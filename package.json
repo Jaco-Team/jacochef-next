@@ -1,0 +1,30 @@
+{
+  "name": "jacochef-next",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emotion/cache": "^11.11.0",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/icons-material": "^5.15.15",
+    "@mui/material": "^5.15.15",
+    "@mui/material-nextjs": "^5.15.11",
+    "axios": "^1.6.8",
+    "common-es": "^1.0.1",
+    "next": "14.1.4",
+    "query-string": "^9.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tinymce": "^7.0.1",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "sass": "^1.74.1"
+  }
+}

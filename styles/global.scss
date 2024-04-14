@@ -1,0 +1,41 @@
+$Roboto: var(--inter-font);
+
+*{
+    font-family: $Roboto;
+}
+
+body{
+    margin: 0px!important;
+    padding: 0px!important;
+}
+
+header > div{
+    height: 64px;
+}
+
+div#__next > div.MuiGrid-root.MuiGrid-container{
+    margin-top: 64px;
+    padding-right: 24px;
+    margin-left: 0px;
+    width: 100%;
+}
+
+.LeftMenu > .MuiDrawer-paper.MuiDrawer-paperAnchorLeft{
+    width: 350px;
+}
+
+.MuiAccordion-root.Mui-expanded{
+    margin: 0!important;
+}
+.MuiAccordionSummary-content.Mui-expanded{
+    margin: 12px 0!important;
+}
+.MuiList-root{
+    & a{
+        text-decoration: none;
+        color: rgba(0, 0, 0, 0.87);
+    }
+    .MuiListItem-root{
+        height: 50px;
+    }
+}
