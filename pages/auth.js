@@ -18,6 +18,8 @@ import Link from 'next/link';
 
 import api from '@/src/api';
 
+import Cookies from 'js-cookie';
+
 export default function Auth(){
 
   const [ isLoad, setIsLoad ] = useState(false);
@@ -64,7 +66,8 @@ export default function Auth(){
         setIsLoad(false);
       }, 500)
     } else {
-      localStorage.setItem('token', res.token)
+      localStorage.setItem('token', res.token);
+      Cookies.set('token', res.token, { expires: 60 });
 
       setTimeout(() => {
         setIsLoad(false);

@@ -18,10 +18,11 @@ import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 
-
 import Link from 'next/link';
 
 import api from '@/src/api';
+
+import Cookies from 'js-cookie';
 
 export default function Registration(){
 
@@ -109,7 +110,8 @@ export default function Registration(){
           openDialog('Предупреждение', res.text)
         }, 500)
       } else {
-        localStorage.setItem('token', res.token)
+        localStorage.setItem('token', res.token);
+        Cookies.set('token', res.token, { expires: 60 });
 
         setTimeout(() => {
           window.location.pathname = '/'

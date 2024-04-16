@@ -29,6 +29,8 @@ import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 
 import api from '@/src/api';
 
+import Cookies from 'js-cookie';
+
 export default function Header({isHeader}) {
   const [ isOpenMenu, setIsOpenMenu ] = useState(false);
   const [ CatMenu, setCatMenu ] = useState([]);
@@ -41,7 +43,7 @@ export default function Header({isHeader}) {
   async function loadMenu(){
     const response = await api('header', 'get_all');
 
-    if( response?.st === true ){
+    if(response?.info.st){
       setCatMenu(response?.info?.left_menu);
       setFullMenu(response?.info?.full_menu);
     }
@@ -58,6 +60,7 @@ export default function Header({isHeader}) {
 
   function logOut(){
     localStorage.removeItem('token');
+    Cookies.remove('token');
     window.location.href = '/auth';
   }
 
