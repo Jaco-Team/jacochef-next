@@ -137,7 +137,7 @@ class LiveOrders_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
         
-        <Grid container spacing={3}>
+        <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>

@@ -457,7 +457,7 @@ class Kkt_Info_ extends React.Component {
           update_kkt={this.update_kkt.bind(this)}
         />
 
-        <Grid container spacing={3}>
+        <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>

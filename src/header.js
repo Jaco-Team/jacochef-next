@@ -31,7 +31,7 @@ import api from '@/src/api';
 
 import Cookies from 'js-cookie';
 
-export default function Header({isHeader}) {
+export default function Header() {
   const [ isOpenMenu, setIsOpenMenu ] = useState(false);
   const [ CatMenu, setCatMenu ] = useState([]);
   const [ FullMenu, setFullMenu ] = useState([]);

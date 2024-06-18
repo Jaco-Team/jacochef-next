@@ -9,8 +9,7 @@ import dynamic from 'next/dynamic'
 import theme from '@/src/theme';
 
 import '@/styles/global.scss'
-
-import '@/styles/test.scss'
+//import '@/styles/test.scss'
 
 const Header = dynamic(() => import('@/src/header'), { ssr: false })
 
@@ -32,6 +31,7 @@ export default function MyApp(props) {
     <AppRouterCacheProvider {...props}>
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
+        <link rel="icon" href="/images/favicon.ico" sizes="any" />
       </Head>
       <ThemeProvider theme={theme}>
         <Header isHeader={isHeader} suppressHydrationWarning />
