@@ -173,11 +173,11 @@ class SiteSaleMin_ extends React.Component {
             
             <Grid item xs={12}>
               
-              <Link href={"/site_sale_min/site_sale_min_new"} style={{ zIndex: 10 }}>
+              <Link href={"/site_sale_min/new"} style={{ zIndex: 10 }}>
                 <Button variant="contained">Новый промокод</Button>
               </Link>
               
-              <Link href={"/site_sale_min/site_sale_min_stat_list"} style={{ zIndex: 10, marginLeft: 20 }}>
+              <Link href={"/site_sale_min/stat_list"} style={{ zIndex: 10, marginLeft: 20 }}>
                 <Button variant="contained">Выписанные промокоды</Button>
               </Link>
               
@@ -218,7 +218,7 @@ class SiteSaleMin_ extends React.Component {
                   { this.state.findPromoList.map( (item, key) =>
                     <TableRow key={key}>
                       <TableCell>
-                        <Link href={"/site_sale_min/site_sale_min_edit/"+item.id} style={{ zIndex: 10, textDecoration: 'none', color: 'rgba(0, 0, 0, 0.87)' }}>
+                        <Link href={"/site_sale_min/edit/"+item.id} style={{ zIndex: 10, textDecoration: 'none', color: 'rgba(0, 0, 0, 0.87)' }}>
                           {item.name}    
                         </Link>
                       </TableCell>

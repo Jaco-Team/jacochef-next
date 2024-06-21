@@ -173,19 +173,19 @@ class SiteSale2_ extends React.Component {
             
             <Grid item xs={12}>
               
-              <Link href={"/site_sale_2/site_sale_2_new"} style={{ zIndex: 10 }}>
+              <Link href={"/site_sale_2/new"} style={{ zIndex: 10 }}>
                 <Button variant="contained">Новый промокод</Button>
               </Link>
               
-              <Link href={"/site_sale_2/site_sale_2_stat"} style={{ zIndex: 10, marginLeft: 20 }}>
+              <Link href={"/site_sale_2/stat"} style={{ zIndex: 10, marginLeft: 20 }}>
                 <Button variant="contained">Статистика</Button>
               </Link>
 
-              <Link href={"/site_sale_2/site_sale_2_stat_list"} style={{ zIndex: 10, marginLeft: 20 }}>
+              <Link href={"/site_sale_2/stat_list"} style={{ zIndex: 10, marginLeft: 20 }}>
                 <Button variant="contained">Выписанные промокоды</Button>
               </Link>
 
-              <Link href={"/site_sale_2/site_sale_2_analitic_list"} style={{ zIndex: 10, marginLeft: 20 }}>
+              <Link href={"/site_sale_2/analitic_list"} style={{ zIndex: 10, marginLeft: 20 }}>
                 <Button variant="contained">Аналитика по выписанным промокодам</Button>
               </Link>
               
@@ -224,7 +224,7 @@ class SiteSale2_ extends React.Component {
                   { this.state.findPromoList.map( (item, key) =>
                     <TableRow key={key}>
                       <TableCell>
-                        <Link href={"/site_sale_2/site_sale_2_edit/"+item.id} style={{ zIndex: 10, textDecoration: 'none', color: 'rgba(0, 0, 0, 0.87)' }}>
+                        <Link href={"/site_sale_2/edit/"+item.id} style={{ zIndex: 10, textDecoration: 'none', color: 'rgba(0, 0, 0, 0.87)' }}>
                           {item.name}    
                         </Link>
                       </TableCell>

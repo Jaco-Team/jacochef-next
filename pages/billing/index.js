@@ -458,7 +458,7 @@ class Billing_ extends React.Component {
 
           <Grid item xs={12} sm={12}>
             <Button variant="contained">
-              <Link style={{ color: '#fff', textDecoration: 'none' }} href="/billing/billing_new">
+              <Link style={{ color: '#fff', textDecoration: 'none' }} href="/billing/new">
                 Новая накладная
               </Link>
             </Button>
@@ -622,7 +622,7 @@ class Billing_ extends React.Component {
                       </TableCell>
                       <TableCell>Прих</TableCell>
                       <TableCell style={{ cursor: 'pointer' }}>
-                        <Link href="/billing/billing_view" onClick={this.getOneBill.bind(this, item)} target="_blank" style={{ textDecoration: 'none', color: 'rgba(0, 0, 0, 0.87)' }}>
+                        <Link href="/billing/view" onClick={this.getOneBill.bind(this, item)} target="_blank" style={{ textDecoration: 'none', color: 'rgba(0, 0, 0, 0.87)' }}>
                           {item.number}
                         </Link>
                       </TableCell>

@@ -43,7 +43,7 @@ export default function Header() {
   async function loadMenu(){
     const response = await api('header', 'get_all');
 
-    if(response?.info.st){
+    if(response?.info?.st === true){
       setCatMenu(response?.info?.left_menu);
       setFullMenu(response?.info?.full_menu);
     }

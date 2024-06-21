@@ -86,13 +86,13 @@ class OrderPost2_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <Button component={Link} href="/order_post_2/order_post_2_manual" variant="contained" sx={{ whiteSpace: 'nowrap', width: '100%' }}>
+            <Button component={Link} href="/order_post_2/manual" variant="contained" sx={{ whiteSpace: 'nowrap', width: '100%' }}>
               Ручная заявка
             </Button>
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <Button component={Link} href="/order_post_2/order_post_2_new" variant="contained" sx={{ whiteSpace: 'nowrap', width: '100%' }}>
+            <Button component={Link} href="/order_post_2/new" variant="contained" sx={{ whiteSpace: 'nowrap', width: '100%' }}>
               Рекомендуемая заявка
             </Button>
           </Grid>

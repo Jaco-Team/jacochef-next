@@ -215,7 +215,7 @@ class Revizion_ extends React.Component {
 
     localStorage.setItem('editRevData', JSON.stringify(data));
 
-    window.location.href = '/revizion/revizion_edit';
+    window.location.href = '/revizion/edit';
   }
 
   render() {
@@ -232,7 +232,7 @@ class Revizion_ extends React.Component {
 
           <Grid item xs={12} sm={2}>
             <Button variant="contained" style={{ whiteSpace: 'nowrap' }}>
-              <Link style={{ color: '#fff', textDecoration: 'none' }} href="/revizion/revizion_new">
+              <Link style={{ color: '#fff', textDecoration: 'none' }} href="/revizion/new">
                 Новая ревизия
               </Link>
             </Button>
