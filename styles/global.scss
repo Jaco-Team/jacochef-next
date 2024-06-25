@@ -404,3 +404,67 @@ div.css-19kzrtu {
   max-height: 300px !important;
   margin-right: 10px;
 }
+
+
+body{
+  margin: 0px!important;
+}
+p, span, b, th, td, label{
+  font-size: 1rem!important;
+}
+h1, h2, h3, h4, h5{
+  margin: 0;
+}
+.MuiAccordion-root.Mui-expanded{
+  margin: 0!important;
+}
+.MuiAccordionSummary-content.Mui-expanded{
+  margin: 12px 0!important;
+}
+a{
+  text-decoration: none;
+  color: black;
+  width: 100%;
+}
+.MuiBackdrop-root{
+  z-index: 999;
+  color: rgb(255, 255, 255)!important;
+}
+.MuiPaper-root.MuiDialog-paper{
+  z-index: 999;
+  width: 100%!important;
+}
+.Mui-disabled{
+  background-color: #fff!important;
+  opacity: 1!important;
+}
+.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.MuiMenu-paper.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation8.MuiPopover-paper{
+  z-index: 999;
+}
+.MyDaterange input{
+  padding: 8.5px 14px!important;
+}
+.rmdp-container{
+  width: 100%!important;
+}
+.rmdp-container > input{
+  font-size: 1rem!important;
+  padding: 8.5px 14px!important;
+  height: auto!important;
+}
+
+.__react_modal_image__icon_menu{
+  display: flex!important;
+}
+.datePicker{
+  width: 100%;
+  & div.MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorPrimary.MuiInputBase-formControl.MuiInputBase-adornedEnd{
+      height: 40px;
+  }
+}
+
+#simple-tabpanel-0, #simple-tabpanel-1{
+  & > div{
+    padding-right: 0;
+  }
+}

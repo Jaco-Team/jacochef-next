@@ -319,7 +319,7 @@ class WorkSchedule_Table extends React.Component {
     let check_period = this.props.test.find((item) => item.row !== 'header' && parseInt(item.data.check_period) == 0);
 
     return (
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} style={{ paddingRight: 0 }}>
         <Table id={this.props.numberChoose === 1 ? 'table_graph_one' : 'table_graph_two'}>
           <TableBody>
             {!check_period ? null : (
@@ -3404,7 +3404,7 @@ class WorkSchedule_ extends React.Component {
             </Box>
 
             {this.state.kind == 'other' ? (
-              <TabPanel value={this.state.tabTable} index={0}>
+              <TabPanel value={this.state.tabTable} index={0} style={{ paddingRight: 0 }}>
                 {!this.state.one ? null : (
                   <WorkSchedule_Table_without_functions
                     number={this.state.one}
@@ -3434,7 +3434,7 @@ class WorkSchedule_ extends React.Component {
                 )}
               </TabPanel>
             ) : (
-              <TabPanel value={this.state.tabTable} index={0}>
+              <TabPanel value={this.state.tabTable} index={0} style={{ paddingRight: 0 }}>
                 {!this.state.one ? null : (
                   <WorkSchedule_Table
                     number={this.state.one}
@@ -3468,7 +3468,7 @@ class WorkSchedule_ extends React.Component {
             )}
 
             {this.state.kind == 'other' ? (
-              <TabPanel value={this.state.tabTable} index={1}>
+              <TabPanel value={this.state.tabTable} index={1} style={{ paddingRight: 0 }}>
                 {!this.state.two ? null : (
                   <WorkSchedule_Table_without_functions
                     number={this.state.two}
@@ -3498,7 +3498,7 @@ class WorkSchedule_ extends React.Component {
                 )}
               </TabPanel>
             ) : (
-              <TabPanel value={this.state.tabTable} index={1}>
+              <TabPanel value={this.state.tabTable} index={1} style={{ paddingRight: 0 }}>
                 {!this.state.two ? null : (
                   <WorkSchedule_Table
                     number={this.state.two}
@@ -3531,7 +3531,7 @@ class WorkSchedule_ extends React.Component {
             )}
           </Box>
 
-          <Grid item xs={12}>
+          <Grid item xs={12} style={{overflow: 'auto'}}>
             <Table>
               <TableHead>
                 <TableRow>
