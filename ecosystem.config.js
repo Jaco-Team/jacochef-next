@@ -6,8 +6,14 @@ module.exports = {
     instances : "max",
     exec_mode : "cluster",
     ignore_watch: ["node_modules", "./**/*.log", "*.log"],
-    env_production : {
-      NODE_ENV: "production"
+    env_local: {
+      APP_ENV: 'local' // APP_ENV=local
+    },
+    env_development: {
+      APP_ENV: 'dev' // APP_ENV=dev
+    },
+    env_production: {
+      APP_ENV: 'prod' // APP_ENV=prod
     },
     "watch_options": {
       "usePolling": true,
