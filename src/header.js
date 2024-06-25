@@ -64,6 +64,12 @@ export default function Header() {
     window.location.href = '/auth';
   }
 
+  if( typeof window != 'undefined' ){
+    if (location.protocol !== 'https:' && location.hostname != 'localhost' ) {
+      location.replace(`https:${location.href.substring(location.protocol.length)}`);
+    }
+  }
+
   if( window.location.pathname == '/auth' || window.location.pathname == '/registration' ){
     return <></>;
   }
