@@ -23,7 +23,7 @@ module.exports = {
       host : '95.163.243.157',
       ref  : 'origin/main',
       repo : 'git@github.com:vito3315/jacochef-next.git',
-      path : '/root/jaco-chef-new1',
+      path : '/root/jacochef-next',
       key: '~/.ssh/id_rsa.pub',
       'pre-deploy-local': '',
       'post-deploy' : 'pm2 reload all',
