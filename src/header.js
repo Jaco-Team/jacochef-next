@@ -67,12 +67,14 @@ export default function Header() {
   if( typeof window != 'undefined' ){
     if (location.protocol !== 'https:' && location.hostname != 'localhost' ) {
       location.replace(`https:${location.href.substring(location.protocol.length)}`);
+    }else{
+      if( window.location.pathname == '/auth' || window.location.pathname == '/registration' ){
+        return <></>;
+      }
     }
   }
 
-  if( window.location.pathname == '/auth' || window.location.pathname == '/registration' ){
-    return <></>;
-  }
+  
 
   return (
     <>
