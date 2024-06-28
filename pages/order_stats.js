@@ -358,8 +358,8 @@ class OrderStats_ extends React.Component {
                     <TableCell>Ср. время от заказа до закрыт на кухне</TableCell>
                     <TableCell>Ср. время от заказа до получения</TableCell>
                     <TableCell>Кол-во заказов ко времени</TableCell>
-                    <TableCell>% вовремя закрытых на кухне</TableCell>
-                    <TableCell>% вовремя полученных клиентом</TableCell>
+                    <TableCell>% вовремя закрытых на кухне (ко времени)</TableCell>
+                    <TableCell>% вовремя полученных клиентом (ко времени с учетом GPS)</TableCell>
                   </TableRow>
                 </TableHead>
 
