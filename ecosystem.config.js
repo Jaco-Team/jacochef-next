@@ -32,7 +32,7 @@ module.exports = {
       path : '/root/jacochef-next',
       key: '~/.ssh/id_rsa.pub',
       'pre-deploy-local': '',
-      'post-deploy' : 'npm run deploy:dev && pm2 reload all',
+      'post-deploy' : 'npm run deploy:prod && pm2 reload all',
       'pre-setup': ''
     }
   }
