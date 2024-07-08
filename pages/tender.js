@@ -327,6 +327,25 @@ class Tender_ extends React.Component {
     }
   }
 
+  async onDownload2() {
+    // const url = this.state.url;
+
+    const data = {
+      city_id: this.state.city,
+      vendors: this.state.vendor,
+      cat: this.state.newCat,
+      date: this.state.tender.name,
+    };
+
+    const res = await this.getData('get_data2', data);
+
+    if(res?.url){
+      const link = document.createElement('a');
+      link.href = res.url;
+      link.click();
+    }
+  }
+
   render() {
     return (
       <>
@@ -410,7 +429,8 @@ class Tender_ extends React.Component {
                 backgroundColor: '#00a550',
                 color: 'white',
               }}
-              onClick={this.onDownload.bind(this)}
+              //onClick={this.onDownload.bind(this)}
+              onClick={this.onDownload2.bind(this)}
             >
               Скачать
             </Button>

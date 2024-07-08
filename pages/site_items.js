@@ -527,7 +527,7 @@ class SiteItems_ extends React.Component {
       vendor['stol'] = stol;
     }
     
-    if( data == 'is_show' || data == 'show_site' || data == 'show_program' || data == 'is_new' || data == 'is_hit' ){
+    if( data == 'is_show' || data == 'show_site' || data == 'show_program' || data == 'is_new' || data == 'is_hit' || data == 'is_updated' ){
       vendor[data] = event.target.checked === true ? 1 : 0;
     }else{
       vendor[data] = event.target.value;
@@ -1799,6 +1799,9 @@ class SiteItems_ extends React.Component {
                                 <Grid item xs={12} sm={6}>
                                   <MyCheckBox label="Хит" value={ parseInt(this.state.editItem.is_hit) == 1 ? true : false } func={ this.changeItem.bind(this, 'is_hit') } style={{ justifyContent: 'center' }} />
                                 </Grid>
+                                <Grid item xs={12} sm={6}>
+                                  <MyCheckBox label="Обновлено" value={ parseInt(this.state.editItem.is_updated) == 1 ? true : false } func={ this.changeItem.bind(this, 'is_updated') } style={{ justifyContent: 'center' }} />
+                                </Grid>
                               </Grid>
                             </Grid>
 
@@ -2164,6 +2167,11 @@ class SiteItems_ extends React.Component {
                                   <Grid item xs={12} sm={6}>
                                     <MyCheckBox label="Хит" value={ parseInt(this.state.editItem.is_hit) == 1 ? true : false } func={ this.changeItem.bind(this, 'is_hit') } style={{ justifyContent: 'center' }} />
                                   </Grid>
+                                  <Grid item xs={12} sm={6}>
+                                    <MyCheckBox label="Обновлено" value={ parseInt(this.state.editItem.is_updated) == 1 ? true : false } func={ this.changeItem.bind(this, 'is_updated') } style={{ justifyContent: 'center' }} />
+                                  </Grid>
+
+                                  
                                 </Grid>
                               </Grid>
 
