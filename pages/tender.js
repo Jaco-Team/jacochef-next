@@ -429,8 +429,8 @@ class Tender_ extends React.Component {
                 backgroundColor: '#00a550',
                 color: 'white',
               }}
-              //onClick={this.onDownload.bind(this)}
-              onClick={this.onDownload2.bind(this)}
+              onClick={this.onDownload.bind(this)}
+              //onClick={this.onDownload2.bind(this)}
             >
               Скачать
             </Button>
