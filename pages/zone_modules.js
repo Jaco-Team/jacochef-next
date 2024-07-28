@@ -25,6 +25,9 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+
 import { MySelect, MyTextInput, MyCheckBox, MyAlert } from '@/ui/elements';
 
 import queryString from 'query-string';
@@ -41,6 +44,7 @@ class ZoneModules_Modal extends React.Component {
       isDrawing: true,
       confirmDialog: false,
       text: '',
+      zones: []
     };
   }
 
@@ -52,6 +56,7 @@ class ZoneModules_Modal extends React.Component {
     }
 
     if (this.props.item !== prevProps.item) {
+
       if (this.props.mark === 'newZone') {
         this.getZones(this.props.item.points[0], this.props.item.other_zone);
       }
@@ -60,8 +65,17 @@ class ZoneModules_Modal extends React.Component {
         this.getZones(this.props.item.zone, this.props.item.other_zone);
       }
 
+      let zones = JSON.parse(JSON.stringify(this.props.zones));
+
+      if (zones.length) {
+        zones = zones.filter(zone => zone.id !== this.props.item.zone.id)
+      } else {
+        zones = [];
+      }
+
       this.setState({
-        item: this.props.item,
+        item: JSON.parse(JSON.stringify(this.props.item)),
+        zones,
       });
     }
   }
@@ -149,7 +163,7 @@ class ZoneModules_Modal extends React.Component {
       // новая точка
       let myGeoObject1 = new ymaps.GeoObject(
         { geometry: { type: 'Point', coordinates: JSON.parse(point['xy_point']) },
-          properties: { iconContent: point.name },
+          properties: { iconContent: this.props.mark === 'newZone' ? point.name : point.point_name },
         },
         { preset: 'islands#blackStretchyIcon' }
       );
@@ -304,6 +318,38 @@ class ZoneModules_Modal extends React.Component {
     });
   }
 
+  changeZonesView(index, id, event) {
+    let zones = this.state.zones;
+    const target = event.target.checked;
+    const item = this.state.item;
+
+    zones[index].is_view = target;
+
+    if(target) {
+      const res = this.props.item.other_zone.find(zone => zone.id === id);
+
+      if(res) {
+        item.other_zone.push(res);
+      }
+
+    } else {
+      item.other_zone = item.other_zone.filter(zone => zone.id !== id);
+    }
+
+    if (this.props.mark === 'newZone') {
+      this.getZones(this.props.item.points[0], item.other_zone);
+    }
+
+    if (this.props.mark === 'editZone') {
+      this.getZones(this.props.item.zone, item.other_zone);
+    }
+
+    this.setState({
+      zones,
+      item
+    });
+  }
+
   save() {
     if (!this.myGeoObject) {
       this.setState({
@@ -331,6 +377,7 @@ class ZoneModules_Modal extends React.Component {
       isDrawing: true,
       confirmDialog: false,
       text: '',
+      zones: []
     });
 
     this.props.onClose();
@@ -362,11 +409,9 @@ class ZoneModules_Modal extends React.Component {
         >
           <DialogTitle className="button">
             {this.props.method}{this.props.itemName ? `: ${this.props.itemName}` : null}
-            {this.props.fullScreen ? (
-              <IconButton onClick={() => this.setState({ confirmDialog: true, text: 'Закрыть без сохранения изменений?' })} style={{ cursor: 'pointer' }}>
-                <CloseIcon />
-              </IconButton>
-            ) : null}
+            <IconButton onClick={() => this.setState({ confirmDialog: true, text: 'Закрыть без сохранения изменений?' })} style={{ cursor: 'pointer' }}>
+              <CloseIcon />
+            </IconButton>
           </DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3}>
@@ -436,7 +481,23 @@ class ZoneModules_Modal extends React.Component {
               </Grid>
 
               <Grid item xs={12} sm={12}>
-                <div id="map" name="map" style={{ width: '100%', height: 700, paddingTop: 10 }}/>
+                <div id="map" name="map" style={{ width: '100%', height: 700, paddingTop: 10 }} >
+                  {!this.state.zones.length || this.props.fullScreen ? null :
+                    <List className='list_zones'>
+                        <div className='list'>
+                          {this.state.zones.map((item, key) => (
+                            <ListItem key={key} style={{ borderBottom: '1px solid #e5e5e5' }}>
+                              <MyCheckBox
+                                label={item?.zone_name}
+                                value={item?.is_view ?? true}
+                                func={this.changeZonesView.bind(this, key, item.id)}
+                              />
+                            </ListItem>
+                          ))}
+                        </div>
+                    </List>
+                  }
+                </div>
               </Grid>
             </Grid>
           </DialogContent>
@@ -701,6 +762,7 @@ class ZoneModules_ extends React.Component {
           itemName={this.state.itemName}
           save={this.save.bind(this)}
           fullScreen={this.state.fullScreen}
+          zones={this.state.zones}
         />
 
         <Grid container spacing={3} mb={3} className='container_first_child'>
@@ -724,7 +786,7 @@ class ZoneModules_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid item xs={12} sm={12} mb={10}>
             <TableContainer>
               <Table>
                 <TableHead>

@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic'
 import theme from '@/src/theme';
 
 import '@/styles/global.scss'
-//import '@/styles/test.scss'
+import '@/styles/tender.scss'
 
 const Header = dynamic(() => import('@/src/header'), { ssr: false })
 

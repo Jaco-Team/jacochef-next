@@ -190,14 +190,7 @@ export default class HotMap extends React.Component {
         opacities = [0.4, 0.6, 0.8, 1];
 
        
-        ymaps.modules.require(['Heatmap'], (Heatmap) => {
-          this.heatmap = new Heatmap(new_data, {
-              gradient: gradients[0],
-              radius: radiuses[1],
-              opacity: opacities[2]
-          });
-          this.heatmap.setMap(this.map);
-        });
+        
 
         //return ;
         
@@ -240,6 +233,17 @@ export default class HotMap extends React.Component {
           this.map.geoObjects.events.add('click', this.changeColorPolygon.bind(this));
           
         })
+
+
+
+        ymaps.modules.require(['Heatmap'], (Heatmap) => {
+          this.heatmap = new Heatmap(new_data, {
+              gradient: gradients[0],
+              radius: radiuses[1],
+              opacity: opacities[2]
+          });
+          this.heatmap.setMap(this.map);
+        });
         
       });
     }else{
@@ -457,8 +461,6 @@ export default class HotMap extends React.Component {
   render(){
     return (
       <> 
-
-        <Script src="https://api-maps.yandex.ru/2.1/?apikey=665f5b53-8905-4934-9502-4a6a7b06a900&lang=ru_RU" />
 
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />

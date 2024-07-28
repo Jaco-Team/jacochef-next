@@ -468,3 +468,22 @@ a{
     padding-right: 0;
   }
 }
+
+.list_zones {
+  height: 50%;
+  width: 30%;
+  z-index: 100;
+  background: #fff;
+  box-shadow: 10px 20px 40px 15px rgba(0, 0, 0, 0.15);
+  border-radius: 20px;
+  padding: 24px !important;
+  float: right;
+  right: 10px;
+  margin-top: 100px !important;
+
+  & .list {
+    overflow-y: auto;
+    height: 100%;
+    padding-right: 24px;
+  }
+}

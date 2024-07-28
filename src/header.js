@@ -31,6 +31,10 @@ import api from '@/src/api';
 
 import Cookies from 'js-cookie';
 
+
+import axios from "axios";
+
+
 export default function Header() {
   const [ isOpenMenu, setIsOpenMenu ] = useState(false);
   const [ CatMenu, setCatMenu ] = useState([]);
