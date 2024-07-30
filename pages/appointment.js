@@ -25,9 +25,10 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox } from '@/ui/elements';
+import { MyTextInput, MySelect, MyCheckBox } from '@/ui/elements';
 
 import queryString from 'query-string';
+import { NoStroller } from '@mui/icons-material';
 
 class Appointment_ extends React.Component {
   constructor(props) {
@@ -36,33 +37,33 @@ class Appointment_ extends React.Component {
     this.state = {
       module: 'appointment',
       module_name: '',
+
+      modalDialog: false,
+      method: '',
+      item : [],
+
       is_load: false,
 
       points: [],
       point: '0',
 
-      cats: [],
+      cats: [], // todo del
 
       confirmDialog: false,
-      cat: [],
+      cat: [], // todo del
+      items: [], 
+      test: 0
     };
   }
 
   async componentDidMount() {
     console.log('appointment!!');
     const data = await this.getData('get_all');
-
-    const point = {
-      point_id: data.points[0].id,
-    };
-
-    const res = await this.getData('get_items', point);
+    const res = await this.getData('get_items');
 
     this.setState({
-      points: data.points,
-      point: data.points[0].id,
       module_name: data.module_info.name,
-      cats: res.items,
+      items: res.items,
     });
 
     document.title = data.module_info.name;
@@ -125,7 +126,7 @@ class Appointment_ extends React.Component {
       cats: res.items,
     });
   }
-
+  // todo
   openConfirm(cat, event) {
     event.stopPropagation();
 
@@ -134,65 +135,8 @@ class Appointment_ extends React.Component {
       cat,
     });
   }
-
-  async changeItemChecked(mark, catChoose, it, event) {
-    const point = this.state.point;
-
-    const cats = this.state.cats;
-
-    let items = [];
-
-    if (mark === 'all') {
-      this.setState({
-        confirmDialog: false,
-      });
-
-      const catConfirm = this.state.cat;
-
-      cats.forEach((cat) => {
-        if (cat.id === catConfirm.id) {
-          cat.items.forEach((item) => {
-            parseInt(item.is_active) == 1 ? (item.is_active = 0) : (item.is_active = 1);
-            items.push(item);
-          });
-        }
-      });
-    }
-
-    if (mark === 'one') {
-      const value = event.target.checked === true ? 1 : 0;
-
-      it.is_active = value;
-
-      items.push(it);
-
-      cats.forEach((cat) => {
-        if (cat.id === catChoose.id) {
-          cat.items.forEach((item) => {
-            if (item.item_id === it.item_id) {
-              item.is_active = value;
-            }
-          });
-        }
-      });
-    }
-
-    const data = {
-      point_id: point,
-      items,
-    };
-
-    // console.log(data);
-
-    await this.getData('save_active', data);
-
-    this.setState({
-      cats,
-    });
-
-    this.update();
-  }
-
+ 
+  // todo
   async update() {
     const point = this.state.point;
 
@@ -207,6 +151,66 @@ class Appointment_ extends React.Component {
     });
   }
 
+  // сохранение сортировки
+  async save() {
+    console.log('save')
+    const app_list = this.state.items;
+ 
+    console.log('app_list',app_list);
+
+   // await this.getData('save_sort', app_list);
+    this.setState({
+      modalDialog: false
+    });
+    console.log('save ok')
+  }
+
+  //(this, 'kind', item.kind, key)
+  changeItem(data, id, event) {
+   
+    const items = this.state.items;
+    console.log('data='+data+' id='+id + ' ev='+ event.target.value )
+
+    items.forEach((item) => {
+      if (item.id === id) {
+         console.log('YES=')
+        item[data] = event.target.value;
+      }
+      // console.log('kind='+item.kind+' sort='+item.sort +' item='+item[data]+' id='+id+' item_id='+item.id)
+    });      
+
+
+    this.setState({
+      items,
+    });
+    console.log('setStateok')
+  }
+  
+  async openModal(id) {
+
+    console.log('id='+id);
+    let d = {'id' : id};
+    const res = await this.getData('get_one', id); 
+
+    console.log('r_data=',res.data);
+    console.log('r_name=',res.data.name);
+    this.setState({
+      modalDialog: true,
+      item: res.data
+    });
+  }
+
+  changeItemChecked(data, event) {
+    console.log('check_',event.target.checked);
+    const item = this.state.item;
+
+   // item.err[data] = event.target.checked === true ? 1 : 0;
+
+    this.setState({
+      item,
+    });
+  }
+
   render() {
     console.log('app render!!');
     return (
@@ -214,20 +218,6 @@ class Appointment_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
-        <Dialog
-          sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
-          maxWidth="sm"
-          open={this.state.confirmDialog}
-          onClose={() => this.setState({ confirmDialog: false })}
-        >
-          <DialogTitle>Подтвердите действие</DialogTitle>
-          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>Изменить Активность у всех товаров данной категории ?</DialogContent>
-          <DialogActions>
-            <Button autoFocus onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
-            <Button onClick={this.changeItemChecked.bind(this, 'all')}>Ok</Button>
-          </DialogActions>
-        </Dialog>
 
         <Grid container spacing={3} mb={3}>
           <Grid item xs={12} sm={12}>
@@ -243,48 +233,144 @@ class Appointment_ extends React.Component {
             />
           </Grid>
         </Grid>
-
-        <Grid item xs={12} mb={1}>
-          {this.state.cats.map((cat, key) => {
-            return (
-              <Accordion key={key}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <CheckBoxIcon style={{ marginRight: 30 }} color="error" onClick={this.openConfirm.bind(this, cat)}/>
-                  <Typography>{cat.name}</Typography>
-                </AccordionSummary>
-                <AccordionDetails style={{ width: '100%', overflow: 'scroll' }}>
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell style={{ width: '5%' }}>#</TableCell>
-                          <TableCell style={{ width: '55%' }}>Позиция</TableCell>
-                          <TableCell style={{ width: '40%' }}>Активность</TableCell>
-                        </TableRow>
-                      </TableHead>
-
-                      <TableBody>
-                        {cat.items.map((it, k) => (
-                          <TableRow key={k}>
-                            <TableCell>{it.item_id}</TableCell>
-                            <TableCell>{it.name}</TableCell>
-                            <TableCell>
-                              <MyCheckBox
-                                label=""
-                                value={parseInt(it.is_active) == 1 ? true : false}
-                                func={this.changeItemChecked.bind(this, 'one', cat, it)}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </AccordionDetails>
-              </Accordion>
-            );
-          })}
+       
+        <Grid item xs={12} ml={3}>
+          <Button  variant="contained" onClick={this.save.bind(this)}>Сохранить</Button>
         </Grid>
+       
+        <Grid item xs={12} mb={1}>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell style={{ width: '1%' }}>#</TableCell>
+                  <TableCell style={{ width: '35%' }}>Должность</TableCell>
+                  <TableCell style={{ width: '15%' }}>Старшенство</TableCell>
+                  <TableCell style={{ width: '15%' }}>Сортировка</TableCell>
+                </TableRow>
+              </TableHead>
+            <TableBody>
+              {this.state.items.map((item, key) => {
+                return (
+                  <TableRow key={key} hover onClick={this.openModal.bind(this, item.id)}>
+                    <TableCell style={{ width: '1%' }}>{key + 1}</TableCell>
+                    <TableCell>{item.name}</TableCell>
+                    <TableCell>
+                      <MyTextInput
+                        label=""
+                        value={item.kind}
+                        func={this.changeItem.bind(this, 'kind', item.id)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <MyTextInput
+                        label=""
+                        value={item.sort}
+                        func={this.changeItem.bind(this, 'sort', item.id)}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+          </TableContainer>
+          <Grid item xs={12} ml={1} mt={3}>
+              <Button color="primary" variant="contained" onClick={this.save.bind(this)}>Сохранить</Button>
+          </Grid> 
+        </Grid>
+
+        
+        <Dialog
+          open={this.state.modalDialog}
+          onClose={() => this.setState({ modalDialog: false, itemName: '' }) }
+          fullWidth={true}
+          maxWidth={'lg'}
+        > 
+          <DialogTitle >
+            {this.state.item.name}
+          </DialogTitle>
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }} >
+            <Grid container spacing={3} className=''>
+              <Grid item >
+                <MyTextInput
+                  label="Название должности"
+                  value={this.state.item.name}
+                  func={this.changeItem.bind(this, 'name')}
+                />
+              </Grid>
+
+              <Grid item  >
+                <MyTextInput
+                  label="Сокрощенное название"
+                  value={this.state.item.short_name}
+                  func={this.changeItem.bind(this, 'short_name')}
+                />
+              </Grid>
+
+              <Grid item  >
+                <MyTextInput
+                  label="Норма бонусов"
+                  value={this.state.item.bonus}
+                  func={this.changeItem.bind(this, 'bonus')}
+                />
+              </Grid>
+            </Grid>
+
+            <Accordion  style={{ marginTop: 10}} >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} >
+                <Typography>Настройка доступа к модулям</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+              
+                    { this.state.item.full_menu ?
+                        this.state.item.full_menu.map((item, key) =>
+                          <Grid item>
+                              <Grid item  style={{ width: '100%', fontWeight: 700, fontSize: 20,paddingTop: 10, paddingBottom: 10 }}>{item.name}</Grid>
+                              <Accordion >
+                              <AccordionSummary>  <Typography>Разделы</Typography></AccordionSummary>
+                                <AccordionDetails>
+                                  <TableContainer><Table> 
+                                    { item.child ?
+                                      item.child.map((it, key) => 
+                                        <TableRow key={key}>
+                                          <TableCell style={{ width: '1%'}}><MyCheckBox
+                                              label=""
+                                              value={parseInt(it.is_active) == 1 ? true : false}
+                                              func={this.changeItemChecked.bind(this, it.id)}
+                                            /></TableCell>
+                                          <TableCell>{it.name}</TableCell>
+
+                                          { it.dop ?
+                                            it.dop.map((j, k) => 
+                                            <TableCell>
+                                              {j.name}   
+                                              <TableCell style={{ width: '1%'}}><MyCheckBox
+                                                label=""
+                                                value={parseInt(it.is_active) == 1 ? true : false}
+                                                func={this.changeItemChecked.bind(this, it.id)}
+                                              /></TableCell>
+                                            </TableCell>
+                                          ) : null}
+                                        </TableRow>
+                                       
+                                    ) : null}
+                                </Table></TableContainer>
+                              </AccordionDetails>
+                              </Accordion >
+                            </Grid>
+                        ) : null}
+                 
+            </AccordionDetails>
+          </Accordion>
+
+          </DialogContent>
+          <DialogActions>
+            <Button color="primary" onClick={this.save.bind(this)}>
+              Сохранить
+            </Button>
+          </DialogActions>
+        </Dialog>
       </>
     );
   }
