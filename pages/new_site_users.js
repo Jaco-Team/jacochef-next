@@ -34,6 +34,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 import TableFooter from '@mui/material/TableFooter';
+import TableHead from '@mui/material/TableHead';
 
 import Paper from '@mui/material/Paper';
 
@@ -79,11 +80,13 @@ class CatWork_ extends React.Component {
       textComment: '',
 
       openAlert: false,
-      alertStatus: '',
+      alertStatus: false,
       alertText: '',
 
       openOrder: false,
-      showOrder: null
+      showOrder: null,
+
+      errOrder: null
     };
   }
   
@@ -165,14 +168,18 @@ class CatWork_ extends React.Component {
 
     let res = await this.getData('show', data);
 
-    if( res.st === false ){
-      alert(res.text)
-    }else{
+    if(res.st){
       this.setState({
         svod: res.svod
       });
 
       this.renderGraphOrdersD(res.svod);
+    } else {
+      this.setState({
+        openAlert: true,
+        alertStatus: false,
+        alertText: res.text
+      });
     }
   }
 
@@ -331,14 +338,14 @@ class CatWork_ extends React.Component {
       if( this.myRef.current.getContent().length == 0 ){
         this.setState({
           openAlert: true,
-          alertStatus: 'error',
+          alertStatus: false,
           alertText: 'Комментарий пустой'
         });
       }
     }else{
       this.setState({
         openAlert: true,
-        alertStatus: 'error',
+        alertStatus: false,
         alertText: 'Комментарий пустой'
       });
     }
@@ -359,13 +366,13 @@ class CatWork_ extends React.Component {
     if( res.st === false ){
       this.setState({
         openAlert: true,
-        alertStatus: 'error',
+        alertStatus: false,
         alertText: res.text
       });
     }else{
       this.setState({
         openAlert: true,
-        alertStatus: 'success',
+        alertStatus: true,
         alertText: 'Успешно сохранено'
       });
 
@@ -408,6 +415,7 @@ class CatWork_ extends React.Component {
 
     this.setState({
       showOrder: res,
+      errOrder: res?.err_order ?? null,
       openOrder: true
     })
   }
@@ -432,6 +440,8 @@ class CatWork_ extends React.Component {
             onClose={ () => { this.setState({ openOrder: false }) } }
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
+            fullWidth={true}
+            maxWidth={'md'}
           >
             <DialogTitle style={{textAlign: 'center'}}>Заказ #{this.state.showOrder.order.order_id}</DialogTitle>
             <DialogContent>
@@ -440,6 +450,7 @@ class CatWork_ extends React.Component {
                 <Grid item xs={12}>
                   <span>{this.state.showOrder.order.type_order}: {this.state.showOrder.order.type_order_addr_new}</span>
                 </Grid>
+
                 { parseInt(this.state.showOrder.order.type_order_) == 1 ?
                   parseInt(this.state.showOrder.order.fake_dom) == 0 ?
                     <Grid item xs={12}>
@@ -469,7 +480,7 @@ class CatWork_ extends React.Component {
                 { this.state.showOrder.order.delete_reason.length > 0 ? <Grid item xs={12}><span style={{ color: 'red' }}>{this.state.showOrder.order.delete_reason}</span></Grid> : null}
                 
                 { parseInt(this.state.showOrder.order.is_preorder) == 1 ? null :
-                  <Grid item xs={12}><span>{this.state.showOrder.order.text_time}{this.state.showOrder.order.time_to_client}</span></Grid>
+                  <Grid item xs={12}><span>{'Обещали: ' + this.state.showOrder.order.time_to_client + ' / '}{this.state.showOrder.order.text_time}{this.state.showOrder.order.time}</span></Grid>
                 }
                 
                 { this.state.showOrder.order.promo_name == null || this.state.showOrder.order.promo_name.length == 0 ? null :
@@ -523,7 +534,7 @@ class CatWork_ extends React.Component {
                     </TableBody>
                     <TableFooter>
                       <TableRow>
-                        <TableCell style={{fontWeight: 'bold', color: '#000'}}>Сумма закза</TableCell>
+                        <TableCell style={{fontWeight: 'bold', color: '#000'}}>Сумма заказа</TableCell>
                         <TableCell></TableCell>
                         <TableCell style={{fontWeight: 'bold', color: '#000'}}>{this.state.showOrder.order.sum_order} р</TableCell>
                       </TableRow>
@@ -531,6 +542,33 @@ class CatWork_ extends React.Component {
                   </Table>
                 </Grid>
 
+                {!this.state.errOrder ? null : 
+                  <Grid item xs={12} mt={3}>
+                  <Accordion>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography style={{fontWeight: 'bold'}}>Ошибка</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell style={{ width: '20%' }}>Дата создания</TableCell>
+                            <TableCell style={{ width: '30%' }}>Проблема</TableCell>
+                            <TableCell style={{ width: '30%' }}>Решение</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          <TableRow hover>
+                            <TableCell>{this.state.errOrder.date_time_desc}</TableCell>
+                            <TableCell>{this.state.errOrder.order_desc}</TableCell>
+                            <TableCell>{this.state.errOrder.text_win}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </AccordionDetails>
+                  </Accordion>
+                  </Grid>
+                }
                 
               </Grid>
 
@@ -598,7 +636,7 @@ class CatWork_ extends React.Component {
                     <Table>
                       <TableBody>
                         { this.state.user_orders.map( (item, key) =>
-                          <TableRow key={key} onClick={this.orderOpen.bind(this, item.order_id, item.point_id)}>
+                          <TableRow key={key} onClick={this.orderOpen.bind(this, item.order_id, item.point_id)} hover style={{ cursor: 'pointer'}}>
                             <TableCell>{item.point}</TableCell>
                             <TableCell>{item.new_type_order}</TableCell>
                             <TableCell>{item.date_time}</TableCell>
