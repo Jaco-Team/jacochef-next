@@ -23,7 +23,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MyTextInput, MyAutocomplite, MyCheckBox } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api } from '@/src/api_new';
 
 class OptionToWin_Modal extends React.Component {
   constructor(props) {
@@ -252,42 +252,15 @@ class OptionToWin_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
+    let res = api(this.state.module, method, data).then(result => result.data);
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+    setTimeout(() => {
+      this.setState({
+        is_load: false,
       });
+    }, 500);
+
+    return res;
   };
 
   handleResize() {
@@ -395,6 +368,7 @@ class OptionToWin_ extends React.Component {
         id,
       };
 
+      //const item = await this.getData('get_one', data);
       const item = await this.getData('get_one', data);
 
       this.setState({

@@ -37,7 +37,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { MySelect, MyDatePickerNew, MyTextInput, formatDate } from '@/ui/elements';
 import Typography from '@mui/material/Typography';
 
-import queryString from 'query-string';
+import { api } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 
@@ -110,46 +110,20 @@ class Concenter_ extends React.Component {
   getData = (method, data = {}) => {
     
     this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      console.log( err )
-      this.setState({
-        is_load: false
-      })
+      is_load: true,
     });
+
+    let res = api(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
   }
    
   changeCity(event){
@@ -240,16 +214,12 @@ class Concenter_ extends React.Component {
   async closeOrderTrue(){
     let deltype = this.state.radiogroup_options.find( (item) => item.id == this.state.typeDel );
         
-    if( deltype.id == '4' ){
-      deltype.label = this.state.textDel;
-    }
-    
     if (confirm("Отменить заказ #"+this.state.showOrder.order.order_id)) {
       let data = {
         typeCreate: 'center',
         order_id: this.state.showOrder.order.order_id,
         point_id: this.state.showOrder.order.point_id,
-        ans: deltype.label
+        ans: parseInt(deltype.id) == 4 ? this.state.textDel : deltype.label
       };
   
       let res = await this.getData('close_order_center', data);
