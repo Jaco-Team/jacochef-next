@@ -506,7 +506,7 @@ class SiteItems_ extends React.Component {
       let stol = vendor.stol;
 
       //сеты
-      if( parseInt(val) == 4 ){
+      if( parseInt(val) == 4 || parseInt(val) == 21 ){
         type = 2;
         stol = -1;
       }
