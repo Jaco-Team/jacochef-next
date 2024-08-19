@@ -3,11 +3,16 @@ import axios from 'axios';
 
 export function api(module = '', method = '', data = {}) {
   //const urlApi_dev = 'http://127.0.0.1:8000/api/'+module+'/'+method;
-  const urlApi_dev = 'http://79.174.91.113/api/'+module+'/'+method;
-  const urlApi_prod = 'https://api.jacochef.ru/driver/public/index.php/';
+  //const urlApi_dev = 'http://79.174.91.113/api/'+module+'/'+method;
+  const urlApi_dev = 'https://jacochef.ru/api/index_new.php';
 
  
   const this_data = queryString.stringify({
+    method: method, 
+    module: module,
+    version: 2,
+
+
     login: localStorage.getItem('token'),
     data: JSON.stringify(data),
   })
@@ -22,7 +27,8 @@ export function api(module = '', method = '', data = {}) {
         };
       }
 
-      return response.data;
+      return response;
+      //return response.data;
     })
     .catch( (error) => {
       console.log(error?.response?.status);
