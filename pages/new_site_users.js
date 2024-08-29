@@ -37,6 +37,8 @@ import TableFooter from '@mui/material/TableFooter';
 import TableHead from '@mui/material/TableHead';
 
 import Paper from '@mui/material/Paper';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 
 class CatWork_ extends React.Component {
   chartordersD = null;
@@ -46,6 +48,7 @@ class CatWork_ extends React.Component {
     super(props);
         
     this.myRef = React.createRef();
+    this.myRef_action = React.createRef();
 
     this.state = {
       module: 'new_site_users',
@@ -86,7 +89,13 @@ class CatWork_ extends React.Component {
       openOrder: false,
       showOrder: null,
 
-      errOrder: null
+      errOrder: null,
+
+      anchorEl: null,
+      openMenu: false,
+      modalDialogAction: false,
+      comment_id: null,
+      type_action: null,
     };
   }
   
@@ -188,14 +197,14 @@ class CatWork_ extends React.Component {
       number
     };
 
-    let res = await this.getData('get_one', data);
+    const res = await this.getData('get_one', data);
 
     this.setState({
       modalDialogNew: true,
       user_info: res.info,
       user_orders: res.orders,
       comments: res.comments,
-      openNumber: number
+      openNumber: number,
     })
   }
 
@@ -333,7 +342,6 @@ class CatWork_ extends React.Component {
   }
 
   async saveComment(){
-
     if(this.myRef.current) {
       if( this.myRef.current.getContent().length == 0 ){
         this.setState({
@@ -341,13 +349,17 @@ class CatWork_ extends React.Component {
           alertStatus: false,
           alertText: 'Комментарий пустой'
         });
+
+        return;
       }
-    }else{
+    } else {
       this.setState({
         openAlert: true,
         alertStatus: false,
         alertText: 'Комментарий пустой'
       });
+
+      return;
     }
 
     if( this.click === true ){
@@ -370,17 +382,14 @@ class CatWork_ extends React.Component {
         alertText: res.text
       });
     }else{
-      this.setState({
-        openAlert: true,
-        alertStatus: true,
-        alertText: 'Успешно сохранено'
-      });
-
       this.myRef.current.setContent('');
 
       this.setState({
+        openAlert: true,
+        alertStatus: true,
+        alertText: 'Успешно сохранено',
         comments: res.comments,
-      })
+      });
 
       this.show();
     }
@@ -390,19 +399,37 @@ class CatWork_ extends React.Component {
     }, 500 )
   }
 
-  async savePromo(){
-    if( this.click === true ){
-      return ;
-    }else{
-      this.click = true;
+  async savePromo(percent){
+    const number = this.state.openNumber;
+
+    const data = {
+      number,
+      percent
     }
 
-    let res = await this.getData('save_promo', {});
+    const res = await this.getData('save_promo', data);
 
+    if(res.st){
 
-    setTimeout( () => {
-      this.click = false;
-    }, 500 )
+      this.setState({
+        openAlert: true,
+        alertStatus: true,
+        alertText: res.text,
+        modalDialogAction: false,
+      })
+
+      this.saveCommentAction();
+      
+    } else {
+      
+      this.setState({
+        openAlert: true,
+        alertStatus: false,
+        alertText: res.text,
+        modalDialogAction: false,
+      });
+
+    }
   }
 
   async orderOpen(order_id, point_id){
@@ -417,6 +444,121 @@ class CatWork_ extends React.Component {
       showOrder: res,
       errOrder: res?.err_order ?? null,
       openOrder: true
+    })
+  }
+
+  async saveCommentAction(){
+
+    const type = this.state.type_action;
+
+    if((!this.myRef_action.current || this.myRef_action.current.getContent().length === 0) && parseInt(type) === 3) {
+
+      this.setState({
+        openAlert: true,
+        alertStatus: false,
+        alertText: 'В описании пусто'
+      });
+
+      return;
+    } 
+
+    if (this.click){
+      return;
+    } else {
+      this.click = true;
+    }
+
+    let data;
+
+    if(parseInt(type) === 1) {
+      data = {
+        type,
+        comment_id: this.state.comment_id,
+        description: "Выписан промокод на скидку 10%",
+        number: this.state.openNumber,
+      };
+    }
+
+    if(parseInt(type) === 2) {
+      data = {
+        type,
+        comment_id: this.state.comment_id,
+        description: "Выписан промокод на скидку 20%",
+        number: this.state.openNumber,
+      };
+    }
+
+    if(parseInt(type) === 3) {
+      data = {
+        comment_id: this.state.comment_id,
+        type: this.state.type_action,
+        description: this.myRef_action.current.getContent(),
+        number: this.state.openNumber,
+      };
+    }
+
+    const res = await this.getData('save_action', data);
+
+    if(!res.st){
+
+      this.setState({
+        openAlert: true,
+        alertStatus: false,
+        alertText: res.text,
+        modalDialogAction: false,
+      });
+
+    } else {
+
+      if(parseInt(type) === 3) {
+        this.myRef_action.current.setContent('');
+      }
+
+      this.setState({
+        openAlert: true,
+        alertStatus: true,
+        alertText: 'Успешно сохранено',
+        modalDialogAction: false,
+        comments: res.comments,
+      })
+
+      this.show();
+    }
+
+    setTimeout(() => {
+      this.click = false;
+    }, 500)
+  }
+
+  openMenu(event){
+    this.setState({
+      anchorEl: event.currentTarget,
+      openMenu: true,
+    })
+  }
+
+  chooseAction(type, comment_id, percent){
+
+    if(parseInt(type) === 3) {
+      this.setState({
+        modalDialogAction: true,
+      })
+    } else {
+      this.savePromo(percent);
+    }
+
+    this.setState({
+      comment_id,
+      type_action: type
+    })
+
+    this.closeMenu();
+  }
+
+  closeMenu(){
+    this.setState({
+      anchorEl: null,
+      openMenu: false,
     })
   }
 
@@ -651,16 +793,41 @@ class CatWork_ extends React.Component {
               </Grid>
 
               <Grid item xs={12} sm={12}>
-                { this.state.comments.map( (item, key) => 
-                  <Paper key={key} style={{ padding: 15, marginBottom: 15 }} elevation={3}>
+                {this.state.comments.map( (item, key) => 
+                  <Paper key={key} style={{ padding: 15, marginBottom: 15}} elevation={3}>
+                    <b>{item?.description ? 'Обращение:' : 'Комментарий:' }</b>
                     <span dangerouslySetInnerHTML={{__html: item.comment}} />
-                    <div style={{ textAlign: 'end' }}>
-                      <span style={{ marginRight: 20 }}>{item.date_add}</span>
-                      <span>{item.name}</span>
+                    <b>{item?.description ? 'Действие:' : null }</b>
+                    {parseInt(item?.type) !== 3 ?
+                      <p>{item?.description}</p>
+                        :
+                      <span dangerouslySetInnerHTML={{__html: item?.description}} />
+                    }
+                    <div style={{ display: 'flex', justifyContent: item?.description ? 'flex-end' : 'space-between', alignItems: 'center' }}>
+                      {item?.description ? null :
+                        <>
+                          <Button color="primary" variant="contained" onClick={this.openMenu.bind(this)}>Действие</Button>
+                          <Menu style={{ marginTop: 10 }} anchorEl={this.state.anchorEl} open={this.state.openMenu} onClose={this.closeMenu.bind(this)}>
+                            <MenuItem onClick={this.chooseAction.bind(this, 1, item.id, 10)}>
+                              Промик на скидку 10%
+                            </MenuItem>
+                            <MenuItem onClick={this.chooseAction.bind(this, 2, item.id, 20)}>
+                              Промик на скидку 20%
+                            </MenuItem>
+                            <MenuItem onClick={this.chooseAction.bind(this, 3, item.id)}>
+                              Провели беседу
+                            </MenuItem>
+                          </Menu>
+                        </>
+                      }
+                      <div>
+                        <span style={{ marginRight: 20 }}>{item.date_add}</span>
+                        <span>{item.name}</span>
+                      </div>
                     </div>
                   </Paper>
                   
-                ) }
+                )}
               </Grid>
 
               <Grid item xs={12} sm={12}>
@@ -672,6 +839,27 @@ class CatWork_ extends React.Component {
           </DialogContent>
           <DialogActions>
             <Button color="primary" variant="contained" onClick={this.saveComment.bind(this)}>Добавить новый комментарий</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={this.state.modalDialogAction}
+          onClose={ () => { this.setState({ modalDialogAction: false }) } }
+          fullWidth={true}
+          maxWidth={'lg'}
+        >
+          <DialogTitle>Описание ситуации</DialogTitle>
+          <DialogContent style={{ paddingTop: 10 }}>
+
+            <Grid item xs={12} sm={12}>
+              <TextEditor22 id="EditorNew" value={''} refs_={this.myRef_action} />
+            </Grid>
+
+          </DialogContent>
+          <DialogActions>
+            <Button color="primary" variant="contained" 
+            onClick={this.saveCommentAction.bind(this)}
+            >Сохранить</Button>
           </DialogActions>
         </Dialog>
         
