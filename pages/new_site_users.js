@@ -40,6 +40,9 @@ import Paper from '@mui/material/Paper';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+
 class CatWork_ extends React.Component {
   chartordersD = null;
   click = false;
@@ -96,6 +99,10 @@ class CatWork_ extends React.Component {
       modalDialogAction: false,
       comment_id: null,
       type_action: null,
+
+      stat_open: [],
+      raiting: 0,
+      type_sale: 0
     };
   }
   
@@ -179,7 +186,8 @@ class CatWork_ extends React.Component {
 
     if(res.st){
       this.setState({
-        svod: res.svod
+        svod: res.svod,
+        stat_open: res.stat_open
       });
 
       this.renderGraphOrdersD(res.svod);
@@ -409,7 +417,7 @@ class CatWork_ extends React.Component {
 
     const res = await this.getData('save_promo', data);
 
-    if(res.st){
+    /*if(res.st){
 
       this.setState({
         openAlert: true,
@@ -429,7 +437,7 @@ class CatWork_ extends React.Component {
         modalDialogAction: false,
       });
 
-    }
+    }*/
   }
 
   async orderOpen(order_id, point_id){
@@ -449,9 +457,7 @@ class CatWork_ extends React.Component {
 
   async saveCommentAction(){
 
-    const type = this.state.type_action;
-
-    if((!this.myRef_action.current || this.myRef_action.current.getContent().length === 0) && parseInt(type) === 3) {
+    if((!this.myRef_action.current || this.myRef_action.current.getContent().length === 0)) {
 
       this.setState({
         openAlert: true,
@@ -470,12 +476,14 @@ class CatWork_ extends React.Component {
 
     let data;
 
-    if(parseInt(type) === 1) {
+    /*if(parseInt(type) === 1) {
       data = {
         type,
         comment_id: this.state.comment_id,
         description: "Выписан промокод на скидку 10%",
         number: this.state.openNumber,
+        raiting: this.state.raiting,
+        type_sale: this.state.raiting,
       };
     }
 
@@ -486,15 +494,20 @@ class CatWork_ extends React.Component {
         description: "Выписан промокод на скидку 20%",
         number: this.state.openNumber,
       };
-    }
+    }*/
 
-    if(parseInt(type) === 3) {
+    //if(parseInt(type) === 3) {
       data = {
         comment_id: this.state.comment_id,
-        type: this.state.type_action,
         description: this.myRef_action.current.getContent(),
         number: this.state.openNumber,
+        raiting: this.state.raiting,
+        type_sale: this.state.type_sale,
       };
+    //}
+
+    if( parseInt(this.state.type_sale) > 0 ){
+      this.savePromo(this.state.type_sale);
     }
 
     const res = await this.getData('save_action', data);
@@ -510,9 +523,9 @@ class CatWork_ extends React.Component {
 
     } else {
 
-      if(parseInt(type) === 3) {
+      //if(parseInt(type) === 3) {
         this.myRef_action.current.setContent('');
-      }
+      //}
 
       this.setState({
         openAlert: true,
@@ -535,24 +548,6 @@ class CatWork_ extends React.Component {
       anchorEl: event.currentTarget,
       openMenu: true,
     })
-  }
-
-  chooseAction(type, comment_id, percent){
-
-    if(parseInt(type) === 3) {
-      this.setState({
-        modalDialogAction: true,
-      })
-    } else {
-      this.savePromo(percent);
-    }
-
-    this.setState({
-      comment_id,
-      type_action: type
-    })
-
-    this.closeMenu();
   }
 
   closeMenu(){
@@ -797,32 +792,36 @@ class CatWork_ extends React.Component {
                   <Paper key={key} style={{ padding: 15, marginBottom: 15}} elevation={3}>
                     <b>{item?.description ? 'Обращение:' : 'Комментарий:' }</b>
                     <span dangerouslySetInnerHTML={{__html: item.comment}} />
-                    <b>{item?.description ? 'Действие:' : null }</b>
-                    {parseInt(item?.type) !== 3 ?
-                      <p>{item?.description}</p>
-                        :
-                      <span dangerouslySetInnerHTML={{__html: item?.description}} />
-                    }
-                    <div style={{ display: 'flex', justifyContent: item?.description ? 'flex-end' : 'space-between', alignItems: 'center' }}>
-                      {item?.description ? null :
-                        <>
-                          <Button color="primary" variant="contained" onClick={this.openMenu.bind(this)}>Действие</Button>
-                          <Menu style={{ marginTop: 10 }} anchorEl={this.state.anchorEl} open={this.state.openMenu} onClose={this.closeMenu.bind(this)}>
-                            <MenuItem onClick={this.chooseAction.bind(this, 1, item.id, 10)}>
-                              Промик на скидку 10%
-                            </MenuItem>
-                            <MenuItem onClick={this.chooseAction.bind(this, 2, item.id, 20)}>
-                              Промик на скидку 20%
-                            </MenuItem>
-                            <MenuItem onClick={this.chooseAction.bind(this, 3, item.id)}>
-                              Провели беседу
-                            </MenuItem>
-                          </Menu>
-                        </>
-                      }
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                       <div>
                         <span style={{ marginRight: 20 }}>{item.date_add}</span>
                         <span>{item.name}</span>
+                      </div>
+                    </div>
+
+                    <hr />
+
+                    <b>{item?.description ? 'Действие:' : null }</b>
+                    
+                    <p dangerouslySetInnerHTML={{__html: item?.description}} />
+                    
+                    <p>
+                      <b>{ parseInt(item.raiting) > 0 ? parseInt(item.raiting) == 1 ? 'Положительный отзыв' : parseInt(item.raiting) == 2 ? 'Средний отзыв' : 'Отрицательный отзыв' : '' }</b>
+                      { parseInt(item.raiting) > 0 & parseInt(item.sale) > 0 ? ' / ' : '' }
+                      <b>{ parseInt(item.sale) > 0 ? 'Выписана скидка '+item.sale+'%' : '' }</b>
+                    </p>
+
+                    <div style={{ display: 'flex', justifyContent: item?.description ? 'flex-end' : 'space-between', alignItems: 'center' }}>
+                      {item?.description ? null :
+                        <>
+                          <Button color="primary" variant="contained" onClick={ () => { this.setState({ modalDialogAction: true, comment_id: item.id }) } }>Действие</Button>
+                          
+                        </>
+                      }
+                      <div>
+                        <span style={{ marginRight: 20 }}>{item.date_time}</span>
+                        <span>{item.name_close}</span>
                       </div>
                     </div>
                   </Paper>
@@ -851,15 +850,50 @@ class CatWork_ extends React.Component {
           <DialogTitle>Описание ситуации</DialogTitle>
           <DialogContent style={{ paddingTop: 10 }}>
 
+            <Grid item xs={12} sm={12} style={{ justifyContent: 'center', display: 'flex', marginBottom: 20 }}>
+              <ToggleButtonGroup
+                value={this.state.raiting}
+                exclusive
+                size="small"
+                onChange={(event, data)=>{ this.setState({raiting: data ?? 0}) } }
+              >
+                <ToggleButton value="1" style={{ backgroundColor: parseInt(this.state.raiting) == 1 ? '#dd1a32' : '#fff', borderRightWidth: 2 }}>
+                  <span style={{ color: parseInt(this.state.raiting) == 1 ? '#fff' : '#333', padding: '0 20px' }}>Положительный отзыв</span>
+                </ToggleButton>
+                <ToggleButton value="2" style={{ backgroundColor: parseInt(this.state.raiting) == 2 ? '#dd1a32' : '#fff', borderRightWidth: 2 }}>
+                  <span style={{ color: parseInt(this.state.raiting) == 2 ? '#fff' : '#333', padding: '0 20px' }}>Средний отзыв</span>
+                </ToggleButton>
+                <ToggleButton value="3" style={{ backgroundColor: parseInt(this.state.raiting) == 3 ? '#dd1a32' : '#fff' }}>
+                  <span style={{ color: parseInt(this.state.raiting) == 3 ? '#fff' : '#333', padding: '0 20px' }}>Отрицательный отзыв</span>
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Grid>
+
+            <Grid item xs={12} sm={12} style={{ justifyContent: 'center', display: 'flex', marginBottom: 20 }}>
+              <ToggleButtonGroup
+                value={this.state.type_sale}
+                exclusive
+                size="small"
+                onChange={(event, data)=>{ this.setState({type_sale: data ?? 0})} }
+              >
+                <ToggleButton value="10" style={{ backgroundColor: parseInt(this.state.type_sale) == 10 ? '#dd1a32' : '#fff', borderRightWidth: 2 }}>
+                  <span style={{ color: parseInt(this.state.type_sale) == 10 ? '#fff' : '#333', padding: '0 20px' }}>Скидка 10%</span>
+                </ToggleButton>
+                <ToggleButton value="20" style={{ backgroundColor: parseInt(this.state.type_sale) == 20 ? '#dd1a32' : '#fff' }}>
+                  <span style={{ color: parseInt(this.state.type_sale) == 20 ? '#fff' : '#333', padding: '0 20px' }}>Скидка 20%</span>
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Grid>
+
             <Grid item xs={12} sm={12}>
               <TextEditor22 id="EditorNew" value={''} refs_={this.myRef_action} />
             </Grid>
 
           </DialogContent>
           <DialogActions>
-            <Button color="primary" variant="contained" 
-            onClick={this.saveCommentAction.bind(this)}
-            >Сохранить</Button>
+            <Button color="primary" variant="contained" onClick={this.saveCommentAction.bind(this)}>
+              Сохранить
+            </Button>
           </DialogActions>
         </Dialog>
         
@@ -892,6 +926,54 @@ class CatWork_ extends React.Component {
             <Button variant="contained" color="primary" onClick={ this.show.bind(this) }>Показать</Button>
           </Grid>
           
+          <Grid item xs={12} style={{ marginBottom: 100 }}>
+            {this.state.stat_open.map( (item, key) =>
+              <Accordion style={{ width: '100%' }} key={key}>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                >
+                  <Typography>Статистика обращений</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>ФИО</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Комментариев</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Закрытых обращений</TableCell>
+
+                        <TableCell style={{ textAlign: 'center' }}>Скидка 10%</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Скидка 20%</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Положительный отзыв</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Средний отзыв</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Отрицательный отзыв</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      { this.state.stat_open.map( (it, k) =>
+                        <TableRow key={k}>
+                          <TableCell>{ it.short_name }</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{ it.count_open }</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{ it.count_close }</TableCell>
+
+                          <TableCell style={{ textAlign: 'center' }}>{ it.stat?.type_10 ?? 0 }</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{ it.stat?.type_20 ?? 0 }</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{ it.stat?.type_1 ?? 0 }</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{ it.stat?.type_2 ?? 0 }</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{ it.stat?.type_3 ?? 0 }</TableCell>
+                        </TableRow>
+                      ) }
+                    </TableBody>
+                  </Table>
+
+
+                  
+                </AccordionDetails>
+              </Accordion>
+            )}
+            
+          </Grid>
+
           <Grid item xs={12}>
             <h2 style={{ textAlign: 'center' }}>Новые клиенты по дням</h2>
             <div id="chartordersD" style={{ width: "100%", height: "500px" }} />
