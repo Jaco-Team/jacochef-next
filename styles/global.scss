@@ -183,6 +183,16 @@ th[class*='tableCelHead'] {
   }
 }
 
+.disabled_input_color {
+  & .MuiFormLabel-root.MuiInputLabel-root.Mui-disabled {
+    background: #FFFFE0 !important;
+  }
+
+  & .MuiInputBase-input.MuiOutlinedInput-input.Mui-disabled {
+    background: #FFFFE0 !important;
+  }
+}
+
 .accordion_details {
   overflow: auto;
   padding: 0 16px 8px 16px !important;

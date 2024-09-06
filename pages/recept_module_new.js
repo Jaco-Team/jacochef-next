@@ -1286,6 +1286,7 @@ class ReceptModuleNew_ extends React.Component {
     }
 
     let res = await this.getData('get_one_pf', data);
+    console.log("🚀 === res:", res);
 
     console.log( res )
 
