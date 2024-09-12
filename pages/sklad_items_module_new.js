@@ -213,6 +213,33 @@ class SkladItemsModule_Modal_History_View extends React.Component {
               />
             </Grid>
 
+            <Grid item xs={12} sm={4}>
+              <MyTextInput
+                label="Активность"
+                value={this.state.itemView ? this.state.itemView.is_show?.color ? this.state.itemView.is_show.key : this.state.itemView.is_show : ''}
+                disabled={true}
+                className={this.state.itemView ? this.state.itemView.is_show?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <MyTextInput
+                label="Заявка"
+                value={this.state.itemView ? this.state.itemView.show_in_order?.color ? this.state.itemView.show_in_order.key : this.state.itemView.show_in_order : ''}
+                disabled={true}
+                className={this.state.itemView ? this.state.itemView.show_in_order?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <MyTextInput
+                label="Ревизия"
+                value={this.state.itemView ? this.state.itemView.show_in_rev?.color ? this.state.itemView.show_in_rev.key : this.state.itemView.show_in_rev : ''}
+                disabled={true}
+                className={this.state.itemView ? this.state.itemView.show_in_rev?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+              />
+            </Grid>
+
             <Grid item xs={12} sm={12}>
               <h4>Разгрузка</h4>
               <Divider />
@@ -982,9 +1009,17 @@ class SkladItemsModule_ extends React.Component {
 
     let itemView = JSON.parse(JSON.stringify(item[index]));
 
+    itemView.show_in_rev = parseInt(itemView.show_in_rev) ? 'Да' : 'Нет';
+    itemView.is_show = parseInt(itemView.is_show) ? 'Да' : 'Нет';
+    itemView.show_in_order = parseInt(itemView.show_in_order) ? 'Да' : 'Нет';
+
     if(parseInt(index) !== 0) {
       
       let itemView_old = JSON.parse(JSON.stringify(item[index - 1]));
+
+      itemView_old.show_in_rev = parseInt(itemView_old.show_in_rev) ? 'Да' : 'Нет';
+      itemView_old.is_show = parseInt(itemView_old.is_show) ? 'Да' : 'Нет';
+      itemView_old.show_in_order = parseInt(itemView_old.show_in_order) ? 'Да' : 'Нет';
       
       for (let key in itemView) {
         if(itemView[key] !== itemView_old[key] && (key !== 'apps' && key !== 'cats' && key !== 'ed_izmer' && key !== 'pf_list' && key !== 'id')) {

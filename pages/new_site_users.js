@@ -37,9 +37,6 @@ import TableFooter from '@mui/material/TableFooter';
 import TableHead from '@mui/material/TableHead';
 
 import Paper from '@mui/material/Paper';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
@@ -93,12 +90,9 @@ class CatWork_ extends React.Component {
       showOrder: null,
 
       errOrder: null,
-
-      anchorEl: null,
-      openMenu: false,
+    
       modalDialogAction: false,
       comment_id: null,
-      type_action: null,
 
       stat_open: [],
       raiting: 0,
@@ -541,20 +535,6 @@ class CatWork_ extends React.Component {
     setTimeout(() => {
       this.click = false;
     }, 500)
-  }
-
-  openMenu(event){
-    this.setState({
-      anchorEl: event.currentTarget,
-      openMenu: true,
-    })
-  }
-
-  closeMenu(){
-    this.setState({
-      anchorEl: null,
-      openMenu: false,
-    })
   }
 
   render(){
