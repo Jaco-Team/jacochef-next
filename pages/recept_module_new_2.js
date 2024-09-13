@@ -568,7 +568,7 @@ class ReceptModule_Modal extends React.Component {
       all_w_netto: this.state.all_w_netto,
     };
 
-    if(this.props.method === 'Новый полуфабрикат или рецепт') {
+    if(this.props.method === 'Новый рецепт' || this.props.method === 'Новый полуфабрикат') {
       this.props.saveNew(data);
     } else {
       data.id = this.props.rec.id;
@@ -726,13 +726,6 @@ class ReceptModule_Modal extends React.Component {
                           disabled={true}
                           className="disabled_input"
                         />
-                         {/* здесь для Полуфабрикатов нужен будет СЕЛЕКТ ? т.к. у Товаров склада может быть несколько ед изменений, у Полуфабрикатов одна ед изм */}
-                        {/* <MyAutocomplite
-                          multiple={false}
-                          data={items}
-                          value={item.ei_name}
-                          func={this.changeItemData.bind(this, 'ei_name', key)}
-                        /> */}
                       </TableCell>
                       <TableCell>
                         <MyTextInput
@@ -842,7 +835,7 @@ class ReceptModule_Modal extends React.Component {
 
 class ReceptModule_Table extends React.Component {
   render() {
-    const { data, method, openItemEdit, checkTable, openHistoryItem } = this.props;
+    const { data, method, openItemEdit, checkTable, openHistoryItem, type } = this.props;
 
     return (
       <>
@@ -873,17 +866,17 @@ class ReceptModule_Table extends React.Component {
                           <MyCheckBox
                             label=""
                             value={parseInt(item.show_in_rev) == 1 ? true : false}
-                            func={checkTable.bind(this, item.id, 'show_in_rev')}
+                            func={checkTable.bind(this, item.id, 'show_in_rev', type)}
                           />
                         </TableCell>
                         <TableCell>{item.name}</TableCell>
                         <TableCell>{item.date_start}</TableCell>
                         <TableCell>{item.date_update}</TableCell>
-                        <TableCell style={{ cursor: 'pointer' }} onClick={openItemEdit.bind(this, item.id, `Редактирование: ${item.name}`)}>
+                        <TableCell style={{ cursor: 'pointer' }} onClick={openItemEdit.bind(this, item.id, `Редактирование: ${item.name}`, type)}>
                           <EditIcon />
                         </TableCell>
                         <TableCell 
-                          onClick={openHistoryItem.bind(this, item.id, 'История изменений')}
+                          onClick={openHistoryItem.bind(this, item.id, 'История изменений', type)}
                           style={{cursor: 'pointer'}}
                         >
                           <EditNoteIcon />
@@ -932,7 +925,9 @@ class ReceptModule_ extends React.Component {
 
       modalDialogView: false,
       itemView: null,
-      itemName: ''
+      itemName: '',
+
+      type: ''
     };
   }
 
@@ -1003,62 +998,123 @@ class ReceptModule_ extends React.Component {
     }
   }
 
-  async openItemNew(method) {
+  async openItemNew(method, type) {
     this.handleResize();
 
     const data = {
       id: 0,
     };
 
-    const res = await this.getData('get_one_rec', data);
+    if(type === 'rec') {
 
-    res.rec.rec_users = [{ id: 0, name: 'Один сотрудник'}, { id: 1, name: 'Два сотрудника'}];
+      const res = await this.getData('get_one_rec', data);
 
-    this.setState({
-      modalDialog: true,
-      method,
-      storages: res.all_storages,
-      apps: res.apps,
-      all_pf_list: res.all_pf_list,
-      rec: res.rec,
-      rec_pf_list: res.pf_list,
-    });
+      res.rec.rec_users = [{ id: 0, name: 'Один сотрудник'}, { id: 1, name: 'Два сотрудника'}];
+
+      this.setState({
+        modalDialog: true,
+        method,
+        storages: res.all_storages,
+        apps: res.apps,
+        all_pf_list: res.all_pf_list,
+        rec: res.rec,
+        rec_pf_list: res.pf_list,
+      });
+
+    } else {
+
+      const res = await this.getData('get_one_pf', data);
+  
+      res.items_list.map(pf => {
+        const value = res.all_items_list.find((item) => parseInt(item.id) === parseInt(pf.item_id));
+        pf.item_id = { id: value.id, name: value.name }
+        return pf;
+      })
+  
+      res.pf.rec_users = [{ id: 0, name: 'Один сотрудник'}, { id: 1, name: 'Два сотрудника'}];
+  
+      this.setState({
+        modalDialog: true,
+        method,
+        storages: res.all_storages,
+        apps: res.apps,
+        all_pf_list: res.all_items_list,
+        rec: res.pf,
+        rec_pf_list: res.items_list,
+      });
+
+    }
   }
 
-  async openItemEdit(id, method) {
+  async openItemEdit(id, method, type) {
     this.handleResize();
 
     const data = { id };
 
-    const res = await this.getData('get_one_rec', data);
+    if(type === 'rec') {
 
-    res.pf_list.map(pf => {
-      const value = res.all_pf_list.find((item) => parseInt(item.id) === parseInt(pf.item_id));
-      pf.item_id = { id: value.id, name: value.name }
-      return pf;
-    })
+      const res = await this.getData('get_one_rec', data);
+  
+      res.pf_list.map(pf => {
+        const value = res.all_pf_list.find((item) => parseInt(item.id) === parseInt(pf.item_id));
+        pf.item_id = { id: value.id, name: value.name }
+        return pf;
+      })
+  
+      res.rec.rec_users = [{ id: 0, name: 'Один сотрудник'}, { id: 1, name: 'Два сотрудника'}];
+  
+      this.setState({
+        modalDialog: true,
+        method,
+        storages: res.all_storages,
+        apps: res.apps,
+        all_pf_list: res.all_pf_list,
+        rec: res.rec,
+        rec_pf_list: res.pf_list,
+        type
+      });
 
-    res.rec.rec_users = [{ id: 0, name: 'Один сотрудник'}, { id: 1, name: 'Два сотрудника'}];
+    } else {
 
-    this.setState({
-      modalDialog: true,
-      method,
-      storages: res.all_storages,
-      apps: res.apps,
-      all_pf_list: res.all_pf_list,
-      rec: res.rec,
-      rec_pf_list: res.pf_list,
-    });
+      const res = await this.getData('get_one_pf', data);
+  
+      res.items_list.map(pf => {
+        const value = res.all_items_list.find((item) => parseInt(item.id) === parseInt(pf.item_id));
+        pf.item_id = { id: value.id, name: value.name }
+        return pf;
+      })
+  
+      res.pf.rec_users = [{ id: 0, name: 'Один сотрудник'}, { id: 1, name: 'Два сотрудника'}];
+  
+      this.setState({
+        modalDialog: true,
+        method,
+        storages: res.all_storages,
+        apps: res.apps,
+        all_pf_list: res.all_items_list,
+        rec: res.pf,
+        rec_pf_list: res.items_list,
+        type
+      });
+
+    }
+
   }
 
-  async openHistoryItem(id, method) {
+  async openHistoryItem(id, method, type) {
     this.handleResize();
 
     const data = {
       item_id: id,
     };
 
-    let res = await this.getData('get_one_hist_rec', data);
+    let res;
+
+    if(type === 'rec') {
+      res = await this.getData('get_one_hist_rec', data);
+    } else {
+      res = await this.getData('get_one_hist_pf', data);
+    }
 
     if(res.hist.length) {
 
@@ -1081,27 +1137,51 @@ class ReceptModule_ extends React.Component {
       const data = {
         id
       };
-    
-      res = await this.getData('get_one_rec', data);
 
-      res.rec.pf_list = res.pf_list;
+      if(type === 'rec') {
+        res = await this.getData('get_one_rec', data);
 
-      res.rec.storages = res.rec.storages.map(storage => {
-        storage = storage.name;
-        return storage;
-      }).join(', ')
+        res.rec.pf_list = res.pf_list;
+  
+        res.rec.storages = res.rec.storages.map(storage => {
+          storage = storage.name;
+          return storage;
+        }).join(', ')
+  
+        res.rec.rec_apps = res.rec.rec_apps.map(app => {
+          app = app.name;
+          return app;
+        }).join(', ')
 
-      res.rec.rec_apps = res.rec.rec_apps.map(app => {
-        app = app.name;
-        return app;
-      }).join(', ')
+        this.setState({
+          modalDialogHist: true,
+          item: [res.rec],
+          itemName: res.rec.name,
+          method,
+        });
 
-      this.setState({
-        modalDialogHist: true,
-        item: [res.rec],
-        itemName: res.rec.name,
-        method,
-      });
+      } else {
+        res = await this.getData('get_one_pf', data);
+
+        res.pf.pf_list = res.items_list;
+  
+        res.pf.storages = res.pf.storages.map(storage => {
+          storage = storage.name;
+          return storage;
+        }).join(', ')
+  
+        res.pf.rec_apps = res.pf.rec_apps.map(app => {
+          app = app.name;
+          return app;
+        }).join(', ')
+
+        this.setState({
+          modalDialogHist: true,
+          item: [res.pf],
+          itemName: res.pf.name,
+          method,
+        });
+      }
     }
 
   }
@@ -1158,12 +1238,20 @@ class ReceptModule_ extends React.Component {
   }
 
   async saveNew(rec) {
+
+    const method = this.state.method;
     
     const data = {
       rec
     }
 
-    const res = await this.getData('save_new_rec', data);
+    let res;
+
+    if(method === 'Новый рецепт') {
+      res = await this.getData('save_new_rec', data);
+    } else {
+      res = await this.getData('save_new_pf', data);
+    }
 
     if (res.st) {
 
@@ -1192,11 +1280,19 @@ class ReceptModule_ extends React.Component {
 
   async saveEdit(rec) {
 
+    const type = this.state.type;
+
     const data = {
       rec
     }
 
-    const res = await this.getData('save_edit_rec', data);
+    let res;
+
+    if(type === 'rec') {
+      res = await this.getData('save_edit_rec', data);
+    } else {
+      res = await this.getData('save_edit_pf', data);
+    }
 
     if (res.st) {
 
@@ -1223,14 +1319,20 @@ class ReceptModule_ extends React.Component {
     }
   }
 
-  async checkTable(id, type, event, value){
+  async checkTable(id, type, type_item, event, value){
     const data = {
       type: type,
       rec_id: id,
       value: value ? 1 : 0
     };
-  
-    const res = await this.getData('save_check_rec', data);
+
+    let res;
+
+    if(type_item === 'rec') {
+      res = await this.getData('save_check_rec', data);
+    } else {
+      res = await this.getData('save_check_pf', data);
+    }
 
     if (res.st) {
 
@@ -1284,6 +1386,7 @@ class ReceptModule_ extends React.Component {
           saveEdit={this.saveEdit.bind(this)}
           fullScreen={this.state.fullScreen}
           list={this.state.rec_pf_list}
+          type={this.state.type}
         />
 
         <ReceptModule_Modal_History
@@ -1309,9 +1412,15 @@ class ReceptModule_ extends React.Component {
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={6} mb={3}>
-            <Button onClick={this.openItemNew.bind(this, 'Новый полуфабрикат или рецепт')} variant="contained">
-              Добавить рецепт или полуфабрикат
+          <Grid item xs={12} sm={4} mb={3}>
+            <Button onClick={this.openItemNew.bind(this, 'Новый рецепт', 'rec')} variant="contained">
+              Добавить рецепт
+            </Button>
+          </Grid>
+
+          <Grid item xs={12} sm={4} mb={3}>
+            <Button onClick={this.openItemNew.bind(this, 'Новый полуфабрикат', 'pf')} variant="contained">
+              Добавить полуфабрикат
             </Button>
           </Grid>
 
@@ -1321,6 +1430,7 @@ class ReceptModule_ extends React.Component {
             openItemEdit={this.openItemEdit.bind(this)}
             checkTable={this.checkTable.bind(this)}
             openHistoryItem={this.openHistoryItem.bind(this)}
+            type={'pf'}
           />
 
           <ReceptModule_Table
@@ -1329,6 +1439,7 @@ class ReceptModule_ extends React.Component {
             openItemEdit={this.openItemEdit.bind(this)}
             checkTable={this.checkTable.bind(this)}
             openHistoryItem={this.openHistoryItem.bind(this)}
+            type={'rec'}
           />
         </Grid>
       </>
