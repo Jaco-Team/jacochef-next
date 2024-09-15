@@ -958,16 +958,17 @@ class SiteBaners_ extends React.Component {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell colSpan={7}><h2>Активные</h2></TableCell>
+                      <TableCell colSpan={8}><h2>Активные</h2></TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell style={{ width: '5%' }}>#</TableCell>
-                      <TableCell style={{ width: '21%' }}>Название</TableCell>
-                      <TableCell style={{ width: '10%' }}>Сорт</TableCell>
-                      <TableCell style={{ width: '15%' }}>Город</TableCell>
-                      <TableCell style={{ width: '17%' }}>Дата старта</TableCell>
-                      <TableCell style={{ width: '17%' }}>Дата окончания</TableCell>
-                      <TableCell style={{ width: '15%' }}>Активность</TableCell>
+                      <TableCell style={{ width: '20%' }}>Название</TableCell>
+                      <TableCell style={{ width: '20%' }}>Ссылка</TableCell>
+                      <TableCell style={{ width: '12%' }}>Сорт</TableCell>
+                      <TableCell style={{ width: '12%' }}>Город</TableCell>
+                      <TableCell style={{ width: '10%' }}>Дата старта</TableCell>
+                      <TableCell style={{ width: '10%' }}>Дата окончания</TableCell>
+                      <TableCell style={{ width: '10%' }}>Активность</TableCell>
                     </TableRow>
                   </TableHead>
 
@@ -978,6 +979,7 @@ class SiteBaners_ extends React.Component {
                         <TableCell onClick={this.openModal.bind(this, 'bannerEdit', 'Редактирование банера', item.id)} style={{ fontWeight: 700, cursor: 'pointer' }}>
                           {item.name}
                         </TableCell>
+                        <TableCell>{item?.link}</TableCell>
                         <TableCell>
                           <Grid item xs={12} sm={6}>
                             <MyTextInput
