@@ -1321,9 +1321,10 @@ class ListFakeUsers_ extends React.Component {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell style={{ width: '5%' }}>#</TableCell>
-                      <TableCell style={{ width: '35%' }}>Имя</TableCell>
-                      <TableCell style={{ width: '60%' }}>Телефон</TableCell>
+                      <TableCell>#</TableCell>
+                      <TableCell>Имя</TableCell>
+                      <TableCell>Телефон</TableCell>
+                      <TableCell>Последний комментарий</TableCell>
                     </TableRow>
                   </TableHead>
 
@@ -1333,6 +1334,7 @@ class ListFakeUsers_ extends React.Component {
                         <TableCell>{i + 1}</TableCell>
                         <TableCell>{item.name}</TableCell>
                         <TableCell>{item.login}</TableCell>
+                        <TableCell dangerouslySetInnerHTML={{__html: item?.last_comment}}></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
