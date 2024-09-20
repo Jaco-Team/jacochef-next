@@ -362,7 +362,7 @@ class ReceptModule_Modal_History extends React.Component {
 
               <TableBody>
                 {this.state.item.map((it, key) => (
-                  <TableRow key={key}>
+                  <TableRow key={key} hover>
                     <TableCell>{key + 1}</TableCell>
                     <TableCell>{it.name}</TableCell>
                     <TableCell>{it.date_start}</TableCell>
