@@ -603,6 +603,9 @@ export class MyCheckBox extends React.PureComponent {
   }
 }
 
+//49uqqohkhxqye2vc8mivb1xm5hm4kbc1rmectk6yetiu9zf0 - новый
+//r0ihgs4ukfpmudzw7aexxgb88tnx5jw26h1xx9x6409ji3gx - старый
+
 export function TextEditor(props){
 
   useEffect(() => {
@@ -617,7 +620,7 @@ export function TextEditor(props){
 
   return (
     <Editor
-      apiKey='r0ihgs4ukfpmudzw7aexxgb88tnx5jw26h1xx9x6409ji3gx'
+      apiKey='49uqqohkhxqye2vc8mivb1xm5hm4kbc1rmectk6yetiu9zf0'
       value={props.value}
       onEditorChange={props.func}
       init={{
@@ -644,7 +647,7 @@ export class TextEditor22 extends React.PureComponent {
   render(){
     return (
       <Editor
-        apiKey='r0ihgs4ukfpmudzw7aexxgb88tnx5jw26h1xx9x6409ji3gx'
+        apiKey='49uqqohkhxqye2vc8mivb1xm5hm4kbc1rmectk6yetiu9zf0'
         value={this.props.value}
         onEditorChange={this.props.func}
         onInit={(evt, editor) => this.props.refs_.current = editor}
@@ -671,7 +674,7 @@ export class TextEditor11 extends React.PureComponent {
   render(){
     return (
       <Editor
-        apiKey='r0ihgs4ukfpmudzw7aexxgb88tnx5jw26h1xx9x6409ji3gx'
+        apiKey='49uqqohkhxqye2vc8mivb1xm5hm4kbc1rmectk6yetiu9zf0'
         value={this.props.value}
         onEditorChange={this.props.func}
         init={{
