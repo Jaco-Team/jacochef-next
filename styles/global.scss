@@ -185,6 +185,16 @@ th[class*='tableCelHead'] {
 
 .disabled_input_color {
   & .MuiFormLabel-root.MuiInputLabel-root.Mui-disabled {
+    background: #FFCF40 !important;
+  }
+
+  & .MuiInputBase-input.MuiOutlinedInput-input.Mui-disabled {
+    background: #FFCF40 !important;
+  }
+}
+
+.disabled_input_color_delete {
+  & .MuiFormLabel-root.MuiInputLabel-root.Mui-disabled {
     background: #fadadd !important;
   }
 

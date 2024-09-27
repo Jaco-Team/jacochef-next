@@ -265,56 +265,56 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
                           <MyTextInput
                             value={item.name?.color ? item.name.key : item.name}
                             disabled={true}
-                            className={item.name?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.name?.color ? item.name.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.ei_name?.color ? item.ei_name.key : item.ei_name}
                             disabled={true}
-                            className={item.ei_name?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.ei_name?.color ? item.ei_name.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.brutto?.color ? item.brutto.key : item.brutto}
                             disabled={true}
-                            className={item.brutto?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.brutto?.color ? item.brutto.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.pr_1?.color ? item.pr_1.key : item.pr_1}
                             disabled={true}
-                            className={item.pr_1?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.pr_1?.color ? item.pr_1.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.netto?.color ? item.netto.key : item.netto}
                             disabled={true}
-                            className={item.netto?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.netto?.color ? item.netto.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.pr_2?.color ? item.pr_2.key : item.pr_2}
                             disabled={true}
-                            className={item.pr_2?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.pr_2?.color ? item.pr_2.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.res?.color ? item.res.key : item.res}
                             disabled={true}
-                            className={item.res?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.res?.color ? item.res.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.stage?.color ? item.stage.key : item.stage}
                             disabled={true}
-                            className={item.stage?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.stage?.color ? item.stage.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                       </TableRow>
@@ -325,56 +325,56 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
                           <MyTextInput
                             value={item.name?.color ? item.name.key : item.name}
                             disabled={true}
-                            className={item.name?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.name?.color ? item.name.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.ei_name?.color ? item.ei_name.key : item.ei_name}
                             disabled={true}
-                            className={item.ei_name?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.ei_name?.color ? item.ei_name.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.brutto?.color ? item.brutto.key : item.brutto}
                             disabled={true}
-                            className={item.brutto?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.brutto?.color ? item.brutto.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.pr_1?.color ? item.pr_1.key : item.pr_1}
                             disabled={true}
-                            className={item.pr_1?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.pr_1?.color ? item.pr_1.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.netto?.color ? item.netto.key : item.netto}
                             disabled={true}
-                            className={item.netto?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.netto?.color ? item.netto.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.pr_2?.color ? item.pr_2.key : item.pr_2}
                             disabled={true}
-                            className={item.pr_2?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.pr_2?.color ? item.pr_2.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.res?.color ? item.res.key : item.res}
                             disabled={true}
-                            className={item.res?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.res?.color ? item.res.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.stage?.color ? item.stage.key : item.stage}
                             disabled={true}
-                            className={item.stage?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.stage?.color ? item.stage.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                       </TableRow>
@@ -385,56 +385,56 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
                           <MyTextInput
                             value={item.name?.color ? item.name.key : item.name}
                             disabled={true}
-                            className={item.name?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.name?.color ? item.name.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.ei_name?.color ? item.ei_name.key : item.ei_name}
                             disabled={true}
-                            className={item.ei_name?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.ei_name?.color ? item.ei_name.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.brutto?.color ? item.brutto.key : item.brutto}
                             disabled={true}
-                            className={item.brutto?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.brutto?.color ? item.brutto.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.pr_1?.color ? item.pr_1.key : item.pr_1}
                             disabled={true}
-                            className={item.pr_1?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.pr_1?.color ? item.pr_1.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.netto?.color ? item.netto.key : item.netto}
                             disabled={true}
-                            className={item.netto?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.netto?.color ? item.netto.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.pr_2?.color ? item.pr_2.key : item.pr_2}
                             disabled={true}
-                            className={item.pr_2?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.pr_2?.color ? item.pr_2.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.res?.color ? item.res.key : item.res}
                             disabled={true}
-                            className={item.res?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.res?.color ? item.res.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.stage?.color ? item.stage.key : item.stage}
                             disabled={true}
-                            className={item.stage?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.stage?.color ? item.stage.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                       </TableRow>
@@ -448,42 +448,42 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
                           <MyTextInput
                             value={item.name?.color ? item.name.key : item.name}
                             disabled={true}
-                            className={item.name?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.name?.color ? item.name.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.brutto?.color ? item.brutto.key : item.brutto}
                             disabled={true}
-                            className={item.brutto?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.brutto?.color ? item.brutto.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.pr_1?.color ? item.pr_1.key : item.pr_1}
                             disabled={true}
-                            className={item.pr_1?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.pr_1?.color ? item.pr_1.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.netto?.color ? item.netto.key : item.netto}
                             disabled={true}
-                            className={item.netto?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.netto?.color ? item.netto.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.pr_2?.color ? item.pr_2.key : item.pr_2}
                             disabled={true}
-                            className={item.pr_2?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.pr_2?.color ? item.pr_2.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTextInput
                             value={item.res?.color ? item.res.key : item.res}
                             disabled={true}
-                            className={item.res?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                            className={item.res?.color ? item.res.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                           />
                         </TableCell>
                         <TableCell>
@@ -1229,6 +1229,66 @@ class SiteItems_Modal_Tech extends React.Component {
     }
   }
 
+  deleteItemData(index, type) {
+    let items_stage = this.state.items_stage;
+    let item_items = this.state.item_items;
+
+    if(type === 'stage_1' || type === 'stage_2' || type === 'stage_3' || type === 'not_stage') {
+      
+      items_stage[type].splice(index, 1);
+
+      this.setState({ 
+        items_stage 
+      });
+    }
+
+    if(type === 'this_items') {
+      
+      item_items[type].splice(index, 1);
+
+      this.setState({ 
+        item_items
+      });
+    }
+
+    let all_w_brutto_1 = items_stage.stage_1.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
+    let all_w_brutto_2 = items_stage.stage_2.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
+    let all_w_brutto_3 = items_stage.stage_3.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
+    let all_w_brutto_4 = items_stage.not_stage.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
+    let all_w_brutto_5 = item_items.this_items.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
+
+    let all_w_brutto = all_w_brutto_1 + all_w_brutto_2 + all_w_brutto_3 + all_w_brutto_4 + all_w_brutto_5;
+
+    all_w_brutto = roundTo(all_w_brutto, 3);
+
+    let all_w_netto_1 = items_stage.stage_1.reduce((sum, item) => sum + parseFloat(item.netto), 0);
+    let all_w_netto_2 = items_stage.stage_2.reduce((sum, item) => sum + parseFloat(item.netto), 0);
+    let all_w_netto_3 = items_stage.stage_3.reduce((sum, item) => sum + parseFloat(item.netto), 0);
+    let all_w_netto_4 = items_stage.not_stage.reduce((sum, item) => sum + parseFloat(item.netto), 0);
+    let all_w_netto_5 = item_items.this_items.reduce((sum, item) => sum + parseFloat(item.netto), 0);
+
+    let all_w_netto = all_w_netto_1 + all_w_netto_2 + all_w_netto_3 + all_w_netto_4 + all_w_netto_5;
+
+    all_w_netto = roundTo(all_w_netto, 3);
+
+    let all_w_1 = items_stage.stage_1.reduce((sum, item) => sum + parseFloat(item.res), 0);
+    let all_w_2 = items_stage.stage_2.reduce((sum, item) => sum + parseFloat(item.res), 0);
+    let all_w_3 = items_stage.stage_3.reduce((sum, item) => sum + parseFloat(item.res), 0);
+    let all_w_4 = items_stage.not_stage.reduce((sum, item) => sum + parseFloat(item.res), 0);
+    let all_w_5 = item_items.this_items.reduce((sum, item) => sum + parseFloat(item.res), 0);
+
+    let all_w = all_w_1 + all_w_2 + all_w_3 + all_w_4 + all_w_5;
+
+    all_w = roundTo(all_w, 3);
+
+    this.setState({ 
+      all_w_brutto, 
+      all_w_netto, 
+      all_w 
+    });
+
+  }
+
   chooseItem(type, event, data) {
 
     if(type === 'stages') {
@@ -1252,6 +1312,19 @@ class SiteItems_Modal_Tech extends React.Component {
     if(type === 'items') {
       let item_items = this.state.item_items;
 
+      const find_item = item_items.this_items.find(item => parseInt(item.item_id.id) === parseInt(data.id));
+
+      if(find_item) {
+  
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: 'Данная позиция уже добавлена',
+        });
+  
+        return;
+      };
+
       item_items.this_items.push({
         item_id: {id: data.id, name: data.name},
         brutto: 0,
@@ -1268,63 +1341,74 @@ class SiteItems_Modal_Tech extends React.Component {
   }
 
   changeItemData(index, type, event, value) {
-    let items_stage = this.state.items_stage;
-    let item_items = this.state.item_items;
-    
-    if(!value && (type === 'stage_1' || type === 'stage_2' || type === 'stage_3' || type === 'not_stage')) {
+
+    if(value && (type === 'stage_1' || type === 'stage_2' || type === 'stage_3' || type === 'not_stage')) {
+
+      let items_stage = this.state.items_stage;
+
+      const find_item = items_stage[type].find(it => it.type === value.type && parseInt(it.type_id.id) === parseInt(value.id));
+
+      if(find_item) {
+
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: 'Данная позиция уже добавлена в указанный этап',
+        });
+
+        return;
+      };
+
+      const obj = {
+        type_id: {id: value.id, name: value.name},
+        ei_name: value.ei_name,
+        type: value.type,
+        brutto: items_stage[type][index].brutto ? items_stage[type][index].brutto : 0,
+        pr_1: items_stage[type][index].pr_1 ? items_stage[type][index].pr_1 : 0,
+        netto: items_stage[type][index].netto ? items_stage[type][index].netto : 0,
+        pr_2: items_stage[type][index].pr_2 ? items_stage[type][index].pr_2 : 0,
+        res: items_stage[type][index].res ? items_stage[type][index].res : 0,
+        stage: items_stage[type][index].stage ? items_stage[type][index].stage : '',
+      };
       
-      items_stage[type].splice(index, 1);
+      items_stage[type][index]  = obj;
 
       this.setState({ 
         items_stage 
       });
     }
 
-    if(!value && type === 'this_items') {
+    if(value && type === 'this_items') {
+
+      let item_items = this.state.item_items;
+
+      const find_item = item_items.this_items.find(item => parseInt(item.item_id.id) === parseInt(value.id));
+
+      if(find_item) {
+  
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: 'Данная позиция уже добавлена',
+        });
+  
+        return;
+      };
+
+      const obj = {
+        item_id: {id: value.id, name: value.name},
+        brutto: item_items[type][index].brutto ? item_items[type][index].brutto : 0,
+        pr_1: item_items[type][index].pr_1 ? item_items[type][index].pr_1 : 0,
+        netto: item_items[type][index].netto ? item_items[type][index].netto : 0,
+        pr_2: item_items[type][index].pr_2 ? item_items[type][index].pr_2 : 0,
+        res: item_items[type][index].res ? item_items[type][index].res : 0,
+        is_add: item_items[type][index].is_add ? item_items[type][index].is_add : 0,
+      };
       
-      item_items[type].splice(index, 1);
+      item_items[type][index]  = obj;
 
       this.setState({ 
-        item_items
-      });
-    }
-
-    if(!value) {
-
-      let all_w_brutto_1 = items_stage.stage_1.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
-      let all_w_brutto_2 = items_stage.stage_2.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
-      let all_w_brutto_3 = items_stage.stage_3.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
-      let all_w_brutto_4 = items_stage.not_stage.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
-      let all_w_brutto_5 = item_items.this_items.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
-
-      let all_w_brutto = all_w_brutto_1 + all_w_brutto_2 + all_w_brutto_3 + all_w_brutto_4 + all_w_brutto_5;
-
-      all_w_brutto = roundTo(all_w_brutto, 3);
-
-      let all_w_netto_1 = items_stage.stage_1.reduce((sum, item) => sum + parseFloat(item.netto), 0);
-      let all_w_netto_2 = items_stage.stage_2.reduce((sum, item) => sum + parseFloat(item.netto), 0);
-      let all_w_netto_3 = items_stage.stage_3.reduce((sum, item) => sum + parseFloat(item.netto), 0);
-      let all_w_netto_4 = items_stage.not_stage.reduce((sum, item) => sum + parseFloat(item.netto), 0);
-      let all_w_netto_5 = item_items.this_items.reduce((sum, item) => sum + parseFloat(item.netto), 0);
-
-      let all_w_netto = all_w_netto_1 + all_w_netto_2 + all_w_netto_3 + all_w_netto_4 + all_w_netto_5;
-
-      all_w_netto = roundTo(all_w_netto, 3);
-
-      let all_w_1 = items_stage.stage_1.reduce((sum, item) => sum + parseFloat(item.res), 0);
-      let all_w_2 = items_stage.stage_2.reduce((sum, item) => sum + parseFloat(item.res), 0);
-      let all_w_3 = items_stage.stage_3.reduce((sum, item) => sum + parseFloat(item.res), 0);
-      let all_w_4 = items_stage.not_stage.reduce((sum, item) => sum + parseFloat(item.res), 0);
-      let all_w_5 = item_items.this_items.reduce((sum, item) => sum + parseFloat(item.res), 0);
-
-      let all_w = all_w_1 + all_w_2 + all_w_3 + all_w_4 + all_w_5;
-
-      all_w = roundTo(all_w, 3);
-
-      this.setState({ 
-        all_w_brutto, 
-        all_w_netto, 
-        all_w 
+        item_items 
       });
     }
 
@@ -1352,9 +1436,22 @@ class SiteItems_Modal_Tech extends React.Component {
 
     let items_stage = this.state.items_stage;
 
-    items_stage[type].splice(index, 1);
-
     const stage = `stage_${event.target.value}`;
+
+    const find_item = items_stage[stage].find(it => it.type === item.type && parseInt(it.type_id.id) === parseInt(item.type_id.id));
+
+    if(find_item) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Данная позиция уже добавлена в указанный этап',
+      });
+
+      return;
+    };
+
+    items_stage[type].splice(index, 1);
 
     item[data] = event.target.value;
 
@@ -1703,9 +1800,10 @@ class SiteItems_Modal_Tech extends React.Component {
                       <TableCell>% потери при ГО</TableCell>
                       <TableCell>Выход</TableCell>
                       <TableCell>Этапы</TableCell>
+                      <TableCell></TableCell>
                     </TableRow>
                     <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                      <TableCell colSpan={8}>Заготовки</TableCell>
+                      <TableCell colSpan={9}>Заготовки</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1769,6 +1867,11 @@ class SiteItems_Modal_Tech extends React.Component {
                             func={this.changeItemSelect.bind(this, 'stage', key, 'stage_1', item)}
                           />
                         </TableCell>
+                        <TableCell>
+                          <IconButton onClick={this.deleteItemData.bind(this, key, 'stage_1')}>
+                            <CloseIcon />
+                          </IconButton>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {this.state.items_stage?.stage_2.map((item, key) => (
@@ -1830,6 +1933,11 @@ class SiteItems_Modal_Tech extends React.Component {
                             value={item.stage}
                             func={this.changeItemSelect.bind(this, 'stage', key, 'stage_2', item)}
                           />
+                        </TableCell>
+                        <TableCell>
+                          <IconButton onClick={this.deleteItemData.bind(this, key, 'stage_2')}>
+                            <CloseIcon />
+                          </IconButton>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1893,6 +2001,11 @@ class SiteItems_Modal_Tech extends React.Component {
                             func={this.changeItemSelect.bind(this, 'stage', key, 'stage_3', item)}
                           />
                         </TableCell>
+                        <TableCell>
+                          <IconButton onClick={this.deleteItemData.bind(this, key, 'stage_3')}>
+                            <CloseIcon />
+                          </IconButton>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {this.state.items_stage?.not_stage.map((item, key) => (
@@ -1955,6 +2068,11 @@ class SiteItems_Modal_Tech extends React.Component {
                             func={this.changeItemSelect.bind(this, 'stage', key, 'not_stage', item)}
                           />
                         </TableCell>
+                        <TableCell>
+                          <IconButton onClick={this.deleteItemData.bind(this, key, 'not_stage')}>
+                            <CloseIcon />
+                          </IconButton>
+                        </TableCell>
                       </TableRow>
                     ))}
                     <TableRow>
@@ -1984,11 +2102,11 @@ class SiteItems_Modal_Tech extends React.Component {
                       <TableCell>
                         <MyTextInput value={''} disabled={true} />
                       </TableCell>
-                      <TableCell>
+                      <TableCell colSpan={2}>
                       </TableCell>
                     </TableRow>
                     <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
-                      <TableCell colSpan={8}>Позиции</TableCell>
+                      <TableCell colSpan={9}>Позиции</TableCell>
                     </TableRow>
                     {this.state.item_items?.this_items.map((item, key) => (
                       <TableRow key={key}>
@@ -2036,6 +2154,11 @@ class SiteItems_Modal_Tech extends React.Component {
                           />
                         </TableCell>
                         <TableCell>
+                          <IconButton onClick={this.deleteItemData.bind(this, key, 'this_items')}>
+                            <CloseIcon />
+                          </IconButton>
+                        </TableCell>
+                        <TableCell>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -2063,7 +2186,7 @@ class SiteItems_Modal_Tech extends React.Component {
                       <TableCell>
                         <MyTextInput value={''} disabled={true} />
                       </TableCell>
-                      <TableCell>
+                      <TableCell colSpan={2}>
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -2091,7 +2214,7 @@ class SiteItems_Modal_Tech extends React.Component {
                           className="disabled_input"
                         />
                       </TableCell>
-                      <TableCell></TableCell>
+                      <TableCell colSpan={2}></TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -2249,8 +2372,8 @@ class SiteItems_ extends React.Component {
       module_name: data.module_info.name,
       cats: data.cats,
       // ??
-      //user_app: 'technologist',
-      user_app: 'marketing',
+      user_app: 'technologist',
+      //user_app: 'marketing',
       timeUpdate: new Date(),
     });
 
@@ -2325,8 +2448,8 @@ class SiteItems_ extends React.Component {
     this.setState({
       cats: data.cats,
       // ??
-      //user_app: 'technologist',
-      user_app: 'marketing',
+      user_app: 'technologist',
+      //user_app: 'marketing',
       timeUpdate: new Date(),
     });
   }
@@ -2783,7 +2906,24 @@ class SiteItems_ extends React.Component {
             }
             
             return newList = [...newList,...[it]]
-          }, [])
+          }, []).concat(itemView_old.stage_1.filter((it) => {
+            if(it.type === 'rec') {
+              item_old = itemView_old.stage_1.find((item) => item.type === 'rec' && parseInt(item.rec_id) === parseInt(it.rec_id));
+              if(!itemView.stage_1.find((item) => item.type === 'rec' && parseInt(item.rec_id) === parseInt(it.rec_id))) {
+                for (let key in it) {
+                  it[key] = { key: it[key], color: 'del' }
+                }
+                return it;
+              }
+            } else {
+              if(!itemView.stage_1.find((item) => item.type === 'pf' && parseInt(item.pf_id) === parseInt(it.pf_id))) {
+                for (let key in it) {
+                  it[key] = { key: it[key], color: 'del' }
+                }
+                return it;
+              }
+            }
+          }));
         }
 
         if(key === 'stage_2') {
@@ -2811,7 +2951,24 @@ class SiteItems_ extends React.Component {
             }
             
             return newList = [...newList,...[it]]
-          }, [])
+          }, []).concat(itemView_old.stage_2.filter((it) => {
+            if(it.type === 'rec') {
+              item_old = itemView_old.stage_2.find((item) => item.type === 'rec' && parseInt(item.rec_id) === parseInt(it.rec_id));
+              if(!itemView.stage_2.find((item) => item.type === 'rec' && parseInt(item.rec_id) === parseInt(it.rec_id))) {
+                for (let key in it) {
+                  it[key] = { key: it[key], color: 'del' }
+                }
+                return it;
+              }
+            } else {
+              if(!itemView.stage_2.find((item) => item.type === 'pf' && parseInt(item.pf_id) === parseInt(it.pf_id))) {
+                for (let key in it) {
+                  it[key] = { key: it[key], color: 'del' }
+                }
+                return it;
+              }
+            }
+          }));
         }
 
         if(key === 'stage_3') {
@@ -2839,7 +2996,24 @@ class SiteItems_ extends React.Component {
             }
             
             return newList = [...newList,...[it]]
-          }, [])
+          }, []).concat(itemView_old.stage_3.filter((it) => {
+            if(it.type === 'rec') {
+              item_old = itemView_old.stage_3.find((item) => item.type === 'rec' && parseInt(item.rec_id) === parseInt(it.rec_id));
+              if(!itemView.stage_3.find((item) => item.type === 'rec' && parseInt(item.rec_id) === parseInt(it.rec_id))) {
+                for (let key in it) {
+                  it[key] = { key: it[key], color: 'del' }
+                }
+                return it;
+              }
+            } else {
+              if(!itemView.stage_3.find((item) => item.type === 'pf' && parseInt(item.pf_id) === parseInt(it.pf_id))) {
+                for (let key in it) {
+                  it[key] = { key: it[key], color: 'del' }
+                }
+                return it;
+              }
+            }
+          }));
         }
 
         if(key === 'items') {
@@ -2859,7 +3033,14 @@ class SiteItems_ extends React.Component {
             }
             
             return newList = [...newList,...[it]]
-          }, [])
+          }, []).concat(itemView_old.items.filter((it) => {
+            if(!itemView.items.find((item) => parseInt(item.item_id) === parseInt(it.item_id))) {
+              for (let key in it) {
+                it[key] = { key: it[key], color: 'del' }
+              }
+              return it;
+            }
+          }));
         }
       }
     } 

@@ -6,7 +6,6 @@ import Typography from '@mui/material/Typography';
 
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
-import Divider from '@mui/material/Divider';
 import EditIcon from '@mui/icons-material/Edit';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import TextSnippetOutlinedIcon from '@mui/icons-material/TextSnippetOutlined';
@@ -23,6 +22,11 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -207,49 +211,49 @@ class ReceptModule_Modal_History_View extends React.Component {
                         <MyTextInput
                           value={item.name?.color ? item.name.key : item.name}
                           disabled={true}
-                          className={item.name?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                          className={item.name?.color ? item.name.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                         />
                       </TableCell>
                       <TableCell>
                         <MyTextInput
                           value={item.ei_name?.color ? item.ei_name.key : item.ei_name}
                           disabled={true}
-                          className={item.ei_name?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                          className={item.ei_name?.color ? item.ei_name.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                         />
                       </TableCell>
                       <TableCell>
                         <MyTextInput
                           value={item.brutto?.color ? item.brutto.key : item.brutto}
                           disabled={true}
-                          className={item.brutto?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                          className={item.brutto?.color ? item.brutto.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                         />
                       </TableCell>
                       <TableCell>
                         <MyTextInput
                           value={item.pr_1?.color ? item.pr_1.key : item.pr_1}
                           disabled={true}
-                          className={item.pr_1?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                          className={item.pr_1?.color ? item.pr_1.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                         />
                       </TableCell>
                       <TableCell>
                         <MyTextInput
                           value={item.netto?.color ? item.netto.key : item.netto}
                           disabled={true}
-                          className={item.netto?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                          className={item.netto?.color ? item.netto.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                         />
                       </TableCell>
                       <TableCell>
                         <MyTextInput
                           value={item.pr_2?.color ? item.pr_2.key : item.pr_2}
                           disabled={true}
-                          className={item.pr_2?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                          className={item.pr_2?.color ? item.pr_2.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                         />
                       </TableCell>
                       <TableCell>
                         <MyTextInput
                           value={item.res?.color ? item.res.key : item.res}
                           disabled={true}
-                          className={item.res?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                          className={item.res?.color ? item.res.color === 'true' ? "disabled_input disabled_input_color" : "disabled_input disabled_input_color_delete" : "disabled_input"}
                         />
                       </TableCell>
                     </TableRow>
@@ -406,6 +410,9 @@ class ReceptModule_Modal extends React.Component {
       all_w_brutto: 0,
       all_w_netto: 0,
       show_in_rev: 0,
+      openAlert: false,
+      err_status: false,
+      err_text: '',
     };
   }
 
@@ -440,6 +447,19 @@ class ReceptModule_Modal extends React.Component {
   chooseItem(event, data) {
     let list = this.state.list;
 
+    const find_item = list.find(item => parseInt(item.item_id.id) === parseInt(data.id));
+
+    if(find_item) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Данная позиция уже добавлена',
+      });
+
+      return;
+    };
+
     list.push({
       item_id: {id: data.id, name: data.name},
       ei_name: data.ei_name,
@@ -453,27 +473,60 @@ class ReceptModule_Modal extends React.Component {
     this.setState({ list });
   }
 
+  deleteItemData(key) {
+
+    let list = this.state.list;
+
+    list.splice(key, 1);
+
+    let all_w_brutto = list.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
+
+    all_w_brutto = roundTo(all_w_brutto, 3);
+
+    let all_w_netto = list.reduce((sum, item) => sum + parseFloat(item.netto), 0);
+
+    all_w_netto = roundTo(all_w_netto, 3);
+
+    let all_w = list.reduce((sum, item) => sum + parseFloat(item.res), 0);
+
+    all_w = roundTo(all_w, 3);
+
+    this.setState({ list, all_w_brutto, all_w_netto, all_w });
+
+  }
+
   changeItemData(key, event, value) {
-    
-    if(!value) {
 
-      let list = this.state.list;
+    if(value) {
       
-      list.splice(key, 1);
+      let list = this.state.list;
 
-      let all_w_brutto = list.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
+      const find_item = list.find(item => parseInt(item.item_id.id) === parseInt(value.id));
 
-      all_w_brutto = roundTo(all_w_brutto, 3);
+      if(find_item) {
 
-      let all_w_netto = list.reduce((sum, item) => sum + parseFloat(item.netto), 0);
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: 'Данная позиция уже добавлена',
+        });
 
-      all_w_netto = roundTo(all_w_netto, 3);
+        return;
+      };
 
-      let all_w = list.reduce((sum, item) => sum + parseFloat(item.res), 0);
+      const obj = {
+        item_id: {id: value.id, name: value.name},
+        ei_name: value.ei_name,
+        brutto: list[key].brutto ? list[key].brutto : 0,
+        pr_1: list[key].pr_1 ? list[key].pr_1 : 0,
+        netto: list[key].netto ? list[key].netto : 0,
+        pr_2: list[key].pr_2 ? list[key].pr_2 : 0,
+        res: list[key].res ? list[key].res : 0,
+      }
 
-      all_w = roundTo(all_w, 3);
+      list[key] = obj;
 
-      this.setState({ list, all_w_brutto, all_w_netto, all_w });
+      this.setState({ list });
     }
 
   }
@@ -595,6 +648,9 @@ class ReceptModule_Modal extends React.Component {
       all_w_brutto: 0,
       all_w_netto: 0,
       show_in_rev: 0,
+      openAlert: false,
+      err_status: false,
+      err_text: ''
     });
 
     this.props.onClose();
@@ -604,231 +660,246 @@ class ReceptModule_Modal extends React.Component {
     const { open, method, apps, storages, all_pf_list } = this.props;
 
     return (
-      <Dialog
-        open={open}
-        fullWidth={true}
-        maxWidth={'xl'}
-        onClose={this.onClose.bind(this)}
-        fullScreen={this.props.fullScreen}
-      >
-        <DialogTitle className="button">
-          <Typography>{method}</Typography>
-          <IconButton onClick={this.onClose.bind(this)}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={4}>
-            <Grid item xs={12} sm={3}>
-              <MyTextInput
-                label="Наименование"
-                value={this.state.name}
-                func={this.changeItem.bind(this, 'name')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <MyTextInput
-                label="Срок годности"
-                value={this.state.shelf_life}
-                func={this.changeItem.bind(this, 'shelf_life')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <MySelect
-                is_none={false}
-                data={this.state.rec_users}
-                value={this.state.two_user}
-                func={this.changeItem.bind(this, 'two_user')}
-                label="Количество сотрудников"
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <MyCheckBox
-                label="Ревизия"
-                value={parseInt(this.state.show_in_rev) == 1 ? true : false}
-                func={this.changeItemChecked.bind(this, 'show_in_rev')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <MyDatePickerNew
-                label="Действует с"
-                value={this.state.date_start}
-                func={this.changeDateRange.bind(this, 'date_start')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <MyDatePickerNew
-                label="по"
-                value={this.state.date_end}
-                func={this.changeDateRange.bind(this, 'date_end')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <MyTextInput
-                label="Время приготовления 1 кг ММ:SS (15:20)"
-                value={this.state.time}
-                func={this.changeItem.bind(this, 'time')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <MyTextInput
-                label="Дополнительное время (уборка рабочего места)"
-                value={this.state.dop_time}
-                func={this.changeItem.bind(this, 'dop_time')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <MyAutocomplite
-                label="Должность в кафе (кто будет готовить)"
-                multiple={true}
-                data={apps}
-                value={this.state.rec_apps}
-                func={this.changeComplite.bind(this, 'rec_apps')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <MyAutocomplite
-                label="Места хранения"
-                multiple={true}
-                data={storages}
-                value={this.state.storages}
-                func={this.changeComplite.bind(this, 'storages')}
-              />
-            </Grid>
+      <>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
 
-            <Grid item xs={12} sm={12}>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                    <TableCell width="30%">Номенклатура</TableCell>
-                    <TableCell>Единица измерения</TableCell>
-                    <TableCell>Брутто</TableCell>
-                    <TableCell>% потери при ХО</TableCell>
-                    <TableCell>Нетто</TableCell>
-                    <TableCell>% потери при ГО</TableCell>
-                    <TableCell>Выход</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {this.state.list.map((item, key) => (
-                    <TableRow key={key}>
+        <Dialog
+          open={open}
+          fullWidth={true}
+          maxWidth={'xl'}
+          onClose={this.onClose.bind(this)}
+          fullScreen={this.props.fullScreen}
+        >
+          <DialogTitle className="button">
+            <Typography>{method}</Typography>
+            <IconButton onClick={this.onClose.bind(this)}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            <Grid container spacing={4}>
+              <Grid item xs={12} sm={3}>
+                <MyTextInput
+                  label="Наименование"
+                  value={this.state.name}
+                  func={this.changeItem.bind(this, 'name')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <MyTextInput
+                  label="Срок годности"
+                  value={this.state.shelf_life}
+                  func={this.changeItem.bind(this, 'shelf_life')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <MySelect
+                  is_none={false}
+                  data={this.state.rec_users}
+                  value={this.state.two_user}
+                  func={this.changeItem.bind(this, 'two_user')}
+                  label="Количество сотрудников"
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <MyCheckBox
+                  label="Ревизия"
+                  value={parseInt(this.state.show_in_rev) == 1 ? true : false}
+                  func={this.changeItemChecked.bind(this, 'show_in_rev')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <MyDatePickerNew
+                  label="Действует с"
+                  value={this.state.date_start}
+                  func={this.changeDateRange.bind(this, 'date_start')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <MyDatePickerNew
+                  label="по"
+                  value={this.state.date_end}
+                  func={this.changeDateRange.bind(this, 'date_end')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <MyTextInput
+                  label="Время приготовления 1 кг ММ:SS (15:20)"
+                  value={this.state.time}
+                  func={this.changeItem.bind(this, 'time')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <MyTextInput
+                  label="Дополнительное время (уборка рабочего места)"
+                  value={this.state.dop_time}
+                  func={this.changeItem.bind(this, 'dop_time')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <MyAutocomplite
+                  label="Должность в кафе (кто будет готовить)"
+                  multiple={true}
+                  data={apps}
+                  value={this.state.rec_apps}
+                  func={this.changeComplite.bind(this, 'rec_apps')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <MyAutocomplite
+                  label="Места хранения"
+                  multiple={true}
+                  data={storages}
+                  value={this.state.storages}
+                  func={this.changeComplite.bind(this, 'storages')}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={12}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                      <TableCell width="30%">Номенклатура</TableCell>
+                      <TableCell>Единица измерения</TableCell>
+                      <TableCell>Брутто</TableCell>
+                      <TableCell>% потери при ХО</TableCell>
+                      <TableCell>Нетто</TableCell>
+                      <TableCell>% потери при ГО</TableCell>
+                      <TableCell>Выход</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {this.state.list.map((item, key) => (
+                      <TableRow key={key}>
+                        <TableCell>
+                          <MyAutocomplite
+                            multiple={false}
+                            data={all_pf_list}
+                            value={item.item_id}
+                            func={this.changeItemData.bind(this, key)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <MyTextInput
+                            value={item.ei_name}
+                            disabled={true}
+                            className="disabled_input"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <MyTextInput
+                            value={item.brutto}
+                            type={'number'}
+                            func={this.changeItemList.bind(this, 'brutto', key)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <MyTextInput
+                            value={item.pr_1}
+                            type={'number'}
+                            func={this.changeItemList.bind(this, 'pr_1', key)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <MyTextInput
+                            value={item.netto}
+                            disabled={true}
+                            className="disabled_input"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <MyTextInput
+                            value={item.pr_2}
+                            type={'number'}
+                            func={this.changeItemList.bind(this, 'pr_2', key)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <MyTextInput
+                            value={item.res}
+                            disabled={true}
+                            className="disabled_input"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <IconButton onClick={this.deleteItemData.bind(this, key)}>
+                            <CloseIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow>
                       <TableCell>
                         <MyAutocomplite
                           multiple={false}
                           data={all_pf_list}
-                          value={item.item_id}
-                          func={this.changeItemData.bind(this, key)}
+                          value={null}
+                          func={this.chooseItem.bind(this)}
                         />
                       </TableCell>
                       <TableCell>
+                        <MyTextInput value={''} disabled={true} />
+                      </TableCell>
+                      <TableCell>
+                        <MyTextInput value={''} disabled={true} />
+                      </TableCell>
+                      <TableCell>
+                        <MyTextInput value={''} disabled={true} />
+                      </TableCell>
+                      <TableCell>
+                        <MyTextInput value={''} disabled={true} />
+                      </TableCell>
+                      <TableCell>
+                        <MyTextInput value={''} disabled={true} />
+                      </TableCell>
+                      <TableCell>
+                        <MyTextInput value={''} disabled={true} />
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell colSpan={2} />
+                      <TableCell>
                         <MyTextInput
-                          value={item.ei_name}
+                          value={this.state.all_w_brutto}
                           disabled={true}
                           className="disabled_input"
                         />
                       </TableCell>
+                      <TableCell colSpan={1} />
                       <TableCell>
                         <MyTextInput
-                          value={item.brutto}
-                          type={'number'}
-                          func={this.changeItemList.bind(this, 'brutto', key)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.pr_1}
-                          type={'number'}
-                          func={this.changeItemList.bind(this, 'pr_1', key)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.netto}
+                          value={this.state.all_w_netto}
                           disabled={true}
                           className="disabled_input"
                         />
                       </TableCell>
+                      <TableCell colSpan={1} />
                       <TableCell>
                         <MyTextInput
-                          value={item.pr_2}
-                          type={'number'}
-                          func={this.changeItemList.bind(this, 'pr_2', key)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.res}
+                          value={this.state.all_w}
                           disabled={true}
                           className="disabled_input"
                         />
                       </TableCell>
                     </TableRow>
-                  ))}
-                  <TableRow>
-                    <TableCell>
-                      <MyAutocomplite
-                        multiple={false}
-                        data={all_pf_list}
-                        value={null}
-                        func={this.chooseItem.bind(this)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <MyTextInput value={''} disabled={true} />
-                    </TableCell>
-                    <TableCell>
-                      <MyTextInput value={''} disabled={true} />
-                    </TableCell>
-                    <TableCell>
-                      <MyTextInput value={''} disabled={true} />
-                    </TableCell>
-                    <TableCell>
-                      <MyTextInput value={''} disabled={true} />
-                    </TableCell>
-                    <TableCell>
-                      <MyTextInput value={''} disabled={true} />
-                    </TableCell>
-                    <TableCell>
-                      <MyTextInput value={''} disabled={true} />
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell colSpan={2} />
-                    <TableCell>
-                      <MyTextInput
-                        value={this.state.all_w_brutto}
-                        disabled={true}
-                        className="disabled_input"
-                      />
-                    </TableCell>
-                    <TableCell colSpan={1} />
-                    <TableCell>
-                      <MyTextInput
-                        value={this.state.all_w_netto}
-                        disabled={true}
-                        className="disabled_input"
-                      />
-                    </TableCell>
-                    <TableCell colSpan={1} />
-                    <TableCell>
-                      <MyTextInput
-                        value={this.state.all_w}
-                        disabled={true}
-                        className="disabled_input"
-                      />
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+                  </TableBody>
+                </Table>
+              </Grid>
             </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button variant="contained" onClick={this.save.bind(this)}>
-            Сохранить
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="contained" onClick={this.save.bind(this)}>
+              Сохранить
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
     );
   }
 }
@@ -840,54 +911,55 @@ class ReceptModule_Table extends React.Component {
     return (
       <>
         {!data.length ? null : (
-          <>
-            <Grid item xs={12} sm={12}>
-              <h4>{method}</h4>
-              <Divider />
-            </Grid>
-            <Grid item xs={12} sm={12} mb={5}>
-              <TableContainer component={Paper}>
-                <Table stickyHeader aria-label="sticky table">
-                  <TableHead sx={{ '& th': { fontWeight: 'bold' } }}>
-                    <TableRow>
-                      <TableCell style={{ width: '10%' }}>Ревизия</TableCell>
-                      <TableCell style={{ width: '18%' }}>Наименование</TableCell>
-                      <TableCell style={{ width: '18%' }}>Действует с</TableCell>
-                      <TableCell style={{ width: '18%' }}>Обновление</TableCell>
-                      <TableCell style={{ width: '18%' }}>Редактирование</TableCell>
-                      <TableCell style={{ width: '18%' }}>История изменений</TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {data.map((item, key) => (
-                      <TableRow key={key}>
-                        <TableCell>
-                          <MyCheckBox
-                            label=""
-                            value={parseInt(item.show_in_rev) == 1 ? true : false}
-                            func={checkTable.bind(this, item.id, 'show_in_rev', type)}
-                          />
-                        </TableCell>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.date_start}</TableCell>
-                        <TableCell>{item.date_update}</TableCell>
-                        <TableCell style={{ cursor: 'pointer' }} onClick={openItemEdit.bind(this, item.id, `Редактирование: ${item.name}`, type)}>
-                          <EditIcon />
-                        </TableCell>
-                        <TableCell 
-                          onClick={openHistoryItem.bind(this, item.id, 'История изменений', type)}
-                          style={{cursor: 'pointer'}}
-                        >
-                          <EditNoteIcon />
-                        </TableCell>
+          <Grid item xs={12} sm={12} style={{ paddingBottom: type === 'rec' ? '40px' : '0px' }}>
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography style={{ fontWeight: 'bold'}}>{method}</Typography>
+              </AccordionSummary>
+              <AccordionDetails className="accordion_details">
+                <TableContainer component={Paper} sx={{ maxHeight: { xs: 'none', sm: 600 } }}>
+                  <Table stickyHeader aria-label="sticky table">
+                    <TableHead sx={{ '& th': { fontWeight: 'bold' } }}>
+                      <TableRow>
+                        <TableCell style={{ width: '10%' }}>Ревизия</TableCell>
+                        <TableCell style={{ width: '18%' }}>Наименование</TableCell>
+                        <TableCell style={{ width: '18%' }}>Действует с</TableCell>
+                        <TableCell style={{ width: '18%' }}>Обновление</TableCell>
+                        <TableCell style={{ width: '18%' }}>Редактирование</TableCell>
+                        <TableCell style={{ width: '18%' }}>История изменений</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Grid>
-          </>
+                    </TableHead>
+
+                    <TableBody>
+                      {data.map((item, key) => (
+                        <TableRow key={key}>
+                          <TableCell>
+                            <MyCheckBox
+                              label=""
+                              value={parseInt(item.show_in_rev) == 1 ? true : false}
+                              func={checkTable.bind(this, item.id, 'show_in_rev', type)}
+                            />
+                          </TableCell>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>{item.date_start}</TableCell>
+                          <TableCell>{item.date_update}</TableCell>
+                          <TableCell style={{ cursor: 'pointer' }} onClick={openItemEdit.bind(this, item.id, `Редактирование: ${item.name}`, type)}>
+                            <EditIcon />
+                          </TableCell>
+                          <TableCell 
+                            onClick={openHistoryItem.bind(this, item.id, 'История изменений', type)}
+                            style={{cursor: 'pointer'}}
+                          >
+                            <EditNoteIcon />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </AccordionDetails>
+            </Accordion>
+          </Grid>
         )}
       </>
     );
@@ -915,7 +987,7 @@ class ReceptModule_ extends React.Component {
       rec: null,
       item: [],
 
-      operAlert: false,
+      openAlert: false,
       err_status: false,
       err_text: '',
 
@@ -1225,7 +1297,14 @@ class ReceptModule_ extends React.Component {
             }
             
             return newList = [...newList,...[pf]]
-          }, [])
+          }, []).concat(itemView_old.pf_list.filter((it) => {
+            if(!itemView.pf_list.find((item) => parseInt(item.item_id) === parseInt(it.item_id))) {
+              for (let key in it) {
+                it[key] = { key: it[key], color: 'del' }
+              }
+              return it;
+            }
+          }));
         }
       }
     } 
@@ -1256,7 +1335,7 @@ class ReceptModule_ extends React.Component {
     if (res.st) {
 
       this.setState({
-        operAlert: true,
+        openAlert: true,
         err_status: res.st,
         err_text: res.text,
         modalDialog: false,
@@ -1270,7 +1349,7 @@ class ReceptModule_ extends React.Component {
     } else {
 
       this.setState({
-        operAlert: true,
+        openAlert: true,
         err_status: res.st,
         err_text: res.text,
       });
@@ -1297,7 +1376,7 @@ class ReceptModule_ extends React.Component {
     if (res.st) {
 
       this.setState({
-        operAlert: true,
+        openAlert: true,
         err_status: res.st,
         err_text: res.text,
         modalDialog: false,
@@ -1311,7 +1390,7 @@ class ReceptModule_ extends React.Component {
     } else {
 
       this.setState({
-        operAlert: true,
+        openAlert: true,
         err_status: res.st,
         err_text: res.text,
       });
@@ -1343,7 +1422,7 @@ class ReceptModule_ extends React.Component {
     } else {
 
       this.setState({
-        operAlert: true,
+        openAlert: true,
         err_status: false,
         err_text: res.text,
       })
@@ -1368,8 +1447,8 @@ class ReceptModule_ extends React.Component {
         </Backdrop>
 
         <MyAlert
-          isOpen={this.state.operAlert}
-          onClose={() => this.setState({ operAlert: false })}
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />

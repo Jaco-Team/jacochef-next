@@ -8,6 +8,8 @@ import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import TextSnippetOutlinedIcon from '@mui/icons-material/TextSnippetOutlined';
 
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -30,14 +32,191 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import {MySelect, MyDatePickerNew, formatDate, MyAlert, MyTextInput} from '@/ui/elements';
+import {MySelect, MyDatePickerNew, formatDate, MyAlert, MyTextInput, MyAutocomplite} from '@/ui/elements';
 
 import queryString from 'query-string';
-//import dayjs from 'dayjs';
+import dayjs from 'dayjs';
+import moment from 'moment';
 
-import { data, items, data_table, modal_view, modal_new } from '@/src/data_write_off_journal';
+class Write_off_journal_View extends React.Component {
+  constructor(props) {
+    super(props);
 
-class Write_off_journal_modal_new extends React.Component {
+    this.state = {
+      itemView: null,
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    //console.log(this.props);
+
+    if (!this.props) {
+      return;
+    }
+
+    if (this.props !== prevProps) {
+      this.setState({
+        itemView: this.props.itemView
+      });
+    }
+  }
+
+  onClose() {
+    this.setState({
+      itemView: null,
+    });
+
+    this.props.onClose();
+  }
+
+  render() {
+    const { open, fullScreen } = this.props;
+
+    return (
+      <Dialog
+        open={open}
+        fullWidth={true}
+        maxWidth={'lg'}
+        onClose={this.onClose.bind(this)}
+        fullScreen={fullScreen}
+      >
+        <DialogTitle>
+          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', float: 'right' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          <TableContainer component={Paper}>
+            <Table stickyHeader aria-label="sticky table">
+              <TableHead>
+                <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                  <TableCell style={{ width: '10%' }}>#</TableCell> 
+                  <TableCell style={{ width: '20%' }}>Тип</TableCell>
+                  <TableCell style={{ width: '40%' }}>Наименование</TableCell>
+                  <TableCell style={{ width: '20%' }}>Количество</TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {this.state.itemView?.items.map((it, key) => (
+                  <TableRow key={key} sx={{ '& td': { color: it?.color ? '#fff' : 'rgba(0, 0, 0, 0.87)'} }} style={{backgroundColor: it?.color ? it.color === 'add' ? 'rgb(255, 204, 0)' : 'red' : '#fff'}}>
+                    <TableCell>{key + 1}</TableCell>
+                    <TableCell>{it.type_name}</TableCell>
+                    <TableCell>{it.item_name}</TableCell>
+                    <TableCell>{it.value + ' ' + it.ei_name}</TableCell>
+                  </TableRow>
+                ))}
+                <TableRow>
+                  <TableCell colSpan={4}>
+                    <MyTextInput
+                      label="Комментарий"
+                      value={this.state.itemView?.coment?.color ? this.state.itemView?.coment?.key : this.state.itemView?.coment}
+                      disabled={true}
+                      className={this.state.itemView?.coment?.color ? "disabled_input disabled_input_color" : "disabled_input"}
+                    />
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={this.onClose.bind(this)}>
+            Закрыть
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+}
+
+class Write_off_journal_History extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      item: [],
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    //console.log(this.props);
+
+    if (!this.props.item) {
+      return;
+    }
+
+    if (this.props.item !== prevProps.item) {
+      this.setState({
+        item: this.props.item,
+      });
+    }
+  }
+
+  onClose() {
+    this.setState({
+      item: [],
+    });
+
+    this.props.onClose();
+  }
+
+  render() {
+    return (
+      <Dialog
+        open={this.props.open}
+        fullWidth={true}
+        maxWidth={'xl'}
+        onClose={this.onClose.bind(this)}
+        fullScreen={this.props.fullScreen}
+      >
+        <DialogTitle className="button">
+          <Typography style={{ alignSelf: 'center' }}>{this.props.method}</Typography>
+          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          <TableContainer component={Paper}>
+            <Table stickyHeader aria-label="sticky table">
+              <TableHead>
+                <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                  <TableCell style={{ width: '5%' }}>#</TableCell>
+                  <TableCell style={{ width: '20%' }}>Дата создания</TableCell>
+                  <TableCell style={{ width: '25%' }}>Дата редактирования/удаления</TableCell>
+                  <TableCell style={{ width: '25%' }}>Время редактирования/удаления</TableCell>
+                  <TableCell style={{ width: '20%' }}>Редактор</TableCell>
+                  <TableCell style={{ width: '5%' }}>Просмотр</TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {this.state.item.map((it, key) => (
+                  <TableRow key={key} hover>
+                    <TableCell>{key + 1}</TableCell>
+                    <TableCell>{it.date_create}</TableCell>
+                    <TableCell>{it.date_update === '0000-00-00' ? '' : it.date_update}</TableCell>
+                    <TableCell>{parseInt(it.time_update) ? it.time_update : ''}</TableCell>
+                    <TableCell>{it.user_update ?? it.user_create}</TableCell>
+                    <TableCell style={{ cursor: 'pointer' }} onClick={this.props.openModalHistoryView.bind(this, key)}><TextSnippetOutlinedIcon /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={this.onClose.bind(this)} variant="contained">
+            Закрыть
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+}
+
+class Write_off_journal_modal extends React.Component {
   constructor(props) {
     super(props);
 
@@ -51,73 +230,166 @@ class Write_off_journal_modal_new extends React.Component {
       items: [],
       item: '',
 
-      count: '',
       ed_izmer: '',
 
+      count: '',
       writeOffItems: [],
+
+      comment: '',
+
+      openAlert: false,
+      err_status: true,
+      err_text: '',
+
+      confirmDialog: false
     };
   }
 
   componentDidUpdate(prevProps) {
     //console.log(this.props);
 
-    if (!this.props.data) {
+    if (!this.props.itemEdit) {
       return;
     }
 
-    if (this.props.data !== prevProps.data) {
+    if (this.props.itemEdit !== prevProps.itemEdit) {
+      const point = this.props.points.find(point => parseInt(point.id) === parseInt(this.props.point)) ?? '';
+
       this.setState({
+        point,
         points: this.props.points,
-        types: this.props.data.types,
-        items: this.props.data.items,
+        types: this.props.itemEdit.types,
+        writeOffItems: this.props.itemEdit?.woj_items ?? [],
+        comment: this.props.itemEdit?.woj?.coment ?? ''
       });
+
     }
   }
 
   changeItem(data, event) {
+
+    let value = event.target.value;
+
+    if(value < 0 && data === 'count') {
+
+      this.setState({
+        [data]: 0,
+      });
+
+    } else {
+
+      this.setState({
+        [data]: value,
+      });
+
+    }
+  }
+
+  changeType(data, event) {
+    const items = this.props.itemEdit.items.filter((it) => {
+      if(parseInt(event.target.value) === 1) {
+        return it.type === 'item' || it.type === 'set';
+      }
+      if(parseInt(event.target.value) === 2) {
+        return it.type === 'rec' || it.type === 'pf';
+      }
+      if(parseInt(event.target.value) === 3) {
+        return it.type === 'pos';
+      }
+    });
+
     this.setState({
       [data]: event.target.value,
+      items,
+      item: ''
+    });
+  }
+
+  changeItemData(data, event, value) {
+    this.setState({
+      [data]: value,
+      ed_izmer: value ? value?.ei_name ?? '' : ''
     });
   }
 
   addItems() {
-    let { point, type, types, item, items, count, ed_izmer, writeOffItems } = this.state;
+    let { type, types, item, count, writeOffItems } = this.state;
 
-    type = types.find((it) => parseInt(it.id) === parseInt(type))?.name;
+    if (!type || !item || !parseInt(count)) {
 
-    item = items.find((it) => parseInt(it.id) === parseInt(item))?.name;
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать все данные для списания'
+      });
+
+      return;
+
+    }
+
+    const type_ = types.find((it) => parseInt(it.id) === parseInt(type));
 
     const data = {
-      id: writeOffItems.length + 1,
-      point,
-      type,
-      item,
-      count,
-      ed_izmer,
-      comment: '',
+      id: item.id,
+      ei_name: item.ei_name,
+      name: item.name,
+      type: item.type,
+      type_name: type_.name,
+      type_s: '1',
+      value: count
     };
 
     writeOffItems.push(data);
 
     this.setState({
       writeOffItems,
+      items: [],
+      type: '',
+      item: '',
+      count: '',
+      ed_izmer: ''
     });
   }
 
-  changeComment(key, event) {
+  deleteItem(index) {
     let writeOffItems = this.state.writeOffItems;
 
-    writeOffItems[key].comment = event.target.value;
+    writeOffItems.splice(index, 1);
 
     this.setState({
-      writeOffItems,
+      writeOffItems
     });
+  }
+
+  delete() {
+    const point = this.state.point;
+
+    this.props.deleteItem(this.props.itemEdit?.woj?.id, point); 
+    this.setState({ confirmDialog: false })
   }
 
   save() {
     const writeOffItems = this.state.writeOffItems;
 
-    this.props.save(writeOffItems);
+    if (!writeOffItems.length) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Позиции для списания отсутствуют!'
+      });
+
+      return;
+
+    }
+
+    const id = this.props.itemEdit?.woj?.id ?? 0;
+
+    const comment = this.state.comment;
+
+    const point = this.state.point;
+
+    this.props.save(writeOffItems, comment, point, id);
 
     this.onClose();
   }
@@ -129,119 +401,169 @@ class Write_off_journal_modal_new extends React.Component {
       item: '',
       count: '',
       ed_izmer: '',
+      comment: '',
       writeOffItems: [],
+      openAlert: false,
+      err_status: true,
+      err_text: '',
+      confirmDialog: false
     });
 
     this.props.onClose();
   }
 
   render() {
+
+    const { open, method, fullScreen } = this.props;
+
     return (
-      <Dialog
-        open={this.props.open}
-        fullWidth={true}
-        maxWidth={'lg'}
-        onClose={this.onClose.bind(this)}
-        fullScreen={this.props.fullScreen}
-      >
-        <DialogTitle className="button">
-          <Typography>Новое списание</Typography>
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+      <>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
 
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3} mb={3}>
-            <Grid item xs={12} sm={4}>
-              <MySelect
-                is_none={false}
-                data={this.state.points}
-                value={this.state.point}
-                func={this.changeItem.bind(this, 'point')}
-                label="Точка"
-              />
-            </Grid>
-            <Grid item xs={12} sm={8} />
-            <Grid item xs={12} sm={3}>
-              <MySelect
-                is_none={false}
-                data={this.state.types}
-                value={this.state.type}
-                func={this.changeItem.bind(this, 'type')}
-                label="Тип"
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <MySelect
-                is_none={false}
-                data={this.state.items}
-                value={this.state.item}
-                func={this.changeItem.bind(this, 'item')}
-                label="Наименование"
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <MyTextInput
-                type="number"
-                label="Количество"
-                value={this.state.count}
-                func={this.changeItem.bind(this, 'count')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={2}>
-              <MyTextInput
-                label="Ед измерения"
-                value={this.state.ed_izmer}
-                func={this.changeItem.bind(this, 'ed_izmer')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={9} />
-            <Grid item xs={12} sm={3} style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button onClick={this.addItems.bind(this)} variant="contained" color="success">
-                Добавить
-              </Button>
-            </Grid>
-            <Grid item xs={12} sm={12}>
-              <Divider />
-            </Grid>
-          </Grid>
-          <TableContainer component={Paper}>
-            <Table stickyHeader aria-label="sticky table">
-              <TableHead>
-                <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                  <TableCell style={{ width: '20%' }}>Тип</TableCell>
-                  <TableCell style={{ width: '20%' }}>Наименование</TableCell>
-                  <TableCell style={{ width: '20%' }}>Количество</TableCell>
-                  <TableCell style={{ width: '40%' }}>Комментарии</TableCell>
-                </TableRow>
-              </TableHead>
+        <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false })}>
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>Точно удалить данное списание ?</DialogContent>
+          <DialogActions>
+            <Button autoFocus onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
+            <Button onClick={this.delete.bind(this)}>Ok</Button>
+          </DialogActions>
+        </Dialog>
 
-              <TableBody>
-                {this.state.writeOffItems.map((it, key) => (
-                  <TableRow key={key}>
-                    <TableCell>{it.type}</TableCell>
-                    <TableCell>{it.item}</TableCell>
-                    <TableCell>{it.count + ' ' + it.ed_izmer}</TableCell>
-                    <TableCell>
+        <Dialog
+          open={open}
+          fullWidth={true}
+          maxWidth={'lg'}
+          onClose={this.onClose.bind(this)}
+          fullScreen={fullScreen}
+        >
+          <DialogTitle className="button">
+            <Typography>{method}</Typography>
+            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            <Grid container spacing={3} mb={3}>
+              <Grid item xs={12} sm={4}>
+                {method === 'Новое списание' ?
+                  <MySelect
+                    is_none={false}
+                    data={this.state.points}
+                    value={this.state.point.id}
+                    func={this.changeItem.bind(this, 'point')}
+                    label="Точка"
+                  />
+                 :  
+                  <MyTextInput
+                    label="Точка"
+                    value={this.state.point.name}
+                    disabled={true}
+                    className="disabled_input"
+                  />
+                }
+              </Grid>
+              <Grid item xs={12} sm={8} />
+              <Grid item xs={12} sm={3}>
+                <MySelect
+                  is_none={false}
+                  data={this.state.types}
+                  value={this.state.type}
+                  func={this.changeType.bind(this, 'type')}
+                  label="Тип"
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <MyAutocomplite
+                  label="Наименование"
+                  multiple={false}
+                  data={this.state.items}
+                  value={this.state.item}
+                  func={this.changeItemData.bind(this, 'item')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <MyTextInput
+                  type="number"
+                  label="Количество"
+                  value={this.state.count}
+                  func={this.changeItem.bind(this, 'count')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={2}>
+                <MyTextInput
+                  label="Ед измерения"
+                  value={this.state.ed_izmer}
+                  disabled={true}
+                  className="disabled_input"
+                />
+              </Grid>
+              <Grid item xs={12} sm={9} />
+              <Grid item xs={12} sm={3} style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button onClick={this.addItems.bind(this)} variant="contained" color="success">
+                  Добавить
+                </Button>
+              </Grid>
+              <Grid item xs={12} sm={12}>
+                <Divider />
+              </Grid>
+            </Grid>
+            <TableContainer component={Paper}>
+              <Table stickyHeader aria-label="sticky table">
+                <TableHead>
+                  <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                    <TableCell style={{ width: '10%' }}>#</TableCell> 
+                    <TableCell style={{ width: '20%' }}>Тип</TableCell>
+                    <TableCell style={{ width: '40%' }}>Наименование</TableCell>
+                    <TableCell style={{ width: '20%' }}>Количество</TableCell>
+                    <TableCell style={{ width: '10%' }}></TableCell>
+                  </TableRow>
+                </TableHead>
+
+                <TableBody>
+                  {this.state.writeOffItems.map((it, key) => (
+                    <TableRow key={key}>
+                      <TableCell>{key + 1}</TableCell>
+                      <TableCell>{it.type_name}</TableCell>
+                      <TableCell>{it.name}</TableCell>
+                      <TableCell>{it.value + ' ' + it.ei_name}</TableCell>
+                      <TableCell onClick={this.deleteItem.bind(this, key)}> 
+                        <IconButton style={{ cursor: 'pointer' }}>
+                          <CloseIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow>
+                    <TableCell colSpan={4}>
                       <MyTextInput
                         label="Комментарий"
-                        value={it.comment}
-                        func={this.changeComment.bind(this, key)}
+                        value={this.state.comment}
+                        func={this.changeItem.bind(this, 'comment')}
                       />
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={this.save.bind(this)} variant="contained">
-            Сохранить
-          </Button>
-        </DialogActions>
-      </Dialog>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </DialogContent>
+          <DialogActions>
+            {method !== 'Новое списание' ?
+              <Button onClick={() => this.setState({ confirmDialog: true })} variant="contained" style={{ backgroundColor: 'rgba(53,59,72,1.000)' }}>
+                Удалить
+              </Button>
+            : null}
+            <Button onClick={this.save.bind(this)} variant="contained">
+              Сохранить
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
     );
   }
 }
@@ -270,9 +592,11 @@ class Write_off_journal_modal_view extends React.Component {
   }
 
   onClose() {
-    this.setState({
-      item: [],
-    });
+    setTimeout(async () => {
+      this.setState({
+        item: [],
+      });
+    }, 100);
 
     this.props.onClose();
   }
@@ -282,16 +606,12 @@ class Write_off_journal_modal_view extends React.Component {
       <Dialog
         open={this.props.open}
         fullWidth={true}
-        maxWidth={'lg'}
+        maxWidth={'md'}
         onClose={this.onClose.bind(this)}
         fullScreen={this.props.fullScreen}
       >
-        <DialogTitle className="button">
-          <Typography>
-            {this.props.method}
-            {this.props.itemName ? `: ${this.props.itemName}` : ''}
-          </Typography>
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+        <DialogTitle>
+          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', float: 'right' }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -302,10 +622,9 @@ class Write_off_journal_modal_view extends React.Component {
               <TableHead>
                 <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
                   <TableCell style={{ width: '5%' }}>№</TableCell>
-                  <TableCell style={{ width: '20%' }}>Позиция</TableCell>
-                  <TableCell style={{ width: '15%' }}>Количество</TableCell>
-                  <TableCell style={{ width: '15%' }}>Себестоимость</TableCell>
-                  <TableCell style={{ width: '15%' }}>Комментарии</TableCell>
+                  <TableCell style={{ width: '35%' }}>Позиция</TableCell>
+                  <TableCell style={{ width: '30%' }}>Количество</TableCell>
+                  <TableCell style={{ width: '30%' }}>Себестоимость</TableCell>
                 </TableRow>
               </TableHead>
 
@@ -314,11 +633,16 @@ class Write_off_journal_modal_view extends React.Component {
                   <TableRow key={key}>
                     <TableCell>{key + 1}</TableCell>
                     <TableCell>{it.name}</TableCell>
-                    <TableCell>{it.count + ' ' + it.ed_izmer}</TableCell>
-                    <TableCell>{' '}{new Intl.NumberFormat('ru-RU').format(it.price)} ₽</TableCell>
-                    <TableCell>{it.comment}</TableCell>
+                    <TableCell>{it.value + ' ' + it.ei_name}</TableCell>
+                    <TableCell>{' '}{new Intl.NumberFormat('ru-RU').format(it?.price ?? 0)} ₽</TableCell>
                   </TableRow>
                 ))}
+                <TableRow>
+                  <TableCell colSpan={4}>
+                    <span style={{ fontWeight: 'bold'}}>Комментарий: </span>
+                    <span>{this.state.item.comment}</span>
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </TableContainer>
@@ -349,38 +673,57 @@ class Write_off_journal_ extends React.Component {
       date_end: formatDate(new Date()),
 
       items: [],
-      itemsCopy: [],
+      item: [],
 
       openAlert: false,
       err_status: true,
       err_text: '',
 
-      searchItem: '',
+      list: [],
+      all_items_pf: [],
+      all_items_pos: [],
+      all_users: [],
 
-      data_table: [],
-      item: null,
+      all_sum_pf: 0,
+      all_sum_pos: 0,
 
       fullScreen: false,
 
       modalDialogView: false,
+      itemView: null,
 
-      modalDialogNew: false,
-      data_new: [],
+      modalDialog: false,
+      itemEdit: null,
+
+      method: '',
+
+      modalDialogHist: false,
+      itemHist: null,
+
+      modalDialogViewHist: false,
+      itemViewHist: null
     };
   }
 
   async componentDidMount() {
-    //const data = await this.getData('get_all');
+    const data = await this.getData('get_all');
 
-    //console.log('data', data)
+    const points = [{base: "jaco_rolls_0", id: "0", id_2: "1_0", manager_id: "0", name: "Тольятти, Тестовая", name2: "Тольятти, Тестовая"}]
 
     this.setState({
-      points: data.points,
-      point: data.points[0].id,
+      // points: data.points,
+      // point: data.points[0].id,
+      points,
+      point: points[0].id,
       module_name: data.module_info.name,
     });
 
     document.title = data.module_info.name;
+
+    setTimeout(async () => {
+      this.getPointData(data.points[0]);
+    }, 100);
+
   }
 
   getData = (method, data = {}) => {
@@ -438,6 +781,55 @@ class Write_off_journal_ extends React.Component {
     }
   }
 
+  async getPointData() {
+
+    const point = this.state.points.find(point => parseInt(point.id) === parseInt(this.state.point));
+    const date_start = this.state.date_start ? dayjs(this.state.date_start).format('YYYY-MM-DD') : '';
+    const date_end = this.state.date_end ? dayjs(this.state.date_end).format('YYYY-MM-DD') : '';
+    const items = this.state.item;
+
+    const data = {
+      point,
+      date_start,
+      date_end,
+      items
+    }
+
+    const res = await this.getData('get_items', data);
+
+    const all_sum_pf = res.all_items_pf.reduce((all, item) => all + Number(item?.price ?? 0), 0);
+    const all_sum_pos = res.all_items_pos.reduce((all, item) => all + Number(item?.price ?? 0), 0);
+
+    const all_users = res.list.reduce((users, item) => {
+
+      if(parseInt(item.user_id) === parseInt(item.user_id)) {
+        const user = users.find(user => parseInt(user.id) === parseInt(item.user_id));
+
+        if(user) {
+          user.price += Number(item?.price ?? 0);
+        } else {
+          users.push({ id: item.user_id, name: item.user_name, price: Number(item?.price ?? 0)});
+        }
+
+      }
+
+      return users;
+
+    }, []);
+
+    this.setState({
+      searchItem: '',
+      items: res.items,
+      list: res.list,
+      all_items_pf: res.all_items_pf,
+      all_items_pos: res.all_items_pos,
+      all_sum_pf,
+      all_sum_pos,
+      all_users
+    });
+    
+  }
+
   changePoint(data, event) {
     this.setState({
       [data]: event.target.value,
@@ -450,73 +842,257 @@ class Write_off_journal_ extends React.Component {
     });
   }
 
-  search(event) {
-    const searchItem = event.target.value;
-    const point = this.state.point;
+  changeComplite(event, value) {
+    this.setState({
+      item: value,
+    });
+  }
 
-    const items = JSON.parse(JSON.stringify(this.state.itemsCopy));
+  openViewItem(itemView, comment) {
+    this.handleResize();
 
-    if (!point || !items.length) {
-      return;
+    itemView.comment = comment;
+
+    this.setState({
+      modalDialogView: true,
+      itemView
+    });
+  }
+
+  async openNewItem(method) {
+    this.handleResize();
+
+    let res = await this.getData('get_all_for_new');
+
+    res.types = [{id: '1', name: 'Товар'}, {id: '2', name: 'Заготовка'}, {id: '3', name: 'Сайт'}]
+
+    this.setState({
+      modalDialog: true,
+      itemEdit: res,
+      method
+    });
+  }
+
+  async openItem(woj_id, method) {
+    this.handleResize();
+
+    const list = this.state.list;
+
+    const open_item = list.find(item => parseInt(item.id) === parseInt(woj_id));
+
+    let change = null;
+
+    if(open_item) {
+      // Для редактирования и удаления давать 2 недели с даты создания 
+      if (parseInt(open_item?.status) === 2) {
+        change = 'del';
+      } else if (!(moment(open_item?.date).diff(moment(), 'days') > -15)) {
+        change = 'day';
+      } 
     }
 
-    if (!searchItem) {
+    if (change === 'del' || change === 'day') {
+
       this.setState({
-        searchItem,
-        items,
+        openAlert: true,
+        err_status: false,
+        err_text: change === 'del' ? 'Удален' : 'Изменения недоступны - с даты создания прошло болеее 2-х недель',
       });
-
+      
       return;
+
     }
 
-    const itemsFilter = items.map((item) => {
-      item.dish = item.dish.filter((item) => item.title.toLowerCase().includes(searchItem.toLowerCase()));
+    const point = this.state.points.find(point => parseInt(point.id) === parseInt(this.state.point));
 
-      item.structure = item.structure.filter((item) => item.name.toLowerCase().includes(searchItem.toLowerCase()));
+    const data = {
+      point,
+      woj_id
+    }
+
+    let res = await this.getData('get_one', data);
+
+    res.woj_items = res.woj_items.map(item => {
+      if(item.type === 'pos') {
+        item.type_name = 'Сайт';
+      }
+
+      if(item.type === 'rec' || item.type === 'pf') {
+        item.type_name = 'Заготовка';
+      }
+
+      if(item.type === 'set' || item.type === 'item') {
+        item.type_name = 'Товар';
+      }
 
       return item;
     });
 
+    res.types = [{id: '1', name: 'Товар'}, {id: '2', name: 'Заготовка'}, {id: '3', name: 'Сайт'}];
+
     this.setState({
-      searchItem,
-      items: itemsFilter,
+      modalDialog: true,
+      itemEdit: res,
+      method
     });
   }
 
-  async getWriteOff() {
-    const res = { items, data_table };
+  async saveItem(items, comment, point, j_id) {
 
-    this.setState({
-      items: res.items,
-      itemsCopy: res.items,
-      data_table: res.data_table,
-    });
+    const method = this.state.method;
+
+    const data = {
+      items, 
+      comment, 
+      point,
+      j_id
+    }
+
+    let res;
+
+    if(method === 'Новое списание') {
+      res = await this.getData('save_new', data);
+    } else {
+      res = await this.getData('save_edit', data);
+    }
+
+    if (res.st) {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+        modalDialog: false
+      });
+      
+      setTimeout(async () => {
+        this.getPointData();
+      }, 300);
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+    }
   }
 
-  async openViewItem() {
+  async deleteItem(j_id, point) {
+
+    const data = {
+      j_id,
+      point
+    }
+
+    const res = await this.getData('delete_item', data);
+
+    if (res.st) {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+        modalDialog: false
+      });
+
+      setTimeout(async () => {
+        this.getPointData();
+      }, 300);
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+    }
+  }
+
+  async openHistoryItem(id, method) {
     this.handleResize();
 
-    const res = modal_view;
+    const point = this.state.points.find(point => parseInt(point.id) === parseInt(this.state.point));
 
-    this.setState({
-      modalDialogView: true,
-      item: res,
+    const data = {
+      id,
+      point
+    };
+
+    const res = await this.getData('get_one_hist', data);
+
+    res.hist = res.hist.map(item => {
+
+      item.items = item.items.map(it => {
+        if(it.type === 'pos') {
+          it.type_name = 'Сайт';
+        }
+  
+        if(it.type === 'rec' || it.type === 'pf') {
+          it.type_name = 'Заготовка';
+        }
+  
+        if(it.type === 'set' || it.type === 'item') {
+          it.type_name = 'Товар';
+        }
+
+        return it;
+
+      })
+
+      return item;
     });
+   
+    this.setState({
+      modalDialogHist: true,
+      itemHist: res.hist,
+      method
+    });
+
   }
 
-  async openNewItem() {
-    this.handleResize();
+  async openModalHistoryView(index) {
 
-    const res = modal_new;
+    const item = this.state.itemHist;
 
+    let itemView = JSON.parse(JSON.stringify(item[index]));
+
+    if(parseInt(index) !== 0) {
+      
+      let itemView_old = JSON.parse(JSON.stringify(item[index - 1]));
+      
+      for (let key in itemView) {
+
+        if(itemView[key] !== itemView_old[key] && key !== 'items' && key !== 'status') {
+          itemView[key] = { key: itemView[key], color: 'true' }
+        }
+
+        if(key === 'items') {
+          itemView.items = itemView.items.reduce((newList, it) => {
+            if(!itemView_old.items.find((item) => item.type === it.type && parseInt(item.item_id) === parseInt(it.item_id))) {
+              it.color = 'add';
+            }
+            return newList = [...newList,...[it]]
+          }, []).concat(itemView_old.items.filter((it) => {
+            if(!itemView.items.find((item) => item.type === it.type && parseInt(item.item_id) === parseInt(it.item_id))) {
+              it.color = 'delete';
+              return it;
+            }
+          }));
+     
+        }
+      }
+    } 
+    
     this.setState({
-      modalDialogNew: true,
-      data_new: res,
+      modalDialogViewHist: true,
+      itemViewHist: itemView
     });
-  }
 
-  async saveNewItem(item) {
-    console.log('saveNewItem', item);
   }
 
   render() {
@@ -535,18 +1111,37 @@ class Write_off_journal_ extends React.Component {
 
         <Write_off_journal_modal_view
           open={this.state.modalDialogView}
-          onClose={() => this.setState({ modalDialogView: false })}
-          item={this.state.item}
+          onClose={() => this.setState({ modalDialogView: false, itemView: null })}
+          item={this.state.itemView}
           fullScreen={this.state.fullScreen}
         />
 
-        <Write_off_journal_modal_new
-          open={this.state.modalDialogNew}
-          onClose={() => this.setState({ modalDialogNew: false })}
-          data={this.state.data_new}
+        <Write_off_journal_modal
+          open={this.state.modalDialog}
+          onClose={() => this.setState({ modalDialog: false, itemEdit: null })}
+          itemEdit={this.state.itemEdit}
           points={this.state.points}
+          point={this.state.point}
+          method={this.state.method}
           fullScreen={this.state.fullScreen}
-          save={this.saveNewItem.bind(this)}
+          save={this.saveItem.bind(this)}
+          deleteItem={this.deleteItem.bind(this)}
+        />
+
+        <Write_off_journal_History
+          open={this.state.modalDialogHist}
+          onClose={() => this.setState({ modalDialogHist: false, itemHist: null })}
+          item={this.state.itemHist}
+          method={this.state.method}
+          fullScreen={this.state.fullScreen}
+          openModalHistoryView={this.openModalHistoryView.bind(this)}
+        />
+
+        <Write_off_journal_View
+          open={this.state.modalDialogViewHist}
+          onClose={() => this.setState({ modalDialogViewHist: false, itemViewHist: null })}
+          itemView={this.state.itemViewHist}
+          fullScreen={this.state.fullScreen}
         />
 
         <Grid container spacing={3} className='container_first_child'>
@@ -555,7 +1150,7 @@ class Write_off_journal_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={3}>
-            <Button onClick={this.openNewItem.bind(this)} variant="contained">
+            <Button onClick={this.openNewItem.bind(this, 'Новое списание')} variant="contained">
               Новое списание
             </Button>
           </Grid>
@@ -591,166 +1186,158 @@ class Write_off_journal_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <MyTextInput
+            <MyAutocomplite
               label="Поиск позиции списания"
-              value={this.state.searchItem}
-              func={this.search.bind(this)}
-              onBlur={this.search.bind(this)}
+              multiple={true}
+              data={this.state.items}
+              value={this.state.item}
+              func={this.changeComplite.bind(this)}
             />
           </Grid>
 
           <Grid item xs={12} sm={2}>
-            <Button onClick={this.getWriteOff.bind(this)} variant="contained">
+            <Button onClick={this.getPointData.bind(this)} variant="contained">
               Посмотреть
             </Button>
           </Grid>
-          {!this.state.items.length ? null : (
-            <>
-              <Grid item xs={12} sm={4}>
-                {this.state.items.map((item, key) => (
-                  <Accordion key={key}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>Количество по материалам</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <TableContainer component={Paper}>
-                        <Table stickyHeader aria-label="sticky table">
-                          <TableHead>
-                            <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                              <TableCell style={{ width: '35%' }}>Позиция</TableCell>
-                              <TableCell style={{ width: '35%' }}>Количество</TableCell>
-                              <TableCell style={{ width: '30%' }}></TableCell>
-                            </TableRow>
-                          </TableHead>
 
-                          <TableBody>
-                            {item.structure.map((it, k) => (
-                              <TableRow key={k}>
-                                <TableCell>{it.name}</TableCell>
-                                <TableCell>{it.pf + ' ' + it.ed_izmer}</TableCell>
-                                <TableCell>{new Intl.NumberFormat('ru-RU').format(it.price)}{' '}₽</TableCell>
-                              </TableRow>
-                            ))}
-                            {this.state.searchItem ? null : (
-                              <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
-                                <TableCell>Общая:</TableCell>
-                                <TableCell></TableCell>
-                                <TableCell>{new Intl.NumberFormat('ru-RU').format(item.allPrice)}{' '}₽</TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                {this.state.items.map((item, key) => (
-                  <Accordion key={key}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>Количество по блюдам</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <TableContainer component={Paper}>
-                        <Table stickyHeader aria-label="sticky table">
-                          <TableHead>
-                            <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                              <TableCell style={{ width: '35%' }}>Позиция</TableCell>
-                              <TableCell style={{ width: '35%' }}>Количество</TableCell>
-                              <TableCell style={{ width: '30%' }}></TableCell>
-                            </TableRow>
-                          </TableHead>
-
-                          <TableBody>
-                            {item.dish.map((it, k) => (
-                              <TableRow key={k}>
-                                <TableCell>{it.title}</TableCell>
-                                <TableCell>{it.count + ' ' + it.ed_izmer}</TableCell>
-                                <TableCell>{new Intl.NumberFormat('ru-RU').format(it.price)}{' '}₽</TableCell>
-                              </TableRow>
-                            ))}
-                            {this.state.searchItem ? null : (
-                              <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
-                                <TableCell>Общая:</TableCell>
-                                <TableCell></TableCell>
-                                <TableCell>{new Intl.NumberFormat('ru-RU').format(item.dish[0].price)}{' '}₽</TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                {this.state.items.map((item, key) => (
-                  <Accordion key={key}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>Количество по создателям</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <TableContainer component={Paper}>
-                        <Table stickyHeader aria-label="sticky table">
-                          <TableHead>
-                            <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                              <TableCell style={{ width: '40%' }}>Создатель</TableCell>
-                              <TableCell style={{ width: '40%' }}>Сумма</TableCell>
-                              <TableCell style={{ width: '20%' }}></TableCell>
-                            </TableRow>
-                          </TableHead>
-
-                          <TableBody>
-                            {item.users.map((it, k) => (
-                              <TableRow key={k}>
-                                <TableCell>{it.user}</TableCell>
-                                <TableCell>{' '}{new Intl.NumberFormat('ru-RU').format(item.allPrice)}{' '}₽</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
-              </Grid>
-            </>
-          )}
-
-          {!this.state.data_table.length ? null : (
-            <Grid item xs={12} sm={12} mt={5}>
-              <TableContainer component={Paper}>
-                <Table stickyHeader aria-label="sticky table">
-                  <TableHead>
-                    <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                      <TableCell style={{ width: '5%' }}>№</TableCell>
-                      <TableCell style={{ width: '18%' }}>Дата</TableCell>
-                      <TableCell style={{ width: '18%' }}>Время</TableCell>
-                      <TableCell style={{ width: '18%' }}>Себестоимость</TableCell>
-                      <TableCell style={{ width: '18%' }}>Создатель</TableCell>
-                      <TableCell style={{ width: '18%' }}>Редактирование</TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {this.state.data_table.map((item, key) => (
-                      <TableRow hover key={key}>
-                        <TableCell>{key + 1}</TableCell>
-                        <TableCell style={{ cursor: 'pointer' }} onClick={this.openViewItem.bind(this)}>{item.date}</TableCell>
-                        <TableCell>{item.time}</TableCell>
-                        <TableCell>{' '}{new Intl.NumberFormat('ru-RU').format(item.price)} ₽</TableCell>
-                        <TableCell>{item.user}</TableCell>
-                        <TableCell style={{ cursor: 'pointer' }}>
-                          <EditIcon />
-                        </TableCell>
+          <Grid item xs={12} sm={4}>
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography sx={{ fontWeight: 'bold' }}>Количество по материалам</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <TableContainer component={Paper}>
+                  <Table stickyHeader aria-label="sticky table">
+                    <TableHead>
+                      <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                        <TableCell style={{ width: '35%' }}>Позиция</TableCell>
+                        <TableCell style={{ width: '35%' }}>Количество</TableCell>
+                        <TableCell style={{ width: '30%' }}></TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Grid>
-          )}
+                    </TableHead>
+
+                    <TableBody>
+                      {this.state.all_items_pf.map((it, k) => (
+                        <TableRow key={k}>
+                          <TableCell>{it.name}</TableCell>
+                          <TableCell>{it.value + ' ' + it.ei_name}</TableCell>
+                          <TableCell>{new Intl.NumberFormat('ru-RU').format(it?.price ?? '')}{' '}₽</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
+                        <TableCell colSpan={2}>Общая</TableCell>
+                        <TableCell>{new Intl.NumberFormat('ru-RU').format(this.state.all_sum_pf)}{' '}₽</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </AccordionDetails>
+            </Accordion>
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography sx={{ fontWeight: 'bold' }}>Количество по блюдам</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <TableContainer component={Paper}>
+                  <Table stickyHeader aria-label="sticky table">
+                    <TableHead>
+                      <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                        <TableCell style={{ width: '35%' }}>Позиция</TableCell>
+                        <TableCell style={{ width: '35%' }}>Количество</TableCell>
+                        <TableCell style={{ width: '30%' }}></TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {this.state.all_items_pos.map((it, k) => (
+                        <TableRow key={k}>
+                          <TableCell>{it.name}</TableCell>
+                          <TableCell>{it.value + ' ' + it.ei_name}</TableCell>
+                          <TableCell>{new Intl.NumberFormat('ru-RU').format(it?.price ?? '')}{' '}₽</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
+                        <TableCell colSpan={2}>Общая</TableCell>
+                        <TableCell>{new Intl.NumberFormat('ru-RU').format(this.state.all_sum_pos)}{' '}₽</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </AccordionDetails>
+            </Accordion>
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography sx={{ fontWeight: 'bold' }}>Количество по создателям</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <TableContainer component={Paper}>
+                  <Table stickyHeader aria-label="sticky table">
+                    <TableHead>
+                      <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                        <TableCell>Создатель</TableCell>
+                        <TableCell>Сумма</TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {this.state.all_users.map((it, k) => (
+                        <TableRow key={k}>
+                          <TableCell>{it.name}</TableCell>
+                          <TableCell>{new Intl.NumberFormat('ru-RU').format(it?.price ?? '')}{' '}₽</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </AccordionDetails>
+            </Accordion>
+          </Grid>
+
+          <Grid item xs={12} sm={12} mb={5}>
+            <TableContainer component={Paper}>
+              <Table stickyHeader aria-label="sticky table">
+                <TableHead>
+                  <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                    <TableCell style={{ width: '5%' }}>№</TableCell>
+                    <TableCell style={{ width: '17%' }}>Дата</TableCell>
+                    <TableCell style={{ width: '17%' }}>Время</TableCell>
+                    <TableCell style={{ width: '15%' }}>Себестоимость</TableCell>
+                    <TableCell style={{ width: '17%' }}>Создатель</TableCell>
+                    <TableCell style={{ width: '15%' }}>Редактирование</TableCell>
+                    <TableCell style={{ width: '14%' }}>История изменений</TableCell>
+                  </TableRow>
+                </TableHead>
+
+                <TableBody>
+                  {this.state.list.map((item, key) => (
+                    <TableRow hover key={key} sx={{ '& td': { color: parseInt(item?.status) === 2 || item?.date_update ? '#fff' : 'rgba(0, 0, 0, 0.87)'} }} style={{ backgroundColor: parseInt(item?.status) === 2 ? 'red' : item?.date_update ? 'rgb(255, 204, 0)' : '#fff'}}>
+                      <TableCell>{key + 1}</TableCell>
+                      <TableCell style={{ cursor: 'pointer', fontWeight: 'bold' }} onClick={this.openViewItem.bind(this, item?.items, item.coment)}>{item.date}</TableCell>
+                      <TableCell>{item.time}</TableCell>
+                      <TableCell>{' '}{new Intl.NumberFormat('ru-RU').format(item?.price ?? '')} ₽</TableCell>
+                      <TableCell>{item.user_name}</TableCell>
+                      <TableCell style={{ cursor: 'pointer' }} onClick={this.openItem.bind(this, item?.id, 'Редактрование списания')}>
+                        <EditIcon />
+                      </TableCell>
+                      <TableCell 
+                          onClick={this.openHistoryItem.bind(this, item.id, 'История изменений')}
+                          style={{cursor: 'pointer'}}
+                        >
+                          <EditNoteIcon />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
         </Grid>
       </>
     );
