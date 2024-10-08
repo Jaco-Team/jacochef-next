@@ -96,7 +96,10 @@ class CatWork_ extends React.Component {
 
       stat_open: [],
       raiting: 0,
-      type_sale: 0
+      type_sale: 0,
+
+      modalDialogNewShowComments: false,
+      show_my_orders: []
     };
   }
   
@@ -537,6 +540,13 @@ class CatWork_ extends React.Component {
     }, 500)
   }
 
+  showMyComments(users){
+    this.setState({
+      modalDialogNewShowComments: true,
+      show_my_orders: users
+    })
+  }
+
   render(){
     return (
       <>
@@ -822,6 +832,45 @@ class CatWork_ extends React.Component {
         </Dialog>
 
         <Dialog
+          open={this.state.modalDialogNewShowComments}
+          onClose={ () => { this.setState({ modalDialogNewShowComments: false }) } }
+          fullWidth={true}
+          maxWidth={'lg'}
+        >
+          <DialogTitle>Оформленные обращения</DialogTitle>
+          <DialogContent style={{ paddingTop: 10 }}>
+            
+            <Grid container spacing={3}>
+              
+              <Grid item xs={12}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Номер телефона</TableCell>
+                      <TableCell>Комментарий</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    { this.state.show_my_orders.map( (it, k) =>
+                      <TableRow key={k} style={{ cursor: 'pointer' }} onClick={ this.get_user_info.bind(this, it.user_number) }>
+                        <TableCell>{ it.user_number }</TableCell>
+                        <TableCell style={{ maxWidth: '50%', padding: 0 }} dangerouslySetInnerHTML={{__html: it.comment}}></TableCell>
+                      </TableRow>
+                    ) }
+                  </TableBody>
+                </Table>
+              </Grid>
+
+                
+
+              
+              
+            </Grid>
+
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
           open={this.state.modalDialogAction}
           onClose={ () => { this.setState({ modalDialogAction: false }) } }
           fullWidth={true}
@@ -931,7 +980,7 @@ class CatWork_ extends React.Component {
                     </TableHead>
                     <TableBody>
                       { this.state.stat_open.map( (it, k) =>
-                        <TableRow key={k}>
+                        <TableRow key={k} style={{ cursor: 'pointer' }} onClick={this.showMyComments.bind(this, it?.users)}>
                           <TableCell>{ it.short_name }</TableCell>
                           <TableCell style={{ textAlign: 'center' }}>{ it.count_open }</TableCell>
                           <TableCell style={{ textAlign: 'center' }}>{ it.count_close }</TableCell>
