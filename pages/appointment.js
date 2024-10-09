@@ -25,7 +25,7 @@ import ListItemButton from '@mui/material/ListItemButton';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyTextInput } from '@/ui/elements';
+import { MyTextInput, MySelect } from '@/ui/elements';
 
 import queryString from 'query-string';
 import Collapse from '@mui/material/Collapse';
@@ -51,7 +51,13 @@ class Appointment_ extends React.Component {
       
 
       openApp: null,
-      full_menu: []
+      full_menu: [],
+
+      dataSelect: [
+        {id: false, name: 'Без активности'},
+        {id: 'show', name: 'Показывать'},
+        {id: 'edit', name: 'Редактировать'},
+      ],
     };
   }
 
@@ -178,10 +184,16 @@ class Appointment_ extends React.Component {
   changeActive(main_key, parent_key, features_key, event){
     let full_menu = this.state.full_menu;
 
-    if( parseInt(features_key) > -1 ) {
-      full_menu[ main_key ]['chaild'][ parent_key ]['features'][ features_key ].is_active = event.target.checked === true ? 1 : 0;
+    if( event.target.checked === undefined ){
+      full_menu[ main_key ]['chaild'][ parent_key ]['features'][ features_key ].is_active = event.target.value;
     }else{
-      full_menu[ main_key ]['chaild'][ parent_key ].is_active = event.target.checked === true ? 1 : 0;
+
+      if( parseInt(features_key) > -1 ) {
+        full_menu[ main_key ]['chaild'][ parent_key ]['features'][ features_key ].is_active = event.target.checked === true ? 1 : 0;
+      }else{
+        full_menu[ main_key ]['chaild'][ parent_key ].is_active = event.target.checked === true ? 1 : 0;
+      }
+
     }
 
     this.setState({
@@ -342,7 +354,7 @@ class Appointment_ extends React.Component {
             </Grid>
         
             <Grid style={{ marginTop: 10}}>
-              <List dense sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
+              <List dense sx={{ width: '100%', maxWidth: 500, bgcolor: 'background.paper' }}>
                 {this.state.full_menu?.map((item, key) => 
                   <>
                     <ListItem
@@ -378,12 +390,20 @@ class Appointment_ extends React.Component {
                               <ListItem
                                 key={f_key}
                                 secondaryAction={
-                                  <Checkbox
-                                    edge="end"
-                                    onChange={ this.changeActive.bind(this, key, k, f_key) }
-                                    checked={ parseInt(f.is_active) == 1 ? true : false }
-                                    //inputProps={{ 'aria-labelledby': labelId }}
-                                  />
+                                  parseInt(f?.type) == 2 ?
+                                    <Checkbox
+                                      edge="end"
+                                      onChange={ this.changeActive.bind(this, key, k, f_key) }
+                                      checked={ parseInt(f.is_active) == 1 ? true : false }
+                                    />
+                                      :
+                                    <MySelect
+                                      data={this.state.dataSelect}
+                                      value={f.is_active}
+                                      func={this.changeActive.bind(this, key, k, f_key)}
+                                      //label="День недели"
+                                      is_none={false}
+                                    />
                                 }
                                 disablePadding
                               >
