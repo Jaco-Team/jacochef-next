@@ -187,10 +187,12 @@ class WorkSchedule_Confirm extends React.Component {
 
 class HeaderItem extends React.Component {
   render() {
+    //Ур. кафе: {this.props.lv_cafe}
+    //Ур. дира: {this.props.lv_dir_new}
     return (
       <>
         <TableRow>
-          <TableCell style={{ minWidth: 140, minHeight: 38 }}>Ур. кафе: {this.props.lv_cafe}</TableCell>
+          <TableCell style={{ minWidth: 140, minHeight: 38 }}></TableCell>
           <TableCell style={{ minWidth: 165, minHeight: 38 }}>Число месяца</TableCell>
 
           {this.props.kind == 'manager' || this.props.kind == 'other' ? null : (
@@ -223,7 +225,7 @@ class HeaderItem extends React.Component {
                   <CloseIcon style={{ fontSize: 30, color: 'red' }} />}
               </TableCell>
               <TableCell style={{ textAlign: 'center', cursor: 'pointer' }} onClick={this.props.kind == 'manager' || this.props.kind == 'dir' ? () => {} : this.props.changeLVDir}>
-                Ур. дира: {this.props.lv_dir_new}
+                
               </TableCell>
             </>
           )}
@@ -317,6 +319,10 @@ class WorkSchedule_Table extends React.Component {
 
   render() {
     let check_period = this.props.test.find((item) => item.row !== 'header' && parseInt(item.data.check_period) == 0);
+
+    //this.props.openModalDirBonus;
+
+    console.log('this.props', this.props);
 
     return (
       <TableContainer component={Paper} style={{ paddingRight: 0 }}>
@@ -422,7 +428,11 @@ class WorkSchedule_Table extends React.Component {
                     {parseInt(item.data.check_period) == 1 ? item.data.err_price : ' - '}
                   </TableCell>
                   
-                  <TableCell style={{ textAlign: 'center' }}>
+                  <TableCell 
+                    style={{ textAlign: 'center', cursor: item.data.app_type == 'dir' && this.props.kind == 'dir' ? 'pointer' : 'default', backgroundColor: this.props.numberChoose == 2 && this.props.kind == 'dir' && item.data.app_type == 'dir' ? '#e5e5e5' : '#fff' }} 
+                    onClick={ this.props.numberChoose == 2 && this.props.kind == 'dir' && item.data.app_type == 'dir' ? this.props.openModalDirBonus.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data) : () => {} } 
+                    //onClick={ item.data.app_type == 'dir' || this.props.kind == 'dir' ? () => {} : this.props.openZPCart.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data)}
+                  >
                     {parseInt(item.data.check_period) == 1 ? item.data.my_bonus : ' - '}
                   </TableCell>
 
@@ -981,6 +991,9 @@ class WorkSchedule_ extends React.Component {
       isOpenWS: false,
       date_start_ws: dayjs(Date.now()),
       date_end_ws: dayjs(Date.now()),
+
+      isModalDirBonus: false,
+      dir_bonus: 0
     };
   }
 
@@ -2288,6 +2301,55 @@ class WorkSchedule_ extends React.Component {
 
   }
 
+  openModalDirBonus(user_id, smena_id, app_id, part, user){
+    console.log(user_id, smena_id, app_id, part, user);
+
+    this.setState({
+      isModalDirBonus: true,
+      dir_bonus: user?.dir_bonus,
+      userInfo: {
+        name: user.user_name,
+        app: user.full_app_name,
+        given: user.given_cash,
+        date: this.state.mounth + (parseInt(part) == 1 ? '-01' : '-16'),
+        user_id: user_id,
+        smena_id: smena_id,
+        app_id: app_id,
+      },
+    });
+  }
+
+  async saveDirBonus(){
+    const data = {
+      date: this.state.mounth,
+      bonus: this.state.dir_bonus,
+      user_id: this.state.userInfo.user_id,
+    };
+
+    const res = await this.getData('save_dirBonus', data);
+
+    if (res.st) {
+      this.setState({
+        isModalDirBonus: false,
+        userInfo: {},
+        dir_bonus: '',
+        operAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+      setTimeout(() => {
+        this.updateData();
+      }, 300);
+    } else {
+      this.setState({
+        operAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    }
+  }
+
   render() {
     return (
       <>
@@ -3344,6 +3406,30 @@ class WorkSchedule_ extends React.Component {
           </DialogActions>
         </Dialog>
 
+        {/* бонус директора */}
+        <Dialog onClose={() => this.setState({ isModalDirBonus: false, dir_bonus: 0 })} open={this.state.isModalDirBonus}>
+          <DialogTitle>Бонус директора {this.state?.userInfo?.name} {this.state?.userInfo?.date}</DialogTitle>
+          
+          <DialogContent>
+            <Grid container spacing={3} style={{ marginTop: 10 }}>
+
+              <Grid item xs={12} sm={12}>
+                <MyTextInput
+                  label="Сумма"
+                  value={this.state.dir_bonus}
+                  func={(event) => this.setState({ dir_bonus: event.target.value })}
+                />
+              </Grid>
+
+              
+            </Grid>
+          </DialogContent>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={ this.saveDirBonus.bind(this) }>Сохранить</Button>
+            <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ isModalDirBonus: false })}>Отмена</Button>
+          </DialogActions>
+        </Dialog>
+
         <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
@@ -3462,6 +3548,8 @@ class WorkSchedule_ extends React.Component {
                     openAddUser={() => this.setState({ mainMenuAddUsers: true })}
 
                     clickAppNameUser={this.clickAppNameUser.bind(this)}
+
+                    openModalDirBonus={this.openModalDirBonus.bind(this)}
                   />
                 )}
               </TabPanel>
@@ -3525,6 +3613,7 @@ class WorkSchedule_ extends React.Component {
                     openAddUser={() => this.setState({ mainMenuAddUsers: true })}
 
                     clickAppNameUser={this.clickAppNameUser.bind(this)}
+                    openModalDirBonus={this.openModalDirBonus.bind(this)}
                   />
                 )}
               </TabPanel>

@@ -27,6 +27,208 @@ import queryString from 'query-string';
 
 import dayjs from 'dayjs';
 
+class MainTable extends React.Component {
+  render () {
+    return (
+      <TableContainer component={Paper}>
+
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Тип</TableCell>
+              <TableCell>Приход</TableCell>
+              <TableCell>Расход</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            
+            <TableRow>
+              <TableCell>
+                { this.props?.ostatok_nachalo_dnya_is_edit === false ?
+                  <Typography 
+                    component="span"
+                  >
+                    Остаток на начало дня
+                  </Typography>
+                    :
+                  <Typography 
+                    component="span"
+                    onClick={this.props.addData.bind(this, 'ostatok_nachalo_dnya', this.props.table, this.props?.ostatok_nachalo_dnya_arr, 'Физическая касса: Остаток на начало дня')} 
+                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
+                  >
+                    Остаток на начало дня
+                  </Typography>
+                }
+              </TableCell>
+              <TableCell>{this.props?.ostatok_nachalo_dnya}</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>
+                { this.props?.virycka_is_edit === false ?
+                  <Typography 
+                    component="span"
+                  >
+                    Выручка
+                  </Typography>
+                    :
+                  <Typography 
+                    component="span"
+                    onClick={this.props.addData.bind(this, 'virycka', this.props.table, this.props?.virycka_arr, 'Физическая касса: Выручка')} 
+                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
+                  >
+                    Выручка
+                  </Typography>
+                }
+                
+              </TableCell>
+              <TableCell>{this.props?.virycka}</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>
+                { this.props?.zaim_is_edit === false ?
+                  <Typography 
+                    component="span"
+                  >
+                    Заемные средства
+                  </Typography>
+                    :
+                  <Typography 
+                    component="span"
+                    onClick={this.props.addData.bind(this, 'zaim', this.props.table, this.props?.zaim_arr, 'Физическая касса: Заемные средства')} 
+                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
+                  >
+                    Заемные средства
+                  </Typography>
+                }
+              </TableCell>
+              <TableCell>{this.props?.zaim}</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>
+                { this.props?.dengi_iz_drygoy_kassy_is_edit === false ?
+                  <Typography
+                    component="span"
+                  >
+                    Перемещение из другой кассы
+                  </Typography>
+                    :
+                  <Typography
+                    component="span"
+                    onClick={this.props.addData.bind(this, 'dengi_iz_drygoy_kassy', this.props.table, this.props?.dengi_iz_drygoy_kassy_arr, 'Физическая касса: Перемещение из другой кассы')} 
+                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
+                  >
+                    Перемещение из другой кассы
+                  </Typography>
+                }
+              </TableCell>
+              <TableCell>{this.props?.dengi_iz_drygoy_kassy}</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>
+                { this.props?.vedomosm_zp_is_edit === false ?
+                  <Typography
+                    component="span"
+                  >
+                    Платежная ведомость на выплату заработной платы
+                  </Typography>
+                    :
+                  <Typography
+                    component="span"
+                    onClick={this.props.addData.bind(this, 'vedomosm_zp', this.props.table, this.props?.vedomosm_zp_arr, 'Физическая касса: Платежная ведомость на выплату заработной платы')} 
+                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
+                  >
+                    Платежная ведомость на выплату заработной платы
+                  </Typography>
+                }
+              </TableCell>
+              <TableCell></TableCell>
+              <TableCell>{this.props?.vedomosm_zp}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>
+                { this.props?.incasacia_is_edit === false ?
+                  <Typography
+                    component="span"
+                  >
+                    Инкассация
+                  </Typography>
+                    :
+                  <Typography
+                    component="span"
+                    onClick={this.props.addData.bind(this, 'incasacia', this.props.table, this.props?.incasacia_arr, 'Физическая касса: Инкассация')} 
+                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
+                  >
+                    Инкассация
+                  </Typography>
+                }
+              </TableCell>
+              <TableCell></TableCell>
+              <TableCell>{this.props?.incasacia}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>
+                { this.props?.vozvrat_zaim_is_edit === false ?
+                  <Typography 
+                    component="span"
+                  >
+                    Возврат займа
+                  </Typography>
+                    :
+                  <Typography 
+                    component="span"
+                    onClick={this.props.addData.bind(this, 'vozvrat_zaim', this.props.table, this.props?.vozvrat_zaim_arr, 'Физическая касса: Возврат займа')} 
+                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
+                  >
+                    Возврат займа
+                  </Typography>
+                }
+              </TableCell>
+              <TableCell></TableCell>
+              <TableCell>{this.props?.vozvrat_zaim}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>
+                { this.props?.vidacha_otchet_is_edit === false ?
+                  <Typography 
+                    component="span"
+                  >
+                    Выдача в подотчет
+                  </Typography>
+                    :
+                  <Typography 
+                    component="span"
+                    onClick={this.props.addData.bind(this, 'vidacha_otchet', this.props.table, this.props?.vidacha_otchet_arr, 'Физическая касса: Выдача в подотчет')} 
+                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
+                  >
+                    Выдача в подотчет
+                  </Typography>
+                }
+              </TableCell>
+              <TableCell></TableCell>
+              <TableCell>{this.props?.vidacha_otchet}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Итого за день</TableCell>
+              <TableCell>{this.props?.itog_plus}</TableCell>
+              <TableCell>{this.props?.itog_minus}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Остаток на конец дня</TableCell>
+              <TableCell>{this.props?.ostatok_konec_dnya}</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+
+          </TableBody>
+        </Table>
+      </TableContainer>
+    )
+  }
+}
+
 class CashBook_ extends React.Component {
   click = false;
 
@@ -194,8 +396,8 @@ class CashBook_ extends React.Component {
 
     this.click = true;
 
-    if( parseInt( this.state.summ ) == 0 ){
-      alert('Необходимо указать сумму');
+    if( parseInt( this.state.summ ) == 0 || this.state.comment.length == 0 ){
+      alert('Необходимо указать сумму и комментарий');
 
       setTimeout( () => {
         this.click = false;
@@ -214,8 +416,6 @@ class CashBook_ extends React.Component {
     };
     
     let res = await this.getData('save_give', data);
-
-    console.log( res )
 
     if( res['st'] == true ){
       this.setState({
@@ -326,17 +526,32 @@ class CashBook_ extends React.Component {
   }
 
   addData(type, kassa, hist, title){
-    this.setState({
-      openModalType: type,
-      openModalType_edit: this.state.fiz_kassa[ type+'_is_edit' ] == 'edit' ? true : false,
-      openModalKassa: kassa,
-      openModalTitle: title,
-      openModalHist_data: hist,
 
-      modalDialog: true,
-      comment: '',
-      summ: 0,
-    })
+    if( kassa == 'online' ){
+      this.setState({
+        openModalType: type,
+        openModalType_edit: this.state.driver_kassa[ type+'_is_edit' ] == 'edit' ? true : false,
+        openModalKassa: kassa,
+        openModalTitle: title,
+        openModalHist_data: hist,
+  
+        modalDialog: true,
+        comment: '',
+        summ: 0,
+      })
+    }else{
+      this.setState({
+        openModalType: type,
+        openModalType_edit: this.state.fiz_kassa[ type+'_is_edit' ] == 'edit' ? true : false,
+        openModalKassa: kassa,
+        openModalTitle: title,
+        openModalHist_data: hist,
+
+        modalDialog: true,
+        comment: '',
+        summ: 0,
+      })
+    }
 
     //Остаток на начало дня - первый раз ставят директора
 
@@ -358,6 +573,8 @@ class CashBook_ extends React.Component {
         </Backdrop>
         
         <Dialog
+          fullWidth={true}
+          maxWidth={'md'}
           open={this.state.modalDialog}
           onClose={ () => { this.setState({ modalDialog: false, comment: '', openModalType: '', openModalKassa: '', summ: 0 }) } }
         >
@@ -388,6 +605,8 @@ class CashBook_ extends React.Component {
                         <TableCell>Время</TableCell>
                         <TableCell>Комментарий</TableCell>
                         <TableCell>Сумма</TableCell>
+                        <TableCell>Наличка</TableCell>
+                        <TableCell>Безнал</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -399,6 +618,8 @@ class CashBook_ extends React.Component {
                           <TableCell>{item.date}</TableCell>
                           <TableCell>{item.comment}</TableCell>
                           <TableCell>{item.summ}</TableCell>
+                          <TableCell>{item.sum_cash}</TableCell>
+                          <TableCell>{item.sum_bank}</TableCell>
                         </TableRow>
 
                       )}
@@ -486,212 +707,87 @@ class CashBook_ extends React.Component {
           </Grid>
         
           <Grid item xs={12} sm={6}>
-            <TableContainer component={Paper}>
+            <MainTable
+              table={'fiz'}
+              addData={this.addData.bind(this)}
+              ostatok_nachalo_dnya={this.state.fiz_kassa?.ostatok_nachalo_dnya}
+              ostatok_nachalo_dnya_is_edit={this.state.fiz_kassa?.ostatok_nachalo_dnya_is_edit}
+              ostatok_nachalo_dnya_arr={this.state.fiz_kassa?.ostatok_nachalo_dnya_arr}
+              
+              virycka={this.state.fiz_kassa?.virycka}
+              virycka_is_edit={this.state.fiz_kassa?.virycka_is_edit}
+              virycka_arr={this.state.fiz_kassa?.virycka_arr}
 
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Тип</TableCell>
-                    <TableCell>Приход</TableCell>
-                    <TableCell>Расход</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  
-                  <TableRow>
-                    <TableCell>
-                      { this.state.fiz_kassa?.ostatok_nachalo_dnya_is_edit === false ?
-                        <Typography 
-                          component="span"
-                        >
-                          Остаток на начало дня
-                        </Typography>
-                          :
-                        <Typography 
-                          component="span"
-                          onClick={this.addData.bind(this, 'ostatok_nachalo_dnya', 'fiz', this.state.fiz_kassa?.ostatok_nachalo_dnya_arr, 'Физическая касса: Остаток на начало дня')} 
-                          style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                        >
-                          Остаток на начало дня
-                        </Typography>
-                      }
-                    </TableCell>
-                    <TableCell>{this.state.fiz_kassa?.ostatok_nachalo_dnya}</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      { this.state.fiz_kassa?.virycka_is_edit === false ?
-                        <Typography 
-                          component="span"
-                        >
-                          Выручка
-                        </Typography>
-                          :
-                        <Typography 
-                          component="span"
-                          onClick={this.addData.bind(this, 'virycka', 'fiz', this.state.fiz_kassa?.virycka_arr, 'Физическая касса: Выручка')} 
-                          style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                        >
-                          Выручка
-                        </Typography>
-                      }
-                      
-                    </TableCell>
-                    <TableCell>{this.state.fiz_kassa?.virycka}</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      { this.state.fiz_kassa?.zaim_is_edit === false ?
-                        <Typography 
-                          component="span"
-                        >
-                          Заемные средства
-                        </Typography>
-                          :
-                        <Typography 
-                          component="span"
-                          onClick={this.addData.bind(this, 'zaim', 'fiz', this.state.fiz_kassa?.zaim_arr, 'Физическая касса: Заемные средства')} 
-                          style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                        >
-                          Заемные средства
-                        </Typography>
-                      }
-                    </TableCell>
-                    <TableCell>{this.state.fiz_kassa?.zaim}</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      { this.state.fiz_kassa?.dengi_iz_drygoy_kassy_is_edit === false ?
-                        <Typography
-                          component="span"
-                        >
-                          Перемещение из другой кассы
-                        </Typography>
-                          :
-                        <Typography
-                          component="span"
-                          onClick={this.addData.bind(this, 'dengi_iz_drygoy_kassy', 'fiz', this.state.fiz_kassa?.dengi_iz_drygoy_kassy_arr, 'Физическая касса: Перемещение из другой кассы')} 
-                          style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                        >
-                          Перемещение из другой кассы
-                        </Typography>
-                      }
-                    </TableCell>
-                    <TableCell>{this.state.fiz_kassa?.dengi_iz_drygoy_kassy}</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      { this.state.fiz_kassa?.vedomosm_zp_is_edit === false ?
-                        <Typography
-                          component="span"
-                        >
-                          Платежная ведомость на выплату заработной платы
-                        </Typography>
-                          :
-                        <Typography
-                          component="span"
-                          onClick={this.addData.bind(this, 'vedomosm_zp', 'fiz', this.state.fiz_kassa?.vedomosm_zp_arr, 'Физическая касса: Платежная ведомость на выплату заработной платы')} 
-                          style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                        >
-                          Платежная ведомость на выплату заработной платы
-                        </Typography>
-                      }
-                    </TableCell>
-                    <TableCell></TableCell>
-                    <TableCell>{this.state.fiz_kassa?.vedomosm_zp}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      { this.state.fiz_kassa?.incasacia_is_edit === false ?
-                        <Typography
-                          component="span"
-                        >
-                          Инкассация
-                        </Typography>
-                          :
-                        <Typography
-                          component="span"
-                          onClick={this.addData.bind(this, 'incasacia', 'fiz', this.state.fiz_kassa?.incasacia_arr, 'Физическая касса: Инкассация')} 
-                          style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                        >
-                          Инкассация
-                        </Typography>
-                      }
-                    </TableCell>
-                    <TableCell></TableCell>
-                    <TableCell>{this.state.fiz_kassa?.incasacia}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      { this.state.fiz_kassa?.vozvrat_zaim_is_edit === false ?
-                        <Typography 
-                          component="span"
-                        >
-                          Возврат займа
-                        </Typography>
-                          :
-                        <Typography 
-                          component="span"
-                          onClick={this.addData.bind(this, 'vozvrat_zaim', 'fiz', this.state.fiz_kassa?.vozvrat_zaim_arr, 'Физическая касса: Возврат займа')} 
-                          style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                        >
-                          Возврат займа
-                        </Typography>
-                      }
-                    </TableCell>
-                    <TableCell></TableCell>
-                    <TableCell>{this.state.fiz_kassa?.vozvrat_zaim}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      { this.state.fiz_kassa?.vidacha_otchet_is_edit === false ?
-                        <Typography 
-                          component="span"
-                        >
-                          Выдача в подотчет
-                        </Typography>
-                          :
-                        <Typography 
-                          component="span"
-                          onClick={this.addData.bind(this, 'vidacha_otchet', 'fiz', this.state.fiz_kassa?.vidacha_otchet_arr, 'Физическая касса: Выдача в подотчет')} 
-                          style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                        >
-                          Выдача в подотчет
-                        </Typography>
-                      }
-                    </TableCell>
-                    <TableCell></TableCell>
-                    <TableCell>{this.state.fiz_kassa?.vidacha_otchet}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Итого за день</TableCell>
-                    <TableCell>{this.state.fiz_kassa?.itog_plus}</TableCell>
-                    <TableCell>{this.state.fiz_kassa?.itog_minus}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Остаток на конец дня</TableCell>
-                    <TableCell>{this.state.fiz_kassa?.ostatok_konec_dnya}</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
+              zaim={this.state.fiz_kassa?.zaim}
+              zaim_is_edit={this.state.fiz_kassa?.zaim_is_edit}
+              zaim_arr={this.state.fiz_kassa?.zaim_arr}
 
-                </TableBody>
-              </Table>
+              dengi_iz_drygoy_kassy={this.state.fiz_kassa?.dengi_iz_drygoy_kassy}
+              dengi_iz_drygoy_kassy_is_edit={this.state.fiz_kassa?.dengi_iz_drygoy_kassy_is_edit}
+              dengi_iz_drygoy_kassy_arr={this.state.fiz_kassa?.dengi_iz_drygoy_kassy_arr}
 
+              vedomosm_zp={this.state.fiz_kassa?.vedomosm_zp}
+              vedomosm_zp_is_edit={this.state.fiz_kassa?.vedomosm_zp_is_edit}
+              vedomosm_zp_arr={this.state.fiz_kassa?.vedomosm_zp_arr}
 
-              
-              
-              
-              
-              
-              
+              incasacia={this.state.fiz_kassa?.incasacia}
+              incasacia_is_edit={this.state.fiz_kassa?.incasacia_is_edit}
+              incasacia_arr={this.state.fiz_kassa?.incasacia_arr}
 
+              vozvrat_zaim={this.state.fiz_kassa?.vozvrat_zaim}
+              vozvrat_zaim_is_edit={this.state.fiz_kassa?.vozvrat_zaim_is_edit}
+              vozvrat_zaim_arr={this.state.fiz_kassa?.vozvrat_zaim_arr}
 
+              vidacha_otchet={this.state.fiz_kassa?.vidacha_otchet}
+              vidacha_otchet_is_edit={this.state.fiz_kassa?.vidacha_otchet_is_edit}
+              vidacha_otchet_zp_arr={this.state.fiz_kassa?.vidacha_otchet_arr}
+
+              itog_plus={this.state.fiz_kassa?.itog_plus}
+              itog_minus={this.state.fiz_kassa?.itog_minus}
+              ostatok_konec_dnya={this.state.fiz_kassa?.ostatok_konec_dnya}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <MainTable 
+              table={'online'}
+              addData={this.addData.bind(this)}
+              ostatok_nachalo_dnya={this.state.driver_kassa?.ostatok_nachalo_dnya}
+              ostatok_nachalo_dnya_is_edit={this.state.driver_kassa?.ostatok_nachalo_dnya_is_edit}
+              ostatok_nachalo_dnya_arr={this.state.driver_kassa?.ostatok_nachalo_dnya_arr}
               
-            </TableContainer>
+              virycka={this.state.driver_kassa?.virycka}
+              virycka_is_edit={this.state.driver_kassa?.virycka_is_edit}
+              virycka_arr={this.state.driver_kassa?.virycka_arr}
+
+              zaim={this.state.driver_kassa?.zaim}
+              zaim_is_edit={this.state.driver_kassa?.zaim_is_edit}
+              zaim_arr={this.state.driver_kassa?.zaim_arr}
+
+              dengi_iz_drygoy_kassy={this.state.driver_kassa?.dengi_iz_drygoy_kassy}
+              dengi_iz_drygoy_kassy_is_edit={this.state.driver_kassa?.dengi_iz_drygoy_kassy_is_edit}
+              dengi_iz_drygoy_kassy_arr={this.state.driver_kassa?.dengi_iz_drygoy_kassy_arr}
+
+              vedomosm_zp={this.state.driver_kassa?.vedomosm_zp}
+              vedomosm_zp_is_edit={this.state.driver_kassa?.vedomosm_zp_is_edit}
+              vedomosm_zp_arr={this.state.driver_kassa?.vedomosm_zp_arr}
+
+              incasacia={this.state.driver_kassa?.incasacia}
+              incasacia_is_edit={this.state.driver_kassa?.incasacia_is_edit}
+              incasacia_arr={this.state.driver_kassa?.incasacia_arr}
+
+              vozvrat_zaim={this.state.driver_kassa?.vozvrat_zaim}
+              vozvrat_zaim_is_edit={this.state.driver_kassa?.vozvrat_zaim_is_edit}
+              vozvrat_zaim_arr={this.state.driver_kassa?.vozvrat_zaim_arr}
+
+              vidacha_otchet={this.state.driver_kassa?.vidacha_otchet}
+              vidacha_otchet_is_edit={this.state.driver_kassa?.vidacha_otchet_is_edit}
+              vidacha_otchet_zp_arr={this.state.driver_kassa?.vidacha_otchet_arr}
+
+              itog_plus={this.state.driver_kassa?.itog_plus}
+              itog_minus={this.state.driver_kassa?.itog_minus}
+              ostatok_konec_dnya={this.state.driver_kassa?.ostatok_konec_dnya}
+            />
           </Grid>
 
           

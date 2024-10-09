@@ -561,6 +561,7 @@ class SkladItemsModule_ extends React.Component {
     };
 
     let res = await this.getData('get_one', data);
+    console.log("🚀 === res:", res);
 
     res.item.pf_id = res.pf_list.find((item) => item.id === res.item.pf_id);
     res.item.cat_id = res.cats.find((item) => item.id === res.item.cat_id);

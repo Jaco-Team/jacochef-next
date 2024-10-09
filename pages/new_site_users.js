@@ -34,8 +34,11 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 import TableFooter from '@mui/material/TableFooter';
+import TableHead from '@mui/material/TableHead';
 
 import Paper from '@mui/material/Paper';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 class CatWork_ extends React.Component {
   chartordersD = null;
@@ -45,6 +48,7 @@ class CatWork_ extends React.Component {
     super(props);
         
     this.myRef = React.createRef();
+    this.myRef_action = React.createRef();
 
     this.state = {
       module: 'new_site_users',
@@ -79,11 +83,23 @@ class CatWork_ extends React.Component {
       textComment: '',
 
       openAlert: false,
-      alertStatus: '',
+      alertStatus: false,
       alertText: '',
 
       openOrder: false,
-      showOrder: null
+      showOrder: null,
+
+      errOrder: null,
+    
+      modalDialogAction: false,
+      comment_id: null,
+
+      stat_open: [],
+      raiting: 0,
+      type_sale: 0,
+
+      modalDialogNewShowComments: false,
+      show_my_orders: []
     };
   }
   
@@ -165,14 +181,19 @@ class CatWork_ extends React.Component {
 
     let res = await this.getData('show', data);
 
-    if( res.st === false ){
-      alert(res.text)
-    }else{
+    if(res.st){
       this.setState({
-        svod: res.svod
+        svod: res.svod,
+        stat_open: res.stat_open
       });
 
       this.renderGraphOrdersD(res.svod);
+    } else {
+      this.setState({
+        openAlert: true,
+        alertStatus: false,
+        alertText: res.text
+      });
     }
   }
 
@@ -181,14 +202,14 @@ class CatWork_ extends React.Component {
       number
     };
 
-    let res = await this.getData('get_one', data);
+    const res = await this.getData('get_one', data);
 
     this.setState({
       modalDialogNew: true,
       user_info: res.info,
       user_orders: res.orders,
       comments: res.comments,
-      openNumber: number
+      openNumber: number,
     })
   }
 
@@ -326,21 +347,24 @@ class CatWork_ extends React.Component {
   }
 
   async saveComment(){
-
     if(this.myRef.current) {
       if( this.myRef.current.getContent().length == 0 ){
         this.setState({
           openAlert: true,
-          alertStatus: 'error',
+          alertStatus: false,
           alertText: 'Комментарий пустой'
         });
+
+        return;
       }
-    }else{
+    } else {
       this.setState({
         openAlert: true,
-        alertStatus: 'error',
+        alertStatus: false,
         alertText: 'Комментарий пустой'
       });
+
+      return;
     }
 
     if( this.click === true ){
@@ -359,21 +383,18 @@ class CatWork_ extends React.Component {
     if( res.st === false ){
       this.setState({
         openAlert: true,
-        alertStatus: 'error',
+        alertStatus: false,
         alertText: res.text
       });
     }else{
-      this.setState({
-        openAlert: true,
-        alertStatus: 'success',
-        alertText: 'Успешно сохранено'
-      });
-
       this.myRef.current.setContent('');
 
       this.setState({
+        openAlert: true,
+        alertStatus: true,
+        alertText: 'Успешно сохранено',
         comments: res.comments,
-      })
+      });
 
       this.show();
     }
@@ -383,19 +404,37 @@ class CatWork_ extends React.Component {
     }, 500 )
   }
 
-  async savePromo(){
-    if( this.click === true ){
-      return ;
-    }else{
-      this.click = true;
+  async savePromo(percent){
+    const number = this.state.openNumber;
+
+    const data = {
+      number,
+      percent
     }
 
-    let res = await this.getData('save_promo', {});
+    const res = await this.getData('save_promo', data);
 
+    /*if(res.st){
 
-    setTimeout( () => {
-      this.click = false;
-    }, 500 )
+      this.setState({
+        openAlert: true,
+        alertStatus: true,
+        alertText: res.text,
+        modalDialogAction: false,
+      })
+
+      this.saveCommentAction();
+      
+    } else {
+      
+      this.setState({
+        openAlert: true,
+        alertStatus: false,
+        alertText: res.text,
+        modalDialogAction: false,
+      });
+
+    }*/
   }
 
   async orderOpen(order_id, point_id){
@@ -408,7 +447,103 @@ class CatWork_ extends React.Component {
 
     this.setState({
       showOrder: res,
+      errOrder: res?.err_order ?? null,
       openOrder: true
+    })
+  }
+
+  async saveCommentAction(){
+
+    if((!this.myRef_action.current || this.myRef_action.current.getContent().length === 0)) {
+
+      this.setState({
+        openAlert: true,
+        alertStatus: false,
+        alertText: 'В описании пусто'
+      });
+
+      return;
+    } 
+
+    if (this.click){
+      return;
+    } else {
+      this.click = true;
+    }
+
+    let data;
+
+    /*if(parseInt(type) === 1) {
+      data = {
+        type,
+        comment_id: this.state.comment_id,
+        description: "Выписан промокод на скидку 10%",
+        number: this.state.openNumber,
+        raiting: this.state.raiting,
+        type_sale: this.state.raiting,
+      };
+    }
+
+    if(parseInt(type) === 2) {
+      data = {
+        type,
+        comment_id: this.state.comment_id,
+        description: "Выписан промокод на скидку 20%",
+        number: this.state.openNumber,
+      };
+    }*/
+
+    //if(parseInt(type) === 3) {
+      data = {
+        comment_id: this.state.comment_id,
+        description: this.myRef_action.current.getContent(),
+        number: this.state.openNumber,
+        raiting: this.state.raiting,
+        type_sale: this.state.type_sale,
+      };
+    //}
+
+    if( parseInt(this.state.type_sale) > 0 ){
+      this.savePromo(this.state.type_sale);
+    }
+
+    const res = await this.getData('save_action', data);
+
+    if(!res.st){
+
+      this.setState({
+        openAlert: true,
+        alertStatus: false,
+        alertText: res.text,
+        modalDialogAction: false,
+      });
+
+    } else {
+
+      //if(parseInt(type) === 3) {
+        this.myRef_action.current.setContent('');
+      //}
+
+      this.setState({
+        openAlert: true,
+        alertStatus: true,
+        alertText: 'Успешно сохранено',
+        modalDialogAction: false,
+        comments: res.comments,
+      })
+
+      this.show();
+    }
+
+    setTimeout(() => {
+      this.click = false;
+    }, 500)
+  }
+
+  showMyComments(users){
+    this.setState({
+      modalDialogNewShowComments: true,
+      show_my_orders: users
     })
   }
 
@@ -432,6 +567,8 @@ class CatWork_ extends React.Component {
             onClose={ () => { this.setState({ openOrder: false }) } }
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
+            fullWidth={true}
+            maxWidth={'md'}
           >
             <DialogTitle style={{textAlign: 'center'}}>Заказ #{this.state.showOrder.order.order_id}</DialogTitle>
             <DialogContent>
@@ -440,6 +577,7 @@ class CatWork_ extends React.Component {
                 <Grid item xs={12}>
                   <span>{this.state.showOrder.order.type_order}: {this.state.showOrder.order.type_order_addr_new}</span>
                 </Grid>
+
                 { parseInt(this.state.showOrder.order.type_order_) == 1 ?
                   parseInt(this.state.showOrder.order.fake_dom) == 0 ?
                     <Grid item xs={12}>
@@ -469,7 +607,7 @@ class CatWork_ extends React.Component {
                 { this.state.showOrder.order.delete_reason.length > 0 ? <Grid item xs={12}><span style={{ color: 'red' }}>{this.state.showOrder.order.delete_reason}</span></Grid> : null}
                 
                 { parseInt(this.state.showOrder.order.is_preorder) == 1 ? null :
-                  <Grid item xs={12}><span>{this.state.showOrder.order.text_time}{this.state.showOrder.order.time_to_client}</span></Grid>
+                  <Grid item xs={12}><span>{'Обещали: ' + this.state.showOrder.order.time_to_client + ' / '}{this.state.showOrder.order.text_time}{this.state.showOrder.order.time}</span></Grid>
                 }
                 
                 { this.state.showOrder.order.promo_name == null || this.state.showOrder.order.promo_name.length == 0 ? null :
@@ -523,7 +661,7 @@ class CatWork_ extends React.Component {
                     </TableBody>
                     <TableFooter>
                       <TableRow>
-                        <TableCell style={{fontWeight: 'bold', color: '#000'}}>Сумма закза</TableCell>
+                        <TableCell style={{fontWeight: 'bold', color: '#000'}}>Сумма заказа</TableCell>
                         <TableCell></TableCell>
                         <TableCell style={{fontWeight: 'bold', color: '#000'}}>{this.state.showOrder.order.sum_order} р</TableCell>
                       </TableRow>
@@ -531,6 +669,33 @@ class CatWork_ extends React.Component {
                   </Table>
                 </Grid>
 
+                {!this.state.errOrder ? null : 
+                  <Grid item xs={12} mt={3}>
+                  <Accordion>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography style={{fontWeight: 'bold'}}>Ошибка</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell style={{ width: '20%' }}>Дата создания</TableCell>
+                            <TableCell style={{ width: '30%' }}>Проблема</TableCell>
+                            <TableCell style={{ width: '30%' }}>Решение</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          <TableRow hover>
+                            <TableCell>{this.state.errOrder.date_time_desc}</TableCell>
+                            <TableCell>{this.state.errOrder.order_desc}</TableCell>
+                            <TableCell>{this.state.errOrder.text_win}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </AccordionDetails>
+                  </Accordion>
+                  </Grid>
+                }
                 
               </Grid>
 
@@ -598,7 +763,7 @@ class CatWork_ extends React.Component {
                     <Table>
                       <TableBody>
                         { this.state.user_orders.map( (item, key) =>
-                          <TableRow key={key} onClick={this.orderOpen.bind(this, item.order_id, item.point_id)}>
+                          <TableRow key={key} onClick={this.orderOpen.bind(this, item.order_id, item.point_id)} hover style={{ cursor: 'pointer'}}>
                             <TableCell>{item.point}</TableCell>
                             <TableCell>{item.new_type_order}</TableCell>
                             <TableCell>{item.date_time}</TableCell>
@@ -613,16 +778,45 @@ class CatWork_ extends React.Component {
               </Grid>
 
               <Grid item xs={12} sm={12}>
-                { this.state.comments.map( (item, key) => 
-                  <Paper key={key} style={{ padding: 15, marginBottom: 15 }} elevation={3}>
+                {this.state.comments.map( (item, key) => 
+                  <Paper key={key} style={{ padding: 15, marginBottom: 15}} elevation={3}>
+                    <b>{item?.description ? 'Обращение:' : 'Комментарий:' }</b>
                     <span dangerouslySetInnerHTML={{__html: item.comment}} />
-                    <div style={{ textAlign: 'end' }}>
-                      <span style={{ marginRight: 20 }}>{item.date_add}</span>
-                      <span>{item.name}</span>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ marginRight: 20 }}>{item.date_add}</span>
+                        <span>{item.name}</span>
+                      </div>
+                    </div>
+
+                    <hr />
+
+                    <b>{item?.description ? 'Действие:' : null }</b>
+                    
+                    <p dangerouslySetInnerHTML={{__html: item?.description}} />
+                    
+                    <p>
+                      <b>{ parseInt(item.raiting) > 0 ? parseInt(item.raiting) == 1 ? 'Положительный отзыв' : parseInt(item.raiting) == 2 ? 'Средний отзыв' : 'Отрицательный отзыв' : '' }</b>
+                      { parseInt(item.raiting) > 0 & parseInt(item.sale) > 0 ? ' / ' : '' }
+                      <b>{ parseInt(item.sale) > 0 ? 'Выписана скидка '+item.sale+'%' : '' }</b>
+                    </p>
+
+                    <div style={{ display: 'flex', justifyContent: item?.description ? 'flex-end' : 'space-between', alignItems: 'center' }}>
+                      {item?.description ? null :
+                        <>
+                          <Button color="primary" variant="contained" onClick={ () => { this.setState({ modalDialogAction: true, comment_id: item.id }) } }>Действие</Button>
+                          
+                        </>
+                      }
+                      <div>
+                        <span style={{ marginRight: 20 }}>{item.date_time}</span>
+                        <span>{item.name_close}</span>
+                      </div>
                     </div>
                   </Paper>
                   
-                ) }
+                )}
               </Grid>
 
               <Grid item xs={12} sm={12}>
@@ -634,6 +828,101 @@ class CatWork_ extends React.Component {
           </DialogContent>
           <DialogActions>
             <Button color="primary" variant="contained" onClick={this.saveComment.bind(this)}>Добавить новый комментарий</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={this.state.modalDialogNewShowComments}
+          onClose={ () => { this.setState({ modalDialogNewShowComments: false }) } }
+          fullWidth={true}
+          maxWidth={'lg'}
+        >
+          <DialogTitle>Оформленные обращения</DialogTitle>
+          <DialogContent style={{ paddingTop: 10 }}>
+            
+            <Grid container spacing={3}>
+              
+              <Grid item xs={12}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Номер телефона</TableCell>
+                      <TableCell>Комментарий</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    { this.state.show_my_orders.map( (it, k) =>
+                      <TableRow key={k} style={{ cursor: 'pointer' }} onClick={ this.get_user_info.bind(this, it.user_number) }>
+                        <TableCell>{ it.user_number }</TableCell>
+                        <TableCell style={{ maxWidth: '50%', padding: 0 }} dangerouslySetInnerHTML={{__html: it.comment}}></TableCell>
+                      </TableRow>
+                    ) }
+                  </TableBody>
+                </Table>
+              </Grid>
+
+                
+
+              
+              
+            </Grid>
+
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={this.state.modalDialogAction}
+          onClose={ () => { this.setState({ modalDialogAction: false }) } }
+          fullWidth={true}
+          maxWidth={'lg'}
+        >
+          <DialogTitle>Описание ситуации</DialogTitle>
+          <DialogContent style={{ paddingTop: 10 }}>
+
+            <Grid item xs={12} sm={12} style={{ justifyContent: 'center', display: 'flex', marginBottom: 20 }}>
+              <ToggleButtonGroup
+                value={this.state.raiting}
+                exclusive
+                size="small"
+                onChange={(event, data)=>{ this.setState({raiting: data ?? 0}) } }
+              >
+                <ToggleButton value="1" style={{ backgroundColor: parseInt(this.state.raiting) == 1 ? '#dd1a32' : '#fff', borderRightWidth: 2 }}>
+                  <span style={{ color: parseInt(this.state.raiting) == 1 ? '#fff' : '#333', padding: '0 20px' }}>Положительный отзыв</span>
+                </ToggleButton>
+                <ToggleButton value="2" style={{ backgroundColor: parseInt(this.state.raiting) == 2 ? '#dd1a32' : '#fff', borderRightWidth: 2 }}>
+                  <span style={{ color: parseInt(this.state.raiting) == 2 ? '#fff' : '#333', padding: '0 20px' }}>Средний отзыв</span>
+                </ToggleButton>
+                <ToggleButton value="3" style={{ backgroundColor: parseInt(this.state.raiting) == 3 ? '#dd1a32' : '#fff' }}>
+                  <span style={{ color: parseInt(this.state.raiting) == 3 ? '#fff' : '#333', padding: '0 20px' }}>Отрицательный отзыв</span>
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Grid>
+
+            <Grid item xs={12} sm={12} style={{ justifyContent: 'center', display: 'flex', marginBottom: 20 }}>
+              <ToggleButtonGroup
+                value={this.state.type_sale}
+                exclusive
+                size="small"
+                onChange={(event, data)=>{ this.setState({type_sale: data ?? 0})} }
+              >
+                <ToggleButton value="10" style={{ backgroundColor: parseInt(this.state.type_sale) == 10 ? '#dd1a32' : '#fff', borderRightWidth: 2 }}>
+                  <span style={{ color: parseInt(this.state.type_sale) == 10 ? '#fff' : '#333', padding: '0 20px' }}>Скидка 10%</span>
+                </ToggleButton>
+                <ToggleButton value="20" style={{ backgroundColor: parseInt(this.state.type_sale) == 20 ? '#dd1a32' : '#fff' }}>
+                  <span style={{ color: parseInt(this.state.type_sale) == 20 ? '#fff' : '#333', padding: '0 20px' }}>Скидка 20%</span>
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Grid>
+
+            <Grid item xs={12} sm={12}>
+              <TextEditor22 id="EditorNew" value={''} refs_={this.myRef_action} />
+            </Grid>
+
+          </DialogContent>
+          <DialogActions>
+            <Button color="primary" variant="contained" onClick={this.saveCommentAction.bind(this)}>
+              Сохранить
+            </Button>
           </DialogActions>
         </Dialog>
         
@@ -666,6 +955,54 @@ class CatWork_ extends React.Component {
             <Button variant="contained" color="primary" onClick={ this.show.bind(this) }>Показать</Button>
           </Grid>
           
+          <Grid item xs={12} style={{ marginBottom: 100 }}>
+            {this.state.stat_open.map( (item, key) =>
+              <Accordion style={{ width: '100%' }} key={key}>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                >
+                  <Typography>Статистика обращений</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>ФИО</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Комментариев</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Закрытых обращений</TableCell>
+
+                        <TableCell style={{ textAlign: 'center' }}>Скидка 10%</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Скидка 20%</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Положительный отзыв</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Средний отзыв</TableCell>
+                        <TableCell style={{ textAlign: 'center' }}>Отрицательный отзыв</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      { this.state.stat_open.map( (it, k) =>
+                        <TableRow key={k} style={{ cursor: 'pointer' }} onClick={this.showMyComments.bind(this, it?.users)}>
+                          <TableCell>{ it.short_name }</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{ it.count_open }</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{ it.count_close }</TableCell>
+
+                          <TableCell style={{ textAlign: 'center' }}>{ it.stat?.type_10 ?? 0 }</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{ it.stat?.type_20 ?? 0 }</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{ it.stat?.type_1 ?? 0 }</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{ it.stat?.type_2 ?? 0 }</TableCell>
+                          <TableCell style={{ textAlign: 'center' }}>{ it.stat?.type_3 ?? 0 }</TableCell>
+                        </TableRow>
+                      ) }
+                    </TableBody>
+                  </Table>
+
+
+                  
+                </AccordionDetails>
+              </Accordion>
+            )}
+            
+          </Grid>
+
           <Grid item xs={12}>
             <h2 style={{ textAlign: 'center' }}>Новые клиенты по дням</h2>
             <div id="chartordersD" style={{ width: "100%", height: "500px" }} />
