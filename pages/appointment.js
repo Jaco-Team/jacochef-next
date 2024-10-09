@@ -22,6 +22,10 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -154,23 +158,36 @@ class Appointment_ extends React.Component {
   // сохранение сортировки
   async save() {
     console.log('save')
-    const app_list = this.state.items;
+
  
-    console.log('app_list',app_list);
+    let data = {
+      item:  this.state.item,
+      app_list:  this.state.items,   
+    };
+    console.log('data',data);
 
    // await this.getData('save_sort', app_list);
     this.setState({
       modalDialog: false
     });
-    console.log('save ok')
+
+    let res = await this.getData('save_edit', data);
+
+    console.log(res);
+
+    if (res.st === false) {
+      alert(res.text);
+    } else {
+      console.log('save ok')
+    }
+ 
   }
 
   //(this, 'kind', item.kind, key)
   changeItem(data, id, event) {
    
     const items = this.state.items;
-    console.log('data='+data+' id='+id + ' ev='+ event.target.value )
-
+  //  console.log('data='+data+' id='+id + ' ev='+ event.target.value )
     items.forEach((item) => {
       if (item.id === id) {
          console.log('YES=')
@@ -186,25 +203,75 @@ class Appointment_ extends React.Component {
     console.log('setStateok')
   }
   
+  changeItem2(data, event) {
+   
+    const item = this.state.item;
+  //  console.log('data='+data+' id='+id + ' ev='+ event.target.value )
+    item[data] = event.target.value;
+    console.log('item', item[data],'data='+data)
+    this.setState({
+      item,
+    });
+    
+  }
+  
+  
   async openModal(id) {
 
-    console.log('id='+id);
     let d = {'id' : id};
     const res = await this.getData('get_one', id); 
 
-    console.log('r_data=',res.data);
-    console.log('r_name=',res.data.name);
     this.setState({
       modalDialog: true,
       item: res.data
     });
   }
 
-  changeItemChecked(data, event) {
-    console.log('check_',event.target.checked);
-    const item = this.state.item;
+  changeItemChecked(category_id, module_id, event) {
 
-   // item.err[data] = event.target.checked === true ? 1 : 0;
+    let item = this.state.item;
+ 
+    item.full_menu.map((inner, key) => {
+   
+      inner.child.map((it, k) => {
+        if(module_id == inner.id && category_id == it.id){
+          item.full_menu[key].child[k].is_active = event.target.checked === true ? 1 : 0;
+        }
+      })
+    })
+
+    this.setState({
+      item,
+    });
+  }
+
+  changeItemChecked2(category_id, module_id, dop_id, event) {
+    console.log('check_',event.target.checked);
+    console.log('category_id=',category_id);
+    console.log('module_id=',module_id);
+    console.log('dop_id=',dop_id);
+
+    let item = this.state.item;
+   // console.log('item=',item);
+    item.full_menu.map((inner, key) => {
+      //console.log('child=',inner.child);
+      inner.child.map((it, k) => {
+
+        if(module_id == inner.id && category_id == it.id){
+          console.log('cat_name='+it.name ); 
+          // item.full_menu[key].child[k].is_active = event.target.checked === true ? 1 : 0;
+        }
+        it.dop.map((dp, j) => {
+          console.log('dp=', dp); 
+          if(module_id == inner.id && category_id == it.id  && dp.id == dop_id){
+            console.log('yes='+event.target.checked ); 
+            item.full_menu[key].child[k].dop[j].is_active = event.target.checked === true ? 1 : 0;
+          }
+        
+        })
+      })
+    
+    })
 
     this.setState({
       item,
@@ -296,7 +363,7 @@ class Appointment_ extends React.Component {
                 <MyTextInput
                   label="Название должности"
                   value={this.state.item.name}
-                  func={this.changeItem.bind(this, 'name')}
+                  func={this.changeItem2.bind(this, 'name')}
                 />
               </Grid>
 
@@ -304,7 +371,7 @@ class Appointment_ extends React.Component {
                 <MyTextInput
                   label="Сокрощенное название"
                   value={this.state.item.short_name}
-                  func={this.changeItem.bind(this, 'short_name')}
+                  func={this.changeItem2.bind(this, 'short_name')}
                 />
               </Grid>
 
@@ -312,59 +379,54 @@ class Appointment_ extends React.Component {
                 <MyTextInput
                   label="Норма бонусов"
                   value={this.state.item.bonus}
-                  func={this.changeItem.bind(this, 'bonus')}
+                  func={this.changeItem2.bind(this, 'bonus')}
                 />
               </Grid>
             </Grid>
+        
+            <Grid style={{ marginTop: 10}}>
+                { this.state.item.full_menu ?
+                    this.state.item.full_menu.map((item, key) =>
+                      <Grid item key={key} >
+                          <Grid item  style={{ width: '100%', fontWeight: 700, fontSize: 20,paddingTop: 10, paddingBottom: 10 }}>{item.name}</Grid>
+                      
+                            { item.child ?
+                                  item.child.map((it, key) => 
+                                    <Grid key={key}>
+                                      <Grid style={{ width: '70%'}}>
+                                        <Grid style={{ width: '4%', float: 'left'}}>
+                                          <MyCheckBox
+                                            label=""
+                                            value={parseInt(it.is_active) == 1 ? true : false}
+                                            func={this.changeItemChecked.bind(this, it.id, item.id)}
+                                          /></Grid>
+                                        <Grid style={{ paddingTop: 10}}>{it.name}</Grid>
+                                      </Grid>
 
-            <Accordion  style={{ marginTop: 10}} >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} >
-                <Typography>Настройка доступа к модулям</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-              
-                    { this.state.item.full_menu ?
-                        this.state.item.full_menu.map((item, key) =>
-                          <Grid item>
-                              <Grid item  style={{ width: '100%', fontWeight: 700, fontSize: 20,paddingTop: 10, paddingBottom: 10 }}>{item.name}</Grid>
-                              <Accordion >
-                              <AccordionSummary>  <Typography>Разделы</Typography></AccordionSummary>
-                                <AccordionDetails>
-                                  <TableContainer><Table> 
-                                    { item.child ?
-                                      item.child.map((it, key) => 
-                                        <TableRow key={key}>
-                                          <TableCell style={{ width: '1%'}}><MyCheckBox
-                                              label=""
-                                              value={parseInt(it.is_active) == 1 ? true : false}
-                                              func={this.changeItemChecked.bind(this, it.id)}
-                                            /></TableCell>
-                                          <TableCell>{it.name}</TableCell>
-
+                                      <Grid >
+                                        <Accordion  style={{position: 'relative', width: '50%', left: 400, top: -40, backgroundColor: 'white'}} >
+                                          <AccordionSummary>  <Typography>Права к модулям</Typography></AccordionSummary>
                                           { it.dop ?
-                                            it.dop.map((j, k) => 
-                                            <TableCell>
-                                              {j.name}   
-                                              <TableCell style={{ width: '1%'}}><MyCheckBox
+                                            it.dop.map((j, key) => 
+                                            <AccordionDetails key={key}  style={{position: 'relative', backgroundColor: 'white', paddingBottom: 20,  zIndex: '20'}}>
+                                              <Grid style={{ width: '9%', marginTop: -8, float: 'left'}}>
+                                                <MyCheckBox
                                                 label=""
-                                                value={parseInt(it.is_active) == 1 ? true : false}
-                                                func={this.changeItemChecked.bind(this, it.id)}
-                                              /></TableCell>
-                                            </TableCell>
-                                          ) : null}
-                                        </TableRow>
-                                       
-                                    ) : null}
-                                </Table></TableContainer>
-                              </AccordionDetails>
-                              </Accordion >
-                            </Grid>
-                        ) : null}
-                 
-            </AccordionDetails>
-          </Accordion>
-
+                                                value={parseInt(j.is_active) == 1 ? true : false}
+                                                func={this.changeItemChecked2.bind(this, it.id, item.id, j.id)}
+                                              /></Grid>
+                                              <Grid style={{position: 'relative', paddingBottom: 0}}>{j.name}</Grid>
+                                            </AccordionDetails>
+                                          ) : null}  
+                                        </Accordion>
+                                      </Grid>
+                                    </Grid>                                
+                              ) : null}
+                            </Grid>   
+                    ) : null}
+            </Grid>
           </DialogContent>
+
           <DialogActions>
             <Button color="primary" onClick={this.save.bind(this)}>
               Сохранить
