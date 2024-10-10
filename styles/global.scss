@@ -131,8 +131,14 @@ th[class*='tableCelHead'] {
   justify-content: center;
   display: flex;
 }
+#stat .MuiBox-root {
+  justify-content: center;
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 24px;
+}
 
-#rec, #items, #pf {
+#rec, #items, #pf, #stat {
   & > div {
     padding: 0;
   }
@@ -142,6 +148,7 @@ th[class*='tableCelHead'] {
       height: auto;
     }
   }
+ 
 }
 
 .fines_err {
