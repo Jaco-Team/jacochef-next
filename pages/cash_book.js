@@ -29,15 +29,21 @@ import dayjs from 'dayjs';
 
 class MainTable extends React.Component {
   render () {
+
+    const kassa_text = this.props.table == 'fiz' ? 'Физические кассы' : 'Курьерская наличка';
+
     return (
       <TableContainer component={Paper}>
 
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell colSpan="3" style={{ textAlign: 'center' }}>{ kassa_text }</TableCell>
+            </TableRow>
+            <TableRow>
               <TableCell>Тип</TableCell>
-              <TableCell>Приход</TableCell>
-              <TableCell>Расход</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff', textAlign: 'center' }}>Приход</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff', textAlign: 'center' }}>Расход</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -53,15 +59,15 @@ class MainTable extends React.Component {
                     :
                   <Typography 
                     component="span"
-                    onClick={this.props.addData.bind(this, 'ostatok_nachalo_dnya', this.props.table, this.props?.ostatok_nachalo_dnya_arr, 'Физическая касса: Остаток на начало дня')} 
+                    onClick={this.props.addData.bind(this, 'ostatok_nachalo_dnya', this.props.table, this.props?.ostatok_nachalo_dnya_arr, kassa_text+': Остаток на начало дня')} 
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Остаток на начало дня
                   </Typography>
                 }
               </TableCell>
-              <TableCell>{this.props?.ostatok_nachalo_dnya}</TableCell>
-              <TableCell></TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.ostatok_nachalo_dnya}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
             </TableRow>
             <TableRow>
               <TableCell>
@@ -74,7 +80,7 @@ class MainTable extends React.Component {
                     :
                   <Typography 
                     component="span"
-                    onClick={this.props.addData.bind(this, 'virycka', this.props.table, this.props?.virycka_arr, 'Физическая касса: Выручка')} 
+                    onClick={this.props.addData.bind(this, 'virycka', this.props.table, this.props?.virycka_arr, kassa_text+': Выручка')} 
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Выручка
@@ -82,8 +88,8 @@ class MainTable extends React.Component {
                 }
                 
               </TableCell>
-              <TableCell>{this.props?.virycka}</TableCell>
-              <TableCell></TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.virycka}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
             </TableRow>
             <TableRow>
               <TableCell>
@@ -96,15 +102,15 @@ class MainTable extends React.Component {
                     :
                   <Typography 
                     component="span"
-                    onClick={this.props.addData.bind(this, 'zaim', this.props.table, this.props?.zaim_arr, 'Физическая касса: Заемные средства')} 
+                    onClick={this.props.addData.bind(this, 'zaim', this.props.table, this.props?.zaim_arr, kassa_text+': Заемные средства')} 
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Заемные средства
                   </Typography>
                 }
               </TableCell>
-              <TableCell>{this.props?.zaim}</TableCell>
-              <TableCell></TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.zaim}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
             </TableRow>
             <TableRow>
               <TableCell>
@@ -117,15 +123,15 @@ class MainTable extends React.Component {
                     :
                   <Typography
                     component="span"
-                    onClick={this.props.addData.bind(this, 'dengi_iz_drygoy_kassy', this.props.table, this.props?.dengi_iz_drygoy_kassy_arr, 'Физическая касса: Перемещение из другой кассы')} 
+                    onClick={this.props.addData.bind(this, 'dengi_iz_drygoy_kassy', this.props.table, this.props?.dengi_iz_drygoy_kassy_arr, kassa_text+': Перемещение из другой кассы')} 
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Перемещение из другой кассы
                   </Typography>
                 }
               </TableCell>
-              <TableCell>{this.props?.dengi_iz_drygoy_kassy}</TableCell>
-              <TableCell></TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.dengi_iz_drygoy_kassy_plus}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.dengi_iz_drygoy_kassy_minus}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell>
@@ -138,15 +144,15 @@ class MainTable extends React.Component {
                     :
                   <Typography
                     component="span"
-                    onClick={this.props.addData.bind(this, 'vedomosm_zp', this.props.table, this.props?.vedomosm_zp_arr, 'Физическая касса: Платежная ведомость на выплату заработной платы')} 
+                    onClick={this.props.addData.bind(this, 'vedomosm_zp', this.props.table, this.props?.vedomosm_zp_arr, kassa_text+': Платежная ведомость на выплату заработной платы')} 
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Платежная ведомость на выплату заработной платы
                   </Typography>
                 }
               </TableCell>
-              <TableCell></TableCell>
-              <TableCell>{this.props?.vedomosm_zp}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}></TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.vedomosm_zp}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell>
@@ -159,15 +165,15 @@ class MainTable extends React.Component {
                     :
                   <Typography
                     component="span"
-                    onClick={this.props.addData.bind(this, 'incasacia', this.props.table, this.props?.incasacia_arr, 'Физическая касса: Инкассация')} 
+                    onClick={this.props.addData.bind(this, 'incasacia', this.props.table, this.props?.incasacia_arr, kassa_text+': Инкассация')} 
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Инкассация
                   </Typography>
                 }
               </TableCell>
-              <TableCell></TableCell>
-              <TableCell>{this.props?.incasacia}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}></TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.incasacia}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell>
@@ -180,15 +186,15 @@ class MainTable extends React.Component {
                     :
                   <Typography 
                     component="span"
-                    onClick={this.props.addData.bind(this, 'vozvrat_zaim', this.props.table, this.props?.vozvrat_zaim_arr, 'Физическая касса: Возврат займа')} 
+                    onClick={this.props.addData.bind(this, 'vozvrat_zaim', this.props.table, this.props?.vozvrat_zaim_arr, kassa_text+': Возврат займа')} 
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Возврат займа
                   </Typography>
                 }
               </TableCell>
-              <TableCell></TableCell>
-              <TableCell>{this.props?.vozvrat_zaim}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}></TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.vozvrat_zaim}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell>
@@ -201,25 +207,25 @@ class MainTable extends React.Component {
                     :
                   <Typography 
                     component="span"
-                    onClick={this.props.addData.bind(this, 'vidacha_otchet', this.props.table, this.props?.vidacha_otchet_arr, 'Физическая касса: Выдача в подотчет')} 
+                    onClick={this.props.addData.bind(this, 'vidacha_otchet', this.props.table, this.props?.vidacha_otchet_arr, kassa_text+': Выдача в подотчет')} 
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Выдача в подотчет
                   </Typography>
                 }
               </TableCell>
-              <TableCell></TableCell>
-              <TableCell>{this.props?.vidacha_otchet}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}></TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.vidacha_otchet}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell>Итого за день</TableCell>
-              <TableCell>{this.props?.itog_plus}</TableCell>
-              <TableCell>{this.props?.itog_minus}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.itog_plus}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.itog_minus}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell>Остаток на конец дня</TableCell>
-              <TableCell>{this.props?.ostatok_konec_dnya}</TableCell>
-              <TableCell></TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.ostatok_konec_dnya}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
             </TableRow>
 
           </TableBody>
@@ -486,48 +492,9 @@ class CashBook_ extends React.Component {
     }, 300 )
   }
 
-  async getStatDop(driver){
-    let data = {
-      point_id: this.state.point,
-      driver_id: driver.driver_id,
-      date_start  : dayjs(this.state.date_start).format('YYYY-MM-DD'),
-      date_end    : dayjs(this.state.date_end).format('YYYY-MM-DD'),
-    };
-    
-    let res = await this.getData('getStatDop', data);
-
-    console.log( res )
-
-    this.setState({
-      modalDialogStatSumm: true,
-      statSumm: res,
-      getSummDriverId: driver 
-    })
-  }
-
-  async getStatDopMain(driver){
-    let data = {
-      point_id: this.state.point,
-      driver_id: driver.driver_id,
-      date_start  : dayjs(this.state.date_start).format('YYYY-MM-DD'),
-      date_end    : dayjs(this.state.date_end).format('YYYY-MM-DD'),
-    };
-    
-    let res = await this.getData('getStatDopMain', data);
-
-    console.log( res )
-
-    this.setState({
-      modalDialogStatSummMain: true,
-      statSummMain: res?.stat,
-      show_dop: parseInt(res.my.kind) < 3 ? 1 : 0,
-      getSummDriverId: driver 
-    })
-  }
-
   addData(type, kassa, hist, title){
 
-    if( kassa == 'online' ){
+    if( kassa == 'driver_cash' ){
       this.setState({
         openModalType: type,
         openModalType_edit: this.state.driver_kassa[ type+'_is_edit' ] == 'edit' ? true : false,
@@ -642,49 +609,6 @@ class CashBook_ extends React.Component {
           }
         </Dialog>
 
-        
-        <Dialog
-          open={this.state.modalDialogStatSumm}
-          onClose={ () => { this.setState({ modalDialogStatSumm: false, getSummDriverId: null }) } }
-          fullWidth={true}
-          maxWidth={'md'}
-        >
-          <DialogTitle>Доп выплаты "{this.state.getSummDriverId ? this.state.getSummDriverId.name : ''}"</DialogTitle>
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            
-            <Table size={'small'}>
-                
-              <TableHead>
-                <TableRow>
-                  <TableCell>Дата</TableCell>
-                  <TableCell>Кто назначил</TableCell>
-                  <TableCell>Сумма</TableCell>
-                  <TableCell>Комментарий</TableCell>
-                  <TableCell>Тип</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                
-                { this.state.statSumm.map( (item, key) =>
-                  <TableRow key={key}>
-                    <TableCell>{item.date_time}</TableCell>
-                    <TableCell>{item.user_name}</TableCell>
-                    <TableCell>{item.price}</TableCell>
-                    <TableCell>{item.comment}</TableCell>
-                    <TableCell>{ parseInt(item.order_id) > 0 ? 'Довоз' : 'Доп выплата' }</TableCell>
-                  </TableRow>
-                ) }
-              
-              </TableBody>
-            
-            </Table>
-
-            
-
-          </DialogContent>
-        </Dialog>
-
         <Grid container spacing={3} style={{ paddingBottom: 100 }} className='container_first_child'>
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
@@ -722,7 +646,8 @@ class CashBook_ extends React.Component {
               zaim_is_edit={this.state.fiz_kassa?.zaim_is_edit}
               zaim_arr={this.state.fiz_kassa?.zaim_arr}
 
-              dengi_iz_drygoy_kassy={this.state.fiz_kassa?.dengi_iz_drygoy_kassy}
+              dengi_iz_drygoy_kassy_plus={this.state.fiz_kassa?.dengi_iz_drygoy_kassy_plus}
+              dengi_iz_drygoy_kassy_minus={this.state.fiz_kassa?.dengi_iz_drygoy_kassy_minus}
               dengi_iz_drygoy_kassy_is_edit={this.state.fiz_kassa?.dengi_iz_drygoy_kassy_is_edit}
               dengi_iz_drygoy_kassy_arr={this.state.fiz_kassa?.dengi_iz_drygoy_kassy_arr}
 
@@ -750,7 +675,7 @@ class CashBook_ extends React.Component {
 
           <Grid item xs={12} sm={6}>
             <MainTable 
-              table={'online'}
+              table={'driver_cash'}
               addData={this.addData.bind(this)}
               ostatok_nachalo_dnya={this.state.driver_kassa?.ostatok_nachalo_dnya}
               ostatok_nachalo_dnya_is_edit={this.state.driver_kassa?.ostatok_nachalo_dnya_is_edit}
@@ -764,7 +689,8 @@ class CashBook_ extends React.Component {
               zaim_is_edit={this.state.driver_kassa?.zaim_is_edit}
               zaim_arr={this.state.driver_kassa?.zaim_arr}
 
-              dengi_iz_drygoy_kassy={this.state.driver_kassa?.dengi_iz_drygoy_kassy}
+              dengi_iz_drygoy_kassy_plus={this.state.driver_kassa?.dengi_iz_drygoy_kassy_plus}
+              dengi_iz_drygoy_kassy_minus={this.state.driver_kassa?.dengi_iz_drygoy_kassy_minus}
               dengi_iz_drygoy_kassy_is_edit={this.state.driver_kassa?.dengi_iz_drygoy_kassy_is_edit}
               dengi_iz_drygoy_kassy_arr={this.state.driver_kassa?.dengi_iz_drygoy_kassy_arr}
 
