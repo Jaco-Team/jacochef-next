@@ -1,7 +1,6 @@
 import React from 'react';
 
 import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 
 import Dialog from '@mui/material/Dialog';
@@ -16,19 +15,20 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import Checkbox from '@mui/material/Checkbox';
+
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemButton from '@mui/material/ListItemButton';
 
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyTextInput, MySelect, MyCheckBox } from '@/ui/elements';
+import { MyTextInput, MySelect } from '@/ui/elements';
 
 import queryString from 'query-string';
-import { NoStroller } from '@mui/icons-material';
+import Collapse from '@mui/material/Collapse';
 
 class Appointment_ extends React.Component {
   constructor(props) {
@@ -44,26 +44,30 @@ class Appointment_ extends React.Component {
 
       is_load: false,
 
-      points: [],
-      point: '0',
-
-      cats: [], // todo del
+      
 
       confirmDialog: false,
-      cat: [], // todo del
       items: [], 
-      test: 0
+      
+
+      openApp: null,
+      full_menu: [],
+
+      dataSelect: [
+        {id: false, name: 'Без активности'},
+        {id: 'show', name: 'Показывать'},
+        {id: 'edit', name: 'Редактировать'},
+      ],
     };
   }
 
   async componentDidMount() {
     console.log('appointment!!');
     const data = await this.getData('get_all');
-    const res = await this.getData('get_items');
 
     this.setState({
       module_name: data.module_info.name,
-      items: res.items,
+      items: data.apps,
     });
 
     document.title = data.module_info.name;
@@ -112,172 +116,204 @@ class Appointment_ extends React.Component {
       });
   };
 
-  async changePoint(event) {
-    const point = event.target.value;
-
-    const data = {
-      point_id: point,
+  async saveSort() {
+    let data = {
+      app_list:  this.state.items,   
     };
 
-    const res = await this.getData('get_items', data);
+    let res = await this.getData('save_sort', data);
 
-    this.setState({
-      point,
-      cats: res.items,
-    });
-  }
-  // todo
-  openConfirm(cat, event) {
-    event.stopPropagation();
-
-    this.setState({
-      confirmDialog: true,
-      cat,
-    });
-  }
+    if (res.st === false) {
+      alert(res.text);
+    } else {
+      this.updateList();
+    }
  
-  // todo
-  async update() {
-    const point = this.state.point;
-
-    const data = {
-      point_id: point,
-    };
-
-    const res = await this.getData('get_items', data);
-
-    this.setState({
-      cats: res.items,
-    });
   }
 
-  // сохранение сортировки
-  async save() {
-    console.log('save')
-    const app_list = this.state.items;
- 
-    console.log('app_list',app_list);
-
-   // await this.getData('save_sort', app_list);
-    this.setState({
-      modalDialog: false
-    });
-    console.log('save ok')
-  }
-
-  //(this, 'kind', item.kind, key)
   changeItem(data, id, event) {
    
-    const items = this.state.items;
-    console.log('data='+data+' id='+id + ' ev='+ event.target.value )
-
+    let items = this.state.items;
+  
     items.forEach((item) => {
-      if (item.id === id) {
-         console.log('YES=')
+      if( parseInt(item.id) === parseInt(id) ) {
         item[data] = event.target.value;
       }
-      // console.log('kind='+item.kind+' sort='+item.sort +' item='+item[data]+' id='+id+' item_id='+item.id)
     });      
 
 
     this.setState({
       items,
     });
-    console.log('setStateok')
+  }
+  
+  changeItem2(data, event) {
+   
+    const item = this.state.openApp;
+
+    item[data] = event.target.value;
+
+    this.setState({
+      openApp: item
+    });
+    
+  }
+  
+  async updateList() {
+    const res = await this.getData('get_items'); 
+
+    this.setState({
+      items: res.apps,
+    });
   }
   
   async openModal(id) {
+    const data = {
+      'app_id': id
+    };
 
-    console.log('id='+id);
-    let d = {'id' : id};
-    const res = await this.getData('get_one', id); 
+    const res = await this.getData('get_one', data); 
 
-    console.log('r_data=',res.data);
-    console.log('r_name=',res.data.name);
     this.setState({
       modalDialog: true,
-      item: res.data
+      openApp: res.appointment,
+      full_menu: res.full_menu,
     });
   }
 
-  changeItemChecked(data, event) {
-    console.log('check_',event.target.checked);
-    const item = this.state.item;
+  changeActive(main_key, parent_key, features_key, event){
+    let full_menu = this.state.full_menu;
 
-   // item.err[data] = event.target.checked === true ? 1 : 0;
+    if( event.target.checked === undefined ){
+      full_menu[ main_key ]['chaild'][ parent_key ]['features'][ features_key ].is_active = event.target.value;
+    }else{
+
+      if( parseInt(features_key) > -1 ) {
+        full_menu[ main_key ]['chaild'][ parent_key ]['features'][ features_key ].is_active = event.target.checked === true ? 1 : 0;
+      }else{
+        full_menu[ main_key ]['chaild'][ parent_key ].is_active = event.target.checked === true ? 1 : 0;
+      }
+
+    }
 
     this.setState({
-      item,
+      full_menu: full_menu
+    });
+  }
+
+  async saveEdit() {
+    const data = {
+      app: this.state.openApp,
+      full_menu: this.state.full_menu,
+    };
+
+    const res = await this.getData('save_edit', data);
+
+    if (res.st === false) {
+      alert(res.text);
+    } else {
+      this.setState({
+        modalDialog: false,
+        openApp: null,
+        full_menu: []
+      });
+
+      this.updateList();
+    }
+  }
+
+  async saveNew(){
+    const data = {
+      app: this.state.openApp,
+      full_menu: this.state.full_menu,
+    };
+
+    const res = await this.getData('save_new', data);
+
+    if (res.st === false) {
+      alert(res.text);
+    } else {
+      this.setState({
+        modalDialog: false,
+        openApp: null,
+        full_menu: []
+      });
+
+      this.updateList();
+    }
+  }
+
+  async openNewApp() {
+    const res = await this.getData('get_all_for_new'); 
+
+    this.setState({
+      modalDialog: true,
+      openApp: res.appointment,
+      full_menu: res.full_menu,
     });
   }
 
   render() {
-    console.log('app render!!');
+    
     return (
       <>
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        <Grid container spacing={3} mb={3}>
+        <Grid container spacing={3} mb={3} mt={10}>
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
-
-          <Grid item xs={12} sm={4}>
-            <MySelect
-              data={this.state.points}
-              value={this.state.point}
-              func={this.changePoint.bind(this)}
-              label="Точка"
-            />
+        
+       
+          <Grid item xs={12} mb={1}>
+            <Button variant="outlined" onClick={this.openNewApp.bind(this)}>
+              Новая должность
+            </Button>
           </Grid>
-        </Grid>
-       
-        <Grid item xs={12} ml={3}>
-          <Button  variant="contained" onClick={this.save.bind(this)}>Сохранить</Button>
-        </Grid>
-       
-        <Grid item xs={12} mb={1}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell style={{ width: '1%' }}>#</TableCell>
-                  <TableCell style={{ width: '35%' }}>Должность</TableCell>
-                  <TableCell style={{ width: '15%' }}>Старшенство</TableCell>
-                  <TableCell style={{ width: '15%' }}>Сортировка</TableCell>
-                </TableRow>
-              </TableHead>
-            <TableBody>
-              {this.state.items.map((item, key) => {
-                return (
-                  <TableRow key={key} hover onClick={this.openModal.bind(this, item.id)}>
-                    <TableCell style={{ width: '1%' }}>{key + 1}</TableCell>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell>
-                      <MyTextInput
-                        label=""
-                        value={item.kind}
-                        func={this.changeItem.bind(this, 'kind', item.id)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <MyTextInput
-                        label=""
-                        value={item.sort}
-                        func={this.changeItem.bind(this, 'sort', item.id)}
-                      />
-                    </TableCell>
+
+          <Grid item xs={12} mb={1}>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell style={{ width: '1%' }}>#</TableCell>
+                    <TableCell style={{ width: '35%' }}>Должность</TableCell>
+                    <TableCell style={{ width: '15%' }}>Старшенство</TableCell>
+                    <TableCell style={{ width: '15%' }}>Сортировка</TableCell>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-          </TableContainer>
-          <Grid item xs={12} ml={1} mt={3}>
-              <Button color="primary" variant="contained" onClick={this.save.bind(this)}>Сохранить</Button>
-          </Grid> 
+                </TableHead>
+              <TableBody>
+                {this.state.items.map((item, key) => {
+                  return (
+                    <TableRow key={key} hover onClick={this.openModal.bind(this, item.id)}>
+                      <TableCell style={{ width: '1%' }}>{key + 1}</TableCell>
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>
+                        <MyTextInput
+                          label=""
+                          value={item.kind}
+                          func={this.changeItem.bind(this, 'kind', item.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <MyTextInput
+                          label=""
+                          value={item.sort}
+                          func={this.changeItem.bind(this, 'sort', item.id)}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+            </TableContainer>
+            <Grid item xs={12} ml={1} mt={3}>
+              <Button color="primary" variant="contained" onClick={this.saveSort.bind(this)}>Сохранить сортировку</Button>
+            </Grid> 
+          </Grid>
         </Grid>
 
         
@@ -292,81 +328,106 @@ class Appointment_ extends React.Component {
           </DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }} >
             <Grid container spacing={3} className=''>
-              <Grid item >
+              <Grid item xs={12} md={4}>
                 <MyTextInput
                   label="Название должности"
-                  value={this.state.item.name}
-                  func={this.changeItem.bind(this, 'name')}
+                  value={this.state.openApp?.name}
+                  func={this.changeItem2.bind(this, 'name')}
                 />
               </Grid>
 
-              <Grid item  >
+              <Grid item xs={12} md={4}>
                 <MyTextInput
                   label="Сокрощенное название"
-                  value={this.state.item.short_name}
-                  func={this.changeItem.bind(this, 'short_name')}
+                  value={this.state.openApp?.short_name}
+                  func={this.changeItem2.bind(this, 'short_name')}
                 />
               </Grid>
 
-              <Grid item  >
+              <Grid item xs={12} md={4}>
                 <MyTextInput
                   label="Норма бонусов"
-                  value={this.state.item.bonus}
-                  func={this.changeItem.bind(this, 'bonus')}
+                  value={this.state.openApp?.bonus}
+                  func={this.changeItem2.bind(this, 'bonus')}
                 />
               </Grid>
             </Grid>
+        
+            <Grid style={{ marginTop: 10}}>
+              <List dense sx={{ width: '100%', maxWidth: 500, bgcolor: 'background.paper' }}>
+                {this.state.full_menu?.map((item, key) => 
+                  <>
+                    <ListItem
+                      key={key}
+                      disablePadding
+                      style={{ marginTop: 30 }}
+                    >
+                      <ListItemButton>
+                        <span style={{ fontWeight: 'bold' }}>{item?.parent?.name}</span>
+                      </ListItemButton>
+                    </ListItem>
+                    {item?.chaild?.map( ( it, k ) => 
+                      <>
+                        <ListItem
+                          key={k}
+                          secondaryAction={
+                            <Checkbox
+                              edge="end"
+                              onChange={ this.changeActive.bind(this, key, k, -1) }
+                              checked={ parseInt(it.is_active) == 1 ? true : false }
+                              //inputProps={{ 'aria-labelledby': labelId }}
+                            />
+                          }
+                          disablePadding
+                        >
+                          <ListItemButton>
+                            <ListItemText primary={it?.name} />
+                          </ListItemButton>
+                        </ListItem>
+                        <Collapse in={ true } timeout="auto">
+                          <List component="div" disablePadding>
+                            { it?.features?.map( (f, f_key) =>
+                              <ListItem
+                                key={f_key}
+                                secondaryAction={
+                                  parseInt(f?.type) == 2 ?
+                                    <Checkbox
+                                      edge="end"
+                                      onChange={ this.changeActive.bind(this, key, k, f_key) }
+                                      checked={ parseInt(f.is_active) == 1 ? true : false }
+                                    />
+                                      :
+                                    <MySelect
+                                      data={this.state.dataSelect}
+                                      value={f.is_active}
+                                      func={this.changeActive.bind(this, key, k, f_key)}
+                                      //label="День недели"
+                                      is_none={false}
+                                    />
+                                }
+                                disablePadding
+                              >
+                                <ListItemButton>
+                                  <ListItemText primary={f?.name} style={{ paddingLeft: 30 }} />
+                                </ListItemButton>
+                              </ListItem>
+                            ) }
+                            
+                          </List>
+                        </Collapse>
+                        
+                      </>
+                    )}
+                  </>
+                  
+                )}
+              </List>
 
-            <Accordion  style={{ marginTop: 10}} >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} >
-                <Typography>Настройка доступа к модулям</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-              
-                    { this.state.item.full_menu ?
-                        this.state.item.full_menu.map((item, key) =>
-                          <Grid item>
-                              <Grid item  style={{ width: '100%', fontWeight: 700, fontSize: 20,paddingTop: 10, paddingBottom: 10 }}>{item.name}</Grid>
-                              <Accordion >
-                              <AccordionSummary>  <Typography>Разделы</Typography></AccordionSummary>
-                                <AccordionDetails>
-                                  <TableContainer><Table> 
-                                    { item.child ?
-                                      item.child.map((it, key) => 
-                                        <TableRow key={key}>
-                                          <TableCell style={{ width: '1%'}}><MyCheckBox
-                                              label=""
-                                              value={parseInt(it.is_active) == 1 ? true : false}
-                                              func={this.changeItemChecked.bind(this, it.id)}
-                                            /></TableCell>
-                                          <TableCell>{it.name}</TableCell>
-
-                                          { it.dop ?
-                                            it.dop.map((j, k) => 
-                                            <TableCell>
-                                              {j.name}   
-                                              <TableCell style={{ width: '1%'}}><MyCheckBox
-                                                label=""
-                                                value={parseInt(it.is_active) == 1 ? true : false}
-                                                func={this.changeItemChecked.bind(this, it.id)}
-                                              /></TableCell>
-                                            </TableCell>
-                                          ) : null}
-                                        </TableRow>
-                                       
-                                    ) : null}
-                                </Table></TableContainer>
-                              </AccordionDetails>
-                              </Accordion >
-                            </Grid>
-                        ) : null}
-                 
-            </AccordionDetails>
-          </Accordion>
-
+            </Grid>
           </DialogContent>
+
           <DialogActions>
-            <Button color="primary" onClick={this.save.bind(this)}>
+            <Button color="primary" onClick={ parseInt(this.state.openApp?.id) == -1 ? this.saveNew.bind(this) : this.saveEdit.bind(this)}>
               Сохранить
             </Button>
           </DialogActions>
