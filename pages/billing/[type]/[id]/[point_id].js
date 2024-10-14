@@ -1555,6 +1555,7 @@ class Billing_Accordion extends React.Component {
           <AccordionSummary style={{ cursor: 'default' }} expandIcon={<ExpandMoreIcon sx={{ opacity: 0 }} />} aria-controls="panel1a-content">
             <Grid item xs display="flex" flexDirection="row">
               <Typography style={{ width: '1%' }}></Typography>
+              <Typography style={{ width: '17%', minWidth: '250px' }}>Тип {type === 'edit' ? ' документа' : ' накладной'}</Typography>
               <Typography style={{ width: '3%' }}></Typography>
               <Typography style={{ width: '3%' }}></Typography>
               <Typography style={{ width: '10%' }}>
@@ -1567,9 +1568,6 @@ class Billing_Accordion extends React.Component {
               <Typography style={{ width: '10%' }}>Дата обновления</Typography>
               <Typography style={{ width: '14%', minWidth: '200px' }}>Редактор</Typography>
               <Typography style={{ width: '10%' }}>Время обновления</Typography>
-              <Typography style={{ width: '17%', minWidth: '250px' }}>
-                Тип {type === 'edit' ? ' документа' : ' накладной'}
-              </Typography>
               <Typography style={{ width: '8%' }}>Сумма с НДС</Typography>
             </Grid>
           </AccordionSummary>
@@ -1582,25 +1580,29 @@ class Billing_Accordion extends React.Component {
 
                   <Typography component="div" style={{ width: '1%', backgroundColor: item.color, marginRight: '1%' }}></Typography>
                   
-                    <MyTooltip name="Нету бумажного носителя">
-                      <Typography component="div" style={{ width: '3%', display: 'flex', alignItems: 'center' }}>
-                        <MyCheckBox
-                          value={false}
-                          //func={this.props.changeCheck.bind(this, key, 'is_not_del')}
-                          label=""
-                        />
-                      </Typography>
-                    </ MyTooltip>
+                  <Typography style={{ width: '17%', minWidth: '250px',  display: 'flex', alignItems: 'center' }}>
+                    {item.name}
+                  </Typography>
 
-                    <MyTooltip name="С бумажным носителем все хорошо">
-                      <Typography component="div" style={{ width: '3%', display: 'flex', alignItems: 'center' }}>
-                        <MyCheckBox
-                          value={false}
-                          //func={this.props.changeCheck.bind(this, key, 'is_not_del')}
-                          label=""
-                        />
-                      </Typography>
-                    </MyTooltip>
+                  <MyTooltip name="Нету бумажного носителя">
+                    <Typography component="div" style={{ width: '3%', display: 'flex', alignItems: 'center' }}>
+                      <MyCheckBox
+                        value={false}
+                        //func={this.props.changeCheck.bind(this, key, 'is_not_del')}
+                        label=""
+                      />
+                    </Typography>
+                  </ MyTooltip>
+
+                  <MyTooltip name="С бумажным носителем все хорошо">
+                    <Typography component="div" style={{ width: '3%', display: 'flex', alignItems: 'center' }}>
+                      <MyCheckBox
+                        value={false}
+                        //func={this.props.changeCheck.bind(this, key, 'is_not_del')}
+                        label=""
+                      />
+                    </Typography>
+                  </MyTooltip>
 
                   <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
                     {item.number}
@@ -1626,9 +1628,7 @@ class Billing_Accordion extends React.Component {
                     {item.time_update}
                   </Typography>
 
-                  <Typography style={{ width: '17%', minWidth: '250px',  display: 'flex', alignItems: 'center' }}>
-                    {item.name}
-                  </Typography>
+                  
 
                   <Typography style={{ width: '8%',  display: 'flex', alignItems: 'center' }}>
                     {item.sum_w_nds}
@@ -1681,7 +1681,7 @@ class Billing_Modal extends React.Component {
       scaleX: 1,
       scaleY: 1,
       vertical: false,
-      horizontal: false,
+      horizontal: true,
     };
   }
 
@@ -1706,7 +1706,7 @@ class Billing_Modal extends React.Component {
   }
 
   setScaleHorizontal() {
-    let scaleX = this.state.scaleX;
+    /*let scaleX = this.state.scaleX;
 
     if(scaleX < 0) {
       scaleX = scaleX * -1;
@@ -1716,11 +1716,18 @@ class Billing_Modal extends React.Component {
 
     this.setState({
       scaleX,
+    });*/
+
+    let rotate = this.state.rotate;
+    rotate = rotate + 180;
+
+    this.setState({
+      rotate,
     });
   }
 
   setScaleVertical() {
-    let scaleY = this.state.scaleY;
+    /*let scaleY = this.state.scaleY;
 
     if(scaleY < 0) {
       scaleY = scaleY * -1;
@@ -1730,6 +1737,13 @@ class Billing_Modal extends React.Component {
 
     this.setState({
       scaleY,
+    });*/
+
+    let rotate = this.state.rotate;
+    rotate = rotate - 180;
+ 
+    this.setState({
+      rotate,
     });
   }
 
@@ -1833,12 +1847,12 @@ class Billing_Modal extends React.Component {
               <RotateRightIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Перевернуть по вертикали'>
+          <MyTooltip name='Повернуть на 180 градусов влево'>
             <IconButton onClick={this.setScaleVertical.bind(this)}>
               <ContrastIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Перевернуть по горизонтали'>
+          <MyTooltip name='Повернуть на 180 градусов вправо'>
             <IconButton onClick={this.setScaleHorizontal.bind(this)}>
               <ContrastIcon style={{ transform: 'rotate(-90deg)'}}/>
             </IconButton>
@@ -1853,7 +1867,7 @@ class Billing_Modal extends React.Component {
               <ZoomOutIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Разделить экран по вертикали'>
+          <MyTooltip name='Разделить экран по вертикали' style={{ display: 'none' }}>
             <IconButton onClick={this.setSplitVertical.bind(this)}>
               <VerticalSplitIcon />
             </IconButton>
@@ -1868,7 +1882,7 @@ class Billing_Modal extends React.Component {
               <RestartAltIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Закрыть'>
+          <MyTooltip name='Закрыть картинку'>
             <IconButton onClick={this.props.onClose.bind(this)}>
               <CloseIcon />
             </IconButton>
@@ -1897,16 +1911,19 @@ class Billing_Modal extends React.Component {
 
         {this.state.vertical || this.state.horizontal ?
           <div className="modal" style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)',  width: this.state.vertical ? '50%' : '100%',  height: this.state.horizontal ? '50vh' : '100vh', left: this.state.vertical ? '50%' : 0, top: this.state.horizontal ? '50%' : 0}}>
-            <div className="modal_content" style={{transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`}}>
-              <img 
-                src={this.props.image} 
-                alt="Image bill" 
-                className="image_bill" 
-                draggable="true" 
-                
-                //onClick={(e) => e.stopPropagation()} 
-              />
-            </div>
+            <Draggable>
+              <div>
+                <div className="modal_content" style={{transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`}}>
+                  <img 
+                    src={this.props.image} 
+                    alt="Image bill" 
+                    className="image_bill" 
+                    draggable="false"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              </div>
+            </Draggable>
           </div> 
         : null}
 
@@ -2106,18 +2123,18 @@ class Billing_Edit_ extends React.Component {
           text={err_text}
         />
 
-        <Grid container spacing={3} mb={10} style={{ marginTop: '64px', maxWidth: is_horizontal || is_vertical ? '50%' : '100%' }}>
+        <Grid container spacing={3} mb={10} style={{ marginTop: '64px', maxWidth: is_vertical ? '50%' : '100%', marginBottom: is_horizontal ? 700 : 30 }}>
 
           <Grid item xs={12} sm={12}>
             <h1>Документ: {bill?.number}</h1>
             <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
           </Grid>
 
-          <FormHeader_new page={'edit'} type_edit={this.state.acces?.header} />
+          <FormHeader_new page={'edit'} type_edit={ parseInt(this.state.acces?.header) == 1 ? 'edit' : 'show' } />
           
           <FormImage_new page={this.state.acces?.photo} />
 
-          { this.state.acces?.items == 'edit' ? 
+          { parseInt(this.state.acces?.items) == 1 ? 
             <>
               <FormVendorItems />  
               <VendorItemsTableEdit />
@@ -2126,7 +2143,7 @@ class Billing_Edit_ extends React.Component {
             <VendorItemsTableView />
           }
           
-          <FormOther_new page={'edit'} type_edit={this.state.acces?.footer} />
+          <FormOther_new page={'edit'} type_edit={parseInt(this.state.acces?.footer) == 1 ? 'edit' : 'show' } />
 
           <Billing_Accordion
             bill_list={bill_list}
