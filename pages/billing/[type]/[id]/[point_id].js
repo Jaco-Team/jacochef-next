@@ -50,6 +50,8 @@ const useStore = create((set, get) => ({
   isPink: false,
   setPink: () => set((state) => ({ isPink: !state.isPink })),
 
+  my_acces: [],
+
   vendor_items: [],
   search_item: '',
   vendor_itemsCopy: [],
@@ -118,6 +120,22 @@ const useStore = create((set, get) => ({
   user: [],
 
   comment: '',
+
+  is_horizontal: false,
+  is_vertical: false,
+
+  set_position: (is_horizontal, is_vertical) => {
+    set({
+      is_horizontal: is_horizontal,
+      is_vertical: is_vertical,
+    });
+  },
+
+  setAcces: acces => {
+    set({
+      acces
+    });
+  },
 
   getData: (method, data = {}) => {
     set({
@@ -246,7 +264,11 @@ const useStore = create((set, get) => ({
 
   closeDialog: () => {
     document.body.style.overflow = "";
-    set({ modalDialog: false })
+    set({ 
+      modalDialog: false,
+      is_horizontal: false,
+      is_vertical: false
+    })
   },
 
   openImageBill: (image) => {
@@ -1042,9 +1064,9 @@ function VendorItemsTableEdit(){
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
-                  <TableCell align="center">{allPrice} ₽</TableCell>
+                  <TableCell>{allPrice} ₽</TableCell>
                   <TableCell></TableCell>
-                  <TableCell align="center">{allPrice_w_nds} ₽</TableCell>
+                  <TableCell>{allPrice_w_nds} ₽</TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                 </TableRow>
@@ -1057,7 +1079,104 @@ function VendorItemsTableEdit(){
   )
 }
 
-function FormHeader_new({ page }){
+function VendorItemsTableView(){
+
+  const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
+  const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  return (
+    <>
+      <Grid item xs={12} sm={12}>
+        <h2>Товары в документе</h2>
+        <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
+      </Grid>
+
+      <Grid item xs={12} style={{ marginBottom: 20 }} sm={12}>
+        <TableContainer component={Paper}>
+          <Table aria-label="a dense table">
+            <TableHead>
+              <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                <TableCell>Товар</TableCell>
+                { bill_items_doc.length == 0 ? null : <TableCell>Изменения</TableCell> }
+                <TableCell>В упак.</TableCell>
+                <TableCell>Упак</TableCell>
+                <TableCell>Кол-во</TableCell>
+                <TableCell>НДС</TableCell>
+                <TableCell>Сумма без НДС</TableCell>
+                <TableCell>Сумма НДС</TableCell>
+                <TableCell>Сумма с НДС</TableCell>
+                <TableCell></TableCell>
+                <TableCell></TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {bill_items.map((item, key) => (
+                <React.Fragment key={key}>
+                  {!item?.data_bill ? null :
+                    <TableRow style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                      <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
+                      <TableCell>До</TableCell>
+                      <TableCell>{item?.data_bill?.pq} {item.ed_izmer_name}</TableCell>
+                      <TableCell>{item?.data_bill?.count}</TableCell>
+                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.fact_unit} {item.ed_izmer_name}</TableCell>
+                      <TableCell>{item?.data_bill?.nds}</TableCell>
+                      <TableCell>{item?.data_bill?.price} ₽</TableCell>
+                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.summ_nds} ₽</TableCell>
+                      <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
+                      <TableCell rowSpan={2}></TableCell>
+                      <TableCell rowSpan={2}>
+                        {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  }
+
+                  <TableRow hover style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                    {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
+                    {!item?.data_bill ? null : <TableCell>После</TableCell>}
+                    <TableCell className="ceil_white">{item.pq}</TableCell>
+                    <TableCell className="ceil_white">{item.count}</TableCell>
+                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.fact_unit} {item.ed_izmer_name}</TableCell>
+                    <TableCell>{item.nds}</TableCell>
+                    <TableCell className="ceil_white">{item.price_item}</TableCell>
+                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.summ_nds} ₽</TableCell>
+                    <TableCell className="ceil_white">{item.price_w_nds}</TableCell>
+                    {item?.data_bill ? null :
+                      <>
+                        <TableCell>
+                          
+                        </TableCell>
+                        <TableCell>
+                          {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
+                        </TableCell>
+                      </>
+                    }
+                  </TableRow>
+                </React.Fragment>
+              ))}
+              { bill_items.length == 0 ? null : (
+                <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
+                  <TableCell>Итого:</TableCell>
+                  { bill_items_doc.length == 0 ? null : <TableCell></TableCell> }
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>{allPrice} ₽</TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>{allPrice_w_nds} ₽</TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Grid>
+    </>
+  )
+}
+
+function FormHeader_new({ page, type_edit }){
 
   const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
 
@@ -1069,6 +1188,7 @@ function FormHeader_new({ page }){
             data={points}
             value={point_name}
             multiple={false}
+            disabled={ type_edit === 'edit' ? false : true }
             func={ (event, name) => search_point(event, name) }
             onBlur={ (event, name) => search_point(event, name) }
             label="Точка"
@@ -1076,7 +1196,7 @@ function FormHeader_new({ page }){
         </Grid>
         :
         <Grid item xs={12} sm={4}>
-          <MyTextInput label="Точка" disabled={true} value={point_name} className='disabled_input'/>
+          <MyTextInput label="Точка" disabled={ type_edit === 'edit' ? false : true } value={point_name} className='disabled_input'/>
         </Grid>
       }
 
@@ -1086,6 +1206,7 @@ function FormHeader_new({ page }){
           value={type}
           multiple={false}
           is_none={false}
+          disabled={ type_edit === 'edit' ? false : true }
           func={ event => changeData('type', event) }
           label="Тип"
         />
@@ -1099,13 +1220,14 @@ function FormHeader_new({ page }){
             multiple={false}
             data={vendors}
             value={search_vendor}
+            disabled={ type_edit === 'edit' ? false : true }
             func={ (event, name) => search_vendors(event, name) }
             onBlur={ (event, name) => search_vendors(event, name) }
           />
         </Grid>
         :
         <Grid item xs={12} sm={4}>
-          <MyTextInput label="Поставщик" disabled={true} value={vendor_name} className='disabled_input'/>
+          <MyTextInput label="Поставщик" disabled={ type_edit === 'edit' ? false : true } value={vendor_name} className='disabled_input'/>
         </Grid>
       }
 
@@ -1117,6 +1239,7 @@ function FormHeader_new({ page }){
               value={doc_base_id}
               multiple={false}
               is_none={false}
+              disabled={ type_edit === 'edit' ? false : true }
               func={ event => changeData('doc_base_id', event) }
               label="Документ"
             />
@@ -1132,6 +1255,7 @@ function FormHeader_new({ page }){
               data={docs}
               multiple={false}
               value={doc}
+              disabled={ type_edit === 'edit' ? false : true }
               func={ (event, name) => search_doc(event, name) }
               onBlur={ (event, name) => search_doc(event, name) }
               label="Документ основание"
@@ -1144,6 +1268,7 @@ function FormHeader_new({ page }){
       <Grid item xs={12} sm={6}>
         <MyTextInput
           label="Номер документа"
+          disabled={ type_edit === 'edit' ? false : true }
           value={number}
           func={ (event) => changeInput(event, 'number') }
         />
@@ -1153,6 +1278,7 @@ function FormHeader_new({ page }){
         <Grid item xs={12} sm={6}>
           <MyTextInput
             label="Номер счет-фактуры"
+            disabled={ type_edit === 'edit' ? false : true }
             value={number_factur}
             func={ (event) => changeInput(event, 'number_factur') }
           />
@@ -1163,6 +1289,7 @@ function FormHeader_new({ page }){
       <Grid item xs={12} sm={6}>
         <MyDatePickerNew
           label="Дата документа"
+          disabled={ type_edit === 'edit' ? false : true }
           value={date}
           func={ (event) => changeDateRange(event, 'date') }
         />
@@ -1172,6 +1299,7 @@ function FormHeader_new({ page }){
         <Grid item xs={12} sm={6}>
           <MyDatePickerNew
             label="Дата счет-фактуры"
+            disabled={ type_edit === 'edit' ? false : true }
             value={date_factur}
             func={ (event) => changeDateRange(event, 'date_factur') }
           />
@@ -1182,7 +1310,7 @@ function FormHeader_new({ page }){
   )
 }
 
-function FormImage_new({ page }){
+function FormImage_new({ page, type_edit }){
 
   const [type, imgs_bill, openImageBill, fullScreen, imgs_factur, number_factur, changeInput, changeDateRange, date_factur] = useStore( state => [state.type, state.imgs_bill, state.openImageBill, state.fullScreen, state.imgs_factur, state.number_factur, state.changeInput, state.changeDateRange, state.date_factur]);
 
@@ -1226,16 +1354,22 @@ function FormImage_new({ page }){
         </Grid>
       ) : null}
 
-      <Grid item xs={12} sm={parseInt(type) === 2 ? 6 : 12}>
-        <div
-          className="dropzone"
-          id="img_bill"
-          style={{ width: '100%', minHeight: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        />
-      </Grid>
+      { type_edit === 'edit' ?
+        <Grid item xs={12} sm={parseInt(type) === 2 ? 6 : 12}>
+          <div
+            className="dropzone"
+            id="img_bill"
+            style={{ width: '100%', minHeight: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          />
+        </Grid>
+          :
+        null
+      }
 
-      {parseInt(type) === 2 && !fullScreen ? (
+
+      {type_edit === 'edit' && parseInt(type) === 2 && !fullScreen ? (
         <Grid item xs={12} sm={6}>
+          
           <div
             className="dropzone"
             id="img_bill_type"
@@ -1249,6 +1383,7 @@ function FormImage_new({ page }){
           <Grid item xs={12}>
             <MyTextInput
               label="Номер счет-фактуры"
+              disabled={ type_edit === 'edit' ? false : true }
               value={number_factur}
               func={ (event) => changeInput(event, 'number_factur') }
             />
@@ -1257,6 +1392,7 @@ function FormImage_new({ page }){
           <Grid item xs={12}>
             <MyDatePickerNew
               label="Дата счет-фактуры"
+              disabled={ type_edit === 'edit' ? false : true }
               value={date_factur}
               func={ (event) => changeDateRange(event, 'date_factur') }
             />
@@ -1282,13 +1418,17 @@ function FormImage_new({ page }){
             </TableContainer>
           </Grid>
 
-          <Grid item xs={12}>
-            <div
-              className="dropzone"
-              id="img_bill_type"
-              style={{ width: '100%', minHeight: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            />
-          </Grid>
+          { type_edit === 'edit' ?
+            <Grid item xs={12}>
+              <div
+                className="dropzone"
+                id="img_bill_type"
+                style={{ width: '100%', minHeight: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              />
+            </Grid>
+              :
+            null
+          }
         </>
         : null
       }
@@ -1296,7 +1436,7 @@ function FormImage_new({ page }){
   )
 }
 
-function FormOther_new({ page }){
+function FormOther_new({ page, type_edit }){
 
   const [type, date_items, changeDateRange, users, user, changeAutocomplite, comment, changeInput, changeItemChecked, is_new_doc] = useStore( state => [state.type, state.date_items, state.changeDateRange, state.users, state.user, state.changeAutocomplite, state.comment, state.changeInput, state.changeItemChecked, state.is_new_doc]);
 
@@ -1307,6 +1447,7 @@ function FormOther_new({ page }){
           <Grid item xs={12} sm={6}>
             <MyDatePickerNew
               label="Дата разгрузки"
+              disabled={ type_edit === 'edit' ? false : true }
               value={date_items}
               func={ (event) => changeDateRange(event, 'date_items') }
             />
@@ -1316,9 +1457,10 @@ function FormOther_new({ page }){
             <MyAutocomplite
               data={users}
               multiple={true}
+              disabled={ type_edit === 'edit' ? false : true }
               value={user}
               func={(event, data) => changeAutocomplite('user', data)}
-              label="Сотрудники"
+              label={"Сотрудники"}
             />
           </Grid>
         </>
@@ -1328,6 +1470,7 @@ function FormOther_new({ page }){
         <MyTextInput
           label="Комментарии"
           multiline={true}
+          disabled={ type_edit === 'edit' ? false : true }
           maxRows={3}
           value={comment}
           func={ (event) => changeInput(event, 'comment') }
@@ -1353,6 +1496,7 @@ function FormOther_new({ page }){
 
       <Grid item xs={12} sm={12} display="flex" alignItems="center">
         <MyCheckBox
+          disabled={ type_edit === 'edit' ? false : true }
           value={parseInt(is_new_doc) === 1 ? true : false}
           func={ (event) => changeItemChecked(event, 'is_new_doc') }
           label=""
@@ -1640,6 +1784,8 @@ class Billing_Modal extends React.Component {
 
     const vertical = this.state.vertical;
 
+    this.props.store.set_position(false, !vertical);
+
     this.setState({
       vertical: !vertical,
       horizontal: false,
@@ -1651,6 +1797,8 @@ class Billing_Modal extends React.Component {
     this.reset();
 
     const horizontal = this.state.horizontal;
+
+    this.props.store.set_position(!horizontal, false);
 
     this.setState({
       horizontal: !horizontal,
@@ -1727,27 +1875,37 @@ class Billing_Modal extends React.Component {
           </MyTooltip>
         </div>
 
-        <div className="modal" onClick={this.props.onClose.bind(this)} style={{ width: this.state.vertical ? '50%' : '100%', height: this.state.horizontal ? '50vh' : '100vh'}}>
-          <Draggable>
-            <div>
-              <div className="modal_content" style={{transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`}}>
-                <img 
-                  src={this.props.image} 
-                  alt="Image bill" 
-                  className="image_bill"
-                  onClick={(e) => e.stopPropagation()}
-                  draggable="false"
-                />
+        { !this.state.vertical && !this.state.horizontal ?
+          <div className="modal" onClick={this.props.onClose.bind(this)} style={{ width: this.state.vertical ? '50%' : '100%', height: this.state.horizontal ? '50vh' : '100vh'}}>
+            <Draggable>
+              <div>
+                <div className="modal_content" style={{transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`}}>
+                  <img 
+                    src={this.props.image} 
+                    alt="Image bill" 
+                    className="image_bill"
+                    onClick={(e) => e.stopPropagation()}
+                    draggable="false"
+                  />
+                </div>
               </div>
-            </div>
-          </Draggable>
-        </div>
+            </Draggable>
+          </div>
+            : 
+          null
+        }
 
         {this.state.vertical || this.state.horizontal ?
-          <div className="modal"
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)',  width: this.state.vertical ? '50%' : '100%',  height: this.state.horizontal ? '50vh' : '100vh', left: this.state.vertical ? '50%' : 0, top: this.state.horizontal ? '50%' : 0}}>
-            <div className="modal_content">
-              <img  src={this.props.image} alt="Image bill" className="image_bill" draggable="false" />
+          <div className="modal" style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)',  width: this.state.vertical ? '50%' : '100%',  height: this.state.horizontal ? '50vh' : '100vh', left: this.state.vertical ? '50%' : 0, top: this.state.horizontal ? '50%' : 0}}>
+            <div className="modal_content" style={{transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`}}>
+              <img 
+                src={this.props.image} 
+                alt="Image bill" 
+                className="image_bill" 
+                draggable="true" 
+                
+                //onClick={(e) => e.stopPropagation()} 
+              />
             </div>
           </div> 
         : null}
@@ -1778,6 +1936,8 @@ class Billing_Edit_ extends React.Component {
       module: 'billing',
       module_name: '',
       is_load: false,
+
+      acces: null
     };
   }
 
@@ -1800,19 +1960,26 @@ class Billing_Edit_ extends React.Component {
 
     const data = {
       point_id: bill['point_id'],
-      vendor_id: res?.vendors[0]?.id
+      vendor_id: res?.vendors[0]?.id,
     }
+
+    this.setState({
+      acces: res?.acces,
+    });
 
     const items = await this.getData('get_vendor_items', data);
     const docs = await this.getData('get_base_doc', data);
 
-    const { getDataBill } = this.props.store;
+    const { getDataBill, setAcces } = this.props.store;
 
+    setAcces(res?.acces);
     getDataBill(res, point, items.items, docs);
 
     document.title = 'Накладные';
 
-    this.myDropzone = new Dropzone("#img_bill", this.dropzoneOptions);
+    if( res?.acces?.photo === 'edit' ){
+      this.myDropzone = new Dropzone("#img_bill", this.dropzoneOptions);
+    }
   }
 
   getData = (method, data = {}) => {
@@ -1915,7 +2082,7 @@ class Billing_Edit_ extends React.Component {
 
   render() {
 
-    const { isPink, operAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items } = this.props.store;
+    const { isPink, operAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical } = this.props.store;
 
     return (
       <>
@@ -1928,6 +2095,7 @@ class Billing_Edit_ extends React.Component {
             onClose={closeDialog}
             fullScreen={fullScreen}
             image={image}
+            store={this.props.store}
           />
         }
 
@@ -1938,22 +2106,27 @@ class Billing_Edit_ extends React.Component {
           text={err_text}
         />
 
-        <Grid container spacing={3} mb={10} style={{ marginTop: '64px' }}>
+        <Grid container spacing={3} mb={10} style={{ marginTop: '64px', maxWidth: is_horizontal || is_vertical ? '50%' : '100%' }}>
 
           <Grid item xs={12} sm={12}>
-            <h1>Редактирование документа:{' '}{bill?.number}</h1>
+            <h1>Документ: {bill?.number}</h1>
             <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
           </Grid>
 
-          <FormHeader_new page={'edit'} />
+          <FormHeader_new page={'edit'} type_edit={this.state.acces?.header} />
           
-          <FormImage_new page={'edit'} />
+          <FormImage_new page={this.state.acces?.photo} />
 
-          <FormVendorItems />
-
-          <VendorItemsTableEdit />
+          { this.state.acces?.items == 'edit' ? 
+            <>
+              <FormVendorItems />  
+              <VendorItemsTableEdit />
+            </>
+              :
+            <VendorItemsTableView />
+          }
           
-          <FormOther_new page={'edit'} />
+          <FormOther_new page={'edit'} type_edit={this.state.acces?.footer} />
 
           <Billing_Accordion
             bill_list={bill_list}
@@ -1961,27 +2134,33 @@ class Billing_Edit_ extends React.Component {
             type='edit'
           />
 
-          <Grid item xs={12} sm={4}>
-            <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveNewBill.bind(this)}>
-              Сохранить
-            </Button>
-          </Grid>
+          { parseInt(this.state.acces?.only_save) === 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveNewBill.bind(this)}>
+                Сохранить
+              </Button>
+            </Grid>
+          }
          
-          <Grid item xs={12} sm={4}>
-            <Button variant="contained" fullWidth style={{ height: '100%' }}
-              //onClick={this.saveBill.bind(this)}
-            >
-              Удалить
-            </Button>
-          </Grid>
+          { parseInt(this.state.acces?.only_delete) === 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth style={{ height: '100%' }}
+                //onClick={this.saveBill.bind(this)}
+              >
+                Удалить
+              </Button>
+            </Grid>
+          }
 
-          <Grid item xs={12} sm={4}>
-            <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
-              //onClick={this.saveBill.bind(this)}
-            >
-              Сохранить и отправить
-            </Button>
-          </Grid>
+          { parseInt(this.state.acces?.only_delete) === 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
+                //onClick={this.saveBill.bind(this)}
+              >
+                Сохранить и отправить
+              </Button>
+            </Grid>
+          }
           
         </Grid>
       </>

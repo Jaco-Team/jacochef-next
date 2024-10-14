@@ -107,6 +107,7 @@ export class MyAutocomplite extends React.PureComponent {
           disableCloseOnSelect={true}
           // freeSolo
           // multiple={true}
+          disabled={ this.props.disabled || this.props.disabled === true ? true : false }
           id={ this.props.id ?? null }
           options={this.props.data}
           getOptionLabel={(option) => option.name || ''}

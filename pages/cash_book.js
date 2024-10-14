@@ -18,14 +18,30 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
-
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
+import DeleteIcon from '@mui/icons-material/Delete';
 import Typography from '@mui/material/Typography';
+
+import HelpIcon from '@mui/icons-material/Help';
 
 import { MySelect, MyTextInput, MyDatePickerNew, formatDate } from '@/ui/elements';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+
+const text = {
+  'virycka_fiz': 'Z-отчет о закрытия кассовой смены',
+  'virycka_driver': 'Курьеры к сдаче',
+  'zaim': 'Проставляется руководителем или бухгалтерией в случае внесения им займа в кассу кафе, если не хватает д/с в кассе, например, на выдачу з/платы.',
+  'peremeshenie': 'Проставляется управляющим в случае, если у него не хватает д/с в кассе и он берет их из курьерской кассы',
+  'zp': 'Заполняется бухгалтерией на основании платежных ведомостей на выплату з/пл, которые передаются управляющим на подпись. Управляющие в кассовой книге эти суммы лишь сверяет с полученными платежными ведомостями.',
+  'incasacia': 'Сумма, сданная в банк. Проставляется управляющим в случае инкассации',
+  'vozvrat': 'Проставляется руководителем или бухгалтерией в случае возврата из кассы ранее внесенного займа руководителем',
+  'otchet_fiz': 'Проставляется управляющим с случае, если он взял из кассы денежные средства для покупки чего-либо и планирует отчитаться по авансовому отчету.',
+  'otchet_driver': 'Эту сумму проставляет управляющий, которые по истечении месяца отчитывается перед руководителем куда потрачены и на какие цели эти денежные средства.'
+};
 
 class MainTable extends React.Component {
   render () {
@@ -84,6 +100,11 @@ class MainTable extends React.Component {
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Выручка
+                    <Tooltip title={<Typography color="inherit">{ this.props.table == 'fiz' ? text.virycka_fiz : text.virycka_driver }</Typography>}> 
+                      <IconButton>
+                        <HelpIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
                   </Typography>
                 }
                 
@@ -106,6 +127,11 @@ class MainTable extends React.Component {
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Заемные средства
+                    <Tooltip title={<Typography color="inherit">{text.zaim}</Typography>}> 
+                      <IconButton>
+                        <HelpIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
                   </Typography>
                 }
               </TableCell>
@@ -127,6 +153,11 @@ class MainTable extends React.Component {
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Перемещение из другой кассы
+                    <Tooltip title={<Typography color="inherit">{text.peremeshenie}</Typography>}> 
+                      <IconButton>
+                        <HelpIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
                   </Typography>
                 }
               </TableCell>
@@ -148,6 +179,11 @@ class MainTable extends React.Component {
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Платежная ведомость на выплату заработной платы
+                    <Tooltip title={<Typography color="inherit">{text.zp}</Typography>}> 
+                      <IconButton>
+                        <HelpIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
                   </Typography>
                 }
               </TableCell>
@@ -169,6 +205,11 @@ class MainTable extends React.Component {
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Инкассация
+                    <Tooltip title={<Typography color="inherit">{text.incasacia}</Typography>}> 
+                      <IconButton>
+                        <HelpIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
                   </Typography>
                 }
               </TableCell>
@@ -190,6 +231,11 @@ class MainTable extends React.Component {
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Возврат займа
+                    <Tooltip title={<Typography color="inherit">{text.vozvrat}</Typography>}> 
+                      <IconButton>
+                        <HelpIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
                   </Typography>
                 }
               </TableCell>
@@ -211,6 +257,11 @@ class MainTable extends React.Component {
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Выдача в подотчет
+                    <Tooltip title={<Typography color="inherit">{ this.props.table == 'fiz' ? text.otchet_fiz : text.otchet_driver }</Typography>}> 
+                      <IconButton>
+                        <HelpIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
                   </Typography>
                 }
               </TableCell>

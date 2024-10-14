@@ -389,13 +389,18 @@ div.css-19kzrtu {
 }
 
 .modal_btn {
-  position: absolute;
+  position: fixed;
   top: 70px;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 2000;
-
+  background-color: gray;
+  height: 60px;
+  margin-left: 10px;
+  padding-left: 10px;
+  border-radius: 10px;
+  
   & :hover {
     background-color: #e5e5e5 !important;
   }
