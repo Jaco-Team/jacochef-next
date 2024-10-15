@@ -54,7 +54,7 @@ class SitePush_Modal extends React.Component {
 
     if (this.props.push !== prevProps.push) {
       this.setState({
-        push: this.props.push
+        push: this.props.pushыв
       });
     }
   }
@@ -62,6 +62,11 @@ class SitePush_Modal extends React.Component {
   async changeItem(data, event) {
     const push = this.state.push;
     const value = event.target.value;
+
+    if (value.length > 50 && (data === 'title' || data === 'text')) {
+      return;
+    }
+
     push.this_push[data] = value;
 
     this.setState({

@@ -1,6 +1,10 @@
 import React from 'react';
+
+import Script from 'next/script';
+
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -10,6 +14,9 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -18,10 +25,157 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+
 import { MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
 
 import queryString from 'query-string';
 import dayjs from 'dayjs';
+
+class DriverStatTime_Modal extends React.Component {
+  map = null;
+  myGeoObject = null;
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      order: null
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    //console.log(this.props.order);
+
+    if (!this.props.order) {
+      return;
+    }
+
+    if (this.props.order !== prevProps.order) {
+      
+      this.getMap(this.props.order.addr_xy, this.props.order.driver_xy);
+    
+      this.setState({
+        order: this.props.order
+      });
+    }
+  }
+
+  getMap(addr, driver) {
+    if (!this.map) {
+      ymaps.ready(() => {
+        this.map = new ymaps.Map('map',
+          { center: addr, zoom: 11 },
+          { searchControlProvider: 'yandex#search' }
+        );
+
+        // адрес клиента
+        let myPlacemark = new ymaps.Placemark(addr, 
+          {}, 
+          {
+            iconLayout: 'default#image',
+            iconImageHref: '/Home.png',
+            iconImageSize: [30, 30],
+            iconImageOffset: [-12, -24],
+            iconContentOffset: [15, 15],
+        });
+
+         // местонахождение курьера
+        let myPlacemark2 = new ymaps.Placemark(driver, 
+          {}, 
+          {
+            iconLayout: 'default#image',
+            iconImageHref: '/Car.png',
+            iconImageSize: [30, 30],
+            iconImageOffset: [-12, -24],
+            iconContentOffset: [15, 15],
+        });
+
+        this.map.geoObjects.add(myPlacemark);
+        this.map.geoObjects.add(myPlacemark2);
+       
+      });
+    } else {
+
+      this.map.geoObjects.removeAll();
+      this.map.setCenter(addr);
+
+      // адрес клиента
+      let myPlacemark = new ymaps.Placemark(addr, 
+        {}, 
+        {
+          iconLayout: 'default#image',
+          iconImageHref: '/Home.png',
+          iconImageSize: [30, 30],
+          iconImageOffset: [-12, -24],
+          iconContentOffset: [15, 15],
+      });
+
+       // местонахождение курьера
+      let myPlacemark2 = new ymaps.Placemark(driver, 
+        {}, 
+        {
+          iconLayout: 'default#image',
+          iconImageHref: '/Car.png',
+          iconImageSize: [30, 30],
+          iconImageOffset: [-12, -24],
+          iconContentOffset: [15, 15],
+      });
+
+      this.map.geoObjects.add(myPlacemark);
+      this.map.geoObjects.add(myPlacemark2);
+    }
+  }
+
+  onClose() {
+    this.map = null;
+    this.myGeoObject = null;
+
+    this.setState({
+      order: null
+    });
+
+    this.props.onClose();
+  }
+
+  render() {
+    return (
+      <Dialog
+        open={this.props.open}
+        onClose={this.onClose.bind(this)}
+        fullWidth={true}
+        maxWidth={'lg'}
+      >
+        <DialogTitle style={{ display: 'flex' }}>
+          <Typography style={{ fontWeight: 'bold' }} mr={5}>{`Заказ: ${this.state.order?.id ?? ''}`}</Typography>
+          <Typography style={{ fontWeight: 'bold' }}>{`Курьер: ${this.state.order?.name ?? ''}`}</Typography>
+          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          <Grid container spacing={3}>
+
+            <Grid item xs={12} sm={12}>
+              <div id="map" name="map" style={{ width: '100%', height: 700, paddingTop: 10 }} />
+            </Grid>
+
+          </Grid>
+        </DialogContent>
+
+        <DialogActions>
+          <Button variant="contained" onClick={this.onClose.bind(this)}>
+            Закрыть
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+}
 
 class DriverStatTime_ extends React.Component {
   constructor(props) {
@@ -46,6 +200,9 @@ class DriverStatTime_ extends React.Component {
       operAlert: false,
       err_status: true,
       err_text: '',
+
+      order: null,
+      modalDialog: false,
     };
   }
   
@@ -158,12 +315,27 @@ class DriverStatTime_ extends React.Component {
     })
   }
 
+  openOrder(order) {
+    this.setState({
+      order,
+      modalDialog: true,
+    });
+  }
+
   render(){
     return (
       <>
+        <Script src="https://api-maps.yandex.ru/2.1/?apikey=665f5b53-8905-4934-9502-4a6a7b06a900&lang=ru_RU" />
+
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+
+        <DriverStatTime_Modal
+          open={this.state.modalDialog}
+          onClose={() => this.setState({ modalDialog: false, order: null })}
+          order={this.state.order}
+        />
         
         <MyAlert
           isOpen={this.state.operAlert}
@@ -228,8 +400,8 @@ class DriverStatTime_ extends React.Component {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {this.state.svod.map((row) => (
-                    <TableRow key={row.driver_id}>
+                  {this.state.svod.map((row, key) => (
+                    <TableRow key={key}>
                       <TableCell>{row.name}</TableCell>
                       <TableCell align="center">{row.time2}</TableCell>
                       <TableCell align="center">{row.other_stat.all_count}</TableCell>
@@ -248,7 +420,7 @@ class DriverStatTime_ extends React.Component {
 
           <Grid item xs={12} sm={12} style={{ marginBottom: 100 }}>
             <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} style={{ fontWeight: 'bold' }}>
                 Детализация заказов
               </AccordionSummary>
               <AccordionDetails>
@@ -263,7 +435,7 @@ class DriverStatTime_ extends React.Component {
                   </TableHead>
                   <TableBody>
                     {this.state.orders.map((row) => (
-                      <TableRow key={row.id}>
+                      <TableRow key={row.id} hover style={{ cursor: 'pointer' }} onClick={ this.openOrder.bind(this, row) }>
                         <TableCell>{row.id}</TableCell>
                         <TableCell>{row.name}</TableCell>
                         <TableCell>{row.time2}</TableCell>
