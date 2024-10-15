@@ -11,14 +11,6 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
-
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -27,19 +19,19 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyAutocomplite, MyDatePickerNew, MySelect, MyTimePicker, MyTextInput, MyCheckBox, MyAlert, formatDate } from '@/ui/elements';
+import { MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
 
-class SitePush_Modal extends React.Component {
+class FAQ_Modal extends React.Component {
 
   constructor(props) {
     super(props);
 
     this.state = {
-      push: null,
+      item: null,
 
       openAlert: false,
       err_status: true,
@@ -48,13 +40,13 @@ class SitePush_Modal extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (!this.props.push) {
+    if (!this.props.item) {
       return;
     }
 
-    if (this.props.push !== prevProps.push) {
+    if (this.props.item !== prevProps.item) {
       this.setState({
-        push: this.props.push
+        push: this.props.pushыв
       });
     }
   }
@@ -457,64 +449,37 @@ class SitePush_Modal extends React.Component {
   }
 }
 
-class SitePush_ extends React.Component {
+class FAQ_ extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      module: 'site_push',
+      module: 'faq_module',
       module_name: '',
       is_load: false,
 
-      cities: [],
-      city: '',
+      points: [],
+      point: [],
 
-      active: [],
-      non_active: [],
+      date_start: formatDate(new Date()),
+      date_end: formatDate(new Date()),
 
-      active_copy: [],
-      non_active_copy: [],
-
-      fullScreen: false,
-
-      modalDialog: false,
-      method: '',
-      mark: '',
-      push: null,
-      push_name: '',
-
-      push_new: {
-        name: '',
-        date_start: formatDate(new Date()),
-        time_start: '',
-        is_send: 0,
-        is_auth: 0,
-        title: '',
-        text: '',
-        type: '',
-        is_active: 0,
-        it_id: 0,
-        city_id: [],
-        list: []
-      },
+      arrayOrdersByH: null,
+      data: null,
+      statAllItemsCount: null,
 
       openAlert: false,
       err_status: true,
-      err_text: ''
-
+      err_text: '',
     };
   }
 
   async componentDidMount() {
     const data = await this.getData('get_all');
+    console.log("🚀 === data:", data);
 
     this.setState({
-      cities: data.cities,
-      city: data.cities[0].id,
-      active: data.push.active,
-      non_active: data.push.non_active,
-      active_copy: data.push.active,
-      non_active_copy: data.push.non_active,
+      // points: data.points,
       module_name: data.module_info.name,
     });
 
@@ -564,225 +529,15 @@ class SitePush_ extends React.Component {
       });
   };
 
-  handleResize() {
-    if (window.innerWidth < 601) {
-      this.setState({
-        fullScreen: true,
-      });
-    } else {
-      this.setState({
-        fullScreen: false,
-      });
-    }
+  async addSection() {
+    console.log('addSection');
   }
 
-  async changeCity(event) {
-    const city = event.target.value;
-
-    let active = JSON.parse(JSON.stringify(this.state.active_copy));
-    let non_active = JSON.parse(JSON.stringify(this.state.non_active_copy));
-    
-    if(parseInt(city) !== -1) {
-      active = active.filter(item => item.city_id.includes(city) || item.city_id.includes('-1'));
-      non_active = non_active.filter(item => item.city_id.includes(city || '-1') || item.city_id.includes('-1'));
-    }
-
-    this.setState({
-      city,
-      active,
-      non_active,
-    });
-  }
-
-  async update() {
-    const res = await this.getData('get_all');
-
-    this.setState({
-      active: res.push.active,
-      non_active: res.push.non_active,
-      active_copy: res.push.active,
-      non_active_copy: res.push.non_active,
-    });
-  }
-
-  async openModal(mark, method, push_id) {
-    this.handleResize();
-
-    if (mark === 'push_new') {
-
-      const push = await this.getData('get_all_for_new');
-
-      push.this_push = JSON.parse(JSON.stringify(this.state.push_new));
-      push.types = [{ id: 1, name: 'Простое уведомление'}, { id: 2, name: 'Открыть акцию'}, { id: 3, name: 'Открыть товар'}];
-
-      this.setState({
-        push,
-        mark,
-        method,
-        modalDialog: true,
-      });
-    }
-
-    if (mark === 'push_edit') {
-
-      const data = {
-        push_id,
-      };
-
-      const push = await this.getData('get_one', data);
-
-      push.types = [{ id: 1, name: 'Простое уведомление'}, { id: 2, name: 'Открыть акцию'}, { id: 3, name: 'Открыть товар'}];
-
-      if(parseInt(push.this_push.ban_id)) {
-        push.this_push.it_id = push.banners.find(ban => parseInt(ban.id) === parseInt(push.this_push.ban_id)) ?? 0;
-
-        if(push.this_push.city_id.length > 1) {
-          push.this_push.list = push.banners.filter(item => parseInt(item.city_id) === -1);
-        } else {
-          push.this_push.list = push.banners.reduce((newArr, item) => {
-    
-            let res = [];
-    
-            push.this_push.city_id.map((city) => {
-    
-              if(parseInt(city.id) === parseInt(item.city_id) || parseInt(item.city_id) === -1) {
-                res.push(item);
-              }
-    
-              return city;
-            });
-    
-            return [...newArr,...res];
-          }, []);
-        }
-      }
-
-      if(parseInt(push.this_push.item_id)) {
-        push.this_push.it_id = push.items.find(item => parseInt(item.id) === parseInt(push.this_push.item_id)) ?? 0;
-        push.this_push.list = push.items;
-      }
-
-      this.setState({
-        push,
-        mark,
-        method,
-        modalDialog: true,
-        push_name: push.this_push.name
-      });
-    }
-  }
-
-  async change_active(key, id, event) {
-    const active = this.state.active;
-    const value = event.target.checked === true ? 1 : 0;
-
-    active.forEach((item) => {
-      if (parseInt(item.id) === parseInt(id)) {
-        item[key] = value;
-      }
-    });
-    
-    this.setState({
-      active,
-    });
-
-    const data = {
-      id,
-      is_active: value,
-    };
-
-    const res = await this.getData('save_active', data);
-
-    if (res.st) {
-
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
-      });
-
-      setTimeout(async () => {
-        this.update();
-      }, 300);
-
-    } else {
-
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
-      });
-
-    }
-  }
-
-  async saveNew(push) {
-    
-    const data = {
-      ...push
-    }
-
-    const res = await this.getData('save_new', data);
-
-    if (res.st) {
-
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
-        modalDialog: false
-      });
-
-      setTimeout(async () => {
-        this.update();
-      }, 300);
-
-    } else {
-
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
-      });
-
-    }
-  
-  }
-
-  async saveEdit(push) {
-
-    const data = {
-      ...push
-    }
-
-    const res = await this.getData('save_edit', data);
-
-    if (res.st) {
-
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
-        modalDialog: false
-      });
-
-      setTimeout(async () => {
-        this.update();
-      }, 300);
-
-    } else {
-
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
-      });
-
-    }
+  async addArt() {
+    console.log('addArt');
   }
 
   render() {
-    
     return (
       <>
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
@@ -796,122 +551,30 @@ class SitePush_ extends React.Component {
           text={this.state.err_text}
         />
 
-        <SitePush_Modal
-          open={this.state.modalDialog}
-          onClose={() => this.setState({ modalDialog: false })}
-          method={this.state.method}
-          mark={this.state.mark}
-          push={this.state.push}
-          push_name={this.state.push_name}
-          fullScreen={this.state.fullScreen}
-          save={this.state.mark === 'push_new' ? this.saveNew.bind(this) : this.saveEdit.bind(this)}
-        />
+        <Grid container spacing={3} mb={3} className='container_first_child'>
 
-        <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}><h1>{this.state.module_name}</h1></Grid>
-
-          <Grid item xs={12} sm={4}>
-            <MySelect
-              is_none={false}
-              label="Город"
-              data={this.state.cities}
-              value={this.state.city}
-              func={this.changeCity.bind(this)}
-            />
+          <Grid item xs={12} sm={12}>
+            <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
-            <Button onClick={this.openModal.bind(this, 'push_new', 'Новая рассылка')} variant="contained">
-              Добавить рассылку
+          <Grid item xs={12} sm={4}>
+            <Button onClick={this.addSection.bind(this)} variant="contained">
+              Добавить раздел
             </Button>
           </Grid>
 
-          {/* таблица активных рассылок */}
-          {!this.state.active.length ? null : (
-            <Grid item xs={12} sm={12}>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell colSpan={8}><h2>Активные</h2></TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell style={{ width: '10%' }}>#</TableCell>
-                      <TableCell style={{ width: '18%' }}>Название</TableCell>
-                      <TableCell style={{ width: '18%' }}>Город</TableCell>
-                      <TableCell style={{ width: '18%' }}>Дата старта</TableCell>
-                      <TableCell style={{ width: '18%' }}>Время старта</TableCell>
-                      <TableCell style={{ width: '18%' }}>Активность</TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {this.state.active.map((item, key) => (
-                      <TableRow key={key} hover>
-                        <TableCell>{key + 1}</TableCell>
-                        <TableCell onClick={this.openModal.bind(this, 'push_edit', 'Редактирование рассылки', item.id)} style={{ fontWeight: 700, cursor: 'pointer' }}>
-                          {item.name}
-                        </TableCell>
-                        <TableCell>{item.city_name}</TableCell>
-                        <TableCell>{item.date_start}</TableCell>
-                        <TableCell>{item.time_start}</TableCell>
-                        <TableCell>
-                          <MyCheckBox
-                            value={parseInt(item.is_active) == 1 ? true : false}
-                            func={this.change_active.bind(this, 'is_active', item.id)}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Grid>
-          )}
-
-          {/* таблица неактивных рассылок */}
-          {!this.state.non_active.length ? null : (
-            <Grid item xs={12} sm={12}>
-              <Accordion pb={10}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography sx={{ fontWeight: 'bold' }}>Не активные</Typography>
-                </AccordionSummary>
-                <AccordionDetails style={{ overflow: 'hidden' }}>
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell style={{ width: '20%' }}>#</TableCell>
-                          <TableCell style={{ width: '20%' }}>Название</TableCell>
-                          <TableCell style={{ width: '20%' }}>Город</TableCell>
-                          <TableCell style={{ width: '20%' }}>Дата старта</TableCell>
-                          <TableCell style={{ width: '20%' }}>Время старта</TableCell>
-                        </TableRow>
-                      </TableHead>
-
-                      <TableBody>
-                        {this.state.non_active.map((item, key) => (
-                          <TableRow key={key} hover>
-                            <TableCell>{key + 1}</TableCell>
-                            <TableCell onClick={this.openModal.bind(this, 'push_edit', 'Редактирование рассылки', item.id)} style={{ fontWeight: 700, cursor: 'pointer' }}>{item.name}</TableCell>
-                            <TableCell>{item.city_name}</TableCell>
-                            <TableCell>{item.date_start}</TableCell>
-                            <TableCell>{item.time_start}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </AccordionDetails>
-              </Accordion>
-            </Grid>
-          )}
+          <Grid item xs={12} sm={4}>
+            <Button onClick={this.addArt.bind(this)} variant="contained">
+              Добавить статью
+            </Button>
+          </Grid>
+             
         </Grid>
       </>
     );
   }
 }
 
-export default function SitePush() {
-  return <SitePush_ />;
+export default function FAQ() {
+  return <FAQ_ />;
 }
