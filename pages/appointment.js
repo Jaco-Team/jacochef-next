@@ -181,17 +181,20 @@ class Appointment_ extends React.Component {
     });
   }
 
-  changeActive(main_key, parent_key, features_key, event){
+  changeActive(main_key, parent_key, features_key, category_id, event){
     let full_menu = this.state.full_menu;
 
     if( event.target.checked === undefined ){
       full_menu[ main_key ]['chaild'][ parent_key ]['features'][ features_key ].is_active = event.target.value;
     }else{
-
-      if( parseInt(features_key) > -1 ) {
-        full_menu[ main_key ]['chaild'][ parent_key ]['features'][ features_key ].is_active = event.target.checked === true ? 1 : 0;
+      if( parseInt(category_id) > -1 ){
+        full_menu[ main_key ]['chaild'][ parent_key ]['features_cat'][ category_id ]['features'][ features_key ].is_active = event.target.checked === true ? 1 : 0;
       }else{
-        full_menu[ main_key ]['chaild'][ parent_key ].is_active = event.target.checked === true ? 1 : 0;
+        if( parseInt(features_key) > -1 ) {
+          full_menu[ main_key ]['chaild'][ parent_key ]['features'][ features_key ].is_active = event.target.checked === true ? 1 : 0;
+        }else{
+          full_menu[ main_key ]['chaild'][ parent_key ].is_active = event.target.checked === true ? 1 : 0;
+        }
       }
 
     }
@@ -354,7 +357,7 @@ class Appointment_ extends React.Component {
             </Grid>
         
             <Grid style={{ marginTop: 10}}>
-              <List dense sx={{ width: '100%', maxWidth: 500, bgcolor: 'background.paper' }}>
+              <List dense sx={{ width: '100%', maxWidth: 800, bgcolor: 'background.paper' }}>
                 {this.state.full_menu?.map((item, key) => 
                   <>
                     <ListItem
@@ -373,7 +376,7 @@ class Appointment_ extends React.Component {
                           secondaryAction={
                             <Checkbox
                               edge="end"
-                              onChange={ this.changeActive.bind(this, key, k, -1) }
+                              onChange={ this.changeActive.bind(this, key, k, -1, -1) }
                               checked={ parseInt(it.is_active) == 1 ? true : false }
                               //inputProps={{ 'aria-labelledby': labelId }}
                             />
@@ -386,6 +389,7 @@ class Appointment_ extends React.Component {
                         </ListItem>
                         <Collapse in={ true } timeout="auto">
                           <List component="div" disablePadding>
+                          
                             { it?.features?.map( (f, f_key) =>
                               <ListItem
                                 key={f_key}
@@ -393,18 +397,18 @@ class Appointment_ extends React.Component {
                                   parseInt(f?.type) == 2 ?
                                     <Checkbox
                                       edge="end"
-                                      onChange={ this.changeActive.bind(this, key, k, f_key) }
+                                      onChange={ this.changeActive.bind(this, key, k, f_key, -1) }
                                       checked={ parseInt(f.is_active) == 1 ? true : false }
                                     />
                                       :
                                     <MySelect
                                       data={this.state.dataSelect}
                                       value={f.is_active}
-                                      func={this.changeActive.bind(this, key, k, f_key)}
+                                      func={this.changeActive.bind(this, key, k, f_key, -1)}
                                       //label="День недели"
                                       is_none={false}
                                     />
-                                }
+                                  }
                                 disablePadding
                               >
                                 <ListItemButton>
@@ -412,6 +416,47 @@ class Appointment_ extends React.Component {
                                 </ListItemButton>
                               </ListItem>
                             ) }
+
+                            <table>
+                              <thead>
+                                <tr>
+                                  <th></th>
+                                  { it?.features_cat?.length > 0 ?
+                                    
+                                      it?.features_cat[0]?.features?.map( ( cat_f, cat_f_key ) =>
+                                        <th key={cat_f_key}>{cat_f?.name}</th>
+                                      )
+                                      :
+                                    false
+                                  }
+                                </tr>
+                              </thead>
+                              <tbody>
+                                
+                              { it?.features_cat?.map( (f, f_key) =>
+                                <tr key={f_key}>
+                                  
+                                  <td>{ f?.category_name }</td>
+                                  { f?.features?.map( ( cat_f, cat_f_key ) =>
+                                    <td key={cat_f_key}>
+                                      <Checkbox
+                                        //key={cat_f_key}
+                                        //style={{ width: 400 }}
+                                        edge="end"
+                                        onChange={ this.changeActive.bind(this, key, k, cat_f_key, f_key) }
+                                        checked={ parseInt(cat_f.is_active) == 1 ? true : false }
+                                      />
+                                    </td>
+                                    
+                                  ) }
+                                </tr>
+                              ) }
+
+                              </tbody>
+                            </table>
+
+                          
+                            
                             
                           </List>
                         </Collapse>
