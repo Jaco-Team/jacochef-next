@@ -820,7 +820,7 @@ class CatWork_ extends React.Component {
               </Grid>
 
               <Grid item xs={12} sm={12}>
-                <TextEditor22 id="EditorNew" value={''} refs_={this.myRef} />
+                <TextEditor22 id="EditorNew" value={''} refs_={this.myRef} toolbar={true} menubar={true} />
               </Grid>
               
             </Grid>
@@ -915,7 +915,7 @@ class CatWork_ extends React.Component {
             </Grid>
 
             <Grid item xs={12} sm={12}>
-              <TextEditor22 id="EditorNew" value={''} refs_={this.myRef_action} />
+              <TextEditor22 id="EditorNew" value={''} refs_={this.myRef_action} toolbar={true} menubar={true} />
             </Grid>
 
           </DialogContent>

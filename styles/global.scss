@@ -118,6 +118,23 @@ th[class*='tableCelHead'] {
   }
 }
 
+.accordion_f_a_q {
+
+  & .MuiAccordionSummary-content {
+    justify-content: space-between;
+
+    & p {
+      display: flex;
+      align-items: center;
+    }
+
+    & button {
+      margin-right: 30px;
+    }
+  }
+
+}
+
 .MuiAccordionSummary-content.Mui-expanded {
   margin: 12px 0 !important;
 }
