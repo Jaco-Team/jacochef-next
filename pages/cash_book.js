@@ -114,6 +114,28 @@ class MainTable extends React.Component {
             </TableRow>
             <TableRow>
               <TableCell>
+                { this.props?.cash_from_bank_is_edit === false ?
+                  <Typography 
+                    component="span"
+                  >
+                    Снятие наличных в банке
+                  </Typography>
+                    :
+                  <Typography 
+                    component="span"
+                    onClick={this.props.addData.bind(this, 'cash_from_bank', this.props.table, this.props?.cash_from_bank_arr, kassa_text+': Снятие наличных в банке')} 
+                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
+                  >
+                    Снятие наличных в банке
+                  </Typography>
+                }
+                
+              </TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.cash_from_bank}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>
                 { this.props?.zaim_is_edit === false ?
                   <Typography 
                     component="span"
@@ -693,6 +715,12 @@ class CashBook_ extends React.Component {
               virycka_is_edit={this.state.fiz_kassa?.virycka_is_edit}
               virycka_arr={this.state.fiz_kassa?.virycka_arr}
 
+              cash_from_bank={this.state.fiz_kassa?.cash_from_bank}
+              cash_from_bank_is_edit={this.state.fiz_kassa?.cash_from_bank_is_edit}
+              cash_from_bank_arr={this.state.fiz_kassa?.cash_from_bank_arr}
+
+              
+
               zaim={this.state.fiz_kassa?.zaim}
               zaim_is_edit={this.state.fiz_kassa?.zaim_is_edit}
               zaim_arr={this.state.fiz_kassa?.zaim_arr}
@@ -735,6 +763,10 @@ class CashBook_ extends React.Component {
               virycka={this.state.driver_kassa?.virycka}
               virycka_is_edit={this.state.driver_kassa?.virycka_is_edit}
               virycka_arr={this.state.driver_kassa?.virycka_arr}
+
+              cash_from_bank={this.state.driver_kassa?.cash_from_bank}
+              cash_from_bank_is_edit={this.state.driver_kassa?.cash_from_bank_is_edit}
+              cash_from_bank_arr={this.state.driver_kassa?.cash_from_bank_arr}
 
               zaim={this.state.driver_kassa?.zaim}
               zaim_is_edit={this.state.driver_kassa?.zaim_is_edit}
