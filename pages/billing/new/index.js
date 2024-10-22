@@ -12,6 +12,11 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -41,9 +46,30 @@ import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 
 import Draggable from 'react-draggable';
 
+const types = [
+  {
+    "name": "Счет",
+    "id": "1"
+  },
+  {
+    "name": "Поступление",
+    "id": "2"
+  },
+  {
+    "name": "Коррекция",
+    "id": "3"
+  },
+  {
+    "name": "Возврат",
+    "id": "4"
+  },
+]
+
 const useStore = create((set, get) => ({
   isPink: false,
   setPink: () => set((state) => ({ isPink: !state.isPink })),
+
+  my_acces: [],
 
   vendor_items: [],
   search_item: '',
@@ -79,7 +105,7 @@ const useStore = create((set, get) => ({
   vendors: [],
   vendorsCopy: [],
 
-  types: [],
+  types: types,
   type: '',
 
   fullScreen: false,
@@ -113,6 +139,28 @@ const useStore = create((set, get) => ({
   user: [],
 
   comment: '',
+
+  is_horizontal: false,
+  is_vertical: false,
+
+  set_position: (is_horizontal, is_vertical) => {
+    set({
+      is_horizontal: is_horizontal,
+      is_vertical: is_vertical,
+    });
+  },
+
+  setPoints: points => {
+    set({
+      points
+    })
+  },
+
+  setAcces: acces => {
+    set({
+      acces
+    });
+  },
 
   getData: (method, data = {}) => {
     set({
@@ -241,7 +289,11 @@ const useStore = create((set, get) => ({
 
   closeDialog: () => {
     document.body.style.overflow = "";
-    set({ modalDialog: false })
+    set({ 
+      modalDialog: false,
+      is_horizontal: false,
+      is_vertical: false
+    })
   },
 
   openImageBill: (image) => {
@@ -823,24 +875,7 @@ const useStore = create((set, get) => ({
 
 }));
 
-const types = [
-  {
-    "name": "Счет",
-    "id": "1"
-  },
-  {
-    "name": "Поступление",
-    "id": "2"
-  },
-  {
-    "name": "Коррекция",
-    "id": "3"
-  },
-  {
-    "name": "Возврат",
-    "id": "4"
-  },
-]
+
 
 function FormVendorItems(){
 
@@ -1037,9 +1072,9 @@ function VendorItemsTableEdit(){
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
-                  <TableCell align="center">{allPrice} ₽</TableCell>
+                  <TableCell>{allPrice} ₽</TableCell>
                   <TableCell></TableCell>
-                  <TableCell align="center">{allPrice_w_nds} ₽</TableCell>
+                  <TableCell>{allPrice_w_nds} ₽</TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                 </TableRow>
@@ -1052,7 +1087,104 @@ function VendorItemsTableEdit(){
   )
 }
 
-function FormHeader_new({ page }){
+function VendorItemsTableView(){
+
+  const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
+  const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  return (
+    <>
+      <Grid item xs={12} sm={12}>
+        <h2>Товары в документе</h2>
+        <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
+      </Grid>
+
+      <Grid item xs={12} style={{ marginBottom: 20 }} sm={12}>
+        <TableContainer component={Paper}>
+          <Table aria-label="a dense table">
+            <TableHead>
+              <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                <TableCell>Товар</TableCell>
+                { bill_items_doc.length == 0 ? null : <TableCell>Изменения</TableCell> }
+                <TableCell>В упак.</TableCell>
+                <TableCell>Упак</TableCell>
+                <TableCell>Кол-во</TableCell>
+                <TableCell>НДС</TableCell>
+                <TableCell>Сумма без НДС</TableCell>
+                <TableCell>Сумма НДС</TableCell>
+                <TableCell>Сумма с НДС</TableCell>
+                <TableCell></TableCell>
+                <TableCell></TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {bill_items.map((item, key) => (
+                <React.Fragment key={key}>
+                  {!item?.data_bill ? null :
+                    <TableRow style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                      <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
+                      <TableCell>До</TableCell>
+                      <TableCell>{item?.data_bill?.pq} {item.ed_izmer_name}</TableCell>
+                      <TableCell>{item?.data_bill?.count}</TableCell>
+                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.fact_unit} {item.ed_izmer_name}</TableCell>
+                      <TableCell>{item?.data_bill?.nds}</TableCell>
+                      <TableCell>{item?.data_bill?.price} ₽</TableCell>
+                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.summ_nds} ₽</TableCell>
+                      <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
+                      <TableCell rowSpan={2}></TableCell>
+                      <TableCell rowSpan={2}>
+                        {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  }
+
+                  <TableRow hover style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                    {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
+                    {!item?.data_bill ? null : <TableCell>После</TableCell>}
+                    <TableCell className="ceil_white">{item.pq}</TableCell>
+                    <TableCell className="ceil_white">{item.count}</TableCell>
+                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.fact_unit} {item.ed_izmer_name}</TableCell>
+                    <TableCell>{item.nds}</TableCell>
+                    <TableCell className="ceil_white">{item.price_item}</TableCell>
+                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.summ_nds} ₽</TableCell>
+                    <TableCell className="ceil_white">{item.price_w_nds}</TableCell>
+                    {item?.data_bill ? null :
+                      <>
+                        <TableCell>
+                          
+                        </TableCell>
+                        <TableCell>
+                          {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
+                        </TableCell>
+                      </>
+                    }
+                  </TableRow>
+                </React.Fragment>
+              ))}
+              { bill_items.length == 0 ? null : (
+                <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
+                  <TableCell>Итого:</TableCell>
+                  { bill_items_doc.length == 0 ? null : <TableCell></TableCell> }
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>{allPrice} ₽</TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>{allPrice_w_nds} ₽</TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Grid>
+    </>
+  )
+}
+
+function FormHeader_new({ page, type_edit }){
 
   const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
 
@@ -1064,6 +1196,7 @@ function FormHeader_new({ page }){
             data={points}
             value={point_name}
             multiple={false}
+            disabled={ type_edit === 'edit' ? false : true }
             func={ (event, name) => search_point(event, name) }
             onBlur={ (event, name) => search_point(event, name) }
             label="Точка"
@@ -1071,7 +1204,7 @@ function FormHeader_new({ page }){
         </Grid>
         :
         <Grid item xs={12} sm={4}>
-          <MyTextInput label="Точка" disabled={true} value={point_name} className='disabled_input'/>
+          <MyTextInput label="Точка" disabled={ type_edit === 'edit' ? false : true } value={point_name} className='disabled_input'/>
         </Grid>
       }
 
@@ -1081,6 +1214,7 @@ function FormHeader_new({ page }){
           value={type}
           multiple={false}
           is_none={false}
+          disabled={ type_edit === 'edit' ? false : true }
           func={ event => changeData('type', event) }
           label="Тип"
         />
@@ -1094,13 +1228,14 @@ function FormHeader_new({ page }){
             multiple={false}
             data={vendors}
             value={search_vendor}
+            disabled={ type_edit === 'edit' ? false : true }
             func={ (event, name) => search_vendors(event, name) }
             onBlur={ (event, name) => search_vendors(event, name) }
           />
         </Grid>
         :
         <Grid item xs={12} sm={4}>
-          <MyTextInput label="Поставщик" disabled={true} value={vendor_name} className='disabled_input'/>
+          <MyTextInput label="Поставщик" disabled={ type_edit === 'edit' ? false : true } value={vendor_name} className='disabled_input'/>
         </Grid>
       }
 
@@ -1112,6 +1247,7 @@ function FormHeader_new({ page }){
               value={doc_base_id}
               multiple={false}
               is_none={false}
+              disabled={ type_edit === 'edit' ? false : true }
               func={ event => changeData('doc_base_id', event) }
               label="Документ"
             />
@@ -1127,6 +1263,7 @@ function FormHeader_new({ page }){
               data={docs}
               multiple={false}
               value={doc}
+              disabled={ type_edit === 'edit' ? false : true }
               func={ (event, name) => search_doc(event, name) }
               onBlur={ (event, name) => search_doc(event, name) }
               label="Документ основание"
@@ -1139,6 +1276,7 @@ function FormHeader_new({ page }){
       <Grid item xs={12} sm={6}>
         <MyTextInput
           label="Номер документа"
+          disabled={ type_edit === 'edit' ? false : true }
           value={number}
           func={ (event) => changeInput(event, 'number') }
         />
@@ -1148,6 +1286,7 @@ function FormHeader_new({ page }){
         <Grid item xs={12} sm={6}>
           <MyTextInput
             label="Номер счет-фактуры"
+            disabled={ type_edit === 'edit' ? false : true }
             value={number_factur}
             func={ (event) => changeInput(event, 'number_factur') }
           />
@@ -1158,6 +1297,7 @@ function FormHeader_new({ page }){
       <Grid item xs={12} sm={6}>
         <MyDatePickerNew
           label="Дата документа"
+          disabled={ type_edit === 'edit' ? false : true }
           value={date}
           func={ (event) => changeDateRange(event, 'date') }
         />
@@ -1167,6 +1307,7 @@ function FormHeader_new({ page }){
         <Grid item xs={12} sm={6}>
           <MyDatePickerNew
             label="Дата счет-фактуры"
+            disabled={ type_edit === 'edit' ? false : true }
             value={date_factur}
             func={ (event) => changeDateRange(event, 'date_factur') }
           />
@@ -1177,7 +1318,7 @@ function FormHeader_new({ page }){
   )
 }
 
-function FormImage_new({ page }){
+function FormImage_new({ page, type_edit }){
 
   const [type, imgs_bill, openImageBill, fullScreen, imgs_factur, number_factur, changeInput, changeDateRange, date_factur] = useStore( state => [state.type, state.imgs_bill, state.openImageBill, state.fullScreen, state.imgs_factur, state.number_factur, state.changeInput, state.changeDateRange, state.date_factur]);
 
@@ -1221,16 +1362,22 @@ function FormImage_new({ page }){
         </Grid>
       ) : null}
 
-      <Grid item xs={12} sm={parseInt(type) === 2 ? 6 : 12}>
-        <div
-          className="dropzone"
-          id="img_bill"
-          style={{ width: '100%', minHeight: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        />
-      </Grid>
+      { type_edit === 'edit' ?
+        <Grid item xs={12} sm={parseInt(type) === 2 ? 6 : 12}>
+          <div
+            className="dropzone"
+            id="img_bill"
+            style={{ width: '100%', minHeight: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          />
+        </Grid>
+          :
+        null
+      }
 
-      {parseInt(type) === 2 && !fullScreen ? (
+
+      {type_edit === 'edit' && parseInt(type) === 2 && !fullScreen ? (
         <Grid item xs={12} sm={6}>
+          
           <div
             className="dropzone"
             id="img_bill_type"
@@ -1244,6 +1391,7 @@ function FormImage_new({ page }){
           <Grid item xs={12}>
             <MyTextInput
               label="Номер счет-фактуры"
+              disabled={ type_edit === 'edit' ? false : true }
               value={number_factur}
               func={ (event) => changeInput(event, 'number_factur') }
             />
@@ -1252,6 +1400,7 @@ function FormImage_new({ page }){
           <Grid item xs={12}>
             <MyDatePickerNew
               label="Дата счет-фактуры"
+              disabled={ type_edit === 'edit' ? false : true }
               value={date_factur}
               func={ (event) => changeDateRange(event, 'date_factur') }
             />
@@ -1277,13 +1426,17 @@ function FormImage_new({ page }){
             </TableContainer>
           </Grid>
 
-          <Grid item xs={12}>
-            <div
-              className="dropzone"
-              id="img_bill_type"
-              style={{ width: '100%', minHeight: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            />
-          </Grid>
+          { type_edit === 'edit' ?
+            <Grid item xs={12}>
+              <div
+                className="dropzone"
+                id="img_bill_type"
+                style={{ width: '100%', minHeight: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              />
+            </Grid>
+              :
+            null
+          }
         </>
         : null
       }
@@ -1291,7 +1444,7 @@ function FormImage_new({ page }){
   )
 }
 
-function FormOther_new({ page }){
+function FormOther_new({ page, type_edit }){
 
   const [type, date_items, changeDateRange, users, user, changeAutocomplite, comment, changeInput, changeItemChecked, is_new_doc] = useStore( state => [state.type, state.date_items, state.changeDateRange, state.users, state.user, state.changeAutocomplite, state.comment, state.changeInput, state.changeItemChecked, state.is_new_doc]);
 
@@ -1302,6 +1455,7 @@ function FormOther_new({ page }){
           <Grid item xs={12} sm={6}>
             <MyDatePickerNew
               label="Дата разгрузки"
+              disabled={ type_edit === 'edit' ? false : true }
               value={date_items}
               func={ (event) => changeDateRange(event, 'date_items') }
             />
@@ -1311,9 +1465,10 @@ function FormOther_new({ page }){
             <MyAutocomplite
               data={users}
               multiple={true}
+              disabled={ type_edit === 'edit' ? false : true }
               value={user}
               func={(event, data) => changeAutocomplite('user', data)}
-              label="Сотрудники"
+              label={"Сотрудники"}
             />
           </Grid>
         </>
@@ -1323,6 +1478,7 @@ function FormOther_new({ page }){
         <MyTextInput
           label="Комментарии"
           multiline={true}
+          disabled={ type_edit === 'edit' ? false : true }
           maxRows={3}
           value={comment}
           func={ (event) => changeInput(event, 'comment') }
@@ -1348,6 +1504,7 @@ function FormOther_new({ page }){
 
       <Grid item xs={12} sm={12} display="flex" alignItems="center">
         <MyCheckBox
+          disabled={ type_edit === 'edit' ? false : true }
           value={parseInt(is_new_doc) === 1 ? true : false}
           func={ (event) => changeItemChecked(event, 'is_new_doc') }
           label=""
@@ -1385,6 +1542,142 @@ function MyTooltip(props) {
   );
 }
 
+// Аккродион с данными из накладной
+class Billing_Accordion extends React.Component {
+  shouldComponentUpdate(nextProps) {
+    var array1 = nextProps.bill_list;
+    var array2 = this.props.bill_list;
+
+    var is_same = array1.length == array2.length && array1.every(function (element, index) { return element === array2[index] });
+
+    return !is_same;
+  }
+
+  render() {
+    const { bill_list, bill_items, type } = this.props;
+
+    return (
+      <Grid item xs={12} sm={12} mb={5}>
+        
+        <AccordionDetails>
+          <AccordionSummary style={{ cursor: 'default' }} expandIcon={<ExpandMoreIcon sx={{ opacity: 0 }} />} aria-controls="panel1a-content">
+            <Grid item xs display="flex" flexDirection="row">
+              <Typography style={{ width: '1%' }}></Typography>
+              <Typography style={{ width: '17%', minWidth: '250px' }}>Тип {type === 'edit' ? ' документа' : ' накладной'}</Typography>
+              <Typography style={{ width: '3%' }}></Typography>
+              <Typography style={{ width: '3%' }}></Typography>
+              <Typography style={{ width: '10%' }}>
+                Номер {type === 'edit' ? ' документа' : ' накладной'}
+              </Typography>
+              <Typography style={{ width: '10%' }}>
+                Дата в {type === 'edit' ? ' документе' : ' накладной'}
+              </Typography>
+              <Typography style={{ width: '14%', minWidth: '200px' }}>Создатель</Typography>
+              <Typography style={{ width: '10%' }}>Дата обновления</Typography>
+              <Typography style={{ width: '14%', minWidth: '200px' }}>Редактор</Typography>
+              <Typography style={{ width: '10%' }}>Время обновления</Typography>
+              <Typography style={{ width: '8%' }}>Сумма с НДС</Typography>
+            </Grid>
+          </AccordionSummary>
+
+          {bill_list.map((item, i) => (
+            <Accordion key={i}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" className="accordion_summary" style={{ paddingRight: '1%' }}>
+
+                <Grid item xs display="flex" flexDirection='row'>
+
+                  <Typography component="div" style={{ width: '1%', backgroundColor: item.color, marginRight: '1%' }}></Typography>
+                  
+                  <Typography style={{ width: '17%', minWidth: '250px',  display: 'flex', alignItems: 'center' }}>
+                    {item.name}
+                  </Typography>
+
+                  <MyTooltip name="Нету бумажного носителя">
+                    <Typography component="div" style={{ width: '3%', display: 'flex', alignItems: 'center' }}>
+                      <MyCheckBox
+                        value={false}
+                        //func={this.props.changeCheck.bind(this, key, 'is_not_del')}
+                        label=""
+                      />
+                    </Typography>
+                  </ MyTooltip>
+
+                  <MyTooltip name="С бумажным носителем все хорошо">
+                    <Typography component="div" style={{ width: '3%', display: 'flex', alignItems: 'center' }}>
+                      <MyCheckBox
+                        value={false}
+                        //func={this.props.changeCheck.bind(this, key, 'is_not_del')}
+                        label=""
+                      />
+                    </Typography>
+                  </MyTooltip>
+
+                  <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
+                    {item.number}
+                  </Typography>
+
+                  <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
+                    {item.date}
+                  </Typography>
+
+                  <Typography style={{ width: '14%', minWidth: '200px', display: 'flex', alignItems: 'center' }}>
+                    {item.creator_id}
+                  </Typography>
+
+                  <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
+                    {item.date_update}
+                  </Typography>
+
+                  <Typography style={{ width: '14%', minWidth: '200px', display: 'flex', alignItems: 'center'}}>
+                    {item.editor_id}
+                  </Typography>
+
+                  <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
+                    {item.time_update}
+                  </Typography>
+
+                  
+
+                  <Typography style={{ width: '8%',  display: 'flex', alignItems: 'center' }}>
+                    {item.sum_w_nds}
+                  </Typography>
+                </Grid>
+              </AccordionSummary>
+
+              <AccordionDetails style={{ width: '100%' }}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                      <TableCell>Товар</TableCell>
+                      <TableCell>Объем упак.</TableCell>
+                      <TableCell>Кол-во упак.</TableCell>
+                      <TableCell>Кол-во</TableCell>
+                      <TableCell>Сумма с НДС</TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {bill_items?.map((item, key) => (
+                      <TableRow key={key} hover>
+                        <TableCell> {item.item_name} </TableCell>
+                        <TableCell>{item.pq} {item.ed_izmer_name}</TableCell>
+                        <TableCell>{item.count}</TableCell>
+                        <TableCell>{item.fact_unit} {item.ed_izmer_name}</TableCell>
+                        <TableCell> {item.price_w_nds} ₽</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </AccordionDetails>
+        
+      </Grid>
+    );
+  }
+}
+
 // модалка просмотра фото/картинок документов
 class Billing_Modal extends React.Component {
 
@@ -1396,7 +1689,7 @@ class Billing_Modal extends React.Component {
       scaleX: 1,
       scaleY: 1,
       vertical: false,
-      horizontal: false,
+      horizontal: true,
     };
   }
 
@@ -1421,7 +1714,7 @@ class Billing_Modal extends React.Component {
   }
 
   setScaleHorizontal() {
-    let scaleX = this.state.scaleX;
+    /*let scaleX = this.state.scaleX;
 
     if(scaleX < 0) {
       scaleX = scaleX * -1;
@@ -1431,11 +1724,18 @@ class Billing_Modal extends React.Component {
 
     this.setState({
       scaleX,
+    });*/
+
+    let rotate = this.state.rotate;
+    rotate = rotate + 180;
+
+    this.setState({
+      rotate,
     });
   }
 
   setScaleVertical() {
-    let scaleY = this.state.scaleY;
+    /*let scaleY = this.state.scaleY;
 
     if(scaleY < 0) {
       scaleY = scaleY * -1;
@@ -1445,6 +1745,13 @@ class Billing_Modal extends React.Component {
 
     this.setState({
       scaleY,
+    });*/
+
+    let rotate = this.state.rotate;
+    rotate = rotate - 180;
+ 
+    this.setState({
+      rotate,
     });
   }
 
@@ -1499,6 +1806,8 @@ class Billing_Modal extends React.Component {
 
     const vertical = this.state.vertical;
 
+    this.props.store.set_position(false, !vertical);
+
     this.setState({
       vertical: !vertical,
       horizontal: false,
@@ -1510,6 +1819,8 @@ class Billing_Modal extends React.Component {
     this.reset();
 
     const horizontal = this.state.horizontal;
+
+    this.props.store.set_position(!horizontal, false);
 
     this.setState({
       horizontal: !horizontal,
@@ -1544,12 +1855,12 @@ class Billing_Modal extends React.Component {
               <RotateRightIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Перевернуть по вертикали'>
+          <MyTooltip name='Повернуть на 180 градусов влево'>
             <IconButton onClick={this.setScaleVertical.bind(this)}>
               <ContrastIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Перевернуть по горизонтали'>
+          <MyTooltip name='Повернуть на 180 градусов вправо'>
             <IconButton onClick={this.setScaleHorizontal.bind(this)}>
               <ContrastIcon style={{ transform: 'rotate(-90deg)'}}/>
             </IconButton>
@@ -1564,7 +1875,7 @@ class Billing_Modal extends React.Component {
               <ZoomOutIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Разделить экран по вертикали'>
+          <MyTooltip name='Разделить экран по вертикали' style={{ display: 'none' }}>
             <IconButton onClick={this.setSplitVertical.bind(this)}>
               <VerticalSplitIcon />
             </IconButton>
@@ -1579,35 +1890,48 @@ class Billing_Modal extends React.Component {
               <RestartAltIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Закрыть'>
+          <MyTooltip name='Закрыть картинку'>
             <IconButton onClick={this.props.onClose.bind(this)}>
               <CloseIcon />
             </IconButton>
           </MyTooltip>
         </div>
 
-        <div className="modal" onClick={this.props.onClose.bind(this)} style={{ width: this.state.vertical ? '50%' : '100%', height: this.state.horizontal ? '50vh' : '100vh'}}>
-          <Draggable>
-            <div>
-              <div className="modal_content" style={{transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`}}>
-                <img 
-                  src={this.props.image} 
-                  alt="Image bill" 
-                  className="image_bill"
-                  onClick={(e) => e.stopPropagation()}
-                  draggable="false"
-                />
+        { !this.state.vertical && !this.state.horizontal ?
+          <div className="modal" onClick={this.props.onClose.bind(this)} style={{ width: this.state.vertical ? '50%' : '100%', height: this.state.horizontal ? '50vh' : '100vh'}}>
+            <Draggable>
+              <div>
+                <div className="modal_content" style={{transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`}}>
+                  <img 
+                    src={this.props.image} 
+                    alt="Image bill" 
+                    className="image_bill"
+                    onClick={(e) => e.stopPropagation()}
+                    draggable="false"
+                  />
+                </div>
               </div>
-            </div>
-          </Draggable>
-        </div>
+            </Draggable>
+          </div>
+            : 
+          null
+        }
 
         {this.state.vertical || this.state.horizontal ?
-          <div className="modal"
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)',  width: this.state.vertical ? '50%' : '100%',  height: this.state.horizontal ? '50vh' : '100vh', left: this.state.vertical ? '50%' : 0, top: this.state.horizontal ? '50%' : 0}}>
-            <div className="modal_content">
-              <img  src={this.props.image} alt="Image bill" className="image_bill" draggable="false" />
-            </div>
+          <div className="modal" style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)',  width: this.state.vertical ? '50%' : '100%',  height: this.state.horizontal ? '50vh' : '100vh', left: this.state.vertical ? '50%' : 0, top: this.state.horizontal ? '50%' : 0}}>
+            <Draggable>
+              <div>
+                <div className="modal_content" style={{transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`}}>
+                  <img 
+                    src={this.props.image} 
+                    alt="Image bill" 
+                    className="image_bill" 
+                    draggable="false"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              </div>
+            </Draggable>
           </div> 
         : null}
 
@@ -1616,17 +1940,16 @@ class Billing_Modal extends React.Component {
   }
 }
 
-class Billing_New_ extends React.Component {
+class Billing_Edit_ extends React.Component {
   dropzoneOptions = {
     autoProcessQueue: false,
     autoQueue: true,
-    maxFiles: 10,
+    maxFiles: 1,
     timeout: 0,
     parallelUploads: 10,
     acceptedFiles: 'image/jpeg,image/png',
     addRemoveLinks: true,
-    addRotateLinks: true,
-    url: 'https://jacochef.ru/src/img/billing_items/upload.php',
+    url: 'https://jacochef.ru/src/img/site_aktii/upload_img.php',
   };
 
   myDropzone = null;
@@ -1639,28 +1962,42 @@ class Billing_New_ extends React.Component {
       module_name: '',
       is_load: false,
 
-      DropzoneDop: null
+      acces: null
     };
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_points')
 
-    const { setData } = this.props.store;
+    
 
-    setData({
-      points: data.points,
-      types: types,
-    })
+    const res = await this.getData('get_all_for_new');
+    //const points = await this.getData('get_points');
+
+    //const point = points.points.find(point => point.id === res.bill.point_id);
+
+    const data = {
+      //point_id: bill['point_id'],
+      vendor_id: res?.vendors[0]?.id,
+    }
 
     this.setState({
-      module_name: 'Новый документ',
+      acces: res?.acces,
     });
+
+    //const items = await this.getData('get_vendor_items', data);
+    //const docs = await this.getData('get_base_doc', data);
+
+    const { getDataBill, setAcces, setPoints } = this.props.store;
+
+    setAcces(res?.acces);
+    setPoints(res?.points)
+    //getDataBill(res, null, items.items, docs);
 
     document.title = 'Накладные';
 
-    this.myDropzone = new Dropzone("#img_bill", this.dropzoneOptions);
-   
+    if( res?.acces?.photo === 'edit' ){
+      this.myDropzone = new Dropzone("#img_bill", this.dropzoneOptions);
+    }
   }
 
   getData = (method, data = {}) => {
@@ -1709,49 +2046,6 @@ class Billing_New_ extends React.Component {
       });
   };
 
-  save_main_img(dropzone, point_id, bill_id){
-    if( dropzone && dropzone['files'].length > 0 ){
-      let i = 0;
-
-      dropzone.on("sending", (file, xhr, data) => {
-        let file_type = (file.name).split('.');
-        file_type = file_type[file_type.length - 1];
-        file_type = file_type.toLowerCase();
-        
-        i ++;
-        data.append("filetype", 'bill_file_'+i+'_point_id_'+point_id+'_bill_id_'+bill_id+'.'+file_type);
-
-        getOrientation(file, function(orientation) {
-          data.append("orientation", orientation);
-        })
-      });
-  
-      //6304
-      return dropzone.on("queuecomplete", (data) => {
-        var check_img = false;
-  
-        dropzone['files'].map((item, key) => {  
-          if( item['status'] == "error" ){
-            check_img = true;
-          }
-
-          
-        })
-        
-        if( check_img ){
-          return {
-            st: false,
-            text: 'Ошибка при загрузке фотографии'
-          };
-        }else{
-          return {
-            st: true
-          };
-        }
-      })
-    }
-  }
-
   async saveNewBill () {
     const {number, point, vendors, date, number_factur, date_factur, type, doc, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
 
@@ -1768,7 +2062,6 @@ class Billing_New_ extends React.Component {
       it.item_id = item.id;
       it.summ = item.price_item;
       it.summ_w_nds = item.price_w_nds;
-      it.color = item.color;
 
       const nds = item.nds.split(' %')[0];
 
@@ -1778,35 +2071,10 @@ class Billing_New_ extends React.Component {
         it.nds = nds;
       }
 
-      newItems.push(it);
+      newItems.push([it]);
 
       return newItems;
     }, [])
-
-    if( this.myDropzone ){
-      console.log( 'main', this.myDropzone.files )
-      if( this.myDropzone.files.length == 0 ){
-        this.setState({
-          operAlert: true,
-          err_status: false,
-          err_text: 'Нет изображения накладной',
-        });
-
-        return ;
-      }
-    }
-
-    if( parseInt(type) == 2 ){
-      if( !this.state.DropzoneDop || this.state.DropzoneDop.files.length == 0 ){
-        this.setState({
-          operAlert: true,
-          err_status: false,
-          err_text: 'Нет изображения счет фактуры',
-        });
-
-        return ;
-      }
-    }
 
     const data = {
       doc,
@@ -1822,10 +2090,8 @@ class Billing_New_ extends React.Component {
       date_items: dateItems,
       date_factur: dateFactur,
       point_id: point?.id ?? '',
-      vendor_id: vendors.length === 1 ? vendors[0]?.id : '',
+      vendor_id: vendors.length === 1 ? vendors[0]?.id : ''
     }
-
-    console.log( this.myDropzone.files.length )
 
     console.log('saveNewBill data', data);
 
@@ -1833,9 +2099,8 @@ class Billing_New_ extends React.Component {
   }
 
   render() {
-    const { isPink, operAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog } = this.props.store;
 
-    // console.log( 'isPink', isPink )
+    const { isPink, operAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical } = this.props.store;
 
     return (
       <>
@@ -1848,9 +2113,10 @@ class Billing_New_ extends React.Component {
             onClose={closeDialog}
             fullScreen={fullScreen}
             image={image}
+            store={this.props.store}
           />
         }
-        
+
         <MyAlert
           isOpen={operAlert}
           onClose={closeAlert}
@@ -1858,29 +2124,62 @@ class Billing_New_ extends React.Component {
           text={err_text}
         />
 
-        <Grid container spacing={3} mb={10} style={{ marginTop: '64px' }}>
+        <Grid container spacing={3} mb={10} style={{ marginTop: '64px', maxWidth: is_vertical ? '50%' : '100%', marginBottom: is_horizontal ? 700 : 30 }}>
 
           <Grid item xs={12} sm={12}>
-            <h1>{this.state.module_name}</h1>
+            <h1>Документ: {bill?.number}</h1>
             <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
           </Grid>
 
-          <FormHeader_new page={'new'} />
+          <FormHeader_new page={'new'} type_edit={ parseInt(this.state.acces?.header) == 1 ? 'edit' : 'show' } />
           
-          <FormImage_new page={'new'} />
+          <FormImage_new page={this.state.acces?.photo} />
 
-          <FormVendorItems />
+          { parseInt(this.state.acces?.items) == 1 ? 
+            <>
+              <FormVendorItems />  
+              <VendorItemsTableEdit />
+            </>
+              :
+            <VendorItemsTableView />
+          }
+          
+          <FormOther_new page={'new'} type_edit={parseInt(this.state.acces?.footer) == 1 ? 'edit' : 'show' } />
 
-          <VendorItemsTableEdit />
+          <Billing_Accordion
+            bill_list={bill_list}
+            bill_items={bill_items}
+            type='new'
+          />
 
-          <FormOther_new page={'new'} />
-
-          <Grid item xs={12} sm={4}>
-            <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveNewBill.bind(this)}>
-              Сохранить
-            </Button>
-          </Grid>
+          { parseInt(this.state.acces?.only_save) === 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveNewBill.bind(this)}>
+                Сохранить
+              </Button>
+            </Grid>
+          }
          
+          { parseInt(this.state.acces?.only_delete) === 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth style={{ height: '100%' }}
+                //onClick={this.saveBill.bind(this)}
+              >
+                Удалить
+              </Button>
+            </Grid>
+          }
+
+          { parseInt(this.state.acces?.only_delete) === 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
+                //onClick={this.saveBill.bind(this)}
+              >
+                Сохранить и отправить
+              </Button>
+            </Grid>
+          }
+          
         </Grid>
       </>
     );
@@ -1892,8 +2191,8 @@ const withStore = BaseComponent => props => {
   return <BaseComponent {...props} store={store} />;
 };
 
-const Billing_New_Store = withStore(Billing_New_)
+const Billing_Edit_Store = withStore(Billing_Edit_)
 
 export default function BillingNew() {
-  return <Billing_New_Store />;
+  return <Billing_Edit_Store />;
 }

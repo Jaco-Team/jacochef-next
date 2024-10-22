@@ -459,7 +459,7 @@ class Billing_ extends React.Component {
           <Grid item xs={12} sm={12}>
             <Button variant="contained">
               <Link style={{ color: '#fff', textDecoration: 'none' }} href="/billing/new">
-                Новая накладная
+                Новый документ
               </Link>
             </Button>
           </Grid> 
