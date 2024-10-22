@@ -4,10 +4,16 @@ import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import EditIcon from '@mui/icons-material/Edit';
+import TextSnippetOutlinedIcon from '@mui/icons-material/TextSnippetOutlined';
+
+import Tooltip from '@mui/material/Tooltip';
+
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
@@ -16,185 +22,242 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
+import { MyAutocomplite, TextEditor22, MyAlert, MyTextInput } from '@/ui/elements';
 
 import queryString from 'query-string';
 
-import dayjs from 'dayjs';
+class FAQ_Modal_View extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.myRef_view = React.createRef();
+
+    this.state = {
+      itemView: null,
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    //console.log(this.props);
+
+    if (!this.props) {
+      return;
+    }
+
+    if (this.props !== prevProps) {
+      this.setState({
+        itemView: this.props.itemView
+      });
+    }
+  }
+
+  onClose() {
+    this.setState({
+      itemView: null,
+    });
+
+    this.props.onClose();
+  }
+
+  render() {
+    const { open, fullScreen, item_name, method, acces } = this.props;
+
+    return (
+      <Dialog
+        open={open}
+        fullWidth={true}
+        maxWidth={'lg'}
+        onClose={this.onClose.bind(this)}
+        fullScreen={fullScreen}
+      >
+        <DialogTitle className="button">
+          {method}
+          {item_name ? `: ${item_name}` : null}
+          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={12}>
+              <MyTextInput
+                label="Название"
+                value={this.state.itemView?.name}
+                disabled={true}
+                className="disabled_input"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <MyTextInput
+                label="Раздел"
+                value={this.state.itemView?.faq_id?.name}
+                disabled={true}
+                className="disabled_input"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <MyTextInput
+                label="Должности"
+                value={this.state.itemView?.apps}
+                disabled={true}
+                className="disabled_input"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={12}>
+              <TextEditor22 id="EditorNew" value={this.state.itemView?.text} refs_={this.myRef_view} toolbar={false} menubar={false}/>
+            </Grid>
+
+            {this.state.itemView?.hist && parseInt(acces?.show_hist) ? 
+              <Grid item xs={12} sm={12}>
+                <Accordion style={{ width: '100%' }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>#</TableCell>
+                          <TableCell>Дата / время</TableCell>
+                          <TableCell>Сотрудник</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {this.state.itemView?.hist.map((it, k) =>
+                          <TableRow hover key={k}>
+                            <TableCell>{k+1}</TableCell>
+                            <TableCell>{it.date_update}</TableCell>
+                            <TableCell>{it.user}</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </AccordionDetails>
+                </Accordion>
+              </Grid>
+              : null
+            }
+          </Grid>
+
+        </DialogContent>
+
+        <DialogActions>
+          <Button variant="contained" onClick={this.onClose.bind(this)}>
+            Закрыть
+          </Button>
+        </DialogActions>
+
+      </Dialog>
+    );
+  }
+}
 
 class FAQ_Modal extends React.Component {
+  click = false;
 
   constructor(props) {
     super(props);
 
+    this.myRef = React.createRef();
+
     this.state = {
       item: null,
+      section: [],
+
+      confirmDialog: false,
 
       openAlert: false,
-      err_status: true,
+      err_status: false,
       err_text: ''
     };
   }
 
   componentDidUpdate(prevProps) {
+    // console.log('componentDidUpdate', this.props);
+    
     if (!this.props.item) {
       return;
     }
 
     if (this.props.item !== prevProps.item) {
+
+      const section = JSON.parse(JSON.stringify(this.props.section));
+      section.push({id: "-1", name: 'Без раздела'});
+
       this.setState({
-        push: this.props.pushыв
+        section,
+        item: this.props.item
       });
     }
   }
 
-  async changeItem(data, event) {
-    const push = this.state.push;
+  changeItem(data, event) {
+    const item = this.state.item;
     const value = event.target.value;
-
-    if (value.length > 50 && (data === 'title' || data === 'text')) {
-      return;
-    }
-
-    push.this_push[data] = value;
+   
+    item[data] = value;
 
     this.setState({
-      push
+      item
     });
   }
 
-  changeDateRange(data, event) {
-    const push = this.state.push;
-
-    push.this_push[data] = event ? event : '';
+  changeEditor(value) {
+    const item = this.state.item;
+   
+    item.text = value;
 
     this.setState({
-      push
+      item
     });
   }
 
   changeAutocomplite(data, event, value) {
-    const push = this.state.push;
+    const item = this.state.item;
+   
+    item[data] = value;
 
-    if(data === 'city_id' && !value.length) {
-      push.this_push.it_id = 0;
-      push.this_push.list = [];
-      push.this_push.type = '';
-    }
+    if(data === 'apps') {
 
-    push.this_push[data] = value;
+      const all_apps = item[data].find(item => parseInt(item.id) === -1);
 
-    if(data === 'city_id') {
-
-      const all_city = push.this_push[data].find(item => parseInt(item.id) === -1);
-
-      if(all_city) {
-        push.this_push.city_id = [];
+      if(all_apps) {
+        item[data] = [];
   
-        push.this_push.city_id.push(all_city);
-      }
-
-    }
-
-    if(data === 'city_id' && parseInt(push.this_push.type) === 2) {
-
-      push.this_push.it_id = 0;
-
-      if(push.this_push.city_id.length > 1) {
-        push.this_push.list = push.banners.filter(item => parseInt(item.city_id) === -1);
-      } else {
-        push.this_push.list = push.banners.reduce((newArr, item) => {
-  
-          let res = [];
-  
-          push.this_push.city_id.map((city) => {
-  
-            if(parseInt(city.id) === parseInt(item.city_id) || parseInt(item.city_id) === -1) {
-              res.push(item);
-            }
-  
-            return city;
-          });
-  
-          return [...newArr,...res];
-        }, []);
+        item[data].push(all_apps);
       }
 
     }
 
     this.setState({
-      push,
+      item,
     });
   }
 
-  changeSelect(data, event) {
-    const push = this.state.push;
+  delete() {
+    let item = this.state.item;
 
-    const value = event.target.value;
-
-    if(!push.this_push.city_id.length) {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо выбрать город',
-      });
-
-      return;
-    }
-    
-    if(parseInt(value) === 2) {
-
-      if(push.this_push.city_id.length > 1) {
-        push.this_push.list = push.banners.filter(item => parseInt(item.city_id) === -1);
-      } else {
-        push.this_push.list = push.banners.reduce((newArr, item) => {
-  
-          let res = [];
-  
-          push.this_push.city_id.map((city) => {
-  
-            if(parseInt(city.id) === parseInt(item.city_id) || parseInt(item.city_id) === -1) {
-              res.push(item);
-            }
-  
-            return city;
-          });
-  
-          return [...newArr,...res];
-        }, []);
-      }
-    }
-    
-    if(parseInt(value) === 3) {
-      push.this_push.list = push.items;
-    }
-    
-    push.this_push.it_id = 0;
-    push.this_push[data] = event.target.value;
-
-    this.setState({
-      push,
-    });
-  }
-
-  changeItemChecked(data, event) {
-    const push = this.state.push;
-
-    push.this_push[data] = event.target.checked === true ? 1 : 0;
-
-    this.setState({
-      push
-    });
+    this.props.delete(item);
+    this.onClose();
   }
 
   save() {
 
-    let push = this.state.push;
+    let item = this.state.item;
 
-    if (!push.this_push.name) {
+    if (!item.name) {
 
       this.setState({
         openAlert: true,
@@ -206,108 +269,68 @@ class FAQ_Modal extends React.Component {
 
     } 
 
-    if (!push.this_push.time_start) {
-
+    if((this.props.type === 'art' || this.props.type === 'art_edit') && !item.apps.length) {
+      
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо указать время начала рассылки'
+        err_text: 'Необходимо выбрать должности'
       });
-
+      
       return;
-
     } 
 
-    if (!push.this_push.title) {
+    if((!this.myRef.current || this.myRef.current.getContent().length === 0) && (this.props.type === 'art' || this.props.type === 'art_edit')) {
 
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо указать заголовок'
+        err_text: 'В описании статьи пусто'
       });
 
       return;
-
     } 
 
-    if (!push.this_push.text) {
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо указать текст'
-      });
-
+    if(this.click === true){
       return;
-
-    } 
-
-    if (!push.this_push.type) {
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо выбрать тип рассылки'
-      });
-
-      return;
-
-    } 
-
-    if((parseInt(push.this_push.type) === 2 || parseInt(push.this_push.type) === 3) && !push.this_push.it_id) {
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо выбрать товар / акцию'
-      });
-
-      return;
-
+    } else {
+      this.click = true;
     }
 
-    if((parseInt(push.this_push.type) === 2 || parseInt(push.this_push.type) === 3)) {
-
-      if(parseInt(push.this_push.type) === 2) {
-        push.this_push.ban_id = push.this_push.it_id.id;
-        push.this_push.item_id = 0;
-      } else {
-        push.this_push.item_id = push.this_push.it_id.id;
-        push.this_push.ban_id = 0;
-      }
+    if(this.props.type === 'art' || this.props.type === 'art_edit') {
+      item.text = this.myRef.current.getContent();
     }
-
-    if(parseInt(push.this_push.type) === 1) {
-      push.this_push.item_id = 0;
-      push.this_push.ban_id = 0;
-    }
-
-    delete push.this_push.it_id;
-    delete push.this_push.list;
-
-    push.this_push.date_start = dayjs(push.this_push.date_start).format('YYYY-MM-DD');
-
-    const data = push.this_push;
+    
+    const data = item;
 
     this.props.save(data);
     this.onClose();
+
+    setTimeout(() => {
+      this.click = false;
+    }, 500)
   }
 
   onClose() {
-    
-    this.setState ({
-      push: null,
 
-      openAlert: false,
-      err_status: true,
-      err_text: ''
-    });
+    setTimeout(() => {
+      this.setState ({
+        item: null,
+        section: [],
+  
+        confirmDialog: false,
+  
+        openAlert: false,
+        err_status: false,
+        err_text: ''
+      });
+    }, 100);
 
     this.props.onClose();
   }
 
   render() {
-    const { open, fullScreen, method, push_name } = this.props;
+    const { open, fullScreen, method, item_name, type, none_section, apps, acces } = this.props;
 
     return (
       <>
@@ -318,131 +341,129 @@ class FAQ_Modal extends React.Component {
           text={this.state.err_text}
         />
 
+        <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false })}>
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>Точно удалить {type === 'section_edit' ?  'данный раздел ?' : 'данную статью ?'}</DialogContent>
+          <DialogActions>
+            <Button autoFocus onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
+            <Button onClick={this.delete.bind(this)}>Ok</Button>
+          </DialogActions>
+        </Dialog>
+
         <Dialog
           open={open}
           onClose={this.onClose.bind(this)}
           fullScreen={fullScreen}
           fullWidth={true}
-          maxWidth={'lg'}
+          maxWidth={'xl'}
         >
           <DialogTitle className="button">
             {method}
-            {push_name ? `: ${push_name}` : null}
+            {item_name ? `: ${item_name}` : null}
+            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+              <CloseIcon />
+            </IconButton>
           </DialogTitle>
 
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
-            <CloseIcon />
-          </IconButton>
-
-          {!this.state.push ? null : (
+          {!this.state.item ? null : (
             <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={12}>
                   <MyTextInput
                     label="Название"
-                    value={this.state.push.this_push.name}
+                    value={this.state.item.name}
                     func={this.changeItem.bind(this, 'name')}
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  <MyDatePickerNew
-                    label="Дата рассылки"
-                    value={dayjs(this.state.push.this_push.date_start)}
-                    func={this.changeDateRange.bind(this, 'date_start')}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <MyTimePicker
-                    label='Время начала рассылки'
-                    value={this.state.push.this_push.time_start}
-                    func={this.changeItem.bind(this, 'time_start')}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={12}>
-                  <MyTextInput
-                    label="Заголовок"
-                    value={this.state.push.this_push.title}
-                    func={this.changeItem.bind(this, 'title')}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={12}>
-                  <MyTextInput
-                    label="Текст"
-                    value={this.state.push.this_push.text}
-                    func={this.changeItem.bind(this, 'text')}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={12}>
-                  <MyAutocomplite
-                    label="Город"
-                    multiple={true}
-                    data={this.state.push.cities}
-                    value={this.state.push.this_push.city_id}
-                    func={this.changeAutocomplite.bind(this, 'city_id')}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <MySelect
-                    is_none={false}
-                    label="Тип"
-                    data={this.state.push.types}
-                    value={this.state.push.this_push.type}
-                    func={this.changeSelect.bind(this, 'type')}
-                  />
-                </Grid>
-
-                {parseInt(this.state.push.this_push.type) === 2 || parseInt(this.state.push.this_push.type) === 3 ?
-                  <Grid item xs={12} sm={6}>
+                {type === 'section' || type === 'section_edit' ? 
+                  <Grid item xs={12} sm={12}>
                     <MyAutocomplite
-                      label="Товар / Акция"
-                      multiple={false}
-                      data={this.state.push.this_push.list}
-                      value={this.state.push.this_push.it_id}
-                      func={this.changeAutocomplite.bind(this, 'it_id')}
+                      label="Статьи"
+                      multiple={true}
+                      data={none_section}
+                      value={this.state.item?.arts}
+                      func={this.changeAutocomplite.bind(this, 'arts')}
                     />
                   </Grid>
-                  : 
-                  <Grid item xs={6} sm={6} />
+                  :
+                  <>
+                    <Grid item xs={12} sm={6}>
+                      <MyAutocomplite
+                        label="Раздел"
+                        multiple={false}
+                        data={this.state.section}
+                        value={this.state.item?.faq_id}
+                        func={this.changeAutocomplite.bind(this, 'faq_id')}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <MyAutocomplite
+                        label=" Должности"
+                        multiple={true}
+                        data={apps}
+                        value={this.state.item?.apps}
+                        func={this.changeAutocomplite.bind(this, 'apps')}
+                      />
+                  </Grid>
+                  </>
                 }
 
-                <Grid item xs={12} sm={4}>
-                  <MyCheckBox
-                    label="Активность"
-                    value={parseInt(this.state.push.this_push.is_active) == 1 ? true : false}
-                    func={this.changeItemChecked.bind(this, 'is_active')}
-                  />
-                </Grid>
+                {type === 'art' || type === 'art_edit' ? 
+                  <Grid item xs={12} sm={12}>
+                    <TextEditor22 id="EditorNew" func={this.changeEditor.bind(this)} value={this.state.item?.text} refs_={this.myRef} toolbar={true} menubar={true} />
+                  </Grid>
+                  : null
+                }
 
-                <Grid item xs={12} sm={4}>
-                  <MyCheckBox
-                    label="Разрешил рассылку"
-                    value={parseInt(this.state.push.this_push.is_send) == 1 ? true : false}
-                    func={this.changeItemChecked.bind(this, 'is_send')}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={4}>
-                  <MyCheckBox
-                    label="Авторизован в приложении"
-                    value={parseInt(this.state.push.this_push.is_auth) == 1 ? true : false}
-                    func={this.changeItemChecked.bind(this, 'is_auth')}
-                  />
-                </Grid>
+                {(type === 'art' || type === 'art_edit') && this.state.item?.hist && parseInt(acces?.show_hist) ? 
+                  <Grid item xs={12} sm={12}>
+                    <Accordion style={{ width: '100%' }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>#</TableCell>
+                              <TableCell>Дата / время</TableCell>
+                              <TableCell>Сотрудник</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {this.state.item?.hist.map((it, k) =>
+                              <TableRow hover key={k}>
+                                <TableCell>{k+1}</TableCell>
+                                <TableCell>{it.date_update}</TableCell>
+                                <TableCell>{it.user}</TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Grid>
+                  : null
+                }
                
               </Grid>
             </DialogContent>
           )}
+
           <DialogActions>
-            <Button variant="contained" onClick={this.save.bind(this)}>
-              Сохранить
-            </Button>
+            {type !== 'section' && type !== 'art' && parseInt(acces?.delete) ?
+              <Button onClick={() => this.setState({ confirmDialog: true })} variant="contained" style={{ backgroundColor: 'rgba(53,59,72,1.000)' }}>
+                Удалить
+              </Button>
+            : null}
+            {parseInt(acces?.edit) || parseInt(acces?.create)?
+              <Button variant="contained" onClick={this.save.bind(this)}>
+                Сохранить
+              </Button>
+            : null}
           </DialogActions>
+
         </Dialog>
       </>
     );
@@ -450,6 +471,7 @@ class FAQ_Modal extends React.Component {
 }
 
 class FAQ_ extends React.Component {
+
   constructor(props) {
     super(props);
 
@@ -458,30 +480,52 @@ class FAQ_ extends React.Component {
       module_name: '',
       is_load: false,
 
-      points: [],
-      point: [],
+      section: [],
+      none_section: [],
+      apps: [],
+ 
+      modalDialog: false,
+      fullScreen: false,
 
-      date_start: formatDate(new Date()),
-      date_end: formatDate(new Date()),
-
-      arrayOrdersByH: null,
-      data: null,
-      statAllItemsCount: null,
+      method: '',
+      type: '',
 
       openAlert: false,
       err_status: true,
       err_text: '',
+
+      item: null,
+      item_name: '',
+
+      item_new: {
+        name: '',
+        text: '',
+        arts: [],
+        faq_id: null,
+        apps: []
+      },
+
+      section_copy: [],
+      none_section_copy: [],
+
+      searchItem: '',
+
+      acces: null,
+
+      modalDialogView: false
     };
   }
 
   async componentDidMount() {
     const data = await this.getData('get_all');
-    console.log("🚀 === data:", data);
 
     this.setState({
-      // points: data.points,
-      module_name: data.module_info.name,
+      apps: data.apps,
+      acces: data.acces,
+      module_name: data.module_info.name
     });
+
+    this.get_data_user(data);
 
     document.title = data.module_info.name;
   }
@@ -529,12 +573,452 @@ class FAQ_ extends React.Component {
       });
   };
 
-  async addSection() {
-    console.log('addSection');
+  handleResize() {
+    if (window.innerWidth < 601) {
+      this.setState({
+        fullScreen: true,
+      });
+    } else {
+      this.setState({
+        fullScreen: false,
+      });
+    }
   }
 
-  async addArt() {
-    console.log('addArt');
+  async update() {
+    const data = await this.getData('get_all');
+
+    this.setState({
+      apps: data.apps,
+      acces: data.acces
+    });
+
+    this.get_data_user(data);
+  }
+
+  get_data_user(data) {
+
+    const acces = data.acces;
+    
+    if(parseInt(acces.create) && parseInt(acces.edit)) {
+
+      this.setState({
+        section: data.faq.section,
+        none_section: data.faq.none_section,
+        section_copy: data.faq.section,
+        none_section_copy: data.faq.none_section,
+      });
+      
+    } else {
+
+      const user = parseInt(data.user_id);
+      const section = data.faq.section;
+      const none_section = data.faq.none_section;
+  
+      const user_section = section.reduce((new_sec, sec) => {
+  
+        if(sec.arts.length) {
+
+          const new_arts = sec.arts.reduce((new_arts, art) => {
+  
+            if(parseInt(art.status) === 1) {
+              if(art.apps.find(it => (parseInt(it.id) === user || parseInt(it.id) === -1))) {
+                new_arts.push(art);
+              }
+            }
+  
+          return new_arts;
+          }, []);
+  
+          if(new_arts.length) {
+            sec.arts = new_arts;
+            new_sec.push(sec);
+          }
+        } 
+  
+        return new_sec;
+      
+      }, []);
+  
+      const user_none_section = none_section.reduce((new_arts, art) => {
+
+        if(parseInt(art.status) === 1) {
+          if(art.apps.find(it => (parseInt(it.id) === user || parseInt(it.id) === -1))) {
+            new_arts.push(art);
+          }
+        }
+  
+        return new_arts;
+      
+      }, []);
+  
+      this.setState({
+        section: user_section,
+        section_copy: user_section,
+        none_section: user_none_section,
+        none_section_copy: user_none_section
+      });
+    }
+
+  }
+
+  openModal_add(method, type) {
+
+    const { create } = this.state.acces;
+
+    if(!parseInt(create)) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'У вас недостаточно прав на Добавление нового раздела/статьи',
+      });
+
+      return;
+
+    }
+
+    const item = JSON.parse(JSON.stringify(this.state.item_new));
+
+    this.setState({
+      modalDialog: true,
+      method,
+      type,
+      item
+    });
+
+  }
+
+  async openModal_edit(method, type, item, event) {
+
+    const { edit } = this.state.acces;
+
+    if(!parseInt(edit)) {
+      event.stopPropagation();
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'У вас недостаточно прав для Редактирования раздела/статьи',
+      });
+
+      return;
+
+    }
+
+    if(type === 'section_edit') {
+      event.stopPropagation();
+  
+      this.setState({
+        modalDialog: true,
+        method,
+        type,
+        item: JSON.parse(JSON.stringify(item)),
+        item_name: item.name
+      });
+    }
+
+    if(type === 'art_edit') {
+
+      let section = JSON.parse(JSON.stringify(this.state.section));
+      section.push({id: "-1", name: 'Без раздела'});
+
+      const data = {
+        id: item.id,
+      }
+
+      const res = await this.getData('get_one_art', data);
+      res.art.faq_id = section.find(el => parseInt(el.id) === parseInt(res.art.faq_id)) ?? null;
+  
+      this.setState({
+        modalDialog: true,
+        method,
+        type,
+        item: res.art,
+        item_name: res.art.name
+      });
+    }
+
+  }
+
+  async openModal_view(method, item) {
+
+    const { show } = this.state.acces;
+
+    if(!parseInt(show)) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'У вас недостаточно прав для Просмотра статей',
+      });
+
+      return;
+
+    }
+
+    let section = JSON.parse(JSON.stringify(this.state.section));
+    section.push({id: "-1", name: 'Без раздела'});
+
+    const data = {
+      id: item.id,
+    }
+
+    const res = await this.getData('get_one_art', data);
+
+    res.art.faq_id = section.find(el => parseInt(el.id) === parseInt(res.art.faq_id)) ?? null;
+    res.art.apps = res.art.apps.map((el) => el.name).join(', ');
+
+    this.setState({
+      modalDialogView: true,
+      method,
+      item: res.art,
+      item_name: res.art.name
+    });
+
+  }
+
+  async saveSection(item) {
+
+    const type = this.state.type;
+
+    let data = {
+      name: item.name,
+      arts: item.arts
+    }
+
+    let res;
+
+    if(type === 'section') {
+
+      res = await this.getData('save_new_section', data);
+
+    } else {
+
+      const section = this.state.section;
+      const arts_past = section.find(sec => parseInt(sec.id) === parseInt(item.id))?.arts;
+
+      let old = [];
+
+      data.arts.map(art_new => {
+        arts_past.map(art_old => {
+          if(parseInt(art_new.id) === parseInt(art_old.id)) {
+            old.push(art_old);
+          }
+          return art_old;
+        })
+        return art_new;
+      })
+
+      let arts_old = []; // статьи которые надо изменить на Без раздела (-1)
+
+      if(old.length) {
+        arts_old = arts_past.filter(art => {
+          if(!old.find(it => parseInt(it.id) === parseInt(art.id))) {
+            return art;
+          }
+        })
+      } else {
+        arts_old = arts_past;
+      };
+
+      const arts_new = data.arts.reduce((new_arts, art) => {
+
+        let isFound = arts_past.some((it) => {
+          return it.id === art.id;
+        });
+
+        if(!isFound) {
+          new_arts.push(art);
+        }
+
+        return new_arts;
+      }, []);
+
+      data.arts_old = arts_old;
+      data.arts = arts_new;
+      data.id = item.id;
+
+      res = await this.getData('save_edit_section', data);
+    }
+
+    if (res.st) {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+        modalDialog: false
+      });
+
+      setTimeout(async () => {
+        this.update();
+      }, 300);
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+    }
+
+  }
+
+  async saveArt(item) {
+
+    const type = this.state.type;
+
+    let data = {
+      name: item.name,
+      text: item.text,
+      faq_id: item.faq_id ? item.faq_id.id : -1,
+      apps: item.apps
+    }
+
+    let res;
+
+    if(type === 'art') {
+
+      res = await this.getData('save_new_art', data);
+
+    } else {
+
+      data.id = item.id;
+      res = await this.getData('save_edit_art', data);
+
+    }
+
+    if (res.st) {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+        modalDialog: false
+      });
+
+      setTimeout(async () => {
+        this.update();
+      }, 300);
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+    }
+
+  }
+
+  async delete(item) {
+
+    const type = this.state.type;
+
+    let res;
+    let data;
+
+    if(type === 'section_edit') {
+
+      data = {
+        name: item.name,
+        arts: item.arts,
+        id: item.id
+      }
+
+      res = await this.getData('delete_section', data);
+    } 
+
+    if(type === 'art_edit'){
+
+      data = {
+        name: item.name,
+        text: item.text,
+        faq_id: item.faq_id ? item.faq_id.id : -1,
+        apps: item.apps,
+        id: item.id
+      }
+
+      res = await this.getData('delete_art', data);
+    }
+
+    if (res.st) {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+        modalDialog: false
+      });
+
+      setTimeout(async () => {
+        this.update();
+      }, 300);
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+    }
+
+  }
+
+  search(event) {
+    const searchItem = event.target.value;
+
+    const section = this.state.section_copy;
+    const none_section = JSON.parse(JSON.stringify(this.state.none_section_copy));
+
+    const section_filter = section.filter((item) => {
+
+      if(searchItem) {
+      
+        if(item.arts.length) {
+          item.arts = item.arts.filter(it => {
+            if(it.name.toLowerCase().includes(searchItem.toLowerCase()) || it.text.toLowerCase().includes(searchItem.toLowerCase())) {
+              return it;
+            }
+          });
+          
+          if(item.arts.length) {
+            return item;
+          }
+        }
+
+      } else {
+        return item;
+      }
+    
+    });
+
+    const none_section_filter = none_section.filter((item) => {
+
+      if(searchItem) {
+
+        if(item.name.toLowerCase().includes(searchItem.toLowerCase()) || item.text.toLowerCase().includes(searchItem.toLowerCase())) {
+          return item;
+        }
+
+      } else {
+        return item;
+      }
+    
+    });
+
+    this.setState({
+      searchItem,
+      section: section_filter,
+      none_section: none_section_filter
+    });
   }
 
   render() {
@@ -543,6 +1027,32 @@ class FAQ_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+
+        <FAQ_Modal
+          open={this.state.modalDialog}
+          onClose={() => this.setState({ modalDialog: false, item: null, item_name: '' })}
+          item={this.state.item}
+          fullScreen={this.state.fullScreen}
+          save={this.state.type === 'section' || this.state.type === 'section_edit' ? this.saveSection.bind(this) : this.saveArt.bind(this)}
+          section={this.state.section}
+          none_section={this.state.none_section}
+          type={this.state.type}
+          method={this.state.method}
+          apps={this.state.apps}
+          item_name={this.state.item_name}
+          delete={this.delete.bind(this)}
+          acces={this.state.acces}
+        />
+
+        <FAQ_Modal_View
+          open={this.state.modalDialogView}
+          onClose={() => this.setState({ modalDialogView: false, item: null, item_name: '' })}
+          itemView={this.state.item}
+          fullScreen={this.state.fullScreen}
+          method={this.state.method}
+          item_name={this.state.item_name}
+          acces={this.state.acces}
+        />
 
         <MyAlert
           isOpen={this.state.openAlert}
@@ -558,16 +1068,114 @@ class FAQ_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={4}>
-            <Button onClick={this.addSection.bind(this)} variant="contained">
+            <Button onClick={this.openModal_add.bind(this, 'Новый раздел', 'section')} variant="contained">
               Добавить раздел
             </Button>
           </Grid>
 
           <Grid item xs={12} sm={4}>
-            <Button onClick={this.addArt.bind(this)} variant="contained">
+            <Button onClick={this.openModal_add.bind(this, 'Новая статья', 'art')} variant="contained">
               Добавить статью
             </Button>
           </Grid>
+
+          <Grid item xs={12} sm={12}>
+            <MyTextInput
+              label="Поиск по статьям"
+              value={this.state.searchItem}
+              func={(event) => {this.setState({ searchItem: event.target.value })}}
+              onBlur={this.search.bind(this)}
+            />
+          </Grid>
+
+          {/* список разделов */}
+          <Grid item xs={12} sm={12}>
+            {this.state.section.map( (item, key) =>
+              <Accordion style={{ width: '100%' }} key={key}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />} className='accordion_f_a_q' style={{ backgroundColor: parseInt(item.status) === 2 ? '#fadadd' : '#fff'}}>
+                  <Typography style={{ fontWeight: 'bold' }}>{item.name}</Typography>
+                  <Tooltip title={<Typography color="inherit">Редактирование раздела</Typography>}> 
+                    <IconButton onClick={this.openModal_edit.bind(this, 'Редактрование раздела', 'section_edit', item)} mr={7}>
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>#</TableCell>
+                        <TableCell>Наименование</TableCell>
+                        <TableCell>Редактирование</TableCell>
+                        <TableCell>Просмотр</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {item.arts.map((it, k) =>
+                        <TableRow hover key={k} style={{ backgroundColor: parseInt(it.status) === 2 ? '#fadadd' : '#fff'}}>
+                          <TableCell>{k+1}</TableCell>
+                          <TableCell>{it.name}</TableCell>
+                          <TableCell>
+                            <EditIcon 
+                              style={{ cursor: 'pointer' }} 
+                              onClick={this.openModal_edit.bind(this, 'Редактрование статьи', 'art_edit', it)} />
+                          </TableCell>
+                          <TableCell>
+                            <TextSnippetOutlinedIcon 
+                              style={{ cursor: 'pointer' }} 
+                              onClick={this.openModal_view.bind(this, 'Просмотр', it)} 
+                            />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </AccordionDetails>
+              </Accordion>
+            )}
+          </Grid>
+
+          {/* список статей без раздела */}
+          {!this.state.none_section.length ? null :
+            <Grid item xs={12} sm={12} style={{ marginBottom: 100 }}>
+              <Accordion style={{ width: '100%' }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography style={{ fontWeight: 'bold' }}>Без раздела</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>#</TableCell>
+                        <TableCell>Наименование</TableCell>
+                        <TableCell>Редактирование</TableCell>
+                        <TableCell>Просмотр</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {this.state.none_section.map( (it, k) =>
+                        <TableRow hover key={k} style={{ backgroundColor: parseInt(it.status) === 2 ? '#fadadd' : '#fff'}}>
+                          <TableCell>{k+1}</TableCell>
+                          <TableCell>{it.name}</TableCell>
+                          <TableCell>
+                            <EditIcon 
+                              style={{ cursor: 'pointer' }} 
+                              onClick={this.openModal_edit.bind(this, 'Редактрование статьи', 'art_edit', it)} />
+                          </TableCell>
+                          <TableCell>
+                            <TextSnippetOutlinedIcon 
+                              style={{ cursor: 'pointer' }} 
+                              onClick={this.openModal_view.bind(this, 'Просмотр', it)} 
+                            />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </AccordionDetails>
+              </Accordion>
+            </Grid>
+          }
              
         </Grid>
       </>

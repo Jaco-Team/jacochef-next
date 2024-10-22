@@ -343,7 +343,7 @@ class ListFakeUsers_Modal_Action extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={12}>
-            <TextEditor22 id="EditorNew" value={''} refs_={myRef_action} />
+            <TextEditor22 id="EditorNew" value={''} refs_={myRef_action} toolbar={true} menubar={true} />
           </Grid>
 
         </DialogContent>
@@ -701,7 +701,7 @@ class ListFakeUsers_Modal extends React.Component {
             </Grid>
 
             <Grid item xs={12} sm={12}>
-              <TextEditor22 id="EditorNew" value={''} refs_={myRef} />
+              <TextEditor22 id="EditorNew" value={''} refs_={myRef} toolbar={true} menubar={true} />
             </Grid>
             
           </Grid>
