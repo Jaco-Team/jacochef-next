@@ -479,6 +479,7 @@ class DriverStat_ extends React.Component {
                     <TableCell>Имя</TableCell>
                     <TableCell>Вся сумма</TableCell>
                     <TableCell>Сумма по налу</TableCell>
+                    <TableCell>Инкасация</TableCell>
                     <TableCell>Сумма по безналу</TableCell>
                     <TableCell>Кол-во по налу</TableCell>
                     <TableCell>Кол-во по безналу</TableCell>
@@ -508,6 +509,7 @@ class DriverStat_ extends React.Component {
                       <TableCell>{item.name}</TableCell>
                       <TableCell>{item.full_sum}</TableCell>
                       <TableCell>{item.full_cash}</TableCell>
+                      <TableCell>{item.cash_fiskal}</TableCell>
                       <TableCell>{item.full_bank}</TableCell>
                       <TableCell>{item.count_cash}</TableCell>
                       <TableCell>{item.count_bank}</TableCell>

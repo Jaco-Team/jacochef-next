@@ -389,7 +389,7 @@ class DriverStatTime_ extends React.Component {
                 <TableHead>
                   <TableRow>
                     <TableCell>Курьер</TableCell>
-                    <TableCell align="center">Среднее время</TableCell>
+                    <TableCell align="center">Среднее время ( в радиусе )</TableCell>
                     <TableCell align="center">Количество</TableCell>
                     <TableCell align="center">Во время</TableCell>
                     <TableCell align="center">С опозданием</TableCell>
