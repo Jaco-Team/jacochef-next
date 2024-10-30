@@ -1,11 +1,15 @@
 import React from 'react';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import CloseIcon from '@mui/icons-material/Close';
 import IconButton from '@mui/material/IconButton';
+import EditIcon from '@mui/icons-material/Edit';
+
+import Tooltip from '@mui/material/Tooltip';
 
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -22,9 +26,228 @@ import TableRow from '@mui/material/TableRow';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import { MyTextInput, MyAutocomplite, MyAlert, MyCheckBox } from '@/ui/elements';
+import { MyTextInput, MyAutocomplite, MyAlert, MyCheckBox, MySelect } from '@/ui/elements';
 
 import queryString from 'query-string';
+
+class SkladModules_Modal_Param extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      item: null,
+
+      openAlert: false,
+      err_status: false,
+      err_text: ''
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    // console.log('componentDidUpdate', this.props);
+    
+    if (!this.props.item) {
+      return;
+    }
+
+    if (this.props.item !== prevProps.item) {
+
+      this.setState({
+        item: this.props.item
+      });
+    }
+  }
+
+  changeItem(data, event) {
+    const item = this.state.item;
+    const value = event.target.value;
+   
+    item[data] = value;
+
+    this.setState({
+      item
+    });
+  }
+
+  changeAutocomplite(data, event, value) {
+    const item = this.state.item;
+   
+    item[data] = value;
+
+    this.setState({
+      item,
+    });
+  }
+
+  save() {
+
+    let item = this.state.item;
+
+    if (!item.name) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать название'
+      });
+
+      return;
+
+    } 
+
+    if (!item.param) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать параметр'
+      });
+
+      return;
+
+    } 
+
+    if(!item.module_id) {
+      
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать модуль'
+      });
+      
+      return;
+    } 
+
+    if(!item.type) {
+      
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать тип'
+      });
+      
+      return;
+    } 
+   
+    this.props.save(item);
+    this.onClose();
+   
+  }
+
+  onClose() {
+
+    setTimeout(() => {
+      this.setState ({
+        item: null,
+  
+        openAlert: false,
+        err_status: false,
+        err_text: ''
+      });
+    }, 100);
+
+    this.props.onClose();
+  }
+
+  render() {
+    const { open, fullScreen, method, param_name } = this.props;
+
+    return (
+      <>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+
+        <Dialog
+          open={open}
+          onClose={this.onClose.bind(this)}
+          fullScreen={fullScreen}
+          fullWidth={true}
+          maxWidth={'md'}
+        >
+          <DialogTitle className="button">
+            {method}
+            {param_name ? `: ${param_name}` : null}
+            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+
+          {!this.state.item ? null : (
+            <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Название"
+                    value={this.state.item.name}
+                    func={this.changeItem.bind(this, 'name')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Параметр"
+                    value={this.state.item.param}
+                    func={this.changeItem.bind(this, 'param')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={12}>
+                  <MyAutocomplite
+                    label="Модуль"
+                    multiple={false}
+                    data={this.state.item.modules}
+                    value={this.state.item.module_id}
+                    func={this.changeAutocomplite.bind(this, 'module_id')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={12}>
+                  <MySelect
+                    is_none={false}
+                    label="Тип"
+                    data={this.state.item.types}
+                    value={this.state.item.type}
+                    func={this.changeItem.bind(this, 'type')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Категория параметра"
+                    value={this.state.item.category}
+                    func={this.changeItem.bind(this, 'category')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Название категории параметра"
+                    value={this.state.item.category_name}
+                    func={this.changeItem.bind(this, 'category_name')}
+                  />
+                </Grid>
+
+               
+              </Grid>
+            </DialogContent>
+          )}
+
+          <DialogActions>
+            <Button variant="contained" onClick={this.save.bind(this)}>
+              Сохранить
+            </Button>
+          </DialogActions>
+
+        </Dialog>
+      </>
+    );
+  }
+}
 
 class SkladModules_Modal extends React.Component {
   constructor(props) {
@@ -202,6 +425,21 @@ class SkladModules_ extends React.Component {
       openAlert: false,
       err_status: true,
       err_text: '',
+
+      mark_param: null,
+      modalDialog_param: false,
+      param: null,
+      param_name: '',
+
+      param_new: {
+        name: '',
+        category: '',
+        category_name: '',
+        param: '',
+        type: '',
+        module_id: null
+      },
+   
     };
   }
 
@@ -307,6 +545,95 @@ class SkladModules_ extends React.Component {
     }
   }
 
+  async openModal_param (mark_param, id) {
+    this.handleResize();
+
+    if (mark_param === 'add_param') {
+
+      const res = await this.getData('get_new_param');
+
+      let param = JSON.parse(JSON.stringify(this.state.param_new));
+
+      param.modules = res.modules;
+
+      param.types = [{ id: 2, name: "2 значения ( чекбокс - показывать / скрыть )"}, { id: 3, name: "3 значения ( селект - не активный / просмотр / редактировать )"}];
+    
+      this.setState({
+        param,
+        mark_param,
+        modalDialog_param: true,
+        method: 'Новый параметр',
+      });
+    }
+
+    if (mark_param === 'edit_param') {
+      const data = {
+        id,
+      };
+
+      const res = await this.getData('get_one_param', data);
+
+      res.param.types = [{ id: 2, name: "2 значения ( чекбокс - показывать / скрыть )"}, { id: 3, name: "3 значения ( селект - не активный / просмотр / редактировать )"}];
+
+      res.param.module_id = res.param.modules.find(module => parseInt(module.id) === parseInt( res.param.module_id)) ?? 0;
+
+      this.setState({
+        mark_param,
+        modalDialog_param: true,
+        param: res.param,
+        param_name: res.param.name,
+        method: 'Редактирование параметра',
+      });
+    }
+
+  }
+
+  async save_param (param) {
+
+    const mark_param = this.state.mark_param;
+
+    let res;
+
+    if (mark_param === 'add_param') {
+      const data = {
+        name: param.name,
+        category: param.category,
+        category_name: param.category_name,
+        param: param.param,
+        type: param.type,
+        module_id: param.module_id.id
+      };
+
+      res = await this.getData('save_new_param', data);
+    }
+
+    if (mark_param === 'edit_param') {
+      const data = {
+        id: param.id,
+        name: param.name,
+        category: param.category,
+        category_name: param.category_name,
+        param: param.param,
+        type: param.type,
+        module_id: param.module_id.id
+      };
+
+      res = await this.getData('save_edit_param', data);
+    }
+
+    if (!res.st) {
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    } else {
+      setTimeout(() => {
+        this.update();
+      }, 300);
+    }
+  }
+
   async save(item) {
     const mark = this.state.mark;
 
@@ -409,6 +736,16 @@ class SkladModules_ extends React.Component {
           text={this.state.err_text}
         />
 
+        <SkladModules_Modal_Param
+          open={this.state.modalDialog_param}
+          onClose={() => this.setState({ modalDialog_param: false, param: null, param_name: '', method: '' })}
+          item={this.state.param}
+          fullScreen={this.state.fullScreen}
+          save={this.save_param.bind(this)}
+          method={this.state.method}
+          param_name={this.state.param_name}
+        />
+
         <SkladModules_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false, itemName: '', method: '' })}
@@ -426,9 +763,15 @@ class SkladModules_ extends React.Component {
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid item xs={12} sm={4}>
             <Button variant="contained" color="primary" style={{ whiteSpace: 'nowrap' }} onClick={this.openModal.bind(this, 'add', null)}>
-              Добавить
+              Добавить модуль
+            </Button>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Button variant="contained" color="primary" style={{ whiteSpace: 'nowrap' }} onClick={this.openModal_param.bind(this, 'add_param', null)}>
+              Добавить параметр модулю
             </Button>
           </Grid>
 
@@ -466,23 +809,58 @@ class SkladModules_ extends React.Component {
                             </TableCell>
                           </TableRow>
                           {item.items.map((it, key) => (
-                            <TableRow hover key={key}>
-                              <TableCell></TableCell>
-                              <TableCell onClick={this.openModal.bind(this, 'edit', it.id)} sx={{ paddingLeft: 10, alignItems: 'center', cursor: 'pointer' }}>
-                                <li>{it.name}</li>
-                              </TableCell>
-                              <TableCell>
-                                <MyTextInput
-                                  label=""
-                                  value={it.sort}
-                                  func={this.changeSort.bind(this, key, 'subCat', item.id)}
-                                  onBlur={this.saveSort.bind(this, it.id)}
-                                />
-                              </TableCell>
-                              <TableCell align="center">
-                                {parseInt(it.is_show) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                              </TableCell>
-                            </TableRow>
+                            it.params.length ? 
+                              <React.Fragment key={key}>
+                                <TableRow hover>
+                                  <TableCell></TableCell>
+                                  <TableCell onClick={this.openModal.bind(this, 'edit', it.id)} sx={{ paddingLeft: 10, alignItems: 'center', cursor: 'pointer' }}>
+                                    <li>{it.name}</li>
+                                  </TableCell>
+                                  <TableCell>
+                                    <MyTextInput
+                                      label=""
+                                      value={it.sort}
+                                      func={this.changeSort.bind(this, key, 'subCat', item.id)}
+                                      onBlur={this.saveSort.bind(this, it.id)}
+                                    />
+                                  </TableCell>
+                                  <TableCell align="center">
+                                    {parseInt(it.is_show) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                                  </TableCell>
+                                </TableRow>
+                                  {it?.params.map((param, k) => (
+                                    <TableRow hover key={k}>
+                                      <TableCell></TableCell>
+                                      <TableCell sx={{ paddingLeft: 20, alignItems: 'center' }}>
+                                        <li className='li_disc'>{param.name}</li>
+                                      </TableCell>
+                                      <TableCell>{param.category_name}</TableCell>
+                                      <TableCell sx={{ textAlign: 'center' }} onClick={this.openModal_param.bind(this, 'edit_param', param.id)}>
+                                        <Tooltip title={<Typography color="inherit">Редактирование параметра</Typography>}> 
+                                          <EditIcon sx={{ paddingLeft: 20, cursor: 'pointer' }}/>
+                                        </Tooltip>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                              </React.Fragment>
+                              :  
+                              <TableRow hover key={key}>
+                                <TableCell></TableCell>
+                                <TableCell onClick={this.openModal.bind(this, 'edit', it.id)} sx={{ paddingLeft: 10, alignItems: 'center', cursor: 'pointer' }}>
+                                  <li>{it.name}</li>
+                                </TableCell>
+                                <TableCell>
+                                  <MyTextInput
+                                    label=""
+                                    value={it.sort}
+                                    func={this.changeSort.bind(this, key, 'subCat', item.id)}
+                                    onBlur={this.saveSort.bind(this, it.id)}
+                                  />
+                                </TableCell>
+                                <TableCell align="center">
+                                  {parseInt(it.is_show) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                                </TableCell>
+                              </TableRow>
                           ))}
                         </React.Fragment>
                       ) : (
