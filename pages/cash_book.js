@@ -15,18 +15,18 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import DialogContentText from '@mui/material/DialogContentText';
 
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
-import DeleteIcon from '@mui/icons-material/Delete';
 import Typography from '@mui/material/Typography';
+import CloseIcon from '@mui/icons-material/Close';
+import EditIcon from '@mui/icons-material/Edit';
 
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 import HelpIcon from '@mui/icons-material/Help';
 
@@ -118,6 +118,7 @@ class MainTableRow extends React.Component {
                       <TableCell>Дата</TableCell>
                       <TableCell>Комментарий</TableCell>
                       <TableCell>Наличка</TableCell>
+                      <TableCell></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -129,6 +130,24 @@ class MainTableRow extends React.Component {
                         <TableCell>{item.date}</TableCell>
                         <TableCell>{item.comment}</TableCell>
                         <TableCell>{item.summ}</TableCell>
+                        <TableCell>
+                          
+                          { this.props?.is_delete === true ?
+                            <IconButton onClick={this.props.updateData.bind(this, item, 'Редактирование ' + kassa_text+': '+this.props?.label)}>
+                              <EditIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
+                            </IconButton>
+                              :
+                            false
+                          }
+
+                          { this.props?.is_delete === true ?
+                            <IconButton onClick={this.props.deleteData.bind(this, item, 'delete')}>
+                              <CloseIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
+                            </IconButton>
+                              :
+                            false
+                          }
+                        </TableCell>
                       </TableRow>
 
                     )}
@@ -200,6 +219,7 @@ class MainTable extends React.Component {
 
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
               addData={this.props.addData.bind(this)}
+              
             />
 
             { this.props.table == 'fiz' ?
@@ -216,6 +236,10 @@ class MainTable extends React.Component {
 
                 toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
                 addData={this.props.addData.bind(this)}
+
+                is_delete={true}
+                deleteData={this.props.deleteData.bind(this)}
+                updateData={this.props.updateData.bind(this)}
               />
                 : 
               false
@@ -234,6 +258,10 @@ class MainTable extends React.Component {
 
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
               addData={this.props.addData.bind(this)}
+
+              is_delete={true}
+              deleteData={this.props.deleteData.bind(this)}
+              updateData={this.props.updateData.bind(this)}
             />
 
             <MainTableRow 
@@ -249,6 +277,10 @@ class MainTable extends React.Component {
 
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
               addData={this.props.addData.bind(this)}
+
+              is_delete={true}
+              deleteData={this.props.deleteData.bind(this)}
+              updateData={this.props.updateData.bind(this)}
             />
 
             { this.props.table == 'fiz' ?
@@ -265,6 +297,10 @@ class MainTable extends React.Component {
 
                 toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
                 addData={this.props.addData.bind(this)}
+
+                is_delete={true}
+                deleteData={this.props.deleteData.bind(this)}
+                updateData={this.props.updateData.bind(this)}
               />
                 :
               false
@@ -283,6 +319,10 @@ class MainTable extends React.Component {
 
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
               addData={this.props.addData.bind(this)}
+
+              is_delete={true}
+              deleteData={this.props.deleteData.bind(this)}
+              updateData={this.props.updateData.bind(this)}
             />
 
             <MainTableRow 
@@ -298,6 +338,10 @@ class MainTable extends React.Component {
 
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
               addData={this.props.addData.bind(this)}
+
+              is_delete={true}
+              deleteData={this.props.deleteData.bind(this)}
+              updateData={this.props.updateData.bind(this)}
             />
             
             
@@ -339,12 +383,10 @@ class CashBook_ extends React.Component {
       rangeDate: [formatDate(new Date()), formatDate(new Date())],
 
       modalDialog: false,
+      modalDialogEdit: false,
 
-      drive_stat_full: [],
-      drive_stat_date: null,
+    
       summ: 0,
-      choose_driver_id: 0,
-      check_cash: 0,
 
       getSumm: 0,
       modalDialogGetSumm: false,
@@ -367,6 +409,13 @@ class CashBook_ extends React.Component {
       openModalKassa: '',
       openModalTitle: '',
       openModalHist_data: [],
+
+      type_action: '',
+      data_action: null,
+      comment_action: '',
+      is_open_action: false,
+
+      hist: []
     };
   }
   
@@ -450,6 +499,10 @@ class CashBook_ extends React.Component {
     this.setState({
       [data]: (event)
     })
+
+    if( data == 'date' ){
+      this.getHist(this.state.openModalType, event);
+    }
   }
 
   changePoint(event){
@@ -460,23 +513,15 @@ class CashBook_ extends React.Component {
     })
   }
 
-  giveCash(driver_id, check_cash){
-    this.setState({
-      modalDialog: true,
-      choose_driver_id: driver_id,
-      check_cash: check_cash
-    })
-  }
-
   changeSumm(event){
     this.setState({
       summ: event.target.value,
     })
   }
 
-  changeComment(event){
+  changeComment(data, event){
     this.setState({
-      comment: event.target.value,
+      [data]: event.target.value,
     })
   }
 
@@ -504,7 +549,7 @@ class CashBook_ extends React.Component {
       comment: this.state.comment,
       type: this.state.openModalType,
       kassa: this.state.openModalKassa,
-      date: this.state.date,
+      date: dayjs(this.state.date).format('YYYY-MM-DD'),
     };
     
     let res = await this.getData('save_give', data);
@@ -512,60 +557,6 @@ class CashBook_ extends React.Component {
     if( res['st'] == true ){
       this.setState({
         modalDialog: false,
-      })
-
-      this.updateData();
-    }else{
-      alert(res['text'])
-    }
-
-    setTimeout( () => {
-      this.click = false;
-    }, 300 )
-  }
-
-  getCash(driver){
-    this.setState({
-      modalDialogGetSumm: true,
-      getSumm: 0,
-      getSummDriverId: driver,
-      getSummComment: ''
-    })
-  }
-
-  async saveGetPrice(){
-    if( this.click ){
-      return ;
-    }
-
-    this.click = true;
-
-    if( parseInt( this.state.getSumm ) > 1000 ){
-      alert('Нельзя выдать больше 1000р за раз');
-      setTimeout( () => {
-        this.click = false;
-      }, 300 )
-      return;
-    }
-
-
-    let data = {
-      point_id: this.state.point,
-      price: this.state.getSumm,
-      driver_id: this.state.getSummDriverId.driver_id,
-      comment: this.state.getSummComment
-    };
-    
-    let res = await this.getData('save_get', data);
-
-    console.log( res )
-
-    if( res['st'] == true ){
-      this.setState({
-        modalDialogGetSumm: false,
-        getSumm: 0,
-        getSummDriverId: null,
-        getSummComment: ''  
       })
 
       this.updateData();
@@ -622,6 +613,123 @@ class CashBook_ extends React.Component {
         summ: 0,
       })
     }
+
+    this.getHist(type, this.state.date);
+  }
+
+  deleteData(item, type){
+    this.setState({
+      type_action: type,
+      data_action: item,
+      comment_action: '',
+      is_open_action: true
+    })
+  }
+
+  closeAction(){
+    this.setState({
+      type_action: '',
+      data_action: null,
+      comment_action: '',
+      is_open_action: false
+    })
+  }
+
+  async saveAction(){
+    let data = {
+      type: this.state.type_action,
+      item: this.state.data_action,
+      comment: this.state.comment_action,
+      point_id: this.state.point,
+    };
+
+    let res = await this.getData('save_action', data);
+
+    if( res['st'] == true ){
+      this.setState({
+        type_action: '',
+        data_action: null,
+        comment_action: '',
+        is_open_action: false
+      })
+
+      this.updateData();
+    }else{
+      alert(res['text'])
+    }
+  }
+
+  updateItem(item, title){
+    this.setState({
+      summ: item?.summ,
+      date: formatDate(item?.date),
+      comment: item?.comment,
+      modalDialogEdit: true,
+      data_action: item,
+      openModalTitle: title
+    })
+  }
+
+  async saveUpdateAction(){
+
+    let item = this.state.data_action;
+
+    item.summ = this.state.summ;
+    item.date = dayjs(this.state.date).format('YYYY-MM-DD');
+    item.comment = this.state.comment;
+
+    let data = {
+      type: 'update',
+      item: item,
+      comment: '',
+      point_id: this.state.point,
+    };
+
+    let res = await this.getData('save_action', data);
+
+    if( res['st'] == true ){
+      this.setState({
+        type_action: '',
+        data_action: null,
+        comment_action: '',
+        is_open_action: false,
+        modalDialogEdit: false,
+        summ: 0,
+        comment: ''
+      })
+
+      this.updateData();
+    }else{
+      alert(res['text'])
+    }
+  }
+
+  async getHist(type, date){
+    let data = {
+      point_id: this.state.point,
+      date: dayjs(date).format('YYYY-MM-DD'),
+      type: type
+    };
+
+    let res = await this.getData('get_hist', data);
+
+    this.setState({ 
+      hist: res 
+    });
+  }
+
+  get_type(type){
+    if( type == 'delete' ){
+      return 'Удален';
+    }
+
+    if( type == 'create' ){
+      return 'Создан';
+    }
+
+    if( type == 'update' ){
+      return 'Обновлен';
+    }
   }
 
   render(){
@@ -656,7 +764,7 @@ class CashBook_ extends React.Component {
 
               { this.state.openModalType_edit === false ? false :
                 <Grid item xs={12} sm={12}>
-                  <MyTextInput label="Комментарий" value={this.state.comment} multiline={true} maxRows={3} type={'text'} func={this.changeComment.bind(this)} />
+                  <MyTextInput label="Комментарий" value={this.state.comment} multiline={true} maxRows={3} type={'text'} func={this.changeComment.bind(this, 'comment')} />
                 </Grid>
               }
 
@@ -666,19 +774,21 @@ class CashBook_ extends React.Component {
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Сотрудник</TableCell>
                         <TableCell>Время</TableCell>
+                        <TableCell>Событие</TableCell>
+                        <TableCell>Сотрудник</TableCell>
                         <TableCell>Комментарий</TableCell>
                         <TableCell>Наличка</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
 
-                      {this.state.openModalHist_data?.map( item => 
+                      {this.state.hist?.map( item => 
                         
                         <TableRow key={item.id}>
+                          <TableCell>{item.date_time_update}</TableCell>
+                          <TableCell>{this.get_type(item.event)}</TableCell>
                           <TableCell>{item.user_name}</TableCell>
-                          <TableCell>{item.date}</TableCell>
                           <TableCell>{item.comment}</TableCell>
                           <TableCell>{item.summ}</TableCell>
                         </TableRow>
@@ -701,6 +811,68 @@ class CashBook_ extends React.Component {
               <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => { this.setState({ modalDialog: false, comment: '', openModalType: '', openModalKassa: '', summ: 0 }) }}>Отмена</Button>
             </DialogActions>
           }
+        </Dialog>
+
+        <Dialog
+          fullWidth={true}
+          maxWidth={'md'}
+          open={this.state.modalDialogEdit}
+          onClose={ () => { this.setState({ modalDialogEdit: false, comment: '', openModalType: '', openModalKassa: '', summ: 0 }) } }
+        >
+          <DialogTitle>{this.state.openModalTitle}</DialogTitle>
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            
+            <Grid container spacing={3}>
+
+              <Grid item xs={12} sm={6}>
+                <MyTextInput label="Сумма" value={this.state.summ} type={'number'} func={this.changeSumm.bind(this)} />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <MyDatePickerNew label="Дата" value={ this.state.date } func={ this.changeDate.bind(this, 'date') } />
+              </Grid>
+              
+              <Grid item xs={12} sm={12}>
+                <MyTextInput label="Комментарий" value={this.state.comment} multiline={true} maxRows={3} type={'text'} func={this.changeComment.bind(this, 'comment')} />
+              </Grid>
+            
+            </Grid>
+
+            
+
+          </DialogContent>
+          
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.saveUpdateAction.bind(this)}>Обновить</Button>
+            <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => { this.setState({ modalDialog: false, comment: '', openModalType: '', openModalKassa: '', summ: 0 }) }}>Отмена</Button>
+          </DialogActions>
+          
+        </Dialog>
+
+        <Dialog
+          open={this.state.is_open_action}
+          onClose={this.closeAction.bind(this)}
+        >
+          <DialogTitle>Подтверди действие</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 10 }}>
+              { this.state?.type_action === 'delete' ? 'Удалить' : '' } данные ?
+            </DialogContentText>
+
+            <MyTextInput 
+              label="Комментарий" 
+              value={this.state.comment_action} 
+              multiline={true} 
+              maxRows={3} 
+              type={'text'} 
+              func={this.changeComment.bind(this, 'comment_action')} 
+            />
+
+          </DialogContent>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.saveAction.bind(this)}>Подтвердить</Button>
+            <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={this.closeAction.bind(this)}>Отмена</Button>
+          </DialogActions>
         </Dialog>
 
         <Grid container spacing={3} style={{ paddingBottom: 100 }} className='container_first_child'>
@@ -728,6 +900,8 @@ class CashBook_ extends React.Component {
             <MainTable
               table={'fiz'}
               addData={this.addData.bind(this)}
+              deleteData={this.deleteData.bind(this)}
+              updateData={this.updateItem.bind(this)}
               toogleCollapseTable={this.toogleCollapseTable.bind(this)}
 
               ostatok_nachalo_dnya={this.state.fiz_kassa?.ostatok_nachalo_dnya}
@@ -779,6 +953,8 @@ class CashBook_ extends React.Component {
             <MainTable 
               table={'driver_cash'}
               addData={this.addData.bind(this)}
+              deleteData={this.deleteData.bind(this)}
+              updateData={this.updateItem.bind(this)}
               toogleCollapseTable={this.toogleCollapseTable.bind(this)}
 
               ostatok_nachalo_dnya={this.state.driver_kassa?.ostatok_nachalo_dnya}
