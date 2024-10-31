@@ -237,7 +237,7 @@ class MainTable extends React.Component {
                 toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
                 addData={this.props.addData.bind(this)}
 
-                is_delete={true}
+                is_delete={this.props?.cash_from_bank_is_edit}
                 deleteData={this.props.deleteData.bind(this)}
                 updateData={this.props.updateData.bind(this)}
               />
@@ -259,7 +259,7 @@ class MainTable extends React.Component {
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
               addData={this.props.addData.bind(this)}
 
-              is_delete={true}
+              is_delete={this.props?.zaim_is_edit}
               deleteData={this.props.deleteData.bind(this)}
               updateData={this.props.updateData.bind(this)}
             />
@@ -278,7 +278,7 @@ class MainTable extends React.Component {
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
               addData={this.props.addData.bind(this)}
 
-              is_delete={true}
+              is_delete={this.props?.vedomosm_zp_is_edit}
               deleteData={this.props.deleteData.bind(this)}
               updateData={this.props.updateData.bind(this)}
             />
@@ -298,7 +298,7 @@ class MainTable extends React.Component {
                 toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
                 addData={this.props.addData.bind(this)}
 
-                is_delete={true}
+                is_delete={this.props?.incasacia_is_edit}
                 deleteData={this.props.deleteData.bind(this)}
                 updateData={this.props.updateData.bind(this)}
               />
@@ -320,7 +320,7 @@ class MainTable extends React.Component {
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
               addData={this.props.addData.bind(this)}
 
-              is_delete={true}
+              is_delete={this.props?.vozvrat_zaim_is_edit}
               deleteData={this.props.deleteData.bind(this)}
               updateData={this.props.updateData.bind(this)}
             />
@@ -339,7 +339,7 @@ class MainTable extends React.Component {
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
               addData={this.props.addData.bind(this)}
 
-              is_delete={true}
+              is_delete={this.props?.vidacha_otchet_is_edit}
               deleteData={this.props.deleteData.bind(this)}
               updateData={this.props.updateData.bind(this)}
             />
