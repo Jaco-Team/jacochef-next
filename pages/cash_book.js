@@ -61,11 +61,65 @@ class MainTableRow extends React.Component {
   //data_hist
   //tooltip
 
+  /**
+   * 
+   * <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={3}>
+            <Collapse in={this.props?.is_open} timeout="auto" unmountOnExit>
+              <Box sx={{ margin: 1 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Сотрудник</TableCell>
+                      <TableCell>Дата</TableCell>
+                      <TableCell>Комментарий</TableCell>
+                      <TableCell>Наличка</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+  
+                    {this.props.data_hist?.map( item => 
+                      
+                      <TableRow key={item.id}>
+                        <TableCell>{item.user_name}</TableCell>
+                        <TableCell>{item.date}</TableCell>
+                        <TableCell>{item.comment}</TableCell>
+                        <TableCell>{item.summ}</TableCell>
+                        <TableCell>
+                          
+                          { this.props?.is_delete === true ?
+                            <IconButton onClick={this.props.updateData.bind(this, item, 'Редактирование ' + kassa_text+': '+this.props?.label)}>
+                              <EditIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
+                            </IconButton>
+                              :
+                            false
+                          }
+
+                          { this.props?.is_delete === true ?
+                            <IconButton onClick={this.props.deleteData.bind(this, item, 'delete')}>
+                              <CloseIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
+                            </IconButton>
+                              :
+                            false
+                          }
+                        </TableCell>
+                      </TableRow>
+
+                    )}
+
+                  </TableBody>
+                </Table>
+              </Box>
+            </Collapse>
+          </TableCell>
+   */
   
 
   render () {
 
     const kassa_text = this.props.table == 'fiz' ? 'Физические кассы' : 'Курьерская наличка';
+
+    console.log( this.props.table, this.props.type, this.props?.is_delete, this.props?.is_edit, this.props?.is_delete == false && this.props?.is_edit === false )
 
     return(
       <React.Fragment>
@@ -114,42 +168,67 @@ class MainTableRow extends React.Component {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Сотрудник</TableCell>
                       <TableCell>Дата</TableCell>
-                      <TableCell>Комментарий</TableCell>
-                      <TableCell>Наличка</TableCell>
-                      <TableCell></TableCell>
+                      <TableCell>Сумма</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
+  
+                    {this.props.data_hist?.map( (item, key) => 
+                      <React.Fragment key={key}>
+                        <TableRow onClick={this.props.toogleCollapseTableRow.bind(this, this.props.type, this.props.table, key)} style={{ cursor: 'pointer' }}>
+                          <TableCell>{item.date}</TableCell>
+                          <TableCell>{item.summ}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={3}>
+                            <Collapse in={item.is_open} timeout="auto" unmountOnExit>
+                              <Box sx={{ margin: 1 }}>
+                                <Table size="small">
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell>Сотрудник</TableCell>
+                                      <TableCell>Дата</TableCell>
+                                      <TableCell>Комментарий</TableCell>
+                                      <TableCell>Наличка</TableCell>
+                                      <TableCell></TableCell>
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                  
+                                    {item['data']?.map( item => 
+                                      
+                                      <TableRow key={item.id}>
+                                        <TableCell>{item.user_name}</TableCell>
+                                        <TableCell>{item.date}</TableCell>
+                                        <TableCell>{item.comment}</TableCell>
+                                        <TableCell>{item.summ}</TableCell>
+                                        <TableCell>
+                                          
+                                          { this.props?.is_delete == false || this.props?.is_edit === false ? false :
+                                            <IconButton onClick={this.props.updateData.bind(this, item, 'Редактирование ' + kassa_text+': '+this.props?.label)}>
+                                              <EditIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
+                                            </IconButton>
+                                          }
 
-                    {this.props.data_hist?.map( item => 
-                      
-                      <TableRow key={item.id}>
-                        <TableCell>{item.user_name}</TableCell>
-                        <TableCell>{item.date}</TableCell>
-                        <TableCell>{item.comment}</TableCell>
-                        <TableCell>{item.summ}</TableCell>
-                        <TableCell>
-                          
-                          { this.props?.is_delete === true ?
-                            <IconButton onClick={this.props.updateData.bind(this, item, 'Редактирование ' + kassa_text+': '+this.props?.label)}>
-                              <EditIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
-                            </IconButton>
-                              :
-                            false
-                          }
+                                          { this.props?.is_delete == false || this.props?.is_edit === false ? false :
+                                            <IconButton onClick={this.props.deleteData.bind(this, item, 'delete')}>
+                                              <CloseIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
+                                            </IconButton>
+                                          }
+                                        </TableCell>
+                                      </TableRow>
 
-                          { this.props?.is_delete === true ?
-                            <IconButton onClick={this.props.deleteData.bind(this, item, 'delete')}>
-                              <CloseIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
-                            </IconButton>
-                              :
-                            false
-                          }
-                        </TableCell>
-                      </TableRow>
+                                    )}
 
+                                  </TableBody>
+                                </Table>
+                              </Box>
+                            </Collapse>
+                          </TableCell>
+                        </TableRow>
+
+                      </React.Fragment>
                     )}
 
                   </TableBody>
@@ -157,6 +236,10 @@ class MainTableRow extends React.Component {
               </Box>
             </Collapse>
           </TableCell>
+
+
+
+          
         </TableRow>
       </React.Fragment>
     )
@@ -218,7 +301,10 @@ class MainTable extends React.Component {
               tooltip={this.props.table == 'fiz' ? text.virycka_fiz : text.virycka_driver}
 
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
               addData={this.props.addData.bind(this)}
+
+              is_delete={false}
               
             />
 
@@ -235,6 +321,7 @@ class MainTable extends React.Component {
                 tooltip={this.props.table == 'fiz' ? text.cash_from_bank_fiz : text.cash_from_bank_driver}
 
                 toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
                 addData={this.props.addData.bind(this)}
 
                 is_delete={this.props?.cash_from_bank_is_edit}
@@ -254,9 +341,10 @@ class MainTable extends React.Component {
               data_plus={this.props?.zaim}
               //data_minus
               data_hist={this.props?.zaim_arr}
-              tooltip={text.zaim}
+              tooltip={this.props.table == 'fiz' ? text.zaim_fiz : text.zaim_driver}
 
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
               addData={this.props.addData.bind(this)}
 
               is_delete={this.props?.zaim_is_edit}
@@ -276,6 +364,7 @@ class MainTable extends React.Component {
               tooltip={text.zp}
 
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
               addData={this.props.addData.bind(this)}
 
               is_delete={this.props?.vedomosm_zp_is_edit}
@@ -296,6 +385,7 @@ class MainTable extends React.Component {
                 tooltip={text.incasacia}
 
                 toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
                 addData={this.props.addData.bind(this)}
 
                 is_delete={this.props?.incasacia_is_edit}
@@ -315,9 +405,10 @@ class MainTable extends React.Component {
               //data_plus={this.props?.vedomosm_zp}
               data_minus={this.props?.vozvrat_zaim}
               data_hist={this.props?.vozvrat_zaim_arr}
-              tooltip={text.vozvrat}
+              tooltip={this.props.table == 'fiz' ? text.vozvrat_fiz : text.vozvrat_driver}
 
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
               addData={this.props.addData.bind(this)}
 
               is_delete={this.props?.vozvrat_zaim_is_edit}
@@ -337,6 +428,7 @@ class MainTable extends React.Component {
               tooltip={this.props.table == 'fiz' ? text.otchet_fiz : text.otchet_driver}
 
               toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
               addData={this.props.addData.bind(this)}
 
               is_delete={this.props?.vidacha_otchet_is_edit}
@@ -578,6 +670,23 @@ class CashBook_ extends React.Component {
       driver_kassa[ type+'_is_open' ] = !driver_kassa[ type+'_is_open' ];
     }else{
       fiz_kassa[ type+'_is_open' ] = !fiz_kassa[ type+'_is_open' ];
+    }
+
+    this.setState({
+      driver_kassa: driver_kassa,
+      fiz_kassa: fiz_kassa,
+    })
+  }
+
+  toogleCollapseTableRow(type, kassa, key){
+
+    let driver_kassa = this.state.driver_kassa;
+    let fiz_kassa = this.state.fiz_kassa;
+
+    if( kassa == 'driver_cash' ){
+      driver_kassa[ type+'_arr' ][ key ]['is_open'] = !driver_kassa[ type+'_arr' ][ key ]['is_open'];
+    }else{
+      fiz_kassa[ type+'_arr' ][ key ]['is_open'] = !fiz_kassa[ type+'_arr' ][ key ]['is_open'];
     }
 
     this.setState({
@@ -903,6 +1012,7 @@ class CashBook_ extends React.Component {
               deleteData={this.deleteData.bind(this)}
               updateData={this.updateItem.bind(this)}
               toogleCollapseTable={this.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.toogleCollapseTableRow.bind(this)}
 
               ostatok_nachalo_dnya={this.state.fiz_kassa?.ostatok_nachalo_dnya}
               ostatok_nachalo_dnya_is_edit={this.state.fiz_kassa?.ostatok_nachalo_dnya_is_edit}
@@ -956,6 +1066,7 @@ class CashBook_ extends React.Component {
               deleteData={this.deleteData.bind(this)}
               updateData={this.updateItem.bind(this)}
               toogleCollapseTable={this.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.toogleCollapseTableRow.bind(this)}
 
               ostatok_nachalo_dnya={this.state.driver_kassa?.ostatok_nachalo_dnya}
               ostatok_nachalo_dnya_is_edit={this.state.driver_kassa?.ostatok_nachalo_dnya_is_edit}
