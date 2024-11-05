@@ -663,6 +663,7 @@ class FAQ_ extends React.Component {
   }
 
   openModal_add(method, type) {
+    this.handleResize();
 
     const { create } = this.state.acces;
 
@@ -690,6 +691,7 @@ class FAQ_ extends React.Component {
   }
 
   async openModal_edit(method, type, item, event) {
+    this.handleResize();
 
     const { edit } = this.state.acces;
 
@@ -742,6 +744,7 @@ class FAQ_ extends React.Component {
   }
 
   async openModal_view(method, item) {
+    this.handleResize();
 
     const { show } = this.state.acces;
 
