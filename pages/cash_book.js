@@ -15,13 +15,18 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import DialogContentText from '@mui/material/DialogContentText';
 
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
-import DeleteIcon from '@mui/icons-material/Delete';
 import Typography from '@mui/material/Typography';
+import CloseIcon from '@mui/icons-material/Close';
+import EditIcon from '@mui/icons-material/Edit';
+
+import Box from '@mui/material/Box';
+import Collapse from '@mui/material/Collapse';
 
 import HelpIcon from '@mui/icons-material/Help';
 
@@ -32,16 +37,214 @@ import queryString from 'query-string';
 import dayjs from 'dayjs';
 
 const text = {
-  'virycka_fiz': 'Z-отчет о закрытия кассовой смены',
-  'virycka_driver': 'Курьеры к сдаче',
-  'zaim': 'Проставляется руководителем или бухгалтерией в случае внесения им займа в кассу кафе, если не хватает д/с в кассе, например, на выдачу з/платы.',
+  'virycka_fiz': 'Выручка за день - берется из Z-отчетов после закрытия кассовой смены автоматически',
+  'virycka_driver': 'Выручка за день - берется из кассовой смены автоматически полностьюя вся сумма',
+  'zaim_fiz': 'Проставляется руководителем или бухгалтерией в случае внесения им займа в кассу кафе, если не хватает д/с в кассе, например, на выдачу з/платы.',
+  'zaim_driver': 'Эту сумму проставляет руководитель, который выдал денежные средства',
   'peremeshenie': 'Проставляется управляющим в случае, если у него не хватает д/с в кассе и он берет их из курьерской кассы',
   'zp': 'Заполняется бухгалтерией на основании платежных ведомостей на выплату з/пл, которые передаются управляющим на подпись. Управляющие в кассовой книге эти суммы лишь сверяет с полученными платежными ведомостями.',
   'incasacia': 'Сумма, сданная в банк. Проставляется управляющим в случае инкассации',
-  'vozvrat': 'Проставляется руководителем или бухгалтерией в случае возврата из кассы ранее внесенного займа руководителем',
+  'vozvrat_fiz': 'Проставляется руководителем или бухгалтерией в случае возврата из кассы ранее внесенного займа руководителем',
+  'vozvrat_driver': 'Эту сумму проставляет руководитель, которому сданы денежные средства',
   'otchet_fiz': 'Проставляется управляющим с случае, если он взял из кассы денежные средства для покупки чего-либо и планирует отчитаться по авансовому отчету.',
   'otchet_driver': 'Эту сумму проставляет управляющий, которые по истечении месяца отчитывается перед руководителем куда потрачены и на какие цели эти денежные средства.'
 };
+
+class MainTableRow extends React.Component {
+  //label
+  //is_edit
+  //is_open
+  //type
+  //table
+  //data_plus
+  //data_minus
+  //data_hist
+  //tooltip
+
+  /**
+   * 
+   * <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={3}>
+            <Collapse in={this.props?.is_open} timeout="auto" unmountOnExit>
+              <Box sx={{ margin: 1 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Сотрудник</TableCell>
+                      <TableCell>Дата</TableCell>
+                      <TableCell>Комментарий</TableCell>
+                      <TableCell>Наличка</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+  
+                    {this.props.data_hist?.map( item => 
+                      
+                      <TableRow key={item.id}>
+                        <TableCell>{item.user_name}</TableCell>
+                        <TableCell>{item.date}</TableCell>
+                        <TableCell>{item.comment}</TableCell>
+                        <TableCell>{item.summ}</TableCell>
+                        <TableCell>
+                          
+                          { this.props?.is_delete === true ?
+                            <IconButton onClick={this.props.updateData.bind(this, item, 'Редактирование ' + kassa_text+': '+this.props?.label)}>
+                              <EditIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
+                            </IconButton>
+                              :
+                            false
+                          }
+
+                          { this.props?.is_delete === true ?
+                            <IconButton onClick={this.props.deleteData.bind(this, item, 'delete')}>
+                              <CloseIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
+                            </IconButton>
+                              :
+                            false
+                          }
+                        </TableCell>
+                      </TableRow>
+
+                    )}
+
+                  </TableBody>
+                </Table>
+              </Box>
+            </Collapse>
+          </TableCell>
+   */
+  
+
+  render () {
+
+    const kassa_text = this.props.table == 'fiz' ? 'Физические кассы' : 'Курьерская наличка';
+
+    console.log( this.props.table, this.props.type, this.props?.is_delete, this.props?.is_edit, this.props?.is_delete == false && this.props?.is_edit === false )
+
+    return(
+      <React.Fragment>
+        <TableRow>
+          <TableCell onClick={this.props.toogleCollapseTable.bind(this, this.props.type, this.props.table)} style={{ cursor: 'pointer' }}>
+            { this.props?.is_edit === false ?
+              <Typography 
+                component="span"
+              >
+                {this.props?.label}
+              </Typography>
+                :
+              <Typography 
+                component="span"
+                //onClick={this.props.addData.bind(this, 'virycka', this.props.table, this.props?.virycka_arr, kassa_text+': Выручка')} 
+                //onClick={this.props.toogleCollapseTable.bind(this, this.props.type, this.props.table)}
+                style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
+              >
+                {this.props?.label}
+                <Tooltip title={<Typography color="inherit">{ this.props.tooltip }</Typography>}> 
+                  <IconButton>
+                    <HelpIcon color="primary" />
+                  </IconButton>
+                </Tooltip>
+              </Typography>
+            }
+            
+          </TableCell>
+          <TableCell 
+            style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff', cursor: 'pointer' }}
+            onClick={this.props.addData.bind(this, this.props.type, this.props.table, this.props.data_hist, kassa_text+': '+this.props?.label)}
+          >
+            {this.props?.data_plus ?? ''}
+          </TableCell>
+          <TableCell 
+            style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff', cursor: 'pointer' }}
+            onClick={this.props.addData.bind(this, this.props.type, this.props.table, this.props.data_hist, kassa_text+': '+this.props?.label)}
+          >{
+            this.props?.data_minus ?? ''}
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={3}>
+            <Collapse in={this.props?.is_open} timeout="auto" unmountOnExit>
+              <Box sx={{ margin: 1 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Дата</TableCell>
+                      <TableCell>Сумма</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+  
+                    {this.props.data_hist?.map( (item, key) => 
+                      <React.Fragment key={key}>
+                        <TableRow onClick={this.props.toogleCollapseTableRow.bind(this, this.props.type, this.props.table, key)} style={{ cursor: 'pointer' }}>
+                          <TableCell>{item.date}</TableCell>
+                          <TableCell>{item.summ}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={3}>
+                            <Collapse in={item.is_open} timeout="auto" unmountOnExit>
+                              <Box sx={{ margin: 1 }}>
+                                <Table size="small">
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell>Сотрудник</TableCell>
+                                      <TableCell>Дата</TableCell>
+                                      <TableCell>Комментарий</TableCell>
+                                      <TableCell>Наличка</TableCell>
+                                      <TableCell></TableCell>
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                  
+                                    {item['data']?.map( item => 
+                                      
+                                      <TableRow key={item.id}>
+                                        <TableCell>{item.user_name}</TableCell>
+                                        <TableCell>{item.date}</TableCell>
+                                        <TableCell>{item.comment}</TableCell>
+                                        <TableCell>{item.summ}</TableCell>
+                                        <TableCell>
+                                          
+                                          { this.props?.is_delete == false || this.props?.is_edit === false ? false :
+                                            <IconButton onClick={this.props.updateData.bind(this, item, 'Редактирование ' + kassa_text+': '+this.props?.label)}>
+                                              <EditIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
+                                            </IconButton>
+                                          }
+
+                                          { this.props?.is_delete == false || this.props?.is_edit === false ? false :
+                                            <IconButton onClick={this.props.deleteData.bind(this, item, 'delete')}>
+                                              <CloseIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
+                                            </IconButton>
+                                          }
+                                        </TableCell>
+                                      </TableRow>
+
+                                    )}
+
+                                  </TableBody>
+                                </Table>
+                              </Box>
+                            </Collapse>
+                          </TableCell>
+                        </TableRow>
+
+                      </React.Fragment>
+                    )}
+
+                  </TableBody>
+                </Table>
+              </Box>
+            </Collapse>
+          </TableCell>
+
+
+
+          
+        </TableRow>
+      </React.Fragment>
+    )
+  }
+}
 
 class MainTable extends React.Component {
   render () {
@@ -85,211 +288,155 @@ class MainTable extends React.Component {
               <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.ostatok_nachalo_dnya}</TableCell>
               <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
             </TableRow>
-            <TableRow>
-              <TableCell>
-                { this.props?.virycka_is_edit === false ?
-                  <Typography 
-                    component="span"
-                  >
-                    Выручка
-                  </Typography>
-                    :
-                  <Typography 
-                    component="span"
-                    onClick={this.props.addData.bind(this, 'virycka', this.props.table, this.props?.virycka_arr, kassa_text+': Выручка')} 
-                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                  >
-                    Выручка
-                    <Tooltip title={<Typography color="inherit">{ this.props.table == 'fiz' ? text.virycka_fiz : text.virycka_driver }</Typography>}> 
-                      <IconButton>
-                        <HelpIcon color="primary" />
-                      </IconButton>
-                    </Tooltip>
-                  </Typography>
-                }
-                
-              </TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.virycka}</TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                { this.props?.cash_from_bank_is_edit === false ?
-                  <Typography 
-                    component="span"
-                  >
-                    Снятие наличных в банке
-                  </Typography>
-                    :
-                  <Typography 
-                    component="span"
-                    onClick={this.props.addData.bind(this, 'cash_from_bank', this.props.table, this.props?.cash_from_bank_arr, kassa_text+': Снятие наличных в банке')} 
-                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                  >
-                    Снятие наличных в банке
-                  </Typography>
-                }
-                
-              </TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.cash_from_bank}</TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                { this.props?.zaim_is_edit === false ?
-                  <Typography 
-                    component="span"
-                  >
-                    Заемные средства
-                  </Typography>
-                    :
-                  <Typography 
-                    component="span"
-                    onClick={this.props.addData.bind(this, 'zaim', this.props.table, this.props?.zaim_arr, kassa_text+': Заемные средства')} 
-                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                  >
-                    Заемные средства
-                    <Tooltip title={<Typography color="inherit">{text.zaim}</Typography>}> 
-                      <IconButton>
-                        <HelpIcon color="primary" />
-                      </IconButton>
-                    </Tooltip>
-                  </Typography>
-                }
-              </TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.zaim}</TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                { this.props?.dengi_iz_drygoy_kassy_is_edit === false ?
-                  <Typography
-                    component="span"
-                  >
-                    Перемещение из другой кассы
-                  </Typography>
-                    :
-                  <Typography
-                    component="span"
-                    onClick={this.props.addData.bind(this, 'dengi_iz_drygoy_kassy', this.props.table, this.props?.dengi_iz_drygoy_kassy_arr, kassa_text+': Перемещение из другой кассы')} 
-                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                  >
-                    Перемещение из другой кассы
-                    <Tooltip title={<Typography color="inherit">{text.peremeshenie}</Typography>}> 
-                      <IconButton>
-                        <HelpIcon color="primary" />
-                      </IconButton>
-                    </Tooltip>
-                  </Typography>
-                }
-              </TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.dengi_iz_drygoy_kassy_plus}</TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.dengi_iz_drygoy_kassy_minus}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                { this.props?.vedomosm_zp_is_edit === false ?
-                  <Typography
-                    component="span"
-                  >
-                    Платежная ведомость на выплату заработной платы
-                  </Typography>
-                    :
-                  <Typography
-                    component="span"
-                    onClick={this.props.addData.bind(this, 'vedomosm_zp', this.props.table, this.props?.vedomosm_zp_arr, kassa_text+': Платежная ведомость на выплату заработной платы')} 
-                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                  >
-                    Платежная ведомость на выплату заработной платы
-                    <Tooltip title={<Typography color="inherit">{text.zp}</Typography>}> 
-                      <IconButton>
-                        <HelpIcon color="primary" />
-                      </IconButton>
-                    </Tooltip>
-                  </Typography>
-                }
-              </TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}></TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.vedomosm_zp}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                { this.props?.incasacia_is_edit === false ?
-                  <Typography
-                    component="span"
-                  >
-                    Инкассация
-                  </Typography>
-                    :
-                  <Typography
-                    component="span"
-                    onClick={this.props.addData.bind(this, 'incasacia', this.props.table, this.props?.incasacia_arr, kassa_text+': Инкассация')} 
-                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                  >
-                    Инкассация
-                    <Tooltip title={<Typography color="inherit">{text.incasacia}</Typography>}> 
-                      <IconButton>
-                        <HelpIcon color="primary" />
-                      </IconButton>
-                    </Tooltip>
-                  </Typography>
-                }
-              </TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}></TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.incasacia}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                { this.props?.vozvrat_zaim_is_edit === false ?
-                  <Typography 
-                    component="span"
-                  >
-                    Возврат займа
-                  </Typography>
-                    :
-                  <Typography 
-                    component="span"
-                    onClick={this.props.addData.bind(this, 'vozvrat_zaim', this.props.table, this.props?.vozvrat_zaim_arr, kassa_text+': Возврат займа')} 
-                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                  >
-                    Возврат займа
-                    <Tooltip title={<Typography color="inherit">{text.vozvrat}</Typography>}> 
-                      <IconButton>
-                        <HelpIcon color="primary" />
-                      </IconButton>
-                    </Tooltip>
-                  </Typography>
-                }
-              </TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}></TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.vozvrat_zaim}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                { this.props?.vidacha_otchet_is_edit === false ?
-                  <Typography 
-                    component="span"
-                  >
-                    Выдача в подотчет
-                  </Typography>
-                    :
-                  <Typography 
-                    component="span"
-                    onClick={this.props.addData.bind(this, 'vidacha_otchet', this.props.table, this.props?.vidacha_otchet_arr, kassa_text+': Выдача в подотчет')} 
-                    style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
-                  >
-                    Выдача в подотчет
-                    <Tooltip title={<Typography color="inherit">{ this.props.table == 'fiz' ? text.otchet_fiz : text.otchet_driver }</Typography>}> 
-                      <IconButton>
-                        <HelpIcon color="primary" />
-                      </IconButton>
-                    </Tooltip>
-                  </Typography>
-                }
-              </TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}></TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.vidacha_otchet}</TableCell>
-            </TableRow>
+
+            <MainTableRow 
+              label={'Выручка'}
+              is_edit={this.props?.virycka_is_edit}
+              is_open={this.props?.virycka_is_open}
+              type={'virycka'}
+              table={this.props.table}
+              data_plus={this.props?.virycka}
+              //data_minus
+              data_hist={this.props?.virycka_arr}
+              tooltip={this.props.table == 'fiz' ? text.virycka_fiz : text.virycka_driver}
+
+              toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+              addData={this.props.addData.bind(this)}
+
+              is_delete={false}
+              
+            />
+
+            { this.props.table == 'fiz' ?
+              <MainTableRow 
+                label={'Снятие наличных в банке'}
+                is_edit={this.props?.cash_from_bank_is_edit}
+                is_open={this.props?.cash_from_bank_is_open}
+                type={'cash_from_bank'}
+                table={this.props.table}
+                data_plus={this.props?.cash_from_bank}
+                //data_minus
+                data_hist={this.props?.cash_from_bank_arr}
+                tooltip={this.props.table == 'fiz' ? text.cash_from_bank_fiz : text.cash_from_bank_driver}
+
+                toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+                addData={this.props.addData.bind(this)}
+
+                is_delete={this.props?.cash_from_bank_is_edit}
+                deleteData={this.props.deleteData.bind(this)}
+                updateData={this.props.updateData.bind(this)}
+              />
+                : 
+              false
+            }
+
+            <MainTableRow 
+              label={this.props.table == 'fiz' ? 'Заемные средства' : 'Выдано'}
+              is_edit={this.props?.zaim_is_edit}
+              is_open={this.props?.zaim_is_open}
+              type={'zaim'}
+              table={this.props.table}
+              data_plus={this.props?.zaim}
+              //data_minus
+              data_hist={this.props?.zaim_arr}
+              tooltip={this.props.table == 'fiz' ? text.zaim_fiz : text.zaim_driver}
+
+              toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+              addData={this.props.addData.bind(this)}
+
+              is_delete={this.props?.zaim_is_edit}
+              deleteData={this.props.deleteData.bind(this)}
+              updateData={this.props.updateData.bind(this)}
+            />
+
+            <MainTableRow 
+              label={this.props.table == 'fiz' ? 'Платежная ведомость на выплату заработной платы' : 'Выплата за услуги курьера'}
+              is_edit={this.props?.vedomosm_zp_is_edit}
+              is_open={this.props?.vedomosm_zp_is_open}
+              type={'vedomosm_zp'}
+              table={this.props.table}
+              //data_plus={this.props?.vedomosm_zp}
+              data_minus={this.props?.vedomosm_zp}
+              data_hist={this.props?.vedomosm_zp_arr}
+              tooltip={text.zp}
+
+              toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+              addData={this.props.addData.bind(this)}
+
+              is_delete={this.props?.vedomosm_zp_is_edit}
+              deleteData={this.props.deleteData.bind(this)}
+              updateData={this.props.updateData.bind(this)}
+            />
+
+            { this.props.table == 'fiz' ?
+              <MainTableRow 
+                label={'Инкассация'}
+                is_edit={this.props?.incasacia_is_edit}
+                is_open={this.props?.incasacia_is_open}
+                type={'incasacia'}
+                table={this.props.table}
+                //data_plus={this.props?.vedomosm_zp}
+                data_minus={this.props?.incasacia}
+                data_hist={this.props?.incasacia_arr}
+                tooltip={text.incasacia}
+
+                toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+                addData={this.props.addData.bind(this)}
+
+                is_delete={this.props?.incasacia_is_edit}
+                deleteData={this.props.deleteData.bind(this)}
+                updateData={this.props.updateData.bind(this)}
+              />
+                :
+              false
+            }
+
+            <MainTableRow 
+              label={this.props.table == 'fiz' ? 'Возврат займа' : 'Сдано'}
+              is_edit={this.props?.vozvrat_zaim_is_edit}
+              is_open={this.props?.vozvrat_zaim_is_open}
+              type={'vozvrat_zaim'}
+              table={this.props.table}
+              //data_plus={this.props?.vedomosm_zp}
+              data_minus={this.props?.vozvrat_zaim}
+              data_hist={this.props?.vozvrat_zaim_arr}
+              tooltip={this.props.table == 'fiz' ? text.vozvrat_fiz : text.vozvrat_driver}
+
+              toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+              addData={this.props.addData.bind(this)}
+
+              is_delete={this.props?.vozvrat_zaim_is_edit}
+              deleteData={this.props.deleteData.bind(this)}
+              updateData={this.props.updateData.bind(this)}
+            />
+
+            <MainTableRow 
+              label={'Выдача в подотчет'}
+              is_edit={this.props?.vidacha_otchet_is_edit}
+              is_open={this.props?.vidacha_otchet_is_open}
+              type={'vidacha_otchet'}
+              table={this.props.table}
+              //data_plus={this.props?.vedomosm_zp}
+              data_minus={this.props?.vidacha_otchet}
+              data_hist={this.props?.vidacha_otchet_arr}
+              tooltip={this.props.table == 'fiz' ? text.otchet_fiz : text.otchet_driver}
+
+              toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+              addData={this.props.addData.bind(this)}
+
+              is_delete={this.props?.vidacha_otchet_is_edit}
+              deleteData={this.props.deleteData.bind(this)}
+              updateData={this.props.updateData.bind(this)}
+            />
+            
+            
             <TableRow>
               <TableCell>Итого за день</TableCell>
               <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.itog_plus}</TableCell>
@@ -324,15 +471,14 @@ class CashBook_ extends React.Component {
       
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
+      date: formatDate(new Date()),
       rangeDate: [formatDate(new Date()), formatDate(new Date())],
 
       modalDialog: false,
+      modalDialogEdit: false,
 
-      drive_stat_full: [],
-      drive_stat_date: null,
+    
       summ: 0,
-      choose_driver_id: 0,
-      check_cash: 0,
 
       getSumm: 0,
       modalDialogGetSumm: false,
@@ -355,6 +501,13 @@ class CashBook_ extends React.Component {
       openModalKassa: '',
       openModalTitle: '',
       openModalHist_data: [],
+
+      type_action: '',
+      data_action: null,
+      comment_action: '',
+      is_open_action: false,
+
+      hist: []
     };
   }
   
@@ -438,6 +591,10 @@ class CashBook_ extends React.Component {
     this.setState({
       [data]: (event)
     })
+
+    if( data == 'date' ){
+      this.getHist(this.state.openModalType, event);
+    }
   }
 
   changePoint(event){
@@ -448,23 +605,15 @@ class CashBook_ extends React.Component {
     })
   }
 
-  giveCash(driver_id, check_cash){
-    this.setState({
-      modalDialog: true,
-      choose_driver_id: driver_id,
-      check_cash: check_cash
-    })
-  }
-
   changeSumm(event){
     this.setState({
       summ: event.target.value,
     })
   }
 
-  changeComment(event){
+  changeComment(data, event){
     this.setState({
-      comment: event.target.value,
+      [data]: event.target.value,
     })
   }
 
@@ -475,8 +624,8 @@ class CashBook_ extends React.Component {
 
     this.click = true;
 
-    if( parseInt( this.state.summ ) == 0 || this.state.comment.length == 0 ){
-      alert('Необходимо указать сумму и комментарий');
+    if( parseInt( this.state.summ ) == 0 || this.state.comment.length == 0 || this.state.date.length == 0 ){
+      alert('Необходимо указать сумму и комментарий и дату');
 
       setTimeout( () => {
         this.click = false;
@@ -492,6 +641,7 @@ class CashBook_ extends React.Component {
       comment: this.state.comment,
       type: this.state.openModalType,
       kassa: this.state.openModalKassa,
+      date: dayjs(this.state.date).format('YYYY-MM-DD'),
     };
     
     let res = await this.getData('save_give', data);
@@ -511,58 +661,38 @@ class CashBook_ extends React.Component {
     }, 300 )
   }
 
-  getCash(driver){
+  toogleCollapseTable(type, kassa){
+
+    let driver_kassa = this.state.driver_kassa;
+    let fiz_kassa = this.state.fiz_kassa;
+
+    if( kassa == 'driver_cash' ){
+      driver_kassa[ type+'_is_open' ] = !driver_kassa[ type+'_is_open' ];
+    }else{
+      fiz_kassa[ type+'_is_open' ] = !fiz_kassa[ type+'_is_open' ];
+    }
+
     this.setState({
-      modalDialogGetSumm: true,
-      getSumm: 0,
-      getSummDriverId: driver,
-      getSummComment: ''
+      driver_kassa: driver_kassa,
+      fiz_kassa: fiz_kassa,
     })
   }
 
-  async saveGetPrice(){
-    if( this.click ){
-      return ;
-    }
+  toogleCollapseTableRow(type, kassa, key){
 
-    this.click = true;
+    let driver_kassa = this.state.driver_kassa;
+    let fiz_kassa = this.state.fiz_kassa;
 
-    if( parseInt( this.state.getSumm ) > 1000 ){
-      alert('Нельзя выдать больше 1000р за раз');
-      setTimeout( () => {
-        this.click = false;
-      }, 300 )
-      return;
-    }
-
-
-    let data = {
-      point_id: this.state.point,
-      price: this.state.getSumm,
-      driver_id: this.state.getSummDriverId.driver_id,
-      comment: this.state.getSummComment
-    };
-    
-    let res = await this.getData('save_get', data);
-
-    console.log( res )
-
-    if( res['st'] == true ){
-      this.setState({
-        modalDialogGetSumm: false,
-        getSumm: 0,
-        getSummDriverId: null,
-        getSummComment: ''  
-      })
-
-      this.updateData();
+    if( kassa == 'driver_cash' ){
+      driver_kassa[ type+'_arr' ][ key ]['is_open'] = !driver_kassa[ type+'_arr' ][ key ]['is_open'];
     }else{
-      alert(res['text'])
+      fiz_kassa[ type+'_arr' ][ key ]['is_open'] = !fiz_kassa[ type+'_arr' ][ key ]['is_open'];
     }
 
-    setTimeout( () => {
-      this.click = false;
-    }, 300 )
+    this.setState({
+      driver_kassa: driver_kassa,
+      fiz_kassa: fiz_kassa,
+    })
   }
 
   addData(type, kassa, hist, title){
@@ -593,16 +723,122 @@ class CashBook_ extends React.Component {
       })
     }
 
-    //Остаток на начало дня - первый раз ставят директора
+    this.getHist(type, this.state.date);
+  }
 
-    //Выручка за день - отчет о закрытии смены
-    //Заемные средства - директор или бухгалтерия
-    //Перемещение из другой кассы - директор / менеджер
+  deleteData(item, type){
+    this.setState({
+      type_action: type,
+      data_action: item,
+      comment_action: '',
+      is_open_action: true
+    })
+  }
 
-    //Выдача заработной платы - бухгалтерия
-    //Инкассация - директор / менеджер
-    //Возврат займа - директор или бухгалтерия
-    //Выдача в подотчет - директор / менеджер
+  closeAction(){
+    this.setState({
+      type_action: '',
+      data_action: null,
+      comment_action: '',
+      is_open_action: false
+    })
+  }
+
+  async saveAction(){
+    let data = {
+      type: this.state.type_action,
+      item: this.state.data_action,
+      comment: this.state.comment_action,
+      point_id: this.state.point,
+    };
+
+    let res = await this.getData('save_action', data);
+
+    if( res['st'] == true ){
+      this.setState({
+        type_action: '',
+        data_action: null,
+        comment_action: '',
+        is_open_action: false
+      })
+
+      this.updateData();
+    }else{
+      alert(res['text'])
+    }
+  }
+
+  updateItem(item, title){
+    this.setState({
+      summ: item?.summ,
+      date: formatDate(item?.date),
+      comment: item?.comment,
+      modalDialogEdit: true,
+      data_action: item,
+      openModalTitle: title
+    })
+  }
+
+  async saveUpdateAction(){
+
+    let item = this.state.data_action;
+
+    item.summ = this.state.summ;
+    item.date = dayjs(this.state.date).format('YYYY-MM-DD');
+    item.comment = this.state.comment;
+
+    let data = {
+      type: 'update',
+      item: item,
+      comment: '',
+      point_id: this.state.point,
+    };
+
+    let res = await this.getData('save_action', data);
+
+    if( res['st'] == true ){
+      this.setState({
+        type_action: '',
+        data_action: null,
+        comment_action: '',
+        is_open_action: false,
+        modalDialogEdit: false,
+        summ: 0,
+        comment: ''
+      })
+
+      this.updateData();
+    }else{
+      alert(res['text'])
+    }
+  }
+
+  async getHist(type, date){
+    let data = {
+      point_id: this.state.point,
+      date: dayjs(date).format('YYYY-MM-DD'),
+      type: type
+    };
+
+    let res = await this.getData('get_hist', data);
+
+    this.setState({ 
+      hist: res 
+    });
+  }
+
+  get_type(type){
+    if( type == 'delete' ){
+      return 'Удален';
+    }
+
+    if( type == 'create' ){
+      return 'Создан';
+    }
+
+    if( type == 'update' ){
+      return 'Обновлен';
+    }
   }
 
   render(){
@@ -624,14 +860,20 @@ class CashBook_ extends React.Component {
             <Grid container spacing={3}>
 
               { this.state.openModalType_edit === false ? false :
-                <Grid item xs={12} sm={12}>
+                <Grid item xs={12} sm={6}>
                   <MyTextInput label="Сумма" value={this.state.summ} type={'number'} func={this.changeSumm.bind(this)} />
                 </Grid>
               }
 
               { this.state.openModalType_edit === false ? false :
+                <Grid item xs={12} sm={6}>
+                  <MyDatePickerNew label="Дата" value={ this.state.date } func={ this.changeDate.bind(this, 'date') } />
+                </Grid>
+              }
+
+              { this.state.openModalType_edit === false ? false :
                 <Grid item xs={12} sm={12}>
-                  <MyTextInput label="Комментарий" value={this.state.comment} multiline={true} maxRows={3} type={'text'} func={this.changeComment.bind(this)} />
+                  <MyTextInput label="Комментарий" value={this.state.comment} multiline={true} maxRows={3} type={'text'} func={this.changeComment.bind(this, 'comment')} />
                 </Grid>
               }
 
@@ -641,25 +883,23 @@ class CashBook_ extends React.Component {
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Сотрудник</TableCell>
                         <TableCell>Время</TableCell>
+                        <TableCell>Событие</TableCell>
+                        <TableCell>Сотрудник</TableCell>
                         <TableCell>Комментарий</TableCell>
-                        <TableCell>Сумма</TableCell>
                         <TableCell>Наличка</TableCell>
-                        <TableCell>Безнал</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
 
-                      {this.state.openModalHist_data?.map( item => 
+                      {this.state.hist?.map( item => 
                         
                         <TableRow key={item.id}>
+                          <TableCell>{item.date_time_update}</TableCell>
+                          <TableCell>{this.get_type(item.event)}</TableCell>
                           <TableCell>{item.user_name}</TableCell>
-                          <TableCell>{item.date}</TableCell>
                           <TableCell>{item.comment}</TableCell>
                           <TableCell>{item.summ}</TableCell>
-                          <TableCell>{item.sum_cash}</TableCell>
-                          <TableCell>{item.sum_bank}</TableCell>
                         </TableRow>
 
                       )}
@@ -680,6 +920,68 @@ class CashBook_ extends React.Component {
               <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => { this.setState({ modalDialog: false, comment: '', openModalType: '', openModalKassa: '', summ: 0 }) }}>Отмена</Button>
             </DialogActions>
           }
+        </Dialog>
+
+        <Dialog
+          fullWidth={true}
+          maxWidth={'md'}
+          open={this.state.modalDialogEdit}
+          onClose={ () => { this.setState({ modalDialogEdit: false, comment: '', openModalType: '', openModalKassa: '', summ: 0 }) } }
+        >
+          <DialogTitle>{this.state.openModalTitle}</DialogTitle>
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            
+            <Grid container spacing={3}>
+
+              <Grid item xs={12} sm={6}>
+                <MyTextInput label="Сумма" value={this.state.summ} type={'number'} func={this.changeSumm.bind(this)} />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <MyDatePickerNew label="Дата" value={ this.state.date } func={ this.changeDate.bind(this, 'date') } />
+              </Grid>
+              
+              <Grid item xs={12} sm={12}>
+                <MyTextInput label="Комментарий" value={this.state.comment} multiline={true} maxRows={3} type={'text'} func={this.changeComment.bind(this, 'comment')} />
+              </Grid>
+            
+            </Grid>
+
+            
+
+          </DialogContent>
+          
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.saveUpdateAction.bind(this)}>Обновить</Button>
+            <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => { this.setState({ modalDialog: false, comment: '', openModalType: '', openModalKassa: '', summ: 0 }) }}>Отмена</Button>
+          </DialogActions>
+          
+        </Dialog>
+
+        <Dialog
+          open={this.state.is_open_action}
+          onClose={this.closeAction.bind(this)}
+        >
+          <DialogTitle>Подтверди действие</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 10 }}>
+              { this.state?.type_action === 'delete' ? 'Удалить' : '' } данные ?
+            </DialogContentText>
+
+            <MyTextInput 
+              label="Комментарий" 
+              value={this.state.comment_action} 
+              multiline={true} 
+              maxRows={3} 
+              type={'text'} 
+              func={this.changeComment.bind(this, 'comment_action')} 
+            />
+
+          </DialogContent>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.saveAction.bind(this)}>Подтвердить</Button>
+            <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={this.closeAction.bind(this)}>Отмена</Button>
+          </DialogActions>
         </Dialog>
 
         <Grid container spacing={3} style={{ paddingBottom: 100 }} className='container_first_child'>
@@ -707,43 +1009,48 @@ class CashBook_ extends React.Component {
             <MainTable
               table={'fiz'}
               addData={this.addData.bind(this)}
+              deleteData={this.deleteData.bind(this)}
+              updateData={this.updateItem.bind(this)}
+              toogleCollapseTable={this.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.toogleCollapseTableRow.bind(this)}
+
               ostatok_nachalo_dnya={this.state.fiz_kassa?.ostatok_nachalo_dnya}
               ostatok_nachalo_dnya_is_edit={this.state.fiz_kassa?.ostatok_nachalo_dnya_is_edit}
               ostatok_nachalo_dnya_arr={this.state.fiz_kassa?.ostatok_nachalo_dnya_arr}
               
               virycka={this.state.fiz_kassa?.virycka}
               virycka_is_edit={this.state.fiz_kassa?.virycka_is_edit}
+              virycka_is_open={this.state.fiz_kassa?.virycka_is_open}
               virycka_arr={this.state.fiz_kassa?.virycka_arr}
 
               cash_from_bank={this.state.fiz_kassa?.cash_from_bank}
               cash_from_bank_is_edit={this.state.fiz_kassa?.cash_from_bank_is_edit}
+              cash_from_bank_is_open={this.state.fiz_kassa?.cash_from_bank_is_open}
               cash_from_bank_arr={this.state.fiz_kassa?.cash_from_bank_arr}
-
-              
 
               zaim={this.state.fiz_kassa?.zaim}
               zaim_is_edit={this.state.fiz_kassa?.zaim_is_edit}
+              zaim_is_open={this.state.fiz_kassa?.zaim_is_open}
               zaim_arr={this.state.fiz_kassa?.zaim_arr}
-
-              dengi_iz_drygoy_kassy_plus={this.state.fiz_kassa?.dengi_iz_drygoy_kassy_plus}
-              dengi_iz_drygoy_kassy_minus={this.state.fiz_kassa?.dengi_iz_drygoy_kassy_minus}
-              dengi_iz_drygoy_kassy_is_edit={this.state.fiz_kassa?.dengi_iz_drygoy_kassy_is_edit}
-              dengi_iz_drygoy_kassy_arr={this.state.fiz_kassa?.dengi_iz_drygoy_kassy_arr}
 
               vedomosm_zp={this.state.fiz_kassa?.vedomosm_zp}
               vedomosm_zp_is_edit={this.state.fiz_kassa?.vedomosm_zp_is_edit}
+              vedomosm_zp_is_open={this.state.fiz_kassa?.vedomosm_zp_is_open}
               vedomosm_zp_arr={this.state.fiz_kassa?.vedomosm_zp_arr}
 
               incasacia={this.state.fiz_kassa?.incasacia}
               incasacia_is_edit={this.state.fiz_kassa?.incasacia_is_edit}
+              incasacia_is_open={this.state.fiz_kassa?.incasacia_is_open}
               incasacia_arr={this.state.fiz_kassa?.incasacia_arr}
 
               vozvrat_zaim={this.state.fiz_kassa?.vozvrat_zaim}
               vozvrat_zaim_is_edit={this.state.fiz_kassa?.vozvrat_zaim_is_edit}
+              vozvrat_zaim_is_open={this.state.fiz_kassa?.vozvrat_zaim_is_open}
               vozvrat_zaim_arr={this.state.fiz_kassa?.vozvrat_zaim_arr}
 
               vidacha_otchet={this.state.fiz_kassa?.vidacha_otchet}
               vidacha_otchet_is_edit={this.state.fiz_kassa?.vidacha_otchet_is_edit}
+              vidacha_otchet_is_open={this.state.fiz_kassa?.vidacha_otchet_is_open}
               vidacha_otchet_zp_arr={this.state.fiz_kassa?.vidacha_otchet_arr}
 
               itog_plus={this.state.fiz_kassa?.itog_plus}
@@ -756,41 +1063,48 @@ class CashBook_ extends React.Component {
             <MainTable 
               table={'driver_cash'}
               addData={this.addData.bind(this)}
+              deleteData={this.deleteData.bind(this)}
+              updateData={this.updateItem.bind(this)}
+              toogleCollapseTable={this.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.toogleCollapseTableRow.bind(this)}
+
               ostatok_nachalo_dnya={this.state.driver_kassa?.ostatok_nachalo_dnya}
               ostatok_nachalo_dnya_is_edit={this.state.driver_kassa?.ostatok_nachalo_dnya_is_edit}
               ostatok_nachalo_dnya_arr={this.state.driver_kassa?.ostatok_nachalo_dnya_arr}
               
               virycka={this.state.driver_kassa?.virycka}
               virycka_is_edit={this.state.driver_kassa?.virycka_is_edit}
+              virycka_is_open={this.state.driver_kassa?.virycka_is_open}
               virycka_arr={this.state.driver_kassa?.virycka_arr}
 
               cash_from_bank={this.state.driver_kassa?.cash_from_bank}
               cash_from_bank_is_edit={this.state.driver_kassa?.cash_from_bank_is_edit}
+              cash_from_bank_is_open={this.state.driver_kassa?.cash_from_bank_is_open}
               cash_from_bank_arr={this.state.driver_kassa?.cash_from_bank_arr}
 
               zaim={this.state.driver_kassa?.zaim}
               zaim_is_edit={this.state.driver_kassa?.zaim_is_edit}
+              zaim_is_open={this.state.driver_kassa?.zaim_is_open}
               zaim_arr={this.state.driver_kassa?.zaim_arr}
-
-              dengi_iz_drygoy_kassy_plus={this.state.driver_kassa?.dengi_iz_drygoy_kassy_plus}
-              dengi_iz_drygoy_kassy_minus={this.state.driver_kassa?.dengi_iz_drygoy_kassy_minus}
-              dengi_iz_drygoy_kassy_is_edit={this.state.driver_kassa?.dengi_iz_drygoy_kassy_is_edit}
-              dengi_iz_drygoy_kassy_arr={this.state.driver_kassa?.dengi_iz_drygoy_kassy_arr}
 
               vedomosm_zp={this.state.driver_kassa?.vedomosm_zp}
               vedomosm_zp_is_edit={this.state.driver_kassa?.vedomosm_zp_is_edit}
+              vedomosm_zp_is_open={this.state.driver_kassa?.vedomosm_zp_is_open}
               vedomosm_zp_arr={this.state.driver_kassa?.vedomosm_zp_arr}
 
               incasacia={this.state.driver_kassa?.incasacia}
               incasacia_is_edit={this.state.driver_kassa?.incasacia_is_edit}
+              incasacia_is_open={this.state.driver_kassa?.incasacia_is_open}
               incasacia_arr={this.state.driver_kassa?.incasacia_arr}
 
               vozvrat_zaim={this.state.driver_kassa?.vozvrat_zaim}
               vozvrat_zaim_is_edit={this.state.driver_kassa?.vozvrat_zaim_is_edit}
+              vozvrat_zaim_is_open={this.state.driver_kassa?.vozvrat_zaim_is_open}
               vozvrat_zaim_arr={this.state.driver_kassa?.vozvrat_zaim_arr}
 
               vidacha_otchet={this.state.driver_kassa?.vidacha_otchet}
               vidacha_otchet_is_edit={this.state.driver_kassa?.vidacha_otchet_is_edit}
+              vidacha_otchet_is_open={this.state.driver_kassa?.vidacha_otchet_is_open}
               vidacha_otchet_zp_arr={this.state.driver_kassa?.vidacha_otchet_arr}
 
               itog_plus={this.state.driver_kassa?.itog_plus}
