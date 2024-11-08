@@ -291,25 +291,25 @@ class MainTable extends React.Component {
               <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
             </TableRow>
 
-            { this.props?.virycka_is_edit === false ? false :
-              <MainTableRow 
-                label={'Выручка'}
-                is_edit={this.props?.virycka_is_edit}
-                is_open={this.props?.virycka_is_open}
-                type={'virycka'}
-                table={this.props.table}
-                data_plus={this.props?.virycka}
-                //data_minus
-                data_hist={this.props?.virycka_arr}
-                tooltip={this.props.table == 'fiz' ? text.virycka_fiz : text.virycka_driver}
+            
+            <MainTableRow 
+              label={'Выручка'}
+              is_edit={'show'}
+              is_open={this.props?.virycka_is_open}
+              type={'virycka'}
+              table={this.props.table}
+              data_plus={this.props?.virycka}
+              //data_minus
+              data_hist={this.props?.virycka_arr}
+              tooltip={this.props.table == 'fiz' ? text.virycka_fiz : text.virycka_driver}
 
-                toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-                addData={this.props.addData.bind(this)}
+              toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+              addData={this.props.addData.bind(this)}
 
-                is_delete={false}
-              />
-            }
+              is_delete={false}
+            />
+            
 
             { this.props.table == 'fiz' ?
               this.props?.cash_from_bank_is_edit === false ? false :
