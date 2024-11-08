@@ -115,16 +115,16 @@ class Appointment_Modal extends React.Component {
   changeActive(main_key, parent_key, features_key, category_id, event){
     let full_menu = this.state.full_menu;
 
-    if( event.target.checked === undefined ){
+    if( event.target.checked === undefined && parseInt(category_id) == -1 ){
       full_menu[ main_key ]['chaild'][ parent_key ]['features'][ features_key ].is_active = event.target.value;
     }else{
       if( parseInt(category_id) > -1 ){
-        full_menu[ main_key ]['chaild'][ parent_key ]['features_cat'][ category_id ]['features'][ features_key ].is_active = event.target.checked === true ? 1 : 0;
+        full_menu[ main_key ]['chaild'][ parent_key ]['features_cat'][ category_id ]['features'][ features_key ].is_active = event.target.checked === undefined ? event.target.value : event.target.checked === true ? 1 : 0
       }else{
         if( parseInt(features_key) > -1 ) {
-          full_menu[ main_key ]['chaild'][ parent_key ]['features'][ features_key ].is_active = event.target.checked === true ? 1 : 0;
+          full_menu[ main_key ]['chaild'][ parent_key ]['features'][ features_key ].is_active = event.target.checked === undefined ? event.target.value : event.target.checked === true ? 1 : 0
         }else{
-          full_menu[ main_key ]['chaild'][ parent_key ].is_active = event.target.checked === true ? 1 : 0;
+          full_menu[ main_key ]['chaild'][ parent_key ].is_active = event.target.checked === undefined ? event.target.value : event.target.checked === true ? 1 : 0
         }
       }
 
@@ -236,11 +236,21 @@ class Appointment_Modal extends React.Component {
                                     <li>{it.name}</li>
                                   </TableCell>
                                   <TableCell colSpan={2}>
-                                    <Checkbox
-                                      edge="end"
-                                      onChange={ this.changeActive.bind(this, key, k, -1, -1) }
-                                      checked={ parseInt(it.is_active) == 1 ? true : false }
-                                    />
+                                    
+                                    {parseInt(it?.type) == 2 ?
+                                      <Checkbox
+                                        edge="end"
+                                        onChange={ this.changeActive.bind(this, key, k, -1, -1) }
+                                        checked={ parseInt(it.is_active) == 1 ? true : false }
+                                      />
+                                      :
+                                      <MySelect
+                                        data={dataSelect}
+                                        value={parseInt(it.is_active) === 0 || it.is_active === null ? false : it.is_active}
+                                        func={ this.changeActive.bind(this, key, k, -1, -1) }
+                                        is_none={false}
+                                      />
+                                    }
                                   </TableCell>
                                 </TableRow>
 
@@ -277,7 +287,7 @@ class Appointment_Modal extends React.Component {
                                 <TableRow hover>
                                   <TableCell></TableCell>
                                   <TableCell sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: 'center' }} >
-                                    <li>{it.name}</li>
+                                    <li>{it.name} -1</li>
                                   </TableCell>
                                   <TableCell colSpan={2}>
                                     <Checkbox
@@ -295,15 +305,24 @@ class Appointment_Modal extends React.Component {
                                       <TableCell sx={{ paddingLeft: { xs: 5, sm: 10 }, }}>
                                         <li className='li_disc'>
                                           <span style={{ marginRight: 80, whiteSpace: 'nowrap'}}>{cat_f.category_name}</span>
-                                          <span style={{ whiteSpace: 'nowrap'}}>{cat_f.name}</span>
+                                          <span style={{ whiteSpace: 'nowrap'}}>{cat_f.name} -2</span>
                                         </li>
                                       </TableCell>
                                       <TableCell> 
-                                      <Checkbox
-                                        edge="end"
-                                        onChange={ this.changeActive.bind(this, key, k, cat_f_key, f_key) }
-                                        checked={ parseInt(cat_f.is_active) == 1 ? true : false }
-                                      />
+                                        {parseInt(cat_f?.type) == 2 ?
+                                          <Checkbox
+                                            edge="end"
+                                            onChange={ this.changeActive.bind(this, key, k, cat_f_key, f_key) }
+                                            checked={ parseInt(cat_f.is_active) == 1 ? true : false }
+                                          />
+                                          :
+                                          <MySelect
+                                            data={dataSelect}
+                                            value={parseInt(cat_f.is_active) === 0 || cat_f.is_active === null ? false : cat_f.is_active}
+                                            func={ this.changeActive.bind(this, key, k, cat_f_key, f_key) }
+                                            is_none={false}
+                                          />
+                                        }
                                       </TableCell>
                                     </TableRow>
                                   ))}
@@ -312,11 +331,11 @@ class Appointment_Modal extends React.Component {
                               <TableRow hover key={k}>
                                 <TableCell></TableCell>
                                 <TableCell sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: 'center' }}>
-                                  <li>{it.name}</li>
+                                  <li>{it.name} -3</li>
                                 </TableCell>
                                 <TableCell colSpan={2}>
                                   <Checkbox
-                                    edge="end"
+                                    edge="end 3"
                                     onChange={ this.changeActive.bind(this, key, k, -1, -1) }
                                     checked={ parseInt(it.is_active) == 1 ? true : false }
                                   />

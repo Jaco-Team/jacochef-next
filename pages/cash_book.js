@@ -251,6 +251,8 @@ class MainTable extends React.Component {
 
     const kassa_text = this.props.table == 'fiz' ? 'Физические кассы' : 'Курьерская наличка';
 
+    console.log( 'virycka_is_edit', this.props?.virycka_is_edit )
+
     return (
       <TableContainer component={Paper}>
 
@@ -289,26 +291,28 @@ class MainTable extends React.Component {
               <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
             </TableRow>
 
-            <MainTableRow 
-              label={'Выручка'}
-              is_edit={this.props?.virycka_is_edit}
-              is_open={this.props?.virycka_is_open}
-              type={'virycka'}
-              table={this.props.table}
-              data_plus={this.props?.virycka}
-              //data_minus
-              data_hist={this.props?.virycka_arr}
-              tooltip={this.props.table == 'fiz' ? text.virycka_fiz : text.virycka_driver}
+            { this.props?.virycka_is_edit === false ? false :
+              <MainTableRow 
+                label={'Выручка'}
+                is_edit={this.props?.virycka_is_edit}
+                is_open={this.props?.virycka_is_open}
+                type={'virycka'}
+                table={this.props.table}
+                data_plus={this.props?.virycka}
+                //data_minus
+                data_hist={this.props?.virycka_arr}
+                tooltip={this.props.table == 'fiz' ? text.virycka_fiz : text.virycka_driver}
 
-              toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-              addData={this.props.addData.bind(this)}
+                toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+                addData={this.props.addData.bind(this)}
 
-              is_delete={false}
-              
-            />
+                is_delete={false}
+              />
+            }
 
             { this.props.table == 'fiz' ?
+              this.props?.cash_from_bank_is_edit === false ? false :
               <MainTableRow 
                 label={'Снятие наличных в банке'}
                 is_edit={this.props?.cash_from_bank_is_edit}
@@ -332,47 +336,52 @@ class MainTable extends React.Component {
               false
             }
 
-            <MainTableRow 
-              label={this.props.table == 'fiz' ? 'Заемные средства' : 'Выдано'}
-              is_edit={this.props?.zaim_is_edit}
-              is_open={this.props?.zaim_is_open}
-              type={'zaim'}
-              table={this.props.table}
-              data_plus={this.props?.zaim}
-              //data_minus
-              data_hist={this.props?.zaim_arr}
-              tooltip={this.props.table == 'fiz' ? text.zaim_fiz : text.zaim_driver}
+            { this.props?.zaim_is_edit === false ? false :
+              <MainTableRow 
+                label={this.props.table == 'fiz' ? 'Заемные средства' : 'Выдано'}
+                is_edit={this.props?.zaim_is_edit}
+                is_open={this.props?.zaim_is_open}
+                type={'zaim'}
+                table={this.props.table}
+                data_plus={this.props?.zaim}
+                //data_minus
+                data_hist={this.props?.zaim_arr}
+                tooltip={this.props.table == 'fiz' ? text.zaim_fiz : text.zaim_driver}
 
-              toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-              addData={this.props.addData.bind(this)}
+                toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+                addData={this.props.addData.bind(this)}
 
-              is_delete={this.props?.zaim_is_edit}
-              deleteData={this.props.deleteData.bind(this)}
-              updateData={this.props.updateData.bind(this)}
-            />
+                is_delete={this.props?.zaim_is_edit}
+                deleteData={this.props.deleteData.bind(this)}
+                updateData={this.props.updateData.bind(this)}
+              />
+            }
 
-            <MainTableRow 
-              label={this.props.table == 'fiz' ? 'Платежная ведомость на выплату заработной платы' : 'Выплата за услуги курьера'}
-              is_edit={this.props?.vedomosm_zp_is_edit}
-              is_open={this.props?.vedomosm_zp_is_open}
-              type={'vedomosm_zp'}
-              table={this.props.table}
-              //data_plus={this.props?.vedomosm_zp}
-              data_minus={this.props?.vedomosm_zp}
-              data_hist={this.props?.vedomosm_zp_arr}
-              tooltip={text.zp}
+            { this.props?.vedomosm_zp_is_edit === false ? false :
+              <MainTableRow 
+                label={this.props.table == 'fiz' ? 'Платежная ведомость на выплату заработной платы' : 'Выплата за услуги курьера'}
+                is_edit={this.props?.vedomosm_zp_is_edit}
+                is_open={this.props?.vedomosm_zp_is_open}
+                type={'vedomosm_zp'}
+                table={this.props.table}
+                //data_plus={this.props?.vedomosm_zp}
+                data_minus={this.props?.vedomosm_zp}
+                data_hist={this.props?.vedomosm_zp_arr}
+                tooltip={text.zp}
 
-              toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-              addData={this.props.addData.bind(this)}
+                toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+                addData={this.props.addData.bind(this)}
 
-              is_delete={this.props?.vedomosm_zp_is_edit}
-              deleteData={this.props.deleteData.bind(this)}
-              updateData={this.props.updateData.bind(this)}
-            />
+                is_delete={this.props?.vedomosm_zp_is_edit}
+                deleteData={this.props.deleteData.bind(this)}
+                updateData={this.props.updateData.bind(this)}
+              />
+            }
 
             { this.props.table == 'fiz' ?
+              this.props?.incasacia_is_edit === false ? false :
               <MainTableRow 
                 label={'Инкассация'}
                 is_edit={this.props?.incasacia_is_edit}
@@ -396,49 +405,53 @@ class MainTable extends React.Component {
               false
             }
 
-            <MainTableRow 
-              label={this.props.table == 'fiz' ? 'Возврат займа' : 'Сдано'}
-              is_edit={this.props?.vozvrat_zaim_is_edit}
-              is_open={this.props?.vozvrat_zaim_is_open}
-              type={'vozvrat_zaim'}
-              table={this.props.table}
-              //data_plus={this.props?.vedomosm_zp}
-              data_minus={this.props?.vozvrat_zaim}
-              data_hist={this.props?.vozvrat_zaim_arr}
-              tooltip={this.props.table == 'fiz' ? text.vozvrat_fiz : text.vozvrat_driver}
+            { this.props?.vozvrat_zaim_is_edit === false ? false :
+              <MainTableRow 
+                label={this.props.table == 'fiz' ? 'Возврат займа' : 'Сдано'}
+                is_edit={this.props?.vozvrat_zaim_is_edit}
+                is_open={this.props?.vozvrat_zaim_is_open}
+                type={'vozvrat_zaim'}
+                table={this.props.table}
+                //data_plus={this.props?.vedomosm_zp}
+                data_minus={this.props?.vozvrat_zaim}
+                data_hist={this.props?.vozvrat_zaim_arr}
+                tooltip={this.props.table == 'fiz' ? text.vozvrat_fiz : text.vozvrat_driver}
 
-              toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-              addData={this.props.addData.bind(this)}
+                toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+                addData={this.props.addData.bind(this)}
 
-              is_delete={this.props?.vozvrat_zaim_is_edit}
-              deleteData={this.props.deleteData.bind(this)}
-              updateData={this.props.updateData.bind(this)}
-            />
+                is_delete={this.props?.vozvrat_zaim_is_edit}
+                deleteData={this.props.deleteData.bind(this)}
+                updateData={this.props.updateData.bind(this)}
+              />
+            }
 
-            <MainTableRow 
-              label={'Выдача в подотчет'}
-              is_edit={this.props?.vidacha_otchet_is_edit}
-              is_open={this.props?.vidacha_otchet_is_open}
-              type={'vidacha_otchet'}
-              table={this.props.table}
-              //data_plus={this.props?.vedomosm_zp}
-              data_minus={this.props?.vidacha_otchet}
-              data_hist={this.props?.vidacha_otchet_arr}
-              tooltip={this.props.table == 'fiz' ? text.otchet_fiz : text.otchet_driver}
+            { this.props?.vidacha_otchet_is_edit === false ? false :
+              <MainTableRow 
+                label={'Выдача в подотчет'}
+                is_edit={this.props?.vidacha_otchet_is_edit}
+                is_open={this.props?.vidacha_otchet_is_open}
+                type={'vidacha_otchet'}
+                table={this.props.table}
+                //data_plus={this.props?.vedomosm_zp}
+                data_minus={this.props?.vidacha_otchet}
+                data_hist={this.props?.vidacha_otchet_arr}
+                tooltip={this.props.table == 'fiz' ? text.otchet_fiz : text.otchet_driver}
 
-              toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-              addData={this.props.addData.bind(this)}
+                toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+                addData={this.props.addData.bind(this)}
 
-              is_delete={this.props?.vidacha_otchet_is_edit}
-              deleteData={this.props.deleteData.bind(this)}
-              updateData={this.props.updateData.bind(this)}
-            />
+                is_delete={this.props?.vidacha_otchet_is_edit}
+                deleteData={this.props.deleteData.bind(this)}
+                updateData={this.props.updateData.bind(this)}
+              />
+            }
             
             
             <TableRow>
-              <TableCell>Итого за день</TableCell>
+              <TableCell>Итого</TableCell>
               <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.itog_plus}</TableCell>
               <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.itog_minus}</TableCell>
             </TableRow>
