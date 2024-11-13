@@ -596,12 +596,18 @@ class CashBook_ extends React.Component {
     
     let res = await this.getData('get_data', data);
     
-    console.log( res )
-    
-    this.setState({
-      fiz_kassa: res.fiz_kassa,
-      driver_kassa: res.driver_kassa,
-    })
+    if( res?.st === true ){
+      this.setState({
+        fiz_kassa: res.fiz_kassa,
+        driver_kassa: res.driver_kassa,
+      })
+    }else{
+      alert(res['text'])
+      this.setState({
+        fiz_kassa: [],
+        driver_kassa: [],
+      })
+    }
   }
   
   changeDate(data, event){
