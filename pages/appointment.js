@@ -287,7 +287,7 @@ class Appointment_Modal extends React.Component {
                                 <TableRow hover>
                                   <TableCell></TableCell>
                                   <TableCell sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: 'center' }} >
-                                    <li>{it.name} -1</li>
+                                    <li>{it.name}</li>
                                   </TableCell>
                                   <TableCell colSpan={2}>
                                     <Checkbox
@@ -305,7 +305,7 @@ class Appointment_Modal extends React.Component {
                                       <TableCell sx={{ paddingLeft: { xs: 5, sm: 10 }, }}>
                                         <li className='li_disc'>
                                           <span style={{ marginRight: 80, whiteSpace: 'nowrap'}}>{cat_f.category_name}</span>
-                                          <span style={{ whiteSpace: 'nowrap'}}>{cat_f.name} -2</span>
+                                          <span style={{ whiteSpace: 'nowrap'}}>{cat_f.name}</span>
                                         </li>
                                       </TableCell>
                                       <TableCell> 
@@ -331,7 +331,7 @@ class Appointment_Modal extends React.Component {
                               <TableRow hover key={k}>
                                 <TableCell></TableCell>
                                 <TableCell sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: 'center' }}>
-                                  <li>{it.name} -3</li>
+                                  <li>{it.name}</li>
                                 </TableCell>
                                 <TableCell colSpan={2}>
                                   <Checkbox
