@@ -10,6 +10,10 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 
+import Typography from '@mui/material/Typography';
+import EditIcon from '@mui/icons-material/Edit';
+import Tooltip from '@mui/material/Tooltip';
+
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -24,6 +28,142 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MyTextInput, MySelect, MyAlert, MyCheckBox } from '@/ui/elements';
 import queryString from 'query-string';
+
+class Appointment_Modal_param extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      item: null
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    // console.log('componentDidUpdate', this.props);
+    
+    if (!this.props.item) {
+      return;
+    }
+
+    if (this.props.item !== prevProps.item) {
+
+      this.setState({
+        item: this.props.item
+      });
+    }
+  }
+
+  onClose() {
+
+    setTimeout(() => {
+      this.setState ({
+        item: null
+      });
+    }, 100);
+
+    this.props.onClose();
+  }
+
+  render() {
+    const { open, fullScreen, method, dataSelect, changeActive, main_key, parent_key, type } = this.props;
+
+    return (
+
+      <Dialog
+        open={open}
+        onClose={this.onClose.bind(this)}
+        fullWidth={true}
+        maxWidth={'lg'}
+        fullScreen={fullScreen}
+      > 
+
+      <DialogTitle >
+        {method}
+        <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }} >
+        <Grid item xs={12} >
+          <TableContainer  sx={{ maxHeight: { xs: 'none', sm: 630 } }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                  <TableCell style={{ width: '40%' }}>Наименование параметра</TableCell>
+                  <TableCell style={{ width: '40%' }}>Наименование категории параметра</TableCell>
+                  <TableCell style={{ width: '20%' }}></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {type === 'one' ?
+                  !this.state.item ? null : (
+                    this.state.item.map((f, f_key) => (
+                      <TableRow hover key={f_key}>
+                        <TableCell>{f.name}</TableCell>
+                        <TableCell>{f.category_name}</TableCell>
+                        <TableCell> 
+                          {parseInt(f?.type) == 2 ?
+                            <Checkbox
+                              edge="end"
+                              onChange={changeActive.bind(this, main_key, parent_key, f_key, -1)}
+                              checked={parseInt(f.is_active) == 1 ? true : false}
+                            />
+                            :
+                            <MySelect
+                              data={dataSelect}
+                              value={parseInt(f.is_active) === 0 || f.is_active === null ? false : f.is_active}
+                              func={changeActive.bind(this, main_key, parent_key, f_key, -1)}
+                              is_none={false}
+                            />
+                          }
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )
+                :
+                  !this.state.item ? null : (
+                    this.state.item.map((f, f_key) => (
+                      f?.features?.map( ( cat_f, cat_f_key ) => (
+                        <TableRow hover key={cat_f_key}>
+                          <TableCell>{cat_f.category_name}</TableCell>
+                          <TableCell>{cat_f.name}</TableCell>
+                          <TableCell> 
+                            {parseInt(cat_f?.type) == 2 ?
+                              <Checkbox
+                                edge="end"
+                                onChange={changeActive.bind(this, main_key, parent_key, cat_f_key, f_key)}
+                                checked={parseInt(cat_f.is_active) == 1 ? true : false }
+                              />
+                              :
+                              <MySelect
+                                data={dataSelect}
+                                value={parseInt(cat_f.is_active) === 0 || cat_f.is_active === null ? false : cat_f.is_active}
+                                func={changeActive.bind(this, main_key, parent_key, cat_f_key, f_key)}
+                                is_none={false}
+                              />
+                            }
+                          </TableCell>
+                        </TableRow>
+                      ))    
+                  )))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Grid>
+
+      </DialogContent>
+
+      <DialogActions>
+        <Button color="primary" onClick={this.onClose.bind(this)}>
+          Закрыть
+        </Button>
+      </DialogActions>
+
+    </Dialog>
+    );
+  }
+}
 
 class Appointment_Modal_input extends React.Component {
 
@@ -75,6 +215,13 @@ class Appointment_Modal extends React.Component {
       name: '',
       short_name: '',
       bonus: '',
+
+      modalDialog_param: false,
+      method: '',
+      params: null,
+      main_key: '',
+      parent_key: '',
+      type: ''
     };
   }
 
@@ -150,6 +297,17 @@ class Appointment_Modal extends React.Component {
 
   }
 
+  openParams(params, method, main_key, parent_key, type) {
+    this.setState({
+      params,
+      method,
+      main_key,
+      parent_key,
+      type,
+      modalDialog_param: true,
+    });
+  }
+
   onClose() {
 
     setTimeout(() => {
@@ -159,6 +317,12 @@ class Appointment_Modal extends React.Component {
         name: '',
         short_name: '',
         bonus: '',
+        modalDialog_param: false,
+        method: '',
+        params: null,
+        main_key: '',
+        parent_key: '', 
+        type: ''
       });
     }, 100);
 
@@ -169,206 +333,175 @@ class Appointment_Modal extends React.Component {
     const { open, fullScreen, method, dataSelect } = this.props;
 
     return (
-      <Dialog
-        open={open}
-        onClose={() => this.setState({ modalDialog: false, itemName: '' }) }
-        fullWidth={true}
-        maxWidth={'lg'}
-        fullScreen={fullScreen}
-      > 
+      <>
+        <Appointment_Modal_param
+          open={this.state.modalDialog_param}
+          onClose={() => this.setState({ modalDialog_param: false, params: null, main_key: '', parent_key: '', type: '' })}
+          item={this.state.params}
+          fullScreen={fullScreen}
+          method={this.state.method}
+          main_key={this.state.main_key}
+          parent_key={this.state.parent_key}
+          type={this.state.type}
+          dataSelect={dataSelect}
+          changeActive={this.changeActive.bind(this)}
+        />
 
-      <DialogTitle >
-        {method}
-        {this.props.item?.name}
-        <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
+        <Dialog
+          open={open}
+          onClose={this.onClose.bind(this)}
+          fullWidth={true}
+          maxWidth={'lg'}
+          fullScreen={fullScreen}
+        > 
 
-      <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }} >
-        <Grid container spacing={3}>
-          <Appointment_Modal_input
-            data={this.props.item?.name}
-            changeItem={this.changeItem.bind(this)}
-            label='Название должности'
-            type='name'
-          />
-          <Appointment_Modal_input
-            data={this.props.item?.short_name}
-            changeItem={this.changeItem.bind(this)}
-            label='Сокращенное название'
-            type='short_name'
-          />
-          <Appointment_Modal_input
-            data={this.props.item?.bonus}
-            changeItem={this.changeItem.bind(this)}
-            label='Норма бонусов'
-            type='bonus'
-          />
-          <Grid item xs={12} md={6}>
-            <MyCheckBox
-              func={this.changeItemChecked.bind(this, 'is_graph')}
-              value={ parseInt(this.props.item?.is_graph) == 1 ? true : false }
-              label='Нужен в графике работы'
-            />
-          </Grid>
+          <DialogTitle >
+            {method}
+            {this.props.item?.name}
+            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
 
-          {!this.state.full_menu ? null : (
-            <Grid item xs={12} sm={12} mb={10}>
-              <TableContainer>
-                <Table size="small">
-                  <TableBody>
-                    {this.state.full_menu.map((item, key) =>
-                      item.chaild.length ? (
-                        <React.Fragment key={key}>
-                          <TableRow sx={{ '& th': { border: 'none' } }}>
-                            <TableCell>{key + 1}</TableCell>
-                            <TableCell colSpan={3} sx={{ fontWeight: 'bold' }}>
-                              {item?.parent?.name}
-                            </TableCell>
-                          </TableRow>
-                          {item.chaild.map((it, k) => (
-                            it.features.length ? 
-                              <React.Fragment key={k}>
-                                <TableRow hover>
-                                  <TableCell></TableCell>
-                                  <TableCell sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: 'center' }}>
-                                    <li>{it.name}</li>
-                                  </TableCell>
-                                  <TableCell colSpan={2}>
-                                    
-                                    {parseInt(it?.type) == 2 ?
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }} >
+            <Grid container spacing={3}>
+              <Appointment_Modal_input
+                data={this.props.item?.name}
+                changeItem={this.changeItem.bind(this)}
+                label='Название должности'
+                type='name'
+              />
+              <Appointment_Modal_input
+                data={this.props.item?.short_name}
+                changeItem={this.changeItem.bind(this)}
+                label='Сокращенное название'
+                type='short_name'
+              />
+              <Appointment_Modal_input
+                data={this.props.item?.bonus}
+                changeItem={this.changeItem.bind(this)}
+                label='Норма бонусов'
+                type='bonus'
+              />
+              <Grid item xs={12} md={6}>
+                <MyCheckBox
+                  func={this.changeItemChecked.bind(this, 'is_graph')}
+                  value={ parseInt(this.props.item?.is_graph) == 1 ? true : false }
+                  label='Нужен в графике работы'
+                />
+              </Grid>
+
+              {!this.state.full_menu ? null : (
+                <Grid item xs={12} sm={12} mb={10}>
+                  <TableContainer  sx={{ maxHeight: { xs: 'none', sm: 630 } }}>
+                    <Table size="small" stickyHeader>
+                      <TableHead>
+                        <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                          <TableCell style={{ width: '5%' }}>#</TableCell>
+                          <TableCell style={{ width: '40%' }}>Наименование модуля</TableCell>
+                          <TableCell style={{ width: '30%' }}>Параметры модуля</TableCell>
+                          <TableCell style={{ width: '25%' }}>Активность модуля</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {this.state.full_menu.map((item, key) =>
+                          item.chaild.length ? (
+                            <React.Fragment key={key}>
+                              <TableRow sx={{ '& th': { border: 'none' } }}>
+                                <TableCell>{key + 1}</TableCell>
+                                <TableCell colSpan={3} sx={{ fontWeight: 'bold' }}>
+                                  {item?.parent?.name}
+                                </TableCell>
+                              </TableRow>
+                              {item.chaild.map((it, k) => (
+                                it.features.length ? 
+                                  <React.Fragment key={k}>
+                                    <TableRow hover>
+                                      <TableCell></TableCell>
+                                      <TableCell sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: 'center' }}>
+                                        <li>{it.name}</li>
+                                      </TableCell>
+                                      <TableCell onClick={this.openParams.bind(this, it.features, `Редактирование параметров модуля: ${it.name}`, key, k, 'one')}>
+                                        <Tooltip title={<Typography color="inherit">Редактировать параметры модуля</Typography>}> 
+                                          <EditIcon sx={{ cursor: 'pointer' }}/>
+                                        </Tooltip>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Checkbox
+                                          edge="end"
+                                          onChange={ this.changeActive.bind(this, key, k, -1, -1) }
+                                          checked={ parseInt(it.is_active) == 1 ? true : false }
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  </React.Fragment>
+                                  :
+                                  it?.features_cat?.length ?
+
+                                  <React.Fragment key={k}>
+                                    <TableRow hover>
+                                      <TableCell></TableCell>
+                                      <TableCell sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: 'center' }} >
+                                        <li>{it.name}</li>
+                                      </TableCell>
+                                      <TableCell onClick={this.openParams.bind(this, it.features_cat, `Редактирование параметров модуля: ${it.name}`, key, k, 'two')}>
+                                        <Tooltip title={<Typography color="inherit">Редактирование свойств модуля</Typography>}> 
+                                          <EditIcon sx={{ cursor: 'pointer' }}/>
+                                        </Tooltip>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Checkbox
+                                          edge="end"
+                                          onChange={ this.changeActive.bind(this, key, k, -1, -1) }
+                                          checked={ parseInt(it.is_active) == 1 ? true : false }
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  </React.Fragment>
+                                  :
+                                  <TableRow hover key={k}>
+                                    <TableCell></TableCell>
+                                    <TableCell sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: 'center' }}>
+                                      <li>{it.name}</li>
+                                    </TableCell>
+                                    <TableCell></TableCell>
+                                    <TableCell>
                                       <Checkbox
-                                        edge="end"
+                                        edge="end 3"
                                         onChange={ this.changeActive.bind(this, key, k, -1, -1) }
                                         checked={ parseInt(it.is_active) == 1 ? true : false }
                                       />
-                                      :
-                                      <MySelect
-                                        data={dataSelect}
-                                        value={parseInt(it.is_active) === 0 || it.is_active === null ? false : it.is_active}
-                                        func={ this.changeActive.bind(this, key, k, -1, -1) }
-                                        is_none={false}
-                                      />
-                                    }
-                                  </TableCell>
-                                </TableRow>
+                                    </TableCell>
+                                  </TableRow>
+                              ))}
+                            </React.Fragment>
+                          ) : (
+                            <TableRow hover key={key} sx={{ '& th': { border: 'none' } }}>
+                              <TableCell>{key + 1}</TableCell>
+                              <TableCell colSpan={3} sx={{ fontWeight: 'bold' }}>
+                                {item?.parent?.name}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
+              )}
 
-                                  {it?.features.map((f, f_key) => (
-                                    <TableRow hover key={k}>
-                                      <TableCell></TableCell>
-                                      <TableCell sx={{ paddingLeft: { xs: 5, sm: 10 }, alignItems: 'center' }}>
-                                        <li className='li_disc'>{f.name}</li>
-                                      </TableCell>
-                                      <TableCell colSpan={2}> 
-                                        {parseInt(f?.type) == 2 ?
-                                          <Checkbox
-                                            edge="end"
-                                            onChange={ this.changeActive.bind(this, key, k, f_key, -1) }
-                                            checked={ parseInt(f.is_active) == 1 ? true : false }
-                                          />
-                                          :
-                                          <MySelect
-                                            data={dataSelect}
-                                            value={parseInt(f.is_active) === 0 || f.is_active === null ? false : f.is_active}
-                                            func={this.changeActive.bind(this, key, k, f_key, -1)}
-                                            is_none={false}
-                                          />
-                                        }
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                              </React.Fragment>
-                              :  
-                              it?.features_cat?.length ? 
-
-                              <React.Fragment key={k}>
-                                
-                                <TableRow hover>
-                                  <TableCell></TableCell>
-                                  <TableCell sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: 'center' }} >
-                                    <li>{it.name}</li>
-                                  </TableCell>
-                                  <TableCell colSpan={2}>
-                                    <Checkbox
-                                      edge="end"
-                                      onChange={ this.changeActive.bind(this, key, k, -1, -1) }
-                                      checked={ parseInt(it.is_active) == 1 ? true : false }
-                                    />
-                                  </TableCell>
-                                </TableRow>
-
-                                  {it?.features_cat.map((f, f_key) => 
-                                    f?.features?.map( ( cat_f, cat_f_key ) =>
-                                    <TableRow hover key={cat_f_key}>
-                                      <TableCell></TableCell>
-                                      <TableCell sx={{ paddingLeft: { xs: 5, sm: 10 }, }}>
-                                        <li className='li_disc'>
-                                          <span style={{ marginRight: 80, whiteSpace: 'nowrap'}}>{cat_f.category_name}</span>
-                                          <span style={{ whiteSpace: 'nowrap'}}>{cat_f.name}</span>
-                                        </li>
-                                      </TableCell>
-                                      <TableCell> 
-                                        {parseInt(cat_f?.type) == 2 ?
-                                          <Checkbox
-                                            edge="end"
-                                            onChange={ this.changeActive.bind(this, key, k, cat_f_key, f_key) }
-                                            checked={ parseInt(cat_f.is_active) == 1 ? true : false }
-                                          />
-                                          :
-                                          <MySelect
-                                            data={dataSelect}
-                                            value={parseInt(cat_f.is_active) === 0 || cat_f.is_active === null ? false : cat_f.is_active}
-                                            func={ this.changeActive.bind(this, key, k, cat_f_key, f_key) }
-                                            is_none={false}
-                                          />
-                                        }
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                              </React.Fragment>
-                              :
-                              <TableRow hover key={k}>
-                                <TableCell></TableCell>
-                                <TableCell sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: 'center' }}>
-                                  <li>{it.name}</li>
-                                </TableCell>
-                                <TableCell colSpan={2}>
-                                  <Checkbox
-                                    edge="end 3"
-                                    onChange={ this.changeActive.bind(this, key, k, -1, -1) }
-                                    checked={ parseInt(it.is_active) == 1 ? true : false }
-                                  />
-                                </TableCell>
-                              </TableRow>
-                          ))}
-                        </React.Fragment>
-                      ) : (
-                        <TableRow hover key={key} sx={{ '& th': { border: 'none' } }}>
-                          <TableCell>{key + 1}</TableCell>
-                          <TableCell colSpan={3} sx={{ fontWeight: 'bold' }}>
-                            {item?.parent?.name}
-                          </TableCell>
-                        </TableRow>
-                      )
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
             </Grid>
-          )}
 
-        </Grid>
+          </DialogContent>
 
-      </DialogContent>
+          <DialogActions>
+            <Button color="primary" onClick={this.save.bind(this)}>
+              Сохранить
+            </Button>
+          </DialogActions>
 
-      <DialogActions>
-        <Button color="primary" onClick={this.save.bind(this)}>
-          Сохранить
-        </Button>
-      </DialogActions>
-
-    </Dialog>
+        </Dialog>
+      </>
     );
   }
 }
@@ -675,169 +808,6 @@ class Appointment_ extends React.Component {
             </Grid> 
           </Grid>
         </Grid>
-
-        
-        {/* <Dialog
-          open={this.state.modalDialog}
-          onClose={() => this.setState({ modalDialog: false, itemName: '' }) }
-          fullWidth={true}
-          maxWidth={'md'}
-        > 
-          <DialogTitle >
-            {this.state.item.name}
-          </DialogTitle>
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }} >
-            <Grid container spacing={3} className=''>
-              <Grid item xs={12} md={4}>
-                <MyTextInput
-                  label="Название должности"
-                  value={this.state.openApp?.name}
-                  func={this.changeItem2.bind(this, 'name')}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <MyTextInput
-                  label="Сокрощенное название"
-                  value={this.state.openApp?.short_name}
-                  func={this.changeItem2.bind(this, 'short_name')}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <MyTextInput
-                  label="Норма бонусов"
-                  value={this.state.openApp?.bonus}
-                  func={this.changeItem2.bind(this, 'bonus')}
-                />
-              </Grid>
-            </Grid>
-        
-            <Grid style={{ marginTop: 10}}>
-              <List dense sx={{ width: '100%', maxWidth: 800, bgcolor: 'background.paper' }}>
-                {this.state.full_menu?.map((item, key) => 
-                  <>
-                    <ListItem
-                      key={key}
-                      disablePadding
-                      style={{ marginTop: 30 }}
-                    >
-                      <ListItemButton>
-                        <span style={{ fontWeight: 'bold' }}>{item?.parent?.name}</span>
-                      </ListItemButton>
-                      <ListItemButton>
-                        <span style={{ fontWeight: 'bold' }}>Активность</span>
-                      </ListItemButton>
-                    </ListItem>
-                    {item?.chaild?.map( ( it, k ) => 
-                      <>
-                        <ListItem
-                          key={k}
-                          secondaryAction={
-                            <Checkbox
-                              edge="end"
-                              onChange={ this.changeActive.bind(this, key, k, -1, -1) }
-                              checked={ parseInt(it.is_active) == 1 ? true : false }
-                              //inputProps={{ 'aria-labelledby': labelId }}
-                            />
-                          }
-                          disablePadding
-                        >
-                          <ListItemButton>
-                            <ListItemText primary={it?.name} />
-                          </ListItemButton>
-                        </ListItem>
-                        <Collapse in={ true } timeout="auto">
-                          <List component="div" disablePadding>
-                          
-                            { it?.features?.map( (f, f_key) =>
-                              <ListItem
-                                key={f_key}
-                                secondaryAction={
-                                  parseInt(f?.type) == 2 ?
-                                    <Checkbox
-                                      edge="end"
-                                      onChange={ this.changeActive.bind(this, key, k, f_key, -1) }
-                                      checked={ parseInt(f.is_active) == 1 ? true : false }
-                                    />
-                                      :
-                                    <MySelect
-                                      data={this.state.dataSelect}
-                                      value={parseInt(f.is_active) === 0 || f.is_active === null ? false : f.is_active}
-                                      // value={f.is_active}
-                                      func={this.changeActive.bind(this, key, k, f_key, -1)}
-                                      //label="День недели"
-                                      is_none={false}
-                                    />
-                                  }
-                                disablePadding
-                              >
-                                <ListItemButton>
-                                  <ListItemText primary={f?.name} style={{ paddingLeft: 30 }} />
-                                </ListItemButton>
-                              </ListItem>
-                            ) }
-
-                            <table>
-                              <thead>
-                                <tr>
-                                  <th></th>
-                                  { it?.features_cat?.length > 0 ?
-                                    
-                                      it?.features_cat[0]?.features?.map( ( cat_f, cat_f_key ) =>
-                                        <th key={cat_f_key}>{cat_f?.name}</th>
-                                      )
-                                      :
-                                    false
-                                  }
-                                </tr>
-                              </thead>
-                              <tbody>
-                                
-                              { it?.features_cat?.map( (f, f_key) =>
-                                <tr key={f_key}>
-                                  
-                                  <td>{ f?.category_name }</td>
-                                  { f?.features?.map( ( cat_f, cat_f_key ) =>
-                                    <td key={cat_f_key}>
-                                      <Checkbox
-                                        //key={cat_f_key}
-                                        //style={{ width: 400 }}
-                                        edge="end"
-                                        onChange={ this.changeActive.bind(this, key, k, cat_f_key, f_key) }
-                                        checked={ parseInt(cat_f.is_active) == 1 ? true : false }
-                                      />
-                                    </td>
-                                    
-                                  ) }
-                                </tr>
-                              ) }
-
-                              </tbody>
-                            </table>
-
-                          
-                            
-                            
-                          </List>
-                        </Collapse>
-                        
-                      </>
-                    )}
-                  </>
-                  
-                )}
-              </List>
-
-            </Grid>
-          </DialogContent>
-
-          <DialogActions>
-            <Button color="primary" onClick={ parseInt(this.state.openApp?.id) == -1 ? this.saveNew.bind(this) : this.saveEdit.bind(this)}>
-              Сохранить
-            </Button>
-          </DialogActions>
-        </Dialog> */}
       </>
     );
   }
