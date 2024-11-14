@@ -90,8 +90,8 @@ class Appointment_Modal_param extends React.Component {
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                  <TableCell style={{ width: '40%' }}>Наименование параметра</TableCell>
-                  <TableCell style={{ width: '40%' }}>Наименование категории параметра</TableCell>
+                  <TableCell style={{ width: '40%' }}>Категория</TableCell>
+                  <TableCell style={{ width: '40%' }}>Параметр</TableCell>
                   <TableCell style={{ width: '20%' }}></TableCell>
                 </TableRow>
               </TableHead>
@@ -100,8 +100,8 @@ class Appointment_Modal_param extends React.Component {
                   !this.state.item ? null : (
                     this.state.item.map((f, f_key) => (
                       <TableRow hover key={f_key}>
-                        <TableCell>{f.name}</TableCell>
                         <TableCell>{f.category_name}</TableCell>
+                        <TableCell>{f.name}</TableCell>
                         <TableCell> 
                           {parseInt(f?.type) == 2 ?
                             <Checkbox
@@ -421,9 +421,9 @@ class Appointment_Modal extends React.Component {
                                       <TableCell sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: 'center' }}>
                                         <li>{it.name}</li>
                                       </TableCell>
-                                      <TableCell onClick={this.openParams.bind(this, it.features, `Редактирование параметров модуля: ${it.name}`, key, k, 'one')}>
+                                      <TableCell sx={{ cursor: 'pointer' }} onClick={this.openParams.bind(this, it.features, `Редактирование параметров модуля: ${it.name}`, key, k, 'one')}>
                                         <Tooltip title={<Typography color="inherit">Редактировать параметры модуля</Typography>}> 
-                                          <EditIcon sx={{ cursor: 'pointer' }}/>
+                                          <EditIcon />
                                         </Tooltip>
                                       </TableCell>
                                       <TableCell>
@@ -444,9 +444,9 @@ class Appointment_Modal extends React.Component {
                                       <TableCell sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: 'center' }} >
                                         <li>{it.name}</li>
                                       </TableCell>
-                                      <TableCell onClick={this.openParams.bind(this, it.features_cat, `Редактирование параметров модуля: ${it.name}`, key, k, 'two')}>
+                                      <TableCell sx={{ cursor: 'pointer' }} onClick={this.openParams.bind(this, it.features_cat, `Редактирование параметров модуля: ${it.name}`, key, k, 'two')}>
                                         <Tooltip title={<Typography color="inherit">Редактирование свойств модуля</Typography>}> 
-                                          <EditIcon sx={{ cursor: 'pointer' }}/>
+                                          <EditIcon/>
                                         </Tooltip>
                                       </TableCell>
                                       <TableCell>
