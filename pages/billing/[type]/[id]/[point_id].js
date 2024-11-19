@@ -70,7 +70,7 @@ const useStore = create((set, get) => ({
   bill_items_doc: [],
   bill_items: [],
 
-  operAlert: false,
+  openAlert: false,
   err_status: true,
   err_text: '',
 
@@ -120,6 +120,8 @@ const useStore = create((set, get) => ({
   user: [],
 
   comment: '',
+  comment_bux: '',
+  delete_text: '',
 
   is_horizontal: false,
   is_vertical: false,
@@ -247,11 +249,13 @@ const useStore = create((set, get) => ({
       date: res.bill?.date && res.bill?.date !== "0000-00-00" ? dayjs(res.bill?.date) : null,
       date_items: res.bill?.date_items ? dayjs(res.bill?.date_items) : null,
       comment: res.bill?.comment,
+      comment_bux: res.bill?.com_bux,
+      delete_text: res.bill?.del_text,
       users: res?.users,
       user: res?.bill_users,
       types: types,
       type: parseInt(res?.bill?.type_bill) == 1 ? 2 : 4,
-      doc_base_id: parseInt(res?.bill?.type_doc),
+      doc_base_id: parseInt(res?.bill?.type_doc ?? 0) === 0 ? '' : parseInt(res?.bill?.type_doc),
       is_load_store: false,
 
       number_factur: res.bill?.number_factur,
@@ -650,7 +654,7 @@ const useStore = create((set, get) => ({
   },
 
   closeAlert: () => {
-    set({ operAlert: false });
+    set({ openAlert: false });
   },
 
   addItem: () => {
@@ -661,7 +665,7 @@ const useStore = create((set, get) => ({
     if (!count || !fact_unit || !summ || !sum_w_nds || !pq || !all_ed_izmer.length) {
 
       set({
-        operAlert: true,
+        openAlert: true,
         err_status: false,
         err_text: 'Необходимо выбрать Товар / кол-во Товара / указать суммы',
       });
@@ -674,7 +678,7 @@ const useStore = create((set, get) => ({
     if (!nds) {
 
       set({
-        operAlert: true,
+        openAlert: true,
         err_status: false,
         err_text: 'Суммы указаны неверно',
       });
@@ -1176,7 +1180,7 @@ function VendorItemsTableView(){
   )
 }
 
-function FormHeader_new({ page, type_edit }){
+function FormHeader_new({ page, type_edit, type_doc }){
 
   const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
 
@@ -1231,7 +1235,7 @@ function FormHeader_new({ page, type_edit }){
         </Grid>
       }
 
-      {parseInt(type) === 2 || parseInt(type) === 3 ? (
+      {(parseInt(type) === 2 || parseInt(type) === 3) && type_doc === 'bill' && doc_base_id ? (
         <>
           <Grid item xs={12} sm={4}>
             <MySelect
@@ -1248,7 +1252,7 @@ function FormHeader_new({ page, type_edit }){
         </>
       ) : null}
 
-      {parseInt(type) === 3 || parseInt(type) === 4 ? (
+      {(parseInt(type) === 3 || parseInt(type) === 4) && type_doc === 'bill' ? (
         <>
           <Grid item xs={12} sm={4}>
             <MyAutocomplite2
@@ -1274,7 +1278,7 @@ function FormHeader_new({ page, type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && !fullScreen ? 
+      {parseInt(type) === 2 && !fullScreen && type_doc === 'bill' ? 
         <Grid item xs={12} sm={6}>
           <MyTextInput
             label="Номер счет-фактуры"
@@ -1295,7 +1299,7 @@ function FormHeader_new({ page, type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && !fullScreen ? 
+      {parseInt(type) === 2 && !fullScreen && type_doc === 'bill' ? 
         <Grid item xs={12} sm={6}>
           <MyDatePickerNew
             label="Дата счет-фактуры"
@@ -1310,24 +1314,26 @@ function FormHeader_new({ page, type_edit }){
   )
 }
 
-function FormImage_new({ page, type_edit }){
+function FormImage_new({ type_edit, type_doc }){
 
   const [type, imgs_bill, openImageBill, fullScreen, imgs_factur, number_factur, changeInput, changeDateRange, date_factur] = useStore( state => [state.type, state.imgs_bill, state.openImageBill, state.fullScreen, state.imgs_factur, state.number_factur, state.changeInput, state.changeDateRange, state.date_factur]);
+
+  const url = type_doc === 'bill' ? 'bill/' : 'bill-ex-items/'
 
   return (
     <>
       <Grid item xs={12} sm={parseInt(type) === 2 ? 6 : 12}>
         <TableContainer>
           <Grid display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
-            {!imgs_bill.length ? page === 'new' ? null : 'Фото отсутствует' :
+            {!imgs_bill.length ? 'Фото отсутствует' :
               <>
                 {imgs_bill.map((img, key) => (
                   <img 
                     key={key} 
-                    src={'https://storage.yandexcloud.net/bill/' + img} 
+                    src={'https://storage.yandexcloud.net/' + url + img} 
                     alt="Image bill" 
                     className="img_modal_bill"
-                    onClick={() => openImageBill('https://storage.yandexcloud.net/bill/' + img)}
+                    onClick={() => openImageBill('https://storage.yandexcloud.net/' + url + img)}
                   />
                 ))}
               </>
@@ -1336,9 +1342,9 @@ function FormImage_new({ page, type_edit }){
         </TableContainer>
       </Grid>
 
-      {parseInt(type) === 2 && !fullScreen ? (
+      {parseInt(type) === 2 && !fullScreen && type_doc === 'bill' ? (
         <Grid item xs={12} sm={6} display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
-          {!imgs_factur.length ? page === 'new' ? null : 'Фото отсутствует' :
+          {!imgs_factur.length ? 'Фото отсутствует' :
             <>
               {imgs_factur.map((img, key) => (
                 <img 
@@ -1378,7 +1384,7 @@ function FormImage_new({ page, type_edit }){
         </Grid>
       ) : null}
 
-      {parseInt(type) === 2 && fullScreen ? 
+      {parseInt(type) === 2 && fullScreen && type_doc === 'bill' ? 
         <>
           <Grid item xs={12}>
             <MyTextInput
@@ -1401,7 +1407,7 @@ function FormImage_new({ page, type_edit }){
           <Grid item xs={12}>
             <TableContainer>
               <Grid display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
-                {!imgs_factur.length ? page === 'new' ? null : 'Фото отсутствует' :
+                {!imgs_factur.length ? 'Фото отсутствует' :
                   <>
                     {imgs_factur.map((img, key) => (
                       <img 
@@ -1436,13 +1442,13 @@ function FormImage_new({ page, type_edit }){
   )
 }
 
-function FormOther_new({ page, type_edit }){
+function FormOther_new({ page, type_edit, type_doc }){
 
-  const [type, date_items, changeDateRange, users, user, changeAutocomplite, comment, changeInput, changeItemChecked, is_new_doc] = useStore( state => [state.type, state.date_items, state.changeDateRange, state.users, state.user, state.changeAutocomplite, state.comment, state.changeInput, state.changeItemChecked, state.is_new_doc]);
+  const [type, date_items, changeDateRange, users, user, changeAutocomplite, comment, changeInput, changeItemChecked, is_new_doc, comment_bux, delete_text] = useStore( state => [state.type, state.date_items, state.changeDateRange, state.users, state.user, state.changeAutocomplite, state.comment, state.changeInput, state.changeItemChecked, state.is_new_doc, state.comment_bux, state.delete_text]);
 
   return (
     <>
-      {parseInt(type) === 1 ? null :
+      {parseInt(type) === 1 ? null : type_doc === 'bill_ex' ? null :
         <>
           <Grid item xs={12} sm={6}>
             <MyDatePickerNew
@@ -1483,12 +1489,12 @@ function FormOther_new({ page, type_edit }){
             <Typography style={{ fontWeight: 'bold', color: '#9e9e9e' }}>
               Причина удаления:&nbsp;
             </Typography>
-            <Typography></Typography>
+            <Typography>{delete_text}</Typography>
           </Grid>
 
           <Grid item xs={12} sm={6} style={{ display: 'flex', marginBottom: 20 }}>
             <Typography style={{ fontWeight: 'bold', color: '#9e9e9e' }}>Комментарий бухгалтера:&nbsp;</Typography>
-            <Typography>Переделать фото</Typography>
+            <Typography>{comment_bux}</Typography>
           </Grid>
         </>
       }
@@ -1555,19 +1561,18 @@ class Billing_Accordion extends React.Component {
           <AccordionSummary style={{ cursor: 'default' }} expandIcon={<ExpandMoreIcon sx={{ opacity: 0 }} />} aria-controls="panel1a-content">
             <Grid item xs display="flex" flexDirection="row">
               <Typography style={{ width: '1%' }}></Typography>
-              <Typography style={{ width: '17%', minWidth: '250px' }}>Тип {type === 'edit' ? ' документа' : ' накладной'}</Typography>
-              <Typography style={{ width: '3%' }}></Typography>
-              <Typography style={{ width: '3%' }}></Typography>
-              <Typography style={{ width: '10%' }}>
+              <Typography style={{ width: '4%', minWidth: '210px' }}>Тип {type === 'edit' ? ' документа' : ' накладной'}</Typography>
+              <Typography style={{ width: '12%' }}>Бумажный носитель</Typography>
+              <Typography style={{ width: '11%' }}>
                 Номер {type === 'edit' ? ' документа' : ' накладной'}
               </Typography>
-              <Typography style={{ width: '10%' }}>
+              <Typography style={{ width: '11%' }}>
                 Дата в {type === 'edit' ? ' документе' : ' накладной'}
               </Typography>
               <Typography style={{ width: '14%', minWidth: '200px' }}>Создатель</Typography>
               <Typography style={{ width: '10%' }}>Дата обновления</Typography>
               <Typography style={{ width: '14%', minWidth: '200px' }}>Редактор</Typography>
-              <Typography style={{ width: '10%' }}>Время обновления</Typography>
+              <Typography style={{ width: '11%' }}>Время обновления</Typography>
               <Typography style={{ width: '8%' }}>Сумма с НДС</Typography>
             </Grid>
           </AccordionSummary>
@@ -1580,35 +1585,23 @@ class Billing_Accordion extends React.Component {
 
                   <Typography component="div" style={{ width: '1%', backgroundColor: item.color, marginRight: '1%' }}></Typography>
                   
-                  <Typography style={{ width: '17%', minWidth: '250px',  display: 'flex', alignItems: 'center' }}>
+                  <Typography style={{ width: '4%', minWidth: '210px',  display: 'flex', alignItems: 'center' }}>
                     {item.name}
                   </Typography>
 
-                  <MyTooltip name="Нету бумажного носителя">
-                    <Typography component="div" style={{ width: '3%', display: 'flex', alignItems: 'center' }}>
-                      <MyCheckBox
-                        value={false}
-                        //func={this.props.changeCheck.bind(this, key, 'is_not_del')}
-                        label=""
-                      />
-                    </Typography>
-                  </ MyTooltip>
+                  <Typography className='checkbox_disable' component="div" style={{ width: '12%', display: 'flex', alignItems: 'center' }}>
+                    <MyCheckBox
+                      value={parseInt(item.real_doc) == 1 ? true : false}
+                      label=""
+                      checked={false}
+                    />
+                  </Typography>
 
-                  <MyTooltip name="С бумажным носителем все хорошо">
-                    <Typography component="div" style={{ width: '3%', display: 'flex', alignItems: 'center' }}>
-                      <MyCheckBox
-                        value={false}
-                        //func={this.props.changeCheck.bind(this, key, 'is_not_del')}
-                        label=""
-                      />
-                    </Typography>
-                  </MyTooltip>
-
-                  <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
+                  <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
                     {item.number}
                   </Typography>
 
-                  <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
+                  <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
                     {item.date}
                   </Typography>
 
@@ -1624,7 +1617,7 @@ class Billing_Accordion extends React.Component {
                     {item.editor_id}
                   </Typography>
 
-                  <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
+                  <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
                     {item.time_update}
                   </Typography>
 
@@ -1954,7 +1947,8 @@ class Billing_Edit_ extends React.Component {
       module_name: '',
       is_load: false,
 
-      acces: null
+      acces: null,
+      type_doc: ''
     };
   }
 
@@ -1970,7 +1964,16 @@ class Billing_Edit_ extends React.Component {
       type: data_bill[2],
     }
 
-    const res = await this.getData('get_one', bill);
+    let res;
+
+    if(bill.type === 'bill') {
+      res = await this.getData('get_one', bill);
+    } else {
+      res = await this.getData('get_one_bill_ex', bill);
+    }
+
+    // console.log("🚀 === componentDidMount res:", res);
+
     const points = await this.getData('get_points');
 
     const point = points.points.find(point => point.id === res.bill.point_id);
@@ -1982,6 +1985,7 @@ class Billing_Edit_ extends React.Component {
 
     this.setState({
       acces: res?.acces,
+      type_doc: data_bill[2]
     });
 
     const items = await this.getData('get_vendor_items', data);
@@ -2045,8 +2049,11 @@ class Billing_Edit_ extends React.Component {
       });
   };
 
-  async saveNewBill () {
-    const {number, point, vendors, date, number_factur, date_factur, type, doc, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
+  async saveEditBill () {
+    const {number, point, vendors, date, number_factur, date_factur, doc, doc_base_id, date_items, user, comment, is_new_doc, bill_items, bill} = this.props.store;
+
+    const type_doc = this.state.type_doc;
+    const type = type_doc === 'bill_ex' ? 1 : 2;
 
     const dateBill = date ? dayjs(date).format('YYYY-MM-DD') : '';
     const dateFactur = date_factur ? dayjs(date_factur).format('YYYY-MM-DD') : '';
@@ -2061,6 +2068,7 @@ class Billing_Edit_ extends React.Component {
       it.item_id = item.id;
       it.summ = item.price_item;
       it.summ_w_nds = item.price_w_nds;
+      it.color = item.color;
 
       const nds = item.nds.split(' %')[0];
 
@@ -2076,6 +2084,7 @@ class Billing_Edit_ extends React.Component {
     }, [])
 
     const data = {
+      bill_id: bill.id,
       doc,
       type,
       items,
@@ -2092,14 +2101,32 @@ class Billing_Edit_ extends React.Component {
       vendor_id: vendors.length === 1 ? vendors[0]?.id : ''
     }
 
-    console.log('saveNewBill data', data);
+    console.log('saveEditBill data', data);
 
-    //const res = await this.getData('save_new', data);
+    // const res = await this.getData('save_edit', data);
+
+     // if (res.st) {
+
+    //   this.setState({
+    //     openAlert: true,
+    //     err_status: res.st,
+    //     err_text: res.text
+    //   });
+
+    // } else {
+
+    //   this.setState({
+    //     openAlert: true,
+    //     err_status: res.st,
+    //     err_text: res.text
+    //   });
+
+    // }
   }
 
   render() {
 
-    const { isPink, operAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical } = this.props.store;
+    const { isPink, openAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical } = this.props.store;
 
     return (
       <>
@@ -2117,7 +2144,7 @@ class Billing_Edit_ extends React.Component {
         }
 
         <MyAlert
-          isOpen={operAlert}
+          isOpen={openAlert}
           onClose={closeAlert}
           status={err_status}
           text={err_text}
@@ -2130,9 +2157,9 @@ class Billing_Edit_ extends React.Component {
             <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
           </Grid>
 
-          <FormHeader_new page={'edit'} type_edit={ parseInt(this.state.acces?.header) == 1 ? 'edit' : 'show' } />
+          <FormHeader_new type_doc={this.state.type_doc} page={'edit'} type_edit={ parseInt(this.state.acces?.header) == 1 ? 'edit' : 'show' } />
           
-          <FormImage_new page={this.state.acces?.photo} />
+          <FormImage_new type_doc={this.state.type_doc} type_edit={ parseInt(this.state.acces?.photo) == 1 ? 'edit' : 'show' } />
 
           { parseInt(this.state.acces?.items) == 1 ? 
             <>
@@ -2143,7 +2170,7 @@ class Billing_Edit_ extends React.Component {
             <VendorItemsTableView />
           }
           
-          <FormOther_new page={'edit'} type_edit={parseInt(this.state.acces?.footer) == 1 ? 'edit' : 'show' } />
+          <FormOther_new type_doc={this.state.type_doc} page={'edit'} type_edit={parseInt(this.state.acces?.footer) == 1 ? 'edit' : 'show' } />
 
           <Billing_Accordion
             bill_list={bill_list}
@@ -2153,7 +2180,7 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.only_save) === 0 ? false :
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveNewBill.bind(this)}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this)}>
                 Сохранить
               </Button>
             </Grid>

@@ -541,3 +541,13 @@ a{
 .li_disc {
   list-style-type: circle;
 }
+
+.checkbox_disable {
+  & .MuiButtonBase-root.MuiCheckbox-root {
+    pointer-events: none;
+  }
+
+  & .MuiButtonBase-root.MuiCheckbox-root:hover {
+    background-color: transparent
+  }
+}
