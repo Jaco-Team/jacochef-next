@@ -174,14 +174,11 @@ class Billing_ extends React.Component {
   async componentDidMount() {
     const data = await this.getData('get_all');
 
-    //console.log('data', data)
+    // console.log('componentDidMount data', data)
 
     this.setState({
       module_name: 'Накладные',
-      vendors: data.vendors,
-      vendorsCopy: data.vendors,
       points: data.points,
-      all_items: data.items,
       bill_list: bill_status,
       billings: bill_status,
       status: bill_status[0].id,
@@ -251,9 +248,28 @@ class Billing_ extends React.Component {
     }, 300);
   }
 
-  changeSelect(data, event) {
+  async changeSelect(data, event) {
+
+    const value = event.target.value;
+
+    if(data === 'type') {
+      const data = {
+        type: value,
+      }
+
+      const res = await this.getData('get_vendors_items_list', data);
+
+      this.setState({
+        vendors: res.vendors,
+        vendorsCopy: res.vendors,
+        all_items: res.items,
+        search_vendor: '',
+        items: []
+      });
+    } 
+
     this.setState({
-      [data]: event.target.value,
+      [data]: value,
     });
 
     setTimeout(() => {
@@ -283,7 +299,7 @@ class Billing_ extends React.Component {
 
   setLocalStorage() {
    
-    const {date_start, date_end, status, type, search_vendor, point, number, items} = this.state;
+    const {date_start, date_end, status, type, point, number} = this.state;
 
     const dateStart = date_start ? dayjs(date_start).format('YYYY-MM-DD') : null;
     const dateEnd = date_end ? dayjs(date_end).format('YYYY-MM-DD') : null;
@@ -293,23 +309,19 @@ class Billing_ extends React.Component {
       dateEnd, 
       status, 
       type, 
-      search_vendor, 
       point, 
-      number, 
-      items
+      number
     }
-
-    console.log('setLocalStorage', data)
 
     localStorage.setItem('main_page_bill', JSON.stringify(data));
   }
 
-  getLocalStorage() {
+  async getLocalStorage() {
 
     const res = JSON.parse(localStorage.getItem('main_page_bill'));
 
     if(res) {
-      const {dateStart, dateEnd, status, type, search_vendor, point, number, items} = res;
+      const {dateStart, dateEnd, status, type, point, number} = res;
   
       const date_start = dateStart ? dayjs(dateStart) : null;
       const date_end = dateEnd ? dayjs(dateEnd) : null;
@@ -319,19 +331,42 @@ class Billing_ extends React.Component {
         date_end,
         status, 
         type,
-        search_vendor, 
         point, 
-        number, 
-        items
+        number
       });
+
+      if(type && type.length) {
+
+        const data = {
+          type
+        }
+
+        const res = await this.getData('get_vendors_items_list', data);
+
+        this.setState({
+          vendors: res.vendors,
+          vendorsCopy: res.vendors,
+          all_items: res.items,
+          search_vendor: '',
+          items: []
+        });
+
+      }
     }
   }
 
   getOneBill(item) {
     const type = this.state.type;
 
+    const type_bill = parseInt(type) === 1 ? 'bill_ex' : 'bill';
+
+    const link = document.createElement('a');
+    link.href = `/billing/${type_bill}/${item?.id}/${item?.point_id}`
+    link.target = '_blank'
+    link.click();
+
     const data = {
-      type: parseInt(type) === 1 ? 'bill_ex' : 'bill',
+      type: type_bill,
       id: item?.id,
       point_id: item?.point_id,
     }
@@ -390,12 +425,8 @@ class Billing_ extends React.Component {
         status,
         type,
       }
-  
-      console.log('getBillingList', data)
 
       const res = await this.getData('get_billing_list', data);
-
-      console.log('getBillingList', res);
 
       let billings = this.state.billings;
 
@@ -560,7 +591,7 @@ class Billing_ extends React.Component {
 
           <Grid item xs={12} style={{ marginBottom: 20 }} sm={6}>
             <TableContainer component={Paper}>
-              <Table aria-label="a dense table">
+              <Table aria-label="a dense table" size='small'>
                 <TableHead>
                   <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
                     <TableCell style={{ minWidth: '180px' }}>Тип</TableCell>
@@ -583,7 +614,7 @@ class Billing_ extends React.Component {
 
           <Grid item xs={12} style={{ marginBottom: 40 }} sm={12}>
             <TableContainer component={Paper}>
-              <Table aria-label="a dense table">
+              <Table aria-label="a dense table" size='small'>
                 <TableHead>
                   <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
                     <TableCell>#</TableCell>
@@ -598,7 +629,7 @@ class Billing_ extends React.Component {
                 </TableHead>
                 <TableBody>
                   {this.state.bills.map((item, key) => (
-                    <TableRow key={key}>
+                    <TableRow key={key} style={{ cursor: 'pointer' }} onClick={this.getOneBill.bind(this, item)}>
                       <TableCell style={{ backgroundColor: item?.color ?? '#fff', color: item?.color ? '#fff' : 'rgba(0, 0, 0, 0.87)'}}>{key + 1}</TableCell>
                       <TableCell>
                         {parseInt(item.check_day) === 1 || parseInt(item.check_price) === 1 ? 
@@ -609,31 +640,19 @@ class Billing_ extends React.Component {
                           </MyTooltip>
                         : null}
                       </TableCell>
-                      <TableCell>
-                        <MyTooltip name="Есть в наличии">
-                          <Typography component="div" className="ceil_tooltip">
-                            <MyCheckBox
-                              value={false}
-                              //func={this.props.changeCheck.bind(this, key, 'is_not_del')}
-                              label=""
-                            />
-                          </Typography>
-                        </ MyTooltip>
+                      <TableCell className='checkbox_disable'>
+                        <MyCheckBox
+                          value={parseInt(item.real_doc) == 1 ? true : false}
+                          label=""
+                          checked={false}
+                        />
                       </TableCell>
                       <TableCell>Прих</TableCell>
-                      <TableCell style={{ cursor: 'pointer' }}>
-                        <Link href="/billing/view" onClick={this.getOneBill.bind(this, item)} target="_blank" style={{ textDecoration: 'none', color: 'rgba(0, 0, 0, 0.87)' }}>
-                          {item.number}
-                        </Link>
-                      </TableCell>
+                      <TableCell>{item.number}</TableCell>
                       <TableCell 
-                        style={{ backgroundColor: parseInt(item.check_day) === 1 ? 'rgb(204, 0, 51)' : '#fff', cursor: 'pointer', color: parseInt(item.check_day) === 1 ? '#fff' : 'rgba(0, 0, 0, 0.87)' }}
-                      >
-                        <Link 
-                          onClick={this.getOneBill.bind(this, item)}
-                          href={`/billing/${parseInt(this.state.type) === 1 ? 'bill_ex' : 'bill'}/${item?.id}/${item?.point_id}`} target="_blank" style={{ textDecoration: 'none', color: 'rgba(0, 0, 0, 0.87)' }}>
-                          {item.date}
-                        </Link>
+                        style={{ backgroundColor: parseInt(item.check_day) === 1 ? 'rgb(204, 0, 51)' : '#fff', color: parseInt(item.check_day) === 1 ? '#fff' : 'rgba(0, 0, 0, 0.87)' }}
+                      > 
+                        {item.date}
                       </TableCell>
                       <TableCell>{item.vendor_name}</TableCell>
                       <TableCell 
