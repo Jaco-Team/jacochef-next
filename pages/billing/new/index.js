@@ -65,6 +65,102 @@ const types = [
   },
 ]
 
+function getOrientation(file, callback) {
+	var reader = new FileReader();
+  
+	reader.onload = function(event) {
+    var view = new DataView(event.target.result);
+
+    if (view.getUint16(0, false) != 0xFFD8) return callback(-2);
+
+    var length = view.byteLength,
+      offset = 2;
+
+    while (offset < length) {
+      var marker = view.getUint16(offset, false);
+      offset += 2;
+
+      if (marker == 0xFFE1) {
+        if (view.getUint32(offset += 2, false) != 0x45786966) {
+          return callback(-1);
+        }
+
+        var little = view.getUint16(offset += 6, false) == 0x4949;
+        offset += view.getUint32(offset + 4, little);
+        var tags = view.getUint16(offset, little);
+        offset += 2;
+  
+        for (var i = 0; i < tags; i++)
+        if (view.getUint16(offset + (i * 12), little) == 0x0112)
+          return callback(view.getUint16(offset + (i * 12) + 8, little));
+
+      }else if ((marker & 0xFF00) != 0xFF00) break;
+
+      else offset += view.getUint16(offset, false);
+		}
+		  
+	  return callback(-1);
+	};
+  
+	reader.readAsArrayBuffer(file.slice(0, 64 * 1024));
+};
+
+var i = 0;
+var global_new_bill_id = 0;
+var global_point_id = 0;
+
+const dropzoneOptions = {
+  autoProcessQueue: false,
+  autoQueue: true,
+  maxFiles: 1,
+  timeout: 0,
+  parallelUploads: 10,
+  acceptedFiles: 'image/jpeg,image/png',
+  addRemoveLinks: true,
+  url: "https://jacochef.ru/src/img/billing_items/upload.php",
+
+  init: function() {
+
+    var myDropzone = this;
+
+    this.on("queuecomplete", function(data){
+      var check_img = false;
+
+      myDropzone['files'].map(function(item, key){
+        if( item['status'] == "error" ){
+          check_img = true;
+        }
+      })
+      
+      if( check_img ){
+        return;
+      }
+      
+      //console.log( 'queuecomplete' )
+      //$('#modal_message').addClass('modal_true');
+      //show_modal_message('Результат операции', 'Накладная успешно сохранена');
+      //window.location.hash = '#billing';
+
+      i = 0;
+    })
+    
+    this.on("sending", function(file, xhr, data) {
+      //var point = document.getElementById('point_id').value;
+
+      i++;
+      var file_type = (file.name).split('.');
+      file_type = file_type[file_type.length - 1];
+      file_type = file_type.toLowerCase();
+
+      data.append("filetype", 'bill_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
+      
+      getOrientation(file, function(orientation) {
+        data.append("orientation", orientation);
+      })
+    });
+  },
+};
+
 const useStore = create((set, get) => ({
   isPink: false,
   setPink: () => set((state) => ({ isPink: !state.isPink })),
@@ -142,6 +238,8 @@ const useStore = create((set, get) => ({
 
   is_horizontal: false,
   is_vertical: false,
+
+  DropzoneDop: null,
 
   set_position: (is_horizontal, is_vertical) => {
     set({
@@ -351,7 +449,7 @@ const useStore = create((set, get) => ({
       
       set({
         bill_items: [],
-        bill_items_doc: [],
+        //bill_items_doc: [],
         search_item: '',
         vendor_items: res.items,
         vendor_itemsCopy: res.items,
@@ -615,18 +713,18 @@ const useStore = create((set, get) => ({
       get().changeKinds(value);
     }
 
-    // if(data === 'type' && parseInt(value) === 2){
-    //   setTimeout( () => {
-    //     set({
-    //       DropzoneDop: new Dropzone("#img_bill_type", this.dropzoneOptions)
-    //     })
-    //   }, 500 )
+    if(data === 'type' && parseInt(value) === 2){
+      setTimeout( () => {
+        set({
+          DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions)
+        })
+      }, 1000 )
       
-    // } else {
-    //   set({
-    //     DropzoneDop: null
-    //   })
-    // }
+    } else {
+      set({
+        DropzoneDop: null
+      })
+    }
 
     set({
       [data]: event.target.value
@@ -1946,17 +2044,6 @@ class Billing_Modal extends React.Component {
 }
 
 class Billing_Edit_ extends React.Component {
-  dropzoneOptions = {
-    autoProcessQueue: false,
-    autoQueue: true,
-    maxFiles: 1,
-    timeout: 0,
-    parallelUploads: 10,
-    acceptedFiles: 'image/jpeg,image/png',
-    addRemoveLinks: true,
-    url: 'https://jacochef.ru/src/img/site_aktii/upload_img.php',
-  };
-
   myDropzone = null;
 
   constructor(props) {
@@ -2000,8 +2087,11 @@ class Billing_Edit_ extends React.Component {
 
     document.title = 'Накладные';
 
-    if( res?.acces?.photo === 'edit' ){
-      this.myDropzone = new Dropzone("#img_bill", this.dropzoneOptions);
+    if( parseInt(res?.acces?.photo) === 1 ){
+      setTimeout( () => {
+        this.myDropzone = new Dropzone("#img_bill", dropzoneOptions);
+      }, 500 )
+      
     }
   }
 
@@ -2058,6 +2148,8 @@ class Billing_Edit_ extends React.Component {
     const dateFactur = date_factur ? dayjs(date_factur).format('YYYY-MM-DD') : '';
     const dateItems = date_items ? dayjs(date_items).format('YYYY-MM-DD') : '';
 
+    
+
     const items = bill_items.reduce((newItems, item) => {
 
       let it = {};
@@ -2077,7 +2169,7 @@ class Billing_Edit_ extends React.Component {
         it.nds = nds;
       }
 
-      newItems.push([it]);
+      newItems.push(it);
 
       return newItems;
     }, [])
@@ -2099,27 +2191,37 @@ class Billing_Edit_ extends React.Component {
       vendor_id: vendors.length === 1 ? vendors[0]?.id : ''
     }
 
-    console.log('saveNewBill data', data);
+    const res = await this.getData('save_new', data);
 
-    //const res = await this.getData('save_new', data);
+    console.log('saveNewBill res', res)
 
-    // if (res.st) {
+    //
 
-    //   this.setState({
-    //     openAlert: true,
-    //     err_status: res.st,
-    //     err_text: res.text
-    //   });
+    if (res.st === true) {
 
-    // } else {
+      if( res?.text && res.text.length > 0 ) {
+        this.setState({
+          openAlert: true,
+          err_status: res.st,
+          err_text: res.text
+        });
+      }
 
-    //   this.setState({
-    //     openAlert: true,
-    //     err_status: res.st,
-    //     err_text: res.text
-    //   });
+      global_point_id = point?.id
+      global_new_bill_id = res.bill_id;
+      //res?.bill_id
 
-    // }
+      this.myDropzone.processQueue();
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text
+      });
+
+    }
 
   }
 
@@ -2152,7 +2254,7 @@ class Billing_Edit_ extends React.Component {
         <Grid container spacing={3} mb={10} style={{ marginTop: '64px', maxWidth: is_vertical ? '50%' : '100%', marginBottom: is_horizontal ? 700 : 30 }}>
 
           <Grid item xs={12} sm={12}>
-            <h1>Документ: {bill?.number}</h1>
+            <h1>Новый документ</h1>
             <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
           </Grid>
 
@@ -2187,16 +2289,6 @@ class Billing_Edit_ extends React.Component {
             </Grid>
           }
          
-          { parseInt(this.state.acces?.only_delete) === 0 ? false :
-            <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth style={{ height: '100%' }}
-                //onClick={this.saveBill.bind(this)}
-              >
-                Удалить
-              </Button>
-            </Grid>
-          }
-
           { parseInt(this.state.acces?.only_delete) === 0 ? false :
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}

@@ -12,9 +12,9 @@
     "deploy:prod": "npm update && next build && pm2 startOrRestart ecosystem.config.js --env production"
   },
   "dependencies": {
-    "@emotion/cache": "^11.13.1",
-    "@emotion/react": "^11.13.3",
-    "@emotion/styled": "^11.13.0",
+    "@emotion/cache": "^11.13.5",
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
     "@mui/icons-material": "^5.16.7",
     "@mui/lab": "^5.0.0-alpha.173",
     "@mui/material": "^5.16.7",
@@ -41,6 +41,6 @@
     "zustand": "^4.5.5"
   },
   "devDependencies": {
-    "sass": "^1.80.7"
+    "sass": "^1.81.0"
   }
 }
