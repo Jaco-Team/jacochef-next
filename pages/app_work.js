@@ -23,9 +23,9 @@ import ListItemText from '@mui/material/ListItemText';
 import CloseIcon from '@mui/icons-material/Close';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
-import {MyTextInput, MyCheckBox, MySelect, MyTimePicker, MyAutocomplite} from '@/ui/elements';
+import {MyTextInput, MyCheckBox, MySelect, MyTimePicker, MyAutocomplite, MyAlert} from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api } from '@/src/api_new';
 
 class AppWorkTable extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -35,7 +35,7 @@ class AppWorkTable extends React.Component {
 
     var is_same = array1.length == array2.length && array1.every(function (element, index) { return element === array2[index] });
 
-    return !is_same;
+    return !is_same || nextProps.timeUpdate !== this.props.timeUpdate;
   }
 
   render() {
@@ -146,6 +146,12 @@ class AppWork_ extends React.Component {
       itemsNew: null,
       chengeItem1: null,
       chengeItemNew1: null,
+
+      openAlert: false,
+      err_status: true,
+      err_text: '',
+
+      timeUpdate: new Date(),
     };
   }
 
@@ -162,56 +168,30 @@ class AppWork_ extends React.Component {
       module_name: data.module_info.name,
       items: data.items,
       items_min: data.items_min,
+      timeUpdate: new Date(),
     });
 
     document.title = data.module_info.name;
   }
 
   getData = (method, data = {}) => {
+    
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({
-          is_load: false,
-        });
+        }, 500);
       });
-  };
+
+    return res;
+  }
 
   openCat(item) {
     this.setState({
@@ -222,12 +202,84 @@ class AppWork_ extends React.Component {
     });
   }
 
+  check_form(type) {
+
+    let item = type === 'new' ? this.state.itemsNew : this.state.itemsEdit;
+
+    if (!item.item.name) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать наименование уборки'
+      });
+
+      return;
+
+    } 
+
+    if (!item.item.type_new) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать категорию уборки'
+      });
+
+      return;
+
+    } 
+
+    if (!item.item.app_id) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать должность'
+      });
+
+      return;
+
+    } 
+
+    if (!item.item.dow) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать день недели'
+      });
+
+      return;
+
+    } 
+
+    if (!item.item.type_time) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать тип добавления'
+      });
+
+      return;
+
+    }
+
+    if(type === 'new') {
+      this.saveNew();
+    } else {
+      this.saveEdit();
+    }
+
+  }
+
   async saveEdit() {
 
-    let itemsEdit = this.state.itemsEdit
+    let itemsEdit = JSON.parse(JSON.stringify(this.state.itemsEdit));
 
-    itemsEdit.item.type_new = this.state.itemsEdit.item.type_new.id
-    itemsEdit.item.app_id = this.state.itemsEdit.item.app_id.id
+    itemsEdit.item.type_new = itemsEdit?.item?.type_new?.id;
+    itemsEdit.item.app_id = itemsEdit?.item?.app_id?.id;
 
     let data = {
       work: itemsEdit.item,
@@ -237,38 +289,35 @@ class AppWork_ extends React.Component {
 
     let res = await this.getData('save_edit', data);
 
-    console.log(res);
+    if (!res.st) {
 
-    if (res.st === false) {
-      alert(res.text);
-    } else {
       this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: res.text,
+      });
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: true,
+        err_text: res.text,
         modalDialog: false,
         itemsEdit: null,
         nameWork: '',
       });
 
-      let data = await this.getData('get_all');
-
-      data.items.map((item, key) => {
-        data.items[key]['dow_name'] = this.state.dows.find(
-          (it) => parseInt(it.id) == parseInt(item.dow)
-        )['name'];
-      });
-
-      this.setState({
-        items: data.items,
-        items_min: data.items_min,
-      });
+      this.update();
     }
   }
 
   async saveNew() {
 
-    let itemsNew = this.state.itemsNew
+    let itemsNew = JSON.parse(JSON.stringify(this.state.itemsNew));
 
-    itemsNew.item.type_new = this.state.itemsNew.item.type_new.id
-    itemsNew.item.app_id = this.state.itemsNew.item.app_id.id
+    itemsNew.item.type_new = itemsNew?.item?.type_new?.id
+    itemsNew.item.app_id = itemsNew?.item?.app_id?.id
 
     let data = {
       work: itemsNew.item,
@@ -278,28 +327,25 @@ class AppWork_ extends React.Component {
 
     let res = await this.getData('save_new', data);
 
-    console.log(res);
-
     if (res.st === false) {
-      alert(res.text);
-    } else {
+
       this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: res.text,
+      });
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: true,
+        err_text: res.text,
         modalDialogNew: false,
         itemsNew: null,
       });
 
-      let data = await this.getData('get_all');
-
-      data.items.map((item, key) => {
-        data.items[key]['dow_name'] = this.state.dows.find(
-          (it) => parseInt(it.id) == parseInt(item.dow)
-        )['name'];
-      });
-
-      this.setState({
-        items: data.items,
-        items_min: data.items_min,
-      });
+      this.update();
     }
   }
 
@@ -309,6 +355,7 @@ class AppWork_ extends React.Component {
     };
 
     let res = await this.getData('get_one', data);
+
     res.item.type_new = res.cats.find(item => item.id === res.item.type_new)
     res.item.app_id = res.apps.find(item => item.id === res.item.app_id)
 
@@ -506,7 +553,12 @@ class AppWork_ extends React.Component {
   async changeCheck(key, type, event) {
     let items = this.state.items;
 
-    items[key][[type]] = event.target.checked ? 1 : 0;
+    items[key][type] = event.target.checked ? 1 : 0;
+
+    this.setState({
+      items: items,
+      timeUpdate: new Date(),
+    });
 
     let data = {
       type: type,
@@ -516,8 +568,34 @@ class AppWork_ extends React.Component {
 
     let res = await this.getData('save_check', data);
 
+    if(res.st) {
+
+      this.update();
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: res.text,
+      });
+
+    }
+  }
+
+  async update () {
+    let data = await this.getData('get_all');
+
+    data.items.map((item, key) => {
+      data.items[key]['dow_name'] = this.state.dows.find(
+        (it) => parseInt(it.id) == parseInt(item.dow)
+      )['name'];
+    });
+
     this.setState({
-      items: items,
+      items: data.items,
+      items_min: data.items_min,
+      timeUpdate: new Date(),
     });
   }
 
@@ -609,6 +687,7 @@ class AppWork_ extends React.Component {
                     value={this.state.itemsEdit.item.dow}
                     func={this.chengeItem.bind(this, 'dow')}
                     label="День недели"
+                    is_none={false}
                   />
                 </Grid>
 
@@ -618,6 +697,7 @@ class AppWork_ extends React.Component {
                     value={this.state.itemsEdit.item.type_time}
                     func={this.chengeItem.bind(this, 'type_time')}
                     label="Тип добавления"
+                    is_none={false}
                   />
                 </Grid>
 
@@ -691,7 +771,7 @@ class AppWork_ extends React.Component {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button color="primary" onClick={this.saveEdit.bind(this)}>
+              <Button color="primary" onClick={this.check_form.bind(this, 'edit')}>
                 Сохранить
               </Button>
             </DialogActions>
@@ -775,6 +855,7 @@ class AppWork_ extends React.Component {
                     value={this.state.itemsNew.item.dow === 0 ? '' : this.state.itemsNew.item.dow}
                     func={this.chengeItemNew.bind(this, 'dow')}
                     label="День недели"
+                    is_none={false}
                   />
                 </Grid>
 
@@ -784,6 +865,7 @@ class AppWork_ extends React.Component {
                     value={this.state.itemsNew.item.type_time === 0 ? '' : this.state.itemsNew.item.type_time}
                     func={this.chengeItemNew.bind(this, 'type_time')}
                     label="Тип добавления"
+                    is_none={false}
                   />
                 </Grid>
 
@@ -857,7 +939,7 @@ class AppWork_ extends React.Component {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button color="primary" onClick={this.saveNew.bind(this)}>
+              <Button color="primary" onClick={this.check_form.bind(this, 'new')}>
                 Сохранить
               </Button>
             </DialogActions>
@@ -868,6 +950,13 @@ class AppWork_ extends React.Component {
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
+
+          <MyAlert 
+            isOpen={this.state.openAlert} 
+            onClose={() => this.setState({ openAlert: false }) } 
+            status={this.state.err_status} 
+            text={this.state.err_text} 
+          />
 
           <Grid item xs={12} sm={12}>
             <Button
@@ -881,12 +970,13 @@ class AppWork_ extends React.Component {
 
           <Grid item xs={12} sm={12}>
 
-          { this.state.items.length > 0 ?
-              <AppWorkTable 
+          {this.state.items.length > 0 ?
+            <AppWorkTable 
               items={this.state.items} 
               openWork={this.openWork.bind(this)}
               changeCheck={this.changeCheck.bind(this) }
-              /> : null
+              timeUpdate={this.state.timeUpdate}
+            /> : null
           }
           </Grid>
         </Grid>
