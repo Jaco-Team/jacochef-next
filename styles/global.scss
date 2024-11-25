@@ -232,23 +232,6 @@ th[class*='tableCelHead'] {
   padding: 0 16px 8px 16px !important;
 }
 
-.tender {
-  th:first-child,
-  tr:first-child,
-  td:first-child {
-    position: -webkit-sticky;
-    position: sticky;
-    left: 0;
-    border-right: none;
-  }
-
-  td,
-  th {
-    border-right: solid 1px #e5e5e5;
-    font-weight: 400 !important;
-  }
-}
-
 #table_graph_one td,
 #table_graph_one th,
 #table_graph_two td,
