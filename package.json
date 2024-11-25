@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -19,7 +19,7 @@
     "@mui/lab": "^5.0.0-alpha.173",
     "@mui/material": "^5.16.7",
     "@mui/material-nextjs": "^5.16.6",
-    "@mui/x-date-pickers": "^7.22.2",
+    "@mui/x-date-pickers": "^7.22.3",
     "@tinymce/tinymce-react": "^5.1.1",
     "axios": "^1.7.7",
     "childprocess": "^2.0.2",
@@ -27,7 +27,7 @@
     "dayjs": "^1.11.13",
     "dropzone": "^6.0.0-beta.2",
     "js-cookie": "^3.0.5",
-    "mathjs": "^13.2.2",
+    "mathjs": "^13.2.3",
     "moment": "^2.30.1",
     "next": "14.2.18",
     "node-tls": "^0.10.2",
@@ -38,9 +38,10 @@
     "react-modal-image": "^2.6.0",
     "react-multi-date-picker": "^4.5.2",
     "tinymce": "^7.5.1",
-    "zustand": "^4.5.5"
+    "zustand": "^4.5.5",
+    "sass": "^1.81.0"
   },
   "devDependencies": {
-    "sass": "^1.81.0"
+   
   }
 }

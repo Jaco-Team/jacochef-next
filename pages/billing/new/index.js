@@ -108,16 +108,21 @@ function getOrientation(file, callback) {
 var i = 0;
 var global_new_bill_id = 0;
 var global_point_id = 0;
+var type_bill = 'bill';
+var bill_type = 0;
+const url_bill = "https://jacochef.ru/src/img/billing_items/upload.php";
+const url_bill_ex = "https://jacochef.ru/src/img/bill_ex_items/upload.php";
 
-const dropzoneOptions = {
+var dropzoneOptions_bill = {
   autoProcessQueue: false,
   autoQueue: true,
   maxFiles: 1,
   timeout: 0,
   parallelUploads: 10,
-  acceptedFiles: 'image/jpeg,image/png',
+  acceptedFiles: "image/jpeg,image/png,image/gif,.pdf",
   addRemoveLinks: true,
-  url: "https://jacochef.ru/src/img/billing_items/upload.php",
+  
+  url: url_bill,
 
   init: function() {
 
@@ -139,9 +144,13 @@ const dropzoneOptions = {
       //console.log( 'queuecomplete' )
       //$('#modal_message').addClass('modal_true');
       //show_modal_message('Результат операции', 'Накладная успешно сохранена');
-      //window.location.hash = '#billing';
+      //window.location.pathname = '/billing';
 
-      i = 0;
+      if( type_bill == 'bill' ){
+
+      }else{
+        window.location.pathname = '/billing';
+      }
     })
     
     this.on("sending", function(file, xhr, data) {
@@ -152,11 +161,84 @@ const dropzoneOptions = {
       file_type = file_type[file_type.length - 1];
       file_type = file_type.toLowerCase();
 
-      data.append("filetype", 'bill_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
+      if( type_bill == 'bill' ){
+        data.append("filetype", 'bill_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
+        data.append("type_bill", 'bill');
+      }else{
+        data.append("filetype", 'bill_ex_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
+      }
       
-      getOrientation(file, function(orientation) {
-        data.append("orientation", orientation);
+      
+      //'bill_file_0_point_id_1_bill_id_9114.png'
+      
+      if( file_type != 'pdf' ){
+        getOrientation(file, function(orientation) {
+          data.append("orientation", orientation);
+        })
+      }
+    });
+  },
+};
+
+var dropzoneOptions_bill_factur = {
+  autoProcessQueue: false,
+  autoQueue: true,
+  maxFiles: 1,
+  timeout: 0,
+  parallelUploads: 10,
+  acceptedFiles: "image/jpeg,image/png,image/gif,.pdf",
+  addRemoveLinks: true,
+  
+  url: url_bill,
+
+  init: function() {
+
+    var myDropzone = this;
+
+    this.on("queuecomplete", function(data){
+      var check_img = false;
+
+      myDropzone['files'].map(function(item, key){
+        if( item['status'] == "error" ){
+          check_img = true;
+        }
       })
+      
+      if( check_img ){
+        return;
+      }
+      
+      //console.log( 'queuecomplete' )
+      //$('#modal_message').addClass('modal_true');
+      //show_modal_message('Результат операции', 'Накладная успешно сохранена');
+      //window.location.pathname = '/billing';
+
+      window.location.pathname = '/billing';
+    })
+    
+    this.on("sending", function(file, xhr, data) {
+      //var point = document.getElementById('point_id').value;
+
+      i++;
+      var file_type = (file.name).split('.');
+      file_type = file_type[file_type.length - 1];
+      file_type = file_type.toLowerCase();
+
+      if( type_bill== 'bill' ){
+        data.append("filetype", 'bill_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
+        data.append("type_bill", 'factur');
+      }else{
+        data.append("filetype", 'bill_ex_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
+      }
+      
+      
+      //'bill_file_0_point_id_1_bill_id_9114.png'
+      
+      if( file_type != 'pdf' ){
+        getOrientation(file, function(orientation) {
+          data.append("orientation", orientation);
+        })
+      }
     });
   },
 };
@@ -508,6 +590,8 @@ const useStore = create((set, get) => ({
 
     const vendors = vendorsCopy.filter((value) => search ? value.name.toLowerCase() === search.toLowerCase() : value);
 
+    const vendor = get().vendors.find((value) => value.name == search);
+
     if (search && vendors.length) {
 
       const point = get().point;
@@ -525,6 +609,8 @@ const useStore = create((set, get) => ({
         vendor_itemsCopy: res.items,
         users: res.users,
         docs: docs.billings,
+        doc: '',
+        vendor: vendor,
       });
 
     } else {
@@ -549,7 +635,7 @@ const useStore = create((set, get) => ({
 
     set({
       search_vendor: search,
-      vendors,
+      //vendors,
     });
   },
 
@@ -713,17 +799,19 @@ const useStore = create((set, get) => ({
       get().changeKinds(value);
     }
 
-    if(data === 'type' && parseInt(value) === 2){
-      setTimeout( () => {
+    if(data === 'type'){
+
+      if( parseInt(value) === 2 ){
+        setTimeout( () => {
+          set({
+            DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions_bill_factur)
+          })
+        }, 1000 )
+      }else{
         set({
-          DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions)
+          DropzoneDop: null
         })
-      }, 1000 )
-      
-    } else {
-      set({
-        DropzoneDop: null
-      })
+      }
     }
 
     set({
@@ -789,6 +877,14 @@ const useStore = create((set, get) => ({
 
   closeAlert: () => {
     set({ openAlert: false });
+  },
+
+  showAlert: (status, text) => {
+    set({ 
+      openAlert: true,
+      err_status: status,
+      err_text: text
+    });
   },
 
   addItem: () => {
@@ -987,8 +1083,6 @@ const useStore = create((set, get) => ({
   }
 
 }));
-
-
 
 function FormVendorItems(){
 
@@ -1300,6 +1394,8 @@ function VendorItemsTableView(){
 function FormHeader_new({ page, type_edit }){
 
   const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
+
+  //doc
 
   return (
     <>
@@ -2059,40 +2155,22 @@ class Billing_Edit_ extends React.Component {
   }
 
   async componentDidMount() {
-
-    
-
     const res = await this.getData('get_all_for_new');
-    //const points = await this.getData('get_points');
-
-    //const point = points.points.find(point => point.id === res.bill.point_id);
-
-    const data = {
-      //point_id: bill['point_id'],
-      vendor_id: res?.vendors[0]?.id,
-    }
-
+    
     this.setState({
       acces: res?.acces,
     });
 
-    //const items = await this.getData('get_vendor_items', data);
-    //const docs = await this.getData('get_base_doc', data);
-
-    const { getDataBill, setAcces, setPoints } = this.props.store;
+    const { setAcces, setPoints } = this.props.store;
 
     setAcces(res?.acces);
     setPoints(res?.points)
-    //getDataBill(res, null, items.items, docs);
-
+    
     document.title = 'Накладные';
 
-    if( parseInt(res?.acces?.photo) === 1 ){
-      setTimeout( () => {
-        this.myDropzone = new Dropzone("#img_bill", dropzoneOptions);
-      }, 500 )
-      
-    }
+    setTimeout( () => {
+      this.myDropzone = new Dropzone("#img_bill", dropzoneOptions_bill);
+    }, 500 )
   }
 
   getData = (method, data = {}) => {
@@ -2142,13 +2220,11 @@ class Billing_Edit_ extends React.Component {
   };
 
   async saveNewBill () {
-    const {number, point, vendors, date, number_factur, date_factur, type, doc, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
+    const {vendor, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
 
     const dateBill = date ? dayjs(date).format('YYYY-MM-DD') : '';
     const dateFactur = date_factur ? dayjs(date_factur).format('YYYY-MM-DD') : '';
     const dateItems = date_items ? dayjs(date_items).format('YYYY-MM-DD') : '';
-
-    
 
     const items = bill_items.reduce((newItems, item) => {
 
@@ -2174,6 +2250,28 @@ class Billing_Edit_ extends React.Component {
       return newItems;
     }, [])
 
+    if( !this.myDropzone || this.myDropzone['files'].length === 0 ) {
+      showAlert(false, 'Нет изображений документа');
+
+      return ;
+    }
+
+    console.log( 'DropzoneDop', DropzoneDop )
+
+    if( parseInt(type) == 2 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
+      showAlert(false, 'Нет изображений счет-фактуры');
+
+      return ;
+    }
+
+    if( parseInt(type) == 1 ){
+      this.myDropzone.options.url = url_bill_ex;
+      type_bill = 'bill_ex';
+    }else{
+      this.myDropzone.options.url = url_bill;
+      type_bill = 'bill';
+    }
+
     const data = {
       doc,
       type,
@@ -2188,38 +2286,31 @@ class Billing_Edit_ extends React.Component {
       date_items: dateItems,
       date_factur: dateFactur,
       point_id: point?.id ?? '',
-      vendor_id: vendors.length === 1 ? vendors[0]?.id : ''
+      vendor_id: vendor?.id,
+      imgs: this.myDropzone['files'].length
     }
 
     const res = await this.getData('save_new', data);
 
-    console.log('saveNewBill res', res)
-
-    //
-
     if (res.st === true) {
 
       if( res?.text && res.text.length > 0 ) {
-        this.setState({
-          openAlert: true,
-          err_status: res.st,
-          err_text: res.text
-        });
+
+        showAlert(res.st, res.text);
       }
 
       global_point_id = point?.id
       global_new_bill_id = res.bill_id;
-      //res?.bill_id
-
+      
       this.myDropzone.processQueue();
+
+      if( parseInt(type) == 2 && DropzoneDop && DropzoneDop['files'].length > 0 ){
+        DropzoneDop.processQueue();
+      }
 
     } else {
 
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text
-      });
+      showAlert(res.st, res.text);
 
     }
 
