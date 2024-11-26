@@ -43,7 +43,9 @@ export default function MyApp(props) {
         
         <Header isHeader={isHeader} suppressHydrationWarning />
         
-        <Component {...pageProps} />
+        <div className={font.variable}>
+          <Component {...pageProps} />
+        </div>
         
       </ThemeProvider>
     </AppRouterCacheProvider>

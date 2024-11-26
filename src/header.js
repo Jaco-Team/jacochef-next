@@ -31,9 +31,7 @@ import api from '@/src/api';
 
 import Cookies from 'js-cookie';
 
-
-import axios from "axios";
-
+import { font } from "@/src/theme";
 
 export default function Header() {
   const [ isOpenMenu, setIsOpenMenu ] = useState(false);
@@ -82,7 +80,7 @@ export default function Header() {
 
   return (
     <>
-      <AppBar position="fixed">
+      <AppBar position="fixed" className={font.variable}>
         <Toolbar>
           <IconButton
             edge="start"
@@ -108,7 +106,7 @@ export default function Header() {
         open={ isOpenMenu }
         onClose={ openMenu }
         onOpen={ openMenu }
-        className='LeftMenu'
+        className={'LeftMenu '+font.variable}
       >
         
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: 10 }}>
