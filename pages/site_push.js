@@ -29,9 +29,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MyAutocomplite, MyDatePickerNew, MySelect, MyTimePicker, MyTextInput, MyCheckBox, MyAlert, formatDate } from '@/ui/elements';
 
-import queryString from 'query-string';
-
 import dayjs from 'dayjs';
+
+import { api } from '@/src/api_new';
 
 class SitePush_Modal extends React.Component {
 
@@ -522,47 +522,23 @@ class SitePush_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
+    
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
-  };
+
+    return res;
+  }
 
   handleResize() {
     if (window.innerWidth < 601) {
