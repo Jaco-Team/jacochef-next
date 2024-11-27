@@ -21,9 +21,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MySelect, MyDatePickerNew, formatDate } from '@/ui/elements';
 
-import queryString from 'query-string';
-
 import dayjs from 'dayjs';
+
+import { api } from '@/src/api_new';
 
 class StatTimeOrders_Table extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -69,7 +69,7 @@ class StatTimeOrders_Table extends React.Component {
                 <TableRow key={key} hover>
                   <TableCell
                     style={{ backgroundColor: ItemTab === '1' ? item.my_color_day ? this.checkColor(item.my_color_day) : null : null,
-                    }}
+                             color: ItemTab === '1' ? item.my_color_day ? '#fff' : '#000' : '#000'}}
                   >
                     {item.user_name}
                   </TableCell>
@@ -175,47 +175,23 @@ class StatTimeOrders_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
+    
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
-  };
+
+    return res;
+  }
 
   changePoint(event) {
     const point = event.target.value;
@@ -257,7 +233,7 @@ class StatTimeOrders_ extends React.Component {
   getDataCellOrder(h, key) {
     const data = this.state.data;
 
-    const item = data.orders.find((item) => item.h === h);
+    const item = data.orders.find((item) => parseInt(item.h) === parseInt(h));
 
     return item ? 
     <TableCell key={key} sx={{ zIndex: 30, minWidth: 50, fontWeight: 'bold', border: 'none' }}>{item.time_h}</TableCell> 
@@ -268,7 +244,7 @@ class StatTimeOrders_ extends React.Component {
   getDataCellCount(h, key) {
     const data = this.state.data;
 
-    const item = data.orders.find((item) => item.h === h);
+    const item = data.orders.find((item) => parseInt(item.h) === parseInt(h));
 
     return item ? 
       <TableCell key={key} sx={{ zIndex: 30, minWidth: 50, fontWeight: 'bold', border: 'none' }}>{item.count_users}</TableCell>
