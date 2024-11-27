@@ -11,6 +11,8 @@ import theme from '@/src/theme';
 import '@/styles/global.scss'
 import '@/styles/tender.scss'
 
+import { font } from "@/src/theme";
+
 const Header = dynamic(() => import('@/src/header'), { ssr: false })
 
 export default function MyApp(props) {
@@ -34,9 +36,13 @@ export default function MyApp(props) {
         <link rel="icon" href="/images/favicon.ico" sizes="any" />
       </Head>
       <ThemeProvider theme={theme}>
+        
         <Header isHeader={isHeader} suppressHydrationWarning />
         
-        <Component {...pageProps} />
+        <div className={font.variable}>
+          <Component {...pageProps} />
+        </div>
+        
       </ThemeProvider>
     </AppRouterCacheProvider>
   );

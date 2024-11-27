@@ -48,7 +48,7 @@ const text = {
   'vozvrat_fiz': 'Проставляется бухгалтерией в случае возврата из кассы ранее внесенного займа руководителем',
   'vozvrat_driver': 'Проставляется управляющим, которую сдает руководителю',
   'otchet_fiz': 'Проставляется управляющим с случае, если он взял из кассы д/с для покупки и отчитаться по авансовому отчету',
-  'otchet_driver': 'Проставляется управляющим с случае, если он взял из кассы д/с для покупки и отчитаться по авансовому отчету',
+  'otchet_driver': 'Все наличные расходы управляющего за месяц',
   'cash_from_bank_fiz': 'Проставляется бухгалтерией, после того как управляющий снимет наличные в банк, например на выдачу з/платы',
   'cash_from_bank_driver': 'Проставляется бухгалтерией, после того как управляющий снимет наличные в банк, например на выдачу з/платы',
 };
@@ -431,26 +431,54 @@ class MainTable extends React.Component {
               />
             }
 
-            { this.props?.vidacha_otchet_is_edit === false ? false :
-              <MainTableRow 
-                label={'Выдача в подотчет'}
-                is_edit={this.props?.vidacha_otchet_is_edit}
-                is_open={this.props?.vidacha_otchet_is_open}
-                type={'vidacha_otchet'}
-                table={this.props.table}
-                //data_plus={this.props?.vedomosm_zp}
-                data_minus={this.props?.vidacha_otchet}
-                data_hist={this.props?.vidacha_otchet_arr}
-                tooltip={this.props.table == 'fiz' ? text.otchet_fiz : text.otchet_driver}
+            { this.props.table == 'fiz' ?
+              this.props?.vidacha_otchet_is_edit === false ? false :
+                <MainTableRow 
+                  label={'Выдача в подотчет'}
+                  is_edit={this.props?.vidacha_otchet_is_edit}
+                  is_open={this.props?.vidacha_otchet_is_open}
+                  type={'vidacha_otchet'}
+                  table={this.props.table}
+                  //data_plus={this.props?.vedomosm_zp}
+                  data_minus={this.props?.vidacha_otchet}
+                  data_hist={this.props?.vidacha_otchet_arr}
+                  tooltip={this.props.table == 'fiz' ? text.otchet_fiz : text.otchet_driver}
 
-                toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-                addData={this.props.addData.bind(this)}
+                  toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+                  toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+                  addData={this.props.addData.bind(this)}
 
-                is_delete={this.props?.vidacha_otchet_is_edit}
-                deleteData={this.props.deleteData.bind(this)}
-                updateData={this.props.updateData.bind(this)}
-              />
+                  is_delete={this.props?.vidacha_otchet_is_edit}
+                  deleteData={this.props.deleteData.bind(this)}
+                  updateData={this.props.updateData.bind(this)}
+                />
+                  :
+                false
+            }
+
+            { this.props.table == 'driver_cash' ?
+              this.props?.vidacha_otchet_is_edit === false ? false :
+                <MainTableRow 
+                  label={'Расходы управляющего'}
+                  is_edit={this.props?.vidacha_otchet_is_edit}
+                  is_open={this.props?.vidacha_otchet_is_open}
+                  type={'vidacha_otchet'}
+                  table={this.props.table}
+                  //data_plus={this.props?.vedomosm_zp}
+                  data_minus={this.props?.vidacha_otchet}
+                  data_hist={this.props?.vidacha_otchet_arr}
+                  tooltip={this.props.table == 'fiz' ? text.otchet_fiz : text.otchet_driver}
+
+                  toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+                  toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+                  addData={this.props.addData.bind(this)}
+
+                  is_delete={this.props?.vidacha_otchet_is_edit}
+                  deleteData={this.props.deleteData.bind(this)}
+                  updateData={this.props.updateData.bind(this)}
+                />
+                  :
+                false
             }
             
             
