@@ -44,7 +44,210 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import HorizontalSplitIcon from '@mui/icons-material/HorizontalSplit';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+
 import Draggable from 'react-draggable';
+
+const types = [
+  {
+    "name": "Счет",
+    "id": "1"
+  },
+  {
+    "name": "Поступление",
+    "id": "2"
+  },
+  {
+    "name": "Коррекция",
+    "id": "3"
+  },
+  {
+    "name": "Возврат",
+    "id": "4"
+  },
+]
+
+function getOrientation(file, callback) {
+	var reader = new FileReader();
+  
+	reader.onload = function(event) {
+    var view = new DataView(event.target.result);
+
+    if (view.getUint16(0, false) != 0xFFD8) return callback(-2);
+
+    var length = view.byteLength,
+      offset = 2;
+
+    while (offset < length) {
+      var marker = view.getUint16(offset, false);
+      offset += 2;
+
+      if (marker == 0xFFE1) {
+        if (view.getUint32(offset += 2, false) != 0x45786966) {
+          return callback(-1);
+        }
+
+        var little = view.getUint16(offset += 6, false) == 0x4949;
+        offset += view.getUint32(offset + 4, little);
+        var tags = view.getUint16(offset, little);
+        offset += 2;
+  
+        for (var i = 0; i < tags; i++)
+        if (view.getUint16(offset + (i * 12), little) == 0x0112)
+          return callback(view.getUint16(offset + (i * 12) + 8, little));
+
+      }else if ((marker & 0xFF00) != 0xFF00) break;
+
+      else offset += view.getUint16(offset, false);
+		}
+		  
+	  return callback(-1);
+	};
+  
+	reader.readAsArrayBuffer(file.slice(0, 64 * 1024));
+};
+
+var i = 0;
+var global_new_bill_id = 0;
+var global_point_id = 0;
+var type_bill = 'bill';
+var bill_type = 0;
+const url_bill = "https://jacochef.ru/src/img/billing_items/upload.php";
+const url_bill_ex = "https://jacochef.ru/src/img/bill_ex_items/upload.php";
+
+var dropzoneOptions_bill = {
+  autoProcessQueue: false,
+  autoQueue: true,
+  maxFiles: 1,
+  timeout: 0,
+  parallelUploads: 10,
+  acceptedFiles: "image/jpeg,image/png,image/gif,.pdf",
+  addRemoveLinks: true,
+  
+  url: url_bill,
+
+  init: function() {
+
+    var myDropzone = this;
+
+    this.on("queuecomplete", function(data){
+      var check_img = false;
+
+      myDropzone['files'].map(function(item, key){
+        if( item['status'] == "error" ){
+          check_img = true;
+        }
+      })
+      
+      if( check_img ){
+        return;
+      }
+      
+      //console.log( 'queuecomplete' )
+      //$('#modal_message').addClass('modal_true');
+      //show_modal_message('Результат операции', 'Накладная успешно сохранена');
+      //window.location.pathname = '/billing';
+
+      if( type_bill == 'bill' ){
+
+      }else{
+        window.location.pathname = '/billing';
+      }
+    })
+    
+    this.on("sending", function(file, xhr, data) {
+      //var point = document.getElementById('point_id').value;
+
+      i++;
+      var file_type = (file.name).split('.');
+      file_type = file_type[file_type.length - 1];
+      file_type = file_type.toLowerCase();
+
+      if( type_bill == 'bill' ){
+        data.append("filetype", 'bill_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
+        data.append("type_bill", 'bill');
+      }else{
+        data.append("filetype", 'bill_ex_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
+      }
+      
+      
+      //'bill_file_0_point_id_1_bill_id_9114.png'
+      
+      if( file_type != 'pdf' ){
+        getOrientation(file, function(orientation) {
+          data.append("orientation", orientation);
+        })
+      }
+    });
+  },
+};
+
+var dropzoneOptions_bill_factur = {
+  autoProcessQueue: false,
+  autoQueue: true,
+  maxFiles: 1,
+  timeout: 0,
+  parallelUploads: 10,
+  acceptedFiles: "image/jpeg,image/png,image/gif,.pdf",
+  addRemoveLinks: true,
+  
+  url: url_bill,
+
+  init: function() {
+
+    var myDropzone = this;
+
+    this.on("queuecomplete", function(data){
+      var check_img = false;
+
+      myDropzone['files'].map(function(item, key){
+        if( item['status'] == "error" ){
+          check_img = true;
+        }
+      })
+      
+      if( check_img ){
+        return;
+      }
+      
+      //console.log( 'queuecomplete' )
+      //$('#modal_message').addClass('modal_true');
+      //show_modal_message('Результат операции', 'Накладная успешно сохранена');
+      //window.location.pathname = '/billing';
+
+      window.location.pathname = '/billing';
+    })
+    
+    this.on("sending", function(file, xhr, data) {
+      //var point = document.getElementById('point_id').value;
+
+      i++;
+      var file_type = (file.name).split('.');
+      file_type = file_type[file_type.length - 1];
+      file_type = file_type.toLowerCase();
+
+      if( type_bill== 'bill' ){
+        data.append("filetype", 'bill_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
+        data.append("type_bill", 'factur');
+      }else{
+        data.append("filetype", 'bill_ex_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
+      }
+      
+      
+      //'bill_file_0_point_id_1_bill_id_9114.png'
+      
+      if( file_type != 'pdf' ){
+        getOrientation(file, function(orientation) {
+          data.append("orientation", orientation);
+        })
+      }
+    });
+  },
+};
 
 const useStore = create((set, get) => ({
   isPink: false,
@@ -86,7 +289,7 @@ const useStore = create((set, get) => ({
   vendors: [],
   vendorsCopy: [],
 
-  types: [],
+  types: types,
   type: '',
 
   fullScreen: false,
@@ -120,17 +323,24 @@ const useStore = create((set, get) => ({
   user: [],
 
   comment: '',
-  comment_bux: '',
-  delete_text: '',
 
   is_horizontal: false,
   is_vertical: false,
+
+  DropzoneMain: null,
+  DropzoneDop: null,
 
   set_position: (is_horizontal, is_vertical) => {
     set({
       is_horizontal: is_horizontal,
       is_vertical: is_vertical,
     });
+  },
+
+  setPoints: points => {
+    set({
+      points
+    })
   },
 
   setAcces: acces => {
@@ -241,6 +451,7 @@ const useStore = create((set, get) => ({
       vendor_name: res?.vendors[0]?.name ?? '',
       bill_list: res?.bill_hist,
       imgs_bill: res?.bill_imgs,
+      imgs_factur: res?.factur_imgs,
       allPrice,
       allPrice_w_nds,
       bill: res?.bill,
@@ -254,14 +465,27 @@ const useStore = create((set, get) => ({
       users: res?.users,
       user: res?.bill_users,
       types: types,
-      type: parseInt(res?.bill?.type_bill) == 1 ? 2 : 4,
-      doc_base_id: parseInt(res?.bill?.type_doc ?? 0) === 0 ? '' : parseInt(res?.bill?.type_doc),
+      //type: parseInt(res?.bill?.type_bill) == 1 ? 2 : 4,
+      type: res?.bill?.type,
+      //doc_base_id: parseInt(res?.bill?.type_doc ?? 0) === 0 ? '' : parseInt(res?.bill?.type_doc),
+      doc_base_id: res?.bill?.doc_base_id,
       is_load_store: false,
 
       number_factur: res.bill?.number_factur,
-      date_factur: res.bill?.date_factur,
+      date_factur: res.bill?.date_factur && res.bill?.date_factur !== "0000-00-00" ? dayjs(res.bill?.date_factur) : null,
     });
 
+    setTimeout( () => {
+      set({
+        DropzoneMain: new Dropzone("#img_bill", dropzoneOptions_bill),
+      })
+
+      if( parseInt(res?.bill?.type) == 2 ){
+        set({
+          DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions_bill_factur)
+        })
+      }
+    }, 500 )
 
     get().changeKinds(res?.bill?.type_doc);
   },
@@ -330,7 +554,7 @@ const useStore = create((set, get) => ({
       
       set({
         bill_items: [],
-        bill_items_doc: [],
+        //bill_items_doc: [],
         search_item: '',
         vendor_items: res.items,
         vendor_itemsCopy: res.items,
@@ -389,6 +613,8 @@ const useStore = create((set, get) => ({
 
     const vendors = vendorsCopy.filter((value) => search ? value.name.toLowerCase() === search.toLowerCase() : value);
 
+    const vendor = get().vendors.find((value) => value.name == search);
+
     if (search && vendors.length) {
 
       const point = get().point;
@@ -406,6 +632,8 @@ const useStore = create((set, get) => ({
         vendor_itemsCopy: res.items,
         users: res.users,
         docs: docs.billings,
+        doc: '',
+        vendor: vendor,
       });
 
     } else {
@@ -430,13 +658,14 @@ const useStore = create((set, get) => ({
 
     set({
       search_vendor: search,
-      vendors,
+      //vendors,
     });
   },
 
   search_point: async (event, name) => {
     const search = event.target.value ? event.target.value : name ? name : '';
 
+    const type = get().type;
     const points = get().points;
     const point = points.find(item => item.name === search);
     
@@ -460,10 +689,11 @@ const useStore = create((set, get) => ({
       doc: ''
     });
 
-    if(point) {
+    if(point && type) {
   
         const obj = {
-          point_id: point.id
+          point_id: point.id,
+          type
         }
   
         const res = await get().getData('get_vendors', obj)
@@ -542,58 +772,60 @@ const useStore = create((set, get) => ({
     get().handleResize();
 
     const value = event.target.value;
+    const point = get().point;
     
-    if(data === 'type' && (parseInt(value) === 1 || parseInt(value) === 2)) {
+    console.log( data, value, point )
 
-      const point = get().point;
-      const vendors = get().vendors;
+    if(data === 'type' && point) {
 
-        if(point && vendors.length === 1) {
+      // const vendors = get().vendors;
 
-          const data = {
-            point_id: point.id,
-            vendor_id: vendors[0]?.id
-          }
+        // if(point) {
           
-          const res = await get().getData('get_vendor_items', data);
+          const obj = {
+            point_id: point.id,
+            type: value
+          }
+
+          const res = await get().getData('get_vendors', obj)
+          
+          console.log( 'res', res )
+
+          // const data = {
+          //   point_id: point.id,
+          //   vendor_id: vendors[0]?.id
+          // }
+
+          // const res = await get().getData('get_vendor_items', data);
           
           set({
-            bill_items: [],
-            bill_items_doc: [],
-            vendor_items: res.items,
-            vendor_itemsCopy: res.items,
-            users: res.users,
-            search_item: '',
-            all_ed_izmer: [],
-            pq: '',
-            count: '',
-            fact_unit: '',
-            summ: '',
-            sum_w_nds: '',
-            doc: '',
+            vendors: res.vendors,
+            vendorsCopy: res.vendors,
           });
-        }
+        // }
     }
 
     if(data === 'type' && (parseInt(value) === 3 || parseInt(value) === 2)) {
       get().changeKinds(value);
     }
 
-    // if(data === 'type' && parseInt(value) === 2){
-    //   setTimeout( () => {
-    //     set({
-    //       DropzoneDop: new Dropzone("#img_bill_type", this.dropzoneOptions)
-    //     })
-    //   }, 500 )
-      
-    // } else {
-    //   set({
-    //     DropzoneDop: null
-    //   })
-    // }
+    if(data === 'type'){
+
+      if( parseInt(value) === 2 ){
+        setTimeout( () => {
+          set({
+            DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions_bill_factur)
+          })
+        }, 1000 )
+      }else{
+        set({
+          DropzoneDop: null
+        })
+      }
+    }
 
     set({
-      [data]: event.target.value
+      [data]: value
     });
   },
 
@@ -655,6 +887,14 @@ const useStore = create((set, get) => ({
 
   closeAlert: () => {
     set({ openAlert: false });
+  },
+
+  showAlert: (status, text) => {
+    set({ 
+      openAlert: true,
+      err_status: status,
+      err_text: text
+    });
   },
 
   addItem: () => {
@@ -854,24 +1094,142 @@ const useStore = create((set, get) => ({
 
 }));
 
-const types = [
-  {
-    "name": "Счет",
-    "id": "1"
-  },
-  {
-    "name": "Поступление",
-    "id": "2"
-  },
-  {
-    "name": "Коррекция",
-    "id": "3"
-  },
-  {
-    "name": "Возврат",
-    "id": "4"
-  },
-]
+function FormHeader_new({ page, type_edit }){
+
+  const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
+
+  //doc
+
+  return (
+    <>
+      {page === 'new' ? 
+        <Grid item xs={12} sm={4}>
+          <MyAutocomplite2
+            data={points}
+            value={point_name}
+            multiple={false}
+            disabled={ type_edit === 'edit' ? false : true }
+            func={ (event, name) => search_point(event, name) }
+            onBlur={ (event, name) => search_point(event, name) }
+            label="Точка"
+          />
+        </Grid>
+        :
+        <Grid item xs={12} sm={4}>
+          <MyTextInput label="Точка" disabled={ type_edit === 'edit' ? false : true } value={point_name} className='disabled_input'/>
+        </Grid>
+      }
+
+      <Grid item xs={12} sm={4}>
+        <MySelect
+          data={types}
+          value={type}
+          multiple={false}
+          is_none={false}
+          disabled={ type_edit === 'edit' ? false : true }
+          func={ event => changeData('type', event) }
+          label="Тип"
+        />
+      </Grid>
+
+      {page === 'new' ? 
+        <Grid item xs={12} sm={4}>
+          <MyAutocomplite2
+            label="Поставщик"
+            freeSolo={true}
+            multiple={false}
+            data={vendors}
+            value={search_vendor}
+            disabled={ type_edit === 'edit' ? false : true }
+            func={ (event, name) => search_vendors(event, name) }
+            onBlur={ (event, name) => search_vendors(event, name) }
+          />
+        </Grid>
+        :
+        <Grid item xs={12} sm={4}>
+          <MyTextInput label="Поставщик" disabled={ type_edit === 'edit' ? false : true } value={vendor_name} className='disabled_input'/>
+        </Grid>
+      }
+
+      {parseInt(type) === 2 || parseInt(type) === 3 ? (
+        <>
+          <Grid item xs={12} sm={4}>
+            <MySelect
+              data={kinds}
+              value={doc_base_id}
+              multiple={false}
+              is_none={false}
+              disabled={ type_edit === 'edit' ? false : true }
+              func={ event => changeData('doc_base_id', event) }
+              label="Документ"
+            />
+          </Grid>
+          {parseInt(type) === 2 ?  <Grid item xs={12} sm={4}></Grid> : null}
+        </>
+      ) : null}
+
+      {parseInt(type) === 3 || parseInt(type) === 4 ? (
+        <>
+          <Grid item xs={12} sm={4}>
+            <MyAutocomplite2
+              data={docs}
+              multiple={false}
+              value={doc}
+              disabled={ type_edit === 'edit' ? false : true }
+              func={ (event, name) => search_doc(event, name) }
+              onBlur={ (event, name) => search_doc(event, name) }
+              label="Документ основание"
+            />
+          </Grid>
+          {parseInt(type) === 4 ?  <Grid item xs={12} sm={4}></Grid> : null}
+        </>
+      ) : null}
+
+      <Grid item xs={12} sm={6}>
+        <MyTextInput
+          label="Номер документа"
+          disabled={ type_edit === 'edit' ? false : true }
+          value={number}
+          func={ (event) => changeInput(event, 'number') }
+        />
+      </Grid>
+
+      {parseInt(type) === 2 && !fullScreen ? 
+        <Grid item xs={12} sm={6}>
+          <MyTextInput
+            label="Номер счет-фактуры"
+            disabled={ type_edit === 'edit' ? false : true }
+            value={number_factur}
+            func={ (event) => changeInput(event, 'number_factur') }
+          />
+        </Grid>
+        : null
+      }
+
+      <Grid item xs={12} sm={6}>
+        <MyDatePickerNew
+          label="Дата документа"
+          disabled={ type_edit === 'edit' ? false : true }
+          value={date}
+          func={ (event) => changeDateRange(event, 'date') }
+        />
+      </Grid>
+
+      {parseInt(type) === 2 && !fullScreen ? 
+        <Grid item xs={12} sm={6}>
+          <MyDatePickerNew
+            label="Дата счет-фактуры"
+            disabled={ type_edit === 'edit' ? false : true }
+            value={date_factur}
+            func={ (event) => changeDateRange(event, 'date_factur') }
+          />
+        </Grid>
+        : null
+      }
+    </>
+  )
+}
+
 
 function FormVendorItems(){
 
@@ -1180,139 +1538,6 @@ function VendorItemsTableView(){
   )
 }
 
-function FormHeader_new({ page, type_edit, type_doc }){
-
-  const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
-
-  return (
-    <>
-      {page === 'new' ? 
-        <Grid item xs={12} sm={4}>
-          <MyAutocomplite2
-            data={points}
-            value={point_name}
-            multiple={false}
-            disabled={ type_edit === 'edit' ? false : true }
-            func={ (event, name) => search_point(event, name) }
-            onBlur={ (event, name) => search_point(event, name) }
-            label="Точка"
-          />
-        </Grid>
-        :
-        <Grid item xs={12} sm={4}>
-          <MyTextInput label="Точка" disabled={ type_edit === 'edit' ? false : true } value={point_name} className='disabled_input'/>
-        </Grid>
-      }
-
-      <Grid item xs={12} sm={4}>
-        <MySelect
-          data={types}
-          value={type}
-          multiple={false}
-          is_none={false}
-          disabled={ type_edit === 'edit' ? false : true }
-          func={ event => changeData('type', event) }
-          label="Тип"
-        />
-      </Grid>
-
-      {page === 'new' ? 
-        <Grid item xs={12} sm={4}>
-          <MyAutocomplite2
-            label="Поставщик"
-            freeSolo={true}
-            multiple={false}
-            data={vendors}
-            value={search_vendor}
-            disabled={ type_edit === 'edit' ? false : true }
-            func={ (event, name) => search_vendors(event, name) }
-            onBlur={ (event, name) => search_vendors(event, name) }
-          />
-        </Grid>
-        :
-        <Grid item xs={12} sm={4}>
-          <MyTextInput label="Поставщик" disabled={ type_edit === 'edit' ? false : true } value={vendor_name} className='disabled_input'/>
-        </Grid>
-      }
-
-      {(parseInt(type) === 2 || parseInt(type) === 3) && type_doc === 'bill' && doc_base_id ? (
-        <>
-          <Grid item xs={12} sm={4}>
-            <MySelect
-              data={kinds}
-              value={doc_base_id}
-              multiple={false}
-              is_none={false}
-              disabled={ type_edit === 'edit' ? false : true }
-              func={ event => changeData('doc_base_id', event) }
-              label="Документ"
-            />
-          </Grid>
-          {parseInt(type) === 2 ?  <Grid item xs={12} sm={4}></Grid> : null}
-        </>
-      ) : null}
-
-      {(parseInt(type) === 3 || parseInt(type) === 4) && type_doc === 'bill' ? (
-        <>
-          <Grid item xs={12} sm={4}>
-            <MyAutocomplite2
-              data={docs}
-              multiple={false}
-              value={doc}
-              disabled={ type_edit === 'edit' ? false : true }
-              func={ (event, name) => search_doc(event, name) }
-              onBlur={ (event, name) => search_doc(event, name) }
-              label="Документ основание"
-            />
-          </Grid>
-          {parseInt(type) === 4 ?  <Grid item xs={12} sm={4}></Grid> : null}
-        </>
-      ) : null}
-
-      <Grid item xs={12} sm={6}>
-        <MyTextInput
-          label="Номер документа"
-          disabled={ type_edit === 'edit' ? false : true }
-          value={number}
-          func={ (event) => changeInput(event, 'number') }
-        />
-      </Grid>
-
-      {parseInt(type) === 2 && !fullScreen && type_doc === 'bill' ? 
-        <Grid item xs={12} sm={6}>
-          <MyTextInput
-            label="Номер счет-фактуры"
-            disabled={ type_edit === 'edit' ? false : true }
-            value={number_factur}
-            func={ (event) => changeInput(event, 'number_factur') }
-          />
-        </Grid>
-        : null
-      }
-
-      <Grid item xs={12} sm={6}>
-        <MyDatePickerNew
-          label="Дата документа"
-          disabled={ type_edit === 'edit' ? false : true }
-          value={date}
-          func={ (event) => changeDateRange(event, 'date') }
-        />
-      </Grid>
-
-      {parseInt(type) === 2 && !fullScreen && type_doc === 'bill' ? 
-        <Grid item xs={12} sm={6}>
-          <MyDatePickerNew
-            label="Дата счет-фактуры"
-            disabled={ type_edit === 'edit' ? false : true }
-            value={date_factur}
-            func={ (event) => changeDateRange(event, 'date_factur') }
-          />
-        </Grid>
-        : null
-      }
-    </>
-  )
-}
 
 function FormImage_new({ type_edit, type_doc }){
 
@@ -1948,7 +2173,9 @@ class Billing_Edit_ extends React.Component {
       is_load: false,
 
       acces: null,
-      type_doc: ''
+      type_doc: '',
+
+      modelCheckDel: false
     };
   }
 
@@ -2124,6 +2351,48 @@ class Billing_Edit_ extends React.Component {
     // }
   }
 
+  async saveDelDoc () {
+    const { bill, point } = this.props.store;
+
+    if( this.state.delText.length <= 3 ) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Надо указать причину удаления'
+      });
+
+      return;
+    }
+
+    const data = {
+      bill_id: bill.id,
+      point_id: point?.id,
+      del_res: this.state.delText
+    }
+
+    console.log('saveDelDoc data', data);
+
+    const res = await this.getData('save_bill_del', data);
+
+    if (res.st) {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text
+      });
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text
+      });
+
+    }
+  }
+
   render() {
 
     const { isPink, openAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical } = this.props.store;
@@ -2149,6 +2418,24 @@ class Billing_Edit_ extends React.Component {
           status={err_status}
           text={err_text}
         />
+
+        <Dialog
+          open={this.state.modelCheckDel}
+          onClose={ () => { this.setState({ modelCheckDel: false }) } }
+        >
+          <DialogTitle>Подтверждение</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 20 }}>
+              Несохраненные данные не будут применены
+            </DialogContentText>
+
+            <MyTextInput label="Причина удаления" value={this.state.delText} func={ event => { this.setState({ delText: event.target.value }) } } />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={ () => { this.setState({ modelCheckDel: false }) } }>Отмена</Button>
+            <Button onClick={ this.saveDelDoc.bind(this) }>Удалить</Button>
+          </DialogActions>
+        </Dialog>
 
         <Grid container spacing={3} mb={10} style={{ marginTop: '64px', maxWidth: is_vertical ? '50%' : '100%', marginBottom: is_horizontal ? 700 : 30 }}>
 
@@ -2189,7 +2476,7 @@ class Billing_Edit_ extends React.Component {
           { parseInt(this.state.acces?.only_delete) === 0 ? false :
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth style={{ height: '100%' }}
-                //onClick={this.saveBill.bind(this)}
+                onClick={ () => { this.setState({ modelCheckDel: true }) } }
               >
                 Удалить
               </Button>
