@@ -137,6 +137,8 @@ export class MyAutocomplite2 extends React.PureComponent {
     };
   }
   
+  
+
   render(){
     if( this.props.id && this.props.id == 'promoName' ){
       return (
@@ -152,6 +154,7 @@ export class MyAutocomplite2 extends React.PureComponent {
             value={this.props.value}
             onChange={this.props.func}
             //filterSelectedOptions
+            disabled={ this.props.disabled && this.props.disabled === true ? true : false }
             multiple={ this.props.multiple && this.props.multiple === true ? true : false }
             //isOptionEqualToValue={(option, value) => option.id === value.id}
             renderInput={(params) => (
@@ -183,7 +186,7 @@ export class MyAutocomplite2 extends React.PureComponent {
             onChange={this.props.func}
             filterSelectedOptions
             multiple={ this.props.multiple && this.props.multiple === true ? true : false }
-       
+            disabled={ this.props.disabled && this.props.disabled === true ? true : false }
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -233,7 +236,7 @@ export class MyAutocomplite2 extends React.PureComponent {
 
             return filtered;
           }}
-
+          disabled={ this.props.disabled && this.props.disabled === true ? true : false }
           renderInput={(params) => (
             <TextField
               {...params}

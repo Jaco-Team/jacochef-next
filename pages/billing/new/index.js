@@ -261,6 +261,8 @@ const useStore = create((set, get) => ({
   summ: '',
   sum_w_nds: '',
 
+  err_items: [],
+
   allPrice: 0,
   allPrice_w_nds: 0,
 
@@ -978,6 +980,32 @@ const useStore = create((set, get) => ({
     return nds[Math.round(value)] ? nds[Math.round(value)] : false;
   },
 
+  check_price_item_new: () => {
+		var err_items = [];
+    var bill_items = get().bill_items;		
+    var vendor_items = get().vendor_items;
+
+    bill_items.map((item, key) => {
+      let one_price_bill = parseFloat(item['one_price_bill']);
+      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id'])).price;
+      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id'])).vend_percent;
+
+      let one_price_max = parseFloat(one_price_vend) + ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
+			let one_price_min = parseFloat(one_price_vend) - ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
+
+      if(one_price_bill >= one_price_max || one_price_bill <= one_price_min || !one_price_bill || !one_price_max || !one_price_min || one_price_bill == 0 ){
+        err_items.push(item);
+
+        bill_items[ key ].color = true;
+      }
+    })
+
+    set({
+      bill_items,
+      err_items
+    })
+	},
+
   check_price_item: (price, percent, summ, pq) => {
 
     const res = Number(price) / 100 * Number(percent);
@@ -1004,26 +1032,26 @@ const useStore = create((set, get) => ({
         if (type === 'pq') {
           item.fact_unit = (Number(item[type]) * Number(item.count)).toFixed(2);
 
-          const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
+          /*const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
   
           if(range_price_item) {
             item.color = false;
           } else {
             item.color = true;
-          }
+          }*/
 
         } 
 
         if (value && value !== '0' && value[0] !== '0' && type === 'count') {
 
           item.fact_unit = (Number(item[type]) * Number(item.pq)).toFixed(2);
-          const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
+          /*const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
 
           if(range_price_item) {
             item.color = false;
           } else {
             item.color = true;
-          }
+          }*/
 
         } else {
 
@@ -1039,7 +1067,7 @@ const useStore = create((set, get) => ({
         if(type === 'price_item' || type === 'price_w_nds') {
           const nds = get().check_nds_bill((Number(item.price_w_nds) - Number(item.price_item)) / (Number(item.price_item) / 100))
 
-          const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
+          //const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
   
           if (nds) {
             item.nds = nds;
@@ -1049,11 +1077,11 @@ const useStore = create((set, get) => ({
             item.nds = '';
           }
 
-          if(nds && range_price_item) {
+          /*if(nds && range_price_item) {
             item.color = false;
           } else {
             item.color = true;
-          }
+          }*/
         } 
 
       }
@@ -1080,6 +1108,8 @@ const useStore = create((set, get) => ({
     set({
       bill_items,
     });
+
+    get().check_price_item_new();
   }
 
 }));
@@ -2220,7 +2250,7 @@ class Billing_Edit_ extends React.Component {
   };
 
   async saveNewBill () {
-    const {vendor, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
+    const {vendor, err_items, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
 
     const dateBill = date ? dayjs(date).format('YYYY-MM-DD') : '';
     const dateFactur = date_factur ? dayjs(date_factur).format('YYYY-MM-DD') : '';
@@ -2287,7 +2317,8 @@ class Billing_Edit_ extends React.Component {
       date_factur: dateFactur,
       point_id: point?.id ?? '',
       vendor_id: vendor?.id,
-      imgs: this.myDropzone['files'].length
+      imgs: this.myDropzone['files'].length,
+      err_items: err_items
     }
 
     const res = await this.getData('save_new', data);

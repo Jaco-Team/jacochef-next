@@ -267,6 +267,8 @@ const useStore = create((set, get) => ({
   summ: '',
   sum_w_nds: '',
 
+  err_items: [],
+
   allPrice: 0,
   allPrice_w_nds: 0,
 
@@ -448,7 +450,10 @@ const useStore = create((set, get) => ({
       point: point ?? [],
       point_name: point?.name ?? '',
       vendors: res?.vendors ?? [],
+      vendorsCopy: res?.vendors ?? [],
       vendor_name: res?.vendors[0]?.name ?? '',
+      search_vendor: res?.vendors[0]?.name ?? '',
+      is_new_doc: parseInt(res?.bill?.doc_true),
       bill_list: res?.bill_hist,
       imgs_bill: res?.bill_imgs,
       imgs_factur: res?.factur_imgs,
@@ -466,7 +471,7 @@ const useStore = create((set, get) => ({
       user: res?.bill_users,
       types: types,
       //type: parseInt(res?.bill?.type_bill) == 1 ? 2 : 4,
-      type: res?.bill?.type,
+      type: res?.bill?.type_bill,
       //doc_base_id: parseInt(res?.bill?.type_doc ?? 0) === 0 ? '' : parseInt(res?.bill?.type_doc),
       doc_base_id: res?.bill?.doc_base_id,
       is_load_store: false,
@@ -476,15 +481,22 @@ const useStore = create((set, get) => ({
     });
 
     setTimeout( () => {
-      set({
-        DropzoneMain: new Dropzone("#img_bill", dropzoneOptions_bill),
-      })
-
-      if( parseInt(res?.bill?.type) == 2 ){
+      if( document.getElementById('img_bill') ){
         set({
-          DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions_bill_factur)
+          DropzoneMain: new Dropzone("#img_bill", dropzoneOptions_bill),
         })
       }
+
+      if( parseInt(res?.bill?.type_bill) == 2 ){
+        if( document.getElementById('img_bill_type') ){
+          set({
+            DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions_bill_factur)
+          })
+        }
+      }
+
+      get().checkPriceItems();
+      get().check_price_item_new();
     }, 500 )
 
     get().changeKinds(res?.bill?.type_doc);
@@ -988,7 +1000,35 @@ const useStore = create((set, get) => ({
     return nds[Math.round(value)] ? nds[Math.round(value)] : false;
   },
 
+  check_price_item_new: () => {
+		var err_items = [];
+    var bill_items = get().bill_items;		
+    var vendor_items = get().vendor_items;
+
+    bill_items.map((item, key) => {
+      let one_price_bill = parseFloat(item['one_price_bill']);
+      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id'])).price;
+      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id'])).vend_percent;
+
+      let one_price_max = parseFloat(one_price_vend) + ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
+			let one_price_min = parseFloat(one_price_vend) - ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
+
+      if(one_price_bill >= one_price_max || one_price_bill <= one_price_min || !one_price_bill || !one_price_max || !one_price_min || one_price_bill == 0 ){
+        err_items.push(item);
+
+        bill_items[ key ].color = true;
+      }
+    })
+
+    set({
+      bill_items,
+      err_items
+    })
+	},
+
   check_price_item: (price, percent, summ, pq) => {
+
+    
 
     const res = Number(price) / 100 * Number(percent);
 
@@ -999,6 +1039,33 @@ const useStore = create((set, get) => ({
     } else {
       return false
     }
+  },
+
+  checkPriceItems: () => {
+    //let bill_items = JSON.parse(JSON.stringify(get().bill_items));
+    /*let bill_items = get().bill_items;
+
+    bill_items.map((item) => {
+
+      console.log( item.price, item.vend_percent, item.price_item, item.pq )
+      console.log( 'item', item ) //
+
+      const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
+
+      if(range_price_item) {
+        item.color = false;
+      } else {
+        item.color = true;
+      }
+
+      return item;
+    })
+
+    set({
+      bill_items,
+    });*/
+
+    get().check_price_item_new();
   },
 
   changeDataTable: (event, type, id, key) => {
@@ -1014,26 +1081,26 @@ const useStore = create((set, get) => ({
         if (type === 'pq') {
           item.fact_unit = (Number(item[type]) * Number(item.count)).toFixed(2);
 
-          const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
+          /*const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
   
           if(range_price_item) {
             item.color = false;
           } else {
             item.color = true;
-          }
+          }*/
 
         } 
 
         if (value && value !== '0' && value[0] !== '0' && type === 'count') {
 
           item.fact_unit = (Number(item[type]) * Number(item.pq)).toFixed(2);
-          const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
+          /*const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
 
           if(range_price_item) {
             item.color = false;
           } else {
             item.color = true;
-          }
+          }*/
 
         } else {
 
@@ -1049,7 +1116,7 @@ const useStore = create((set, get) => ({
         if(type === 'price_item' || type === 'price_w_nds') {
           const nds = get().check_nds_bill((Number(item.price_w_nds) - Number(item.price_item)) / (Number(item.price_item) / 100))
 
-          const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
+          //const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
   
           if (nds) {
             item.nds = nds;
@@ -1059,11 +1126,11 @@ const useStore = create((set, get) => ({
             item.nds = '';
           }
 
-          if(nds && range_price_item) {
+          /*if(nds && range_price_item) {
             item.color = false;
           } else {
             item.color = true;
-          }
+          }*/
         } 
 
       }
@@ -1090,11 +1157,13 @@ const useStore = create((set, get) => ({
     set({
       bill_items,
     });
+
+    get().check_price_item_new();
   }
 
 }));
 
-function FormHeader_new({ page, type_edit }){
+function FormHeader_new({ type_edit }){
 
   const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
 
@@ -1102,23 +1171,21 @@ function FormHeader_new({ page, type_edit }){
 
   return (
     <>
-      {page === 'new' ? 
-        <Grid item xs={12} sm={4}>
-          <MyAutocomplite2
-            data={points}
-            value={point_name}
-            multiple={false}
-            disabled={ type_edit === 'edit' ? false : true }
-            func={ (event, name) => search_point(event, name) }
-            onBlur={ (event, name) => search_point(event, name) }
-            label="Точка"
-          />
-        </Grid>
-        :
-        <Grid item xs={12} sm={4}>
-          <MyTextInput label="Точка" disabled={ type_edit === 'edit' ? false : true } value={point_name} className='disabled_input'/>
-        </Grid>
-      }
+      
+      <Grid item xs={12} sm={4}>
+        <MyAutocomplite2
+          data={points}
+          value={point_name}
+          multiple={false}
+          //disabled={ type_edit === 'edit' ? false : true }
+          disabled={ true }
+          func={ (event, name) => search_point(event, name) }
+          onBlur={ (event, name) => search_point(event, name) }
+          label="Точка"
+        />
+      </Grid>
+          
+        
 
       <Grid item xs={12} sm={4}>
         <MySelect
@@ -1132,24 +1199,19 @@ function FormHeader_new({ page, type_edit }){
         />
       </Grid>
 
-      {page === 'new' ? 
-        <Grid item xs={12} sm={4}>
-          <MyAutocomplite2
-            label="Поставщик"
-            freeSolo={true}
-            multiple={false}
-            data={vendors}
-            value={search_vendor}
-            disabled={ type_edit === 'edit' ? false : true }
-            func={ (event, name) => search_vendors(event, name) }
-            onBlur={ (event, name) => search_vendors(event, name) }
-          />
-        </Grid>
-        :
-        <Grid item xs={12} sm={4}>
-          <MyTextInput label="Поставщик" disabled={ type_edit === 'edit' ? false : true } value={vendor_name} className='disabled_input'/>
-        </Grid>
-      }
+     
+      <Grid item xs={12} sm={4}>
+        <MyAutocomplite2
+          label="Поставщик"
+          freeSolo={true}
+          multiple={false}
+          data={vendors}
+          value={search_vendor}
+          disabled={ type_edit === 'edit' ? false : true }
+          func={ (event, name) => search_vendors(event, name) }
+          onBlur={ (event, name) => search_vendors(event, name) }
+        />
+      </Grid>
 
       {parseInt(type) === 2 || parseInt(type) === 3 ? (
         <>
@@ -1355,7 +1417,7 @@ function VendorItemsTableEdit(){
                         </Button>
                       </TableCell>
                       <TableCell rowSpan={2}>
-                        {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
+                        {Number(item.count) === 0 ? Number(item.count).toFixed(2) : ( parseFloat(item.price_w_nds) / parseFloat(item.fact_unit)).toFixed(2)}
                       </TableCell>
                     </TableRow>
                   }
@@ -1411,7 +1473,7 @@ function VendorItemsTableEdit(){
                           </Button>
                         </TableCell>
                         <TableCell>
-                          {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
+                          {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.fact_unit)).toFixed(2)}
                         </TableCell>
                       </>
                     }
@@ -1730,11 +1792,9 @@ function FormOther_new({ page, type_edit, type_doc }){
           disabled={ type_edit === 'edit' ? false : true }
           value={parseInt(is_new_doc) === 1 ? true : false}
           func={ (event) => changeItemChecked(event, 'is_new_doc') }
-          label=""
+          label="Поставщик привезет новый документ"
         />
-        <Typography component="span" className="span_text">
-          Поставщик привезет новый документ
-        </Typography>
+        
       </Grid>
 
     </>
@@ -1777,7 +1837,7 @@ class Billing_Accordion extends React.Component {
   }
 
   render() {
-    const { bill_list, bill_items, type } = this.props;
+    const { bill_list, type } = this.props;
 
     return (
       <Grid item xs={12} sm={12} mb={5}>
@@ -1786,13 +1846,13 @@ class Billing_Accordion extends React.Component {
           <AccordionSummary style={{ cursor: 'default' }} expandIcon={<ExpandMoreIcon sx={{ opacity: 0 }} />} aria-controls="panel1a-content">
             <Grid item xs display="flex" flexDirection="row">
               <Typography style={{ width: '1%' }}></Typography>
-              <Typography style={{ width: '4%', minWidth: '210px' }}>Тип {type === 'edit' ? ' документа' : ' накладной'}</Typography>
+              <Typography style={{ width: '4%', minWidth: '210px' }}>Тип документа</Typography>
               <Typography style={{ width: '12%' }}>Бумажный носитель</Typography>
               <Typography style={{ width: '11%' }}>
-                Номер {type === 'edit' ? ' документа' : ' накладной'}
+                Номер документа
               </Typography>
               <Typography style={{ width: '11%' }}>
-                Дата в {type === 'edit' ? ' документе' : ' накладной'}
+                Дата в документе
               </Typography>
               <Typography style={{ width: '14%', minWidth: '200px' }}>Создатель</Typography>
               <Typography style={{ width: '10%' }}>Дата обновления</Typography>
@@ -1816,9 +1876,9 @@ class Billing_Accordion extends React.Component {
 
                   <Typography className='checkbox_disable' component="div" style={{ width: '12%', display: 'flex', alignItems: 'center' }}>
                     <MyCheckBox
-                      value={parseInt(item.real_doc) == 1 ? true : false}
+                      value={parseInt(item.doc_true) == 1 ? true : false}
                       label=""
-                      checked={false}
+                      //disabled={true}
                     />
                   </Typography>
 
@@ -1867,13 +1927,13 @@ class Billing_Accordion extends React.Component {
                   </TableHead>
 
                   <TableBody>
-                    {bill_items?.map((item, key) => (
+                    {item?.items?.map((item, key) => (
                       <TableRow key={key} hover>
-                        <TableCell> {item.item_name} </TableCell>
-                        <TableCell>{item.pq} {item.ed_izmer_name}</TableCell>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.pq} {item.ei_name}</TableCell>
                         <TableCell>{item.count}</TableCell>
-                        <TableCell>{item.fact_unit} {item.ed_izmer_name}</TableCell>
-                        <TableCell> {item.price_w_nds} ₽</TableCell>
+                        <TableCell>{item.fact_count} {item.ei_name}</TableCell>
+                        <TableCell>{item.price_w_nds} ₽</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -2151,19 +2211,6 @@ class Billing_Modal extends React.Component {
 }
 
 class Billing_Edit_ extends React.Component {
-  dropzoneOptions = {
-    autoProcessQueue: false,
-    autoQueue: true,
-    maxFiles: 1,
-    timeout: 0,
-    parallelUploads: 10,
-    acceptedFiles: 'image/jpeg,image/png',
-    addRemoveLinks: true,
-    url: 'https://jacochef.ru/src/img/site_aktii/upload_img.php',
-  };
-
-  myDropzone = null;
-
   constructor(props) {
     super(props);
 
@@ -2224,10 +2271,6 @@ class Billing_Edit_ extends React.Component {
     getDataBill(res, point, items.items, docs);
 
     document.title = 'Накладные';
-
-    if( res?.acces?.photo === 'edit' ){
-      this.myDropzone = new Dropzone("#img_bill", this.dropzoneOptions);
-    }
   }
 
   getData = (method, data = {}) => {
@@ -2276,11 +2319,8 @@ class Billing_Edit_ extends React.Component {
       });
   };
 
-  async saveEditBill () {
-    const {number, point, vendors, date, number_factur, date_factur, doc, doc_base_id, date_items, user, comment, is_new_doc, bill_items, bill} = this.props.store;
-
-    const type_doc = this.state.type_doc;
-    const type = type_doc === 'bill_ex' ? 1 : 2;
+  async saveEditBill (type_save) {
+    const {vendor, err_items, DropzoneMain, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, doc_base_id, date_items, user, comment, is_new_doc, bill_items, imgs_bill, imgs_factur, bill } = this.props.store;
 
     const dateBill = date ? dayjs(date).format('YYYY-MM-DD') : '';
     const dateFactur = date_factur ? dayjs(date_factur).format('YYYY-MM-DD') : '';
@@ -2292,7 +2332,7 @@ class Billing_Edit_ extends React.Component {
 
       it.pq = item.pq;
       it.count = item.count;
-      it.item_id = item.id;
+      it.item_id = item.item_id ?? item.id;
       it.summ = item.price_item;
       it.summ_w_nds = item.price_w_nds;
       it.color = item.color;
@@ -2305,10 +2345,32 @@ class Billing_Edit_ extends React.Component {
         it.nds = nds;
       }
 
-      newItems.push([it]);
+      newItems.push(it);
 
       return newItems;
     }, [])
+
+    if( imgs_bill.length == 0 && ( !DropzoneMain || DropzoneMain['files'].length === 0 ) ) {
+      showAlert(false, 'Нет изображений документа');
+
+      return ;
+    }
+
+    if( imgs_factur.length == 0 && ( parseInt(type) == 2 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) ) {
+      showAlert(false, 'Нет изображений счет-фактуры');
+
+      return ;
+    }
+
+    if( DropzoneMain && DropzoneMain['files'].length > 0 ){
+      if( parseInt(type) == 1 ){
+        DropzoneMain.options.url = url_bill_ex;
+        type_bill = 'bill_ex';
+      }else{
+        DropzoneMain.options.url = url_bill;
+        type_bill = 'bill';
+      }
+    }
 
     const data = {
       bill_id: bill.id,
@@ -2324,35 +2386,47 @@ class Billing_Edit_ extends React.Component {
       date: dateBill,
       date_items: dateItems,
       date_factur: dateFactur,
-      point_id: point?.id ?? '',
-      vendor_id: vendors.length === 1 ? vendors[0]?.id : ''
+      point_id: bill.point_id,
+      vendor_id: bill.vendor_id,
+      type_save: type_save,
+      err_items: err_items
     }
 
     console.log('saveEditBill data', data);
 
-    // const res = await this.getData('save_edit', data);
+    const res = await this.getData('save_edit', data);
 
-     // if (res.st) {
+    if (res.st === true) {
 
-    //   this.setState({
-    //     openAlert: true,
-    //     err_status: res.st,
-    //     err_text: res.text
-    //   });
+      if( res?.text && res.text.length > 0 ) {
 
-    // } else {
+        showAlert(res.st, res.text);
+      }
 
-    //   this.setState({
-    //     openAlert: true,
-    //     err_status: res.st,
-    //     err_text: res.text
-    //   });
+      global_point_id = point?.id
+      global_new_bill_id = res.bill_id;
+      
+      if( DropzoneMain && DropzoneMain['files'].length > 0 ){
+        DropzoneMain.processQueue();
+      }
 
-    // }
+      if( parseInt(type) == 2 && DropzoneDop && DropzoneDop['files'].length > 0 ){
+        DropzoneDop.processQueue();
+      }
+
+      if( DropzoneMain['files'].length == 0 && DropzoneDop['files'].length == 0 ){
+        window.location.pathname = '/billing';
+      }
+
+    } else {
+
+      showAlert(res.st, res.text);
+
+    }
   }
 
   async saveDelDoc () {
-    const { bill, point } = this.props.store;
+    const { bill, point, showAlert } = this.props.store;
 
     if( this.state.delText.length <= 3 ) {
       this.setState({
@@ -2375,21 +2449,16 @@ class Billing_Edit_ extends React.Component {
     const res = await this.getData('save_bill_del', data);
 
     if (res.st) {
+      showAlert(res.st, res.text);
 
       this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text
+        modelCheckDel: false
       });
 
+      window.location.pathname = '/billing';
     } else {
 
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text
-      });
-
+      showAlert(res.st, res.text);
     }
   }
 
@@ -2467,7 +2536,7 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.only_save) === 0 ? false :
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this)}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'current')}>
                 Сохранить
               </Button>
             </Grid>
@@ -2486,7 +2555,7 @@ class Billing_Edit_ extends React.Component {
           { parseInt(this.state.acces?.only_delete) === 0 ? false :
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
-                //onClick={this.saveBill.bind(this)}
+                onClick={this.saveEditBill.bind(this, 'next')}
               >
                 Сохранить и отправить
               </Button>
