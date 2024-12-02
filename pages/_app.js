@@ -30,21 +30,21 @@ export default function MyApp(props) {
   }
 
   return (
-    <AppRouterCacheProvider {...props}>
+    <ThemeProvider theme={theme}>
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
         <link rel="icon" href="/images/favicon.ico" sizes="any" />
       </Head>
-      <ThemeProvider theme={theme}>
+      <div className={font.variable}>
         
         <Header isHeader={isHeader} suppressHydrationWarning />
         
-        <div className={font.variable}>
-          <Component {...pageProps} />
-        </div>
         
-      </ThemeProvider>
-    </AppRouterCacheProvider>
+          <Component {...pageProps} />
+        
+        
+      </div>
+    </ThemeProvider>
   );
 }
 
