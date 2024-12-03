@@ -534,3 +534,9 @@ a{
     background-color: transparent
   }
 }
+
+.button_import {
+  & .MuiButtonBase-root.MuiButton-root {
+    font-size: 0.875rem !important;
+  }
+}
