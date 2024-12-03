@@ -268,7 +268,7 @@ export class MySelect extends React.PureComponent {
           disabled={ this.props.disabled || this.props.disabled === true ? true : false }
           onChange={ this.props.func }
           multiple={ this.props.multiple && this.props.multiple === true ? true : false }
-          style={{ zIndex: 9999 }}
+          //style={{ zIndex: 9999 }}
         >
           {this.props.is_none === false ? null : 
             <MenuItem value=""><em>None</em></MenuItem>
