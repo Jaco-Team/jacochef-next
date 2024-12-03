@@ -137,6 +137,8 @@ export class MyAutocomplite2 extends React.PureComponent {
     };
   }
   
+  
+
   render(){
     if( this.props.id && this.props.id == 'promoName' ){
       return (
@@ -152,6 +154,7 @@ export class MyAutocomplite2 extends React.PureComponent {
             value={this.props.value}
             onChange={this.props.func}
             //filterSelectedOptions
+            disabled={ this.props.disabled && this.props.disabled === true ? true : false }
             multiple={ this.props.multiple && this.props.multiple === true ? true : false }
             //isOptionEqualToValue={(option, value) => option.id === value.id}
             renderInput={(params) => (
@@ -183,7 +186,7 @@ export class MyAutocomplite2 extends React.PureComponent {
             onChange={this.props.func}
             filterSelectedOptions
             multiple={ this.props.multiple && this.props.multiple === true ? true : false }
-       
+            disabled={ this.props.disabled && this.props.disabled === true ? true : false }
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -233,7 +236,7 @@ export class MyAutocomplite2 extends React.PureComponent {
 
             return filtered;
           }}
-
+          disabled={ this.props.disabled && this.props.disabled === true ? true : false }
           renderInput={(params) => (
             <TextField
               {...params}
@@ -265,13 +268,14 @@ export class MySelect extends React.PureComponent {
           disabled={ this.props.disabled || this.props.disabled === true ? true : false }
           onChange={ this.props.func }
           multiple={ this.props.multiple && this.props.multiple === true ? true : false }
+          //style={{ zIndex: 9999 }}
         >
           {this.props.is_none === false ? null : 
             <MenuItem value=""><em>None</em></MenuItem>
           }
           
           { this.props.data.map( (item, key) =>
-            <MenuItem key={key} value={item.id} style={{ color: item?.color ? item.color : null }}>{item.name}</MenuItem>
+            <MenuItem key={key} value={item.id} style={{ color: item?.color ? item.color : null, zIndex: 9999 }}>{item.name}</MenuItem>
           ) }
         </Select>
       </FormControl>
@@ -604,7 +608,7 @@ export class MyCheckBox extends React.PureComponent {
   }
 }
 
-//49uqqohkhxqye2vc8mivb1xm5hm4kbc1rmectk6yetiu9zf0 - новый
+//q3skq93mjg9kb2pusut1jjvqd15b8wncykg7tj0ke02dbipj - новый
 //r0ihgs4ukfpmudzw7aexxgb88tnx5jw26h1xx9x6409ji3gx - старый
 //q3skq93mjg9kb2pusut1jjvqd15b8wncykg7tj0ke02dbipj - еще более новый
 
@@ -622,7 +626,7 @@ export function TextEditor(props){
 
   return (
     <Editor
-      apiKey='49uqqohkhxqye2vc8mivb1xm5hm4kbc1rmectk6yetiu9zf0'
+      apiKey='q3skq93mjg9kb2pusut1jjvqd15b8wncykg7tj0ke02dbipj'
       value={props.value}
       onEditorChange={props.func}
       init={{
@@ -649,7 +653,7 @@ export class TextEditor22 extends React.PureComponent {
   render(){
     return (
       <Editor
-        apiKey='49uqqohkhxqye2vc8mivb1xm5hm4kbc1rmectk6yetiu9zf0'
+        apiKey='q3skq93mjg9kb2pusut1jjvqd15b8wncykg7tj0ke02dbipj'
         value={this.props.value}
         onEditorChange={this.props.func}
         onInit={(evt, editor) => this.props.refs_.current = editor}
@@ -676,7 +680,7 @@ export class TextEditor11 extends React.PureComponent {
   render(){
     return (
       <Editor
-        apiKey='49uqqohkhxqye2vc8mivb1xm5hm4kbc1rmectk6yetiu9zf0'
+        apiKey='q3skq93mjg9kb2pusut1jjvqd15b8wncykg7tj0ke02dbipj'
         value={this.props.value}
         onEditorChange={this.props.func}
         init={{

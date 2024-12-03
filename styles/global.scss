@@ -32,6 +32,12 @@ div#__next > div > div.MuiGrid-root.MuiGrid-container {
   width: 100%;
 }
 
+div#__next > div.MuiGrid-root.MuiGrid-container {
+  padding-right: 24px;
+  margin-left: 0px;
+  width: 100%;
+}
+
 .LeftMenu > .MuiDrawer-paper.MuiDrawer-paperAnchorLeft {
   width: 350px;
 }

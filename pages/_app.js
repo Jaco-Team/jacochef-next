@@ -30,13 +30,9 @@ export default function MyApp(props) {
   }
 
   return (
-    <AppRouterCacheProvider {...props}>
-      <Head>
-        <meta name="viewport" content="initial-scale=1, width=device-width" />
-        <link rel="icon" href="/images/favicon.ico" sizes="any" />
-      </Head>
+    <AppRouterCacheProvider {...props} options={{ enableCssLayer: false }}>
       <ThemeProvider theme={theme}>
-        
+      
         <Header isHeader={isHeader} suppressHydrationWarning />
         
         <div className={font.variable}>
