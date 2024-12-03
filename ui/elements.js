@@ -268,13 +268,14 @@ export class MySelect extends React.PureComponent {
           disabled={ this.props.disabled || this.props.disabled === true ? true : false }
           onChange={ this.props.func }
           multiple={ this.props.multiple && this.props.multiple === true ? true : false }
+          
         >
           {this.props.is_none === false ? null : 
             <MenuItem value=""><em>None</em></MenuItem>
           }
           
           { this.props.data.map( (item, key) =>
-            <MenuItem key={key} value={item.id} style={{ color: item?.color ? item.color : null }}>{item.name}</MenuItem>
+            <MenuItem key={key} value={item.id} style={{ color: item?.color ? item.color : null, zIndex: 9999 }}>{item.name}</MenuItem>
           ) }
         </Select>
       </FormControl>
