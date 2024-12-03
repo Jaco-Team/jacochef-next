@@ -39,9 +39,9 @@ export default function MyApp(props) {
         
         <Header isHeader={isHeader} suppressHydrationWarning />
         
-        <div className={font.variable}>
-          <Component {...pageProps} />
-        </div>
+        
+        <Component {...pageProps} />
+        
         
       </ThemeProvider>
     </>
