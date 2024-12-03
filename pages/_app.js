@@ -30,7 +30,7 @@ export default function MyApp(props) {
   }
 
   return (
-    <AppRouterCacheProvider>
+    <AppRouterCacheProvider options={{ enableCssLayer: true }}>
       <ThemeProvider theme={theme}>
       
         <Header isHeader={isHeader} suppressHydrationWarning />
