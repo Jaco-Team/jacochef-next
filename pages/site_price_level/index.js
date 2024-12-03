@@ -256,15 +256,30 @@ class SitePriceLevel_ extends React.Component {
     const data = await this.getData('get_all');
     console.log("🚀 === componentDidMount data:", data);
 
-    this.setState({
+    if( data ){
+
+      //console.log( 'data', data.data );
+
+      this.setState({
+        cities: data.cities,
+        city: data.cities[0].id,
+        levels: data.levels,
+        levelsCopy: data.levels,
+        module_name: data.module_info.name
+      });
+
+      document.title = data.module_info.name;
+    }
+
+    /*this.setState({
       cities: data.cities,
-      city: data.cities[0].id,
+      //city: data.cities[0].id,
       levels: data.levels,
       levelsCopy: data.levels,
       module_name: data.module_info.name
-    });
+    });*/
 
-    document.title = data.module_info.name;
+    //document.title = data.module_info.name;
   }
 
   getData = (method, data = {}, dop_type = {}) => {
@@ -276,10 +291,12 @@ class SitePriceLevel_ extends React.Component {
     let res = api(this.state.module, method, data, dop_type)
     .then(result => {
 
+      
+
       if(method === 'export_file_xls' || method === 'import_file_xls') {
         return result;
       } else {
-        return result.data;
+        return result.data.data;
       }
 
     })
@@ -414,27 +431,36 @@ class SitePriceLevel_ extends React.Component {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('document', file);
-
-    // for (var pair of formData.entries()) {
-    //   console.log(pair[0]);
-    //   console.log(pair[1]);
-    //   formData.append('file', pair[1]);
-    // }
+    let formData = new FormData();
+    
 
     const urlApi_dev = 'http://127.0.0.1:8000/api/site_price_level/import_file_xls';
 
-    const this_data = queryString.stringify({
-      method: 'import_file_xls', 
-      module: 'site_price_level',
-      version: 2,
-  
-      login: localStorage.getItem('token'),
-      file: formData,
-    })
+    
 
-    axios.post(urlApi_dev, this_data).then(response => console.log('response', response));
+    formData.append('file', target.files[0]);
+    formData.append('login', localStorage.getItem('token'));
+    formData.append('method', 'import_file_xls');
+    formData.append('module', 'site_price_level');
+
+    
+
+    axios.post( urlApi_dev, formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }
+    ).then(function(response){
+        that.errors = response.data.success;
+    })
+    .catch(function(){
+      console.log('FAILURE!!');
+    });
+      
+
+
+    //axios.post(urlApi_dev, this_data).then(response => console.log('response', response));
 
     // console.log("🚀 === uploadFile res:", res);
 
