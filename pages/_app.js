@@ -30,7 +30,7 @@ export default function MyApp(props) {
   }
 
   return (
-    <>
+    <AppRouterCacheProvider {...props}>
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
         <link rel="icon" href="/images/favicon.ico" sizes="any" />
@@ -39,12 +39,12 @@ export default function MyApp(props) {
         
         <Header isHeader={isHeader} suppressHydrationWarning />
         
-        
-        <Component {...pageProps} />
-        
+        <div className={font.variable}>
+          <Component {...pageProps} />
+        </div>
         
       </ThemeProvider>
-    </>
+    </AppRouterCacheProvider>
   );
 }
 
