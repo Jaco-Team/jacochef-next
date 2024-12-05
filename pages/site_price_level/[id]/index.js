@@ -17,10 +17,57 @@ import CircularProgress from '@mui/material/CircularProgress';
 import {MySelect, MyDatePickerNew, MyTextInput, MyAlert} from '@/ui/elements';
 
 import { api } from '@/src/api_new';
-
 import dayjs from 'dayjs';
 
-class SitePriceLevelEdit_input extends React.Component {
+class SitePriceLevelEdit_input_level_name extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      item: '',
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    if (!this.props.data) {
+      return;
+    }
+
+    if (this.props.data !== prevProps.data) {
+      this.setState({
+        item: this.props.data,
+      });
+    }
+  }
+
+  changeItem(event) {
+    const value = event.target.value;
+
+    this.setState({
+      item: value
+    });
+  }
+
+  save_data_input() {
+    let value = this.state.item;
+    this.props.changeInput(value);
+  }
+
+  render() {
+    return (
+      <Grid item xs={12} sm={4}>
+        <MyTextInput
+          label='Название'
+          value={this.state.item}
+          func={this.changeItem.bind(this)}
+          onBlur={this.save_data_input.bind(this)}
+        />
+      </Grid>
+    )
+  }
+}
+
+class SitePriceLevelEdit_input_item extends React.Component {
   click = false;
 
   constructor(props) {
@@ -50,7 +97,7 @@ class SitePriceLevelEdit_input extends React.Component {
       return;
     }
 
-    const value = event.target.value;
+    const value = event.target.value.replace(/^0+/, '');
 
     this.setState({
       item: value
@@ -58,6 +105,14 @@ class SitePriceLevelEdit_input extends React.Component {
   }
 
   save_data_input() {
+
+    const date_now = dayjs();
+    const date_start = dayjs(this.props.date_start);
+
+    if(date_start.isSame(date_now, 'day') || date_start.isBefore(date_now, 'day')){
+      return;
+    }
+
     if (!this.click) {
       this.click = true;
 
@@ -123,7 +178,8 @@ class SitePriceLevelEdit_ extends React.Component {
       date_start: '',
       cats: [],
 
-      level_id: ''
+      level_id: '',
+      level_name: '',
 
     };
   }
@@ -138,7 +194,6 @@ class SitePriceLevelEdit_ extends React.Component {
     }
 
     const res = await this.getData('get_one', data);
-    console.log("🚀 === componentDidMount res:", res);
 
     this.setState({
       level_id: res.level.id,
@@ -146,7 +201,8 @@ class SitePriceLevelEdit_ extends React.Component {
       cities: res.cities,
       city: res.level.city_id,
       date_start: res.level.date_start,
-      module_name: res.level.name
+      level_name: res.level.name,
+      module_name: res.module_info.name
     });
 
     document.title = res.module_info.name;
@@ -176,6 +232,12 @@ class SitePriceLevelEdit_ extends React.Component {
 
     this.setState({
       city,
+    });
+  }
+
+  changeItem(value) {
+    this.setState({
+      level_name: value,
     });
   }
 
@@ -232,6 +294,20 @@ class SitePriceLevelEdit_ extends React.Component {
       return;
     }
 
+    let level_name = this.state.level_name;
+
+    if (!level_name) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать название'
+      });
+
+      return;
+
+    } 
+
     date_start = dayjs(this.state.date_start).format('YYYY-MM-DD');
 
     let items = [];
@@ -246,12 +322,10 @@ class SitePriceLevelEdit_ extends React.Component {
     const data = {
       level_id: this.state.level_id,
       city_id: this.state.city,
-      name: this.state.module_name,
+      name: this.state.level_name,
       date_start,
       items
     };
-
-    console.log("🚀 === save data:", data);
 
     const res = await this.getData('save_edit', data);
 
@@ -290,7 +364,8 @@ class SitePriceLevelEdit_ extends React.Component {
       cats: res.cats,
       cities: res.cities,
       city: res.level.city_id,
-      date_start: res.level.date_start
+      date_start: res.level.date_start,
+      level_name: res.level.name,
     });
 
   }
@@ -315,6 +390,11 @@ class SitePriceLevelEdit_ extends React.Component {
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
+
+          <SitePriceLevelEdit_input_level_name
+            data={this.state.level_name}
+            changeInput={this.changeItem.bind(this)}
+          />
 
           <Grid item xs={12} sm={4}>
             <MySelect
@@ -361,7 +441,7 @@ class SitePriceLevelEdit_ extends React.Component {
                               {item.name}
                             </TableCell>
                             <TableCell>
-                              <SitePriceLevelEdit_input
+                              <SitePriceLevelEdit_input_item
                                 data={item?.price}
                                 changeInput={this.changeInput.bind(this)}
                                 key_cat={key}
