@@ -28,8 +28,6 @@ import { MySelect, MyAlert, formatDate, MyTextInput, MyDatePickerNew } from '@/u
 import { api } from '@/src/api_new';
 import { ExlIcon } from '@/ui/icons';
 import axios from 'axios';
-import queryString from 'query-string';
-
 import dayjs from 'dayjs';
 
 class SitePriceLevel_Modal_New extends React.Component {
@@ -241,25 +239,21 @@ class SitePriceLevel_ extends React.Component {
 
       itemNew: {
         name: '',
-        date_start: formatDate(new Date()),
+        date_start: formatDate(new Date(new Date().getTime() + 24 * 60 * 60 * 1000)),
         city_id: '',
       },
 
       levels: [],
       levelsCopy: [],
      
-      file_import: null
+      input_value: ''
     };
   }
 
   async componentDidMount() {
     const data = await this.getData('get_all');
-    console.log("🚀 === componentDidMount data:", data);
 
     if( data ){
-
-      //console.log( 'data', data.data );
-
       this.setState({
         cities: data.cities,
         city: data.cities[0].id,
@@ -271,15 +265,6 @@ class SitePriceLevel_ extends React.Component {
       document.title = data.module_info.name;
     }
 
-    /*this.setState({
-      cities: data.cities,
-      //city: data.cities[0].id,
-      levels: data.levels,
-      levelsCopy: data.levels,
-      module_name: data.module_info.name
-    });*/
-
-    //document.title = data.module_info.name;
   }
 
   getData = (method, data = {}, dop_type = {}) => {
@@ -291,12 +276,10 @@ class SitePriceLevel_ extends React.Component {
     let res = api(this.state.module, method, data, dop_type)
     .then(result => {
 
-      
-
-      if(method === 'export_file_xls' || method === 'import_file_xls') {
+      if(method === 'export_file_xls') {
         return result;
       } else {
-        return result.data.data;
+        return result.data;
       }
 
     })
@@ -406,12 +389,10 @@ class SitePriceLevel_ extends React.Component {
   async downLoad() {
 
     const dop_type = {
-      //responseType: 'arraybuffer',
       responseType: 'blob',
     }
 
     const res = await this.getData('export_file_xls', {}, dop_type);
-    console.log("🚀 === downLoad res:", res);
 
     const url = window.URL.createObjectURL(new Blob([res]));
     const link = document.createElement("a");
@@ -431,58 +412,59 @@ class SitePriceLevel_ extends React.Component {
       return;
     }
 
+    this.setState({
+      input_value: ''
+    });
+
     let formData = new FormData();
-    
 
     const urlApi_dev = 'http://127.0.0.1:8000/api/site_price_level/import_file_xls';
-
-    
 
     formData.append('file', target.files[0]);
     formData.append('login', localStorage.getItem('token'));
     formData.append('method', 'import_file_xls');
     formData.append('module', 'site_price_level');
 
-    
+    this.setState({
+      is_load: true,
+    });
 
-    axios.post( urlApi_dev, formData,
+    const res = await axios.post( urlApi_dev, formData,
     {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     }
     ).then(function(response){
-        that.errors = response.data.success;
+      return response.data.data;
     })
     .catch(function(){
-      console.log('FAILURE!!');
+      // console.log('FAILURE!!');
     });
+
+    if(res.st) {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+        is_load: false,
+      });
+
+      setTimeout(async () => {
+        this.update();
+      }, 100);
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+        is_load: false,
+      });
       
-
-
-    //axios.post(urlApi_dev, this_data).then(response => console.log('response', response));
-
-    // console.log("🚀 === uploadFile res:", res);
-
-    // if(res.st) {
-    //   this.setState({
-    //     openAlert: true,
-    //     err_status: res.st,
-    //     err_text: res.text,
-    //   });
-
-    //   setTimeout(async () => {
-    //     this.update();
-    //   }, 100);
-    // } else {
-
-    //   this.setState({
-    //     openAlert: true,
-    //     err_status: res.st,
-    //     err_text: res.text,
-    //   });
-      
-    // }
+    }
 
   };
 
@@ -545,7 +527,7 @@ class SitePriceLevel_ extends React.Component {
           <Grid item xs={12} sm={4} className='button_import'>
             <Button variant="contained" component="label">
               Загрузить файл xls
-              <input type="file" hidden onChange={this.uploadFile.bind(this)} />
+              <input type="file" hidden onChange={this.uploadFile.bind(this)} value={this.state.input_value} />
             </Button>
           </Grid>
 

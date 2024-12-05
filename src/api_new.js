@@ -19,8 +19,6 @@ export function api(module = '', method = '', data = {}, dop_type = {}) {
 
   return axios.post(urlApi_dev, this_data, dop_type)
     .then( (response) => {
-
-      console.log('api response?.data', response?.data);
     
       if( typeof response.data == 'string' ){
         return {
