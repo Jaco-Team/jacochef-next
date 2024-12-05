@@ -722,7 +722,8 @@ const useStore = create((set, get) => ({
       set({
         vendor_items,
         all_ed_izmer: vendor_items.length ? vendor_items[0].pq_item : [],
-        pq: vendor_items.length ? vendor_items[0].pq_item[0].id : '',
+        //pq: vendor_items.length ? vendor_items[0].pq_item[0].id : '',
+        pq: '',
         count: '',
         fact_unit: '',
         summ: '',
@@ -802,12 +803,30 @@ const useStore = create((set, get) => ({
     }
 
     if(data === 'type'){
-
-      if( parseInt(value) === 2 ){
+      
+      if( parseInt(value) === 2 && parseInt( get().doc_base_id ) == 1 ){
         setTimeout( () => {
-          set({
-            DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions_bill_factur)
-          })
+          if( document.getElementById('img_bill_type') ){
+            set({
+              DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions_bill_factur)
+            })
+          }
+        }, 1000 )
+      }else{
+        set({
+          DropzoneDop: null
+        })
+      }
+    }
+
+    if(data === 'doc_base_id'){
+      if( parseInt(value) === 1 && parseInt( get().type ) == 2 ){
+        setTimeout( () => {
+          if( document.getElementById('img_bill_type') ){
+            set({
+              DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions_bill_factur)
+            })
+          }
         }, 1000 )
       }else{
         set({
@@ -973,6 +992,8 @@ const useStore = create((set, get) => ({
   check_nds_bill: (value) => {
     let nds = [];
     nds[0] = 'без НДС';
+    nds[5] = '5 %';
+    nds[7] = '7 %';
     nds[10] = '10 %';
     nds[20] = '20 %';
     nds[18] = '18 %';
@@ -1139,14 +1160,16 @@ function FormVendorItems(){
       </Grid>
 
       <Grid item xs={12} sm={3}>
-        <MySelect
-          data={all_ed_izmer}
-          value={pq}
-          multiple={false}
-          is_none={false}
-          func={ event => changeData('pq', event) }
+        <MyAutocomplite2
           label="Объем упаковки"
+          freeSolo={true}
+          multiple={false}
+          data={ all_ed_izmer }
+          value={ pq }
+          func={ (event, name) => changeData('pq', event) }
+          onBlur={ (event, name) => changeData('pq', event) }
         />
+
       </Grid>
 
       <Grid item xs={12} sm={3}>
@@ -1238,7 +1261,7 @@ function VendorItemsTableEdit(){
                         </Button>
                       </TableCell>
                       <TableCell rowSpan={2}>
-                        {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
+                        {Number(item.count) === 0 ? Number(item.count).toFixed(2) : ( parseFloat(item.price_w_nds) / parseFloat(item.fact_unit)).toFixed(2)}
                       </TableCell>
                     </TableRow>
                   }
@@ -1247,14 +1270,21 @@ function VendorItemsTableEdit(){
                     {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
                     {!item?.data_bill ? null : <TableCell>После</TableCell>}
                     <TableCell className="ceil_white">
-                      <MySelect
-                        data={item.all_ed_izmer}
-                        value={item.pq}
-                        multiple={false}
-                        is_none={false}
-                        func={(event) => changeDataTable(event, 'pq', item.id, key)}
+                      
+
+                      <MyAutocomplite2
                         label=""
+                        freeSolo={true}
+                        multiple={false}
+                        data={ item.pq_item }
+                        value={ item.pq }
+                        //func={ (event, data) => { console.log( data ?? event.target.value ) } }
+                        //onBlur={ (event, data) => { console.log( data ?? event.target.value ) } }
+                        func={ (event, data) => changeDataTable( { target: { value: data ?? event.target.value } }, 'pq', item.id, key) }
+                        onBlur={ (event, data) => changeDataTable({ target: { value: data ?? event.target.value } }, 'pq', item.id, key) }
                       />
+
+
                     </TableCell>
                     <TableCell className="ceil_white">
                       <MyTextInput
@@ -1294,7 +1324,7 @@ function VendorItemsTableEdit(){
                           </Button>
                         </TableCell>
                         <TableCell>
-                          {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
+                          {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.fact_unit)).toFixed(2)}
                         </TableCell>
                       </>
                     }
@@ -1521,7 +1551,7 @@ function FormHeader_new({ page, type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? 
         <Grid item xs={12} sm={6}>
           <MyTextInput
             label="Номер счет-фактуры"
@@ -1536,16 +1566,18 @@ function FormHeader_new({ page, type_edit }){
       <Grid item xs={12} sm={6}>
         <MyDatePickerNew
           label="Дата документа"
+          format="DD-MM-YYYY"
           disabled={ type_edit === 'edit' ? false : true }
           value={date}
           func={ (event) => changeDateRange(event, 'date') }
         />
       </Grid>
 
-      {parseInt(type) === 2 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? 
         <Grid item xs={12} sm={6}>
           <MyDatePickerNew
             label="Дата счет-фактуры"
+            format="DD-MM-YYYY"
             disabled={ type_edit === 'edit' ? false : true }
             value={date_factur}
             func={ (event) => changeDateRange(event, 'date_factur') }
@@ -1559,16 +1591,16 @@ function FormHeader_new({ page, type_edit }){
 
 function FormImage_new({ type_edit }){
 
-  const [type, imgs_bill, openImageBill, fullScreen, imgs_factur, number_factur, changeInput, changeDateRange, date_factur] = useStore( state => [state.type, state.imgs_bill, state.openImageBill, state.fullScreen, state.imgs_factur, state.number_factur, state.changeInput, state.changeDateRange, state.date_factur]);
+  const [type, doc_base_id, imgs_bill, openImageBill, fullScreen, imgs_factur, number_factur, changeInput, changeDateRange, date_factur] = useStore( state => [state.type, state.doc_base_id, state.imgs_bill, state.openImageBill, state.fullScreen, state.imgs_factur, state.number_factur, state.changeInput, state.changeDateRange, state.date_factur]);
 
   const url = parseInt(type) === 1 ? 'bill-ex-items/' : 'bill/';
-
+  
   return (
     <>
-      <Grid item xs={12} sm={parseInt(type) === 2 ? 6 : 12}>
+      <Grid item xs={12} sm={parseInt(type) === 2 && parseInt(doc_base_id) == 1 ? 6 : 12}>
         <TableContainer>
           <Grid display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
-            {!imgs_bill.length ? 'Фото отсутствует' :
+            {!imgs_bill.length ? '' :
               <>
                 {imgs_bill.map((img, key) => (
                   <img 
@@ -1585,9 +1617,9 @@ function FormImage_new({ type_edit }){
         </TableContainer>
       </Grid>
 
-      {parseInt(type) === 2 && !fullScreen ? (
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? (
         <Grid item xs={12} sm={6} display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
-          {!imgs_factur.length ? 'Фото отсутствует' :
+          {!imgs_factur.length ? '' :
             <>
               {imgs_factur.map((img, key) => (
                 <img 
@@ -1616,7 +1648,7 @@ function FormImage_new({ type_edit }){
       }
 
 
-      {type_edit === 'edit' && parseInt(type) === 2 && !fullScreen ? (
+      {type_edit === 'edit' && parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? (
         <Grid item xs={12} sm={6}>
           
           <div
@@ -1627,7 +1659,7 @@ function FormImage_new({ type_edit }){
         </Grid>
       ) : null}
 
-      {parseInt(type) === 2 && fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && fullScreen ? 
         <>
           <Grid item xs={12}>
             <MyTextInput
@@ -1641,6 +1673,7 @@ function FormImage_new({ type_edit }){
           <Grid item xs={12}>
             <MyDatePickerNew
               label="Дата счет-фактуры"
+              format="DD-MM-YYYY"
               disabled={ type_edit === 'edit' ? false : true }
               value={date_factur}
               func={ (event) => changeDateRange(event, 'date_factur') }
@@ -1650,7 +1683,7 @@ function FormImage_new({ type_edit }){
           <Grid item xs={12}>
             <TableContainer>
               <Grid display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
-                {!imgs_factur.length ? 'Фото отсутствует' :
+                {!imgs_factur.length ? '' :
                   <>
                     {imgs_factur.map((img, key) => (
                       <img 
@@ -1696,6 +1729,7 @@ function FormOther_new({ page, type_edit }){
           <Grid item xs={12} sm={6}>
             <MyDatePickerNew
               label="Дата разгрузки"
+              format="DD-MM-YYYY"
               disabled={ type_edit === 'edit' ? false : true }
               value={date_items}
               func={ (event) => changeDateRange(event, 'date_items') }
@@ -2288,7 +2322,7 @@ class Billing_Edit_ extends React.Component {
 
     console.log( 'DropzoneDop', DropzoneDop )
 
-    if( parseInt(type) == 2 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
+    if( parseInt(type) == 2 && parseInt(doc_base_id) == 1 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
       showAlert(false, 'Нет изображений счет-фактуры');
 
       return ;

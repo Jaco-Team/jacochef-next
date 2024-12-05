@@ -18,7 +18,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import ErrorIcon from '@mui/icons-material/Error';
 
-import { MySelect, MyAutocomplite, MyAutocomplite2, MyDatePickerNew, formatDate, MyTextInput, MyCheckBox, MyAlert} from '@/ui/elements';
+import { MySelect, MyAutocomplite, MyAutocomplite2, MyDatePickerNew, formatDate, formatDateReverse, MyTextInput, MyCheckBox, MyAlert} from '@/ui/elements';
 
 import queryString from 'query-string';
 import dayjs from 'dayjs';
@@ -498,6 +498,7 @@ class Billing_ extends React.Component {
           <Grid item xs={12} sm={4}>
             <MyDatePickerNew
               label="Дата от"
+              format="DD-MM-YYYY"
               value={this.state.date_start}
               func={this.changeDateRange.bind(this, 'date_start')}
               clearable={true}
@@ -508,6 +509,7 @@ class Billing_ extends React.Component {
           <Grid item xs={12} sm={4}>
             <MyDatePickerNew
               label="Дата до"
+              format="DD-MM-YYYY"
               value={this.state.date_end}
               func={this.changeDateRange.bind(this, 'date_end')}
               clearable={true}
@@ -567,7 +569,7 @@ class Billing_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={8}>
+          <Grid item xs={12} sm={6}>
             <MyAutocomplite
               data={this.state.all_items}
               multiple={true}
@@ -577,13 +579,7 @@ class Billing_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={12} sx={{ display: 'flex', justifyContent: 'space-between', flexDirection: { sm: 'row', xs: 'column' } }}>
-            <Button variant="contained" sx={{ marginBottom: { sm: 0, xs: 1 } }}
-              //onClick={this.getItems.bind(this)}
-            >
-              Проставить бумажный носитель
-            </Button>
-
+          <Grid item xs={12} sm={2}>
             <Button variant="contained" onClick={this.getBillingList.bind(this)}>
               Показать
             </Button>
@@ -619,7 +615,7 @@ class Billing_ extends React.Component {
                   <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
                     <TableCell>#</TableCell>
                     <TableCell></TableCell>
-                    <TableCell>Бумажный носитель</TableCell>
+                    
                     <TableCell>Тип</TableCell>
                     <TableCell>Номер</TableCell>
                     <TableCell style={{ minWidth: '180px' }}>Дата накладной</TableCell>
@@ -640,19 +636,13 @@ class Billing_ extends React.Component {
                           </MyTooltip>
                         : null}
                       </TableCell>
-                      <TableCell className='checkbox_disable'>
-                        <MyCheckBox
-                          value={parseInt(item.real_doc) == 1 ? true : false}
-                          label=""
-                          checked={false}
-                        />
-                      </TableCell>
+                      
                       <TableCell>Прих</TableCell>
                       <TableCell>{item.number}</TableCell>
                       <TableCell 
                         style={{ backgroundColor: parseInt(item.check_day) === 1 ? 'rgb(204, 0, 51)' : '#fff', color: parseInt(item.check_day) === 1 ? '#fff' : 'rgba(0, 0, 0, 0.87)' }}
                       > 
-                        {item.date}
+                        {formatDateReverse(item.date)}
                       </TableCell>
                       <TableCell>{item.vendor_name}</TableCell>
                       <TableCell 
