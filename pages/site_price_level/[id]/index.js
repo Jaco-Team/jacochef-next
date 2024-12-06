@@ -210,9 +210,11 @@ class SitePriceLevelEdit_ extends React.Component {
 
   getData = (method, data = {}) => {
       
-    this.setState({
-      is_load: true,
-    });
+    if(method !== 'save_one_price') {
+      this.setState({
+        is_load: true,
+      });
+    }
 
     let res = api(this.state.module, method, data)
       .then(result => result.data)

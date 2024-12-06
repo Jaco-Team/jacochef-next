@@ -4,7 +4,6 @@ import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
-import DownloadIcon from '@mui/icons-material/Download';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
 
@@ -29,6 +28,56 @@ import { api } from '@/src/api_new';
 import { ExlIcon } from '@/ui/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
+
+class SitePriceLevel_Modal_XLS extends React.Component {
+
+  render() {
+
+    const {onClose, open, fullScreen, downLoad, uploadFile, input_value} = this.props;
+
+    return (
+      <Dialog
+        open={open}
+        onClose={onClose}
+        fullScreen={fullScreen}
+        fullWidth={true}
+        maxWidth={'sm'}
+      >
+        <DialogTitle className="button">
+          Скачать/Загрузить файл XLS
+          <IconButton onClick={onClose} style={{ cursor: 'pointer' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          <Grid container spacing={3} style={{ display: 'flex', justifyContent: 'space-evenly' }}>
+
+            <Grid item xs={12} sm={4} x={{ display: 'flex', alignItems: 'center' }}>
+              <Tooltip title={<Typography color="inherit">{'Скачать шаблон таблицы в Excel'}</Typography>}> 
+                <IconButton disableRipple sx={{ padding: 0 }} onClick={downLoad}>
+                  <ExlIcon />
+                </IconButton>
+              </Tooltip>
+            </Grid>
+
+            <Grid item xs={12} sm={4} className='button_import'>
+              <Button variant="contained" component="label" style={{ whiteSpace: 'nowrap' }}>
+                Загрузить файл xls
+                <input type="file" hidden onChange={uploadFile} value={input_value} />
+              </Button>
+            </Grid>
+
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>
+            Закрыть
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+}
 
 class SitePriceLevel_Modal_New extends React.Component {
   constructor(props) {
@@ -246,7 +295,9 @@ class SitePriceLevel_ extends React.Component {
       levels: [],
       levelsCopy: [],
      
-      input_value: ''
+      input_value: '',
+
+      modalDialog_XLS: false
     };
   }
 
@@ -388,6 +439,8 @@ class SitePriceLevel_ extends React.Component {
 
   async downLoad() {
 
+    this.setState({ modalDialog_XLS: false })
+
     const dop_type = {
       responseType: 'blob',
     }
@@ -413,6 +466,7 @@ class SitePriceLevel_ extends React.Component {
     }
 
     this.setState({
+      modalDialog_XLS: false,
       input_value: ''
     });
 
@@ -491,6 +545,14 @@ class SitePriceLevel_ extends React.Component {
           fullScreen={this.state.fullScreen}
         />
 
+        <SitePriceLevel_Modal_XLS
+          open={this.state.modalDialog_XLS}
+          onClose={() => this.setState({ modalDialog_XLS: false })}
+          uploadFile={this.uploadFile.bind(this)}
+          downLoad={this.downLoad.bind(this)}
+          input_value={this.state.input_value}
+        />
+
         <Grid container spacing={3} mb={3} className='container_first_child'>
 
           <Grid item xs={12} sm={12}>
@@ -507,27 +569,15 @@ class SitePriceLevel_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={8}>
+          <Grid item xs={12} sm={2}>
             <Button onClick={this.openModal.bind(this, 'Новый уровень цен')} variant="contained">
               Добавить
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={4} x={{ display: 'flex', alignItems: 'center' }}>
-            <Tooltip title={<Typography color="inherit">{'Скачать шаблон таблицы в Excel'}</Typography>}> 
-              <IconButton disableRipple sx={{ padding: 0 }}
-              onClick={this.downLoad.bind(this)} 
-              >
-                <ExlIcon />
-                <DownloadIcon />
-              </IconButton>
-            </Tooltip>
-          </Grid>
-
-          <Grid item xs={12} sm={4} className='button_import'>
-            <Button variant="contained" component="label">
-              Загрузить файл xls
-              <input type="file" hidden onChange={this.uploadFile.bind(this)} value={this.state.input_value} />
+          <Grid item xs={12} sm={4}>
+            <Button onClick={() => this.setState({ modalDialog_XLS: true })} variant="contained">
+              Скачать/Загрузить файл XLS
             </Button>
           </Grid>
 
