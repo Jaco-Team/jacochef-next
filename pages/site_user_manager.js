@@ -24,7 +24,7 @@ import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyDatePickerNew } fr
 
 import Dropzone from "dropzone";
 
-import queryString from 'query-string';
+import { api } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 
@@ -141,70 +141,39 @@ class SiteUserManager_ extends React.Component {
 
         let data = await this.getData('get_all');
 
-        console.log(data);
+        console.log('componentDidMount data', data);
 
         this.setState({
             module_name: data.module_info.name,
             point_list: data.points,
-            app_list: data.apps,
-            show_access: data.my.show_access
+            // app_list: data.apps,
+            // show_access: data.my.show_access
         })
 
-        setTimeout(() => {
-            this.changeSort('point_id', { target: { value: data.points[0]['id'] } })
-        }, 500)
+        // setTimeout(() => {
+        //     this.changeSort('point_id', { target: { value: data.points[0]['id'] } })
+        // }, 500)
 
         document.title = data.module_info.name;
     }
 
-    getData = (method, data = {}, is_load = true) => {
-
-        if (is_load == true) {
+    getData = (method, data = {}) => {
+    
+      this.setState({
+        is_load: true,
+      });
+  
+      let res = api(this.state.module, method, data)
+        .then(result => result.data)
+        .finally( () => {
+          setTimeout(() => {
             this.setState({
-                is_load: true
-            })
-        }
-
-        return fetch('https://jacochef.ru/api/index_new.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: queryString.stringify({
-                method: method,
-                module: this.state.module,
-                version: 2,
-                login: localStorage.getItem('token'),
-                data: JSON.stringify(data)
-            })
-        }).then(res => res.json()).then(json => {
-
-            if (json.st === false && json.type == 'redir') {
-                window.location.pathname = '/';
-                return;
-            }
-
-            if (json.st === false && json.type == 'auth') {
-                window.location.pathname = '/auth';
-                return;
-            }
-
-            setTimeout(() => {
-                this.setState({
-                    is_load: false
-                })
-            }, 300)
-
-            return json;
-        })
-            .catch(err => {
-                setTimeout(() => {
-                    this.setState({
-                        is_load: false
-                    })
-                }, 300)
-                console.log(err)
+              is_load: false,
             });
+          }, 500);
+        });
+  
+      return res;
     }
 
     changeSort(type, event, data) {
@@ -564,7 +533,7 @@ class SiteUserManager_ extends React.Component {
 
         editUser_user.user.birthday = dayjs(editUser_user.user.birthday).format('YYYY-MM-DD')
 
-        console.log( editUser_user )
+        // console.log( editUser_user )
 
         let data = {
             user: editUser_user,
@@ -940,7 +909,6 @@ class SiteUserManager_ extends React.Component {
                     <Grid item xs={12} sm={12}>
                         <h1>{this.state.module_name}</h1>
                     </Grid>
-                    { console.log(this.state) }
                     <Grid item xs={12} sm={6}>
                         <MySelect data={this.state.point_list} value={this.state.point_id} func={this.changeSort.bind(this, 'point_id')} label='Точка' />
                     </Grid>
