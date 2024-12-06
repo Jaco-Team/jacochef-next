@@ -28,7 +28,7 @@ import IconButton from '@mui/material/IconButton';
 
 import Dropzone from 'dropzone';
 
-import { MySelect, MyAutocomplite, MyAutocomplite2, MyDatePickerNew, MyTextInput, MyCheckBox, MyAlert} from '@/ui/elements';
+import { MySelect, MyAutocomplite, MyAutocomplite2, MyDatePickerNew, MyTextInput, MyCheckBox, MyAlert, formatDateReverse} from '@/ui/elements';
 
 import queryString from 'query-string';
 import dayjs from 'dayjs';
@@ -49,6 +49,8 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
 import Draggable from 'react-draggable';
 
@@ -253,7 +255,7 @@ const useStore = create((set, get) => ({
   isPink: false,
   setPink: () => set((state) => ({ isPink: !state.isPink })),
 
-  my_acces: [],
+  acces: [],
 
   vendor_items: [],
   search_item: '',
@@ -332,10 +334,19 @@ const useStore = create((set, get) => ({
   DropzoneMain: null,
   DropzoneDop: null,
 
+  openImgType: '',
+
   set_position: (is_horizontal, is_vertical) => {
     set({
       is_horizontal: is_horizontal,
       is_vertical: is_vertical,
+    });
+  },
+
+  setImgList: (imgs_bill, imgs_factur) => {
+    set({
+      imgs_bill: imgs_bill,
+      imgs_factur: imgs_factur,
     });
   },
 
@@ -507,16 +518,18 @@ const useStore = create((set, get) => ({
     set({ 
       modalDialog: false,
       is_horizontal: false,
-      is_vertical: false
+      is_vertical: false,
+      openImgType: ''
     })
   },
 
-  openImageBill: (image) => {
+  openImageBill: (image, type) => {
     get().handleResize();
 
     set({ 
       modalDialog: true, 
-      image
+      image,
+      openImgType: type,
     })
   },
 
@@ -746,7 +759,7 @@ const useStore = create((set, get) => ({
 
       vendor_items.map((item) => {
         item.pq_item = item.pq_item.map(it => {
-          it = { name: `${it.name} ${item.ed_izmer_name}`, id: it.id };
+          it = { name: `${it.name}`, id: it.id };
           return it;
         });
         return item;
@@ -755,7 +768,8 @@ const useStore = create((set, get) => ({
       set({
         vendor_items,
         all_ed_izmer: vendor_items.length ? vendor_items[0].pq_item : [],
-        pq: vendor_items.length ? vendor_items[0].pq_item[0].id : '',
+        //pq: vendor_items.length ? vendor_items[0].pq_item[0].id : '',
+        pq: '',
         count: '',
         fact_unit: '',
         summ: '',
@@ -801,7 +815,7 @@ const useStore = create((set, get) => ({
 
           const res = await get().getData('get_vendors', obj)
           
-          console.log( 'res', res )
+          
 
           // const data = {
           //   point_id: point.id,
@@ -993,6 +1007,8 @@ const useStore = create((set, get) => ({
   check_nds_bill: (value) => {
     let nds = [];
     nds[0] = 'без НДС';
+    nds[5] = '5 %';
+    nds[7] = '7 %';
     nds[10] = '10 %';
     nds[20] = '20 %';
     nds[18] = '18 %';
@@ -1007,8 +1023,8 @@ const useStore = create((set, get) => ({
 
     bill_items.map((item, key) => {
       let one_price_bill = parseFloat(item['one_price_bill']);
-      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id'])).price;
-      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id'])).vend_percent;
+      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.price;
+      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.vend_percent;
 
       let one_price_max = parseFloat(one_price_vend) + ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
 			let one_price_min = parseFloat(one_price_vend) - ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
@@ -1069,9 +1085,15 @@ const useStore = create((set, get) => ({
   },
 
   changeDataTable: (event, type, id, key) => {
+
+    console.log( event )
+
     const value = event.target.value;
 
-    let bill_items = JSON.parse(JSON.stringify(get().bill_items));
+    let bill_items = get().bill_items;
+
+    console.log(value, type, id, key)
+    console.log(bill_items)
 
     bill_items = bill_items.map((item, index) => {
       if (item.id === id && key === index) {
@@ -1193,7 +1215,8 @@ function FormHeader_new({ type_edit }){
           value={type}
           multiple={false}
           is_none={false}
-          disabled={ type_edit === 'edit' ? false : true }
+          //disabled={ type_edit === 'edit' ? false : true }
+          disabled={ true }
           func={ event => changeData('type', event) }
           label="Тип"
         />
@@ -1207,7 +1230,8 @@ function FormHeader_new({ type_edit }){
           multiple={false}
           data={vendors}
           value={search_vendor}
-          disabled={ type_edit === 'edit' ? false : true }
+          //disabled={ type_edit === 'edit' ? false : true }
+          disabled={ true }
           func={ (event, name) => search_vendors(event, name) }
           onBlur={ (event, name) => search_vendors(event, name) }
         />
@@ -1221,7 +1245,8 @@ function FormHeader_new({ type_edit }){
               value={doc_base_id}
               multiple={false}
               is_none={false}
-              disabled={ type_edit === 'edit' ? false : true }
+              //disabled={ type_edit === 'edit' ? false : true }
+              disabled={ true }
               func={ event => changeData('doc_base_id', event) }
               label="Документ"
             />
@@ -1238,6 +1263,7 @@ function FormHeader_new({ type_edit }){
               multiple={false}
               value={doc}
               disabled={ type_edit === 'edit' ? false : true }
+              //disabled={ true }
               func={ (event, name) => search_doc(event, name) }
               onBlur={ (event, name) => search_doc(event, name) }
               label="Документ основание"
@@ -1271,6 +1297,7 @@ function FormHeader_new({ type_edit }){
       <Grid item xs={12} sm={6}>
         <MyDatePickerNew
           label="Дата документа"
+          format="DD-MM-YYYY"
           disabled={ type_edit === 'edit' ? false : true }
           value={date}
           func={ (event) => changeDateRange(event, 'date') }
@@ -1281,6 +1308,7 @@ function FormHeader_new({ type_edit }){
         <Grid item xs={12} sm={6}>
           <MyDatePickerNew
             label="Дата счет-фактуры"
+            format="DD-MM-YYYY"
             disabled={ type_edit === 'edit' ? false : true }
             value={date_factur}
             func={ (event) => changeDateRange(event, 'date_factur') }
@@ -1291,7 +1319,6 @@ function FormHeader_new({ type_edit }){
     </>
   )
 }
-
 
 function FormVendorItems(){
 
@@ -1318,14 +1345,16 @@ function FormVendorItems(){
       </Grid>
 
       <Grid item xs={12} sm={3}>
-        <MySelect
-          data={all_ed_izmer}
-          value={pq}
-          multiple={false}
-          is_none={false}
-          func={ event => changeData('pq', event) }
+        <MyAutocomplite2
           label="Объем упаковки"
+          freeSolo={true}
+          multiple={false}
+          data={ all_ed_izmer }
+          value={ pq }
+          func={ (event, name) => changeData('pq', event) }
+          onBlur={ (event, name) => changeData('pq', event) }
         />
+
       </Grid>
 
       <Grid item xs={12} sm={3}>
@@ -1426,14 +1455,21 @@ function VendorItemsTableEdit(){
                     {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
                     {!item?.data_bill ? null : <TableCell>После</TableCell>}
                     <TableCell className="ceil_white">
-                      <MySelect
-                        data={item.all_ed_izmer}
-                        value={item.pq}
-                        multiple={false}
-                        is_none={false}
-                        func={(event) => changeDataTable(event, 'pq', item.id, key)}
+                      
+
+                      <MyAutocomplite2
                         label=""
+                        freeSolo={true}
+                        multiple={false}
+                        data={ item.pq_item }
+                        value={ item.pq }
+                        //func={ (event, data) => { console.log( data ?? event.target.value ) } }
+                        //onBlur={ (event, data) => { console.log( data ?? event.target.value ) } }
+                        func={ (event, data) => changeDataTable( { target: { value: data ?? event.target.value } }, 'pq', item.id, key) }
+                        onBlur={ (event, data) => changeDataTable({ target: { value: data ?? event.target.value } }, 'pq', item.id, key) }
                       />
+
+
                     </TableCell>
                     <TableCell className="ceil_white">
                       <MyTextInput
@@ -1600,7 +1636,6 @@ function VendorItemsTableView(){
   )
 }
 
-
 function FormImage_new({ type_edit, type_doc }){
 
   const [type, imgs_bill, openImageBill, fullScreen, imgs_factur, number_factur, changeInput, changeDateRange, date_factur] = useStore( state => [state.type, state.imgs_bill, state.openImageBill, state.fullScreen, state.imgs_factur, state.number_factur, state.changeInput, state.changeDateRange, state.date_factur]);
@@ -1620,7 +1655,7 @@ function FormImage_new({ type_edit, type_doc }){
                     src={'https://storage.yandexcloud.net/' + url + img} 
                     alt="Image bill" 
                     className="img_modal_bill"
-                    onClick={() => openImageBill('https://storage.yandexcloud.net/' + url + img)}
+                    onClick={() => openImageBill('https://storage.yandexcloud.net/' + url + img, 'bill')}
                   />
                 ))}
               </>
@@ -1639,7 +1674,7 @@ function FormImage_new({ type_edit, type_doc }){
                   src={'https://storage.yandexcloud.net/bill/' + img} 
                   alt="Image bill" 
                   className="img_modal_bill"
-                  onClick={() => openImageBill('https://storage.yandexcloud.net/bill/' + img)}
+                  onClick={() => openImageBill('https://storage.yandexcloud.net/bill/' + img, 'factur')}
                 />
               ))}
             </>
@@ -1685,6 +1720,7 @@ function FormImage_new({ type_edit, type_doc }){
           <Grid item xs={12}>
             <MyDatePickerNew
               label="Дата счет-фактуры"
+              format="DD-MM-YYYY"
               disabled={ type_edit === 'edit' ? false : true }
               value={date_factur}
               func={ (event) => changeDateRange(event, 'date_factur') }
@@ -1702,7 +1738,7 @@ function FormImage_new({ type_edit, type_doc }){
                         src={'https://storage.yandexcloud.net/bill/' + img} 
                         alt="Image bill" 
                         className="img_modal_bill"
-                        onClick={() => openImageBill('https://storage.yandexcloud.net/bill/' + img)}
+                        onClick={() => openImageBill('https://storage.yandexcloud.net/bill/' + img, 'factur')}
                       />
                     ))}
                   </>
@@ -1740,6 +1776,7 @@ function FormOther_new({ page, type_edit, type_doc }){
           <Grid item xs={12} sm={6}>
             <MyDatePickerNew
               label="Дата разгрузки"
+              format="DD-MM-YYYY"
               disabled={ type_edit === 'edit' ? false : true }
               value={date_items}
               func={ (event) => changeDateRange(event, 'date_items') }
@@ -1787,7 +1824,7 @@ function FormOther_new({ page, type_edit, type_doc }){
       }
 
 
-      <Grid item xs={12} sm={12} display="flex" alignItems="center">
+      <Grid item xs={12} sm={12} display="flex" alignItems="center" style={{ display: 'none' }}>
         <MyCheckBox
           disabled={ type_edit === 'edit' ? false : true }
           value={parseInt(is_new_doc) === 1 ? true : false}
@@ -1842,106 +1879,109 @@ class Billing_Accordion extends React.Component {
     return (
       <Grid item xs={12} sm={12} mb={5}>
         
-        <AccordionDetails>
-          <AccordionSummary style={{ cursor: 'default' }} expandIcon={<ExpandMoreIcon sx={{ opacity: 0 }} />} aria-controls="panel1a-content">
-            <Grid item xs display="flex" flexDirection="row">
-              <Typography style={{ width: '1%' }}></Typography>
-              <Typography style={{ width: '4%', minWidth: '210px' }}>Тип документа</Typography>
-              <Typography style={{ width: '12%' }}>Бумажный носитель</Typography>
-              <Typography style={{ width: '11%' }}>
-                Номер документа
-              </Typography>
-              <Typography style={{ width: '11%' }}>
-                Дата в документе
-              </Typography>
-              <Typography style={{ width: '14%', minWidth: '200px' }}>Создатель</Typography>
-              <Typography style={{ width: '10%' }}>Дата обновления</Typography>
-              <Typography style={{ width: '14%', minWidth: '200px' }}>Редактор</Typography>
-              <Typography style={{ width: '11%' }}>Время обновления</Typography>
-              <Typography style={{ width: '8%' }}>Сумма с НДС</Typography>
-            </Grid>
-          </AccordionSummary>
+        <Accordion>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>История</AccordionSummary>
+          <AccordionDetails>
 
-          {bill_list.map((item, i) => (
-            <Accordion key={i}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" className="accordion_summary" style={{ paddingRight: '1%' }}>
-
-                <Grid item xs display="flex" flexDirection='row'>
-
-                  <Typography component="div" style={{ width: '1%', backgroundColor: item.color, marginRight: '1%' }}></Typography>
+            <AccordionDetails>
+              <AccordionSummary style={{ cursor: 'default' }} expandIcon={<ExpandMoreIcon sx={{ opacity: 0 }} />} aria-controls="panel1a-content">
+                <Grid item xs display="flex" flexDirection="row">
+                  <Typography style={{ width: '1%' }}></Typography>
+                  <Typography style={{ width: '4%', minWidth: '210px' }}>Тип документа</Typography>
                   
-                  <Typography style={{ width: '4%', minWidth: '210px',  display: 'flex', alignItems: 'center' }}>
-                    {item.name}
+                  <Typography style={{ width: '11%' }}>
+                    Номер документа
                   </Typography>
-
-                  <Typography className='checkbox_disable' component="div" style={{ width: '12%', display: 'flex', alignItems: 'center' }}>
-                    <MyCheckBox
-                      value={parseInt(item.doc_true) == 1 ? true : false}
-                      label=""
-                      //disabled={true}
-                    />
+                  <Typography style={{ width: '11%' }}>
+                    Дата в документе
                   </Typography>
-
-                  <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
-                    {item.number}
-                  </Typography>
-
-                  <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
-                    {item.date}
-                  </Typography>
-
-                  <Typography style={{ width: '14%', minWidth: '200px', display: 'flex', alignItems: 'center' }}>
-                    {item.creator_id}
-                  </Typography>
-
-                  <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
-                    {item.date_update}
-                  </Typography>
-
-                  <Typography style={{ width: '14%', minWidth: '200px', display: 'flex', alignItems: 'center'}}>
-                    {item.editor_id}
-                  </Typography>
-
-                  <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
-                    {item.time_update}
-                  </Typography>
-
-                  
-
-                  <Typography style={{ width: '8%',  display: 'flex', alignItems: 'center' }}>
-                    {item.sum_w_nds}
-                  </Typography>
+                  <Typography style={{ width: '14%', minWidth: '200px' }}>Создатель</Typography>
+                  <Typography style={{ width: '10%' }}>Дата обновления</Typography>
+                  <Typography style={{ width: '14%', minWidth: '200px' }}>Редактор</Typography>
+                  <Typography style={{ width: '11%' }}>Время обновления</Typography>
+                  <Typography style={{ width: '8%' }}>Сумма с НДС</Typography>
                 </Grid>
               </AccordionSummary>
 
-              <AccordionDetails style={{ width: '100%' }}>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                      <TableCell>Товар</TableCell>
-                      <TableCell>Объем упак.</TableCell>
-                      <TableCell>Кол-во упак.</TableCell>
-                      <TableCell>Кол-во</TableCell>
-                      <TableCell>Сумма с НДС</TableCell>
-                    </TableRow>
-                  </TableHead>
+              {bill_list.map((item, i) => (
+                <Accordion key={i}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" className="accordion_summary" style={{ paddingRight: '1%' }}>
 
-                  <TableBody>
-                    {item?.items?.map((item, key) => (
-                      <TableRow key={key} hover>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.pq} {item.ei_name}</TableCell>
-                        <TableCell>{item.count}</TableCell>
-                        <TableCell>{item.fact_count} {item.ei_name}</TableCell>
-                        <TableCell>{item.price_w_nds} ₽</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </AccordionDetails>
-            </Accordion>
-          ))}
-        </AccordionDetails>
+                    <Grid item xs display="flex" flexDirection='row'>
+
+                      <Typography component="div" style={{ width: '1%', backgroundColor: item.color, marginRight: '1%' }}></Typography>
+                      
+                      <Typography style={{ width: '4%', minWidth: '210px',  display: 'flex', alignItems: 'center' }}>
+                        {item.name}
+                      </Typography>
+
+                      
+
+                      <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
+                        {item.number}
+                      </Typography>
+
+                      <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
+                        {formatDateReverse(item.date_create)}
+                      </Typography>
+
+                      <Typography style={{ width: '14%', minWidth: '200px', display: 'flex', alignItems: 'center' }}>
+                        {item.creator_id}
+                      </Typography>
+
+                      <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
+                        {formatDateReverse(item.date_update)}
+                      </Typography>
+
+                      <Typography style={{ width: '14%', minWidth: '200px', display: 'flex', alignItems: 'center'}}>
+                        {item.editor_id}
+                      </Typography>
+
+                      <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
+                        {item.time_update}
+                      </Typography>
+
+                      
+
+                      <Typography style={{ width: '8%',  display: 'flex', alignItems: 'center' }}>
+                        {item.sum_w_nds}
+                      </Typography>
+                    </Grid>
+                  </AccordionSummary>
+
+                  <AccordionDetails>
+                    <Table>
+                      <TableHead>
+                        <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                          <TableCell>Товар</TableCell>
+                          <TableCell>Объем упак.</TableCell>
+                          <TableCell>Кол-во упак.</TableCell>
+                          <TableCell>Кол-во</TableCell>
+                          <TableCell>Сумма с НДС</TableCell>
+                        </TableRow>
+                      </TableHead>
+
+                      <TableBody>
+                        {item?.items?.map((item, key) => (
+                          <TableRow key={key} hover>
+                            <TableCell>{item.name}</TableCell>
+                            <TableCell style={{ textAlign: 'center' }}>{item.pq} {item.ei_name}</TableCell>
+                            <TableCell style={{ textAlign: 'center' }}>{item.count}</TableCell>
+                            <TableCell style={{ textAlign: 'center' }}>{item.fact_count} {item.ei_name}</TableCell>
+                            <TableCell style={{ textAlign: 'center' }}>{item.price_w_nds} ₽</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </AccordionDetails>
+
+          </AccordionDetails>
+        </Accordion>
+
+        
         
       </Grid>
     );
@@ -2115,6 +2155,15 @@ class Billing_Modal extends React.Component {
     return (
       <>
         <div className='modal_btn'>
+          { this.props.isDelImg === true ?
+            <MyTooltip name='Удалить'>
+              <IconButton onClick={this.props.delImg.bind(this, this.props.image)} style={{ backgroundColor: 'red', color: '#fff' }}>
+                <DeleteForeverIcon />
+              </IconButton>
+            </MyTooltip>
+              :
+            false
+          }
           <MyTooltip name='Повернуть на 90 градусов влево'>
             <IconButton onClick={this.setLeftRotate.bind(this)}>
               <RotateLeftIcon />
@@ -2222,7 +2271,12 @@ class Billing_Edit_ extends React.Component {
       acces: null,
       type_doc: '',
 
-      modelCheckDel: false
+      modelCheckDel: false,
+      modelCheckDelImg: false,
+      modelChecReturn: false,
+
+      imgDel: '',
+      delText: '',
     };
   }
 
@@ -2356,7 +2410,7 @@ class Billing_Edit_ extends React.Component {
       return ;
     }
 
-    if( imgs_factur.length == 0 && ( parseInt(type) == 2 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) ) {
+    if( imgs_factur.length == 0 && parseInt(doc_base_id) == 1 && ( parseInt(type) == 2 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) ) {
       showAlert(false, 'Нет изображений счет-фактуры');
 
       return ;
@@ -2462,9 +2516,41 @@ class Billing_Edit_ extends React.Component {
     }
   }
 
+  delImg(img){
+
+    this.setState({
+      imgDel: img,
+      modelCheckDelImg: true
+    })
+
+  }
+
+  async delImgTrue(){
+    const { bill, point, closeDialog, setImgList, showAlert, openImgType } = this.props.store;
+
+    const data = {
+      bill_id: bill.id,
+      point_id: point?.id,
+      bill_type: parseInt(bill.type_bill) == 1 ? 'bill_ex' : 'bill', //bill / bill_ex
+      type: openImgType, //bill / factur
+      img_name: this.state.imgDel
+    }
+
+    const res = await this.getData('delImg', data);
+
+    if( res.st === true ){
+      closeDialog();
+      setImgList(res?.imgs_bill, res?.imgs_factur);
+
+      this.setState({ modelCheckDelImg: false, imgDel: '' })
+    }else{
+      showAlert(res.st, res.text);
+    }
+  }
+
   render() {
 
-    const { isPink, openAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical } = this.props.store;
+    const { acces, openAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical } = this.props.store;
 
     return (
       <>
@@ -2478,6 +2564,8 @@ class Billing_Edit_ extends React.Component {
             fullScreen={fullScreen}
             image={image}
             store={this.props.store}
+            delImg={this.delImg.bind(this)}
+            isDelImg={ parseInt(acces?.del_img) == 1 ? true : false }
           />
         }
 
@@ -2503,6 +2591,41 @@ class Billing_Edit_ extends React.Component {
           <DialogActions>
             <Button onClick={ () => { this.setState({ modelCheckDel: false }) } }>Отмена</Button>
             <Button onClick={ this.saveDelDoc.bind(this) }>Удалить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={this.state.modelChecReturn}
+          onClose={ () => { this.setState({ modelChecReturn: false, delText: '' }) } }
+        >
+          <DialogTitle>Подтверждение</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 20 }}>
+              Укажите причину возврата
+            </DialogContentText>
+
+            <MyTextInput label="Причина" value={this.state.delText} func={ event => { this.setState({ delText: event.target.value }) } } />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={ () => { this.setState({ modelChecReturn: false, delText: '' }) } }>Отмена</Button>
+            <Button onClick={ this.saveEditBill.bind(this, 'return') }>Удалить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={this.state.modelCheckDelImg}
+          onClose={ () => { this.setState({ modelCheckDelImg: false, imgDel: '' }) } }
+        >
+          <DialogTitle>Подтверждение</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 20 }}>
+              Удалить сохраненное изображение?
+            </DialogContentText>
+
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={ () => { this.setState({ modelCheckDelImg: false, imgDel: '' }) } }>Отмена</Button>
+            <Button onClick={ this.delImgTrue.bind(this) }>Удалить</Button>
           </DialogActions>
         </Dialog>
 
@@ -2534,14 +2657,6 @@ class Billing_Edit_ extends React.Component {
             type='edit'
           />
 
-          { parseInt(this.state.acces?.only_save) === 0 ? false :
-            <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'current')}>
-                Сохранить
-              </Button>
-            </Grid>
-          }
-         
           { parseInt(this.state.acces?.only_delete) === 0 ? false :
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth style={{ height: '100%' }}
@@ -2552,6 +2667,24 @@ class Billing_Edit_ extends React.Component {
             </Grid>
           }
 
+          { parseInt(this.state.acces?.only_return) === 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth style={{ height: '100%' }}
+                onClick={ () => { this.setState({ modelChecReturn: true }) } }
+              >
+                Ошибка ( вернуть управляющему )
+              </Button>
+            </Grid>
+          }
+
+          { parseInt(this.state.acces?.only_save) === 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'current')}>
+                Сохранить
+              </Button>
+            </Grid>
+          }
+         
           { parseInt(this.state.acces?.only_delete) === 0 ? false :
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}

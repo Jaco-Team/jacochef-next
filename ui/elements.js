@@ -55,6 +55,10 @@ export function formatDate(date) {
   return [year, month, day].join('-');*/
 }
 
+export function formatDateReverse(date) {
+  return dayjs(date).format('DD-MM-YYYY');
+}
+
 export function formatDateMax(date) {
   var d = new Date(date),
       month = '' + (d.getMonth() + 1),
@@ -413,7 +417,8 @@ export class MyDatePickerNew extends React.PureComponent {
         <DatePicker
           multiple={true}
           //mask="____-__-__"
-          format="YYYY-MM-DD"
+          //format="YYYY-MM-DD"
+          format={ this.props.format ?? "YYYY-MM-DD" }
           minDate={ this.props.minDate ? this.props.minDate : null }
           label={this.props.label}
           value={(this.props.value)}
