@@ -21,6 +21,11 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
 import Checkbox from '@mui/material/Checkbox';
 
 import Backdrop from '@mui/material/Backdrop';
@@ -39,7 +44,7 @@ class Appointment_Modal_param extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    // console.log('componentDidUpdate', this.props);
+    //console.log('componentDidUpdate', this.props);
     
     if (!this.props.item) {
       return;
@@ -86,8 +91,8 @@ class Appointment_Modal_param extends React.Component {
 
       <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }} >
         <Grid item xs={12} >
-          <TableContainer  sx={{ maxHeight: { xs: 'none', sm: 630 } }}>
-            <Table size="small" stickyHeader>
+          {!this.state.item?.table?.length ? null :
+            <Table size="small">
               <TableHead>
                 <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
                   <TableCell style={{ width: '40%' }}>Категория</TableCell>
@@ -97,69 +102,149 @@ class Appointment_Modal_param extends React.Component {
               </TableHead>
               <TableBody>
                 {type === 'one' ?
-                  !this.state.item ? null : (
-                    this.state.item.map((f, f_key) => (
-                      <TableRow hover key={f_key}>
-                        <TableCell>{f.category_name}</TableCell>
-                        <TableCell>{f.name}</TableCell>
-                        <TableCell> 
-                          {parseInt(f?.type) == 2 ?
-                            <Checkbox
-                              edge="end"
-                              onChange={changeActive.bind(this, main_key, parent_key, f_key, -1)}
-                              checked={parseInt(f.is_active) == 1 ? true : false}
-                            />
-                            :
-                            <MySelect
-                              data={dataSelect}
-                              value={parseInt(f.is_active) === 0 || f.is_active === null ? false : f.is_active}
-                              func={changeActive.bind(this, main_key, parent_key, f_key, -1)}
-                              is_none={false}
-                            />
-                          }
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )
+                  this.state.item.table.map((f, f_key) => (
+                    <TableRow hover key={f_key}>
+                      <TableCell>{f.category_name}</TableCell>
+                      <TableCell>{f.name}</TableCell>
+                      <TableCell> 
+                        {parseInt(f?.type) == 2 ?
+                          <Checkbox
+                            edge="end"
+                            onChange={changeActive.bind(this, main_key, parent_key, f.index, -1)}
+                            checked={parseInt(f.is_active) == 1 ? true : false}
+                          />
+                          :
+                          <MySelect
+                            data={dataSelect}
+                            value={parseInt(f.is_active) === 0 || f.is_active === null ? false : f.is_active}
+                            func={changeActive.bind(this, main_key, parent_key, f.index, -1)}
+                            is_none={false}
+                          />
+                        }
+                      </TableCell>
+                    </TableRow>
+                  ))
                 :
-                  !this.state.item ? null : (
-                    this.state.item.map((f, f_key) => (
-                      f?.features?.map( ( cat_f, cat_f_key ) => (
-                        <TableRow hover key={cat_f_key}>
-                          <TableCell>{cat_f.category_name}</TableCell>
-                          <TableCell>{cat_f.name}</TableCell>
+                this.state.item.table.map((f, f_key) => (
+                  f?.features?.map( ( cat_f, cat_f_key ) => (
+                    <TableRow hover key={cat_f_key}>
+                      <TableCell>{cat_f.category_name}</TableCell>
+                      <TableCell>{cat_f.name}</TableCell>
+                      <TableCell> 
+                        {parseInt(cat_f?.type) == 2 ?
+                          <Checkbox
+                            edge="end"
+                            onChange={changeActive.bind(this, main_key, parent_key, cat_f_key, f.index)}
+                            checked={parseInt(cat_f.is_active) == 1 ? true : false }
+                          />
+                          :
+                          <MySelect
+                            data={dataSelect}
+                            value={parseInt(cat_f.is_active) === 0 || cat_f.is_active === null ? false : cat_f.is_active}
+                            func={changeActive.bind(this, main_key, parent_key, cat_f_key, f.index)}
+                            is_none={false}
+                          />
+                        }
+                      </TableCell>
+                    </TableRow>
+                  ))    
+                ))}
+              </TableBody>
+            </Table>
+          }
+          {!this.state.item?.accordion?.length ? null :
+            type === 'one' ?
+              this.state.item.accordion.map((f, f_key) => (
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>{f.category_name}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                          <TableCell style={{ width: '40%' }}>Категория</TableCell>
+                          <TableCell style={{ width: '40%' }}>Параметр</TableCell>
+                          <TableCell style={{ width: '20%' }}></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        <TableRow hover key={f_key}>
+                          <TableCell>{f.category_name}</TableCell>
+                          <TableCell>{f.name}</TableCell>
                           <TableCell> 
-                            {parseInt(cat_f?.type) == 2 ?
+                            {parseInt(f?.type) == 2 ?
                               <Checkbox
                                 edge="end"
-                                onChange={changeActive.bind(this, main_key, parent_key, cat_f_key, f_key)}
-                                checked={parseInt(cat_f.is_active) == 1 ? true : false }
+                                onChange={changeActive.bind(this, main_key, parent_key, f.index, -1)}
+                                checked={parseInt(f.is_active) == 1 ? true : false}
                               />
                               :
                               <MySelect
                                 data={dataSelect}
-                                value={parseInt(cat_f.is_active) === 0 || cat_f.is_active === null ? false : cat_f.is_active}
-                                func={changeActive.bind(this, main_key, parent_key, cat_f_key, f_key)}
+                                value={parseInt(f.is_active) === 0 || f.is_active === null ? false : f.is_active}
+                                func={changeActive.bind(this, main_key, parent_key, f.index, -1)}
                                 is_none={false}
                               />
                             }
                           </TableCell>
                         </TableRow>
-                      ))    
-                  )))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      </TableBody>
+                    </Table>
+                  </AccordionDetails>
+                </Accordion>
+              ))
+            :
+              this.state.item.accordion.map((f, f_key) => (
+                <Accordion key={f_key}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>{f.category_name}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                          <TableCell style={{ width: '40%' }}>Категория</TableCell>
+                          <TableCell style={{ width: '40%' }}>Параметр</TableCell>
+                          <TableCell style={{ width: '20%' }}></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {f?.features?.map( ( cat_f, cat_f_key ) => (
+                          <TableRow hover key={cat_f_key}>
+                            <TableCell>{cat_f.category_name}</TableCell>
+                            <TableCell>{cat_f.name}</TableCell>
+                            <TableCell> 
+                              {parseInt(cat_f?.type) == 2 ?
+                                <Checkbox
+                                  edge="end"
+                                  onChange={changeActive.bind(this, main_key, parent_key, cat_f_key, f.index)}
+                                  checked={parseInt(cat_f.is_active) == 1 ? true : false }
+                                />
+                                :
+                                <MySelect
+                                  data={dataSelect}
+                                  value={parseInt(cat_f.is_active) === 0 || cat_f.is_active === null ? false : cat_f.is_active}
+                                  func={changeActive.bind(this, main_key, parent_key, cat_f_key, f.index)}
+                                  is_none={false}
+                                />
+                              }
+                            </TableCell>
+                          </TableRow>
+                        ))}   
+                      </TableBody>
+                    </Table>
+                  </AccordionDetails>
+                </Accordion>
+              ))
+          }
         </Grid>
-
       </DialogContent>
-
       <DialogActions>
         <Button color="primary" onClick={this.onClose.bind(this)}>
           Закрыть
         </Button>
       </DialogActions>
-
     </Dialog>
     );
   }
@@ -298,8 +383,29 @@ class Appointment_Modal extends React.Component {
   }
 
   openParams(params, method, main_key, parent_key, type) {
+
+    let table_data = [];
+    let accordion_data = [];
+  
+    params.map((param, i) => {
+      param.index = i;
+      if(param.category) {
+        accordion_data.push(param);
+      } else {
+        table_data.push(param);
+      }
+      
+      return param;
+      
+    }, [])
+
+    const data = {
+      table: table_data,
+      accordion: accordion_data
+    }
+
     this.setState({
-      params,
+      params: data,
       method,
       main_key,
       parent_key,
