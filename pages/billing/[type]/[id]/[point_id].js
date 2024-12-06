@@ -2432,6 +2432,7 @@ class Billing_Edit_ extends React.Component {
       type,
       items,
       number,
+      text: this.state.delText,
       comment,
       is_new_doc,
       users: user,
@@ -2468,7 +2469,7 @@ class Billing_Edit_ extends React.Component {
         DropzoneDop.processQueue();
       }
 
-      if( DropzoneMain['files'].length == 0 && DropzoneDop['files'].length == 0 ){
+      if( (!DropzoneMain || DropzoneMain['files'].length == 0) && (!DropzoneDop || DropzoneDop['files'].length == 0) ){
         window.location.pathname = '/billing';
       }
 
@@ -2608,7 +2609,7 @@ class Billing_Edit_ extends React.Component {
           </DialogContent>
           <DialogActions>
             <Button onClick={ () => { this.setState({ modelChecReturn: false, delText: '' }) } }>Отмена</Button>
-            <Button onClick={ this.saveEditBill.bind(this, 'return') }>Удалить</Button>
+            <Button onClick={ this.saveEditBill.bind(this, 'return') }>Вернуть</Button>
           </DialogActions>
         </Dialog>
 
@@ -2667,7 +2668,7 @@ class Billing_Edit_ extends React.Component {
             </Grid>
           }
 
-          { parseInt(this.state.acces?.only_return) === 0 ? false :
+          { !parseInt(this.state.acces?.only_return) || parseInt(this.state.acces?.only_return) == 0 ? false :
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth style={{ height: '100%' }}
                 onClick={ () => { this.setState({ modelChecReturn: true }) } }
@@ -2685,6 +2686,17 @@ class Billing_Edit_ extends React.Component {
             </Grid>
           }
          
+         { !parseInt(this.state.acces?.send_1c) || parseInt(this.state.acces?.send_1c) == 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next')}>
+                Отправить в 1с
+              </Button>
+            </Grid>
+          }
+
+         
+
+
           { parseInt(this.state.acces?.only_delete) === 0 ? false :
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
