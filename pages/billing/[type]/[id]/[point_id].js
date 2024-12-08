@@ -2447,8 +2447,6 @@ class Billing_Edit_ extends React.Component {
       err_items: err_items
     }
 
-    console.log('saveEditBill data', data);
-
     const res = await this.getData('save_edit', data);
 
     if (res.st === true) {
@@ -2501,8 +2499,6 @@ class Billing_Edit_ extends React.Component {
       del_res: this.state.delText
     }
 
-    console.log('saveDelDoc data', data);
-
     const res = await this.getData('save_bill_del', data);
 
     if (res.st) {
@@ -2547,6 +2543,27 @@ class Billing_Edit_ extends React.Component {
 
       this.setState({ modelCheckDelImg: false, imgDel: '' })
     }else{
+      showAlert(res.st, res.text);
+    }
+  }
+
+  async saveTruePrice(){
+    const { bill, point, showAlert } = this.props.store;
+
+    const data = {
+      bill_id: bill.id,
+      point_id: point?.id,
+      type: parseInt(bill.type_bill) == 1 ? 'bill_ex' : 'bill', //bill / bill_ex
+    }
+
+    const res = await this.getData('save_true_price', data);
+
+    if (res.st) {
+      showAlert(res.st, res.text);
+
+      window.location.pathname = '/billing';
+    } else {
+
       showAlert(res.st, res.text);
     }
   }
@@ -2704,6 +2721,13 @@ class Billing_Edit_ extends React.Component {
             </Grid>
           }
 
+          { !parseInt(this.state.acces?.true_price) || parseInt(this.state.acces?.true_price) == 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveTruePrice.bind(this)}>
+                Подтвердить ценники
+              </Button>
+            </Grid>
+          }
 
           { parseInt(this.state.acces?.only_delete) === 0 ? false :
             <Grid item xs={12} sm={4}>
