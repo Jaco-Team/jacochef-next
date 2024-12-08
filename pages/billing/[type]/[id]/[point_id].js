@@ -466,8 +466,8 @@ const useStore = create((set, get) => ({
       search_vendor: res?.vendors[0]?.name ?? '',
       is_new_doc: parseInt(res?.bill?.doc_true),
       bill_list: res?.bill_hist,
-      imgs_bill: res?.bill_imgs,
-      imgs_factur: res?.factur_imgs,
+      imgs_bill: res?.bill_imgs ?? [],
+      imgs_factur: res?.factur_imgs ?? [],
       allPrice,
       allPrice_w_nds,
       bill: res?.bill,
@@ -2462,10 +2462,12 @@ class Billing_Edit_ extends React.Component {
       global_new_bill_id = res.bill_id;
       
       if( DropzoneMain && DropzoneMain['files'].length > 0 ){
+        i = imgs_bill.length + 1;
         DropzoneMain.processQueue();
       }
 
       if( parseInt(type) == 2 && DropzoneDop && DropzoneDop['files'].length > 0 ){
+        i = imgs_factur.length + 1;
         DropzoneDop.processQueue();
       }
 
@@ -2694,7 +2696,13 @@ class Billing_Edit_ extends React.Component {
             </Grid>
           }
 
-         
+          { !parseInt(this.state.acces?.pay) || parseInt(this.state.acces?.pay) == 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next')}>
+                Оплатить
+              </Button>
+            </Grid>
+          }
 
 
           { parseInt(this.state.acces?.only_delete) === 0 ? false :
