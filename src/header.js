@@ -117,7 +117,7 @@ export default function Header() {
             getOptionLabel={(option) => option.name}
             onChange={(event, newValue) => {
               if( newValue ){
-                window.location.pathname = "/"+newValue.key_query+"/";
+                window.location = "/"+newValue.key_query;
               }
             }}
             style={{ width: '100%' }}
