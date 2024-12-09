@@ -466,8 +466,8 @@ const useStore = create((set, get) => ({
       search_vendor: res?.vendors[0]?.name ?? '',
       is_new_doc: parseInt(res?.bill?.doc_true),
       bill_list: res?.bill_hist,
-      imgs_bill: res?.bill_imgs,
-      imgs_factur: res?.factur_imgs,
+      imgs_bill: res?.bill_imgs ?? [],
+      imgs_factur: res?.factur_imgs ?? [],
       allPrice,
       allPrice_w_nds,
       bill: res?.bill,
@@ -2447,8 +2447,6 @@ class Billing_Edit_ extends React.Component {
       err_items: err_items
     }
 
-    console.log('saveEditBill data', data);
-
     const res = await this.getData('save_edit', data);
 
     if (res.st === true) {
@@ -2462,10 +2460,12 @@ class Billing_Edit_ extends React.Component {
       global_new_bill_id = res.bill_id;
       
       if( DropzoneMain && DropzoneMain['files'].length > 0 ){
+        i = imgs_bill.length + 1;
         DropzoneMain.processQueue();
       }
 
       if( parseInt(type) == 2 && DropzoneDop && DropzoneDop['files'].length > 0 ){
+        i = imgs_factur.length + 1;
         DropzoneDop.processQueue();
       }
 
@@ -2498,8 +2498,6 @@ class Billing_Edit_ extends React.Component {
       point_id: point?.id,
       del_res: this.state.delText
     }
-
-    console.log('saveDelDoc data', data);
 
     const res = await this.getData('save_bill_del', data);
 
@@ -2545,6 +2543,27 @@ class Billing_Edit_ extends React.Component {
 
       this.setState({ modelCheckDelImg: false, imgDel: '' })
     }else{
+      showAlert(res.st, res.text);
+    }
+  }
+
+  async saveTruePrice(){
+    const { bill, point, showAlert } = this.props.store;
+
+    const data = {
+      bill_id: bill.id,
+      point_id: point?.id,
+      type: parseInt(bill.type_bill) == 1 ? 'bill_ex' : 'bill', //bill / bill_ex
+    }
+
+    const res = await this.getData('save_true_price', data);
+
+    if (res.st) {
+      showAlert(res.st, res.text);
+
+      window.location.pathname = '/billing';
+    } else {
+
       showAlert(res.st, res.text);
     }
   }
@@ -2694,8 +2713,21 @@ class Billing_Edit_ extends React.Component {
             </Grid>
           }
 
-         
+          { !parseInt(this.state.acces?.pay) || parseInt(this.state.acces?.pay) == 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next')}>
+                Оплатить
+              </Button>
+            </Grid>
+          }
 
+          { !parseInt(this.state.acces?.true_price) || parseInt(this.state.acces?.true_price) == 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveTruePrice.bind(this)}>
+                Подтвердить ценники
+              </Button>
+            </Grid>
+          }
 
           { parseInt(this.state.acces?.only_delete) === 0 ? false :
             <Grid item xs={12} sm={4}>
