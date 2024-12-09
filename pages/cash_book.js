@@ -254,7 +254,7 @@ class MainTable extends React.Component {
 
     const kassa_text = this.props.table == 'fiz' ? 'Физические кассы' : 'Курьерская наличка';
 
-    console.log( 'virycka_is_edit', this.props?.virycka_is_edit )
+    console.log( 'vidacha_otchet_arr', this.props?.vidacha_otchet, this.props?.vidacha_otchet_arr )
 
     return (
       <TableContainer component={Paper}>
@@ -1103,6 +1103,7 @@ class CashBook_ extends React.Component {
               vidacha_otchet_is_edit={this.state.fiz_kassa?.vidacha_otchet_is_edit}
               vidacha_otchet_is_open={this.state.fiz_kassa?.vidacha_otchet_is_open}
               vidacha_otchet_zp_arr={this.state.fiz_kassa?.vidacha_otchet_arr}
+              vidacha_otchet_arr={this.state.fiz_kassa?.vidacha_otchet_arr}
 
               itog_plus={this.state.fiz_kassa?.itog_plus}
               itog_minus={this.state.fiz_kassa?.itog_minus}
