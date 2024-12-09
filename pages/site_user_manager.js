@@ -146,7 +146,7 @@ class SiteUserManager_ extends React.Component {
         this.setState({
             module_name: data.module_info.name,
             point_list: data.points,
-            app_list: data.apps,
+            // app_list: data.apps,
             // show_access: data.my.show_access
         })
 
@@ -177,8 +177,6 @@ class SiteUserManager_ extends React.Component {
     }
 
     changeSort(type, event, data) {
-
-        console.log( type, event, data )
 
         // автокомлит для должностей
         if (type == 'app_id') {
