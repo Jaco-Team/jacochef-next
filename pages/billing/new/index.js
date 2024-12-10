@@ -518,7 +518,7 @@ const useStore = create((set, get) => ({
     if(search) {
         
       const docs = get().docs;
-      const vendor_id = get().vendors[0]?.id;
+      const vendor_id = get().vendor?.id;
       const point = get().point;
       
       const billing_id = docs.find(doc => doc.name === search)?.id;
@@ -557,7 +557,7 @@ const useStore = create((set, get) => ({
         
         const data = {
           point_id: point.id,
-          vendor_id: vendors[0]?.id
+          vendor_id: vendor?.id
         }
         
         const res = await get().getData('get_vendor_items', data);
@@ -764,8 +764,6 @@ const useStore = create((set, get) => ({
     const value = event.target.value;
     const point = get().point;
     
-    console.log( data, event, value, Number(value) ) 
-
     if(data === 'type' && point) {
 
       // const vendors = get().vendors;
@@ -789,12 +787,13 @@ const useStore = create((set, get) => ({
           set({
             vendors: res.vendors,
             vendorsCopy: res.vendors,
-
+            vendor_name: '',
             bill_items: [],
             bill_items_doc: [],
             vendor_items: [],
             vendor_itemsCopy: [],
             users: [],
+            search_vendor: '',
             // vendor_items: res.items,
             // vendor_itemsCopy: res.items,
             // users: res.users,
@@ -829,6 +828,12 @@ const useStore = create((set, get) => ({
           DropzoneDop: null
         })
       }
+
+      /*set({
+        vendor_items: [],
+        vendors: [],
+        vendor_name: '',
+      })*/
     }
 
     if(data === 'doc_base_id'){
@@ -2336,8 +2341,6 @@ class Billing_Edit_ extends React.Component {
 
       return ;
     }
-
-    console.log( 'DropzoneDop', DropzoneDop )
 
     if( parseInt(type) == 2 && parseInt(doc_base_id) == 1 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
       showAlert(false, 'Нет изображений счет-фактуры');
