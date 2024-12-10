@@ -431,7 +431,7 @@ const useStore = create((set, get) => ({
     const bill_items = res.bill_items.map((item) => {
 
       item.all_ed_izmer = item.pq_item.map(it => {
-        it = { name: `${it.name} ${item.ed_izmer_name}`, id: it.id };
+        it = { name: `${it.name}`, id: it.id };
         return it;
       });
 
@@ -794,14 +794,22 @@ const useStore = create((set, get) => ({
     });
   },
 
+  reCount: () => {
+    const count = get().count;
+
+    const fact_unit = Number(get().pq) * Number(count);
+
+    set({
+      fact_unit: fact_unit ? fact_unit : '',
+    });
+  },
+
   changeData: async (data, event) => {
     get().handleResize();
 
     const value = event.target.value;
     const point = get().point;
     
-    console.log( data, value, point )
-
     if(data === 'type' && point) {
 
       // const vendors = get().vendors;
@@ -853,6 +861,8 @@ const useStore = create((set, get) => ({
     set({
       [data]: value
     });
+
+    get().reCount();
   },
 
   changeKinds: (value) => {
@@ -1351,8 +1361,11 @@ function FormVendorItems(){
           multiple={false}
           data={ all_ed_izmer }
           value={ pq }
-          func={ (event, name) => changeData('pq', event) }
-          onBlur={ (event, name) => changeData('pq', event) }
+          //func={ (event, name) => changeData('pq', event) }
+          //onBlur={ (event, name) => changeData('pq', event) }
+
+          func={ (event, data) => changeData( 'pq', { target: { value: data ?? event.target.value } }) }
+          onBlur={ (event, data) => changeData( 'pq', { target: { value: data ?? event.target.value } }) }
         />
 
       </Grid>
