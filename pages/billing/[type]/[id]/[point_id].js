@@ -2752,6 +2752,12 @@ class Billing_Edit_ extends React.Component {
             </Grid>
           }
           
+          { modalDialog === true ?
+            <Grid item xs={12} sm={4} style={{ height: 500 }} />
+              : 
+            false
+          }
+
         </Grid>
       </>
     );
