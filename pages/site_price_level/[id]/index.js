@@ -16,7 +16,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import {MySelect, MyDatePickerNew, MyTextInput, MyAlert} from '@/ui/elements';
 
-import { api } from '@/src/api_new';
+import { api, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 class SitePriceLevelEdit_input_level_name extends React.Component {
@@ -216,7 +216,7 @@ class SitePriceLevelEdit_ extends React.Component {
       });
     }
 
-    let res = api(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then(result => result.data)
       .finally( () => {
         setTimeout(() => {

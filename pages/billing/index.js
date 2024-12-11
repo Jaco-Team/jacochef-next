@@ -91,6 +91,10 @@ const bill_status = [
 
 const types = [
   {
+    "name": "Все",
+    "id": "-1"
+  },
+  {
     "name": "Счет",
     "id": "1"
   },
@@ -356,17 +360,13 @@ class Billing_ extends React.Component {
   }
 
   getOneBill(item) {
-    const type = this.state.type;
-
-    const type_bill = parseInt(type) === 1 ? 'bill_ex' : 'bill';
-
     const link = document.createElement('a');
-    link.href = `/billing/${type_bill}/${item?.id}/${item?.point_id}`
+    link.href = `/billing/${item?.my_type_bill}/${item?.id}/${item?.point_id}`
     link.target = '_blank'
     link.click();
 
     const data = {
-      type: type_bill,
+      type: item?.my_type_bill,
       id: item?.id,
       point_id: item?.point_id,
     }

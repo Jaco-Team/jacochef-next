@@ -413,7 +413,7 @@ const useStore = create((set, get) => ({
     const bill_items = res.bill_items.map((item) => {
 
       item.all_ed_izmer = item.pq_item.map(it => {
-        it = { name: `${it.name} ${item.ed_izmer_name}`, id: it.id };
+        it = { name: `${it.name}`, id: it.id };
         return it;
       });
 
@@ -518,7 +518,7 @@ const useStore = create((set, get) => ({
     if(search) {
         
       const docs = get().docs;
-      const vendor_id = get().vendors[0]?.id;
+      const vendor_id = get().vendor?.id;
       const point = get().point;
       
       const billing_id = docs.find(doc => doc.name === search)?.id;
@@ -557,7 +557,7 @@ const useStore = create((set, get) => ({
         
         const data = {
           point_id: point.id,
-          vendor_id: vendors[0]?.id
+          vendor_id: vendor?.id
         }
         
         const res = await get().getData('get_vendor_items', data);
@@ -713,7 +713,7 @@ const useStore = create((set, get) => ({
 
       vendor_items.map((item) => {
         item.pq_item = item.pq_item.map(it => {
-          it = { name: `${it.name} ${item.ed_izmer_name}`, id: it.id };
+          it = { name: `${it.name}`, id: it.id };
           return it;
         });
         return item;
@@ -748,6 +748,16 @@ const useStore = create((set, get) => ({
     });
   },
 
+  reCount: () => {
+    const count = get().count;
+
+    const fact_unit = Number(get().pq) * Number(count);
+
+    set({
+      fact_unit: fact_unit ? fact_unit : '',
+    });
+  },
+
   changeData: async (data, event) => {
     get().handleResize();
 
@@ -777,12 +787,13 @@ const useStore = create((set, get) => ({
           set({
             vendors: res.vendors,
             vendorsCopy: res.vendors,
-
+            vendor_name: '',
             bill_items: [],
             bill_items_doc: [],
             vendor_items: [],
             vendor_itemsCopy: [],
             users: [],
+            search_vendor: '',
             // vendor_items: res.items,
             // vendor_itemsCopy: res.items,
             // users: res.users,
@@ -817,6 +828,12 @@ const useStore = create((set, get) => ({
           DropzoneDop: null
         })
       }
+
+      /*set({
+        vendor_items: [],
+        vendors: [],
+        vendor_name: '',
+      })*/
     }
 
     if(data === 'doc_base_id'){
@@ -838,6 +855,8 @@ const useStore = create((set, get) => ({
     set({
       [data]: event.target.value
     });
+
+    get().reCount();
   },
 
   changeKinds: (value) => {
@@ -1166,8 +1185,11 @@ function FormVendorItems(){
           multiple={false}
           data={ all_ed_izmer }
           value={ pq }
-          func={ (event, name) => changeData('pq', event) }
-          onBlur={ (event, name) => changeData('pq', event) }
+          //func={ (event, name) => changeData('pq', event) }
+          //onBlur={ (event, name) => changeData('pq', event) }
+
+          func={ (event, data) => changeData( 'pq', { target: { value: data ?? event.target.value } }) }
+          onBlur={ (event, data) => changeData( 'pq', { target: { value: data ?? event.target.value } }) }
         />
 
       </Grid>
@@ -2319,8 +2341,6 @@ class Billing_Edit_ extends React.Component {
 
       return ;
     }
-
-    console.log( 'DropzoneDop', DropzoneDop )
 
     if( parseInt(type) == 2 && parseInt(doc_base_id) == 1 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
       showAlert(false, 'Нет изображений счет-фактуры');

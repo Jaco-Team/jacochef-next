@@ -56,6 +56,9 @@ export function formatDate(date) {
 }
 
 export function formatDateReverse(date) {
+  if( date == '0000-00-00' ){
+    return '';
+  }
   return dayjs(date).format('DD-MM-YYYY');
 }
 
