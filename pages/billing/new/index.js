@@ -149,7 +149,7 @@ var dropzoneOptions_bill = {
       if( type_bill == 'bill' ){
 
       }else{
-        window.location.pathname = '/billing';
+        window.location = '/billing';
       }
     })
     
@@ -2391,6 +2391,10 @@ class Billing_Edit_ extends React.Component {
 
       if( parseInt(type) == 2 && DropzoneDop && DropzoneDop['files'].length > 0 ){
         DropzoneDop.processQueue();
+      }
+
+      if( (!DropzoneDop || DropzoneDop['files'].length == 0) ){
+        //window.location = '/billing';
       }
 
     } else {
