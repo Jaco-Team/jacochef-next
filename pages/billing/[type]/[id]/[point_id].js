@@ -458,6 +458,7 @@ const useStore = create((set, get) => ({
       vendor_items: items,
       vendor_itemsCopy: items,
       docs: docs.billings,
+      doc: docs.billings.find( item => item.number == res?.bill.number_base )?.name,
       point: point ?? [],
       point_name: point?.name ?? '',
       vendors: res?.vendors ?? [],
@@ -1201,6 +1202,8 @@ function FormHeader_new({ type_edit }){
 
   //doc
 
+  console.log('type', type, doc_base_id, parseInt(type) === 2 && parseInt(doc_base_id) == 2 && !fullScreen )
+
   return (
     <>
       
@@ -1272,8 +1275,8 @@ function FormHeader_new({ type_edit }){
               data={docs}
               multiple={false}
               value={doc}
-              disabled={ type_edit === 'edit' ? false : true }
-              //disabled={ true }
+              //disabled={ type_edit === 'edit' ? false : true }
+              disabled={ true }
               func={ (event, name) => search_doc(event, name) }
               onBlur={ (event, name) => search_doc(event, name) }
               label="Документ основание"
@@ -1292,7 +1295,7 @@ function FormHeader_new({ type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? 
         <Grid item xs={12} sm={6}>
           <MyTextInput
             label="Номер счет-фактуры"
@@ -1314,7 +1317,7 @@ function FormHeader_new({ type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? 
         <Grid item xs={12} sm={6}>
           <MyDatePickerNew
             label="Дата счет-фактуры"
@@ -1651,7 +1654,7 @@ function VendorItemsTableView(){
 
 function FormImage_new({ type_edit, type_doc }){
 
-  const [type, imgs_bill, openImageBill, fullScreen, imgs_factur, number_factur, changeInput, changeDateRange, date_factur] = useStore( state => [state.type, state.imgs_bill, state.openImageBill, state.fullScreen, state.imgs_factur, state.number_factur, state.changeInput, state.changeDateRange, state.date_factur]);
+  const [type, imgs_bill, openImageBill, fullScreen, imgs_factur, number_factur, changeInput, changeDateRange, date_factur, doc_base_id] = useStore( state => [state.type, state.imgs_bill, state.openImageBill, state.fullScreen, state.imgs_factur, state.number_factur, state.changeInput, state.changeDateRange, state.date_factur, state.doc_base_id]);
 
   const url = type_doc === 'bill' ? 'bill/' : 'bill-ex-items/'
 
@@ -1677,7 +1680,7 @@ function FormImage_new({ type_edit, type_doc }){
         </TableContainer>
       </Grid>
 
-      {parseInt(type) === 2 && !fullScreen && type_doc === 'bill' ? (
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen && type_doc === 'bill' ? (
         <Grid item xs={12} sm={6} display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
           {!imgs_factur.length ? 'Фото отсутствует' :
             <>
@@ -1696,7 +1699,7 @@ function FormImage_new({ type_edit, type_doc }){
       ) : null}
 
       { type_edit === 'edit' ?
-        <Grid item xs={12} sm={parseInt(type) === 2 ? 6 : 12}>
+        <Grid item xs={12} sm={parseInt(type) === 2 && parseInt(doc_base_id) == 1 ? 6 : 12}>
           <div
             className="dropzone"
             id="img_bill"
@@ -1708,7 +1711,7 @@ function FormImage_new({ type_edit, type_doc }){
       }
 
 
-      {type_edit === 'edit' && parseInt(type) === 2 && !fullScreen ? (
+      {type_edit === 'edit' && parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? (
         <Grid item xs={12} sm={6}>
           
           <div
@@ -1719,7 +1722,7 @@ function FormImage_new({ type_edit, type_doc }){
         </Grid>
       ) : null}
 
-      {parseInt(type) === 2 && fullScreen && type_doc === 'bill' ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && fullScreen && type_doc === 'bill' ? 
         <>
           <Grid item xs={12}>
             <MyTextInput
@@ -2387,7 +2390,9 @@ class Billing_Edit_ extends React.Component {
   };
 
   async saveEditBill (type_save) {
-    const {vendor, err_items, DropzoneMain, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, doc_base_id, date_items, user, comment, is_new_doc, bill_items, imgs_bill, imgs_factur, bill } = this.props.store;
+    const {vendor, err_items, DropzoneMain, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, docs, doc_base_id, date_items, user, comment, is_new_doc, bill_items, imgs_bill, imgs_factur, bill } = this.props.store;
+
+    let doc_info = docs.find( item_doc => item_doc.name === doc )
 
     const dateBill = date ? dayjs(date).format('YYYY-MM-DD') : '';
     const dateFactur = date_factur ? dayjs(date_factur).format('YYYY-MM-DD') : '';
@@ -2441,7 +2446,7 @@ class Billing_Edit_ extends React.Component {
 
     const data = {
       bill_id: bill.id,
-      doc,
+      doc_info,
       type,
       items,
       number,
@@ -2497,19 +2502,16 @@ class Billing_Edit_ extends React.Component {
     const { bill, point, showAlert } = this.props.store;
 
     if( this.state.delText.length <= 3 ) {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Надо указать причину удаления'
-      });
-
+      showAlert(false, 'Надо указать причину удаления');
+      
       return;
     }
 
     const data = {
       bill_id: bill.id,
       point_id: point?.id,
-      del_res: this.state.delText
+      del_res: this.state.delText,
+      bill_type: parseInt(bill.type_bill) == 1 ? 'bill_ex' : 'bill', //bill / bill_ex
     }
 
     const res = await this.getData('save_bill_del', data);

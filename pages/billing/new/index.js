@@ -110,6 +110,7 @@ var global_new_bill_id = 0;
 var global_point_id = 0;
 var type_bill = 'bill';
 var bill_type = 0;
+var is_return = false;
 const url_bill = "https://jacochef.ru/src/img/billing_items/upload.php";
 const url_bill_ex = "https://jacochef.ru/src/img/bill_ex_items/upload.php";
 
@@ -146,9 +147,7 @@ var dropzoneOptions_bill = {
       //show_modal_message('Результат операции', 'Накладная успешно сохранена');
       //window.location.pathname = '/billing';
 
-      if( type_bill == 'bill' ){
-
-      }else{
+      if( is_return == true ){
         window.location = '/billing';
       }
     })
@@ -2306,7 +2305,9 @@ class Billing_Edit_ extends React.Component {
   };
 
   async saveNewBill () {
-    const {vendor, err_items, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
+    const {vendor, err_items, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, docs, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
+
+    let doc_info = docs.find( item_doc => item_doc.name === doc )
 
     const dateBill = date ? dayjs(date).format('YYYY-MM-DD') : '';
     const dateFactur = date_factur ? dayjs(date_factur).format('YYYY-MM-DD') : '';
@@ -2351,13 +2352,19 @@ class Billing_Edit_ extends React.Component {
     if( parseInt(type) == 1 ){
       this.myDropzone.options.url = url_bill_ex;
       type_bill = 'bill_ex';
+      is_return = true;
     }else{
       this.myDropzone.options.url = url_bill;
       type_bill = 'bill';
+      //is_return = true;
+    }
+
+    if( ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ){
+      is_return = true;
     }
 
     const data = {
-      doc,
+      doc_info,
       type,
       items,
       number,
@@ -2469,15 +2476,7 @@ class Billing_Edit_ extends React.Component {
             </Grid>
           }
          
-          { parseInt(this.state.acces?.only_delete) === 0 ? false :
-            <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
-                //onClick={this.saveBill.bind(this)}
-              >
-                Сохранить и отправить
-              </Button>
-            </Grid>
-          }
+          
           
         </Grid>
       </>
