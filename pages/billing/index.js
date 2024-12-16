@@ -356,6 +356,8 @@ class Billing_ extends React.Component {
         });
 
       }
+
+      this.getBillingList();
     }
   }
 

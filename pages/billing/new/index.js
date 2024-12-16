@@ -12,6 +12,12 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -45,6 +51,8 @@ import HorizontalSplitIcon from '@mui/icons-material/HorizontalSplit';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 
 import Draggable from 'react-draggable';
+
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 const types = [
   {
@@ -466,6 +474,45 @@ const useStore = create((set, get) => ({
 
 
     get().changeKinds(res?.bill?.type_doc);
+  },
+
+  clearForm: () => {
+    set({
+      bill_items: [],
+      search_item: '',
+      vendor_items: [],
+      vendor_itemsCopy: [],
+      users: [],
+      all_ed_izmer: [],
+      pq: '',
+      count: '',
+      fact_unit: '',
+      summ: '',
+      sum_w_nds: '',
+      bill_items_doc: [],
+      docs: [],
+      doc: '',
+      points: [],
+      point: '',
+      point_name: '',
+      vendors: [],
+      vendor_name: '',
+      bill_list: [],
+      imgs_bill: [],
+      allPrice: 0,
+      allPrice_w_nds: 0,
+      number: '',
+      date: null,
+      date_items: null,
+      comment: '',
+      user: [],
+      type: '',
+      doc_base_id: '',
+      number_factur: '',
+      date_factur: null,
+      is_new_doc: 0
+    });
+
   },
 
   closeDialog: () => {
@@ -1472,6 +1519,80 @@ function VendorItemsTableView(){
   )
 }
 
+function VendorItemsTableView_min(){
+
+  const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
+  const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  return (
+    
+        
+          <Table aria-label="a dense table">
+            <TableHead>
+              <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                <TableCell>Товар</TableCell>
+                { bill_items_doc.length == 0 ? null : <TableCell>Изменения</TableCell> }
+                <TableCell>В упак.</TableCell>
+                <TableCell>Упак</TableCell>
+                <TableCell>Кол-во</TableCell>
+                <TableCell>НДС</TableCell>
+                <TableCell>Сумма без НДС</TableCell>
+                <TableCell>Сумма НДС</TableCell>
+                <TableCell>Сумма с НДС</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {bill_items.map((item, key) => (
+                <React.Fragment key={key}>
+                  {!item?.data_bill ? null :
+                    <TableRow style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                      <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
+                      <TableCell>До</TableCell>
+                      <TableCell>{item?.data_bill?.pq} {item.ed_izmer_name}</TableCell>
+                      <TableCell>{item?.data_bill?.count}</TableCell>
+                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.fact_unit} {item.ed_izmer_name}</TableCell>
+                      <TableCell>{item?.data_bill?.nds}</TableCell>
+                      <TableCell>{item?.data_bill?.price} ₽</TableCell>
+                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.summ_nds} ₽</TableCell>
+                      <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
+                      
+                    </TableRow>
+                  }
+
+                  <TableRow hover style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                    {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
+                    {!item?.data_bill ? null : <TableCell>После</TableCell>}
+                    <TableCell className="ceil_white">{item.pq}</TableCell>
+                    <TableCell className="ceil_white">{item.count}</TableCell>
+                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.fact_unit} {item.ed_izmer_name}</TableCell>
+                    <TableCell>{item.nds}</TableCell>
+                    <TableCell className="ceil_white">{item.price_item}</TableCell>
+                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.summ_nds} ₽</TableCell>
+                    <TableCell className="ceil_white">{item.price_w_nds}</TableCell>
+                    
+                  </TableRow>
+                </React.Fragment>
+              ))}
+              { bill_items.length == 0 ? null : (
+                <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
+                  <TableCell>Итого:</TableCell>
+                  { bill_items_doc.length == 0 ? null : <TableCell></TableCell> }
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>{allPrice} ₽</TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>{allPrice_w_nds} ₽</TableCell>
+                  
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        
+  )
+}
+
 function FormHeader_new({ page, type_edit }){
 
   const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
@@ -1798,17 +1919,7 @@ function FormOther_new({ page, type_edit }){
       }
 
 
-      <Grid item xs={12} sm={12} display="flex" alignItems="center">
-        <MyCheckBox
-          disabled={ type_edit === 'edit' ? false : true }
-          value={parseInt(is_new_doc) === 1 ? true : false}
-          func={ (event) => changeItemChecked(event, 'is_new_doc') }
-          label=""
-        />
-        <Typography component="span" className="span_text">
-          Поставщик привезет новый документ
-        </Typography>
-      </Grid>
+      
 
     </>
   )
@@ -2226,6 +2337,7 @@ class Billing_Modal extends React.Component {
 
 class Billing_Edit_ extends React.Component {
   myDropzone = null;
+  isClick = false;
 
   constructor(props) {
     super(props);
@@ -2235,11 +2347,24 @@ class Billing_Edit_ extends React.Component {
       module_name: '',
       is_load: false,
 
+      items_err: [],
+      modelCheckErrItems: false,
+
+      thisTypeSave: '',
+
       acces: null
     };
   }
 
   async componentDidMount() {
+    const { clearForm } = this.props.store;
+
+    clearForm();
+
+    this.setState({
+      thisTypeSave: '',
+    });
+
     const res = await this.getData('get_all_for_new');
     
     this.setState({
@@ -2304,14 +2429,33 @@ class Billing_Edit_ extends React.Component {
       });
   };
 
-  async saveNewBill () {
+  async saveNewBill ( type_save, check_err = true ) {
+
+    if( this.isClick === true ) return;
+
+    this.isClick = true;
+
+    if( type_save != 'type' ){
+      this.setState({
+        thisTypeSave: type_save
+      })
+    }else{
+      type_save = this.state.thisTypeSave;
+    }
+
     const {vendor, err_items, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, docs, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
+
+    this.setState({
+      modelCheckErrItems: false,
+    })
 
     let doc_info = docs.find( item_doc => item_doc.name === doc )
 
     const dateBill = date ? dayjs(date).format('YYYY-MM-DD') : '';
     const dateFactur = date_factur ? dayjs(date_factur).format('YYYY-MM-DD') : '';
     const dateItems = date_items ? dayjs(date_items).format('YYYY-MM-DD') : '';
+
+    var items_color = [];
 
     const items = bill_items.reduce((newItems, item) => {
 
@@ -2323,6 +2467,10 @@ class Billing_Edit_ extends React.Component {
       it.summ = item.price_item;
       it.summ_w_nds = item.price_w_nds;
       it.color = item.color;
+
+      if( item.color && item.color === true ) {
+        items_color.push(item);
+      }
 
       const nds = item.nds.split(' %')[0];
 
@@ -2337,14 +2485,31 @@ class Billing_Edit_ extends React.Component {
       return newItems;
     }, [])
 
+    if( check_err === true && items_color.length > 0 ){
+
+      this.setState({
+        items_err: items_color,
+        modelCheckErrItems: true
+      })
+
+      this.isClick = false;
+
+      return ;
+    }
+    
+
     if( !this.myDropzone || this.myDropzone['files'].length === 0 ) {
       showAlert(false, 'Нет изображений документа');
+
+      this.isClick = false;
 
       return ;
     }
 
     if( parseInt(type) == 2 && parseInt(doc_base_id) == 1 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
       showAlert(false, 'Нет изображений счет-фактуры');
+
+      this.isClick = false;
 
       return ;
     }
@@ -2379,10 +2544,15 @@ class Billing_Edit_ extends React.Component {
       point_id: point?.id ?? '',
       vendor_id: vendor?.id,
       imgs: this.myDropzone['files'].length,
+      type_save: type_save,
       err_items: err_items
     }
 
     const res = await this.getData('save_new', data);
+
+    setTimeout( () => {
+      this.isClick = false;
+    }, 1000 );
 
     if (res.st === true) {
 
@@ -2412,6 +2582,13 @@ class Billing_Edit_ extends React.Component {
 
   }
 
+  returnFN (){
+    const { clearForm } = this.props.store;
+
+    clearForm();
+    window.location = '/billing';
+  }
+
   render() {
 
     const { isPink, openAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical } = this.props.store;
@@ -2438,10 +2615,38 @@ class Billing_Edit_ extends React.Component {
           text={err_text}
         />
 
+        <Dialog
+          open={this.state.modelCheckErrItems}
+          onClose={ () => { this.setState({ modelCheckErrItems: false }) } }
+          fullWidth={true}
+          maxWidth={'md'}
+        >
+          <DialogTitle>Подтверждение</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 20 }}>
+              Проверь корректность позиций
+            </DialogContentText>
+
+            <VendorItemsTableView_min />
+
+          </DialogContent>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckErrItems: false }) } } color="error" >Отмена</Button>
+            <Button variant="contained" onClick={ this.saveNewBill.bind(this, 'type', false) } color="success">Сохранить</Button>
+          </DialogActions>
+        </Dialog>
+
         <Grid container spacing={3} mb={10} style={{ marginTop: '64px', maxWidth: is_vertical ? '50%' : '100%', marginBottom: is_horizontal ? 700 : 30 }}>
 
-          <Grid item xs={12} sm={12}>
+          <Grid item xs={12} sm={12} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+            
+            <ArrowBackIosNewIcon style={{ width: 50, height: 30, cursor: 'pointer' }} onClick={this.returnFN.bind(this)} />
+            
             <h1>Новый документ</h1>
+            
+          </Grid>
+
+          <Grid item xs={12} sm={12}>
             <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
           </Grid>
 
@@ -2470,12 +2675,21 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.only_save) === 0 ? false :
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveNewBill.bind(this)}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveNewBill.bind(this, 'current', true)}>
                 Сохранить
               </Button>
             </Grid>
           }
          
+          { parseInt(this.state.acces?.only_save) === 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
+                onClick={this.saveNewBill.bind(this, 'next', true)}
+              >
+                Сохранить и отправить
+              </Button>
+            </Grid>
+          }
           
           
         </Grid>

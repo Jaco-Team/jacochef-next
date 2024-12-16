@@ -54,6 +54,8 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
 import Draggable from 'react-draggable';
 
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+
 const types = [
   {
     "name": "Счет",
@@ -512,6 +514,45 @@ const useStore = create((set, get) => ({
     }, 500 )
 
     get().changeKinds(res?.bill?.type_doc);
+  },
+
+  clearForm: () => {
+    set({
+      bill_items: [],
+      search_item: '',
+      vendor_items: [],
+      vendor_itemsCopy: [],
+      users: [],
+      all_ed_izmer: [],
+      pq: '',
+      count: '',
+      fact_unit: '',
+      summ: '',
+      sum_w_nds: '',
+      bill_items_doc: [],
+      docs: [],
+      doc: '',
+      points: [],
+      point: '',
+      point_name: '',
+      vendors: [],
+      vendor_name: '',
+      bill_list: [],
+      imgs_bill: [],
+      allPrice: 0,
+      allPrice_w_nds: 0,
+      number: '',
+      date: null,
+      date_items: null,
+      comment: '',
+      user: [],
+      type: '',
+      doc_base_id: '',
+      number_factur: '',
+      date_factur: null,
+      is_new_doc: 0
+    });
+
   },
 
   closeDialog: () => {
@@ -1200,10 +1241,6 @@ function FormHeader_new({ type_edit }){
 
   const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
 
-  //doc
-
-  console.log('type', type, doc_base_id, parseInt(type) === 2 && parseInt(doc_base_id) == 2 && !fullScreen )
-
   return (
     <>
       
@@ -1649,6 +1686,80 @@ function VendorItemsTableView(){
         </TableContainer>
       </Grid>
     </>
+  )
+}
+
+function VendorItemsTableView_min(){
+
+  const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
+  const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  return (
+    
+        
+          <Table aria-label="a dense table">
+            <TableHead>
+              <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                <TableCell>Товар</TableCell>
+                { bill_items_doc.length == 0 ? null : <TableCell>Изменения</TableCell> }
+                <TableCell>В упак.</TableCell>
+                <TableCell>Упак</TableCell>
+                <TableCell>Кол-во</TableCell>
+                <TableCell>НДС</TableCell>
+                <TableCell>Сумма без НДС</TableCell>
+                <TableCell>Сумма НДС</TableCell>
+                <TableCell>Сумма с НДС</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {bill_items.map((item, key) => (
+                <React.Fragment key={key}>
+                  {!item?.data_bill ? null :
+                    <TableRow style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                      <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
+                      <TableCell>До</TableCell>
+                      <TableCell>{item?.data_bill?.pq} {item.ed_izmer_name}</TableCell>
+                      <TableCell>{item?.data_bill?.count}</TableCell>
+                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.fact_unit} {item.ed_izmer_name}</TableCell>
+                      <TableCell>{item?.data_bill?.nds}</TableCell>
+                      <TableCell>{item?.data_bill?.price} ₽</TableCell>
+                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.summ_nds} ₽</TableCell>
+                      <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
+                      
+                    </TableRow>
+                  }
+
+                  <TableRow hover style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                    {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
+                    {!item?.data_bill ? null : <TableCell>После</TableCell>}
+                    <TableCell className="ceil_white">{item.pq}</TableCell>
+                    <TableCell className="ceil_white">{item.count}</TableCell>
+                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.fact_unit} {item.ed_izmer_name}</TableCell>
+                    <TableCell>{item.nds}</TableCell>
+                    <TableCell className="ceil_white">{item.price_item}</TableCell>
+                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.summ_nds} ₽</TableCell>
+                    <TableCell className="ceil_white">{item.price_w_nds}</TableCell>
+                    
+                  </TableRow>
+                </React.Fragment>
+              ))}
+              { bill_items.length == 0 ? null : (
+                <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
+                  <TableCell>Итого:</TableCell>
+                  { bill_items_doc.length == 0 ? null : <TableCell></TableCell> }
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>{allPrice} ₽</TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>{allPrice_w_nds} ₽</TableCell>
+                  
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        
   )
 }
 
@@ -2276,6 +2387,8 @@ class Billing_Modal extends React.Component {
 }
 
 class Billing_Edit_ extends React.Component {
+  isClick = false;
+
   constructor(props) {
     super(props);
 
@@ -2290,6 +2403,10 @@ class Billing_Edit_ extends React.Component {
       modelCheckDel: false,
       modelCheckDelImg: false,
       modelChecReturn: false,
+      modelCheckErrItems: false,
+
+      items_err: [],
+      thisTypeSave: '',
 
       imgDel: '',
       delText: '',
@@ -2297,6 +2414,13 @@ class Billing_Edit_ extends React.Component {
   }
 
   async componentDidMount() {
+    const { clearForm } = this.props.store;
+
+    clearForm();
+    this.setState({
+      thisTypeSave: ''
+    })
+
 
     let data_bill = window.location.pathname;
 
@@ -2389,7 +2513,19 @@ class Billing_Edit_ extends React.Component {
       });
   };
 
-  async saveEditBill (type_save) {
+  async saveEditBill (type_save, check_err = true) {
+    if( this.isClick === true ) return;
+
+    this.isClick = true;
+
+    if( type_save != 'type' ){
+      this.setState({
+        thisTypeSave: type_save
+      })
+    }else{
+      type_save = this.state.thisTypeSave;
+    }
+
     const {vendor, err_items, DropzoneMain, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, docs, doc_base_id, date_items, user, comment, is_new_doc, bill_items, imgs_bill, imgs_factur, bill } = this.props.store;
 
     let doc_info = docs.find( item_doc => item_doc.name === doc )
@@ -2397,6 +2533,8 @@ class Billing_Edit_ extends React.Component {
     const dateBill = date ? dayjs(date).format('YYYY-MM-DD') : '';
     const dateFactur = date_factur ? dayjs(date_factur).format('YYYY-MM-DD') : '';
     const dateItems = date_items ? dayjs(date_items).format('YYYY-MM-DD') : '';
+
+    var items_color = [];
 
     const items = bill_items.reduce((newItems, item) => {
 
@@ -2408,6 +2546,10 @@ class Billing_Edit_ extends React.Component {
       it.summ = item.price_item;
       it.summ_w_nds = item.price_w_nds;
       it.color = item.color;
+
+      if( item.color && item.color === true ) {
+        items_color.push(item);
+      }
 
       const nds = item.nds.split(' %')[0];
 
@@ -2422,14 +2564,31 @@ class Billing_Edit_ extends React.Component {
       return newItems;
     }, [])
 
+    if( check_err === true && items_color.length > 0 ){
+
+      this.setState({
+        items_err: items_color,
+        modelCheckErrItems: true
+      })
+
+      this.isClick = false;
+
+      return ;
+    }
+    
+
     if( imgs_bill.length == 0 && ( !DropzoneMain || DropzoneMain['files'].length === 0 ) ) {
       showAlert(false, 'Нет изображений документа');
+
+      this.isClick = false;
 
       return ;
     }
 
     if( imgs_factur.length == 0 && parseInt(doc_base_id) == 1 && ( parseInt(type) == 2 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) ) {
       showAlert(false, 'Нет изображений счет-фактуры');
+
+      this.isClick = false;
 
       return ;
     }
@@ -2466,6 +2625,10 @@ class Billing_Edit_ extends React.Component {
     }
 
     const res = await this.getData('save_edit', data);
+
+    setTimeout( () => {
+      this.isClick = false;
+    }, 1000 );
 
     if (res.st === true) {
 
@@ -2583,6 +2746,13 @@ class Billing_Edit_ extends React.Component {
     }
   }
 
+  returnFN (){
+    const { clearForm } = this.props.store;
+
+    clearForm();
+    window.location = '/billing';
+  }
+
   render() {
 
     const { acces, openAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical } = this.props.store;
@@ -2623,9 +2793,9 @@ class Billing_Edit_ extends React.Component {
 
             <MyTextInput label="Причина удаления" value={this.state.delText} func={ event => { this.setState({ delText: event.target.value }) } } />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={ () => { this.setState({ modelCheckDel: false }) } }>Отмена</Button>
-            <Button onClick={ this.saveDelDoc.bind(this) }>Удалить</Button>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckDel: false }) } } color="error">Отмена</Button>
+            <Button variant="contained" onClick={ this.saveDelDoc.bind(this) } color="success">Удалить</Button>
           </DialogActions>
         </Dialog>
 
@@ -2641,9 +2811,9 @@ class Billing_Edit_ extends React.Component {
 
             <MyTextInput label="Причина" value={this.state.delText} func={ event => { this.setState({ delText: event.target.value }) } } />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={ () => { this.setState({ modelChecReturn: false, delText: '' }) } }>Отмена</Button>
-            <Button onClick={ this.saveEditBill.bind(this, 'return') }>Вернуть</Button>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelChecReturn: false, delText: '' }) } } color="error">Отмена</Button>
+            <Button variant="contained" onClick={ this.saveEditBill.bind(this, 'return', false) } color="success">Вернуть</Button>
           </DialogActions>
         </Dialog>
 
@@ -2658,18 +2828,48 @@ class Billing_Edit_ extends React.Component {
             </DialogContentText>
 
           </DialogContent>
-          <DialogActions>
-            <Button onClick={ () => { this.setState({ modelCheckDelImg: false, imgDel: '' }) } }>Отмена</Button>
-            <Button onClick={ this.delImgTrue.bind(this) }>Удалить</Button>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckDelImg: false, imgDel: '' }) } } color="error">Отмена</Button>
+            <Button variant="contained" onClick={ this.delImgTrue.bind(this) } color="success">Удалить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={this.state.modelCheckErrItems}
+          onClose={ () => { this.setState({ modelCheckErrItems: false }) } }
+          fullWidth={true}
+          maxWidth={'md'}
+        >
+          <DialogTitle>Подтверждение</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 20 }}>
+              Проверь корректность позиций
+            </DialogContentText>
+
+            <VendorItemsTableView_min />
+
+          </DialogContent>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckErrItems: false }) } } color="error" >Отмена</Button>
+            <Button variant="contained" onClick={ this.saveEditBill.bind(this, 'type', false) } color="success">Сохранить</Button>
           </DialogActions>
         </Dialog>
 
         <Grid container spacing={3} mb={10} style={{ marginTop: '64px', maxWidth: is_vertical ? '50%' : '100%', marginBottom: is_horizontal ? 700 : 30 }}>
 
-          <Grid item xs={12} sm={12}>
+          <Grid item xs={12} sm={12} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+            
+            <ArrowBackIosNewIcon style={{ width: 50, height: 30, cursor: 'pointer' }} onClick={this.returnFN.bind(this)} />
+            
             <h1>Документ: {bill?.number}</h1>
+            
+          </Grid>
+
+          <Grid item xs={12} sm={12}>
             <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
           </Grid>
+
+
 
           <FormHeader_new type_doc={this.state.type_doc} page={'edit'} type_edit={ parseInt(this.state.acces?.header) == 1 ? 'edit' : 'show' } />
           
@@ -2714,7 +2914,7 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.only_save) === 0 ? false :
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'current')}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'current', true)}>
                 Сохранить
               </Button>
             </Grid>
@@ -2722,7 +2922,7 @@ class Billing_Edit_ extends React.Component {
          
          { !parseInt(this.state.acces?.send_1c) || parseInt(this.state.acces?.send_1c) == 0 ? false :
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next')}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next', true)}>
                 Отправить в 1с
               </Button>
             </Grid>
@@ -2730,7 +2930,7 @@ class Billing_Edit_ extends React.Component {
 
           { !parseInt(this.state.acces?.pay) || parseInt(this.state.acces?.pay) == 0 ? false :
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next')}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next', true)}>
                 Оплатить
               </Button>
             </Grid>
@@ -2744,10 +2944,10 @@ class Billing_Edit_ extends React.Component {
             </Grid>
           }
 
-          { parseInt(this.state.acces?.only_delete) === 0 ? false :
+          { parseInt(this.state.acces?.only_save) === 0 ? false :
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
-                onClick={this.saveEditBill.bind(this, 'next')}
+                onClick={this.saveEditBill.bind(this, 'next', true)}
               >
                 Сохранить и отправить
               </Button>
