@@ -593,6 +593,12 @@ const useStore = create((set, get) => ({
         bill_items_doc: res.billing_items,
       });
 
+      
+
+      res.billing_items.map( item => {
+        //get().addItem_fast(item.count, item.count * item.pq, item.price, item.price_w_nds, item.ed_izmer_name, item.pq, item.item_id);
+      } )
+
     } else {
 
       const point = get().point;
@@ -1054,6 +1060,56 @@ const useStore = create((set, get) => ({
     });
   },
 
+  addItem_fast: ( count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, item_id ) => {
+    
+    let bill_items = JSON.parse(JSON.stringify(get().bill_items));
+
+    let vendor_item = {};
+
+    const nds = get().check_nds_bill((Number(sum_w_nds) - Number(summ)) / (Number(summ) / 100))
+
+    vendor_item.summ_nds = (Number(sum_w_nds) - Number(summ)).toFixed(2);
+    vendor_item.nds = nds;
+    vendor_item.pq = pq;
+    vendor_item.all_ed_izmer = all_ed_izmer;
+    vendor_item.count = count;
+    vendor_item.fact_unit = (Number(fact_unit)).toFixed(2);
+    vendor_item.price_item = summ;
+    vendor_item.price_w_nds = sum_w_nds;
+    vendor_item.item_id = item_id;
+    
+
+    const bill_items_doc = get().bill_items_doc;
+
+    if(bill_items_doc.length) {
+      const item = bill_items_doc.find(it => parseInt(it.item_id) === parseInt(item_id));
+
+      item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
+      item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
+
+      const nds = get().check_nds_bill((Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100))
+
+      if(nds) {
+        item.nds = nds;
+      } else {
+        item.nds = '';
+      }
+
+      vendor_item.data_bill = item;
+    }
+
+    bill_items.push(vendor_item);
+
+    const allPrice = (bill_items.reduce((all, item) => all + Number(item.price_item), 0)).toFixed(2);
+    const allPrice_w_nds = (bill_items.reduce((all, item) => all + Number(item.price_w_nds), 0)).toFixed(2);
+
+    set({
+      bill_items,
+      allPrice,
+      allPrice_w_nds
+    });
+  },
+
   check_nds_bill: (value) => {
     let nds = [];
     nds[0] = 'без НДС';
@@ -1071,10 +1127,12 @@ const useStore = create((set, get) => ({
     var bill_items = get().bill_items;		
     var vendor_items = get().vendor_items;
 
+    console.log( 'vendor_items', vendor_items )
+
     bill_items.map((item, key) => {
       let one_price_bill = parseFloat(item['one_price_bill']);
-      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id'])).price;
-      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id'])).vend_percent;
+      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.price;
+      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.vend_percent;
 
       let one_price_max = parseFloat(one_price_vend) + ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
 			let one_price_min = parseFloat(one_price_vend) - ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
@@ -2484,6 +2542,7 @@ class Billing_Edit_ extends React.Component {
 
       return newItems;
     }, [])
+
 
     if( check_err === true && items_color.length > 0 ){
 

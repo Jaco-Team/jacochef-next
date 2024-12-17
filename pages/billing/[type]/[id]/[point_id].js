@@ -1894,7 +1894,7 @@ function FormImage_new({ type_edit, type_doc }){
 
 function FormOther_new({ page, type_edit, type_doc }){
 
-  const [type, date_items, changeDateRange, users, user, changeAutocomplite, comment, changeInput, changeItemChecked, is_new_doc, comment_bux, delete_text] = useStore( state => [state.type, state.date_items, state.changeDateRange, state.users, state.user, state.changeAutocomplite, state.comment, state.changeInput, state.changeItemChecked, state.is_new_doc, state.comment_bux, state.delete_text]);
+  const [bill, type, date_items, changeDateRange, users, user, changeAutocomplite, comment, changeInput, changeItemChecked, is_new_doc, comment_bux, delete_text] = useStore( state => [ state.bill, state.type, state.date_items, state.changeDateRange, state.users, state.user, state.changeAutocomplite, state.comment, state.changeInput, state.changeItemChecked, state.is_new_doc, state.comment_bux, state.delete_text]);
 
   return (
     <>
@@ -1950,6 +1950,16 @@ function FormOther_new({ page, type_edit, type_doc }){
         </>
       }
 
+      { bill?.comment_gen_dir?.length > 0 ?
+        <Grid item xs={12} sm={6} style={{ display: 'flex', marginBottom: 20 }}>
+          <Typography style={{ fontWeight: 'bold', color: '#9e9e9e' }}>
+            Комментарии Отдела закупки:&nbsp;
+          </Typography>
+          <Typography>{bill?.comment_gen_dir}</Typography>
+        </Grid>
+          : 
+        null
+      }
 
       <Grid item xs={12} sm={12} display="flex" alignItems="center" style={{ display: 'none' }}>
         <MyCheckBox
@@ -2404,6 +2414,8 @@ class Billing_Edit_ extends React.Component {
       modelCheckDelImg: false,
       modelChecReturn: false,
       modelCheckErrItems: false,
+      modelCheckDel1c: false,
+      modelCheckPrice: false,
 
       items_err: [],
       thisTypeSave: '',
@@ -2686,7 +2698,7 @@ class Billing_Edit_ extends React.Component {
         modelCheckDel: false
       });
 
-      window.location.pathname = '/billing';
+      window.location = '/billing';
     } else {
 
       showAlert(res.st, res.text);
@@ -2728,9 +2740,16 @@ class Billing_Edit_ extends React.Component {
   async saveTruePrice(){
     const { bill, point, showAlert } = this.props.store;
 
+    if( this.state.delText.length <= 3 ) {
+      showAlert(false, 'Надо указать комментарий');
+      
+      return;
+    }
+
     const data = {
       bill_id: bill.id,
       point_id: point?.id,
+      del_res: this.state.delText,
       type: parseInt(bill.type_bill) == 1 ? 'bill_ex' : 'bill', //bill / bill_ex
     }
 
@@ -2739,7 +2758,11 @@ class Billing_Edit_ extends React.Component {
     if (res.st) {
       showAlert(res.st, res.text);
 
-      window.location.pathname = '/billing';
+      this.setState({
+        modelCheckPrice: false
+      })
+
+      window.location = '/billing';
     } else {
 
       showAlert(res.st, res.text);
@@ -2751,6 +2774,55 @@ class Billing_Edit_ extends React.Component {
 
     clearForm();
     window.location = '/billing';
+  }
+
+  async delete_1c(){
+    const { bill, point, showAlert } = this.props.store;
+
+    if( this.state.delText.length <= 3 ) {
+      showAlert(false, 'Надо указать причину удаления');
+      
+      return;
+    }
+
+    const data = {
+      bill_id: bill.id,
+      point_id: point?.id,
+      del_res: this.state.delText,
+      bill_type: parseInt(bill.type_bill) == 1 ? 'bill_ex' : 'bill', //bill / bill_ex
+    }
+
+    const res = await this.getData('delete_bill_1c', data);
+
+    if (res.st) {
+      //showAlert(res.st, res.text);
+
+      window.location = '/billing';
+    } else {
+
+      showAlert(res.st, res.text);
+    }
+  }
+
+  async return_to_bux(){
+    const { bill, point, showAlert } = this.props.store;
+
+    const data = {
+      bill_id: bill.id,
+      point_id: point?.id,
+      bill_type: parseInt(bill.type_bill) == 1 ? 'bill_ex' : 'bill', //bill / bill_ex
+    }
+
+    const res = await this.getData('return_from_bill_1c', data);
+
+    if (res.st) {
+      //showAlert(res.st, res.text);
+
+      window.location = '/billing';
+    } else {
+
+      showAlert(res.st, res.text);
+    }
   }
 
   render() {
@@ -2796,6 +2868,38 @@ class Billing_Edit_ extends React.Component {
           <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
             <Button variant="contained" onClick={ () => { this.setState({ modelCheckDel: false }) } } color="error">Отмена</Button>
             <Button variant="contained" onClick={ this.saveDelDoc.bind(this) } color="success">Удалить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={this.state.modelCheckDel1c}
+          onClose={ () => { this.setState({ modelCheckDel1c: false }) } }
+        >
+          <DialogTitle>Подтверждение</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 20 }}>
+              Несохраненные данные не будут применены
+            </DialogContentText>
+
+            <MyTextInput label="Причина удаления" value={this.state.delText} func={ event => { this.setState({ delText: event.target.value }) } } />
+          </DialogContent>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckDel1c: false }) } } color="error">Отмена</Button>
+            <Button variant="contained" onClick={ this.delete_1c.bind(this) } color="success">Удалить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={this.state.modelCheckPrice}
+          onClose={ () => { this.setState({ modelCheckPrice: false }) } }
+        >
+          <DialogTitle>Подтверждение</DialogTitle>
+          <DialogContent>
+            <MyTextInput label="Комментарий" value={this.state.delText} func={ event => { this.setState({ delText: event.target.value }) } } />
+          </DialogContent>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckPrice: false }) } } color="error">Отмена</Button>
+            <Button variant="contained" onClick={ this.saveTruePrice.bind(this) } color="success">Сохранить</Button>
           </DialogActions>
         </Dialog>
 
@@ -2892,7 +2996,7 @@ class Billing_Edit_ extends React.Component {
             type='edit'
           />
 
-          { parseInt(this.state.acces?.only_delete) === 0 ? false :
+          { parseInt(this.state.acces?.only_delete) === 1 ?
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth style={{ height: '100%' }}
                 onClick={ () => { this.setState({ modelCheckDel: true }) } }
@@ -2900,9 +3004,11 @@ class Billing_Edit_ extends React.Component {
                 Удалить
               </Button>
             </Grid>
+              :
+            false
           }
 
-          { !parseInt(this.state.acces?.only_return) || parseInt(this.state.acces?.only_return) == 0 ? false :
+          { parseInt(this.state.acces?.only_return) == 1 ?
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth style={{ height: '100%' }}
                 onClick={ () => { this.setState({ modelChecReturn: true }) } }
@@ -2910,41 +3016,51 @@ class Billing_Edit_ extends React.Component {
                 Ошибка ( вернуть управляющему )
               </Button>
             </Grid>
+              :
+            false
           }
 
-          { parseInt(this.state.acces?.only_save) === 0 ? false :
+          { parseInt(this.state.acces?.only_save) === 1 ?
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'current', true)}>
                 Сохранить
               </Button>
             </Grid>
+              :
+            false
           }
          
-         { !parseInt(this.state.acces?.send_1c) || parseInt(this.state.acces?.send_1c) == 0 ? false :
+         { parseInt(this.state.acces?.send_1c) == 1 ?
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next', true)}>
                 Отправить в 1с
               </Button>
             </Grid>
+              :
+            false
           }
 
-          { !parseInt(this.state.acces?.pay) || parseInt(this.state.acces?.pay) == 0 ? false :
+          { parseInt(this.state.acces?.pay) == 1 ?
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next', true)}>
                 Оплатить
               </Button>
             </Grid>
+              :
+            false
           }
 
-          { !parseInt(this.state.acces?.true_price) || parseInt(this.state.acces?.true_price) == 0 ? false :
+          { parseInt(this.state.acces?.true_price) == 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveTruePrice.bind(this)}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={ () => { this.setState({ modelCheckPrice: true }) } }>
                 Подтвердить ценники
               </Button>
             </Grid>
+              :
+            false
           }
 
-          { parseInt(this.state.acces?.only_save) === 0 ? false :
+          { parseInt(this.state.acces?.only_save) === 1 ?
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
                 onClick={this.saveEditBill.bind(this, 'next', true)}
@@ -2952,6 +3068,33 @@ class Billing_Edit_ extends React.Component {
                 Сохранить и отправить
               </Button>
             </Grid>
+              : 
+            false
+          }
+
+          { parseInt(this.state.acces?.delete_1c) === 1 ?
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth style={{ height: '100%' }}
+                //onClick={this.delete_1c.bind(this, 'next', true)}
+                onClick={ () => { this.setState({ modelCheckDel1c: true }) } }
+              >
+                Удалить ( если подготовлено для 1с )
+              </Button>
+            </Grid>
+              : 
+            false
+          }
+
+          { parseInt(this.state.acces?.return_to_bux) === 1 ?
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
+                onClick={this.return_to_bux.bind(this, 'next', true)}
+              >
+                Вернуть в бухгалтерию
+              </Button>
+            </Grid> 
+              : 
+            false
           }
           
           { modalDialog === true ?

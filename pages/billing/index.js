@@ -75,7 +75,7 @@ const bill_status = [
   },
   {
       "id": "10",
-      "name": "Для ген дира",
+      "name": "Отдел закупки",
       "sum_w_nds": "0",
       "count": "0",
       "clr": "#942f3d",
@@ -364,7 +364,7 @@ class Billing_ extends React.Component {
   getOneBill(item) {
     const link = document.createElement('a');
     link.href = `/billing/${item?.my_type_bill}/${item?.id}/${item?.point_id}`
-    link.target = '_blank'
+    //link.target = '_blank'
     link.click();
 
     const data = {
