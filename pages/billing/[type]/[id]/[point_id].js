@@ -494,6 +494,18 @@ const useStore = create((set, get) => ({
       date_factur: res.bill?.date_factur && res.bill?.date_factur !== "0000-00-00" ? dayjs(res.bill?.date_factur) : null,
     });
 
+    let base_doc_name = docs.billings.find( item => item.number == res?.bill.number_base )?.name;
+
+    console.log( 'base_doc_name', base_doc_name )
+
+    if( parseInt(res?.bill?.doc_base_id) > 0 ){
+      get().search_doc( { targer: { value: base_doc_name } } , base_doc_name);
+    }
+
+    set({
+      bill_items
+    })
+
     setTimeout( () => {
       if( document.getElementById('img_bill') ){
         set({
@@ -601,14 +613,15 @@ const useStore = create((set, get) => ({
 
   search_doc: async (event, name) => {
 
-    const search = event.target.value ? event.target.value : name ? name : '';
+    const search = event?.target?.value ? event?.target?.value : name ? name : '';
 
     if(search) {
         
       const docs = get().docs;
       const vendor_id = get().vendors[0]?.id;
       const point = get().point;
-      
+      const bill_items = get().bill_items;
+
       const billing_id = docs.find(doc => doc.name === search)?.id;
       
       const obj = {
@@ -634,6 +647,24 @@ const useStore = create((set, get) => ({
         sum_w_nds: '',
         bill_items_doc: res.billing_items,
       });
+
+      
+
+      console.log( 'bill_items', bill_items )
+
+      res.billing_items.map( item => {
+
+        let test = res.items.filter( v => parseInt(v.id) === parseInt(item.item_id) );
+
+        let this_bill = bill_items.find( b => parseInt(b.item_id) === parseInt(item.item_id) );
+
+        if( this_bill ){
+          get().addItem_fast(this_bill.count, this_bill.fact_unit, this_bill.price, this_bill.price_w_nds, this_bill.ed_izmer_name, this_bill.pq, this_bill.item_id, test, 1);
+        }else{
+          get().addItem_fast(item.count, item.count * item.pq, item.price, item.price_w_nds, item.ed_izmer_name, item.pq, item.item_id, test, 0);
+        }
+        
+      } )
 
     } else {
 
@@ -1053,6 +1084,63 @@ const useStore = create((set, get) => ({
       fact_unit: '',
       summ: '',
       sum_w_nds: '',
+      search_item: '',
+      pq: ''
+    });
+  },
+
+  addItem_fast: ( count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, item_id, vendor_items, is_add ) => {
+    
+    if( vendor_items.length == 0 ) {
+      return ;
+    }
+
+    //const { count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, vendor_items } = get();
+
+    let bill_items = JSON.parse(JSON.stringify(get().bill_items));
+
+    const nds = is_add == 0 ? '' : get().check_nds_bill((Number(sum_w_nds) - Number(summ)) / (Number(summ) / 100))
+
+    vendor_items[0].color = false;
+   
+    vendor_items[0].summ_nds = is_add == 0 ? '' : (Number(sum_w_nds) - Number(summ)).toFixed(2);
+    vendor_items[0].nds = nds;
+
+    vendor_items[0].pq = is_add == 0 ? '' : pq;
+    vendor_items[0].all_ed_izmer = all_ed_izmer;
+    vendor_items[0].count = is_add == 0 ? '' : count;
+    vendor_items[0].fact_unit = is_add == 0 ? '' : fact_unit;
+    vendor_items[0].price_item = is_add == 0 ? '' : sum_w_nds;
+    vendor_items[0].price_w_nds = is_add == 0 ? '' : sum_w_nds;
+
+    const bill_items_doc = get().bill_items_doc;
+
+    if(bill_items_doc.length) {
+      const item = bill_items_doc.find(it => it.item_id === vendor_items[0].id);
+
+      item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
+      item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
+
+      const nds = get().check_nds_bill((Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100))
+
+      if(nds) {
+        item.nds = nds;
+      } else {
+        item.nds = '';
+      }
+
+      vendor_items[0].data_bill = item;
+    }
+
+    bill_items.push(vendor_items[0]);
+
+    const allPrice = (bill_items.reduce((all, item) => all + Number(item.price_item), 0)).toFixed(2);
+    const allPrice_w_nds = (bill_items.reduce((all, item) => all + Number(item.price_w_nds), 0)).toFixed(2);
+
+    set({
+      bill_items,
+      allPrice,
+      allPrice_w_nds,
     });
   },
 
@@ -2548,7 +2636,9 @@ class Billing_Edit_ extends React.Component {
 
     var items_color = [];
 
-    const items = bill_items.reduce((newItems, item) => {
+    let new_bill_items = bill_items.filter( item => parseInt(item.fact_unit) > 0 );
+
+    const items = new_bill_items.reduce((newItems, item) => {
 
       let it = {};
 

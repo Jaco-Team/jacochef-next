@@ -567,6 +567,8 @@ const useStore = create((set, get) => ({
       const vendor_id = get().vendor?.id;
       const point = get().point;
       
+      const vendor_items = get().vendor_items;
+
       const billing_id = docs.find(doc => doc.name === search)?.id;
       
       const obj = {
@@ -596,7 +598,10 @@ const useStore = create((set, get) => ({
       
 
       res.billing_items.map( item => {
-        //get().addItem_fast(item.count, item.count * item.pq, item.price, item.price_w_nds, item.ed_izmer_name, item.pq, item.item_id);
+
+        let test = res.items.filter( v => parseInt(v.id) === parseInt(item.item_id) );
+
+        get().addItem_fast(item.count, item.count * item.pq, item.price, item.price_w_nds, item.ed_izmer_name, item.pq, item.item_id, test);
       } )
 
     } else {
@@ -780,6 +785,7 @@ const useStore = create((set, get) => ({
         fact_unit: '',
         summ: '',
         sum_w_nds: '',
+        //search_item: '',
       });
 
     }
@@ -982,7 +988,7 @@ const useStore = create((set, get) => ({
   addItem: () => {
     const { count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, vendor_items } = get();
 
-    let bill_items = JSON.parse(JSON.stringify(get().bill_items));
+    let bill_items = get().bill_items;
 
     if (!count || !fact_unit || !summ || !sum_w_nds || !pq || !all_ed_izmer.length) {
 
@@ -1057,32 +1063,38 @@ const useStore = create((set, get) => ({
       fact_unit: '',
       summ: '',
       sum_w_nds: '',
+      search_item: '',
+      pq: '',
     });
   },
 
-  addItem_fast: ( count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, item_id ) => {
+  addItem_fast: ( count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, item_id, vendor_items ) => {
     
+    if( vendor_items.length == 0 ) {
+      return ;
+    }
+
+    //const { count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, vendor_items } = get();
+
     let bill_items = JSON.parse(JSON.stringify(get().bill_items));
 
-    let vendor_item = {};
+    //const nds = get().check_nds_bill((Number(sum_w_nds) - Number(summ)) / (Number(summ) / 100))
 
-    const nds = get().check_nds_bill((Number(sum_w_nds) - Number(summ)) / (Number(summ) / 100))
-
-    vendor_item.summ_nds = (Number(sum_w_nds) - Number(summ)).toFixed(2);
-    vendor_item.nds = nds;
-    vendor_item.pq = pq;
-    vendor_item.all_ed_izmer = all_ed_izmer;
-    vendor_item.count = count;
-    vendor_item.fact_unit = (Number(fact_unit)).toFixed(2);
-    vendor_item.price_item = summ;
-    vendor_item.price_w_nds = sum_w_nds;
-    vendor_item.item_id = item_id;
-    
+    vendor_items[0].color = false;
+   
+    vendor_items[0].summ_nds = '';
+    vendor_items[0].nds = '';
+    vendor_items[0].pq = '';
+    vendor_items[0].all_ed_izmer = all_ed_izmer;
+    vendor_items[0].count = '';
+    vendor_items[0].fact_unit = '';
+    vendor_items[0].price_item = '';
+    vendor_items[0].price_w_nds = '';
 
     const bill_items_doc = get().bill_items_doc;
 
     if(bill_items_doc.length) {
-      const item = bill_items_doc.find(it => parseInt(it.item_id) === parseInt(item_id));
+      const item = bill_items_doc.find(it => it.item_id === vendor_items[0].id);
 
       item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
       item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
@@ -1095,10 +1107,10 @@ const useStore = create((set, get) => ({
         item.nds = '';
       }
 
-      vendor_item.data_bill = item;
+      vendor_items[0].data_bill = item;
     }
 
-    bill_items.push(vendor_item);
+    bill_items.push(vendor_items[0]);
 
     const allPrice = (bill_items.reduce((all, item) => all + Number(item.price_item), 0)).toFixed(2);
     const allPrice_w_nds = (bill_items.reduce((all, item) => all + Number(item.price_w_nds), 0)).toFixed(2);
@@ -1106,7 +1118,7 @@ const useStore = create((set, get) => ({
     set({
       bill_items,
       allPrice,
-      allPrice_w_nds
+      allPrice_w_nds,
     });
   },
 
@@ -1126,8 +1138,6 @@ const useStore = create((set, get) => ({
 		var err_items = [];
     var bill_items = get().bill_items;		
     var vendor_items = get().vendor_items;
-
-    console.log( 'vendor_items', vendor_items )
 
     bill_items.map((item, key) => {
       let one_price_bill = parseFloat(item['one_price_bill']);
@@ -2515,7 +2525,9 @@ class Billing_Edit_ extends React.Component {
 
     var items_color = [];
 
-    const items = bill_items.reduce((newItems, item) => {
+    let new_bill_items = bill_items.filter( item => parseInt(item.fact_unit) > 0 );
+
+    const items = new_bill_items.reduce((newItems, item) => {
 
       let it = {};
 
