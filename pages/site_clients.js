@@ -1116,7 +1116,7 @@ class SiteClients_ extends React.Component {
       is_load: true,
     });
 
-    let res = api(this.state.module, method, data, dop_type)
+    let res = api_laravel(this.state.module, method, data, dop_type)
       .then(result => {
 
         if(method === 'export_file_xls') {
