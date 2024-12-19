@@ -54,6 +54,8 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
 import Draggable from 'react-draggable';
 
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+
 const types = [
   {
     "name": "Счет",
@@ -458,6 +460,7 @@ const useStore = create((set, get) => ({
       vendor_items: items,
       vendor_itemsCopy: items,
       docs: docs.billings,
+      doc: docs.billings.find( item => item.number == res?.bill.number_base )?.name,
       point: point ?? [],
       point_name: point?.name ?? '',
       vendors: res?.vendors ?? [],
@@ -491,6 +494,18 @@ const useStore = create((set, get) => ({
       date_factur: res.bill?.date_factur && res.bill?.date_factur !== "0000-00-00" ? dayjs(res.bill?.date_factur) : null,
     });
 
+    let base_doc_name = docs.billings.find( item => item.number == res?.bill.number_base )?.name;
+
+    console.log( 'base_doc_name', base_doc_name )
+
+    if( parseInt(res?.bill?.doc_base_id) > 0 ){
+      get().search_doc( { targer: { value: base_doc_name } } , base_doc_name);
+    }
+
+    set({
+      bill_items
+    })
+
     setTimeout( () => {
       if( document.getElementById('img_bill') ){
         set({
@@ -511,6 +526,45 @@ const useStore = create((set, get) => ({
     }, 500 )
 
     get().changeKinds(res?.bill?.type_doc);
+  },
+
+  clearForm: () => {
+    set({
+      bill_items: [],
+      search_item: '',
+      vendor_items: [],
+      vendor_itemsCopy: [],
+      users: [],
+      all_ed_izmer: [],
+      pq: '',
+      count: '',
+      fact_unit: '',
+      summ: '',
+      sum_w_nds: '',
+      bill_items_doc: [],
+      docs: [],
+      doc: '',
+      points: [],
+      point: '',
+      point_name: '',
+      vendors: [],
+      vendor_name: '',
+      bill_list: [],
+      imgs_bill: [],
+      allPrice: 0,
+      allPrice_w_nds: 0,
+      number: '',
+      date: null,
+      date_items: null,
+      comment: '',
+      user: [],
+      type: '',
+      doc_base_id: '',
+      number_factur: '',
+      date_factur: null,
+      is_new_doc: 0
+    });
+
   },
 
   closeDialog: () => {
@@ -559,14 +613,15 @@ const useStore = create((set, get) => ({
 
   search_doc: async (event, name) => {
 
-    const search = event.target.value ? event.target.value : name ? name : '';
+    const search = event?.target?.value ? event?.target?.value : name ? name : '';
 
     if(search) {
         
       const docs = get().docs;
       const vendor_id = get().vendors[0]?.id;
       const point = get().point;
-      
+      const bill_items = get().bill_items;
+
       const billing_id = docs.find(doc => doc.name === search)?.id;
       
       const obj = {
@@ -592,6 +647,24 @@ const useStore = create((set, get) => ({
         sum_w_nds: '',
         bill_items_doc: res.billing_items,
       });
+
+      
+
+      console.log( 'bill_items', bill_items )
+
+      res.billing_items.map( item => {
+
+        let test = res.items.filter( v => parseInt(v.id) === parseInt(item.item_id) );
+
+        let this_bill = bill_items.find( b => parseInt(b.item_id) === parseInt(item.item_id) );
+
+        if( this_bill ){
+          get().addItem_fast(this_bill.count, this_bill.fact_unit, this_bill.price, this_bill.price_w_nds, this_bill.ed_izmer_name, this_bill.pq, this_bill.item_id, test, 1);
+        }else{
+          get().addItem_fast(item.count, item.count * item.pq, item.price, item.price_w_nds, item.ed_izmer_name, item.pq, item.item_id, test, 0);
+        }
+        
+      } )
 
     } else {
 
@@ -1011,6 +1084,63 @@ const useStore = create((set, get) => ({
       fact_unit: '',
       summ: '',
       sum_w_nds: '',
+      search_item: '',
+      pq: ''
+    });
+  },
+
+  addItem_fast: ( count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, item_id, vendor_items, is_add ) => {
+    
+    if( vendor_items.length == 0 ) {
+      return ;
+    }
+
+    //const { count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, vendor_items } = get();
+
+    let bill_items = JSON.parse(JSON.stringify(get().bill_items));
+
+    const nds = is_add == 0 ? '' : get().check_nds_bill((Number(sum_w_nds) - Number(summ)) / (Number(summ) / 100))
+
+    vendor_items[0].color = false;
+   
+    vendor_items[0].summ_nds = is_add == 0 ? '' : (Number(sum_w_nds) - Number(summ)).toFixed(2);
+    vendor_items[0].nds = nds;
+
+    vendor_items[0].pq = is_add == 0 ? '' : pq;
+    vendor_items[0].all_ed_izmer = all_ed_izmer;
+    vendor_items[0].count = is_add == 0 ? '' : count;
+    vendor_items[0].fact_unit = is_add == 0 ? '' : fact_unit;
+    vendor_items[0].price_item = is_add == 0 ? '' : sum_w_nds;
+    vendor_items[0].price_w_nds = is_add == 0 ? '' : sum_w_nds;
+
+    const bill_items_doc = get().bill_items_doc;
+
+    if(bill_items_doc.length) {
+      const item = bill_items_doc.find(it => it.item_id === vendor_items[0].id);
+
+      item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
+      item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
+
+      const nds = get().check_nds_bill((Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100))
+
+      if(nds) {
+        item.nds = nds;
+      } else {
+        item.nds = '';
+      }
+
+      vendor_items[0].data_bill = item;
+    }
+
+    bill_items.push(vendor_items[0]);
+
+    const allPrice = (bill_items.reduce((all, item) => all + Number(item.price_item), 0)).toFixed(2);
+    const allPrice_w_nds = (bill_items.reduce((all, item) => all + Number(item.price_w_nds), 0)).toFixed(2);
+
+    set({
+      bill_items,
+      allPrice,
+      allPrice_w_nds,
     });
   },
 
@@ -1199,8 +1329,6 @@ function FormHeader_new({ type_edit }){
 
   const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
 
-  //doc
-
   return (
     <>
       
@@ -1272,8 +1400,8 @@ function FormHeader_new({ type_edit }){
               data={docs}
               multiple={false}
               value={doc}
-              disabled={ type_edit === 'edit' ? false : true }
-              //disabled={ true }
+              //disabled={ type_edit === 'edit' ? false : true }
+              disabled={ true }
               func={ (event, name) => search_doc(event, name) }
               onBlur={ (event, name) => search_doc(event, name) }
               label="Документ основание"
@@ -1292,7 +1420,7 @@ function FormHeader_new({ type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? 
         <Grid item xs={12} sm={6}>
           <MyTextInput
             label="Номер счет-фактуры"
@@ -1314,7 +1442,7 @@ function FormHeader_new({ type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? 
         <Grid item xs={12} sm={6}>
           <MyDatePickerNew
             label="Дата счет-фактуры"
@@ -1649,9 +1777,83 @@ function VendorItemsTableView(){
   )
 }
 
+function VendorItemsTableView_min(){
+
+  const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
+  const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  return (
+    
+        
+          <Table aria-label="a dense table">
+            <TableHead>
+              <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                <TableCell>Товар</TableCell>
+                { bill_items_doc.length == 0 ? null : <TableCell>Изменения</TableCell> }
+                <TableCell>В упак.</TableCell>
+                <TableCell>Упак</TableCell>
+                <TableCell>Кол-во</TableCell>
+                <TableCell>НДС</TableCell>
+                <TableCell>Сумма без НДС</TableCell>
+                <TableCell>Сумма НДС</TableCell>
+                <TableCell>Сумма с НДС</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {bill_items.map((item, key) => (
+                <React.Fragment key={key}>
+                  {!item?.data_bill ? null :
+                    <TableRow style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                      <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
+                      <TableCell>До</TableCell>
+                      <TableCell>{item?.data_bill?.pq} {item.ed_izmer_name}</TableCell>
+                      <TableCell>{item?.data_bill?.count}</TableCell>
+                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.fact_unit} {item.ed_izmer_name}</TableCell>
+                      <TableCell>{item?.data_bill?.nds}</TableCell>
+                      <TableCell>{item?.data_bill?.price} ₽</TableCell>
+                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.summ_nds} ₽</TableCell>
+                      <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
+                      
+                    </TableRow>
+                  }
+
+                  <TableRow hover style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                    {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
+                    {!item?.data_bill ? null : <TableCell>После</TableCell>}
+                    <TableCell className="ceil_white">{item.pq}</TableCell>
+                    <TableCell className="ceil_white">{item.count}</TableCell>
+                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.fact_unit} {item.ed_izmer_name}</TableCell>
+                    <TableCell>{item.nds}</TableCell>
+                    <TableCell className="ceil_white">{item.price_item}</TableCell>
+                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.summ_nds} ₽</TableCell>
+                    <TableCell className="ceil_white">{item.price_w_nds}</TableCell>
+                    
+                  </TableRow>
+                </React.Fragment>
+              ))}
+              { bill_items.length == 0 ? null : (
+                <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
+                  <TableCell>Итого:</TableCell>
+                  { bill_items_doc.length == 0 ? null : <TableCell></TableCell> }
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>{allPrice} ₽</TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>{allPrice_w_nds} ₽</TableCell>
+                  
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        
+  )
+}
+
 function FormImage_new({ type_edit, type_doc }){
 
-  const [type, imgs_bill, openImageBill, fullScreen, imgs_factur, number_factur, changeInput, changeDateRange, date_factur] = useStore( state => [state.type, state.imgs_bill, state.openImageBill, state.fullScreen, state.imgs_factur, state.number_factur, state.changeInput, state.changeDateRange, state.date_factur]);
+  const [type, imgs_bill, openImageBill, fullScreen, imgs_factur, number_factur, changeInput, changeDateRange, date_factur, doc_base_id] = useStore( state => [state.type, state.imgs_bill, state.openImageBill, state.fullScreen, state.imgs_factur, state.number_factur, state.changeInput, state.changeDateRange, state.date_factur, state.doc_base_id]);
 
   const url = type_doc === 'bill' ? 'bill/' : 'bill-ex-items/'
 
@@ -1677,7 +1879,7 @@ function FormImage_new({ type_edit, type_doc }){
         </TableContainer>
       </Grid>
 
-      {parseInt(type) === 2 && !fullScreen && type_doc === 'bill' ? (
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen && type_doc === 'bill' ? (
         <Grid item xs={12} sm={6} display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
           {!imgs_factur.length ? 'Фото отсутствует' :
             <>
@@ -1696,7 +1898,7 @@ function FormImage_new({ type_edit, type_doc }){
       ) : null}
 
       { type_edit === 'edit' ?
-        <Grid item xs={12} sm={parseInt(type) === 2 ? 6 : 12}>
+        <Grid item xs={12} sm={parseInt(type) === 2 && parseInt(doc_base_id) == 1 ? 6 : 12}>
           <div
             className="dropzone"
             id="img_bill"
@@ -1708,7 +1910,7 @@ function FormImage_new({ type_edit, type_doc }){
       }
 
 
-      {type_edit === 'edit' && parseInt(type) === 2 && !fullScreen ? (
+      {type_edit === 'edit' && parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? (
         <Grid item xs={12} sm={6}>
           
           <div
@@ -1719,7 +1921,7 @@ function FormImage_new({ type_edit, type_doc }){
         </Grid>
       ) : null}
 
-      {parseInt(type) === 2 && fullScreen && type_doc === 'bill' ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && fullScreen && type_doc === 'bill' ? 
         <>
           <Grid item xs={12}>
             <MyTextInput
@@ -1780,7 +1982,7 @@ function FormImage_new({ type_edit, type_doc }){
 
 function FormOther_new({ page, type_edit, type_doc }){
 
-  const [type, date_items, changeDateRange, users, user, changeAutocomplite, comment, changeInput, changeItemChecked, is_new_doc, comment_bux, delete_text] = useStore( state => [state.type, state.date_items, state.changeDateRange, state.users, state.user, state.changeAutocomplite, state.comment, state.changeInput, state.changeItemChecked, state.is_new_doc, state.comment_bux, state.delete_text]);
+  const [bill, type, date_items, changeDateRange, users, user, changeAutocomplite, comment, changeInput, changeItemChecked, is_new_doc, comment_bux, delete_text] = useStore( state => [ state.bill, state.type, state.date_items, state.changeDateRange, state.users, state.user, state.changeAutocomplite, state.comment, state.changeInput, state.changeItemChecked, state.is_new_doc, state.comment_bux, state.delete_text]);
 
   return (
     <>
@@ -1836,6 +2038,16 @@ function FormOther_new({ page, type_edit, type_doc }){
         </>
       }
 
+      { bill?.comment_gen_dir?.length > 0 ?
+        <Grid item xs={12} sm={6} style={{ display: 'flex', marginBottom: 20 }}>
+          <Typography style={{ fontWeight: 'bold', color: '#9e9e9e' }}>
+            Комментарии Отдела закупки:&nbsp;
+          </Typography>
+          <Typography>{bill?.comment_gen_dir}</Typography>
+        </Grid>
+          : 
+        null
+      }
 
       <Grid item xs={12} sm={12} display="flex" alignItems="center" style={{ display: 'none' }}>
         <MyCheckBox
@@ -2273,6 +2485,8 @@ class Billing_Modal extends React.Component {
 }
 
 class Billing_Edit_ extends React.Component {
+  isClick = false;
+
   constructor(props) {
     super(props);
 
@@ -2287,6 +2501,12 @@ class Billing_Edit_ extends React.Component {
       modelCheckDel: false,
       modelCheckDelImg: false,
       modelChecReturn: false,
+      modelCheckErrItems: false,
+      modelCheckDel1c: false,
+      modelCheckPrice: false,
+
+      items_err: [],
+      thisTypeSave: '',
 
       imgDel: '',
       delText: '',
@@ -2294,6 +2514,13 @@ class Billing_Edit_ extends React.Component {
   }
 
   async componentDidMount() {
+    const { clearForm } = this.props.store;
+
+    clearForm();
+    this.setState({
+      thisTypeSave: ''
+    })
+
 
     let data_bill = window.location.pathname;
 
@@ -2386,14 +2613,32 @@ class Billing_Edit_ extends React.Component {
       });
   };
 
-  async saveEditBill (type_save) {
-    const {vendor, err_items, DropzoneMain, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, doc_base_id, date_items, user, comment, is_new_doc, bill_items, imgs_bill, imgs_factur, bill } = this.props.store;
+  async saveEditBill (type_save, check_err = true) {
+    if( this.isClick === true ) return;
+
+    this.isClick = true;
+
+    if( type_save != 'type' ){
+      this.setState({
+        thisTypeSave: type_save
+      })
+    }else{
+      type_save = this.state.thisTypeSave;
+    }
+
+    const {vendor, err_items, DropzoneMain, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, docs, doc_base_id, date_items, user, comment, is_new_doc, bill_items, imgs_bill, imgs_factur, bill } = this.props.store;
+
+    let doc_info = docs.find( item_doc => item_doc.name === doc )
 
     const dateBill = date ? dayjs(date).format('YYYY-MM-DD') : '';
     const dateFactur = date_factur ? dayjs(date_factur).format('YYYY-MM-DD') : '';
     const dateItems = date_items ? dayjs(date_items).format('YYYY-MM-DD') : '';
 
-    const items = bill_items.reduce((newItems, item) => {
+    var items_color = [];
+
+    let new_bill_items = bill_items.filter( item => parseInt(item.fact_unit) > 0 );
+
+    const items = new_bill_items.reduce((newItems, item) => {
 
       let it = {};
 
@@ -2403,6 +2648,10 @@ class Billing_Edit_ extends React.Component {
       it.summ = item.price_item;
       it.summ_w_nds = item.price_w_nds;
       it.color = item.color;
+
+      if( item.color && item.color === true ) {
+        items_color.push(item);
+      }
 
       const nds = item.nds.split(' %')[0];
 
@@ -2417,14 +2666,31 @@ class Billing_Edit_ extends React.Component {
       return newItems;
     }, [])
 
+    if( check_err === true && items_color.length > 0 ){
+
+      this.setState({
+        items_err: items_color,
+        modelCheckErrItems: true
+      })
+
+      this.isClick = false;
+
+      return ;
+    }
+    
+
     if( imgs_bill.length == 0 && ( !DropzoneMain || DropzoneMain['files'].length === 0 ) ) {
       showAlert(false, 'Нет изображений документа');
+
+      this.isClick = false;
 
       return ;
     }
 
     if( imgs_factur.length == 0 && parseInt(doc_base_id) == 1 && ( parseInt(type) == 2 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) ) {
       showAlert(false, 'Нет изображений счет-фактуры');
+
+      this.isClick = false;
 
       return ;
     }
@@ -2441,7 +2707,7 @@ class Billing_Edit_ extends React.Component {
 
     const data = {
       bill_id: bill.id,
-      doc,
+      doc_info,
       type,
       items,
       number,
@@ -2461,6 +2727,10 @@ class Billing_Edit_ extends React.Component {
     }
 
     const res = await this.getData('save_edit', data);
+
+    setTimeout( () => {
+      this.isClick = false;
+    }, 1000 );
 
     if (res.st === true) {
 
@@ -2497,19 +2767,16 @@ class Billing_Edit_ extends React.Component {
     const { bill, point, showAlert } = this.props.store;
 
     if( this.state.delText.length <= 3 ) {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Надо указать причину удаления'
-      });
-
+      showAlert(false, 'Надо указать причину удаления');
+      
       return;
     }
 
     const data = {
       bill_id: bill.id,
       point_id: point?.id,
-      del_res: this.state.delText
+      del_res: this.state.delText,
+      bill_type: parseInt(bill.type_bill) == 1 ? 'bill_ex' : 'bill', //bill / bill_ex
     }
 
     const res = await this.getData('save_bill_del', data);
@@ -2521,7 +2788,7 @@ class Billing_Edit_ extends React.Component {
         modelCheckDel: false
       });
 
-      window.location.pathname = '/billing';
+      window.location = '/billing';
     } else {
 
       showAlert(res.st, res.text);
@@ -2563,9 +2830,16 @@ class Billing_Edit_ extends React.Component {
   async saveTruePrice(){
     const { bill, point, showAlert } = this.props.store;
 
+    if( this.state.delText.length <= 3 ) {
+      showAlert(false, 'Надо указать комментарий');
+      
+      return;
+    }
+
     const data = {
       bill_id: bill.id,
       point_id: point?.id,
+      del_res: this.state.delText,
       type: parseInt(bill.type_bill) == 1 ? 'bill_ex' : 'bill', //bill / bill_ex
     }
 
@@ -2574,7 +2848,67 @@ class Billing_Edit_ extends React.Component {
     if (res.st) {
       showAlert(res.st, res.text);
 
-      window.location.pathname = '/billing';
+      this.setState({
+        modelCheckPrice: false
+      })
+
+      window.location = '/billing';
+    } else {
+
+      showAlert(res.st, res.text);
+    }
+  }
+
+  returnFN (){
+    const { clearForm } = this.props.store;
+
+    clearForm();
+    window.location = '/billing';
+  }
+
+  async delete_1c(){
+    const { bill, point, showAlert } = this.props.store;
+
+    if( this.state.delText.length <= 3 ) {
+      showAlert(false, 'Надо указать причину удаления');
+      
+      return;
+    }
+
+    const data = {
+      bill_id: bill.id,
+      point_id: point?.id,
+      del_res: this.state.delText,
+      bill_type: parseInt(bill.type_bill) == 1 ? 'bill_ex' : 'bill', //bill / bill_ex
+    }
+
+    const res = await this.getData('delete_bill_1c', data);
+
+    if (res.st) {
+      //showAlert(res.st, res.text);
+
+      window.location = '/billing';
+    } else {
+
+      showAlert(res.st, res.text);
+    }
+  }
+
+  async return_to_bux(){
+    const { bill, point, showAlert } = this.props.store;
+
+    const data = {
+      bill_id: bill.id,
+      point_id: point?.id,
+      bill_type: parseInt(bill.type_bill) == 1 ? 'bill_ex' : 'bill', //bill / bill_ex
+    }
+
+    const res = await this.getData('return_from_bill_1c', data);
+
+    if (res.st) {
+      //showAlert(res.st, res.text);
+
+      window.location = '/billing';
     } else {
 
       showAlert(res.st, res.text);
@@ -2621,9 +2955,41 @@ class Billing_Edit_ extends React.Component {
 
             <MyTextInput label="Причина удаления" value={this.state.delText} func={ event => { this.setState({ delText: event.target.value }) } } />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={ () => { this.setState({ modelCheckDel: false }) } }>Отмена</Button>
-            <Button onClick={ this.saveDelDoc.bind(this) }>Удалить</Button>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckDel: false }) } } color="error">Отмена</Button>
+            <Button variant="contained" onClick={ this.saveDelDoc.bind(this) } color="success">Удалить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={this.state.modelCheckDel1c}
+          onClose={ () => { this.setState({ modelCheckDel1c: false }) } }
+        >
+          <DialogTitle>Подтверждение</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 20 }}>
+              Несохраненные данные не будут применены
+            </DialogContentText>
+
+            <MyTextInput label="Причина удаления" value={this.state.delText} func={ event => { this.setState({ delText: event.target.value }) } } />
+          </DialogContent>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckDel1c: false }) } } color="error">Отмена</Button>
+            <Button variant="contained" onClick={ this.delete_1c.bind(this) } color="success">Удалить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={this.state.modelCheckPrice}
+          onClose={ () => { this.setState({ modelCheckPrice: false }) } }
+        >
+          <DialogTitle>Подтверждение</DialogTitle>
+          <DialogContent>
+            <MyTextInput label="Комментарий" value={this.state.delText} func={ event => { this.setState({ delText: event.target.value }) } } />
+          </DialogContent>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckPrice: false }) } } color="error">Отмена</Button>
+            <Button variant="contained" onClick={ this.saveTruePrice.bind(this) } color="success">Сохранить</Button>
           </DialogActions>
         </Dialog>
 
@@ -2639,9 +3005,9 @@ class Billing_Edit_ extends React.Component {
 
             <MyTextInput label="Причина" value={this.state.delText} func={ event => { this.setState({ delText: event.target.value }) } } />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={ () => { this.setState({ modelChecReturn: false, delText: '' }) } }>Отмена</Button>
-            <Button onClick={ this.saveEditBill.bind(this, 'return') }>Вернуть</Button>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelChecReturn: false, delText: '' }) } } color="error">Отмена</Button>
+            <Button variant="contained" onClick={ this.saveEditBill.bind(this, 'return', false) } color="success">Вернуть</Button>
           </DialogActions>
         </Dialog>
 
@@ -2656,18 +3022,48 @@ class Billing_Edit_ extends React.Component {
             </DialogContentText>
 
           </DialogContent>
-          <DialogActions>
-            <Button onClick={ () => { this.setState({ modelCheckDelImg: false, imgDel: '' }) } }>Отмена</Button>
-            <Button onClick={ this.delImgTrue.bind(this) }>Удалить</Button>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckDelImg: false, imgDel: '' }) } } color="error">Отмена</Button>
+            <Button variant="contained" onClick={ this.delImgTrue.bind(this) } color="success">Удалить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={this.state.modelCheckErrItems}
+          onClose={ () => { this.setState({ modelCheckErrItems: false }) } }
+          fullWidth={true}
+          maxWidth={'md'}
+        >
+          <DialogTitle>Подтверждение</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 20 }}>
+              Проверь корректность позиций
+            </DialogContentText>
+
+            <VendorItemsTableView_min />
+
+          </DialogContent>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckErrItems: false }) } } color="error" >Отмена</Button>
+            <Button variant="contained" onClick={ this.saveEditBill.bind(this, 'type', false) } color="success">Сохранить</Button>
           </DialogActions>
         </Dialog>
 
         <Grid container spacing={3} mb={10} style={{ marginTop: '64px', maxWidth: is_vertical ? '50%' : '100%', marginBottom: is_horizontal ? 700 : 30 }}>
 
-          <Grid item xs={12} sm={12}>
+          <Grid item xs={12} sm={12} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+            
+            <ArrowBackIosNewIcon style={{ width: 50, height: 30, cursor: 'pointer' }} onClick={this.returnFN.bind(this)} />
+            
             <h1>Документ: {bill?.number}</h1>
+            
+          </Grid>
+
+          <Grid item xs={12} sm={12}>
             <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
           </Grid>
+
+
 
           <FormHeader_new type_doc={this.state.type_doc} page={'edit'} type_edit={ parseInt(this.state.acces?.header) == 1 ? 'edit' : 'show' } />
           
@@ -2690,7 +3086,7 @@ class Billing_Edit_ extends React.Component {
             type='edit'
           />
 
-          { parseInt(this.state.acces?.only_delete) === 0 ? false :
+          { parseInt(this.state.acces?.only_delete) === 1 ?
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth style={{ height: '100%' }}
                 onClick={ () => { this.setState({ modelCheckDel: true }) } }
@@ -2698,9 +3094,11 @@ class Billing_Edit_ extends React.Component {
                 Удалить
               </Button>
             </Grid>
+              :
+            false
           }
 
-          { !parseInt(this.state.acces?.only_return) || parseInt(this.state.acces?.only_return) == 0 ? false :
+          { parseInt(this.state.acces?.only_return) == 1 ?
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth style={{ height: '100%' }}
                 onClick={ () => { this.setState({ modelChecReturn: true }) } }
@@ -2708,50 +3106,93 @@ class Billing_Edit_ extends React.Component {
                 Ошибка ( вернуть управляющему )
               </Button>
             </Grid>
+              :
+            false
           }
 
-          { parseInt(this.state.acces?.only_save) === 0 ? false :
+          { parseInt(this.state.acces?.only_save) === 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'current')}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'current', true)}>
                 Сохранить
               </Button>
             </Grid>
+              :
+            false
           }
          
-         { !parseInt(this.state.acces?.send_1c) || parseInt(this.state.acces?.send_1c) == 0 ? false :
+         { parseInt(this.state.acces?.send_1c) == 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next')}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next', true)}>
                 Отправить в 1с
               </Button>
             </Grid>
+              :
+            false
           }
 
-          { !parseInt(this.state.acces?.pay) || parseInt(this.state.acces?.pay) == 0 ? false :
+          { parseInt(this.state.acces?.pay) == 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next')}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next', true)}>
                 Оплатить
               </Button>
             </Grid>
+              :
+            false
           }
 
-          { !parseInt(this.state.acces?.true_price) || parseInt(this.state.acces?.true_price) == 0 ? false :
+          { parseInt(this.state.acces?.true_price) == 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveTruePrice.bind(this)}>
+              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={ () => { this.setState({ modelCheckPrice: true }) } }>
                 Подтвердить ценники
               </Button>
             </Grid>
+              :
+            false
           }
 
-          { parseInt(this.state.acces?.only_delete) === 0 ? false :
+          { parseInt(this.state.acces?.only_save) === 1 ?
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
-                onClick={this.saveEditBill.bind(this, 'next')}
+                onClick={this.saveEditBill.bind(this, 'next', true)}
               >
                 Сохранить и отправить
               </Button>
             </Grid>
+              : 
+            false
+          }
+
+          { parseInt(this.state.acces?.delete_1c) === 1 ?
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth style={{ height: '100%' }}
+                //onClick={this.delete_1c.bind(this, 'next', true)}
+                onClick={ () => { this.setState({ modelCheckDel1c: true }) } }
+              >
+                Удалить ( если подготовлено для 1с )
+              </Button>
+            </Grid>
+              : 
+            false
+          }
+
+          { parseInt(this.state.acces?.return_to_bux) === 1 ?
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
+                onClick={this.return_to_bux.bind(this, 'next', true)}
+              >
+                Вернуть в бухгалтерию
+              </Button>
+            </Grid> 
+              : 
+            false
           }
           
+          { modalDialog === true ?
+            <Grid item xs={12} sm={4} style={{ height: 500 }} />
+              : 
+            false
+          }
+
         </Grid>
       </>
     );

@@ -144,8 +144,6 @@ export class MyAutocomplite2 extends React.PureComponent {
     };
   }
   
-  
-
   render(){
     if( this.props.id && this.props.id == 'promoName' ){
       return (
@@ -206,6 +204,7 @@ export class MyAutocomplite2 extends React.PureComponent {
       )
     }  
 
+    //isOptionEqualToValue
 
     return (
       <Stack spacing={3}>
@@ -222,7 +221,7 @@ export class MyAutocomplite2 extends React.PureComponent {
           onChange={this.props.func}
           //filterSelectedOptions
           multiple={ this.props.multiple && this.props.multiple === true ? true : false }
-          isOptionEqualToValue={(option, value) => option.id === value.id}
+          //isOptionEqualToValue={(option, value) => option.id === value.id}
 
           filterOptions={(options, params) => {
             const filtered = filter(options, params);

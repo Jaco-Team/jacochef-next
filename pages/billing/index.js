@@ -23,6 +23,13 @@ import { MySelect, MyAutocomplite, MyAutocomplite2, MyDatePickerNew, formatDate,
 import queryString from 'query-string';
 import dayjs from 'dayjs';
 
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+
+
 const bill_status = [
   {
       "id": "0",
@@ -75,7 +82,7 @@ const bill_status = [
   },
   {
       "id": "10",
-      "name": "Для ген дира",
+      "name": "Отдел закупки",
       "sum_w_nds": "0",
       "count": "0",
       "clr": "#942f3d",
@@ -172,6 +179,12 @@ class Billing_ extends React.Component {
       operAlert: false,
       err_status: true,
       err_text: '',
+
+      arrPay: {},
+      count_true: 0,
+
+      modelCheckPay: false,
+      acces_bux_pay: false,
     };
   }
 
@@ -187,6 +200,7 @@ class Billing_ extends React.Component {
       billings: bill_status,
       status: bill_status[0].id,
       types: types,
+      acces_bux_pay: parseInt(data.acces_bux_pay) == 1 ? true : false,
     });
 
     document.title = 'Накладные';
@@ -356,13 +370,15 @@ class Billing_ extends React.Component {
         });
 
       }
+
+      this.getBillingList();
     }
   }
 
   getOneBill(item) {
     const link = document.createElement('a');
     link.href = `/billing/${item?.my_type_bill}/${item?.id}/${item?.point_id}`
-    link.target = '_blank'
+    //link.target = '_blank'
     link.click();
 
     const data = {
@@ -468,6 +484,46 @@ class Billing_ extends React.Component {
     
   }
 
+  actionCheckBox(bill_id, point_id, bill_type, event){
+    let arr_Pay = this.state.arrPay;
+
+    arr_Pay[ bill_type + '_' + bill_id + '_' + point_id ] = {
+      bill_id: bill_id,
+      point_id: point_id,
+      bill_type: bill_type,
+      status: event.target.checked,
+    };
+
+    let count_true = Object.keys(arr_Pay).filter( it => arr_Pay[ it ]?.status === true ).length
+
+    this.setState({ arrPay: arr_Pay, count_true });
+  }
+
+  async multiPayBill(){
+    let arr_Pay = this.state.arrPay;
+
+    let arr_true = Object.keys(arr_Pay).filter( it => arr_Pay[ it ].status === true );
+    let arr_true_full = [];
+
+    arr_true.map( item => {
+      arr_true_full.push( arr_Pay[ item ] )
+    } )
+
+    const data = {
+      arr_Pay: arr_true_full,
+    }
+
+    const res = await this.getData('multi_pay_bill', data);
+
+    if( res.st === true ){
+      this.getBillingList();
+
+      this.setState({ arrPay: {}, count_true: 0, modelCheckPay: false });
+    }
+  }
+
+  //onClick={this.getOneBill.bind(this, item)}
+
   render() {
     return (
       <>
@@ -481,6 +537,23 @@ class Billing_ extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
+
+        <Dialog
+          open={this.state.modelCheckPay}
+          onClose={ () => { this.setState({ modelCheckPay: false }) } }
+        >
+          <DialogTitle>Подтверждение</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 20 }}>
+              Оплатить выбранные документы ?
+            </DialogContentText>
+
+          </DialogContent>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckPay: false }) } } color="error">Отмена</Button>
+            <Button variant="contained" onClick={ this.multiPayBill.bind(this) } color="success">Оплатить</Button>
+          </DialogActions>
+        </Dialog>
 
         <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
@@ -608,12 +681,23 @@ class Billing_ extends React.Component {
             </TableContainer>
           </Grid>
 
+          <Grid item xs={12}>
+            { this.state.acces_bux_pay === true ?
+              <Button variant="contained" color="success" disabled={ this.state.count_true > 0 ? false : true } onClick={ () => { this.setState({ modelCheckPay: true }) } }>
+                Оплатить выбранные
+              </Button>
+                :
+              false
+            }
+          </Grid>
+
           <Grid item xs={12} style={{ marginBottom: 40 }} sm={12}>
             <TableContainer component={Paper}>
               <Table aria-label="a dense table" size='small'>
                 <TableHead>
                   <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
                     <TableCell>#</TableCell>
+                    <TableCell>{ this.state.acces_bux_pay === true ? 'Оплатить' : '' }</TableCell>
                     <TableCell></TableCell>
                     
                     <TableCell>Тип</TableCell>
@@ -625,9 +709,20 @@ class Billing_ extends React.Component {
                 </TableHead>
                 <TableBody>
                   {this.state.bills.map((item, key) => (
-                    <TableRow key={key} style={{ cursor: 'pointer' }} onClick={this.getOneBill.bind(this, item)}>
-                      <TableCell style={{ backgroundColor: item?.color ?? '#fff', color: item?.color ? '#fff' : 'rgba(0, 0, 0, 0.87)'}}>{key + 1}</TableCell>
-                      <TableCell>
+                    <TableRow key={key} style={{ cursor: 'pointer' }}>
+                      <TableCell style={{ backgroundColor: item?.color ?? '#fff', color: item?.color ? '#fff' : 'rgba(0, 0, 0, 0.87)'}} onClick={this.getOneBill.bind(this, item)}>{key + 1}</TableCell>
+                      <TableCell style={ this.state.acces_bux_pay === true && parseInt(item?.status) == 9 ? { display: 'flex', justifyContent: 'center' } : {}}>
+                        { this.state.acces_bux_pay === true && parseInt(item?.status) == 9 ?
+                          <MyCheckBox 
+                            func={this.actionCheckBox.bind(this, item.id, item.point_id, item.my_type_bill)}
+                            value={ this.state.arrPay[ item.my_type_bill + '_' + item.id + '_' + item.point_id ]?.status ?? false }
+                          />
+                            :
+                          ''
+                        }
+
+                      </TableCell>
+                      <TableCell onClick={this.getOneBill.bind(this, item)}>
                         {parseInt(item.check_day) === 1 || parseInt(item.check_price) === 1 ? 
                           <MyTooltip name={item.err_items ? item.err_items : item.err_date}>
                             <Typography component="div" className="ceil_svg">
@@ -637,15 +732,17 @@ class Billing_ extends React.Component {
                         : null}
                       </TableCell>
                       
-                      <TableCell>Прих</TableCell>
-                      <TableCell>{item.number}</TableCell>
+                      <TableCell onClick={this.getOneBill.bind(this, item)}>Прих</TableCell>
+                      <TableCell onClick={this.getOneBill.bind(this, item)}>{item.number}</TableCell>
                       <TableCell 
+                        onClick={this.getOneBill.bind(this, item)}
                         style={{ backgroundColor: parseInt(item.check_day) === 1 ? 'rgb(204, 0, 51)' : '#fff', color: parseInt(item.check_day) === 1 ? '#fff' : 'rgba(0, 0, 0, 0.87)' }}
                       > 
                         {formatDateReverse(item.date)}
                       </TableCell>
-                      <TableCell>{item.vendor_name}</TableCell>
+                      <TableCell onClick={this.getOneBill.bind(this, item)}>{item.vendor_name}</TableCell>
                       <TableCell 
+                        onClick={this.getOneBill.bind(this, item)}
                         style={{ backgroundColor: parseInt(item.check_price) === 1 ? 'rgb(204, 0, 51)' : '#fff', color: parseInt(item.check_price) === 1 ? '#fff' : 'rgba(0, 0, 0, 0.87)'}}
                       >
                         {item.sum_w_nds} ₽
