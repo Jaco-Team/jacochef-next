@@ -1186,25 +1186,7 @@ class SiteClients_ extends React.Component {
 
     } else {
 
-      let login = event.target.value.replace(/^0+/, '');
-
-      if (parseInt(login[0]) == 9) {
-        login = '8' + login;
-      }
-
-      if (login[0] == '+' && parseInt(login[1]) == '7') {
-        login = login.slice(2);
-        login = '8' + login;
-      }
-
-      if (parseInt(login[0]) == '7') {
-        login = login.slice(1);
-        login = '8' + login;
-      }
-
-      if (login.length > 11) {
-        return;
-      }
+      let login = event.target.value;
 
       this.setState({
         [data]: login

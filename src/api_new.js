@@ -2,11 +2,11 @@ import queryString from 'query-string';
 import axios from 'axios';
 
 export function api(module = '', method = '', data = {}, dop_type = {}) {
-  //const urlApi_dev = 'http://127.0.0.1:8000/api/'+module+'/'+method;
+  const urlApi_dev = 'http://127.0.0.1:8000/api/'+module+'/'+method;
   //const urlApi_dev = 'https://79.174.91.113/api/'+module+'/'+method;
   //const urlApi_dev = 'https://apichef.jacochef.ru/api/'+module+'/'+method;
   
-  const urlApi_dev = 'https://jacochef.ru/api/index_new.php';
+  //const urlApi_dev = 'https://jacochef.ru/api/index_new.php';
  
   const this_data = queryString.stringify({
     method: method, 
@@ -27,8 +27,8 @@ export function api(module = '', method = '', data = {}, dop_type = {}) {
         };
       }
 
-      return response;
-      //return response.data;
+      //return response;
+      return response.data;
     })
     .catch( (error) => {
       console.log(error?.response?.status);
