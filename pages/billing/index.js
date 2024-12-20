@@ -446,12 +446,16 @@ class Billing_ extends React.Component {
 
       let billings = this.state.billings;
 
+      console.log( 'billings', billings )
+
       billings = billings.map(status => {
 
         if(res.svod[status.id]) {
           status.count = res.svod[status.id].count
+          status.sum_w_nds = res.svod[status.id].sum_w_nds
         } else {
           status.count = 0
+          status.sum_w_nds = 0
         }
 
         return status

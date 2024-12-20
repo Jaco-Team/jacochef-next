@@ -332,6 +332,8 @@ const useStore = create((set, get) => ({
 
   DropzoneDop: null,
 
+  bill_base_id: 0,
+
   set_position: (is_horizontal, is_vertical) => {
     set({
       is_horizontal: is_horizontal,
@@ -593,6 +595,7 @@ const useStore = create((set, get) => ({
         summ: '',
         sum_w_nds: '',
         bill_items_doc: res.billing_items,
+        bill_base_id: billing_id,
       });
 
       
@@ -873,7 +876,7 @@ const useStore = create((set, get) => ({
 
     if(data === 'type'){
       
-      if( parseInt(value) === 2 && parseInt( get().doc_base_id ) == 1 ){
+      if( parseInt(value) === 2 && parseInt( get().doc_base_id ) == 5 ){
         setTimeout( () => {
           if( document.getElementById('img_bill_type') ){
             set({
@@ -1270,8 +1273,12 @@ const useStore = create((set, get) => ({
 
 function FormVendorItems(){
 
-  const [ vendor_items, search_item, all_ed_izmer, changeCount, changeData, addItem ] = useStore( state => [ state.vendor_items, state.search_item, state.all_ed_izmer, state.changeCount, state.changeData, state.addItem ]);
+  const [ type, vendor_items, search_item, all_ed_izmer, changeCount, changeData, addItem ] = useStore( state => [ state.type, state.vendor_items, state.search_item, state.all_ed_izmer, state.changeCount, state.changeData, state.addItem ]);
   const [ search_vendor_items, pq, count, fact_unit, summ, sum_w_nds ] = useStore( state => [ state.search_vendor_items, state.pq, state.count, state.fact_unit, state.summ, state.sum_w_nds ]);
+
+  if( parseInt(type) == 3 ){
+    return null;
+  }
 
   return (
     <>
@@ -1761,7 +1768,7 @@ function FormHeader_new({ page, type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? 
         <Grid item xs={12} sm={6}>
           <MyTextInput
             label="Номер счет-фактуры"
@@ -1783,7 +1790,7 @@ function FormHeader_new({ page, type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? 
         <Grid item xs={12} sm={6}>
           <MyDatePickerNew
             label="Дата счет-фактуры"
@@ -1807,7 +1814,7 @@ function FormImage_new({ type_edit }){
   
   return (
     <>
-      <Grid item xs={12} sm={parseInt(type) === 2 && parseInt(doc_base_id) == 1 ? 6 : 12}>
+      <Grid item xs={12} sm={parseInt(type) === 2 && parseInt(doc_base_id) == 5 ? 6 : 12}>
         <TableContainer>
           <Grid display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
             {!imgs_bill.length ? '' :
@@ -1827,7 +1834,7 @@ function FormImage_new({ type_edit }){
         </TableContainer>
       </Grid>
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? (
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
         <Grid item xs={12} sm={6} display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
           {!imgs_factur.length ? '' :
             <>
@@ -1858,7 +1865,7 @@ function FormImage_new({ type_edit }){
       }
 
 
-      {type_edit === 'edit' && parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? (
+      {type_edit === 'edit' && parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
         <Grid item xs={12} sm={6}>
           
           <div
@@ -1869,7 +1876,7 @@ function FormImage_new({ type_edit }){
         </Grid>
       ) : null}
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && fullScreen ? 
         <>
           <Grid item xs={12}>
             <MyTextInput
@@ -2511,7 +2518,7 @@ class Billing_Edit_ extends React.Component {
       type_save = this.state.thisTypeSave;
     }
 
-    const {vendor, err_items, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, docs, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
+    const {bill_base_id, vendor, err_items, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, docs, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
 
     this.setState({
       modelCheckErrItems: false,
@@ -2525,9 +2532,17 @@ class Billing_Edit_ extends React.Component {
 
     var items_color = [];
 
-    let new_bill_items = bill_items.filter( item => parseInt(item.fact_unit) > 0 );
+    let new_bill_items = bill_items.filter( item => item.fact_unit == '' );
 
-    const items = new_bill_items.reduce((newItems, item) => {
+    if( new_bill_items.length > 0 ){
+      showAlert(false, 'Не все даныне в товаре заполнены');
+
+      this.isClick = false;
+
+      return ;
+    } 
+
+    const items = bill_items.reduce((newItems, item) => {
 
       let it = {};
 
@@ -2577,7 +2592,7 @@ class Billing_Edit_ extends React.Component {
       return ;
     }
 
-    if( parseInt(type) == 2 && parseInt(doc_base_id) == 1 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
+    if( parseInt(type) == 2 && parseInt(doc_base_id) == 5 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
       showAlert(false, 'Нет изображений счет-фактуры');
 
       this.isClick = false;
@@ -2616,7 +2631,8 @@ class Billing_Edit_ extends React.Component {
       vendor_id: vendor?.id,
       imgs: this.myDropzone['files'].length,
       type_save: type_save,
-      err_items: err_items
+      err_items: err_items,
+      bill_base_id: bill_base_id
     }
 
     const res = await this.getData('save_new', data);
