@@ -1356,7 +1356,7 @@ function FormVendorItems(){
 
 function VendorItemsTableEdit(){
 
-  const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
+  const [ type, deleteItem, changeDataTable ] = useStore( state => [ state.type, state.deleteItem, state.changeDataTable ]);
   const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
 
   return (
@@ -1399,9 +1399,11 @@ function VendorItemsTableEdit(){
                       <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.summ_nds} ₽</TableCell>
                       <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
                       <TableCell rowSpan={2}>
-                        <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
-                          <ClearIcon />
-                        </Button>
+                        { parseInt(type) == 3 ? false :
+                          <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
+                            <ClearIcon />
+                          </Button>
+                        }
                       </TableCell>
                       <TableCell rowSpan={2}>
                         {Number(item.count) === 0 ? Number(item.count).toFixed(2) : ( parseFloat(item.price_w_nds) / parseFloat(item.fact_unit)).toFixed(2)}
@@ -1462,9 +1464,11 @@ function VendorItemsTableEdit(){
                     {item?.data_bill ? null :
                       <>
                         <TableCell>
-                          <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
-                            <ClearIcon />
-                          </Button>
+                          { parseInt(type) == 3 ? false :
+                            <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
+                              <ClearIcon />
+                            </Button>
+                          }
                         </TableCell>
                         <TableCell>
                           {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.fact_unit)).toFixed(2)}
@@ -2532,7 +2536,7 @@ class Billing_Edit_ extends React.Component {
 
     var items_color = [];
 
-    let new_bill_items = bill_items.filter( item => item.fact_unit == '' );
+    let new_bill_items = bill_items.filter( item => item.fact_unit.length == 0 || item.price_item.length == 0 || item.price_w_nds.length == 0 );
 
     if( new_bill_items.length > 0 ){
       showAlert(false, 'Не все даныне в товаре заполнены');
