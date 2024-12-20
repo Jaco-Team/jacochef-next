@@ -499,6 +499,9 @@ const useStore = create((set, get) => ({
     console.log( 'base_doc_name', base_doc_name )
 
     if( parseInt(res?.bill?.doc_base_id) > 0 ){
+
+      console.log( 'base_doc_name', parseInt(res?.bill?.doc_base_id) )
+
       get().search_doc( { targer: { value: base_doc_name } } , base_doc_name);
     }
 
@@ -617,6 +620,8 @@ const useStore = create((set, get) => ({
 
     if(search) {
         
+      console.log( 'search', search )
+
       const docs = get().docs;
       const vendor_id = get().vendors[0]?.id;
       const point = get().point;
@@ -682,8 +687,8 @@ const useStore = create((set, get) => ({
         const res = await get().getData('get_vendor_items', data);
         
         set({
-          bill_items: [],
-          bill_items_doc: [],
+          //bill_items: [],
+          //bill_items_doc: [],
           vendor_items: res.items,
           vendor_itemsCopy: res.items,
           users: res.users,
