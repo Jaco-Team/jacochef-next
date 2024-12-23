@@ -18,11 +18,17 @@ export default function api(module = '', method = '', data = {}){
     console.log(window.location.pathname);
 
     if( json.st === false && json.type == 'redir' && window.location.pathname != '/' ){
+
+      alert(json.text);
+
       window.location.pathname = '/';
       return;
     }
     
     if( json.st === false && json.type == 'auth' && window.location.pathname != '/auth' ){
+
+      alert(json.text);
+
       window.location.pathname = '/auth';
       return;
     }

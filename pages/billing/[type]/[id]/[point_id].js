@@ -2931,7 +2931,7 @@ class Billing_Edit_ extends React.Component {
     if (res.st) {
       //showAlert(res.st, res.text);
 
-      //window.location = '/billing';
+      window.location = '/billing';
     } else {
 
       showAlert(res.st, res.text);
