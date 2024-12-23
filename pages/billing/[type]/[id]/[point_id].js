@@ -1540,7 +1540,7 @@ function FormVendorItems(){
       </Grid>
 
       <Grid item xs={12} sm={4}>
-        <Button variant="contained" fullWidth style={{ height: '100%' }} onClick={addItem}>
+        <Button variant="contained" fullWidth  onClick={addItem}>
           <AddIcon />
         </Button>
       </Grid>
@@ -3111,7 +3111,7 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.only_delete) === 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth style={{ height: '100%' }}
+              <Button variant="contained" fullWidth 
                 onClick={ () => { this.setState({ modelCheckDel: true }) } }
               >
                 Удалить
@@ -3123,7 +3123,7 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.only_return) == 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth style={{ height: '100%' }}
+              <Button variant="contained" fullWidth 
                 onClick={ () => { this.setState({ modelChecReturn: true }) } }
               >
                 Ошибка ( вернуть управляющему )
@@ -3135,7 +3135,7 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.only_save) === 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'current', true)}>
+              <Button variant="contained" fullWidth color="success"  onClick={this.saveEditBill.bind(this, 'current', true)}>
                 Сохранить
               </Button>
             </Grid>
@@ -3145,7 +3145,7 @@ class Billing_Edit_ extends React.Component {
          
          { parseInt(this.state.acces?.send_1c) == 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next', true)}>
+              <Button variant="contained" fullWidth color="success"  onClick={this.saveEditBill.bind(this, 'next', true)}>
                 Отправить в 1с
               </Button>
             </Grid>
@@ -3155,7 +3155,7 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.pay) == 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveEditBill.bind(this, 'next', true)}>
+              <Button variant="contained" fullWidth color="success"  onClick={this.saveEditBill.bind(this, 'next', true)}>
                 Оплатить
               </Button>
             </Grid>
@@ -3165,7 +3165,7 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.true_price) == 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={ () => { this.setState({ modelCheckPrice: true }) } }>
+              <Button variant="contained" fullWidth color="success"  onClick={ () => { this.setState({ modelCheckPrice: true }) } }>
                 Подтвердить ценники
               </Button>
             </Grid>
@@ -3175,7 +3175,7 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.only_save) === 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
+              <Button variant="contained" fullWidth color="info" 
                 onClick={this.saveEditBill.bind(this, 'next', true)}
               >
                 Сохранить и отправить
@@ -3187,7 +3187,7 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.delete_1c) === 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth style={{ height: '100%' }}
+              <Button variant="contained" fullWidth 
                 //onClick={this.delete_1c.bind(this, 'next', true)}
                 onClick={ () => { this.setState({ modelCheckDel1c: true }) } }
               >
@@ -3200,7 +3200,7 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.return_to_bux) === 1 ?
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
+              <Button variant="contained" fullWidth color="info" 
                 onClick={this.return_to_bux.bind(this, 'next', true)}
               >
                 Вернуть в бухгалтерию
