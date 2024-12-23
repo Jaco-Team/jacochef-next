@@ -26,8 +26,8 @@ export function api(module = '', method = '', data = {}, dop_type = {}) {
         };
       }
 
-     // return response; // react
-     return response.data; // lara  
+     return response; // react
+     //return response.data; // lara  
     })
     .catch( (error) => {
       console.log(error?.response?.status);
