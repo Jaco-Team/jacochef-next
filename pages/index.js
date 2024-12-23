@@ -7,6 +7,7 @@ import Container from '@mui/material/Container';
 //import Copyright from '../src/Copyright';
 
 export default function Index() {
+ 
   return (
     <Container maxWidth="sm">
       {/* <Box sx={{ my: 4 }}>

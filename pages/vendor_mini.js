@@ -24,6 +24,8 @@ import Typography from '@mui/material/Typography';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
+// todo подключ лара
+import { api, api_laravel } from '@/src/api_new';
 
 import queryString from 'query-string';
 
@@ -80,46 +82,19 @@ class VendorMini_ extends React.Component {
     this.setState({
       is_load: true
     })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
+    console.log('new lara')
+       
+    let res = api_laravel(this.state.module, method, data)
+    .then(result => result.data)
+    .finally( () => {
+      setTimeout(() => {
         this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      console.log( err )
+          is_load: false,
+        });
+      }, 500);
     });
+
+    return res; 
   }
    
   async openModalVendor(vendor){
@@ -135,10 +110,12 @@ class VendorMini_ extends React.Component {
       mails: res.mails,
       items: res.items
     })
+
+    console.log('mails', res.mails)
   }
   
   render(){
-    console.log( this.state.fullScreen )
+   
     return (
       <>
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
