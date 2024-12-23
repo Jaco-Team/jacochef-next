@@ -432,6 +432,8 @@ const useStore = create((set, get) => ({
       is_load_store: true,
     });
 
+    console.log( docs, res )
+
     const bill_items = res.bill_items.map((item) => {
 
       item.all_ed_izmer = item.pq_item.map(it => {
@@ -458,6 +460,8 @@ const useStore = create((set, get) => ({
     const allPrice = (bill_items.reduce((all, item) => all + Number(item.price), 0)).toFixed(2);
     const allPrice_w_nds = (bill_items.reduce((all, item) => all + Number(item.price_w_nds), 0)).toFixed(2);
    
+    console.log( 'asd', docs.billings.find( item => parseInt(item.id) == parseInt(res?.bill.base_id) )?.name )
+
     set({
       vendor_items: items,
       vendor_itemsCopy: items,
@@ -617,6 +621,8 @@ const useStore = create((set, get) => ({
 
     const search = event?.target?.value ? event?.target?.value : name ? name : '';
 
+    console.log( 'search', search )
+
     if(search) {
         
       const docs = get().docs;
@@ -664,6 +670,11 @@ const useStore = create((set, get) => ({
         
       } )
 
+
+      set({
+        doc: search,
+      });
+
     } else {
 
       const point = get().point;
@@ -697,9 +708,7 @@ const useStore = create((set, get) => ({
 
     }
 
-    set({
-      doc: search,
-    });
+    
   },
 
   search_vendors: async (event, name) => {
@@ -938,6 +947,8 @@ const useStore = create((set, get) => ({
 
   changeKinds: (value) => {
     let kinds = [];
+
+    console.log( 'changeKinds', value );
 
     if( parseInt(value) === 2 ){
       kinds = [
@@ -2920,7 +2931,7 @@ class Billing_Edit_ extends React.Component {
     if (res.st) {
       //showAlert(res.st, res.text);
 
-      window.location = '/billing';
+      //window.location = '/billing';
     } else {
 
       showAlert(res.st, res.text);
