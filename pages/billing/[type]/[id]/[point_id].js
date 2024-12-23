@@ -2765,11 +2765,11 @@ class Billing_Edit_ extends React.Component {
 
     const res = await this.getData('save_edit', data);
 
-    setTimeout( () => {
-      this.isClick = false;
-    }, 1000 );
-
     if (res.st === true) {
+
+      setTimeout( () => {
+        this.isClick = false;
+      }, 1000 );
 
       if( res?.text && res.text.length > 0 ) {
 
@@ -2796,6 +2796,10 @@ class Billing_Edit_ extends React.Component {
     } else {
 
       showAlert(res.st, res.text);
+
+      setTimeout( () => {
+        this.isClick = false;
+      }, 1000 );
 
     }
   }
