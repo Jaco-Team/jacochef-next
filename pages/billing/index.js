@@ -231,12 +231,18 @@ class Billing_ extends React.Component {
       .then((res) => res.json())
       .then((json) => {
         if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
+
+          alert(json.text); 
+
+          window.location = '/';
           return;
         }
 
         if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+
+          alert(json.text); 
+
+          window.location = '/auth';
           return;
         }
 
