@@ -12,6 +12,12 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -45,6 +51,8 @@ import HorizontalSplitIcon from '@mui/icons-material/HorizontalSplit';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 
 import Draggable from 'react-draggable';
+
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 const types = [
   {
@@ -324,6 +332,8 @@ const useStore = create((set, get) => ({
 
   DropzoneDop: null,
 
+  bill_base_id: 0,
+
   set_position: (is_horizontal, is_vertical) => {
     set({
       is_horizontal: is_horizontal,
@@ -468,6 +478,45 @@ const useStore = create((set, get) => ({
     get().changeKinds(res?.bill?.type_doc);
   },
 
+  clearForm: () => {
+    set({
+      bill_items: [],
+      search_item: '',
+      vendor_items: [],
+      vendor_itemsCopy: [],
+      users: [],
+      all_ed_izmer: [],
+      pq: '',
+      count: '',
+      fact_unit: '',
+      summ: '',
+      sum_w_nds: '',
+      bill_items_doc: [],
+      docs: [],
+      doc: '',
+      points: [],
+      point: '',
+      point_name: '',
+      vendors: [],
+      vendor_name: '',
+      bill_list: [],
+      imgs_bill: [],
+      allPrice: 0,
+      allPrice_w_nds: 0,
+      number: '',
+      date: null,
+      date_items: null,
+      comment: '',
+      user: [],
+      type: '',
+      doc_base_id: '',
+      number_factur: '',
+      date_factur: null,
+      is_new_doc: 0
+    });
+
+  },
+
   closeDialog: () => {
     document.body.style.overflow = "";
     set({ 
@@ -520,6 +569,8 @@ const useStore = create((set, get) => ({
       const vendor_id = get().vendor?.id;
       const point = get().point;
       
+      const vendor_items = get().vendor_items;
+
       const billing_id = docs.find(doc => doc.name === search)?.id;
       
       const obj = {
@@ -544,7 +595,17 @@ const useStore = create((set, get) => ({
         summ: '',
         sum_w_nds: '',
         bill_items_doc: res.billing_items,
+        bill_base_id: billing_id,
       });
+
+      
+
+      res.billing_items.map( item => {
+
+        let test = res.items.filter( v => parseInt(v.id) === parseInt(item.item_id) );
+
+        get().addItem_fast(item.count, item.count * item.pq, item.price, item.price_w_nds, item.ed_izmer_name, item.pq, item.item_id, test);
+      } )
 
     } else {
 
@@ -727,6 +788,7 @@ const useStore = create((set, get) => ({
         fact_unit: '',
         summ: '',
         sum_w_nds: '',
+        //search_item: '',
       });
 
     }
@@ -814,7 +876,7 @@ const useStore = create((set, get) => ({
 
     if(data === 'type'){
       
-      if( parseInt(value) === 2 && parseInt( get().doc_base_id ) == 1 ){
+      if( parseInt(value) === 2 && parseInt( get().doc_base_id ) == 5 ){
         setTimeout( () => {
           if( document.getElementById('img_bill_type') ){
             set({
@@ -875,10 +937,6 @@ const useStore = create((set, get) => ({
     } else {
       kinds = [
         {
-          "name": "Накладная",
-          "id": "1"
-        },
-        {
           "name": "УКД",
           "id": "3"
         },
@@ -929,7 +987,7 @@ const useStore = create((set, get) => ({
   addItem: () => {
     const { count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, vendor_items } = get();
 
-    let bill_items = JSON.parse(JSON.stringify(get().bill_items));
+    let bill_items = get().bill_items;
 
     if (!count || !fact_unit || !summ || !sum_w_nds || !pq || !all_ed_izmer.length) {
 
@@ -1004,6 +1062,62 @@ const useStore = create((set, get) => ({
       fact_unit: '',
       summ: '',
       sum_w_nds: '',
+      search_item: '',
+      pq: '',
+    });
+  },
+
+  addItem_fast: ( count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, item_id, vendor_items ) => {
+    
+    if( vendor_items.length == 0 ) {
+      return ;
+    }
+
+    //const { count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, vendor_items } = get();
+
+    let bill_items = JSON.parse(JSON.stringify(get().bill_items));
+
+    //const nds = get().check_nds_bill((Number(sum_w_nds) - Number(summ)) / (Number(summ) / 100))
+
+    vendor_items[0].color = false;
+   
+    vendor_items[0].summ_nds = '';
+    vendor_items[0].nds = '';
+    vendor_items[0].pq = '';
+    vendor_items[0].all_ed_izmer = all_ed_izmer;
+    vendor_items[0].count = '';
+    vendor_items[0].fact_unit = '';
+    vendor_items[0].price_item = '';
+    vendor_items[0].price_w_nds = '';
+
+    const bill_items_doc = get().bill_items_doc;
+
+    if(bill_items_doc.length) {
+      const item = bill_items_doc.find(it => it.item_id === vendor_items[0].id);
+
+      item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
+      item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
+
+      const nds = get().check_nds_bill((Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100))
+
+      if(nds) {
+        item.nds = nds;
+      } else {
+        item.nds = '';
+      }
+
+      vendor_items[0].data_bill = item;
+    }
+
+    bill_items.push(vendor_items[0]);
+
+    const allPrice = (bill_items.reduce((all, item) => all + Number(item.price_item), 0)).toFixed(2);
+    const allPrice_w_nds = (bill_items.reduce((all, item) => all + Number(item.price_w_nds), 0)).toFixed(2);
+
+    set({
+      bill_items,
+      allPrice,
+      allPrice_w_nds,
     });
   },
 
@@ -1026,8 +1140,8 @@ const useStore = create((set, get) => ({
 
     bill_items.map((item, key) => {
       let one_price_bill = parseFloat(item['one_price_bill']);
-      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id'])).price;
-      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id'])).vend_percent;
+      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.price;
+      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.vend_percent;
 
       let one_price_max = parseFloat(one_price_vend) + ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
 			let one_price_min = parseFloat(one_price_vend) - ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
@@ -1155,8 +1269,12 @@ const useStore = create((set, get) => ({
 
 function FormVendorItems(){
 
-  const [ vendor_items, search_item, all_ed_izmer, changeCount, changeData, addItem ] = useStore( state => [ state.vendor_items, state.search_item, state.all_ed_izmer, state.changeCount, state.changeData, state.addItem ]);
+  const [ type, vendor_items, search_item, all_ed_izmer, changeCount, changeData, addItem ] = useStore( state => [ state.type, state.vendor_items, state.search_item, state.all_ed_izmer, state.changeCount, state.changeData, state.addItem ]);
   const [ search_vendor_items, pq, count, fact_unit, summ, sum_w_nds ] = useStore( state => [ state.search_vendor_items, state.pq, state.count, state.fact_unit, state.summ, state.sum_w_nds ]);
+
+  if( parseInt(type) == 3 ){
+    return null;
+  }
 
   return (
     <>
@@ -1224,7 +1342,7 @@ function FormVendorItems(){
       </Grid>
 
       <Grid item xs={12} sm={4}>
-        <Button variant="contained" fullWidth style={{ height: '100%' }} onClick={addItem}>
+        <Button variant="contained" fullWidth  onClick={addItem}>
           <AddIcon />
         </Button>
       </Grid>
@@ -1234,8 +1352,14 @@ function FormVendorItems(){
 
 function VendorItemsTableEdit(){
 
-  const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
+  const [ type, deleteItem, changeDataTable ] = useStore( state => [ state.type, state.deleteItem, state.changeDataTable ]);
   const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  let summ_nds = 0;
+
+  bill_items.map( item => {
+    summ_nds += parseFloat(item.summ_nds);
+  } )
 
   return (
     <>
@@ -1277,9 +1401,11 @@ function VendorItemsTableEdit(){
                       <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.summ_nds} ₽</TableCell>
                       <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
                       <TableCell rowSpan={2}>
-                        <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
-                          <ClearIcon />
-                        </Button>
+                        { parseInt(type) == 3 ? false :
+                          <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
+                            <ClearIcon />
+                          </Button>
+                        }
                       </TableCell>
                       <TableCell rowSpan={2}>
                         {Number(item.count) === 0 ? Number(item.count).toFixed(2) : ( parseFloat(item.price_w_nds) / parseFloat(item.fact_unit)).toFixed(2)}
@@ -1340,9 +1466,11 @@ function VendorItemsTableEdit(){
                     {item?.data_bill ? null :
                       <>
                         <TableCell>
-                          <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
-                            <ClearIcon />
-                          </Button>
+                          { parseInt(type) == 3 ? false :
+                            <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
+                              <ClearIcon />
+                            </Button>
+                          }
                         </TableCell>
                         <TableCell>
                           {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.fact_unit)).toFixed(2)}
@@ -1361,7 +1489,7 @@ function VendorItemsTableEdit(){
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell>{allPrice} ₽</TableCell>
-                  <TableCell></TableCell>
+                  <TableCell>{ summ_nds.toFixed(2) } ₽</TableCell>
                   <TableCell>{allPrice_w_nds} ₽</TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
@@ -1379,6 +1507,12 @@ function VendorItemsTableView(){
 
   const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
   const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  let summ_nds = 0;
+
+  bill_items.map( item => {
+    summ_nds += parseFloat(item.summ_nds);
+  } )
 
   return (
     <>
@@ -1458,7 +1592,7 @@ function VendorItemsTableView(){
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell>{allPrice} ₽</TableCell>
-                  <TableCell></TableCell>
+                  <TableCell>{ summ_nds.toFixed(2) } ₽</TableCell>
                   <TableCell>{allPrice_w_nds} ₽</TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
@@ -1469,6 +1603,86 @@ function VendorItemsTableView(){
         </TableContainer>
       </Grid>
     </>
+  )
+}
+
+function VendorItemsTableView_min(){
+
+  const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
+  const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  let summ_nds = 0;
+
+  bill_items.map( item => {
+    summ_nds += parseFloat(item.summ_nds);
+  } )
+
+  return (
+    
+        
+          <Table aria-label="a dense table">
+            <TableHead>
+              <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                <TableCell>Товар</TableCell>
+                { bill_items_doc.length == 0 ? null : <TableCell>Изменения</TableCell> }
+                <TableCell>В упак.</TableCell>
+                <TableCell>Упак</TableCell>
+                <TableCell>Кол-во</TableCell>
+                <TableCell>НДС</TableCell>
+                <TableCell>Сумма без НДС</TableCell>
+                <TableCell>Сумма НДС</TableCell>
+                <TableCell>Сумма с НДС</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {bill_items.map((item, key) => (
+                <React.Fragment key={key}>
+                  {!item?.data_bill ? null :
+                    <TableRow style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                      <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
+                      <TableCell>До</TableCell>
+                      <TableCell>{item?.data_bill?.pq} {item.ed_izmer_name}</TableCell>
+                      <TableCell>{item?.data_bill?.count}</TableCell>
+                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.fact_unit} {item.ed_izmer_name}</TableCell>
+                      <TableCell>{item?.data_bill?.nds}</TableCell>
+                      <TableCell>{item?.data_bill?.price} ₽</TableCell>
+                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.summ_nds} ₽</TableCell>
+                      <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
+                      
+                    </TableRow>
+                  }
+
+                  <TableRow hover style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                    {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
+                    {!item?.data_bill ? null : <TableCell>После</TableCell>}
+                    <TableCell className="ceil_white">{item.pq}</TableCell>
+                    <TableCell className="ceil_white">{item.count}</TableCell>
+                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.fact_unit} {item.ed_izmer_name}</TableCell>
+                    <TableCell>{item.nds}</TableCell>
+                    <TableCell className="ceil_white">{item.price_item}</TableCell>
+                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.summ_nds} ₽</TableCell>
+                    <TableCell className="ceil_white">{item.price_w_nds}</TableCell>
+                    
+                  </TableRow>
+                </React.Fragment>
+              ))}
+              { bill_items.length == 0 ? null : (
+                <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
+                  <TableCell>Итого:</TableCell>
+                  { bill_items_doc.length == 0 ? null : <TableCell></TableCell> }
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell>{allPrice} ₽</TableCell>
+                  <TableCell>{ summ_nds.toFixed(2) } ₽</TableCell>
+                  <TableCell>{allPrice_w_nds} ₽</TableCell>
+                  
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        
   )
 }
 
@@ -1572,7 +1786,7 @@ function FormHeader_new({ page, type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? 
         <Grid item xs={12} sm={6}>
           <MyTextInput
             label="Номер счет-фактуры"
@@ -1594,7 +1808,7 @@ function FormHeader_new({ page, type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? 
         <Grid item xs={12} sm={6}>
           <MyDatePickerNew
             label="Дата счет-фактуры"
@@ -1618,7 +1832,7 @@ function FormImage_new({ type_edit }){
   
   return (
     <>
-      <Grid item xs={12} sm={parseInt(type) === 2 && parseInt(doc_base_id) == 1 ? 6 : 12}>
+      <Grid item xs={12} sm={parseInt(type) === 2 && parseInt(doc_base_id) == 5 ? 6 : 12}>
         <TableContainer>
           <Grid display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
             {!imgs_bill.length ? '' :
@@ -1638,7 +1852,7 @@ function FormImage_new({ type_edit }){
         </TableContainer>
       </Grid>
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? (
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
         <Grid item xs={12} sm={6} display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
           {!imgs_factur.length ? '' :
             <>
@@ -1669,7 +1883,7 @@ function FormImage_new({ type_edit }){
       }
 
 
-      {type_edit === 'edit' && parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? (
+      {type_edit === 'edit' && parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
         <Grid item xs={12} sm={6}>
           
           <div
@@ -1680,7 +1894,7 @@ function FormImage_new({ type_edit }){
         </Grid>
       ) : null}
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && fullScreen ? 
         <>
           <Grid item xs={12}>
             <MyTextInput
@@ -1798,17 +2012,7 @@ function FormOther_new({ page, type_edit }){
       }
 
 
-      <Grid item xs={12} sm={12} display="flex" alignItems="center">
-        <MyCheckBox
-          disabled={ type_edit === 'edit' ? false : true }
-          value={parseInt(is_new_doc) === 1 ? true : false}
-          func={ (event) => changeItemChecked(event, 'is_new_doc') }
-          label=""
-        />
-        <Typography component="span" className="span_text">
-          Поставщик привезет новый документ
-        </Typography>
-      </Grid>
+      
 
     </>
   )
@@ -2226,6 +2430,7 @@ class Billing_Modal extends React.Component {
 
 class Billing_Edit_ extends React.Component {
   myDropzone = null;
+  isClick = false;
 
   constructor(props) {
     super(props);
@@ -2235,11 +2440,24 @@ class Billing_Edit_ extends React.Component {
       module_name: '',
       is_load: false,
 
+      items_err: [],
+      modelCheckErrItems: false,
+
+      thisTypeSave: '',
+
       acces: null
     };
   }
 
   async componentDidMount() {
+    const { clearForm } = this.props.store;
+
+    clearForm();
+
+    this.setState({
+      thisTypeSave: '',
+    });
+
     const res = await this.getData('get_all_for_new');
     
     this.setState({
@@ -2304,14 +2522,43 @@ class Billing_Edit_ extends React.Component {
       });
   };
 
-  async saveNewBill () {
-    const {vendor, err_items, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, docs, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
+  async saveNewBill ( type_save, check_err = true ) {
+
+    if( this.isClick === true ) return;
+
+    this.isClick = true;
+
+    if( type_save != 'type' ){
+      this.setState({
+        thisTypeSave: type_save
+      })
+    }else{
+      type_save = this.state.thisTypeSave;
+    }
+
+    const {bill_base_id, vendor, err_items, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, docs, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
+
+    this.setState({
+      modelCheckErrItems: false,
+    })
 
     let doc_info = docs.find( item_doc => item_doc.name === doc )
 
     const dateBill = date ? dayjs(date).format('YYYY-MM-DD') : '';
     const dateFactur = date_factur ? dayjs(date_factur).format('YYYY-MM-DD') : '';
     const dateItems = date_items ? dayjs(date_items).format('YYYY-MM-DD') : '';
+
+    var items_color = [];
+
+    let new_bill_items = bill_items.filter( item => item.fact_unit.length == 0 || item.price_item.length == 0 || item.price_w_nds.length == 0 );
+
+    if( new_bill_items.length > 0 ){
+      showAlert(false, 'Не все даныне в товаре заполнены');
+
+      this.isClick = false;
+
+      return ;
+    } 
 
     const items = bill_items.reduce((newItems, item) => {
 
@@ -2323,6 +2570,10 @@ class Billing_Edit_ extends React.Component {
       it.summ = item.price_item;
       it.summ_w_nds = item.price_w_nds;
       it.color = item.color;
+
+      if( item.color && item.color === true ) {
+        items_color.push(item);
+      }
 
       const nds = item.nds.split(' %')[0];
 
@@ -2337,14 +2588,32 @@ class Billing_Edit_ extends React.Component {
       return newItems;
     }, [])
 
+
+    if( check_err === true && items_color.length > 0 ){
+
+      this.setState({
+        items_err: items_color,
+        modelCheckErrItems: true
+      })
+
+      this.isClick = false;
+
+      return ;
+    }
+    
+
     if( !this.myDropzone || this.myDropzone['files'].length === 0 ) {
       showAlert(false, 'Нет изображений документа');
+
+      this.isClick = false;
 
       return ;
     }
 
-    if( parseInt(type) == 2 && parseInt(doc_base_id) == 1 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
+    if( parseInt(type) == 2 && parseInt(doc_base_id) == 5 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
       showAlert(false, 'Нет изображений счет-фактуры');
+
+      this.isClick = false;
 
       return ;
     }
@@ -2379,10 +2648,16 @@ class Billing_Edit_ extends React.Component {
       point_id: point?.id ?? '',
       vendor_id: vendor?.id,
       imgs: this.myDropzone['files'].length,
-      err_items: err_items
+      type_save: type_save,
+      err_items: err_items,
+      bill_base_id: bill_base_id
     }
 
     const res = await this.getData('save_new', data);
+
+    setTimeout( () => {
+      this.isClick = false;
+    }, 1000 );
 
     if (res.st === true) {
 
@@ -2412,6 +2687,13 @@ class Billing_Edit_ extends React.Component {
 
   }
 
+  returnFN (){
+    const { clearForm } = this.props.store;
+
+    clearForm();
+    window.location = '/billing';
+  }
+
   render() {
 
     const { isPink, openAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical } = this.props.store;
@@ -2438,10 +2720,38 @@ class Billing_Edit_ extends React.Component {
           text={err_text}
         />
 
+        <Dialog
+          open={this.state.modelCheckErrItems}
+          onClose={ () => { this.setState({ modelCheckErrItems: false }) } }
+          fullWidth={true}
+          maxWidth={'md'}
+        >
+          <DialogTitle>Подтверждение</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 20 }}>
+              Проверь корректность позиций
+            </DialogContentText>
+
+            <VendorItemsTableView_min />
+
+          </DialogContent>
+          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={ () => { this.setState({ modelCheckErrItems: false }) } } color="error" >Отмена</Button>
+            <Button variant="contained" onClick={ this.saveNewBill.bind(this, 'type', false) } color="success">Сохранить</Button>
+          </DialogActions>
+        </Dialog>
+
         <Grid container spacing={3} mb={10} style={{ marginTop: '64px', maxWidth: is_vertical ? '50%' : '100%', marginBottom: is_horizontal ? 700 : 30 }}>
 
-          <Grid item xs={12} sm={12}>
+          <Grid item xs={12} sm={12} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+            
+            <ArrowBackIosNewIcon style={{ width: 50, height: 30, cursor: 'pointer' }} onClick={this.returnFN.bind(this)} />
+            
             <h1>Новый документ</h1>
+            
+          </Grid>
+
+          <Grid item xs={12} sm={12}>
             <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
           </Grid>
 
@@ -2470,12 +2780,21 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.only_save) === 0 ? false :
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveNewBill.bind(this)}>
+              <Button variant="contained" fullWidth color="success"  onClick={this.saveNewBill.bind(this, 'current', true)}>
                 Сохранить
               </Button>
             </Grid>
           }
          
+          { parseInt(this.state.acces?.save_send) === 0 ? false :
+            <Grid item xs={12} sm={4}>
+              <Button variant="contained" fullWidth color="info" 
+                onClick={this.saveNewBill.bind(this, 'next', true)}
+              >
+                Сохранить и отправить
+              </Button>
+            </Grid>
+          }
           
           
         </Grid>

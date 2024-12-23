@@ -42,6 +42,10 @@ export default function Header() {
     setIsOpenMenu( state => !state );
   }
 
+  function closeMenu(){
+    setIsOpenMenu( false );
+  }
+
   async function loadMenu(){
     const response = await api('header', 'get_all');
 
@@ -118,6 +122,7 @@ export default function Header() {
             onChange={(event, newValue) => {
               if( newValue ){
                 window.location = "/"+newValue.key_query;
+                closeMenu();
               }
             }}
             style={{ width: '100%' }}
@@ -144,7 +149,7 @@ export default function Header() {
               <List style={{ width: '100%' }}>
               
                 { item.chaild.map( (it, k) =>
-                  <Link href={`/${it.key_query}/`} key={k}>
+                  <Link href={`/${it.key_query}`} key={k} onClick={closeMenu}>
                     <ListItem button>
                       {it.name}
                     </ListItem>

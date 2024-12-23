@@ -50,17 +50,6 @@ class SiteUserManagerTable extends React.Component {
 
     return (
       <TableContainer component={Paper}>
-        <TablePagination
-          component="div"
-          count={total_rows}
-          page={page_table}
-          rowsPerPage={rows_table}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage="Количество строк на странице"
-          rowsPerPageOptions={[25, 50, 100, { value: -1, label: 'Все' }]}
-          labelDisplayedRows={({ from, to, count }) => `${from}–${to} из ${count !== -1 ? count : `больше, чем ${to}`}`}
-        />
         <Table>
           <TableHead>
             <TableRow>
@@ -91,6 +80,17 @@ class SiteUserManagerTable extends React.Component {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={total_rows}
+          page={page_table}
+          rowsPerPage={rows_table}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="Количество строк на странице"
+          rowsPerPageOptions={[25, 50, 100, { value: -1, label: 'Все' }]}
+          labelDisplayedRows={({ from, to, count }) => `${from}–${to} из ${count !== -1 ? count : `больше, чем ${to}`}`}
+        />
       </TableContainer>
     );
   }

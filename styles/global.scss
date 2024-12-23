@@ -160,8 +160,12 @@ th[class*='tableCelHead'] {
   flex-wrap: wrap;
   row-gap: 24px;
 }
+#clients .MuiBox-root {
+  display: flex;
+  flex-wrap: wrap;
+}
 
-#rec, #items, #pf, #stat {
+#rec, #items, #pf, #stat, #clients {
   & > div {
     padding: 0;
   }
@@ -172,6 +176,19 @@ th[class*='tableCelHead'] {
     }
   }
  
+}
+
+#client {
+  & > div {
+    padding: 0;
+    padding-top: 24px;
+  }
+}
+
+.client_auth {
+  margin-top: 24px;
+  display: flex;
+  justify-content: space-between;
 }
 
 .fines_err {
@@ -546,4 +563,43 @@ a{
   & .MuiButtonBase-root.MuiButton-root {
     font-size: 0.875rem !important;
   }
+}
+
+.input_login {
+  & .MuiInputBase-root.MuiOutlinedInput-root {
+
+    & input::-webkit-outer-spin-button,
+    & input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+    }
+
+  }
+}
+
+.mail_box {
+  display: flex;
+  align-items: center;
+
+  & > div:nth-child(2) {
+    width: 50% !important;
+    margin-left: 30px;
+  }
+
+}
+
+.select_box {
+  display: flex;
+  align-items: center;
+
+  & > div:nth-child(2) {
+    width: 10% !important;
+    margin-right: 30px;
+    margin-left: 30px;
+  }
+
+  & > div:nth-child(3) {
+    width: 20% !important;
+    margin-right: 30px;
+  }
+
 }
