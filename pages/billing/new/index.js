@@ -1346,7 +1346,7 @@ function FormVendorItems(){
       </Grid>
 
       <Grid item xs={12} sm={4}>
-        <Button variant="contained" fullWidth style={{ height: '100%' }} onClick={addItem}>
+        <Button variant="contained" fullWidth  onClick={addItem}>
           <AddIcon />
         </Button>
       </Grid>
@@ -1358,6 +1358,12 @@ function VendorItemsTableEdit(){
 
   const [ type, deleteItem, changeDataTable ] = useStore( state => [ state.type, state.deleteItem, state.changeDataTable ]);
   const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  let summ_nds = 0;
+
+  bill_items.map( item => {
+    summ_nds += parseFloat(item.summ_nds);
+  } )
 
   return (
     <>
@@ -1487,7 +1493,7 @@ function VendorItemsTableEdit(){
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell>{allPrice} ₽</TableCell>
-                  <TableCell></TableCell>
+                  <TableCell>{ summ_nds.toFixed(2) } ₽</TableCell>
                   <TableCell>{allPrice_w_nds} ₽</TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
@@ -1505,6 +1511,12 @@ function VendorItemsTableView(){
 
   const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
   const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  let summ_nds = 0;
+
+  bill_items.map( item => {
+    summ_nds += parseFloat(item.summ_nds);
+  } )
 
   return (
     <>
@@ -1584,7 +1596,7 @@ function VendorItemsTableView(){
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell>{allPrice} ₽</TableCell>
-                  <TableCell></TableCell>
+                  <TableCell>{ summ_nds.toFixed(2) } ₽</TableCell>
                   <TableCell>{allPrice_w_nds} ₽</TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
@@ -1602,6 +1614,12 @@ function VendorItemsTableView_min(){
 
   const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
   const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  let summ_nds = 0;
+
+  bill_items.map( item => {
+    summ_nds += parseFloat(item.summ_nds);
+  } )
 
   return (
     
@@ -1661,7 +1679,7 @@ function VendorItemsTableView_min(){
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell>{allPrice} ₽</TableCell>
-                  <TableCell></TableCell>
+                  <TableCell>{ summ_nds.toFixed(2) } ₽</TableCell>
                   <TableCell>{allPrice_w_nds} ₽</TableCell>
                   
                 </TableRow>
@@ -2766,7 +2784,7 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.only_save) === 0 ? false :
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveNewBill.bind(this, 'current', true)}>
+              <Button variant="contained" fullWidth color="success"  onClick={this.saveNewBill.bind(this, 'current', true)}>
                 Сохранить
               </Button>
             </Grid>
@@ -2774,7 +2792,7 @@ class Billing_Edit_ extends React.Component {
          
           { parseInt(this.state.acces?.only_save) === 0 ? false :
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
+              <Button variant="contained" fullWidth color="info" 
                 onClick={this.saveNewBill.bind(this, 'next', true)}
               >
                 Сохранить и отправить
