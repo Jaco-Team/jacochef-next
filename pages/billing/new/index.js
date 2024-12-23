@@ -937,10 +937,6 @@ const useStore = create((set, get) => ({
     } else {
       kinds = [
         {
-          "name": "Накладная",
-          "id": "1"
-        },
-        {
           "name": "УКД",
           "id": "3"
         },

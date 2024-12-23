@@ -964,10 +964,6 @@ const useStore = create((set, get) => ({
     } else {
       kinds = [
         {
-          "name": "Накладная",
-          "id": "1"
-        },
-        {
           "name": "УКД",
           "id": "3"
         },
@@ -3191,7 +3187,7 @@ class Billing_Edit_ extends React.Component {
             false
           }
 
-          { parseInt(this.state.acces?.only_save) === 1 ?
+          { parseInt(this.state.acces?.save_send) === 1 ?
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth color="info" 
                 onClick={this.saveEditBill.bind(this, 'next', true)}
