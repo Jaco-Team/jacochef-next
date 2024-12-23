@@ -2786,7 +2786,7 @@ class Billing_Edit_ extends React.Component {
             </Grid>
           }
          
-          { parseInt(this.state.acces?.only_save) === 0 ? false :
+          { parseInt(this.state.acces?.save_send) === 0 ? false :
             <Grid item xs={12} sm={4}>
               <Button variant="contained" fullWidth color="info" 
                 onClick={this.saveNewBill.bind(this, 'next', true)}
