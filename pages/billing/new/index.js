@@ -1298,17 +1298,21 @@ function FormVendorItems(){
       </Grid>
 
       <Grid item xs={12} sm={3}>
-        <MyAutocomplite2
+        <MyAutocomplite
           label="Объем упаковки"
-          freeSolo={true}
+          freeSolo={false}
           multiple={false}
+          name={'only_choose'}
           data={ all_ed_izmer }
-          value={ pq }
+          value={ all_ed_izmer.find( it => it.name == pq ) }
           //func={ (event, name) => changeData('pq', event) }
           //onBlur={ (event, name) => changeData('pq', event) }
 
-          func={ (event, data) => changeData( 'pq', { target: { value: data ?? event.target.value } }) }
-          onBlur={ (event, data) => changeData( 'pq', { target: { value: data ?? event.target.value } }) }
+          // func={ (event, data) => { console.log(data, event) } }
+          // onBlur={ (event, data) => { console.log(data, event) } }
+
+          func={ (event, data) => changeData( 'pq', { target: { value: data?.id ?? event.target.value } }) }
+          onBlur={ (event, data) => changeData( 'pq', { target: { value: data?.id ?? event.target.value } }) }
         />
 
       </Grid>
@@ -1421,12 +1425,11 @@ function VendorItemsTableEdit(){
                     <TableCell className="ceil_white">
                       
 
-                      <MyAutocomplite2
+                      <MyAutocomplite
                         label=""
-                        freeSolo={true}
-                        multiple={false}
                         data={ item.pq_item }
-                        value={ item.pq }
+                        //value={ item.pq }
+                        value={ item.pq_item.find( it => it.name == item.pq ) }
                         //func={ (event, data) => { console.log( data ?? event.target.value ) } }
                         //onBlur={ (event, data) => { console.log( data ?? event.target.value ) } }
                         func={ (event, data) => changeDataTable( { target: { value: data ?? event.target.value } }, 'pq', item.id, key) }

@@ -122,7 +122,7 @@ export class MyAutocomplite extends React.PureComponent {
           onChange={this.props.func}
           filterSelectedOptions
           multiple={ this.props.multiple && this.props.multiple === true ? true : false }
-          isOptionEqualToValue={(option, value) => parseInt(option.id) === parseInt(value.id) }
+          isOptionEqualToValue={(option, value) => parseInt(option?.id) === parseInt(value?.id) }
           renderInput={(params) => (
             <TextField
               {...params}
@@ -205,6 +205,57 @@ export class MyAutocomplite2 extends React.PureComponent {
     }  
 
     //isOptionEqualToValue
+
+    if( this.props.name && this.props.name == 'only_choose' ){
+      return (
+        <Stack spacing={3}>
+          <Autocomplete
+            freeSolo={ this.props.freeSolo ? this.props.freeSolo : false }
+            size="small"
+            //disableCloseOnSelect={true}
+            onBlur={this.props.onBlur ? this.props.onBlur : null}
+            id={ this.props.id ?? null }
+            
+            options={this.props.data.map((option) => option.name)}
+
+            value={this.props.value}
+            onChange={this.props.func}
+            //filterSelectedOptions
+            multiple={ this.props.multiple && this.props.multiple === true ? true : false }
+            isOptionEqualToValue={(option, value) => option?.id === value?.id}
+
+            filterOptions={(options, params) => {
+              const filtered = filter(options, params);
+      
+              //console.log( 'params', params )
+              //console.log( 'filtered', filtered )
+
+              const { inputValue } = params;
+              // Suggest the creation of a new value
+              const isExisting = options.some((option) => inputValue === option.name);
+              /*if (inputValue !== '' && !isExisting) {
+                filtered.push(
+                  inputValue
+                );
+              }*/
+      
+              //console.log( 'new filtered', filtered )
+
+              return filtered;
+            }}
+            disabled={ this.props.disabled && this.props.disabled === true ? true : false }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={this.props.label}
+                placeholder={this.props.placeholder}
+              />
+            )}
+          />
+        </Stack>
+      )
+    }
+
 
     return (
       <Stack spacing={3}>

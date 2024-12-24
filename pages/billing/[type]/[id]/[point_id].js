@@ -1457,7 +1457,7 @@ function FormHeader_new({ type_edit }){
 
 function FormVendorItems(){
 
-  const [ type, vendor_items, search_item, all_ed_izmer, changeCount, changeData, addItem ] = useStore( state => [ state.type, state.vendor_items, state.search_item, state.all_ed_izmer, state.changeCount, state.changeData, state.addItem ]);
+  const [ bill, type, vendor_items, search_item, all_ed_izmer, changeCount, changeData, addItem ] = useStore( state => [ state.bill, state.type, state.vendor_items, state.search_item, state.all_ed_izmer, state.changeCount, state.changeData, state.addItem ]);
   const [ search_vendor_items, pq, count, fact_unit, summ, sum_w_nds ] = useStore( state => [ state.search_vendor_items, state.pq, state.count, state.fact_unit, state.summ, state.sum_w_nds ]);
 
   if( parseInt(type) == 3 ){
@@ -1484,18 +1484,38 @@ function FormVendorItems(){
       </Grid>
 
       <Grid item xs={12} sm={3}>
-        <MyAutocomplite2
-          label="Объем упаковки"
-          freeSolo={true}
-          multiple={false}
-          data={ all_ed_izmer }
-          value={ pq }
-          //func={ (event, name) => changeData('pq', event) }
-          //onBlur={ (event, name) => changeData('pq', event) }
 
-          func={ (event, data) => changeData( 'pq', { target: { value: data ?? event.target.value } }) }
-          onBlur={ (event, data) => changeData( 'pq', { target: { value: data ?? event.target.value } }) }
-        />
+        { parseInt(bill?.type) == 5 || parseInt(bill?.type) == 2 ?
+          <MyAutocomplite
+            label="Объем упаковки"
+            freeSolo={false}
+            multiple={false}
+            name={'only_choose'}
+            data={ all_ed_izmer }
+            value={ all_ed_izmer.find( it => it.name == pq ) }
+            //func={ (event, name) => changeData('pq', event) }
+            //onBlur={ (event, name) => changeData('pq', event) }
+
+            // func={ (event, data) => { console.log(data, event) } }
+            // onBlur={ (event, data) => { console.log(data, event) } }
+
+            func={ (event, data) => changeData( 'pq', { target: { value: data?.name ?? event.target.value } }) }
+            onBlur={ (event, data) => changeData( 'pq', { target: { value: data?.name ?? event.target.value } }) }
+          />
+            :
+          <MyAutocomplite2
+            label="Объем упаковки"
+            freeSolo={true}
+            multiple={false}
+            data={ all_ed_izmer }
+            value={ pq }
+            //func={ (event, name) => changeData('pq', event) }
+            //onBlur={ (event, name) => changeData('pq', event) }
+
+            func={ (event, data) => changeData( 'pq', { target: { value: data ?? event.target.value } }) }
+            onBlur={ (event, data) => changeData( 'pq', { target: { value: data ?? event.target.value } }) }
+          />
+        }
 
       </Grid>
 
@@ -1540,7 +1560,7 @@ function FormVendorItems(){
 
 function VendorItemsTableEdit(){
 
-  const [ type, deleteItem, changeDataTable ] = useStore( state => [ state.type, state.deleteItem, state.changeDataTable ]);
+  const [ bill, type, deleteItem, changeDataTable ] = useStore( state => [ state.bill, state.type, state.deleteItem, state.changeDataTable ]);
   const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
 
   let summ_nds = 0;
@@ -1606,18 +1626,30 @@ function VendorItemsTableEdit(){
                     {!item?.data_bill ? null : <TableCell>После</TableCell>}
                     <TableCell className="ceil_white">
                       
-
-                      <MyAutocomplite2
-                        label=""
-                        freeSolo={true}
-                        multiple={false}
-                        data={ item.pq_item }
-                        value={ item.pq }
-                        //func={ (event, data) => { console.log( data ?? event.target.value ) } }
-                        //onBlur={ (event, data) => { console.log( data ?? event.target.value ) } }
-                        func={ (event, data) => changeDataTable( { target: { value: data ?? event.target.value } }, 'pq', item.id, key) }
-                        onBlur={ (event, data) => changeDataTable({ target: { value: data ?? event.target.value } }, 'pq', item.id, key) }
-                      />
+                      { parseInt(bill?.type) == 5 || parseInt(bill?.type) == 2 ?
+                        <MyAutocomplite
+                          label=""
+                          data={ item.pq_item }
+                          //value={ item.pq }
+                          value={ item.pq_item.find( it => it.name == item.pq ) }
+                          //func={ (event, data) => { console.log( data ?? event.target.value ) } }
+                          //onBlur={ (event, data) => { console.log( data ?? event.target.value ) } }
+                          func={ (event, data) => changeDataTable( { target: { value: data?.name ?? event.target.value } }, 'pq', item.id, key) }
+                          onBlur={ (event, data) => changeDataTable({ target: { value: data?.name ?? event.target.value } }, 'pq', item.id, key) }
+                        />
+                          :
+                        <MyAutocomplite2
+                          label=""
+                          freeSolo={true}
+                          multiple={false}
+                          data={ item.pq_item }
+                          value={ item.pq }
+                          //func={ (event, data) => { console.log( data ?? event.target.value ) } }
+                          //onBlur={ (event, data) => { console.log( data ?? event.target.value ) } }
+                          func={ (event, data) => changeDataTable( { target: { value: data ?? event.target.value } }, 'pq', item.id, key) }
+                          onBlur={ (event, data) => changeDataTable({ target: { value: data ?? event.target.value } }, 'pq', item.id, key) }
+                        />
+                      }
 
 
                     </TableCell>

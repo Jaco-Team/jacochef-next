@@ -377,7 +377,7 @@ class Billing_ extends React.Component {
 
       }
 
-      this.getBillingList();
+      //this.getBillingList();
     }
   }
 
@@ -451,8 +451,6 @@ class Billing_ extends React.Component {
       const res = await this.getData('get_billing_list', data);
 
       let billings = this.state.billings;
-
-      console.log( 'billings', billings )
 
       billings = billings.map(status => {
 
