@@ -1013,13 +1013,13 @@ const useStore = create((set, get) => ({
       return;
     }
 
-    const range_price_item = get().check_price_item(vendor_items[0].price, vendor_items[0].vend_percent, summ, pq)
+    /*const range_price_item = get().check_price_item(vendor_items[0].price, vendor_items[0].vend_percent, summ, pq)
 
     if(range_price_item) {
       vendor_items[0].color = false;
     } else {
       vendor_items[0].color = true;
-    }
+    }*/
 
     vendor_items[0].summ_nds = (Number(sum_w_nds) - Number(summ)).toFixed(2);
     vendor_items[0].nds = nds;
@@ -1065,6 +1065,8 @@ const useStore = create((set, get) => ({
       search_item: '',
       pq: '',
     });
+
+    get().check_price_item_new();
   },
 
   addItem_fast: ( count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, item_id, vendor_items ) => {
@@ -2633,7 +2635,7 @@ class Billing_Edit_ extends React.Component {
     }else{
       this.myDropzone.options.url = url_bill;
       type_bill = 'bill';
-      //is_return = true;
+      is_return = true;
     }
 
     if( ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ){

@@ -156,11 +156,11 @@ var dropzoneOptions_bill = {
       //show_modal_message('Результат операции', 'Накладная успешно сохранена');
       //window.location.pathname = '/billing';
 
-      if( type_bill == 'bill' ){
+      /*if( type_bill == 'bill' ){
 
-      }else{
-        window.location.pathname = '/billing';
-      }
+      }else{*/
+        window.location = '/billing';
+      //}
     })
     
     this.on("sending", function(file, xhr, data) {
@@ -432,8 +432,6 @@ const useStore = create((set, get) => ({
       is_load_store: true,
     });
 
-    console.log( docs, res )
-
     const bill_items = res.bill_items.map((item) => {
 
       item.all_ed_izmer = item.pq_item.map(it => {
@@ -460,8 +458,6 @@ const useStore = create((set, get) => ({
     const allPrice = (bill_items.reduce((all, item) => all + Number(item.price), 0)).toFixed(2);
     const allPrice_w_nds = (bill_items.reduce((all, item) => all + Number(item.price_w_nds), 0)).toFixed(2);
    
-    console.log( 'asd', docs.billings.find( item => parseInt(item.id) == parseInt(res?.bill.base_id) )?.name )
-
     set({
       vendor_items: items,
       vendor_itemsCopy: items,
@@ -620,8 +616,6 @@ const useStore = create((set, get) => ({
   search_doc: async (event, name) => {
 
     const search = event?.target?.value ? event?.target?.value : name ? name : '';
-
-    console.log( 'search', search )
 
     if(search) {
         
@@ -948,8 +942,6 @@ const useStore = create((set, get) => ({
   changeKinds: (value) => {
     let kinds = [];
 
-    console.log( 'changeKinds', value );
-
     if( parseInt(value) === 2 ){
       kinds = [
         {
@@ -1040,13 +1032,13 @@ const useStore = create((set, get) => ({
       return;
     }
 
-    const range_price_item = get().check_price_item(vendor_items[0].price, vendor_items[0].vend_percent, summ, pq)
+    /*const range_price_item = get().check_price_item(vendor_items[0].price, vendor_items[0].vend_percent, summ, pq)
 
     if(range_price_item) {
       vendor_items[0].color = false;
     } else {
       vendor_items[0].color = true;
-    }
+    }*/
 
     vendor_items[0].summ_nds = (Number(sum_w_nds) - Number(summ)).toFixed(2);
     vendor_items[0].nds = nds;
@@ -1092,6 +1084,8 @@ const useStore = create((set, get) => ({
       search_item: '',
       pq: ''
     });
+
+    get().check_price_item_new();
   },
 
   addItem_fast: ( count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, item_id, vendor_items, is_add ) => {
