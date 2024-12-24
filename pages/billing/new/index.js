@@ -67,10 +67,10 @@ const types = [
     "name": "Коррекция",
     "id": "3"
   },
-  {
+  /*{
     "name": "Возврат",
     "id": "4"
-  },
+  },*/
 ]
 
 function getOrientation(file, callback) {
@@ -125,7 +125,7 @@ const url_bill_ex = "https://jacochef.ru/src/img/bill_ex_items/upload.php";
 var dropzoneOptions_bill = {
   autoProcessQueue: false,
   autoQueue: true,
-  maxFiles: 1,
+  maxFiles: 10,
   timeout: 0,
   parallelUploads: 10,
   acceptedFiles: "image/jpeg,image/png,image/gif,.pdf",
@@ -190,7 +190,7 @@ var dropzoneOptions_bill = {
 var dropzoneOptions_bill_factur = {
   autoProcessQueue: false,
   autoQueue: true,
-  maxFiles: 1,
+  maxFiles: 10,
   timeout: 0,
   parallelUploads: 10,
   acceptedFiles: "image/jpeg,image/png,image/gif,.pdf",
@@ -2012,7 +2012,15 @@ function FormOther_new({ page, type_edit }){
       }
 
 
-      
+      <Grid item xs={12} sm={12} display="flex" alignItems="center">
+        <MyCheckBox
+          disabled={ type_edit === 'edit' ? false : true }
+          value={parseInt(is_new_doc) === 1 ? true : false}
+          func={ (event) => changeItemChecked(event, 'is_new_doc') }
+          label="Поставщик привезет новый документ"
+        />
+        
+      </Grid>
 
     </>
   )
