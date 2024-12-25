@@ -45,7 +45,7 @@ import { MySelect, MyAlert, MyTextInput, TextEditor22, MyAutocomplite, formatDat
 
 import { ExlIcon } from '@/ui/icons';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 function TabPanel(props) {
@@ -1325,6 +1325,9 @@ class SiteClients_ extends React.Component {
     let items = this.state.items;
     let addr = this.state.addr;
 
+    date_start = date_start ? dayjs(date_start).format('YYYY-MM-DD') : '';
+    date_end = date_end ? dayjs(date_end).format('YYYY-MM-DD') : '';
+
     if (!city_id.length) {
 
       this.setState({
@@ -1336,19 +1339,20 @@ class SiteClients_ extends React.Component {
       return;
     } 
 
-    if (!date_start || !date_end) {
+    if ( (!date_start && !date_end) || !date_start || !date_end) {
 
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо указать даты'
-      });
+      if( number.length > 0 || order.length > 0 || items.length > 0 || addr.length > 0 ) {
 
-      return;
+      }else{
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: 'Необходимо указать дату или что-то кроме нее'
+        });
+  
+        return;
+      }
     } 
-
-    date_start = dayjs(date_start).format('YYYY-MM-DD');
-    date_end = dayjs(date_end).format('YYYY-MM-DD');
 
     const data = {
       number,
