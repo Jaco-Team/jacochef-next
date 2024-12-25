@@ -1616,7 +1616,7 @@ function VendorItemsTableEdit(){
                         }
                       </TableCell>
                       <TableCell rowSpan={2}>
-                        {Number(item.count) === 0 ? Number(item.count).toFixed(2) : ( parseFloat(item.price_w_nds) / parseFloat(item.fact_unit)).toFixed(2)}
+                        {Number(item.fact_unit) === 0 ? 0 : ( parseFloat(item.price_w_nds) / parseFloat(item.fact_unit)).toFixed(2)}
                       </TableCell>
                     </TableRow>
                   }
@@ -1693,7 +1693,7 @@ function VendorItemsTableEdit(){
                           }
                         </TableCell>
                         <TableCell>
-                          {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.fact_unit)).toFixed(2)}
+                          {Number(item.fact_unit) === 0 ? 0 : (Number(item.price_w_nds) / Number(item.fact_unit)).toFixed(2)}
                         </TableCell>
                       </>
                     }
@@ -1775,7 +1775,7 @@ function VendorItemsTableView(){
                       <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
                       <TableCell rowSpan={2}></TableCell>
                       <TableCell rowSpan={2}>
-                        {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
+                        {Number(item.fact_unit) === 0 ? 0 : (Number(item.price_w_nds) / Number(item.fact_unit)).toFixed(2)}
                       </TableCell>
                     </TableRow>
                   }
@@ -1796,7 +1796,7 @@ function VendorItemsTableView(){
                           
                         </TableCell>
                         <TableCell>
-                          {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
+                          {Number(item.fact_unit) === 0 ? 0 : (Number(item.price_w_nds) / Number(item.fact_unit)).toFixed(2)}
                         </TableCell>
                       </>
                     }
