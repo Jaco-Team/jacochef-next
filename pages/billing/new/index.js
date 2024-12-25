@@ -1140,10 +1140,13 @@ const useStore = create((set, get) => ({
     var bill_items = get().bill_items;		
     var vendor_items = get().vendor_items;
 
+    console.log( bill_items )
+    console.log( vendor_items )
+
     bill_items.map((item, key) => {
-      let one_price_bill = parseFloat(item['one_price_bill']);
-      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.price;
-      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.vend_percent;
+      let one_price_bill = parseFloat(item['price']);
+      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['id']))?.price;
+      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['id']))?.vend_percent;
 
       let one_price_max = parseFloat(one_price_vend) + ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
 			let one_price_min = parseFloat(one_price_vend) - ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
@@ -1152,6 +1155,8 @@ const useStore = create((set, get) => ({
         err_items.push(item);
 
         bill_items[ key ].color = true;
+      }else{
+        bill_items[ key ].color = false;
       }
     })
 
@@ -1186,27 +1191,11 @@ const useStore = create((set, get) => ({
 
         if (type === 'pq') {
           item.fact_unit = (Number(item[type]) * Number(item.count)).toFixed(2);
-
-          /*const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
-  
-          if(range_price_item) {
-            item.color = false;
-          } else {
-            item.color = true;
-          }*/
-
         } 
 
         if (value && value !== '0' && value[0] !== '0' && type === 'count') {
 
           item.fact_unit = (Number(item[type]) * Number(item.pq)).toFixed(2);
-          /*const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
-
-          if(range_price_item) {
-            item.color = false;
-          } else {
-            item.color = true;
-          }*/
 
         } else {
 
@@ -1214,7 +1203,7 @@ const useStore = create((set, get) => ({
             item.fact_unit = 0;
           }
     
-          item.color = true;
+          //item.color = true;
 
         }
 
@@ -1222,8 +1211,6 @@ const useStore = create((set, get) => ({
         if(type === 'price_item' || type === 'price_w_nds') {
           const nds = get().check_nds_bill((Number(item.price_w_nds) - Number(item.price_item)) / (Number(item.price_item) / 100))
 
-          //const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
-  
           if (nds) {
             item.nds = nds;
             item.summ_nds = (Number(item.price_w_nds) - Number(item.price_item)).toFixed(2)
@@ -1231,14 +1218,11 @@ const useStore = create((set, get) => ({
             item.summ_nds = 0;
             item.nds = '';
           }
-
-          /*if(nds && range_price_item) {
-            item.color = false;
-          } else {
-            item.color = true;
-          }*/
         } 
 
+
+
+        item.price = Number(item.fact_unit) == 0 ? 0 : Number(item.price_w_nds) / Number(item.fact_unit);
       }
 
       return item;
@@ -1432,8 +1416,8 @@ function VendorItemsTableEdit(){
                         value={ item.pq_item.find( it => it.name == item.pq ) }
                         //func={ (event, data) => { console.log( data ?? event.target.value ) } }
                         //onBlur={ (event, data) => { console.log( data ?? event.target.value ) } }
-                        func={ (event, data) => changeDataTable( { target: { value: data ?? event.target.value } }, 'pq', item.id, key) }
-                        onBlur={ (event, data) => changeDataTable({ target: { value: data ?? event.target.value } }, 'pq', item.id, key) }
+                        func={ (event, data) => changeDataTable( { target: { value: data?.name ?? event.target.value } }, 'pq', item.id, key) }
+                        onBlur={ (event, data) => changeDataTable({ target: { value: data?.name ?? event.target.value } }, 'pq', item.id, key) }
                       />
 
 

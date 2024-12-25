@@ -1172,6 +1172,8 @@ const useStore = create((set, get) => ({
         err_items.push(item);
 
         bill_items[ key ].color = true;
+      }else{
+        bill_items[ key ].color = false;
       }
     })
 
