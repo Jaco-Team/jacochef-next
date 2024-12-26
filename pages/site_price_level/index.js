@@ -472,7 +472,7 @@ class SitePriceLevel_ extends React.Component {
 
     let formData = new FormData();
 
-    // const urlApi_dev = 'http://127.0.0.1:8000/api/site_price_level/import_file_xls';
+    //const urlApi_dev = 'http://127.0.0.1:8000/api/site_price_level/import_file_xls';
     const urlApi_dev = 'https://apichef.jacochef.ru/api/site_price_level/import_file_xls';
 
     formData.append('file', target.files[0]);

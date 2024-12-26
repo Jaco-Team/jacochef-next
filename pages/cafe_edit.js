@@ -80,13 +80,23 @@ class CafeEdit_Modal_Close extends React.Component {
   }
 
   open_confirm() {
+    if(!this.props.is_сlosed_technic && !this.props.is_сlosed_overload){
+      
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать причину закрытия кафе',
+      })  
+
+      return;
+    }
 
     if(this.props.is_сlosed_technic && !this.props.chooseReason){
       
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо указать причину технического закрытия кафе',
+        err_text: 'Необходимо выбрать/указать причину технического закрытия кафе',
       })  
 
       return;
@@ -737,8 +747,8 @@ class CafeEdit_ extends React.Component {
     });
 
     const chooseReason = this.state.chooseReason;
-    const is_сlosed_overload = this.state.is_сlosed_overload ? 1 : 0;
-    const is_сlosed_technic = this.state.is_сlosed_technic ? 1 : 0;
+    const is_сlosed_overload = this.state.is_сlosed_overload;
+    const is_сlosed_technic = this.state.is_сlosed_technic;
 
     if(!is_сlosed_overload && !is_сlosed_technic && !chooseReason){
       const point_info = this.state.point_info
