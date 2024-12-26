@@ -231,12 +231,18 @@ class Billing_ extends React.Component {
       .then((res) => res.json())
       .then((json) => {
         if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
+
+          alert(json.text); 
+
+          window.location = '/';
           return;
         }
 
         if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+
+          alert(json.text); 
+
+          window.location = '/auth';
           return;
         }
 
@@ -371,7 +377,7 @@ class Billing_ extends React.Component {
 
       }
 
-      this.getBillingList();
+      //this.getBillingList();
     }
   }
 
@@ -450,8 +456,10 @@ class Billing_ extends React.Component {
 
         if(res.svod[status.id]) {
           status.count = res.svod[status.id].count
+          status.sum_w_nds = res.svod[status.id].sum_w_nds
         } else {
           status.count = 0
+          status.sum_w_nds = 0
         }
 
         return status

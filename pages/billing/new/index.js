@@ -67,10 +67,10 @@ const types = [
     "name": "Коррекция",
     "id": "3"
   },
-  {
+  /*{
     "name": "Возврат",
     "id": "4"
-  },
+  },*/
 ]
 
 function getOrientation(file, callback) {
@@ -125,7 +125,7 @@ const url_bill_ex = "https://jacochef.ru/src/img/bill_ex_items/upload.php";
 var dropzoneOptions_bill = {
   autoProcessQueue: false,
   autoQueue: true,
-  maxFiles: 1,
+  maxFiles: 10,
   timeout: 0,
   parallelUploads: 10,
   acceptedFiles: "image/jpeg,image/png,image/gif,.pdf",
@@ -190,7 +190,7 @@ var dropzoneOptions_bill = {
 var dropzoneOptions_bill_factur = {
   autoProcessQueue: false,
   autoQueue: true,
-  maxFiles: 1,
+  maxFiles: 10,
   timeout: 0,
   parallelUploads: 10,
   acceptedFiles: "image/jpeg,image/png,image/gif,.pdf",
@@ -331,6 +331,8 @@ const useStore = create((set, get) => ({
   is_vertical: false,
 
   DropzoneDop: null,
+
+  bill_base_id: 0,
 
   set_position: (is_horizontal, is_vertical) => {
     set({
@@ -593,6 +595,7 @@ const useStore = create((set, get) => ({
         summ: '',
         sum_w_nds: '',
         bill_items_doc: res.billing_items,
+        bill_base_id: billing_id,
       });
 
       
@@ -873,7 +876,7 @@ const useStore = create((set, get) => ({
 
     if(data === 'type'){
       
-      if( parseInt(value) === 2 && parseInt( get().doc_base_id ) == 1 ){
+      if( parseInt(value) === 2 && parseInt( get().doc_base_id ) == 5 ){
         setTimeout( () => {
           if( document.getElementById('img_bill_type') ){
             set({
@@ -933,10 +936,6 @@ const useStore = create((set, get) => ({
       ];
     } else {
       kinds = [
-        {
-          "name": "Накладная",
-          "id": "1"
-        },
         {
           "name": "УКД",
           "id": "3"
@@ -1014,13 +1013,13 @@ const useStore = create((set, get) => ({
       return;
     }
 
-    const range_price_item = get().check_price_item(vendor_items[0].price, vendor_items[0].vend_percent, summ, pq)
+    /*const range_price_item = get().check_price_item(vendor_items[0].price, vendor_items[0].vend_percent, summ, pq)
 
     if(range_price_item) {
       vendor_items[0].color = false;
     } else {
       vendor_items[0].color = true;
-    }
+    }*/
 
     vendor_items[0].summ_nds = (Number(sum_w_nds) - Number(summ)).toFixed(2);
     vendor_items[0].nds = nds;
@@ -1066,6 +1065,8 @@ const useStore = create((set, get) => ({
       search_item: '',
       pq: '',
     });
+
+    get().check_price_item_new();
   },
 
   addItem_fast: ( count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, item_id, vendor_items ) => {
@@ -1139,10 +1140,13 @@ const useStore = create((set, get) => ({
     var bill_items = get().bill_items;		
     var vendor_items = get().vendor_items;
 
+    console.log( bill_items )
+    console.log( vendor_items )
+
     bill_items.map((item, key) => {
-      let one_price_bill = parseFloat(item['one_price_bill']);
-      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.price;
-      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.vend_percent;
+      let one_price_bill = parseFloat(item['price']);
+      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['id']))?.price;
+      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['id']))?.vend_percent;
 
       let one_price_max = parseFloat(one_price_vend) + ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
 			let one_price_min = parseFloat(one_price_vend) - ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
@@ -1151,6 +1155,8 @@ const useStore = create((set, get) => ({
         err_items.push(item);
 
         bill_items[ key ].color = true;
+      }else{
+        bill_items[ key ].color = false;
       }
     })
 
@@ -1185,27 +1191,11 @@ const useStore = create((set, get) => ({
 
         if (type === 'pq') {
           item.fact_unit = (Number(item[type]) * Number(item.count)).toFixed(2);
-
-          /*const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
-  
-          if(range_price_item) {
-            item.color = false;
-          } else {
-            item.color = true;
-          }*/
-
         } 
 
         if (value && value !== '0' && value[0] !== '0' && type === 'count') {
 
           item.fact_unit = (Number(item[type]) * Number(item.pq)).toFixed(2);
-          /*const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
-
-          if(range_price_item) {
-            item.color = false;
-          } else {
-            item.color = true;
-          }*/
 
         } else {
 
@@ -1213,7 +1203,7 @@ const useStore = create((set, get) => ({
             item.fact_unit = 0;
           }
     
-          item.color = true;
+          //item.color = true;
 
         }
 
@@ -1221,8 +1211,6 @@ const useStore = create((set, get) => ({
         if(type === 'price_item' || type === 'price_w_nds') {
           const nds = get().check_nds_bill((Number(item.price_w_nds) - Number(item.price_item)) / (Number(item.price_item) / 100))
 
-          //const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
-  
           if (nds) {
             item.nds = nds;
             item.summ_nds = (Number(item.price_w_nds) - Number(item.price_item)).toFixed(2)
@@ -1230,14 +1218,11 @@ const useStore = create((set, get) => ({
             item.summ_nds = 0;
             item.nds = '';
           }
-
-          /*if(nds && range_price_item) {
-            item.color = false;
-          } else {
-            item.color = true;
-          }*/
         } 
 
+
+
+        item.price = Number(item.fact_unit) == 0 ? 0 : Number(item.price_w_nds) / Number(item.fact_unit);
       }
 
       return item;
@@ -1270,8 +1255,12 @@ const useStore = create((set, get) => ({
 
 function FormVendorItems(){
 
-  const [ vendor_items, search_item, all_ed_izmer, changeCount, changeData, addItem ] = useStore( state => [ state.vendor_items, state.search_item, state.all_ed_izmer, state.changeCount, state.changeData, state.addItem ]);
+  const [ type, vendor_items, search_item, all_ed_izmer, changeCount, changeData, addItem ] = useStore( state => [ state.type, state.vendor_items, state.search_item, state.all_ed_izmer, state.changeCount, state.changeData, state.addItem ]);
   const [ search_vendor_items, pq, count, fact_unit, summ, sum_w_nds ] = useStore( state => [ state.search_vendor_items, state.pq, state.count, state.fact_unit, state.summ, state.sum_w_nds ]);
+
+  if( parseInt(type) == 3 ){
+    return null;
+  }
 
   return (
     <>
@@ -1293,17 +1282,21 @@ function FormVendorItems(){
       </Grid>
 
       <Grid item xs={12} sm={3}>
-        <MyAutocomplite2
+        <MyAutocomplite
           label="Объем упаковки"
-          freeSolo={true}
+          freeSolo={false}
           multiple={false}
+          name={'only_choose'}
           data={ all_ed_izmer }
-          value={ pq }
+          value={ all_ed_izmer.find( it => it.name == pq ) }
           //func={ (event, name) => changeData('pq', event) }
           //onBlur={ (event, name) => changeData('pq', event) }
 
-          func={ (event, data) => changeData( 'pq', { target: { value: data ?? event.target.value } }) }
-          onBlur={ (event, data) => changeData( 'pq', { target: { value: data ?? event.target.value } }) }
+          // func={ (event, data) => { console.log(data, event) } }
+          // onBlur={ (event, data) => { console.log(data, event) } }
+
+          func={ (event, data) => changeData( 'pq', { target: { value: data?.id ?? event.target.value } }) }
+          onBlur={ (event, data) => changeData( 'pq', { target: { value: data?.id ?? event.target.value } }) }
         />
 
       </Grid>
@@ -1339,7 +1332,7 @@ function FormVendorItems(){
       </Grid>
 
       <Grid item xs={12} sm={4}>
-        <Button variant="contained" fullWidth style={{ height: '100%' }} onClick={addItem}>
+        <Button variant="contained" fullWidth  onClick={addItem}>
           <AddIcon />
         </Button>
       </Grid>
@@ -1349,8 +1342,14 @@ function FormVendorItems(){
 
 function VendorItemsTableEdit(){
 
-  const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
+  const [ type, deleteItem, changeDataTable ] = useStore( state => [ state.type, state.deleteItem, state.changeDataTable ]);
   const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  let summ_nds = 0;
+
+  bill_items.map( item => {
+    summ_nds += parseFloat(item.summ_nds);
+  } )
 
   return (
     <>
@@ -1392,9 +1391,11 @@ function VendorItemsTableEdit(){
                       <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.summ_nds} ₽</TableCell>
                       <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
                       <TableCell rowSpan={2}>
-                        <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
-                          <ClearIcon />
-                        </Button>
+                        { parseInt(type) == 3 ? false :
+                          <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
+                            <ClearIcon />
+                          </Button>
+                        }
                       </TableCell>
                       <TableCell rowSpan={2}>
                         {Number(item.count) === 0 ? Number(item.count).toFixed(2) : ( parseFloat(item.price_w_nds) / parseFloat(item.fact_unit)).toFixed(2)}
@@ -1408,16 +1409,15 @@ function VendorItemsTableEdit(){
                     <TableCell className="ceil_white">
                       
 
-                      <MyAutocomplite2
+                      <MyAutocomplite
                         label=""
-                        freeSolo={true}
-                        multiple={false}
                         data={ item.pq_item }
-                        value={ item.pq }
+                        //value={ item.pq }
+                        value={ item.pq_item.find( it => it.name == item.pq ) }
                         //func={ (event, data) => { console.log( data ?? event.target.value ) } }
                         //onBlur={ (event, data) => { console.log( data ?? event.target.value ) } }
-                        func={ (event, data) => changeDataTable( { target: { value: data ?? event.target.value } }, 'pq', item.id, key) }
-                        onBlur={ (event, data) => changeDataTable({ target: { value: data ?? event.target.value } }, 'pq', item.id, key) }
+                        func={ (event, data) => changeDataTable( { target: { value: data?.name ?? event.target.value } }, 'pq', item.id, key) }
+                        onBlur={ (event, data) => changeDataTable({ target: { value: data?.name ?? event.target.value } }, 'pq', item.id, key) }
                       />
 
 
@@ -1455,9 +1455,11 @@ function VendorItemsTableEdit(){
                     {item?.data_bill ? null :
                       <>
                         <TableCell>
-                          <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
-                            <ClearIcon />
-                          </Button>
+                          { parseInt(type) == 3 ? false :
+                            <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
+                              <ClearIcon />
+                            </Button>
+                          }
                         </TableCell>
                         <TableCell>
                           {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.fact_unit)).toFixed(2)}
@@ -1476,7 +1478,7 @@ function VendorItemsTableEdit(){
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell>{allPrice} ₽</TableCell>
-                  <TableCell></TableCell>
+                  <TableCell>{ summ_nds.toFixed(2) } ₽</TableCell>
                   <TableCell>{allPrice_w_nds} ₽</TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
@@ -1494,6 +1496,12 @@ function VendorItemsTableView(){
 
   const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
   const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  let summ_nds = 0;
+
+  bill_items.map( item => {
+    summ_nds += parseFloat(item.summ_nds);
+  } )
 
   return (
     <>
@@ -1573,7 +1581,7 @@ function VendorItemsTableView(){
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell>{allPrice} ₽</TableCell>
-                  <TableCell></TableCell>
+                  <TableCell>{ summ_nds.toFixed(2) } ₽</TableCell>
                   <TableCell>{allPrice_w_nds} ₽</TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
@@ -1591,6 +1599,12 @@ function VendorItemsTableView_min(){
 
   const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
   const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+
+  let summ_nds = 0;
+
+  bill_items.map( item => {
+    summ_nds += parseFloat(item.summ_nds);
+  } )
 
   return (
     
@@ -1650,7 +1664,7 @@ function VendorItemsTableView_min(){
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell>{allPrice} ₽</TableCell>
-                  <TableCell></TableCell>
+                  <TableCell>{ summ_nds.toFixed(2) } ₽</TableCell>
                   <TableCell>{allPrice_w_nds} ₽</TableCell>
                   
                 </TableRow>
@@ -1761,7 +1775,7 @@ function FormHeader_new({ page, type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? 
         <Grid item xs={12} sm={6}>
           <MyTextInput
             label="Номер счет-фактуры"
@@ -1783,7 +1797,7 @@ function FormHeader_new({ page, type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? 
         <Grid item xs={12} sm={6}>
           <MyDatePickerNew
             label="Дата счет-фактуры"
@@ -1807,7 +1821,7 @@ function FormImage_new({ type_edit }){
   
   return (
     <>
-      <Grid item xs={12} sm={parseInt(type) === 2 && parseInt(doc_base_id) == 1 ? 6 : 12}>
+      <Grid item xs={12} sm={parseInt(type) === 2 && parseInt(doc_base_id) == 5 ? 6 : 12}>
         <TableContainer>
           <Grid display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
             {!imgs_bill.length ? '' :
@@ -1827,7 +1841,7 @@ function FormImage_new({ type_edit }){
         </TableContainer>
       </Grid>
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? (
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
         <Grid item xs={12} sm={6} display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
           {!imgs_factur.length ? '' :
             <>
@@ -1858,7 +1872,7 @@ function FormImage_new({ type_edit }){
       }
 
 
-      {type_edit === 'edit' && parseInt(type) === 2 && parseInt(doc_base_id) == 1 && !fullScreen ? (
+      {type_edit === 'edit' && parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
         <Grid item xs={12} sm={6}>
           
           <div
@@ -1869,7 +1883,7 @@ function FormImage_new({ type_edit }){
         </Grid>
       ) : null}
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 1 && fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && fullScreen ? 
         <>
           <Grid item xs={12}>
             <MyTextInput
@@ -1987,7 +2001,15 @@ function FormOther_new({ page, type_edit }){
       }
 
 
-      
+      <Grid item xs={12} sm={12} display="flex" alignItems="center">
+        <MyCheckBox
+          disabled={ type_edit === 'edit' ? false : true }
+          value={parseInt(is_new_doc) === 1 ? true : false}
+          func={ (event) => changeItemChecked(event, 'is_new_doc') }
+          label="Поставщик привезет новый документ"
+        />
+        
+      </Grid>
 
     </>
   )
@@ -2511,7 +2533,7 @@ class Billing_Edit_ extends React.Component {
       type_save = this.state.thisTypeSave;
     }
 
-    const {vendor, err_items, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, docs, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
+    const {bill_base_id, vendor, err_items, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, docs, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
 
     this.setState({
       modelCheckErrItems: false,
@@ -2525,9 +2547,17 @@ class Billing_Edit_ extends React.Component {
 
     var items_color = [];
 
-    let new_bill_items = bill_items.filter( item => parseInt(item.fact_unit) > 0 );
+    let new_bill_items = bill_items.filter( item => item.fact_unit.length == 0 || item.price_item.length == 0 || item.price_w_nds.length == 0 );
 
-    const items = new_bill_items.reduce((newItems, item) => {
+    if( new_bill_items.length > 0 ){
+      showAlert(false, 'Не все даныне в товаре заполнены');
+
+      this.isClick = false;
+
+      return ;
+    } 
+
+    const items = bill_items.reduce((newItems, item) => {
 
       let it = {};
 
@@ -2577,7 +2607,7 @@ class Billing_Edit_ extends React.Component {
       return ;
     }
 
-    if( parseInt(type) == 2 && parseInt(doc_base_id) == 1 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
+    if( parseInt(type) == 2 && parseInt(doc_base_id) == 5 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
       showAlert(false, 'Нет изображений счет-фактуры');
 
       this.isClick = false;
@@ -2592,7 +2622,7 @@ class Billing_Edit_ extends React.Component {
     }else{
       this.myDropzone.options.url = url_bill;
       type_bill = 'bill';
-      //is_return = true;
+      is_return = true;
     }
 
     if( ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ){
@@ -2616,7 +2646,8 @@ class Billing_Edit_ extends React.Component {
       vendor_id: vendor?.id,
       imgs: this.myDropzone['files'].length,
       type_save: type_save,
-      err_items: err_items
+      err_items: err_items,
+      bill_base_id: bill_base_id
     }
 
     const res = await this.getData('save_new', data);
@@ -2746,15 +2777,15 @@ class Billing_Edit_ extends React.Component {
 
           { parseInt(this.state.acces?.only_save) === 0 ? false :
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="success" style={{ height: '100%' }} onClick={this.saveNewBill.bind(this, 'current', true)}>
+              <Button variant="contained" fullWidth color="success"  onClick={this.saveNewBill.bind(this, 'current', true)}>
                 Сохранить
               </Button>
             </Grid>
           }
          
-          { parseInt(this.state.acces?.only_save) === 0 ? false :
+          { parseInt(this.state.acces?.save_send) === 0 ? false :
             <Grid item xs={12} sm={4}>
-              <Button variant="contained" fullWidth color="info" style={{ height: '100%' }}
+              <Button variant="contained" fullWidth color="info" 
                 onClick={this.saveNewBill.bind(this, 'next', true)}
               >
                 Сохранить и отправить
