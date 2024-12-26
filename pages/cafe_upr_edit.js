@@ -647,7 +647,11 @@ class СafeUprEdit_ extends React.Component {
 
 
               <Grid item xs={12} sm={12}>
-                <MyCheckBox label='Если в заказе только пицца, она выйдет на сборку после начала ее приготовления (напитки, допы и закуски не учитываются)' value={this.state.priority_pizza} func={this.changeChekBoxSimple.bind(this, 'priority_pizza')} />
+                <MyCheckBox 
+                  label='Если в заказе только пицца, она выйдет на сборку после начала ее приготовления (напитки, допы и закуски не учитываются)' 
+                  value={this.state.priority_pizza} 
+                  func={this.changeChekBoxSimple.bind(this, 'priority_pizza')} 
+                />
               </Grid>
 
               <Grid item xs={12} sm={12}>

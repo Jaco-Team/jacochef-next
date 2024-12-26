@@ -153,6 +153,7 @@ class SitePriceLevelEdit_input_item extends React.Component {
           func={this.changeItem.bind(this)}
           onBlur={this.save_data_input.bind(this)}
           enter={(event) => event.key === 'Enter' ? this.save_data_input(event) : null}
+          onWheel={(e) => e.target.blur()}
         />
       </>
     )

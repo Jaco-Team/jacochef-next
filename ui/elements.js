@@ -318,6 +318,7 @@ export class MyTextInput extends React.PureComponent {
         InputProps={this.props.inputAdornment}
         inputProps={this.props.tabindex}
         className={this.props.className}
+        onWheel={this.props.onWheel ? this.props.onWheel : null}
       />
     )
   }
