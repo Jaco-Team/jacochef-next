@@ -1109,7 +1109,7 @@ const useStore = create((set, get) => ({
     vendor_items[0].all_ed_izmer = all_ed_izmer;
     vendor_items[0].count = is_add == 0 ? '' : count;
     vendor_items[0].fact_unit = is_add == 0 ? '' : fact_unit;
-    vendor_items[0].price_item = is_add == 0 ? '' : sum_w_nds;
+    vendor_items[0].price_item = is_add == 0 ? '' : summ;
     vendor_items[0].price_w_nds = is_add == 0 ? '' : sum_w_nds;
 
     const bill_items_doc = get().bill_items_doc;
@@ -2694,6 +2694,10 @@ class Billing_Edit_ extends React.Component {
     var items_color = [];
 
     let new_bill_items = bill_items.filter( item => item.fact_unit.length == 0 || item.price_item.length == 0 || item.price_w_nds.length == 0 );
+
+    console.log( 'bill_items', bill_items )
+    //this.isClick = false;
+    //return ;
 
     if( new_bill_items.length > 0 ){
       showAlert(false, 'Не все даныне в товаре заполнены');
