@@ -1231,15 +1231,19 @@ class SiteClients_ extends React.Component {
       return;
     } 
 
-    if (!date_start || !date_end) {
+    if ( (!date_start && !date_end) || !date_start || !date_end) {
 
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо указать даты'
-      });
+      if( number.length > 0 || order.length > 0 || items.length > 0 || addr.length > 0 || promo.length > 0 ) {
 
-      return;
+      }else{
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: 'Необходимо указать дату или что-то кроме нее'
+        });
+  
+        return;
+      }
     } 
 
     date_start = dayjs(date_start).format('YYYY-MM-DD');
