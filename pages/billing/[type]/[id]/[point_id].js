@@ -2695,7 +2695,7 @@ class Billing_Edit_ extends React.Component {
 
     let new_bill_items = bill_items.filter( item => item.fact_unit.length == 0 || item.price_item.length == 0 || item.price_w_nds.length == 0 );
 
-    console.log( 'bill_items', bill_items )
+    //console.log( 'bill_items', bill_items )
     //this.isClick = false;
     //return ;
 
