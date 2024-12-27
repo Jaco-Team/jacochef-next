@@ -2747,21 +2747,22 @@ class Billing_Edit_ extends React.Component {
       return ;
     }
     
+    if( type_save !== 'return' ){
+      if( imgs_bill.length == 0 && ( !DropzoneMain || DropzoneMain['files'].length === 0 ) ) {
+        showAlert(false, 'Нет изображений документа');
 
-    if( imgs_bill.length == 0 && ( !DropzoneMain || DropzoneMain['files'].length === 0 ) ) {
-      showAlert(false, 'Нет изображений документа');
+        this.isClick = false;
 
-      this.isClick = false;
+        return ;
+      }
 
-      return ;
-    }
+      if( imgs_factur.length == 0 && parseInt(doc_base_id) == 5 && ( parseInt(type) == 2 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) ) {
+        showAlert(false, 'Нет изображений счет-фактуры');
 
-    if( imgs_factur.length == 0 && parseInt(doc_base_id) == 5 && ( parseInt(type) == 2 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) ) {
-      showAlert(false, 'Нет изображений счет-фактуры');
+        this.isClick = false;
 
-      this.isClick = false;
-
-      return ;
+        return ;
+      }
     }
 
     if( DropzoneMain && DropzoneMain['files'].length > 0 ){
