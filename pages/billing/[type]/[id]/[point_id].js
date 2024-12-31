@@ -1323,7 +1323,9 @@ const useStore = create((set, get) => ({
 
 function FormHeader_new({ type_edit }){
 
-  const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
+  const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, bill] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.bill]);
+
+  console.log( 'bill', bill?.type, parseInt(bill?.type) == 5 || ( parseInt(type) === 2 || parseInt(type) === 3 ), type )
 
   return (
     <>
@@ -1371,7 +1373,7 @@ function FormHeader_new({ type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 || parseInt(type) === 3 ? (
+      { parseInt(type) === 2 || parseInt(type) === 3 ? (
         <>
           <Grid item xs={12} sm={4}>
             <MySelect
@@ -1380,7 +1382,7 @@ function FormHeader_new({ type_edit }){
               multiple={false}
               is_none={false}
               //disabled={ type_edit === 'edit' ? false : true }
-              disabled={ true }
+              disabled={ parseInt(bill?.type) == 5 ? false : true }
               func={ event => changeData('doc_base_id', event) }
               label="Документ"
             />
