@@ -14,6 +14,11 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Paper from '@mui/material/Paper';
@@ -64,6 +69,315 @@ function a11yProps(index) {
     id: `simple-tab-${index}`,
     'aria-controls': `simple-tabpanel-${index}`,
   };
+}
+
+class CafeEdit_Modal_History extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      itemView: null,
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    // console.log(this.props.itemView);
+
+    if (!this.props) {
+      return;
+    }
+
+    if (this.props !== prevProps) {
+      this.setState({
+        itemView: this.props.itemView
+      });
+    }
+  }
+
+  onClose() {
+    this.setState({
+      itemView: null,
+    });
+
+    this.props.onClose();
+  }
+
+  render() {
+
+    const { open, fullScreen, type_modal, date_edit } = this.props
+
+    return (
+      <Dialog
+        open={open}
+        fullWidth={true}
+        maxWidth={'md'}
+        onClose={this.onClose.bind(this)}
+        fullScreen={fullScreen}
+      >
+        <DialogTitle className="button">
+          <Typography style={{ alignSelf: 'center' }}>
+            {type_modal !== 'zone' ? 'Изменения выделены цветом' : 'Изменения в зоне доставки'}
+          </Typography>
+          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          <Grid container spacing={3}>
+
+            {type_modal === 'info' ?
+              <>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Город"
+                    value={this.state.itemView ? this.state.itemView.city_id?.color ? this.state.itemView.city_id.key : this.state.itemView.city_id : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.city_id?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Адрес"
+                    value={this.state.itemView ? this.state.itemView.addr?.color ? this.state.itemView.addr.key : this.state.itemView.addr : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.addr?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    label="Район"
+                    value={this.state.itemView ? this.state.itemView.raion?.color ? this.state.itemView.raion.key : this.state.itemView.raion : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.raion?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    label="Сортировка"
+                    value={this.state.itemView ? this.state.itemView.sort?.color ? this.state.itemView.sort.key : this.state.itemView.sort : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.sort?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    label="Организация"
+                    value={this.state.itemView ? this.state.itemView.organization?.color ? this.state.itemView.organization.key : this.state.itemView.organization : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.organization?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    label="ИНН"
+                    value={this.state.itemView ? this.state.itemView.inn?.color ? this.state.itemView.inn.key : this.state.itemView.inn : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.inn?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    label="ОГРН"
+                    value={this.state.itemView ? this.state.itemView.ogrn?.color ? this.state.itemView.ogrn.key : this.state.itemView.ogrn : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.ogrn?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    label="КПП"
+                    value={this.state.itemView ? this.state.itemView.kpp?.color ? this.state.itemView.kpp.key : this.state.itemView.kpp : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.kpp?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    label="Телефон управляющего"
+                    value={this.state.itemView ? this.state.itemView.phone_upr?.color ? this.state.itemView.phone_upr.key : this.state.itemView.phone_upr : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.phone_upr?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    label="Телефон менеджера"
+                    value={this.state.itemView ? this.state.itemView.phone_man?.color ? this.state.itemView.phone_man.key : this.state.itemView.phone_man : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.phone_man?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    label="Активность"
+                    value={this.state.itemView ? this.state.itemView.is_active?.color ? this.state.itemView.is_active.key : this.state.itemView.is_active : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.is_active?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={12}>
+                  <MyTextInput
+                    label="Полный адрес"
+                    value={this.state.itemView ? this.state.itemView.full_addr?.color ? this.state.itemView.full_addr.key : this.state.itemView.full_addr : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.full_addr?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+              </>
+            : null}
+
+            {type_modal === 'rate' ?
+              <>
+                {!date_edit ? null :
+                  <Grid item xs={12} sm={12}>
+                    <Typography style={{ alignSelf: 'center', fontWeight: 'bold' }}>
+                      Дата начала изменений: {date_edit ?? ''}
+                    </Typography>
+                  </Grid>
+                }
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Коэффициент количества пиццы в час"
+                    value={this.state.itemView ? this.state.itemView.k_pizza?.color ? this.state.itemView.k_pizza.key : this.state.itemView.k_pizza : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.k_pizza?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Коэффициент мойки посуды для пиццы (кух раб)"
+                    value={this.state.itemView ? this.state.itemView.k_pizza_kux?.color ? this.state.itemView.k_pizza_kux.key : this.state.itemView.k_pizza_kux : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.k_pizza_kux?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Коэффициент мойки посуды для роллов (кух раб)"
+                    value={this.state.itemView ? this.state.itemView.k_rolls_kux?.color ? this.state.itemView.k_rolls_kux.key : this.state.itemView.k_rolls_kux : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.k_rolls_kux?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+              </>
+            : null}
+
+            {type_modal === 'pay' ?
+              <>
+                {!date_edit ? null :
+                  <Grid item xs={12} sm={12}>
+                    <Typography style={{ alignSelf: 'center', fontWeight: 'bold' }}>
+                      Дата начала изменений: {date_edit ?? ''}
+                    </Typography>
+                  </Grid>
+                }
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Оклад директора на 2 недели (с тек. периода)"
+                    value={this.state.itemView ? this.state.itemView.dir_price?.color ? this.state.itemView.dir_price.key : this.state.itemView.dir_price : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.dir_price?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Бонус от уровня директору (с тек. периода)"
+                    value={this.state.itemView ? this.state.itemView.price_per_lv?.color ? this.state.itemView.price_per_lv.key : this.state.itemView.price_per_lv : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.price_per_lv?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Часовая ставка курьера (применяется со следующего дня)"
+                    value={this.state.itemView ? this.state.itemView.driver_price?.color ? this.state.itemView.driver_price.key : this.state.itemView.driver_price : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.driver_price?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+              </>
+            : null}
+
+            {type_modal === 'sett' ?
+              <>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Если в заказе только пицца, она выйдет на сборку после начала ее приготовления (напитки, допы и закуски не учитываются)"
+                    value={this.state.itemView ? this.state.itemView.priority_pizza?.color ? this.state.itemView.priority_pizza.key : this.state.itemView.priority_pizza : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.priority_pizza?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Если заказ приготовить зарнее - он выйдет в приоритете на сборку, кроме предов (напитки, допы и закуски не учитываются)"
+                    value={this.state.itemView ? this.state.itemView.priority_order?.color ? this.state.itemView.priority_order.key : this.state.itemView.priority_order : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.priority_order?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Пицца у повара будет отображаться, если более 50% роллов в заказе начнут готовить"
+                    value={this.state.itemView ? this.state.itemView.rolls_pizza_dif?.color ? this.state.itemView.rolls_pizza_dif.key : this.state.itemView.rolls_pizza_dif : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.rolls_pizza_dif?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Общий стол"
+                    value={this.state.itemView ? this.state.itemView.cook_common_stol?.color ? this.state.itemView.cook_common_stol.key : this.state.itemView.cook_common_stol : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.cook_common_stol?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Кафе работает"
+                    value={this.state.itemView ? this.state.itemView.cafe_handle_close?.color ? this.state.itemView.cafe_handle_close.key : this.state.itemView.cafe_handle_close : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.cafe_handle_close?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Максимальная сумма нала для курьера"
+                    value={this.state.itemView ? this.state.itemView.summ_driver?.color ? this.state.itemView.summ_driver.key : this.state.itemView.summ_driver : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.summ_driver?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Максимальная сумма нала для курьера стажера"
+                    value={this.state.itemView ? this.state.itemView.summ_driver_min?.color ? this.state.itemView.summ_driver_min.key : this.state.itemView.summ_driver_min : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.summ_driver_min?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+              </>
+            : null}
+
+            {type_modal === 'zone' ?
+              <Grid item xs={12} sm={12}>
+                <Typography style={{ alignSelf: 'center', fontWeight: 'bold' }}>
+                  {`${this.state.itemView?.zone_name} ${this.state.itemView?.is_active}: ${this.state.itemView?.date_time_update}`}
+                </Typography>
+              </Grid>
+            : null}
+          
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={this.onClose.bind(this)} variant="contained">
+            Закрыть
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
 }
 
 class CafeEdit_Modal_Close extends React.Component {
@@ -159,7 +473,7 @@ class CafeEdit_Modal_Close extends React.Component {
           onClose={this.onClose.bind(this)}
           fullScreen={fullScreen}
           fullWidth={true}
-          maxWidth={'md'}
+          maxWidth={'sm'}
         >
           <DialogTitle>
             Причина закрытия кафе
@@ -288,6 +602,7 @@ class CafeEdit_Modal_Zone extends React.Component {
 
     this.state = {
       is_active: 0,
+      confirmDialog: false,
     };
   }
 
@@ -319,7 +634,7 @@ class CafeEdit_Modal_Zone extends React.Component {
 
     zone.is_active = is_active;
 
-    this.props.save(zone);
+    this.props.save();
 
     this.onClose();
   }
@@ -329,6 +644,7 @@ class CafeEdit_Modal_Zone extends React.Component {
     setTimeout(() => {
       this.setState ({
         isActive: 0,
+        confirmDialog: false,
       });
     }, 100);
 
@@ -339,32 +655,45 @@ class CafeEdit_Modal_Zone extends React.Component {
     const { open, fullScreen, zone } = this.props;
 
     return (
-      <Dialog 
-        open={open}
-        onClose={this.onClose.bind(this)}
-        fullScreen={fullScreen}
-        fullWidth={true}
-        maxWidth={'sm'}
-      >
-        <DialogTitle>
-          Активность зоны доставки
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
-            <CloseIcon />
-          </IconButton>
-          </DialogTitle>
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <MyCheckBox 
-            label={zone?.zone_name ?? ''} 
-            value={parseInt(this.state.is_active) == 1 ? true : false} 
-            func={this.changeItemChecked.bind(this, 'is_active')} 
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button variant="contained" onClick={this.save.bind(this)}>
-            Сохранить
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <>
+        <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false })}>
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+            <Typography>Вы действительное хотите сохранить данные?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button autoFocus onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
+            <Button onClick={this.save.bind(this)}>Сохранить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog 
+          open={open}
+          onClose={this.onClose.bind(this)}
+          fullScreen={fullScreen}
+          fullWidth={true}
+          maxWidth={'sm'}
+        >
+          <DialogTitle>
+            Активность зоны доставки
+            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+              <CloseIcon />
+            </IconButton>
+            </DialogTitle>
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            <MyCheckBox 
+              label={zone?.zone_name ?? ''} 
+              value={parseInt(this.state.is_active) == 1 ? true : false} 
+              func={this.changeItemChecked.bind(this, 'is_active')} 
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button variant="contained" onClick={() => this.setState({ confirmDialog: true })}>
+              Сохранить
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
     );
   }
 }
@@ -518,6 +847,9 @@ class CafeEdit_ extends React.Component {
       module_name: '',
       is_load: false,
 
+      acces: null,
+      fullScreen: false,
+
       points: [],
       point: '',
       cities: [],
@@ -557,24 +889,47 @@ class CafeEdit_ extends React.Component {
       reason_list: [],
       chooseReason: null,
 
+      point_info_hist: [],
+      point_rate_hist: [],
+      point_pay_hist: [],
+      point_sett_hist: [],
+      point_zone_hist: [],
+
+      modalDialogView: false,
+      itemView: null,
+      type_modal: null,
+      date_edit: null,
+
+      index_info: -1,
+      index_rate: -1,
+      index_pay: -1,
+      index_sett: -1,
+      index_zone: -1,
+      tabs_data: []
+
     };
   }
 
   async componentDidMount() {
     const data = await this.getData('get_all');
-    console.log("🚀 === componentDidMount data:", data);
 
     this.setState({
+      acces: data.acces,
       points: data.points,
       point: data.points[0],
       module_name: data.module_info.name
     });
 
     document.title = data.module_info.name;
+    
+    setTimeout(() => {
+      this.getTabIndex();
+    }, 100);
 
     setTimeout(() => {
       this.getDataPoint();
-    }, 100);
+    }, 200);
+
   }
 
   handleResize() {
@@ -618,14 +973,19 @@ class CafeEdit_ extends React.Component {
   }
 
   changeTab(event, value) {
+    const index_zone = this.state.index_zone;
     
-    if(value === 4) {
+    if(value === index_zone) {
       const zone = this.state.zone;
       const other_zones = this.state.other_zones;
 
       if(zone.length && other_zones.length) {
         setTimeout(() => {
           this.getZones(zone, other_zones);
+        }, 300);
+      } else {
+        setTimeout(() => {
+          this.map?.geoObjects?.removeAll();
         }, 300);
       }
 
@@ -649,19 +1009,95 @@ class CafeEdit_ extends React.Component {
     });
   }
 
+  getTabIndex() {
+    const acces = this.state.acces;
+
+    let tabs_data = [];
+
+    for (let key in acces) {
+      if(parseInt(acces[key])) {
+
+        if(key === 'active_point' || key === 'organization_point' || key === 'telephone_point') {
+
+          const info = tabs_data.find(item => item.name === 'Информация о точке');
+
+          if(!info) {
+            tabs_data.push({key, 'name': "Информация о точке"});
+          }
+
+        }
+
+        if(key === 'rate_point') {
+          tabs_data.push({key, 'name': "Коэффициенты"});
+        }
+
+        if(key === 'pay_point') {
+          tabs_data.push({key, 'name': "Зарплата"});
+        }
+        
+        if(key === 'settings_point') {
+          tabs_data.push({key, 'name': "Настройки"});
+        }
+
+        if(key === 'zone_point') {
+          tabs_data.push({key, 'name': "Зоны доставки"});
+        }
+        
+      }
+    }
+
+    tabs_data.forEach((item, index) => {
+
+      if(item.key === 'active_point' || item.key === 'organization_point' || item.key === 'telephone_point') {
+        this.setState({
+          index_info: index
+        });
+      }
+
+      if(item.key === 'rate_point') {
+        this.setState({
+          index_rate: index
+        });
+      }
+
+      if(item.key === 'pay_point') {
+        this.setState({
+          index_pay: index
+        });
+      }
+
+      if(item.key === 'settings_point') {
+        this.setState({
+          index_sett: index
+        });
+      }
+
+      if(item.key === 'zone_point') {
+        this.setState({
+          index_zone: index
+        });
+      }
+
+    });
+
+    this.setState({
+      tabs_data
+    });
+
+  }
+
   async getDataPoint() {
-    //const point_id = this.state.point.id;
+    const point_id = this.state.point.id;
     const city_id = this.state.point.city_id;
     const activeTab = this.state.activeTab;
+    const index_zone = this.state.index_zone;
 
     const data = {
-      point_id: 0,
+      point_id,
       city_id
     };
 
     const res = await this.getData('get_one', data);
-
-    console.log("🚀 === getDataPoint res:", res);
 
     this.setState({
       cities: res.cities,
@@ -670,12 +1106,21 @@ class CafeEdit_ extends React.Component {
       dop_time_list: res.dop_time_list,
       other_zones: res.other_zones,
       zone: res.zone,
-      reason_list: res.reason_list
+      reason_list: res.reason_list,
+      point_info_hist: res.point_info_hist,
+      point_rate_hist: res.point_rate_hist,
+      point_pay_hist: res.point_pay_hist,
+      point_sett_hist: res.point_sett_hist,
+      point_zone_hist: res.point_zone_hist
     });
 
-    if(activeTab === 4 && res.zone.length && res.other_zones.length) {
+    if(activeTab === index_zone && res.zone.length && res.other_zones.length) {
       setTimeout(() => {
         this.getZones(res.zone, res.other_zones);
+      }, 300);
+    } else {
+      setTimeout(() => {
+        this.map?.geoObjects?.removeAll();
       }, 300);
     }
 
@@ -690,9 +1135,9 @@ class CafeEdit_ extends React.Component {
     }
  
     if(data === 'cafe_handle_close' && value){
-      // setTimeout(() => {
-      //     this.runCafe();
-      // }, 250)
+      setTimeout(() => {
+        this.save_edit_point_sett();
+      }, 300)
     }
 
     if(data === 'is_сlosed_technic'){
@@ -773,15 +1218,39 @@ class CafeEdit_ extends React.Component {
     const chooseReason = this.state.chooseReason;
     const is_сlosed_overload = this.state.is_сlosed_overload ? 1 : 0;
     const is_сlosed_technic = this.state.is_сlosed_technic ? 1 : 0;
+    const point_info = this.state.point_info;
    
     const data = {
       point_id,
       is_сlosed_overload,
       is_сlosed_technic,
-      comment: chooseReason
+      comment: chooseReason,
+      point_info
     }
     
-    console.log("🚀 === stop_cafe data:", data);
+    const res = await this.getData('stop_cafe', data);
+
+    if (!res.st) {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+      setTimeout(() => {
+        this.getDataPoint();
+      }, 300);
+
+    }
     
   }
 
@@ -809,29 +1278,35 @@ class CafeEdit_ extends React.Component {
   }
 
   async save_new_point(item) {
-    // let data = this.state.point_info;
 
-    // data.point_id = data.id;
+    const data = {
+      addr: item.addr,
+      city_id: item.city_id
+    }
 
-    console.log('save_new_point', item);
+    const res = await this.getData('save_new_point', data);
 
-    // const res = await this.getData('save_edit_point_info', data);
+    if (!res.st) {
 
-    // console.log("🚀 === res:", res);
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
 
-    // if (!res.st) {
-    //   this.setState({
-    //     openAlert: true,
-    //     err_status: res.st,
-    //     err_text: res.text,
-    //   });
-    // } else {
+    } else {
 
-    // setTimeout(() => {
-    //   this.getDataPoint();
-    // }, 300);
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
 
-    // }
+      setTimeout(() => {
+        this.getDataPoint();
+      }, 300);
+
+    }
   }
 
   async save_edit_point_info() {
@@ -993,6 +1468,10 @@ class CafeEdit_ extends React.Component {
         err_text: res.text,
       });
 
+      setTimeout(() => {
+        this.getDataPoint();
+      }, 300);
+
     }
   }
 
@@ -1024,23 +1503,29 @@ class CafeEdit_ extends React.Component {
     }
   }
 
-  async save_active_zone(item) {
-  
-    console.log('save_edit_point new item', item);
+  async save_active_zone() {
+
+    const zone_list = this.state.zone;
+    const point_id = this.state.point.id;
+
+    const data = {
+      zone_list,
+      point_id
+    };
+
+    const res = await this.getData('stop_zone', data);
    
-    // if (!res.st) {
-    //   this.setState({
-    //     openAlert: true,
-    //     err_status: res.st,
-    //     err_text: res.text,
-    //   });
-    // } else {
+    if (res.st) {
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
 
-    // setTimeout(() => {
-    //   this.getDataPoint();
-    // }, 300);
-
-    // }
+      setTimeout(() => {
+        this.getDataPoint();
+      }, 300);
+    }
 
   }
 
@@ -1060,18 +1545,18 @@ class CafeEdit_ extends React.Component {
         points.map((item) => {
           let points_zone = [];
 
-          points_zone.push(JSON.parse(item['zone']));
+          points_zone.push({xy: JSON.parse(item['zone']), active: item.is_active});
 
           let myGeoObject2 = [];
-
+          
           for (var poly = 0; poly < points_zone.length; poly++) {
             myGeoObject2[poly] = new ymaps.Polygon(
-              [points_zone[poly]],
+              [points_zone[poly].xy],
               {geometry: { fillRule: 'nonZero' }},
               {
                 fillOpacity: 0.4,
-                fillColor: '#00FF00',
-                strokeColor: '#0000FF',
+                fillColor: parseInt(points_zone[poly].active) ? '#00FF00' : '#AAAAAA',
+                strokeColor: parseInt(points_zone[poly].active) ? '#0000FF' : '#000000',
                 strokeWidth: 5,
               }
             );
@@ -1120,24 +1605,24 @@ class CafeEdit_ extends React.Component {
       points.map((item) => {
         let points_zone = [];
 
-        points_zone.push(JSON.parse(item['zone']));
+        points_zone.push({xy: JSON.parse(item['zone']), active: item.is_active});
 
-        let myGeoObject2 = [];
+          let myGeoObject2 = [];
+          
+          for (var poly = 0; poly < points_zone.length; poly++) {
+            myGeoObject2[poly] = new ymaps.Polygon(
+              [points_zone[poly].xy],
+              {geometry: { fillRule: 'nonZero' }},
+              {
+                fillOpacity: 0.4,
+                fillColor: parseInt(points_zone[poly].active) ? '#00FF00' : '#AAAAAA',
+                strokeColor: parseInt(points_zone[poly].active) ? '#0000FF' : '#000000',
+                strokeWidth: 5,
+              }
+            );
 
-        for (var poly = 0; poly < points_zone.length; poly++) {
-          myGeoObject2[poly] = new ymaps.Polygon(
-            [points_zone[poly]],
-            { geometry: { fillRule: 'nonZero' } },
-            {
-              fillColor: '#00FF00',
-              strokeColor: '#0000FF',
-              fillOpacity: 0.4,
-              strokeWidth: 5,
-            }
-          );
-
-          this.map.geoObjects.add(myGeoObject2[poly]);
-        }
+            this.map.geoObjects.add(myGeoObject2[poly]);
+          }
 
       });
 
@@ -1182,6 +1667,113 @@ class CafeEdit_ extends React.Component {
         one_zone: zone[index]
       });
     }
+
+  }
+
+  async open_hist_view(index, type_modal) {
+
+    let item;
+
+    if(type_modal === 'info') {
+      item = this.state.point_info_hist;
+    }
+
+    if(type_modal === 'rate') {
+      item = this.state.point_rate_hist;
+    }
+
+    if(type_modal === 'pay') {
+      item = this.state.point_pay_hist;
+    }
+
+    if(type_modal === 'sett') {
+      item = this.state.point_sett_hist;
+    }
+
+    let itemView = JSON.parse(JSON.stringify(item[index]));
+
+    if(type_modal === 'info') {
+      itemView.is_active = parseInt(itemView.is_active) ? 'Активна' : 'Не активна';
+    }
+
+    if(type_modal === 'sett') {
+      itemView.priority_pizza = parseInt(itemView.priority_pizza) ? 'Да' : 'Нет';
+      itemView.priority_order = parseInt(itemView.priority_order) ? 'Да' : 'Нет';
+      itemView.rolls_pizza_dif = parseInt(itemView.rolls_pizza_dif) ? 'Да' : 'Нет';
+      itemView.cook_common_stol = parseInt(itemView.cook_common_stol) ? 'Да' : 'Нет';
+      itemView.cafe_handle_close = parseInt(itemView.cafe_handle_close) ? 'Да' : 'Нет';
+    }
+
+    if(parseInt(index) !== 0) {
+      
+      let itemView_old = JSON.parse(JSON.stringify(item[index - 1]));
+
+      if(type_modal === 'info') {
+        itemView_old.is_active = parseInt(itemView_old.is_active) ? 'Активна' : 'Не активна';
+      }
+
+      if(type_modal === 'sett') {
+        itemView_old.priority_pizza = parseInt(itemView_old.priority_pizza) ? 'Да' : 'Нет';
+        itemView_old.priority_order = parseInt(itemView_old.priority_order) ? 'Да' : 'Нет';
+        itemView_old.rolls_pizza_dif = parseInt(itemView_old.rolls_pizza_dif) ? 'Да' : 'Нет';
+        itemView_old.cook_common_stol = parseInt(itemView_old.cook_common_stol) ? 'Да' : 'Нет';
+        itemView_old.cafe_handle_close = parseInt(itemView_old.cafe_handle_close) ? 'Да' : 'Нет';
+      }
+      
+      for (let key in itemView) {
+        if(itemView[key] !== itemView_old[key]) {
+
+          if(key === 'city_id') {
+            const name = this.state.cities.find((item) => item.id === itemView.city_id)?.name;
+            itemView[key] = { key: name, color: 'true' }
+          } else {
+            itemView[key] = { key: itemView[key], color: 'true' }
+          }
+
+        } else {
+
+          if(key === 'city_id') {
+            itemView.city_id = this.state.cities.find((item) => item.id === itemView.city_id)?.name ?? '';
+          } 
+
+        }
+
+      }
+      
+    } else {
+
+      itemView.city_id = this.state.cities.find((item) => item.id === itemView.city_id)?.name ?? '';
+
+    }
+
+    let date_edit = null;
+
+    if(type_modal === 'rate' || type_modal === 'pay') {
+      date_edit = itemView?.date_start?.key ?? null;
+    } 
+
+    this.setState({
+      modalDialogView: true,
+      itemView,
+      type_modal,
+      date_edit
+    });
+
+  }
+
+  async open_hist_view_zone(index, type_modal) {
+
+    const item = this.state.point_zone_hist;
+
+    let itemView = JSON.parse(JSON.stringify(item[index]));
+
+    itemView.is_active = parseInt(itemView.is_active) ? 'включена' : 'отключена';
+
+    this.setState({
+      modalDialogView: true,
+      itemView,
+      type_modal
+    });
 
   }
 
@@ -1238,6 +1830,15 @@ class CafeEdit_ extends React.Component {
           fullScreen={this.state.fullScreen}
         />
 
+        <CafeEdit_Modal_History
+          open={this.state.modalDialogView}
+          onClose={() => this.setState({ modalDialogView: false, itemView: null,type_modal: null, date_edit: null })}
+          itemView={this.state.itemView}
+          fullScreen={this.state.fullScreen}
+          type_modal={this.state.type_modal}
+          date_edit={this.state.date_edit}
+        />
+
         <Grid container spacing={3} mb={3} className='container_first_child'>
 
           <Grid item xs={12} sm={12}>
@@ -1254,20 +1855,20 @@ class CafeEdit_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
-            <Button onClick={this.open_new_point.bind(this)} variant="contained">
-              Добавить точку
-            </Button>
-          </Grid>
+          {parseInt(this.state.acces?.organization_point) ?
+            <Grid item xs={12} sm={4}>
+              <Button onClick={this.open_new_point.bind(this)} variant="contained">
+                Добавить точку
+              </Button>
+            </Grid>
+          : null}
 
           <Grid item xs={12} sm={12} style={{ paddingBottom: 24 }}>
             <Paper>
               <Tabs value={this.state.activeTab} onChange={ this.changeTab.bind(this) } centered variant='fullWidth'>
-                <Tab label="Информация о точке" {...a11yProps(0)} />
-                <Tab label="Коэффициенты" {...a11yProps(1)} />
-                <Tab label="Зарплата" {...a11yProps(2)} />
-                <Tab label="Настройки" {...a11yProps(3)} />
-                <Tab label="Зоны доставки" {...a11yProps(4)} />
+                {this.state.tabs_data?.map((item, index) => {
+                  return <Tab label={item.name} {...a11yProps(index)} key={index} />
+                })}
               </Tabs>
             </Paper>
           </Grid>
@@ -1275,108 +1876,119 @@ class CafeEdit_ extends React.Component {
           <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
             <TabPanel 
               value={this.state.activeTab} 
-              index={0} 
+              index={this.state.index_info} 
               id='clients'
             >
               <Grid container spacing={3}>
 
-                <Grid item xs={12} sm={3}>
-                  <MySelect
-                    label="Город"
-                    is_none={false}
-                    data={this.state.cities}
-                    value={this.state.point_info?.city_id ?? ''}
-                    func={this.changeData.bind(this, 'city_id')}
-                  />
-                </Grid>
+                {parseInt(this.state.acces?.organization_point) ?
+                  <>
+                    <Grid item xs={12} sm={3}>
+                      <MySelect
+                        label="Город"
+                        is_none={false}
+                        data={this.state.cities}
+                        value={this.state.point_info?.city_id ?? ''}
+                        func={this.changeData.bind(this, 'city_id')}
+                      />
+                    </Grid>
 
-                <Grid item xs={12} sm={3}>
-                  <MyTextInput
-                    label="Адрес"
-                    value={this.state.point_info?.addr ?? ''}
-                    func={this.changeData.bind(this, 'addr')}
-                  />
-                </Grid>
+                    <Grid item xs={12} sm={3}>
+                      <MyTextInput
+                        label="Адрес"
+                        value={this.state.point_info?.addr ?? ''}
+                        func={this.changeData.bind(this, 'addr')}
+                      />
+                    </Grid>
 
-                <Grid item xs={12} sm={3}>
-                  <MyTextInput
-                    label="Район"
-                    value={this.state.point_info?.raion ?? ''}
-                    func={this.changeData.bind(this, 'raion')}
-                  />
-                </Grid>
+                    <Grid item xs={12} sm={3}>
+                      <MyTextInput
+                        label="Район"
+                        value={this.state.point_info?.raion ?? ''}
+                        func={this.changeData.bind(this, 'raion')}
+                      />
+                    </Grid>
 
-                <Grid item xs={12} sm={3}>
-                  <MyTextInput
-                    label="Сортировка"
-                    value={this.state.point_info?.sort ?? ''}
-                    func={this.changeData.bind(this, 'sort')}
-                  />
-                </Grid>
+                    <Grid item xs={12} sm={3}>
+                      <MyTextInput
+                        label="Сортировка"
+                        value={this.state.point_info?.sort ?? ''}
+                        func={this.changeData.bind(this, 'sort')}
+                      />
+                    </Grid>
 
-                <Grid item xs={12} sm={3}>
-                  <MyTextInput
-                    label="Организация"
-                    value={this.state.point_info?.organization ?? ''}
-                    func={this.changeData.bind(this, 'organization')}
-                  />
-                </Grid>
+                    <Grid item xs={12} sm={3}>
+                      <MyTextInput
+                        label="Организация"
+                        value={this.state.point_info?.organization ?? ''}
+                        func={this.changeData.bind(this, 'organization')}
+                      />
+                    </Grid>
 
-                <Grid item xs={12} sm={3}>
-                  <MyTextInput
-                    label="ИНН"
-                    value={this.state.point_info?.inn ?? ''}
-                    func={this.changeData.bind(this, 'inn')}
-                  />
-                </Grid>
+                    <Grid item xs={12} sm={3}>
+                      <MyTextInput
+                        label="ИНН"
+                        value={this.state.point_info?.inn ?? ''}
+                        func={this.changeData.bind(this, 'inn')}
+                      />
+                    </Grid>
 
-                <Grid item xs={12} sm={3}>
-                  <MyTextInput
-                    label="ОГРН"
-                    value={this.state.point_info?.ogrn ?? ''}
-                    func={this.changeData.bind(this, 'ogrn')}
-                  />
-                </Grid>
+                    <Grid item xs={12} sm={3}>
+                      <MyTextInput
+                        label="ОГРН"
+                        value={this.state.point_info?.ogrn ?? ''}
+                        func={this.changeData.bind(this, 'ogrn')}
+                      />
+                    </Grid>
 
-                <Grid item xs={12} sm={3}>
-                  <MyTextInput
-                    label="КПП"
-                    value={this.state.point_info?.kpp ?? ''}
-                    func={this.changeData.bind(this, 'kpp')}
-                  />
-                </Grid>
+                    <Grid item xs={12} sm={3}>
+                      <MyTextInput
+                        label="КПП"
+                        value={this.state.point_info?.kpp ?? ''}
+                        func={this.changeData.bind(this, 'kpp')}
+                      />
+                    </Grid>
 
-                <Grid item xs={12} sm={8}>
-                  <MyTextInput
-                    label="Полный адрес"
-                    value={this.state.point_info?.full_addr ?? ''}
-                    func={this.changeData.bind(this, 'full_addr')}
-                  />
-                </Grid>
+                    <Grid item xs={12} sm={12}>
+                      <MyTextInput
+                        label="Полный адрес"
+                        value={this.state.point_info?.full_addr ?? ''}
+                        func={this.changeData.bind(this, 'full_addr')}
+                      />
+                    </Grid>
+                  </>
+                  : null
+                }
 
-                <Grid item xs={12} sm={4}>
-                  <MyCheckBox
-                    label="Активность"
-                    value={parseInt(this.state.point_info?.is_active ?? 0) == 1 ? true : false}
-                    func={this.changeItemChecked.bind(this, 'is_active')}
-                  />
-                </Grid>
+                {parseInt(this.state.acces?.active_point) ?
+                  <Grid item xs={12} sm={12}>
+                    <MyCheckBox
+                      label="Активность"
+                      value={parseInt(this.state.point_info?.is_active ?? 0) == 1 ? true : false}
+                      func={this.changeItemChecked.bind(this, 'is_active')}
+                    />
+                  </Grid>
+                : null}
 
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="Телефон управляющего"
-                    value={this.state.point_info?.phone_upr ?? ''}
-                    func={this.changeData.bind(this, 'phone_upr')}
-                  />
-                </Grid>
+                {parseInt(this.state.acces?.telephone_point) ?
+                  <>
+                    <Grid item xs={12} sm={4}>
+                      <MyTextInput
+                        label="Телефон управляющего"
+                        value={this.state.point_info?.phone_upr ?? ''}
+                        func={this.changeData.bind(this, 'phone_upr')}
+                      />
+                    </Grid>
 
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="Телефон менеджера"
-                    value={this.state.point_info?.phone_man ?? ''}
-                    func={this.changeData.bind(this, 'phone_man')}
-                  />
-                </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <MyTextInput
+                        label="Телефон менеджера"
+                        value={this.state.point_info?.phone_man ?? ''}
+                        func={this.changeData.bind(this, 'phone_man')}
+                      />
+                    </Grid>
+                  </>
+                : null}
 
                 <Grid item xs={12} sm={12} display='grid'>
                   <Button 
@@ -1388,6 +2000,41 @@ class CafeEdit_ extends React.Component {
                     Сохранить изменения
                   </Button>
                 </Grid>
+
+                {!this.state.point_info_hist.length ? null :
+                  <Grid item xs={12} sm={12} mb={5}>
+                    <Accordion style={{ width: '100%' }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Table size='small'>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>#</TableCell>
+                              <TableCell>Дата / время</TableCell>
+                              <TableCell>Сотрудник</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {this.state.point_info_hist.map((it, k) =>
+                              <TableRow 
+                                hover 
+                                key={k} 
+                                style={{ cursor: 'pointer'}}
+                                onClick={this.open_hist_view.bind(this, k, 'info')}
+                              >
+                                <TableCell>{k+1}</TableCell>
+                                <TableCell>{it.date_time_update}</TableCell>
+                                <TableCell>{it.user_name}</TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Grid>
+                }
                
               </Grid>
             </TabPanel>
@@ -1396,7 +2043,7 @@ class CafeEdit_ extends React.Component {
           <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
             <TabPanel 
               value={this.state.activeTab} 
-              index={1} 
+              index={this.state.index_rate} 
               id='clients'
             >
               <Grid container spacing={3}>
@@ -1435,6 +2082,41 @@ class CafeEdit_ extends React.Component {
                     Сохранить изменения
                   </Button>
                 </Grid>
+
+                {!this.state.point_rate_hist.length ? null :
+                  <Grid item xs={12} sm={12} mb={5}>
+                    <Accordion style={{ width: '100%' }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Table size='small'>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>#</TableCell>
+                              <TableCell>Дата / время</TableCell>
+                              <TableCell>Сотрудник</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {this.state.point_rate_hist.map((it, k) =>
+                              <TableRow 
+                                hover 
+                                key={k} 
+                                style={{ cursor: 'pointer'}}
+                                onClick={this.open_hist_view.bind(this, k,'rate')} 
+                              >
+                                <TableCell>{k+1}</TableCell>
+                                <TableCell>{it.date_time_update}</TableCell>
+                                <TableCell>{it.user_name}</TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Grid>
+                }
                
               </Grid>
             </TabPanel>
@@ -1443,7 +2125,7 @@ class CafeEdit_ extends React.Component {
           <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
             <TabPanel 
               value={this.state.activeTab} 
-              index={2} 
+              index={this.state.index_pay} 
               id='clients'
             >
               <Grid container spacing={3}>
@@ -1481,6 +2163,41 @@ class CafeEdit_ extends React.Component {
                     Сохранить изменения
                   </Button>
                 </Grid>
+
+                {!this.state.point_pay_hist.length ? null :
+                  <Grid item xs={12} sm={12} mb={5}>
+                    <Accordion style={{ width: '100%' }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Table size='small'>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>#</TableCell>
+                              <TableCell>Дата / время</TableCell>
+                              <TableCell>Сотрудник</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {this.state.point_pay_hist.map((it, k) =>
+                              <TableRow 
+                                hover 
+                                key={k} 
+                                style={{ cursor: 'pointer'}}
+                                onClick={this.open_hist_view.bind(this, k,'pay')} 
+                              >
+                                <TableCell>{k+1}</TableCell>
+                                <TableCell>{it.date_time_update}</TableCell>
+                                <TableCell>{it.user_name}</TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Grid>
+                }
                
               </Grid>
             </TabPanel>
@@ -1489,7 +2206,7 @@ class CafeEdit_ extends React.Component {
           <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
             <TabPanel 
               value={this.state.activeTab} 
-              index={3} 
+              index={this.state.index_sett} 
               id='clients'
             >
               <Grid container spacing={3}>
@@ -1561,31 +2278,33 @@ class CafeEdit_ extends React.Component {
                   </Button>
                 </Grid>
 
-                <Grid item xs={12} sm={12} mb={5}>
-                  <TableContainer component={Paper}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell colSpan={3}>Актуальное время</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell style={{ width:'33%' }}>Зона</TableCell>
-                          <TableCell style={{ width:'33%' }}>Промежуток</TableCell>
-                          <TableCell style={{ width:'33%' }}>Время доставки</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {this.state.actual_time_list.map((item, key) =>
-                          <TableRow key={key}>
-                            <TableCell>{item.name}</TableCell>
-                            <TableCell>{item.time_start} - {item.time_end}</TableCell>
-                            <TableCell>{item.time_dev} мин.</TableCell>
+                {!this.state.actual_time_list.length ? null :
+                  <Grid item xs={12} sm={12} mb={5}>
+                    <TableContainer component={Paper}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell colSpan={3}>Актуальное время</TableCell>
                           </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Grid>
+                          <TableRow>
+                            <TableCell style={{ width:'33%' }}>Зона</TableCell>
+                            <TableCell style={{ width:'33%' }}>Промежуток</TableCell>
+                            <TableCell style={{ width:'33%' }}>Время доставки</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {this.state.actual_time_list.map((item, key) =>
+                            <TableRow key={key}>
+                              <TableCell>{item.name}</TableCell>
+                              <TableCell>{item.time_start} - {item.time_end}</TableCell>
+                              <TableCell>{item.time_dev} мин.</TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                }
 
                 {!this.state.dop_time_list.length ? null :
                   <Grid item xs={12} sm={12} mb={5}>
@@ -1614,6 +2333,42 @@ class CafeEdit_ extends React.Component {
                     </TableContainer>
                   </Grid>
                 }
+
+                {!this.state.point_sett_hist.length ? null :
+                  <Grid item xs={12} sm={12} mb={5}>
+                    <Accordion style={{ width: '100%' }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Table size='small'>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>#</TableCell>
+                              <TableCell>Дата / время</TableCell>
+                              <TableCell>Сотрудник</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {this.state.point_sett_hist.map((it, k) =>
+                              <TableRow 
+                                hover 
+                                key={k} 
+                                style={{ cursor: 'pointer'}}
+                                onClick={this.open_hist_view.bind(this, k, 'sett')}
+                              >
+                                <TableCell>{k+1}</TableCell>
+                                <TableCell>{it.date_time_update}</TableCell>
+                                <TableCell>{it.user_name}</TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Grid>
+                }
+
                
               </Grid>
             </TabPanel>
@@ -1622,12 +2377,47 @@ class CafeEdit_ extends React.Component {
           <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
             <TabPanel 
               value={this.state.activeTab} 
-              index={4} 
+              index={this.state.index_zone} 
               id='clients'
             >
-              <Grid item xs={12} sm={12} mb={5}>
+              <Grid item xs={12} sm={12} mb={3}>
                 <div id="map" name="map" style={{ width: '100%', height: 700, paddingTop: 10 }} />
               </Grid>
+
+              {!this.state.point_zone_hist.length ? null :
+                <Grid item xs={12} sm={12} mb={5}>
+                  <Accordion style={{ width: '100%' }}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Table size='small'>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>#</TableCell>
+                            <TableCell>Дата / время</TableCell>
+                            <TableCell>Сотрудник</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {this.state.point_zone_hist.map((it, k) =>
+                            <TableRow 
+                              hover 
+                              key={k} 
+                              style={{ cursor: 'pointer'}}
+                              onClick={this.open_hist_view_zone.bind(this, k, 'zone')}
+                            >
+                              <TableCell>{k+1}</TableCell>
+                              <TableCell>{it.date_time_update}</TableCell>
+                              <TableCell>{it.user_name}</TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </AccordionDetails>
+                  </Accordion>
+                </Grid>
+              }
             </TabPanel>
           </Grid>
 

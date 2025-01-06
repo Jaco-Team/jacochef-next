@@ -2,7 +2,7 @@ import queryString from 'query-string';
 import axios from 'axios';
 
 export function api(module = '', method = '', data = {}, dop_type = {}) {
- //const urlApi_dev = 'http://127.0.0.1:8000/api/'+module+'/'+method;
+  //const urlApi_dev = 'http://127.0.0.1:8000/api/'+module+'/'+method;
   //const urlApi_dev = 'https://79.174.91.113/api/'+module+'/'+method;
 
   const urlApi_dev = 'https://jacochef.ru/api/index_new.php';
