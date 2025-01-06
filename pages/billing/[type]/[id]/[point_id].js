@@ -1109,7 +1109,7 @@ const useStore = create((set, get) => ({
     vendor_items[0].all_ed_izmer = all_ed_izmer;
     vendor_items[0].count = is_add == 0 ? '' : count;
     vendor_items[0].fact_unit = is_add == 0 ? '' : fact_unit;
-    vendor_items[0].price_item = is_add == 0 ? '' : sum_w_nds;
+    vendor_items[0].price_item = is_add == 0 ? '' : summ;
     vendor_items[0].price_w_nds = is_add == 0 ? '' : sum_w_nds;
 
     const bill_items_doc = get().bill_items_doc;
@@ -1323,7 +1323,9 @@ const useStore = create((set, get) => ({
 
 function FormHeader_new({ type_edit }){
 
-  const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
+  const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, bill] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.bill]);
+
+  console.log( 'bill', bill?.type, parseInt(bill?.type) == 5 || ( parseInt(type) === 2 || parseInt(type) === 3 ), type )
 
   return (
     <>
@@ -1371,7 +1373,7 @@ function FormHeader_new({ type_edit }){
         />
       </Grid>
 
-      {parseInt(type) === 2 || parseInt(type) === 3 ? (
+      { parseInt(type) === 2 || parseInt(type) === 3 ? (
         <>
           <Grid item xs={12} sm={4}>
             <MySelect
@@ -1380,7 +1382,7 @@ function FormHeader_new({ type_edit }){
               multiple={false}
               is_none={false}
               //disabled={ type_edit === 'edit' ? false : true }
-              disabled={ true }
+              disabled={ parseInt(bill?.type) == 5 ? false : true }
               func={ event => changeData('doc_base_id', event) }
               label="Документ"
             />
@@ -2695,6 +2697,10 @@ class Billing_Edit_ extends React.Component {
 
     let new_bill_items = bill_items.filter( item => item.fact_unit.length == 0 || item.price_item.length == 0 || item.price_w_nds.length == 0 );
 
+    //console.log( 'bill_items', bill_items )
+    //this.isClick = false;
+    //return ;
+
     if( new_bill_items.length > 0 ){
       showAlert(false, 'Не все даныне в товаре заполнены');
 
@@ -2743,21 +2749,22 @@ class Billing_Edit_ extends React.Component {
       return ;
     }
     
+    if( type_save !== 'return' ){
+      if( imgs_bill.length == 0 && ( !DropzoneMain || DropzoneMain['files'].length === 0 ) ) {
+        showAlert(false, 'Нет изображений документа');
 
-    if( imgs_bill.length == 0 && ( !DropzoneMain || DropzoneMain['files'].length === 0 ) ) {
-      showAlert(false, 'Нет изображений документа');
+        this.isClick = false;
 
-      this.isClick = false;
+        return ;
+      }
 
-      return ;
-    }
+      if( imgs_factur.length == 0 && parseInt(doc_base_id) == 5 && ( parseInt(type) == 2 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) ) {
+        showAlert(false, 'Нет изображений счет-фактуры');
 
-    if( imgs_factur.length == 0 && parseInt(doc_base_id) == 5 && ( parseInt(type) == 2 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) ) {
-      showAlert(false, 'Нет изображений счет-фактуры');
+        this.isClick = false;
 
-      this.isClick = false;
-
-      return ;
+        return ;
+      }
     }
 
     if( DropzoneMain && DropzoneMain['files'].length > 0 ){

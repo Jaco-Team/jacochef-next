@@ -429,8 +429,8 @@ class WorkSchedule_Table extends React.Component {
                   </TableCell>
                   
                   <TableCell 
-                    style={{ textAlign: 'center', cursor: item.data.app_type == 'dir' && this.props.kind == 'dir' ? 'pointer' : 'default', backgroundColor: this.props.numberChoose == 2 && this.props.kind == 'dir' && item.data.app_type == 'dir' ? '#e5e5e5' : '#fff' }} 
-                    onClick={ this.props.numberChoose == 2 && this.props.kind == 'dir' && item.data.app_type == 'dir' ? this.props.openModalDirBonus.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data) : () => {} } 
+                    style={{ textAlign: 'center', cursor: item.data.app_type == 'dir' && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') ? 'pointer' : 'default', backgroundColor: this.props.numberChoose == 2 && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') && item.data.app_type == 'dir' ? '#e5e5e5' : '#fff' }} 
+                    onClick={ this.props.numberChoose == 2 && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') && item.data.app_type == 'dir' ? this.props.openModalDirBonus.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data) : () => { console.log( this.props.numberChoose, this.props.kind, item.data.app_type, this.props.numberChoose == 2 && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') && item.data.app_type == 'dir' ) } } 
                     //onClick={ item.data.app_type == 'dir' || this.props.kind == 'dir' ? () => {} : this.props.openZPCart.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data)}
                   >
                     {parseInt(item.data.check_period) == 1 ? item.data.my_bonus : ' - '}

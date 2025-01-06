@@ -24,7 +24,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MySelect, MyAlert, formatDate, MyTextInput, MyDatePickerNew } from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 import { ExlIcon } from '@/ui/icons';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -268,7 +268,7 @@ class SitePriceLevel_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'site_price_level',
+      module: 'site_price_lavel',
       module_name: '',
       is_load: false,
 
@@ -406,7 +406,7 @@ class SitePriceLevel_ extends React.Component {
     } else {
 
       const link = document.createElement('a');
-      link.href = `/site_price_level/${res?.level_id}`
+      link.href = `/site_price_lavel/${res?.level_id}`
       link.target = '_blank'
       link.click();
 
@@ -420,7 +420,7 @@ class SitePriceLevel_ extends React.Component {
   async getOneLevel(level_id) {
    
     const link = document.createElement('a');
-    link.href = `/site_price_level/${level_id}`
+    link.href = `/site_price_lavel/${level_id}`
     link.target = '_blank'
     link.click();
 
@@ -472,13 +472,13 @@ class SitePriceLevel_ extends React.Component {
 
     let formData = new FormData();
 
-    //const urlApi_dev = 'http://127.0.0.1:8000/api/site_price_level/import_file_xls';
-    const urlApi_dev = 'https://apichef.jacochef.ru/api/site_price_level/import_file_xls';
+    //const urlApi_dev = 'http://127.0.0.1:8000/api/site_price_lavel/import_file_xls';
+    const urlApi_dev = 'https://apichef.jacochef.ru/api/site_price_lavel/import_file_xls';
 
     formData.append('file', target.files[0]);
     formData.append('login', localStorage.getItem('token'));
     formData.append('method', 'import_file_xls');
-    formData.append('module', 'site_price_level');
+    formData.append('module', 'site_price_lavel');
 
     this.setState({
       is_load: true,

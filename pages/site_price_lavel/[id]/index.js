@@ -16,7 +16,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import {MySelect, MyDatePickerNew, MyTextInput, MyAlert} from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 class SitePriceLevelEdit_input_level_name extends React.Component {
@@ -166,7 +166,7 @@ class SitePriceLevelEdit_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'site_price_level',
+      module: 'site_price_lavel',
       module_name: '',
       is_load: false,
 
@@ -416,6 +416,8 @@ class SitePriceLevelEdit_ extends React.Component {
               func={this.changeDateRange.bind(this, 'date_start')}
             />
           </Grid>
+
+          
 
           <Grid item xs={12} sm={12}>
             <TableContainer  sx={{ maxHeight: { xs: 'none', sm: 652 } }} component={Paper}>

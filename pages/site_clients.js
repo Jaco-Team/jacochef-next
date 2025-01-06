@@ -1050,6 +1050,7 @@ class SiteClients_ extends React.Component {
       order: '',
       search_orders: [],
       addr: '',
+      promo: '',
 
       cities: [],
       city_id: [],
@@ -1217,6 +1218,7 @@ class SiteClients_ extends React.Component {
     let order = this.state.order;
     let items = this.state.items;
     let addr = this.state.addr;
+    let promo = this.state.promo;
 
     if (!city_id.length) {
 
@@ -1229,15 +1231,19 @@ class SiteClients_ extends React.Component {
       return;
     } 
 
-    if (!date_start || !date_end) {
+    if ( (!date_start && !date_end) || !date_start || !date_end) {
 
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо указать даты'
-      });
+      if( number.length > 0 || order.length > 0 || items.length > 0 || addr.length > 0 || promo.length > 0 ) {
 
-      return;
+      }else{
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: 'Необходимо указать дату или что-то кроме нее'
+        });
+  
+        return;
+      }
     } 
 
     date_start = dayjs(date_start).format('YYYY-MM-DD');
@@ -1250,7 +1256,8 @@ class SiteClients_ extends React.Component {
       date_end,
       order,
       items,
-      addr
+      addr,
+      promo
     }
 
     const dop_type = {
@@ -1324,6 +1331,7 @@ class SiteClients_ extends React.Component {
     let order = this.state.order;
     let items = this.state.items;
     let addr = this.state.addr;
+    let promo = this.state.promo;
 
     date_start = date_start ? dayjs(date_start).format('YYYY-MM-DD') : '';
     date_end = date_end ? dayjs(date_end).format('YYYY-MM-DD') : '';
@@ -1341,7 +1349,7 @@ class SiteClients_ extends React.Component {
 
     if ( (!date_start && !date_end) || !date_start || !date_end) {
 
-      if( number.length > 0 || order.length > 0 || items.length > 0 || addr.length > 0 ) {
+      if( number.length > 0 || order.length > 0 || items.length > 0 || addr.length > 0 || promo.length > 0 ) {
 
       }else{
         this.setState({
@@ -1361,7 +1369,8 @@ class SiteClients_ extends React.Component {
       date_end,
       order,
       items,
-      addr
+      addr,
+      promo
     }
 
     const res = await this.getData('get_orders', data);
@@ -1732,6 +1741,7 @@ class SiteClients_ extends React.Component {
                     <Grid item xs={12} sm={4}>
                       <MyDatePickerNew
                         label="Дата от"
+                        customActions={true}
                         value={dayjs(this.state.date_start)}
                         func={this.changeDateRange.bind(this, 'date_start')}
                       />
@@ -1740,6 +1750,7 @@ class SiteClients_ extends React.Component {
                     <Grid item xs={12} sm={4}>
                       <MyDatePickerNew
                         label="Дата до"
+                        customActions={true}
                         value={dayjs(this.state.date_end)}
                         func={this.changeDateRange.bind(this, 'date_end')}
                       />
@@ -1792,6 +1803,29 @@ class SiteClients_ extends React.Component {
                     </Grid>
 
                     <Grid item xs={12} sm={4}>
+                      <MyTextInput
+                        type='text'
+                        className="input_promo"
+                        label="Промокод"
+                        value={this.state.promo}
+                        func={this.changeInput.bind(this, 'promo', 'edit')}
+                        inputAdornment={{
+                          endAdornment: (
+                            <>
+                              {!this.state.number ? null :
+                                <InputAdornment position="end">
+                                <IconButton>
+                                  <ClearIcon onClick={this.changeInput.bind(this, 'promo', 'clear')} />
+                                </IconButton>
+                              </InputAdornment>
+                              }
+                            </>
+                          )
+                        }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12}>
                       <MyTextInput
                         className="input_login"
                         label="Адрес клиента"
