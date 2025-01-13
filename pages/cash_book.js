@@ -24,6 +24,7 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
@@ -173,6 +174,7 @@ class MainTableRow extends React.Component {
                     <TableRow>
                       <TableCell>Дата</TableCell>
                       <TableCell>Сумма</TableCell>
+                      <TableCell></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -182,6 +184,7 @@ class MainTableRow extends React.Component {
                         <TableRow onClick={this.props.toogleCollapseTableRow.bind(this, this.props.type, this.props.table, key)} style={{ cursor: 'pointer' }}>
                           <TableCell>{item.date}</TableCell>
                           <TableCell>{item.summ}</TableCell>
+                          <TableCell><ExpandMoreIcon style={{ display: 'flex', transform: item.is_open ? 'rotate(180deg)' : 'rotate(0deg)' }}/></TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={3}>

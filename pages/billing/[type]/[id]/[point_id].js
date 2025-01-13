@@ -400,7 +400,7 @@ const useStore = create((set, get) => ({
           set({
             is_load_store: false,
           });
-        }, 300);
+        }, 1100);
 
         return json;
       })
@@ -2660,7 +2660,7 @@ class Billing_Edit_ extends React.Component {
           this.setState({
             is_load: false,
           });
-        }, 300);
+        }, 1100);
 
         return json;
       })
@@ -2804,7 +2804,7 @@ class Billing_Edit_ extends React.Component {
 
       setTimeout( () => {
         this.isClick = false;
-      }, 1000 );
+      }, 10000 );
 
       if( res?.text && res.text.length > 0 ) {
 
@@ -2834,7 +2834,7 @@ class Billing_Edit_ extends React.Component {
 
       setTimeout( () => {
         this.isClick = false;
-      }, 1000 );
+      }, 10000 );
 
     }
   }
