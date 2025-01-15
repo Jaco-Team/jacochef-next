@@ -2654,7 +2654,7 @@ class Billing_Edit_ extends React.Component {
 
     setTimeout( () => {
       this.isClick = false;
-    }, 10000 );
+    }, 20000 );
 
     if (res.st === true) {
 

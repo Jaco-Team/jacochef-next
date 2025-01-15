@@ -16,7 +16,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import {MyCheckBox, MyDatePickerNew, formatDate, MyAutocomplite, MyAlert} from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api, api_laravel, api_laravel_local } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 var am5locales_ru_RU = {
@@ -130,7 +130,7 @@ class StatOrder_ extends React.Component {
       is_load: true,
     });
 
-    let res = api(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {

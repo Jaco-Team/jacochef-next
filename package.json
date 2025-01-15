@@ -17,11 +17,11 @@
     "@emotion/styled": "^11.14.0",
     "@mui/styled-engine-sc": "^5.14.12",
     "styled-components": "^5.3.11",
-    "@mui/icons-material": "^5.16.13",
+    "@mui/icons-material": "^5.16.14",
     "@mui/lab": "^5.0.0-alpha.175",
-    "@mui/material": "^5.16.13",
-    "@mui/material-nextjs": "^5.16.13",
-    "@mui/x-date-pickers": "^7.23.3",
+    "@mui/material": "^5.16.14",
+    "@mui/material-nextjs": "^5.16.14",
+    "@mui/x-date-pickers": "^7.23.6",
     "@tinymce/tinymce-react": "^5.1.1",
     "axios": "^1.7.9",
     "childprocess": "^2.0.2",
@@ -31,7 +31,7 @@
     "js-cookie": "^3.0.5",
     "mathjs": "^14.0.1",
     "moment": "^2.30.1",
-    "next": "14.2.22",
+    "next": "14.2.23",
     "node-tls": "^0.10.2",
     "query-string": "^9.1.1",
     "react": "^18.2.0",
@@ -40,8 +40,8 @@
     "react-modal-image": "^2.6.0",
     "react-multi-date-picker": "^4.5.2",
     "tinymce": "^7.6.0",
-    "zustand": "^4.5.5",
-    "sass": "^1.83.0"
+    "zustand": "^4.5.6",
+    "sass": "^1.83.1"
   },
   "devDependencies": {
    
