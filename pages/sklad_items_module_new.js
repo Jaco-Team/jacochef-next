@@ -38,7 +38,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import {MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyAlert} from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api, api_laravel } from '@/src/api_new';
 
 class SkladItemsModule_Modal_History_View extends React.Component {
   constructor(props) {
@@ -380,7 +380,10 @@ class SkladItemsModule_Modal extends React.Component {
 
     if (this.props !== prevProps) {
       this.setState({
-        itemEdit: this.props.event
+        itemEdit: this.props.event,
+        openAlert: false,
+        err_status: false,
+        err_text: ''
       });
     }
   }
@@ -402,208 +405,285 @@ class SkladItemsModule_Modal extends React.Component {
       itemEdit: value,
     });
   }
+
+  save() {
+    let item = this.state.itemEdit;
+
+    let { name, cat_id, ed_izmer_id, name_for_vendor, pq, art, pf_id, my_allergens, my_allergens_other, app_id } = item.item;
+    let { this_storages } = item;
+
+    if (!name || !cat_id || !ed_izmer_id || !name_for_vendor || !pq || !art || !pf_id || !my_allergens.length || !my_allergens_other.length || !this_storages.length || !app_id) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Все поля формы должны быть заполнены'
+      });
+
+      return;
+    } 
+
+    this.props.method === 'Редактирование товара' ? this.props.checkArt(item) : this.props.checkArtNew(item);
+  }
  
   onClose() {
+
     this.setState({
       itemEdit: this.props.event ? this.props.event : null,
+      openAlert: false,
+      err_status: false,
+      err_text: ''
     });
+
     this.props.onClose();
+
   }
 
   render() {
     return (
-      <Dialog
-        open={this.props.open}
-        fullWidth={true}
-        maxWidth={'xl'}
-        onClose={this.onClose.bind(this)}
-        fullScreen={this.props.fullScreen}
-      >
-        <DialogTitle className="button">
-          <Typography style={{ alignSelf: 'center' }}>
-            {this.props.method}
-            {this.props.itemName ? `: ${this.props.itemName}` : ''}
-          </Typography>
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+      <>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+      
+        <Dialog
+          open={this.props.open}
+          fullWidth={true}
+          maxWidth={'xl'}
+          onClose={this.onClose.bind(this)}
+          fullScreen={this.props.fullScreen}
+        >
+          <DialogTitle className="button">
+            <Typography style={{ alignSelf: 'center' }}>
+              {this.props.method}
+              {this.props.itemName ? `: ${this.props.itemName}` : ''}
+            </Typography>
+            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
 
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={3.5}>
-              <MyTextInput
-                label="Название товара"
-                value={this.state.itemEdit ? this.state.itemEdit.item.name : ''}
-                func={this.changeItem.bind(this, 'name')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3.5}>
-              <MyAutocomplite
-                label="Категория"
-                multiple={false}
-                data={this.state.itemEdit ? this.state.itemEdit.cats : []}
-                value={this.state.itemEdit ? this.state.itemEdit.item.cat_id === '0' ? '' : this.state.itemEdit.item.cat_id : ''}
-                func={(event, value) => {
-                  let this_storages = this.state.itemEdit;
-                  this_storages.item.cat_id = value;
-                  this.setState({ itemEdit: this_storages });
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={1.5}>
-              <MySelect
-                data={this.state.itemEdit ? this.state.itemEdit.ed_izmer : []}
-                value={this.state.itemEdit ? this.state.itemEdit.item.ed_izmer_id === '0' ? '' : this.state.itemEdit.item.ed_izmer_id : ''}
-                func={this.changeItem.bind(this, 'ed_izmer_id')}
-                label="Ед измер"
-              />
-            </Grid>
-            <Grid item xs={12} sm={3.5}>
-              <MyTextInput
-                label="Максимальное количество заказов в месяц (0 - без ограничений)"
-                value={this.state.itemEdit ? this.state.itemEdit.item.max_count_in_m : ''}
-                func={this.changeItem.bind(this, 'max_count_in_m')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3.5}>
-              <MyTextInput
-                label="Название товара для поставщика"
-                value={this.state.itemEdit ? this.state.itemEdit.item.name_for_vendor : ''}
-                func={this.changeItem.bind(this, 'name_for_vendor')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3.5}>
-              <MyTextInput
-                label="Количество в упаковке" 
-                value={this.state.itemEdit ? this.state.itemEdit.item.pq : ''} 
-                func={this.changeItem.bind(this, 'pq')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={1.5}>
-              <MyTextInput
-                label="% заявки"
-                value={this.state.itemEdit ? this.state.itemEdit.item.percent : ''}
-                func={this.changeItem.bind(this, 'percent')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3.5}>
-              <MyTextInput
-                label="Разрешенный % повышения ценника"
-                value={this.state.itemEdit ? this.state.itemEdit.item.vend_percent : ''}
-                func={this.changeItem.bind(this, 'vend_percent')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3.5}>
-              <MyTextInput
-                label="Код для 1с"
-                value={this.state.itemEdit ? this.state.itemEdit.item.art : ''}
-                func={this.changeItem.bind(this, 'art')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3.5}>
-              <MyTextInput
-                label="Минимальный остаток"
-                value={ this.state.itemEdit ? this.state.itemEdit.item.min_count : ''}
-                func={ this.changeItem.bind(this, 'min_count') }
-              />
-            </Grid>
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={3.5}>
+                <MyTextInput
+                  label="Название товара"
+                  value={this.state.itemEdit ? this.state.itemEdit.item.name : ''}
+                  func={this.changeItem.bind(this, 'name')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3.5}>
+                <MyAutocomplite
+                  label="Категория"
+                  multiple={false}
+                  data={this.state.itemEdit ? this.state.itemEdit.cats : []}
+                  value={this.state.itemEdit ? this.state.itemEdit.item.cat_id === '0' ? '' : this.state.itemEdit.item.cat_id : ''}
+                  func={(event, value) => {
+                    let this_storages = this.state.itemEdit;
+                    this_storages.item.cat_id = value;
+                    this.setState({ itemEdit: this_storages });
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={1.5}>
+                <MySelect
+                  data={this.state.itemEdit ? this.state.itemEdit.ed_izmer : []}
+                  value={this.state.itemEdit ? this.state.itemEdit.item.ed_izmer_id === '0' ? '' : this.state.itemEdit.item.ed_izmer_id : ''}
+                  func={this.changeItem.bind(this, 'ed_izmer_id')}
+                  label="Ед измер"
+                  is_none={false}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3.5}>
+                <MyTextInput
+                  label="Максимальное количество заказов в месяц (0 - без ограничений)"
+                  value={this.state.itemEdit ? this.state.itemEdit.item.max_count_in_m : ''}
+                  func={this.changeItem.bind(this, 'max_count_in_m')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3.5}>
+                <MyTextInput
+                  label="Название товара для поставщика"
+                  value={this.state.itemEdit ? this.state.itemEdit.item.name_for_vendor : ''}
+                  func={this.changeItem.bind(this, 'name_for_vendor')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3.5}>
+                <MyTextInput
+                  label="Количество в упаковке" 
+                  value={this.state.itemEdit ? this.state.itemEdit.item.pq : ''} 
+                  func={this.changeItem.bind(this, 'pq')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={1.5}>
+                <MyTextInput
+                  label="% заявки"
+                  value={this.state.itemEdit ? this.state.itemEdit.item.percent : ''}
+                  func={this.changeItem.bind(this, 'percent')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3.5}>
+                <MyTextInput
+                  label="Разрешенный % повышения ценника"
+                  value={this.state.itemEdit ? this.state.itemEdit.item.vend_percent : ''}
+                  func={this.changeItem.bind(this, 'vend_percent')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3.5}>
+                <MyTextInput
+                  label="Код для 1с"
+                  value={this.state.itemEdit ? this.state.itemEdit.item.art : ''}
+                  func={this.changeItem.bind(this, 'art')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3.5}>
+                <MyTextInput
+                  label="Минимальный остаток"
+                  value={ this.state.itemEdit ? this.state.itemEdit.item.min_count : ''}
+                  func={ this.changeItem.bind(this, 'min_count') }
+                />
+              </Grid>
 
-            <Grid item xs={12} sm={12}>
-              <MyAutocomplite
-                label="Состав"
-                multiple={false}
-                data={this.state.itemEdit ? this.state.itemEdit.pf_list : []}
-                value={this.state.itemEdit ? this.state.itemEdit.item.pf_id === '0' ? '' : this.state.itemEdit.item.pf_id : ''}
-                func={(event, value) => {
-                  let this_storages = this.state.itemEdit;
-                  this_storages.item.pf_id = value;
-                  this.setState({ itemEdit: this_storages });
-                }}
-              />
-            </Grid>
+              <Grid item xs={12} sm={12}>
+                <MyAutocomplite
+                  label="Состав"
+                  multiple={false}
+                  data={this.state.itemEdit ? this.state.itemEdit.pf_list : []}
+                  value={this.state.itemEdit ? this.state.itemEdit.item.pf_id === '0' ? '' : this.state.itemEdit.item.pf_id : ''}
+                  func={(event, value) => {
+                    let this_storages = this.state.itemEdit;
+                    this_storages.item.pf_id = value;
+                    this.setState({ itemEdit: this_storages });
+                  }}
+                />
+              </Grid>
 
-            <Grid item xs={12} sm={12}>
-              <MyAutocomplite
-                label="Аллергены"
-                multiple={true}
-                data={this.state.itemEdit ? this.state.itemEdit.allergens : []}
-                value={this.state.itemEdit ? this.state.itemEdit.item.my_allergens : ''}
-                func={(event, value) => {
-                  let this_storages = this.state.itemEdit;
-                  this_storages.item.my_allergens = value;
-                  this.setState({ itemEdit: this_storages });
-                }}
-              />
-            </Grid>
+              <Grid item xs={12} sm={12}>
+                <MyAutocomplite
+                  label="Аллергены"
+                  multiple={true}
+                  data={this.state.itemEdit ? this.state.itemEdit.allergens : []}
+                  value={this.state.itemEdit ? this.state.itemEdit.item.my_allergens : ''}
+                  func={(event, value) => {
+                    let this_storages = this.state.itemEdit;
+                    this_storages.item.my_allergens = value;
+                    this.setState({ itemEdit: this_storages });
+                  }}
+                />
+              </Grid>
 
-            <Grid item xs={12} sm={12}>
-              <MyAutocomplite
-                label="Возможные аллергены"
-                multiple={true}
-                data={this.state.itemEdit ? this.state.itemEdit.allergens : []}
-                value={this.state.itemEdit ? this.state.itemEdit.item.my_allergens_other : ''}
-                func={(event, value) => {
-                  let this_storages = this.state.itemEdit;
-                  this_storages.item.my_allergens_other = value;
-                  this.setState({ itemEdit: this_storages });
-                }}
-              />
-            </Grid>
+              <Grid item xs={12} sm={12}>
+                <MyAutocomplite
+                  label="Возможные аллергены"
+                  multiple={true}
+                  data={this.state.itemEdit ? this.state.itemEdit.allergens : []}
+                  value={this.state.itemEdit ? this.state.itemEdit.item.my_allergens_other : ''}
+                  func={(event, value) => {
+                    let this_storages = this.state.itemEdit;
+                    this_storages.item.my_allergens_other = value;
+                    this.setState({ itemEdit: this_storages });
+                  }}
+                />
+              </Grid>
 
-            <Grid item xs={12} sm={12}>
-              <h4>Места хранения</h4>
-              <Divider />
-            </Grid>
+              <Grid item xs={12} sm={12}>
+                <h4>Места хранения</h4>
+                <Divider />
+              </Grid>
 
-            <Grid item xs={12} sm={12}>
-              <MyAutocomplite
-                label="Места хранения"
-                multiple={true}
-                data={this.state.itemEdit ? this.state.itemEdit.storages : []}
-                value={this.state.itemEdit ? this.state.itemEdit.this_storages : ''}
-                func={(event, value) => {
-                  let this_storages = this.state.itemEdit;
-                  this_storages.this_storages = value;
-                  this.setState({ itemEdit: this_storages });
-                }}
-              />
-            </Grid>
+              <Grid item xs={12} sm={12}>
+                <MyAutocomplite
+                  label="Места хранения"
+                  multiple={true}
+                  data={this.state.itemEdit ? this.state.itemEdit.storages : []}
+                  value={this.state.itemEdit ? this.state.itemEdit.this_storages : ''}
+                  func={(event, value) => {
+                    let this_storages = this.state.itemEdit;
+                    this_storages.this_storages = value;
+                    this.setState({ itemEdit: this_storages });
+                  }}
+                />
+              </Grid>
 
-            <Grid item xs={12} sm={12}>
-              <h4>Разгрузка</h4>
-              <Divider />
-            </Grid>
-         
-            <Grid item xs={12} sm={3.5}>
-              <MySelect
-                label="Должность в кафе"
-                data={this.state.itemEdit ? this.state.itemEdit.apps : []}
-                value={this.state.itemEdit ? this.state.itemEdit.item.app_id : ''}
-                func={this.changeItem.bind(this, 'app_id')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3.5}>
-              <MyTextInput
-                label="Время ММ:SS (15:20)"
-                value={this.state.itemEdit ? this.state.itemEdit.item.time_min_other : ''}
-                func={this.changeItem.bind(this, 'time_min_other')}
-                placeholder="00:00"
-              />
-            </Grid>
+              <Grid item xs={12} sm={12}>
+                <h4>Разгрузка</h4>
+                <Divider />
+              </Grid>
+          
+              <Grid item xs={12} sm={3.5}>
+                <MySelect
+                  label="Должность в кафе"
+                  data={this.state.itemEdit ? this.state.itemEdit.apps : []}
+                  value={this.state.itemEdit ? this.state.itemEdit.item.app_id : ''}
+                  func={this.changeItem.bind(this, 'app_id')}
+                  is_none={false}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3.5}>
+                <MyTextInput
+                  label="Время ММ:SS (15:20)"
+                  value={this.state.itemEdit ? this.state.itemEdit.item.time_min_other : ''}
+                  func={this.changeItem.bind(this, 'time_min_other')}
+                  placeholder="00:00"
+                />
+              </Grid>
 
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={this.props.method === 'Редактирование товара' ? this.props.checkArt.bind(this, this.state.itemEdit) : this.props.checkArtNew.bind(this, this.state.itemEdit)}
-            variant="contained"
-          >
-            Сохранить
-          </Button>
-        </DialogActions>
-      </Dialog>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={this.save.bind(this)}
+              variant="contained"
+            >
+              Сохранить
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
     );
+  }
+}
+
+class SkladItemsModule_input_search extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      item: this.props.data,
+    };
+  }
+
+  changeItem(event) {
+    const value = event.target.value;
+
+    this.setState({
+      item: value
+    });
+  }
+
+  save_data_input() {
+    let value = this.state.item;
+    this.props.search(value)
+  }
+
+  render() {
+
+    const { label } = this.props;
+
+    return (
+      <Grid item xs={12} md={4}>
+        <MyTextInput
+          label={label}
+          value={this.state.item}
+          func={this.changeItem.bind(this)}
+          onBlur={this.save_data_input.bind(this)}
+        />
+      </Grid>
+    )
   }
 }
 
@@ -648,7 +728,7 @@ class SkladItemsModule_ extends React.Component {
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all_new');
+    const data = await this.getData('get_all');
 
     this.setState({
       module_name: data.module_info.name,
@@ -659,54 +739,22 @@ class SkladItemsModule_ extends React.Component {
     document.title = data.module_info.name;
   }
 
-  getData = (method, data = {}, is_load = true) => {
-    if (is_load == true) {
-      this.setState({
-        is_load: true,
-      });
-    }
+  getData = (method, data = {}) => {
+    this.setState({
+      is_load: true,
+    });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 300);
-        console.log(err);
+        }, 500);
       });
+
+    return res;
   };
 
   handleResize() {
@@ -728,7 +776,7 @@ class SkladItemsModule_ extends React.Component {
       item_id: id,
     };
 
-    const res = await this.getData('get_one_new', data);
+    const res = await this.getData('get_one', data);
 
     res.item.pf_id = res.pf_list.find((item) => item.id === res.item.pf_id);
     res.item.cat_id = res.cats.find((item) => item.id === res.item.cat_id);
@@ -769,7 +817,7 @@ class SkladItemsModule_ extends React.Component {
 
     } else {
     
-      res = await this.getData('get_one_new', data);
+      res = await this.getData('get_one', data);
 
       res.item.date_start = res.item.date_update;
       res.item.this_storages = res.this_storages;
@@ -807,10 +855,9 @@ class SkladItemsModule_ extends React.Component {
     let pf_id = itemEdit.item.pf_id.id;
     let cat_id = itemEdit.item.cat_id.id;
 
-    itemEdit.item.pf_id = pf_id;
-    itemEdit.item.cat_id = cat_id;
-
     const data = {
+      pf_id,
+      cat_id,
       id: itemEdit.item.id,
       item: itemEdit.item,
       storages: itemEdit.this_storages,
@@ -820,7 +867,7 @@ class SkladItemsModule_ extends React.Component {
         parseInt(main_item_id) == 0 ? itemEdit.item.id : parseInt(main_item_id),
     };
 
-    const res = await this.getData('saveEditItem_new', data);
+    let res = await this.getData('save_edit', data);
 
     if (res.st) {
 
@@ -834,9 +881,12 @@ class SkladItemsModule_ extends React.Component {
         checkArtList: [],
       });
       
-      setTimeout(async () => {
-        this.search();
-      }, 300);
+      res = await this.getData('get_all');
+
+      this.setState({
+        cats: res.cats,
+        freeItems: res.items_free,
+      });
 
     } else {
 
@@ -853,10 +903,9 @@ class SkladItemsModule_ extends React.Component {
     const pf_id = itemEdit.item.pf_id.id;
     const cat_id = itemEdit.item.cat_id.id;
 
-    itemEdit.item.pf_id = pf_id;
-    itemEdit.item.cat_id = cat_id;
-
     const data = {
+      pf_id,
+      cat_id,
       id: itemEdit.item.id,
       item: itemEdit.item,
       storages: itemEdit.this_storages,
@@ -866,7 +915,7 @@ class SkladItemsModule_ extends React.Component {
         parseInt(main_item_id) == 0 ? itemEdit.item.id : parseInt(main_item_id),
     };
 
-    const res = await this.getData('saveNewItem_new', data);
+    let res = await this.getData('save_new', data);
 
     if (res.st) {
 
@@ -880,9 +929,12 @@ class SkladItemsModule_ extends React.Component {
         checkArtList: [],
       });
       
-      setTimeout(async () => {
-        this.search();
-      }, 300);
+      res = await this.getData('get_all');
+
+      this.setState({
+        cats: res.cats,
+        freeItems: res.items_free,
+      });
 
     } else {
 
@@ -901,12 +953,12 @@ class SkladItemsModule_ extends React.Component {
       art: itemEdit.item.art,
     };
 
-    const res = await this.getData('checkArt', data);
+    const res = await this.getData('check_art', data);
 
     if (res.st === false) {
       this.setState({
         checkArtDialog: true,
-        checkArtList: res.data,
+        checkArtList: res.arts,
         itemEdit: itemEdit,
       });
     } else {
@@ -920,14 +972,14 @@ class SkladItemsModule_ extends React.Component {
       art: itemEdit.item.art,
     };
 
-    let res = await this.getData('checkArt', data);
+    let res = await this.getData('check_art', data);
 
     if (res.st === false) {
-      res.data.push({ id: -1, name: this.state.itemEdit.item.name });
+      res.arts.push({ id: -1, name: this.state.itemEdit.item.name });
 
       this.setState({
         checkArtDialog: true,
-        checkArtList: res.data,
+        checkArtList: res.arts,
       });
     } else {
       this.saveNewItem(itemEdit);
@@ -938,14 +990,14 @@ class SkladItemsModule_ extends React.Component {
     if (this.state.method === 'Редактирование товара') {
       this.saveEditItem(this.state.itemEdit, item_id);
     } else {
-      this.saveNewItem(item_id);
+      this.saveNewItem(this.state.itemEdit, item_id);
     }
   }
 
   async openModalItemNew(method) {
     this.handleResize();
 
-    const res = await this.getData('get_all_for_new_2');
+    const res = await this.getData('get_all_for_new');
 
     this.setState({
       modalDialog: true,
@@ -962,7 +1014,7 @@ class SkladItemsModule_ extends React.Component {
       value: event.target.checked === true ? 1 : 0,
     };
 
-    let res = await this.getData('saveCheckItem', data);
+    let res = await this.getData('save_check', data);
 
     if (res.st) {
 
@@ -972,7 +1024,7 @@ class SkladItemsModule_ extends React.Component {
         err_text: res.text,
       });
 
-      res = await this.getData('get_all_new');
+      res = await this.getData('get_all');
 
       this.setState({
         cats: res.cats,
@@ -990,12 +1042,12 @@ class SkladItemsModule_ extends React.Component {
     }
   }
 
-  async search() {
+  async search(value) {
     const data = {
-      item: this.state.searchItem,
+      item: value ? value : this.state.searchItem
     };
 
-    const res = await this.getData('get_all_search_new', data);
+    const res = await this.getData('get_search', data);
 
     this.setState({
       cats: res.cats,
@@ -1003,7 +1055,7 @@ class SkladItemsModule_ extends React.Component {
     });
   }
 
-  async openModalHistoryView(index) {
+  openModalHistoryView(index) {
 
     const item = this.state.item;
 
@@ -1022,7 +1074,7 @@ class SkladItemsModule_ extends React.Component {
       itemView_old.show_in_order = parseInt(itemView_old.show_in_order) ? 'Да' : 'Нет';
       
       for (let key in itemView) {
-        if(itemView[key] !== itemView_old[key] && (key !== 'apps' && key !== 'cats' && key !== 'ed_izmer' && key !== 'pf_list' && key !== 'id')) {
+        if(itemView[key] !== itemView_old[key]) {
 
           if(key === 'pf_id') {
             const name = itemView.pf_id = itemView.pf_list.find((item) => item.id === itemView.pf_id)?.name;
@@ -1040,14 +1092,26 @@ class SkladItemsModule_ extends React.Component {
             itemView[key] = { key: itemView[key], color: 'true' }
           }
 
+        } else {
+
+          if(key === 'pf_id') {
+            itemView.pf_id = itemView.pf_list.find((item) => item.id === itemView.pf_id)?.name ?? '';
+          } else if (key === 'cat_id') {
+            itemView.cat_id = itemView.cats.find((item) => item.id === itemView.cat_id)?.name ?? '';
+          } else if (key === 'app_id') {
+            itemView.app_id = itemView.apps.find((item) => item.id === itemView.app_id)?.name ?? '';
+          } else if (key === 'ed_izmer_id') {
+            itemView.ed_izmer_id = itemView.ed_izmer.find((item) => item.id === itemView.ed_izmer_id)?.name ?? '';
+          } 
+
         }
       }
       
     } else {
-      itemView.pf_id = itemView.pf_list.find((item) => item.id === itemView.pf_id)?.name;
-      itemView.cat_id = itemView.cats.find((item) => item.id === itemView.cat_id)?.name;
-      itemView.app_id = itemView.apps.find((item) => item.id === itemView.app_id)?.name;
-      itemView.ed_izmer_id = itemView.ed_izmer.find((item) => item.id === itemView.ed_izmer_id)?.name;
+      itemView.pf_id = itemView.pf_list.find((item) => item.id === itemView.pf_id)?.name ?? '';
+      itemView.cat_id = itemView.cats.find((item) => item.id === itemView.cat_id)?.name ?? '';
+      itemView.app_id = itemView.apps.find((item) => item.id === itemView.app_id)?.name ?? '';
+      itemView.ed_izmer_id = itemView.ed_izmer.find((item) => item.id === itemView.ed_izmer_id)?.name ?? '';
     }
 
     this.setState({
@@ -1087,7 +1151,7 @@ class SkladItemsModule_ extends React.Component {
 
         <SkladItemsModule_Modal
           open={this.state.modalDialog}
-          onClose={() => this.setState({ modalDialog: false })}
+          onClose={() => this.setState({ modalDialog: false, itemEdit: null })}
           checkArtNew={this.checkArtNew.bind(this)}
           checkArt={this.checkArt.bind(this)}
           method={this.state.method}
@@ -1125,14 +1189,11 @@ class SkladItemsModule_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
-            <MyTextInput
-              label="Поиск"
-              value={this.state.searchItem}
-              func={(event) => this.setState({ searchItem: event.target.value })}
-              onBlur={this.search.bind(this)}
-            />
-          </Grid>
+          <SkladItemsModule_input_search
+            data={this.state.searchItem}
+            search={this.search.bind(this)}
+            label='Поиск'
+          />
 
           <Grid item xs={12} style={{ paddingBottom: '50px' }}>
             {this.state.cats.map((item, key) => (
