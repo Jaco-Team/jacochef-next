@@ -544,7 +544,32 @@ class WorkSchedule_Table extends React.Component {
 
               <TableRow>
                 <TableCell></TableCell>
-                <TableCell>Роллов</TableCell>
+                <TableCell>Роллов макс.</TableCell>
+
+                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+
+                {this.props.number.bonus.map((item, key) => <TableCell className="min_block min_size" key={key}>{item.count_rolls_max}</TableCell>)}
+
+                {this.props.kind == 'manager' ? null : (
+                    <>
+                      <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}></TableCell>
+
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+
+                      {this.props.show_zp == 1 || this.props.show_zp == 0 ? <TableCell style={{ textAlign: 'center' }}></TableCell> : null}
+
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    </>
+                )}
+              </TableRow>
+
+              <TableRow>
+                <TableCell></TableCell>
+                <TableCell>Роллов средн.</TableCell>
 
                 {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
                 {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
@@ -569,7 +594,57 @@ class WorkSchedule_Table extends React.Component {
 
               <TableRow>
                 <TableCell></TableCell>
-                <TableCell>Пиццы</TableCell>
+                <TableCell>Роллов мин.</TableCell>
+
+                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+
+                {this.props.number.bonus.map((item, key) => <TableCell className="min_block min_size" key={key}>{item.count_rolls_min}</TableCell>)}
+
+                {this.props.kind == 'manager' ? null : (
+                    <>
+                      <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}></TableCell>
+
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+
+                      {this.props.show_zp == 1 || this.props.show_zp == 0 ? <TableCell style={{ textAlign: 'center' }}></TableCell> : null}
+
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    </>
+                )}
+              </TableRow>
+
+              <TableRow>
+                <TableCell></TableCell>
+                <TableCell>Пиццы макс.</TableCell>
+
+                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+
+                {this.props.number.bonus.map((item, key) => <TableCell className="min_block min_size" key={key}>{item.count_pizza_max}</TableCell>)}
+
+                {this.props.kind == 'manager' ? null : (
+                    <>
+                      <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}></TableCell>
+
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+
+                      {this.props.show_zp == 1 || this.props.show_zp == 0 ? <TableCell style={{ textAlign: 'center' }}></TableCell> : null}
+
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    </>
+                )}
+              </TableRow>
+
+              <TableRow>
+                <TableCell></TableCell>
+                <TableCell>Пиццы средн.</TableCell>
 
                 {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
                 {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
@@ -589,6 +664,31 @@ class WorkSchedule_Table extends React.Component {
 
                     <TableCell style={{ textAlign: 'center' }}></TableCell>
                   </>
+                )}
+              </TableRow>
+
+              <TableRow>
+                <TableCell></TableCell>
+                <TableCell>Пиццы мин.</TableCell>
+
+                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+
+                {this.props.number.bonus.map((item, key) => <TableCell className="min_block min_size" key={key}>{item.count_pizza_min}</TableCell>)}
+
+                {this.props.kind == 'manager' ? null : (
+                    <>
+                      <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}></TableCell>
+
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+
+                      {this.props.show_zp == 1 || this.props.show_zp == 0 ? <TableCell style={{ textAlign: 'center' }}></TableCell> : null}
+
+                      <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    </>
                 )}
               </TableRow>
 
