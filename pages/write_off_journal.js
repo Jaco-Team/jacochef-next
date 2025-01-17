@@ -34,7 +34,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import {MySelect, MyDatePickerNew, formatDate, MyAlert, MyTextInput, MyAutocomplite} from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api, api_laravel } from '@/src/api_new';
+
 import dayjs from 'dayjs';
 import moment from 'moment';
 
@@ -246,7 +247,7 @@ class Write_off_journal_modal extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    //console.log(this.props);
+    //console.log(this.props.itemEdit);
 
     if (!this.props.itemEdit) {
       return;
@@ -397,8 +398,11 @@ class Write_off_journal_modal extends React.Component {
   onClose() {
     this.setState({
       point: '',
+      points: [],
       type: '',
+      types: [],
       item: '',
+      items: [],
       count: '',
       ed_izmer: '',
       comment: '',
@@ -708,6 +712,7 @@ class Write_off_journal_ extends React.Component {
   async componentDidMount() {
     const data = await this.getData('get_all');
 
+    // для тестов
     const points = [{base: "jaco_rolls_0", id: "0", id_2: "1_0", manager_id: "0", name: "Тольятти, Тестовая", name2: "Тольятти, Тестовая"}]
 
     this.setState({
@@ -720,9 +725,14 @@ class Write_off_journal_ extends React.Component {
 
     document.title = data.module_info.name;
 
+    // для тестов
     setTimeout(async () => {
-      this.getPointData(data.points[0]);
+      this.getPointData(points[0]);
     }, 100);
+
+    // setTimeout(async () => {
+    //   this.getPointData(data.points[0]);
+    // }, 100);
 
   }
 
@@ -731,42 +741,17 @@ class Write_off_journal_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
+
+    return res;
   };
 
   handleResize() {
@@ -819,7 +804,7 @@ class Write_off_journal_ extends React.Component {
 
     this.setState({
       searchItem: '',
-      items: res.items,
+      items: res?.items?.items ?? [],
       list: res.list,
       all_items_pf: res.all_items_pf,
       all_items_pos: res.all_items_pos,
@@ -929,6 +914,8 @@ class Write_off_journal_ extends React.Component {
     });
 
     res.types = [{id: '1', name: 'Товар'}, {id: '2', name: 'Заготовка'}, {id: '3', name: 'Сайт'}];
+
+    res.items = res.items.items;
 
     this.setState({
       modalDialog: true,
@@ -1055,7 +1042,7 @@ class Write_off_journal_ extends React.Component {
 
   }
 
-  async openModalHistoryView(index) {
+  openModalHistoryView(index) {
 
     const item = this.state.itemHist;
 
