@@ -2795,7 +2795,7 @@ class Billing_Edit_ extends React.Component {
       point_id: bill.point_id,
       vendor_id: bill.vendor_id,
       type_save: type_save,
-      err_items: err_items
+      err_items: items_color
     }
 
     const res = await this.getData('save_edit', data);
