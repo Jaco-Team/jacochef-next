@@ -2646,7 +2646,7 @@ class Billing_Edit_ extends React.Component {
       vendor_id: vendor?.id,
       imgs: this.myDropzone['files'].length,
       type_save: type_save,
-      err_items: err_items,
+      err_items: items_color,
       bill_base_id: bill_base_id
     }
 
