@@ -33,7 +33,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import {MyCheckBox, MyTextInput, MyAutocomplite, MyDatePickerNew, MyAlert, formatDate, MySelect} from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 function roundTo(n, digits) {
@@ -1004,7 +1004,7 @@ class ReceptModule_ extends React.Component {
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all_new');
+    const data = await this.getData('get_all');
 
     this.setState({
       module_name: data.module_info.name,
@@ -1020,42 +1020,17 @@ class ReceptModule_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
+
+    return res;
   };
 
   handleResize() {
@@ -1258,7 +1233,7 @@ class ReceptModule_ extends React.Component {
 
   }
 
-  async openModalHistoryView(index) {
+  openModalHistoryView(index) {
 
     const item = this.state.item;
 
@@ -1431,7 +1406,7 @@ class ReceptModule_ extends React.Component {
   }
 
   async update() {
-    const data = await this.getData('get_all_new');
+    const data = await this.getData('get_all');
 
     this.setState({
       rec_list: data.rec,
