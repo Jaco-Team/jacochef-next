@@ -34,7 +34,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import {MySelect, MyCheckBox, MyTextInput, MyDatePickerNew, formatDate, MyAlert, MyAutocomplite} from '@/ui/elements';
 
 import Dropzone from 'dropzone';
-import queryString from 'query-string';
+import { api, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 function roundTo(n, digits) {
@@ -1610,7 +1610,7 @@ class SiteItems_Modal_Tech extends React.Component {
 
     this.props.save(data);
 
-    this.onClose();
+    // this.onClose();
   }
 
   onClose() {
@@ -2366,68 +2366,36 @@ class SiteItems_ extends React.Component {
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all_new');
+    const data = await this.getData('get_all');
 
     this.setState({
       module_name: data.module_info.name,
       cats: data.cats,
       // ??
-      user_app: 'technologist',
-      //user_app: 'marketing',
+      // user_app: 'technologist',
+      user_app: 'marketing',
       timeUpdate: new Date(),
     });
 
     document.title = data.module_info.name;
   }
 
-  getData = (method, data = {}, is_load = true) => {
-    if (is_load == true) {
-      this.setState({
-        is_load: true,
-      });
-    }
+  getData = (method, data = {}) => {
+    this.setState({
+      is_load: true,
+    });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 300);
-        console.log(err);
+        }, 500);
       });
+
+    return res;
   };
 
   handleResize() {
@@ -2443,13 +2411,13 @@ class SiteItems_ extends React.Component {
   }
 
   async update() {
-    const data = await this.getData('get_all_new');
+    const data = await this.getData('get_all');
 
     this.setState({
       cats: data.cats,
       // ??
-      user_app: 'technologist',
-      //user_app: 'marketing',
+      // user_app: 'technologist',
+      user_app: 'marketing',
       timeUpdate: new Date(),
     });
   }
@@ -2625,9 +2593,11 @@ class SiteItems_ extends React.Component {
     // }, 300);
   }
 
-  async saveTech(item) {
+  async saveTech(item_) {
 
     const method = this.state.method;
+
+    const item = JSON.parse(JSON.stringify(item_));
 
     item.item_items.this_items = item.item_items.this_items.map((it) => {
       it.item_id = it.item_id.id;
@@ -2824,7 +2794,7 @@ class SiteItems_ extends React.Component {
 
   }
 
-  async openModalHistoryView_Mark(index) {
+  openModalHistoryView_Mark(index) {
 
     const item = this.state.itemHist;
 
@@ -2859,7 +2829,7 @@ class SiteItems_ extends React.Component {
 
   }
 
-  async openModalHistoryView_Tech(index) {
+  openModalHistoryView_Tech(index) {
 
     const item = this.state.itemHist;
 
