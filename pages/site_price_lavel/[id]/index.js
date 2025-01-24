@@ -245,6 +245,21 @@ class SitePriceLevelEdit_ extends React.Component {
   }
 
   changeDateRange(data, event) {
+
+    if(event === null){
+
+      const date_start = this.state.date_start;
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Указание даты обязательно',
+        date_start
+      });
+
+      return;
+    }
+
     const date_now = dayjs();
     let date_start = dayjs(event ? event : '');
 
@@ -284,7 +299,21 @@ class SitePriceLevelEdit_ extends React.Component {
 
   async save() {
     const date_now = dayjs();
-    let date_start = dayjs(this.state.date_start);
+
+    let date_start = this.state.date_start;
+
+    if(!date_start){
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Указание даты обязательно',
+      });
+
+      return;
+    }
+
+    date_start = dayjs(this.state.date_start);
 
     if(date_start.isSame(date_now, 'day') || date_start.isBefore(date_now, 'day')){
 

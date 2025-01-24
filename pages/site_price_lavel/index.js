@@ -297,12 +297,27 @@ class SitePriceLevel_ extends React.Component {
      
       input_value: '',
 
-      modalDialog_XLS: false
+      modalDialog_XLS: false,
+
+      confirmDialog: false,
+      delete_level: null
     };
   }
 
   async componentDidMount() {
     const data = await this.getData('get_all');
+
+    data.levels.forEach((level) => {
+      const date_now = dayjs();
+      const date_start = dayjs(level.date_start);
+
+      if(date_start.isSame(date_now, 'day') || date_start.isBefore(date_now, 'day')){
+        level.delete = false;        
+      } else {
+        level.delete = true; 
+      }
+
+    });
 
     if( data ){
       this.setState({
@@ -429,6 +444,18 @@ class SitePriceLevel_ extends React.Component {
   async update() {
     const data = await this.getData('get_all');
 
+    data.levels.forEach((level) => {
+      const date_now = dayjs();
+      const date_start = dayjs(level.date_start);
+
+      if(date_start.isSame(date_now, 'day') || date_start.isBefore(date_now, 'day')){
+        level.delete = false;        
+      } else {
+        level.delete = true; 
+      }
+
+    });
+
     this.setState({
       cities: data.cities,
       city: data.cities[0].id,
@@ -523,12 +550,62 @@ class SitePriceLevel_ extends React.Component {
 
   };
 
+  async delete_level() {
+
+    const level = this.state.delete_level;
+
+    const data = {
+      date_start: level.date_start,
+      level_id: level.id
+    };
+    
+    const res = await this.getData('delete_level', data);
+
+    if(res.st) {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+        is_load: false,
+        confirmDialog: false, 
+        delete_level: null
+      });
+
+      setTimeout(async () => {
+        this.update();
+      }, 100);
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+        is_load: false,
+      });
+      
+    }
+
+  }
+
   render() {
     return (
       <>
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+
+        <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false, delete_level: null })}>
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+            <Typography>Вы действительное хотите удалить данный уровень цен?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button autoFocus onClick={() => this.setState({ confirmDialog: false, delete_level: null })}>Отмена</Button>
+            <Button onClick={this.delete_level.bind(this)}>Удалить</Button>
+          </DialogActions>
+        </Dialog>
 
         <MyAlert
           isOpen={this.state.openAlert}
@@ -587,19 +664,27 @@ class SitePriceLevel_ extends React.Component {
               <Table>
                 <TableHead>
                   <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                    <TableCell style={{ width: '10%' }}>#</TableCell>
+                    <TableCell style={{ width: '5%' }}>#</TableCell>
                     <TableCell style={{ width: '30%' }}>Наименование</TableCell>
-                    <TableCell style={{ width: '30%' }}>Дата старта</TableCell>
-                    <TableCell style={{ width: '30%' }}>Город</TableCell>
+                    <TableCell style={{ width: '25%' }}>Дата старта</TableCell>
+                    <TableCell style={{ width: '20%' }}>Город</TableCell>
+                    <TableCell style={{ width: '20%' }}></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {this.state.levels.map((level, key) =>
-                    <TableRow hover key={key} style={{ cursor: 'pointer' }} onClick={this.getOneLevel.bind(this, level.id)}>
-                      <TableCell>{key + 1}</TableCell>
-                      <TableCell>{level.name}</TableCell>
-                      <TableCell>{level.date_start}</TableCell>
-                      <TableCell>{level.city_name}</TableCell>
+                    <TableRow hover key={key} style={{ cursor: 'pointer' }}>
+                      <TableCell onClick={this.getOneLevel.bind(this, level.id)}>{key + 1}</TableCell>
+                      <TableCell onClick={this.getOneLevel.bind(this, level.id)}>{level.name}</TableCell>
+                      <TableCell onClick={this.getOneLevel.bind(this, level.id)}>{level.date_start}</TableCell>
+                      <TableCell onClick={this.getOneLevel.bind(this, level.id)}>{level.city_name}</TableCell>
+                      <TableCell onClick={level?.delete ? null : this.getOneLevel.bind(this, level.id)} >
+                        {!level?.delete ? null :
+                          <IconButton>
+                            <CloseIcon onClick={() => this.setState ({ confirmDialog: true, delete_level: level })}/>
+                          </IconButton>
+                        }
+                      </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
