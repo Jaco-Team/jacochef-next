@@ -34,6 +34,15 @@ function Row(props) {
   const { row } = props;
   const [open, setOpen] = React.useState(false);
 
+  const handleClick = () => {
+    setOpen(!open);
+
+    if( row?.arr.length == 0 ) {
+      props.getData(row?.name)
+    }
+    
+  }
+
   return (
     <React.Fragment>
       <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
@@ -41,7 +50,7 @@ function Row(props) {
           <IconButton
             aria-label="expand row"
             size="small"
-            onClick={() => setOpen(!open)}
+            onClick={handleClick}
           >
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
@@ -253,6 +262,37 @@ class CompositionOfOrders_ extends React.Component {
     });
   }
 
+  async getDataRow(row_name){
+    const { point, dow, date_start, date_end, pay, now_time, pred_time, stat } = this.state;
+
+    const data = {
+      date_start: date_start ? dayjs(date_start).format('YYYY-MM-DD') : '',
+      date_end: date_end ? dayjs(date_end).format('YYYY-MM-DD') : '',
+      point,
+      dow,
+      pay,
+      now_time,
+      pred_time,
+      row_name
+    };
+
+    let res = await this.getData('get_stat_orders_row', data);
+    
+    stat.map( ( item, key ) => {
+      if( item.name == row_name ){
+        stat[key].arr = res?.array;
+      }
+    } )
+
+    console.log( stat )
+
+    this.setState({
+      stat: stat,
+      //all_price: res?.all_price,
+      //all_count: res?.all_count,
+    });
+  }
+
   get_new_type_sort(active){
     if( active == 'none' ){
       return 'desc';
@@ -430,7 +470,7 @@ class CompositionOfOrders_ extends React.Component {
                   </TableHead>
                   <TableBody>
                     {this.state.stat.map((row) => (
-                      <Row key={row.name} row={row} />
+                      <Row key={row.name} row={row} getData={this.getDataRow.bind(this)} />
                     ))}
                   </TableBody>
                   <TableFooter>
