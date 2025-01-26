@@ -192,6 +192,22 @@ class CafeEdit_Modal_History extends React.Component {
                     className={this.state.itemView ? this.state.itemView.kpp?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
                   />
                 </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Управляющий"
+                    value={this.state.itemView ? this.state.itemView.manager_id?.color ? this.state.itemView.manager_id.key : this.state.itemView.manager_id : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.manager_id?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Количество столов сборки"
+                    value={this.state.itemView ? this.state.itemView.count_tables?.color ? this.state.itemView.count_tables.key : this.state.itemView.count_tables : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.count_tables?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
                 <Grid item xs={12} sm={4}>
                   <MyTextInput
                     label="Телефон управляющего"
@@ -274,7 +290,7 @@ class CafeEdit_Modal_History extends React.Component {
                 }
                 <Grid item xs={12} sm={6}>
                   <MyTextInput
-                    label="Оклад директора на 2 недели (с тек. периода)"
+                    label="Оклад директора на 2 недели"
                     value={this.state.itemView ? this.state.itemView.dir_price?.color ? this.state.itemView.dir_price.key : this.state.itemView.dir_price : ''}
                     disabled={true}
                     className={this.state.itemView ? this.state.itemView.dir_price?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
@@ -282,7 +298,7 @@ class CafeEdit_Modal_History extends React.Component {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <MyTextInput
-                    label="Бонус от уровня директору (с тек. периода)"
+                    label="Бонус от уровня директору"
                     value={this.state.itemView ? this.state.itemView.price_per_lv?.color ? this.state.itemView.price_per_lv.key : this.state.itemView.price_per_lv : ''}
                     disabled={true}
                     className={this.state.itemView ? this.state.itemView.price_per_lv?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
@@ -290,7 +306,7 @@ class CafeEdit_Modal_History extends React.Component {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <MyTextInput
-                    label="Часовая ставка курьера (применяется со следующего дня)"
+                    label="Часовая ставка курьера"
                     value={this.state.itemView ? this.state.itemView.driver_price?.color ? this.state.itemView.driver_price.key : this.state.itemView.driver_price : ''}
                     disabled={true}
                     className={this.state.itemView ? this.state.itemView.driver_price?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
@@ -341,6 +357,27 @@ class CafeEdit_Modal_History extends React.Component {
                     className={this.state.itemView ? this.state.itemView.cafe_handle_close?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
                   />
                 </Grid>
+              </>
+            : null}
+
+            {type_modal === 'zone' ?
+              <Grid item xs={12} sm={12}>
+                <Typography style={{ alignSelf: 'center', fontWeight: 'bold' }}>
+                  {`${this.state.itemView?.zone_name} ${this.state.itemView?.is_active}: ${this.state.itemView?.date_time_update}`}
+                </Typography>
+              </Grid>
+            : null}
+
+            {type_modal === 'driver' ?
+              <>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Количество заказов на руках"
+                    value={this.state.itemView ? this.state.itemView.count_driver?.color ? this.state.itemView.count_driver.key : this.state.itemView.count_driver : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.count_driver?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
                 <Grid item xs={12} sm={6}>
                   <MyTextInput
                     label="Максимальная сумма нала для курьера"
@@ -358,14 +395,6 @@ class CafeEdit_Modal_History extends React.Component {
                   />
                 </Grid>
               </>
-            : null}
-
-            {type_modal === 'zone' ?
-              <Grid item xs={12} sm={12}>
-                <Typography style={{ alignSelf: 'center', fontWeight: 'bold' }}>
-                  {`${this.state.itemView?.zone_name} ${this.state.itemView?.is_active}: ${this.state.itemView?.date_time_update}`}
-                </Typography>
-              </Grid>
             : null}
           
           </Grid>
@@ -894,6 +923,7 @@ class CafeEdit_ extends React.Component {
       point_pay_hist: [],
       point_sett_hist: [],
       point_zone_hist: [],
+      point_sett_driver_hist: [],
 
       modalDialogView: false,
       itemView: null,
@@ -905,7 +935,10 @@ class CafeEdit_ extends React.Component {
       index_pay: -1,
       index_sett: -1,
       index_zone: -1,
-      tabs_data: []
+      index_driver: -1,
+      tabs_data: [],
+
+      upr_list: [],
 
     };
   }
@@ -1036,11 +1069,15 @@ class CafeEdit_ extends React.Component {
         }
         
         if(key === 'settings_point') {
-          tabs_data.push({key, 'name': "Настройки"});
+          tabs_data.push({key, 'name': "Настройки точки"});
         }
 
         if(key === 'zone_point') {
           tabs_data.push({key, 'name': "Зоны доставки"});
+        }
+
+        if(key === 'settings_driver') {
+          tabs_data.push({key, 'name': "Настройки курьеров"});
         }
         
       }
@@ -1078,6 +1115,12 @@ class CafeEdit_ extends React.Component {
         });
       }
 
+      if(item.key === 'settings_driver') {
+        this.setState({
+          index_driver: index
+        });
+      }
+
     });
 
     this.setState({
@@ -1099,7 +1142,12 @@ class CafeEdit_ extends React.Component {
 
     const res = await this.getData('get_one', data);
 
+    res.point_info.manager_id = {id: res.point_info.manager_id, name: res.point_info.manager_name};
+    const upr = res.upr_list.find(upr => parseInt(upr.id) === parseInt(res.point_info?.manager_id?.id));
+    if(!upr) res.upr_list.push(res.point_info?.manager_id);
+
     this.setState({
+      upr_list: res.upr_list,
       cities: res.cities,
       point_info: res.point_info,
       actual_time_list: res.actual_time_list,
@@ -1111,7 +1159,8 @@ class CafeEdit_ extends React.Component {
       point_rate_hist: res.point_rate_hist,
       point_pay_hist: res.point_pay_hist,
       point_sett_hist: res.point_sett_hist,
-      point_zone_hist: res.point_zone_hist
+      point_zone_hist: res.point_zone_hist,
+      point_sett_driver_hist: res.point_sett_driver_hist
     });
 
     if(activeTab === index_zone && res.zone.length && res.other_zones.length) {
@@ -1475,6 +1524,37 @@ class CafeEdit_ extends React.Component {
     }
   }
 
+  async save_edit_point_sett_driver() {
+
+    let data = this.state.point_info;
+
+    data.point_id = data.id;
+
+    const res = await this.getData('save_edit_point_sett_driver', data);
+
+    if (!res.st) {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+      setTimeout(() => {
+        this.getDataPoint();
+      }, 300);
+
+    }
+  }
+
   async save_edit_point_sett() {
     let data = this.state.point_info;
 
@@ -1690,6 +1770,10 @@ class CafeEdit_ extends React.Component {
       item = this.state.point_sett_hist;
     }
 
+    if(type_modal === 'driver') {
+      item = this.state.point_sett_driver_hist;
+    }
+
     let itemView = JSON.parse(JSON.stringify(item[index]));
 
     if(type_modal === 'info') {
@@ -1701,7 +1785,7 @@ class CafeEdit_ extends React.Component {
       itemView.priority_order = parseInt(itemView.priority_order) ? 'Да' : 'Нет';
       itemView.rolls_pizza_dif = parseInt(itemView.rolls_pizza_dif) ? 'Да' : 'Нет';
       itemView.cook_common_stol = parseInt(itemView.cook_common_stol) ? 'Да' : 'Нет';
-      itemView.cafe_handle_close = parseInt(itemView.cafe_handle_close) ? 'Да' : 'Нет';
+      itemView.cafe_handle_close = parseInt(itemView.cafe_handle_close) === 1 ? 'Да' : 'Нет';
     }
 
     if(parseInt(index) !== 0) {
@@ -1717,7 +1801,7 @@ class CafeEdit_ extends React.Component {
         itemView_old.priority_order = parseInt(itemView_old.priority_order) ? 'Да' : 'Нет';
         itemView_old.rolls_pizza_dif = parseInt(itemView_old.rolls_pizza_dif) ? 'Да' : 'Нет';
         itemView_old.cook_common_stol = parseInt(itemView_old.cook_common_stol) ? 'Да' : 'Нет';
-        itemView_old.cafe_handle_close = parseInt(itemView_old.cafe_handle_close) ? 'Да' : 'Нет';
+        itemView_old.cafe_handle_close = parseInt(itemView_old.cafe_handle_close) === 1 ? 'Да' : 'Нет';
       }
       
       for (let key in itemView) {
@@ -1725,6 +1809,9 @@ class CafeEdit_ extends React.Component {
 
           if(key === 'city_id') {
             const name = this.state.cities.find((item) => item.id === itemView.city_id)?.name;
+            itemView[key] = { key: name, color: 'true' }
+          } else if (key === 'manager_id') {
+            const name = itemView.manager_name ?? '';
             itemView[key] = { key: name, color: 'true' }
           } else {
             itemView[key] = { key: itemView[key], color: 'true' }
@@ -1736,6 +1823,10 @@ class CafeEdit_ extends React.Component {
             itemView.city_id = this.state.cities.find((item) => item.id === itemView.city_id)?.name ?? '';
           } 
 
+          if(key === 'manager_id') {
+            itemView.manager_id = itemView.manager_name ?? '';
+          } 
+
         }
 
       }
@@ -1743,13 +1834,18 @@ class CafeEdit_ extends React.Component {
     } else {
 
       itemView.city_id = this.state.cities.find((item) => item.id === itemView.city_id)?.name ?? '';
-
+      
+      itemView.manager_id = itemView.manager_name ?? '';
     }
 
     let date_edit = null;
 
     if(type_modal === 'rate' || type_modal === 'pay') {
-      date_edit = itemView?.date_start?.key ?? null;
+      if(itemView?.date_start?.key) {
+        date_edit = itemView?.date_start?.key;
+      } else {
+        date_edit = itemView?.date_start ?? null;
+      }
     } 
 
     this.setState({
@@ -1775,6 +1871,16 @@ class CafeEdit_ extends React.Component {
       type_modal
     });
 
+  }
+
+  changeUpr(data, event, value) {
+    const point_info = this.state.point_info;
+
+    point_info[data] = value;
+
+    this.setState({
+      point_info,
+    });
   }
 
   render() {
@@ -1865,9 +1971,15 @@ class CafeEdit_ extends React.Component {
 
           <Grid item xs={12} sm={12} style={{ paddingBottom: 24 }}>
             <Paper>
-              <Tabs value={this.state.activeTab} onChange={ this.changeTab.bind(this) } centered variant='fullWidth'>
+              <Tabs 
+                value={this.state.activeTab} 
+                onChange={ this.changeTab.bind(this)} 
+                variant='scrollable' 
+                scrollButtons={false}
+                //allowScrollButtonsMobile 
+              >
                 {this.state.tabs_data?.map((item, index) => {
-                  return <Tab label={item.name} {...a11yProps(index)} key={index} />
+                  return <Tab label={item.name} {...a11yProps(index)} key={index} sx={{ minWidth: "fit-content", flex: 1 }} />
                 })}
               </Tabs>
             </Paper>
@@ -1956,12 +2068,30 @@ class CafeEdit_ extends React.Component {
                         func={this.changeData.bind(this, 'full_addr')}
                       />
                     </Grid>
+
+                    <Grid item xs={12} sm={4}>
+                      <MyAutocomplite
+                        label="Управляющий"
+                        multiple={false}
+                        data={this.state.upr_list}
+                        value={this.state.point_info?.manager_id ?? ''}
+                        func={this.changeUpr.bind(this, 'manager_id')}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={4}>
+                      <MyTextInput
+                        label="Количество столов сборки"
+                        value={this.state.point_info?.count_tables ?? ''}
+                        func={this.changeData.bind(this, 'count_tables')}
+                      />
+                    </Grid>
                   </>
                   : null
                 }
 
                 {parseInt(this.state.acces?.active_point) ?
-                  <Grid item xs={12} sm={12}>
+                  <Grid item xs={12} sm={4}>
                     <MyCheckBox
                       label="Активность"
                       value={parseInt(this.state.point_info?.is_active ?? 0) == 1 ? true : false}
@@ -2079,7 +2209,7 @@ class CafeEdit_ extends React.Component {
                     variant="contained" 
                     style={{ whiteSpace: 'nowrap', justifySelf: 'flex-end' }}
                   >
-                    Сохранить изменения
+                    Выбрать дату применения
                   </Button>
                 </Grid>
 
@@ -2131,7 +2261,7 @@ class CafeEdit_ extends React.Component {
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={4}>
                   <MyTextInput
-                    label="Оклад директора на 2 недели (с тек. периода)"
+                    label="Оклад директора на 2 недели"
                     value={this.state.point_info?.dir_price ?? ''}
                     func={this.changeData.bind(this, 'dir_price')}
                   />
@@ -2139,7 +2269,7 @@ class CafeEdit_ extends React.Component {
 
                 <Grid item xs={12} sm={4}>
                   <MyTextInput
-                    label="Бонус от уровня директору (с тек. периода)"
+                    label="Бонус от уровня директору"
                     value={this.state.point_info?.price_per_lv ?? ''}
                     func={this.changeData.bind(this, 'price_per_lv')}
                   />
@@ -2147,7 +2277,7 @@ class CafeEdit_ extends React.Component {
 
                 <Grid item xs={12} sm={4}>
                   <MyTextInput
-                    label="Часовая ставка курьера (применяется со следующего дня)"
+                    label="Часовая ставка курьера"
                     value={this.state.point_info?.driver_price ?? ''}
                     func={this.changeData.bind(this, 'driver_price')}
                   />
@@ -2160,7 +2290,7 @@ class CafeEdit_ extends React.Component {
                     variant="contained" 
                     style={{ whiteSpace: 'nowrap', justifySelf: 'flex-end' }}
                   >
-                    Сохранить изменения
+                    Выбрать дату применения
                   </Button>
                 </Grid>
 
@@ -2250,22 +2380,6 @@ class CafeEdit_ extends React.Component {
                     func={this.changeItemChecked.bind(this, 'cafe_handle_close')} 
                   />
                 </Grid>
-
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput 
-                    value={this.state.point_info?.summ_driver ?? ''} 
-                    func={this.changeData.bind(this, 'summ_driver')}
-                    label='Максимальная сумма нала для курьера' 
-                  />
-                </Grid> 
-
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput 
-                    value={this.state.point_info?.summ_driver_min ?? ''} 
-                    func={this.changeData.bind(this, 'summ_driver_min')}
-                    label='Максимальная сумма нала для курьера стажера' 
-                  />
-                </Grid> 
 
                 <Grid item xs={12} sm={12} display='grid'>
                   <Button 
@@ -2418,6 +2532,87 @@ class CafeEdit_ extends React.Component {
                   </Accordion>
                 </Grid>
               }
+            </TabPanel>
+          </Grid>
+
+          <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+            <TabPanel 
+              value={this.state.activeTab} 
+              index={this.state.index_driver} 
+              id='clients'
+            >
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    label="Количество заказов на руках"
+                    value={this.state.point_info?.count_driver ?? ''}
+                    func={this.changeData.bind(this, 'count_driver')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput 
+                    value={this.state.point_info?.summ_driver ?? ''} 
+                    func={this.changeData.bind(this, 'summ_driver')}
+                    label='Максимальная сумма нала для курьера' 
+                  />
+                </Grid> 
+
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput 
+                    value={this.state.point_info?.summ_driver_min ?? ''} 
+                    func={this.changeData.bind(this, 'summ_driver_min')}
+                    label='Максимальная сумма нала для курьера стажера' 
+                  />
+                </Grid> 
+
+                <Grid item xs={12} sm={12} display='grid'>
+                  <Button 
+                    onClick={this.save_edit_point_sett_driver.bind(this)}  
+                    color="success" 
+                    variant="contained" 
+                    style={{ whiteSpace: 'nowrap', justifySelf: 'flex-end' }}
+                  >
+                    Сохранить изменения
+                  </Button>
+                </Grid>
+
+                {!this.state.point_sett_driver_hist.length ? null :
+                  <Grid item xs={12} sm={12} mb={5}>
+                    <Accordion style={{ width: '100%' }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Table size='small'>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>#</TableCell>
+                              <TableCell>Дата / время</TableCell>
+                              <TableCell>Сотрудник</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {this.state.point_sett_driver_hist.map((it, k) =>
+                              <TableRow 
+                                hover 
+                                key={k} 
+                                style={{ cursor: 'pointer'}}
+                                onClick={this.open_hist_view.bind(this, k,'driver')} 
+                              >
+                                <TableCell>{k+1}</TableCell>
+                                <TableCell>{it.date_time_update}</TableCell>
+                                <TableCell>{it.user_name}</TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Grid>
+                }
+               
+              </Grid>
             </TabPanel>
           </Grid>
 
