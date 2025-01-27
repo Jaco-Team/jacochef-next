@@ -171,7 +171,7 @@ class SiteSale2_ extends React.Component {
           
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
             
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={12}>
               
               <Link href={"/site_sale_2/new"} style={{ zIndex: 10 }}>
                 <Button variant="contained">Новый промокод</Button>
@@ -187,6 +187,10 @@ class SiteSale2_ extends React.Component {
 
               <Link href={"/site_sale_2/analitic_list"} style={{ zIndex: 10, marginLeft: 20 }}>
                 <Button variant="contained">Аналитика по выписанным промокодам</Button>
+              </Link>
+
+              <Link href={"/site_sale_2/repeat_orders "} style={{ zIndex: 10, marginLeft: 20 }}>
+                <Button variant="contained">Повторные заказы с промокода</Button>
               </Link>
               
             </Grid>
