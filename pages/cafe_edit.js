@@ -704,12 +704,16 @@ class CafeEdit_Modal_Zone extends React.Component {
           maxWidth={'sm'}
         >
           <DialogTitle>
-            Активность зоны доставки
+            Настройка активных зон доставки
             <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
               <CloseIcon />
             </IconButton>
             </DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            <div style={{ marginBottom: 20 }}>
+              <span>Если снять активность с выбранной зоны доставки, то прекратиться оформление новых заказов в данную зону</span>
+            </div>
+
             <MyCheckBox 
               label={zone?.zone_name ?? ''} 
               value={parseInt(this.state.is_active) == 1 ? true : false} 
@@ -2023,7 +2027,7 @@ class CafeEdit_ extends React.Component {
 
                     <Grid item xs={12} sm={3}>
                       <MyTextInput
-                        label="Сортировка"
+                        label="Сортировка ( порядок точек во всех модулях и на сайте )"
                         value={this.state.point_info?.sort ?? ''}
                         func={this.changeData.bind(this, 'sort')}
                       />
@@ -2398,7 +2402,7 @@ class CafeEdit_ extends React.Component {
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell colSpan={3}>Актуальное время</TableCell>
+                            <TableCell colSpan={3}>Актуальное время доставки</TableCell>
                           </TableRow>
                           <TableRow>
                             <TableCell style={{ width:'33%' }}>Зона</TableCell>
