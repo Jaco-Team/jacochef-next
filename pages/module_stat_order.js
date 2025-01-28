@@ -110,6 +110,12 @@ class StatOrder_ extends React.Component {
       avg_graph: null,
       summ_graph: null,
       count_graph: null,
+
+      types: [],
+      type: [],
+
+      promos: [],
+      promo: '',
     };
   }
 
@@ -119,6 +125,8 @@ class StatOrder_ extends React.Component {
     this.setState({
       points: data.points,
       metrics: data.metrics,
+      types: data.types,
+      promos: data.promos,
       module_name: data.module_info.name,
     });
 
@@ -200,10 +208,9 @@ class StatOrder_ extends React.Component {
       count_graph: null,
     });
 
-    const { activeTab, point, metric, date_start, date_end, is_akcii } =
-      this.state;
+    const { activeTab, point, metric, date_start, date_end, is_akcii, promo, type } = this.state;
 
-    const type = activeTab ? 'month' : 'days';
+    const type_active = activeTab ? 'month' : 'days';
 
     if (!point.length) {
       this.setState({
@@ -243,6 +250,8 @@ class StatOrder_ extends React.Component {
       }
     });
 
+    let promo_name = promo ? parseInt(promo.id) : 0;
+
     const data = {
       date_start: date_start ? dayjs(date_start).format('YYYY-MM-DD') : '',
       date_end: date_end ? dayjs(date_end).format('YYYY-MM-DD') : '',
@@ -252,11 +261,13 @@ class StatOrder_ extends React.Component {
       count,
       avg,
       summ,
+      type,
+      promo_name
     };
 
     let res;
 
-    if (type === 'days') {
+    if (type_active === 'days') {
       res = await this.getData('get_stat_days', data);
     } else {
       res = await this.getData('get_stat_month', data);
@@ -267,7 +278,7 @@ class StatOrder_ extends React.Component {
     });
 
     setTimeout(() => {
-      this.get_graph_data(count, avg, summ, type);
+      this.get_graph_data(count, avg, summ, type_active);
     }, 100);
   }
 
@@ -772,6 +783,12 @@ class StatOrder_ extends React.Component {
     );
   }
 
+  changePromo(data, event, value) {
+    this.setState({
+      [data]: value
+    });
+  }
+
   render() {
     return (
       <>
@@ -828,6 +845,26 @@ class StatOrder_ extends React.Component {
               data={this.state.metrics}
               value={this.state.metric}
               func={this.changeAutocomplite.bind(this, 'metric')}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <MyAutocomplite
+              label="Тип оформления"
+              multiple={true}
+              data={this.state.types}
+              value={this.state.type}
+              func={this.changeAutocomplite.bind(this, 'type')}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <MyAutocomplite
+              label="Наличие промокода в заказе"
+              multiple={false}
+              data={this.state.promos}
+              value={this.state.promo}
+              func={this.changePromo.bind(this, 'promo')}
             />
           </Grid>
 
