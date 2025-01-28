@@ -372,7 +372,7 @@ class CafeEdit_Modal_History extends React.Component {
               <>
                 <Grid item xs={12} sm={6}>
                   <MyTextInput
-                    label="Количество заказов на руках"
+                    label="Количество заказов на руках (0 - без ограничений)"
                     value={this.state.itemView ? this.state.itemView.count_driver?.color ? this.state.itemView.count_driver.key : this.state.itemView.count_driver : ''}
                     disabled={true}
                     className={this.state.itemView ? this.state.itemView.count_driver?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
@@ -2544,7 +2544,7 @@ class CafeEdit_ extends React.Component {
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={4}>
                   <MyTextInput
-                    label="Количество заказов на руках"
+                    label="Количество заказов на руках (0 - без ограничений)"
                     value={this.state.point_info?.count_driver ?? ''}
                     func={this.changeData.bind(this, 'count_driver')}
                   />
