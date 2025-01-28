@@ -55,6 +55,8 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import Draggable from 'react-draggable';
 
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
 const types = [
   {
@@ -638,8 +640,8 @@ const useStore = create((set, get) => ({
         bill_items: [],
         //bill_items_doc: [],
         search_item: '',
-        vendor_items: res.items,
-        vendor_itemsCopy: res.items,
+        //vendor_items: res.items,
+        //vendor_itemsCopy: res.items,
         users: res.users,
         all_ed_izmer: [],
         pq: '',
@@ -687,8 +689,8 @@ const useStore = create((set, get) => ({
         set({
           //bill_items: [],
           //bill_items_doc: [],
-          vendor_items: res.items,
-          vendor_itemsCopy: res.items,
+          //vendor_items: res.items,
+          //vendor_itemsCopy: res.items,
           users: res.users,
           search_item: '',
           all_ed_izmer: [],
@@ -1111,6 +1113,9 @@ const useStore = create((set, get) => ({
     vendor_items[0].fact_unit = is_add == 0 ? '' : fact_unit;
     vendor_items[0].price_item = is_add == 0 ? '' : summ;
     vendor_items[0].price_w_nds = is_add == 0 ? '' : sum_w_nds;
+    vendor_items[0].item_id = is_add == 0 ? '' : item_id;
+
+    vendor_items[0].one_price_bill = is_add == 0 ? '' : parseInt(sum_w_nds) / parseInt(fact_unit);
 
     const bill_items_doc = get().bill_items_doc;
 
@@ -1162,6 +1167,7 @@ const useStore = create((set, get) => ({
 
     bill_items.map((item, key) => {
       let one_price_bill = parseFloat(item['one_price_bill']);
+
       let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.price;
       let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.vend_percent;
 
@@ -1924,13 +1930,19 @@ function FormImage_new({ type_edit, type_doc }){
             {!imgs_bill.length ? 'Фото отсутствует' :
               <>
                 {imgs_bill.map((img, key) => (
-                  <img 
-                    key={key} 
-                    src={'https://storage.yandexcloud.net/' + url + img} 
-                    alt="Image bill" 
-                    className="img_modal_bill"
-                    onClick={() => openImageBill('https://storage.yandexcloud.net/' + url + img, 'bill')}
-                  />
+                  img.includes('.pdf') ? 
+                    <a href={'https://storage.yandexcloud.net/' + url + img} target="_blank" rel="noreferrer" key={key} style={{ width: 'fit-content', height: 'fit-content', display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
+                      <InsertDriveFileIcon style={{ fontSize: 200 }} />
+                      <span>PDF</span>
+                    </a>
+                      :
+                    <img 
+                      key={key} 
+                      src={'https://storage.yandexcloud.net/' + url + img} 
+                      alt="Image bill" 
+                      className="img_modal_bill"
+                      onClick={() => openImageBill('https://storage.yandexcloud.net/' + url + img, 'bill')}
+                    />
                 ))}
               </>
             }
@@ -1943,6 +1955,12 @@ function FormImage_new({ type_edit, type_doc }){
           {!imgs_factur.length ? 'Фото отсутствует' :
             <>
               {imgs_factur.map((img, key) => (
+                img.includes('.pdf') ? 
+                <a href={'https://storage.yandexcloud.net/bill/' + url + img} target="_blank" rel="noreferrer" key={key} style={{ width: 'fit-content', height: 'fit-content', display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
+                  <InsertDriveFileIcon style={{ fontSize: 200 }} />
+                  <span>PDF</span>
+                </a>
+                  :
                 <img 
                   key={key} 
                   src={'https://storage.yandexcloud.net/bill/' + img} 
@@ -2007,6 +2025,12 @@ function FormImage_new({ type_edit, type_doc }){
                 {!imgs_factur.length ? 'Фото отсутствует' :
                   <>
                     {imgs_factur.map((img, key) => (
+                      img.includes('.pdf') ? 
+                      <a href={'https://storage.yandexcloud.net/bill/' + url + img} target="_blank" rel="noreferrer" key={key} style={{ width: 'fit-content', height: 'fit-content', display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
+                        <InsertDriveFileIcon style={{ fontSize: 200 }} />
+                        <span>PDF</span>
+                      </a>
+                        :
                       <img 
                         key={key} 
                         src={'https://storage.yandexcloud.net/bill/' + img} 

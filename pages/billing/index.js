@@ -532,6 +532,31 @@ class Billing_ extends React.Component {
 
   //onClick={this.getOneBill.bind(this, item)}
 
+  check_all_bill_pay(){
+
+    let arr_Pay = this.state.arrPay;
+
+    let bills = this.state.bills;
+
+    let count_true = 0;
+
+    bills.map( bill => {
+      if( parseInt(bill?.status) == 9 ){
+        arr_Pay[ bill.my_type_bill + '_' + bill.id + '_' + bill.point_id ] = {
+          bill_id: bill.id,
+          point_id: bill.point_id,
+          bill_type: bill.my_type_bill,
+          status: true,
+        };
+
+        count_true++;
+      }
+    } )
+
+    this.setState({ arrPay: arr_Pay, count_true });
+  
+  }
+
   render() {
     return (
       <>
@@ -705,7 +730,17 @@ class Billing_ extends React.Component {
                 <TableHead>
                   <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
                     <TableCell>#</TableCell>
-                    <TableCell>{ this.state.acces_bux_pay === true ? 'Оплатить' : '' }</TableCell>
+                    <TableCell>
+                      { this.state.acces_bux_pay === true ? 
+                        <MyCheckBox 
+                          label={'Оплатить'}
+                          func={ this.check_all_bill_pay.bind(this) }
+                          value={ false }
+                        />
+                          : 
+                        '' 
+                      }
+                    </TableCell>
                     <TableCell></TableCell>
                     
                     <TableCell>Тип</TableCell>
