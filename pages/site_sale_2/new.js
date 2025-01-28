@@ -835,7 +835,7 @@ class SiteSale2_new_ extends React.Component {
   delItemPrice(item){
     let thisItems = this.state.itemsAddPrice;
     
-    let newItems = thisItems.filter( (it) => parseInt(it.item_id) != parseInt(item.item_id) );
+    let newItems = thisItems.filter( (it) => parseInt(it.id) != parseInt(item.id));
     
     let addItemAllPrice = 0;
       
@@ -853,6 +853,28 @@ class SiteSale2_new_ extends React.Component {
     }, 300 )
   }
   
+  changeItemPrice(item, event){
+    let thisItems = this.state.itemsAddPrice;
+    
+    let newItems = thisItems.map( (it) => {
+      if( parseInt(it.id) == parseInt(item.id) ){
+        it.price = event.target.value;
+      }
+      
+      return it;
+    } )
+    
+    this.setState({
+      itemsAddPrice: newItems
+    })
+    
+    setTimeout( () => {
+      this.generateTextDescFalse();  
+      this.generateTextDescTrue();    
+    }, 300 )
+
+  }
+
   render(){
     return (
       <>
@@ -1059,7 +1081,9 @@ class SiteSale2_new_ extends React.Component {
                     { this.state.itemsAddPrice.map( (item, key) =>
                       <TableRow key={key}>
                         <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.price}</TableCell>
+                        <TableCell>
+                          <MyTextInput value={item.price} func={ this.changeItemPrice.bind(this, item) } />
+                        </TableCell>
                         <TableCell> <CloseIcon onClick={this.delItemPrice.bind(this, item)} style={{ cursor: 'pointer' }} /> </TableCell>
                       </TableRow>
                     ) }
