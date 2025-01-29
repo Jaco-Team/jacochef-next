@@ -17,15 +17,39 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableFooter from '@mui/material/TableFooter';
-import Typography from '@mui/material/Typography';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import Tooltip from '@mui/material/Tooltip';
+
+const SvgIconInfo = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="25"
+    height="25"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <path d="M0 0h24v24H0z"></path>
+    <circle
+      cx="12"
+      cy="12"
+      r="9"
+      stroke="#414a4c"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    ></circle>
+    <path
+      stroke="#414a4c"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M12 11v6M11.75 8V7h.5v1z"
+    ></path>
+  </svg>
+);
 
 import { api_laravel, api_laravel_local } from '@/src/api_new';
 import dayjs from 'dayjs';
@@ -34,13 +58,14 @@ function Row(props) {
   const { row } = props;
   const [open, setOpen] = React.useState(false);
 
+  const [showMore, setShowMore] = React.useState(false);
+
   const handleClick = () => {
     setOpen(!open);
 
     if( row?.arr.length == 0 ) {
       props.getData(row?.name)
     }
-    
   }
 
   return (
@@ -58,32 +83,82 @@ function Row(props) {
         <TableCell component="th" scope="row">
           {row?.name} <CompositionOfOrders_Tooltip title={row?.title} />
         </TableCell>
-        <TableCell align="right" style={{ paddingRight: 40 }}>{row?.count}</TableCell>
-        <TableCell align="right" style={{ paddingRight: 40 }}>{row?.count_percent}%</TableCell>
-        <TableCell align="right" style={{ paddingRight: 40 }}>{row?.price}</TableCell>
-        <TableCell align="right" style={{ paddingRight: 40 }}>{row?.price_percent}%</TableCell>
+        <TableCell align="right" style={{ paddingRight: 10 }}>{new Intl.NumberFormat('ru-RU').format(parseInt(row?.count))}</TableCell>
+        <TableCell align="right" style={{ paddingRight: 10 }}>{new Intl.NumberFormat('ru-RU').format(row?.count_percent)}%</TableCell>
+        <TableCell align="right" style={{ paddingRight: 10 }}>{ new Intl.NumberFormat('ru-RU').format(row?.price)}</TableCell>
+        <TableCell align="right" style={{ paddingRight: 10 }}>{new Intl.NumberFormat('ru-RU').format(row?.price_percent)}%</TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
               
-              <Table size="small" aria-label="purchases">
-                <TableHead>
+              <Table size="small">
+                <TableHead style={{ backgroundColor: '#e6e6e6' }}>
                   <TableRow>
-                    <TableCell>Группа</TableCell>
-                    <TableCell align="right">Количество</TableCell>
+                    <TableCell style={{ }}>Группа</TableCell>
+                    <TableCell align="right">Заказов, шт.</TableCell>
+                    <TableCell align="right">Доля в заказах</TableCell>
+                    <TableCell align="right">Выручка, руб.</TableCell>
+                    <TableCell align="right">Доля в выручке, руб.</TableCell>
+                    <TableCell align="right">Промокод</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {row?.arr?.map((historyRow) => (
+                  {row?.arr_main?.map((historyRow) => (
                     <TableRow key={historyRow.full_group}>
                       <TableCell>{historyRow.full_group}</TableCell>
-                      <TableCell align="right">{historyRow.count}</TableCell>
+                      <TableCell align="right" style={{ paddingRight: 10 }}>{new Intl.NumberFormat('ru-RU').format(parseInt(historyRow?.count))}</TableCell>
+                      <TableCell align="right" style={{ paddingRight: 10 }}>{new Intl.NumberFormat('ru-RU').format(historyRow?.count_percent)}%</TableCell>
+                      <TableCell align="right" style={{ paddingRight: 10 }}>{ new Intl.NumberFormat('ru-RU').format(historyRow?.sum_orders)}</TableCell>
+                      <TableCell align="right" style={{ paddingRight: 10 }}>{new Intl.NumberFormat('ru-RU').format(historyRow?.sum_percent)}%</TableCell>
+                      <TableCell align="right" style={{ paddingRight: 10 }}>{historyRow?.promo_name}</TableCell>
                     </TableRow>
                   ))}
+
+                  { showMore === false ?
+                    <TableRow onClick={() => setShowMore(true)} style={{ cursor: 'pointer' }}>
+                      <TableCell>{ showMore === false ? 'Показать больше' : 'Показать меньше' }</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                      :
+                    false
+                  }
+
+                  {row?.arr_dop?.map((historyRow) => (
+                    <TableRow key={historyRow.full_group} style={{ display: showMore === true ? 'table-row' : 'none' }}>
+                      <TableCell>{historyRow.full_group}</TableCell>
+                      <TableCell align="right" style={{ paddingRight: 10 }}>{new Intl.NumberFormat('ru-RU').format(parseInt(historyRow?.count))}</TableCell>
+                      <TableCell align="right" style={{ paddingRight: 10 }}>{new Intl.NumberFormat('ru-RU').format(historyRow?.count_percent)}%</TableCell>
+                      <TableCell align="right" style={{ paddingRight: 10 }}>{ new Intl.NumberFormat('ru-RU').format(historyRow?.sum_orders)}</TableCell>
+                      <TableCell align="right" style={{ paddingRight: 10 }}>{new Intl.NumberFormat('ru-RU').format(historyRow?.sum_percent)}%</TableCell>
+                      <TableCell align="right" style={{ paddingRight: 10 }}>{historyRow?.promo_name}</TableCell>
+                    </TableRow>
+                  ))}
+
+                  { showMore === true ?
+                    <TableRow onClick={() => setShowMore(false)} style={{ cursor: 'pointer' }}>
+                      <TableCell>{ showMore === false ? 'Показать больше' : 'Показать меньше' }</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                      :
+                    false
+                  }
                 </TableBody>
+                
               </Table>
+
+
+
+              
             </Box>
           </Collapse>
         </TableCell>
@@ -96,7 +171,7 @@ function CompositionOfOrders_Tooltip({title}) {
   return (
     <Tooltip title={title}>
       <IconButton>
-        <InfoOutlinedIcon style={{ verticalAlign: 'bottom' }} />
+        <SvgIconInfo style={{ verticalAlign: 'bottom' }} />
       </IconButton>
     </Tooltip>
   );
@@ -142,14 +217,14 @@ class CompositionOfOrders_ extends React.Component {
       dow: [],
 
       pays: [
-        { id: 1, name: 'Доставка наличка' },
-        { id: 2, name: 'Доставка безнал' },
-        { id: 3, name: 'Самовывоз наличка' },
-        { id: 4, name: 'Самовывоз безнал' },
-        { id: 5, name: 'Зал наличка' },
-        { id: 6, name: 'Зал безнал' },
-        { id: 7, name: 'Зал с собой наличка' },
-        { id: 8, name: 'Зал с собой безнал' },
+        { id: 1, name: 'Доставка - Нал.' },
+        { id: 2, name: 'Доставка - Безнал.' },
+        { id: 3, name: 'Самовывоз - Нал.' },
+        { id: 4, name: 'Самовывоз - Безнал.' },
+        { id: 5, name: 'Зал - Нал.' },
+        { id: 6, name: 'Зал - Безнал.' },
+        { id: 7, name: 'Зал с собой - Нал.' },
+        { id: 8, name: 'Зал с собой - Безнал.' },
       ],
       pay: [],
 
@@ -164,10 +239,10 @@ class CompositionOfOrders_ extends React.Component {
       all_price: 0,
       all_count: 0,
 
-      sort_count: 'none',
-      sort_count_percent: 'none',
+      sort_count: 'asc',
+      sort_count_percent: 'asc',
       sort_price_percent: 'desc',
-      sort_price: 'none',
+      sort_price: 'asc',
     };
   }
 
@@ -259,6 +334,11 @@ class CompositionOfOrders_ extends React.Component {
       stat: res?.res,
       all_price: res?.all_price,
       all_count: res?.all_count,
+
+      sort_count: 'asc',
+      sort_count_percent: 'asc',
+      sort_price_percent: 'desc',
+      sort_price: 'asc',
     });
   }
 
@@ -280,7 +360,10 @@ class CompositionOfOrders_ extends React.Component {
     
     stat.map( ( item, key ) => {
       if( item.name == row_name ){
-        stat[key].arr = res?.array;
+
+        stat[key].arr_main = res?.array.slice(0, 20)
+        stat[key].arr_dop = res?.array.slice(20)
+        stat[key].arr = res?.array
       }
     } )
 
@@ -306,15 +389,17 @@ class CompositionOfOrders_ extends React.Component {
   }
 
   sort(type){
+    console.log( 'sort', type )
+
     if( type == 'sort_count' ){
 
       let type_sort = this.get_new_type_sort(this.state.sort_count);
 
       this.setState({ 
         sort_count: type_sort, 
-        sort_count_percent: 'none',
-        sort_price_percent: 'none',
-        sort_price: 'none',
+        sort_count_percent: 'asc',
+        sort_price_percent: 'asc',
+        sort_price: 'asc',
 
         stat: type_sort == 'asc' ? this.state.stat.sort((a, b) => parseInt(a.count) - parseInt(b.count)) : this.state.stat.sort((a, b) => parseInt(b.count) - parseInt(a.count)),
       });
@@ -325,10 +410,10 @@ class CompositionOfOrders_ extends React.Component {
       let type_sort = this.get_new_type_sort(this.state.sort_count_percent);
 
       this.setState({ 
-        sort_count: 'none',
+        sort_count: 'asc',
         sort_count_percent: type_sort,
-        sort_price_percent: 'none',
-        sort_price: 'none',
+        sort_price_percent: 'asc',
+        sort_price: 'asc',
 
         stat: type_sort == 'asc' ? this.state.stat.sort((a, b) => parseInt(a.count_percent) - parseInt(b.count_percent)) : this.state.stat.sort((a, b) => parseInt(b.count_percent) - parseInt(a.count_percent)),
       });
@@ -339,10 +424,10 @@ class CompositionOfOrders_ extends React.Component {
       let type_sort = this.get_new_type_sort(this.state.sort_price_percent);
 
       this.setState({ 
-        sort_count: 'none',
-        sort_count_percent: 'none',
+        sort_count: 'asc',
+        sort_count_percent: 'asc',
         sort_price_percent: type_sort, 
-        sort_price: 'none',
+        sort_price: 'asc',
 
         stat: type_sort == 'asc' ? this.state.stat.sort((a, b) => parseInt(a.price_percent) - parseInt(b.price_percent)) : this.state.stat.sort((a, b) => parseInt(b.price_percent) - parseInt(a.price_percent)),
       });
@@ -353,9 +438,9 @@ class CompositionOfOrders_ extends React.Component {
       let type_sort = this.get_new_type_sort(this.state.sort_price);
 
       this.setState({ 
-        sort_count: 'none',
-        sort_count_percent: 'none',
-        sort_price_percent: 'none',
+        sort_count: 'asc',
+        sort_count_percent: 'asc',
+        sort_price_percent: 'asc',
         sort_price: type_sort, 
 
         stat: type_sort == 'asc' ? this.state.stat.sort((a, b) => parseInt(a.price) - parseInt(b.price)) : this.state.stat.sort((a, b) => parseInt(b.price) - parseInt(a.price)),
@@ -411,7 +496,7 @@ class CompositionOfOrders_ extends React.Component {
 
           <Grid item xs={12} sm={6}>
             <MyAutocomplite
-              label="Дни недели"
+              label="День недели"
               multiple={true}
               data={this.state.dows}
               value={this.state.dow}
@@ -421,7 +506,7 @@ class CompositionOfOrders_ extends React.Component {
 
           <Grid item xs={12} sm={6}>
             <MyAutocomplite
-              label="Оплата"
+              label="Способ оплаты"
               multiple={true}
               data={this.state.pays}
               value={this.state.pay}
@@ -439,14 +524,14 @@ class CompositionOfOrders_ extends React.Component {
 
           <Grid item xs={12} sm={2}>
             <MyCheckBox
-              label="Оформлен по предзаказу"
+              label="Оформлен предзаказ"
               value={parseInt(this.state.pred_time) == 1 ? true : false}
               func={this.changeItemChecked.bind(this, 'pred_time')}
             />
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <Button onClick={this.get_stat_orders.bind(this)} variant="contained">
+            <Button onClick={this.get_stat_orders.bind(this)} variant="contained" disableElevation>
               Показать
             </Button>
           </Grid>
@@ -454,40 +539,34 @@ class CompositionOfOrders_ extends React.Component {
           
           <Grid item xs={12} sm={12} style={{ marginBottom: 100 }}>
             
-            
+            <Table aria-label="collapsible table">
+              <TableHead style={{ backgroundColor: '#e6e6e6' }}>
+                <TableRow>
+                  <TableCell style={{ }} />
+                  <TableCell style={{ }}>Позиция меню <CompositionOfOrders_Tooltip title={'Берутся к учёту только те заказы, в которых есть то, что написано ниже списком. Блюда берутся в единственном и множественном числе.'} /></TableCell>
+                  <TableCell align="right" style={{ }}><span style={{ cursor: 'pointer' }} onClick={ this.sort.bind(this, 'sort_count') }><CompositionOfOrders_IconSort type={this.state.sort_count} /></span> Заказов, шт. <CompositionOfOrders_Tooltip title={'Общее количество таких заказов'} /></TableCell>
+                  <TableCell align="right" style={{ }}><span style={{ cursor: 'pointer' }} onClick={ this.sort.bind(this, 'sort_count_percent') }><CompositionOfOrders_IconSort type={this.state.sort_count_percent} /></span> Доля в заказах <CompositionOfOrders_Tooltip title={'% от общего количества таких заказов'} /></TableCell>
+                  <TableCell align="right" style={{ }}><span style={{ cursor: 'pointer' }} onClick={ this.sort.bind(this, 'sort_price') }><CompositionOfOrders_IconSort type={this.state.sort_price} /></span> Выручка, руб. <CompositionOfOrders_Tooltip title={'Общая выручка таких заказов в руб.'} /></TableCell>
+                  <TableCell align="right" style={{ }}><span style={{ cursor: 'pointer' }} onClick={ this.sort.bind(this, 'sort_price_percent') }><CompositionOfOrders_IconSort type={this.state.sort_price_percent} /></span> Доля в выручке, руб. <CompositionOfOrders_Tooltip title={'% от общей суммы выручки таких заказов'} /></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {this.state.stat.map((row) => (
+                  <Row key={row.name} row={row} getData={this.getDataRow.bind(this)} />
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell style={{ borderBottom: 0 }}></TableCell>
+                  <TableCell style={{ borderBottom: 0 }}>Итого</TableCell>
+                  <TableCell align="right" style={{ paddingRight: 10, borderBottom: 0 }}>{new Intl.NumberFormat('ru-RU').format(parseInt(this.state.all_count)) }</TableCell>
+                  <TableCell align="right" style={{ paddingRight: 10, borderBottom: 0 }}>100%</TableCell>
+                  <TableCell align="right" style={{ paddingRight: 10, borderBottom: 0 }}>{new Intl.NumberFormat('ru-RU').format(parseInt(this.state.all_price)) }</TableCell>
+                  <TableCell align="right" style={{ paddingRight: 10, borderBottom: 0 }}>100%</TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
               
-              
-                <Table aria-label="collapsible table">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell style={{ }} />
-                      <TableCell style={{ }}>Если в заказе только <CompositionOfOrders_Tooltip title={'Берутся к учёту только те заказы, в которых есть то, что написано ниже списком. Блюда берутся в единственном и множественном числе.'} /></TableCell>
-                      <TableCell style={{ cursor: 'pointer' }} onClick={ this.sort.bind(this, 'sort_count') }><CompositionOfOrders_IconSort type={this.state.sort_count} /> Общее количество заказов, шт. <CompositionOfOrders_Tooltip title={'Общее количество таких заказов'} /></TableCell>
-                      <TableCell style={{ cursor: 'pointer' }} onClick={ this.sort.bind(this, 'sort_count_percent') }><CompositionOfOrders_IconSort type={this.state.sort_count_percent} /> Доля от общего количества заказов, % <CompositionOfOrders_Tooltip title={'% от общего количества таких заказов'} /></TableCell>
-                      <TableCell style={{ cursor: 'pointer' }} onClick={ this.sort.bind(this, 'sort_price') }><CompositionOfOrders_IconSort type={this.state.sort_price} />Общая выручка, руб. <CompositionOfOrders_Tooltip title={'Общая выручка таких заказов в руб.'} /></TableCell>
-                      <TableCell style={{ cursor: 'pointer' }} onClick={ this.sort.bind(this, 'sort_price_percent') }><CompositionOfOrders_IconSort type={this.state.sort_price_percent} />Доля от общей выручки, % <CompositionOfOrders_Tooltip title={'% от общей суммы выручки таких заказов'} /></TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {this.state.stat.map((row) => (
-                      <Row key={row.name} row={row} getData={this.getDataRow.bind(this)} />
-                    ))}
-                  </TableBody>
-                  <TableFooter>
-                    <TableRow>
-                      <TableCell></TableCell>
-                      <TableCell>Итого</TableCell>
-                      <TableCell align="right" style={{ paddingRight: 40 }}>{ this.state.all_count }</TableCell>
-                      <TableCell align="right" style={{ paddingRight: 40 }}>100%</TableCell>
-                      <TableCell align="right" style={{ paddingRight: 40 }}>{ this.state.all_price }</TableCell>
-                      <TableCell align="right" style={{ paddingRight: 40 }}>100%</TableCell>
-                    </TableRow>
-                  </TableFooter>
-                </Table>
-              
-              
-            
-            
           </Grid>
           
         </Grid>
