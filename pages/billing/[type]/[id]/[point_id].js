@@ -1219,13 +1219,21 @@ const useStore = create((set, get) => ({
     bill_items.map((item, key) => {
       let one_price_bill = parseFloat(item['one_price_bill']);
 
+      if( !one_price_bill || one_price_bill == '0' || one_price_bill == 0 ){
+        one_price_bill = parseFloat(item['price_w_nds']) / parseFloat(item['fact_unit']);
+      }
+
       let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.price;
       let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['item_id']))?.vend_percent;
 
       let one_price_max = parseFloat(one_price_vend) + ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
 			let one_price_min = parseFloat(one_price_vend) - ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
 
-      if(one_price_bill >= one_price_max || one_price_bill <= one_price_min || !one_price_bill || !one_price_max || !one_price_min || one_price_bill == 0 ){
+      const nds = get().check_nds_bill( Number(item.price_item) == 0 ? 0 : (Number(item.price_w_nds) - Number(item.price_item)) / (Number(item.price_item) / 100))
+
+      console.log( item.item_name, one_price_min, one_price_bill, one_price_max, nds, item )
+
+      if(one_price_bill >= one_price_max || one_price_bill <= one_price_min || !one_price_bill || !one_price_max || !one_price_min || one_price_bill == 0 || nds === false ){
         err_items.push(item);
 
         bill_items[ key ].color = true;
@@ -1291,7 +1299,9 @@ const useStore = create((set, get) => ({
     bill_items = bill_items.map((item, index) => {
       if (item.id === id && key === index) {
 
-        item[type] = value;
+        //item[type] = value;
+        bill_items[ key ][type] = value;
+        console.log( item.item_name, type, value )
 
         if (type === 'pq') {
           item.fact_unit = (Number(item[type]) * Number(item.count)).toFixed(2);
