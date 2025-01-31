@@ -334,6 +334,28 @@ const useStore = create((set, get) => ({
 
   bill_base_id: 0,
 
+  dragIndex: null,
+
+  handleDrag: (event) => {
+    set({
+      dragIndex: event.currentTarget.id
+    });
+  },
+
+  handleDrop: (event) => {
+    let bill_items = get().bill_items;
+
+    const drop = bill_items[event.currentTarget.id];
+    const drag = bill_items[get().dragIndex];
+
+    bill_items[event.currentTarget.id] = drag;
+    bill_items[get().dragIndex] = drop;
+
+    set({
+      bill_items
+    });
+  },
+
   set_position: (is_horizontal, is_vertical) => {
     set({
       is_horizontal: is_horizontal,
@@ -1342,7 +1364,7 @@ function FormVendorItems(){
 
 function VendorItemsTableEdit(){
 
-  const [ type, deleteItem, changeDataTable ] = useStore( state => [ state.type, state.deleteItem, state.changeDataTable ]);
+  const [ type, deleteItem, changeDataTable, handleDrag, handleDrop ] = useStore( state => [ state.type, state.deleteItem, state.changeDataTable, state.handleDrag, state.handleDrop ]);
   const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
 
   let summ_nds = 0;
@@ -1380,7 +1402,14 @@ function VendorItemsTableEdit(){
               {bill_items.map((item, key) => (
                 <React.Fragment key={key}>
                   {!item?.data_bill ? null :
-                    <TableRow style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                    <TableRow 
+                      style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}
+                      draggable={true}
+                      onDragStart={handleDrag}
+                      onDrop={handleDrop}
+                      id={key}
+                      onDragOver={(ev) => ev.preventDefault()}
+                    >
                       <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
                       <TableCell>До</TableCell>
                       <TableCell>{item?.data_bill?.pq} {item.ed_izmer_name}</TableCell>
@@ -1403,7 +1432,15 @@ function VendorItemsTableEdit(){
                     </TableRow>
                   }
 
-                  <TableRow hover style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                  <TableRow 
+                    hover 
+                    style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }} 
+                    draggable={true}
+                    onDragStart={handleDrag}
+                    onDrop={handleDrop}
+                    id={key}
+                    onDragOver={(ev) => ev.preventDefault()}
+                  >
                     {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
                     {!item?.data_bill ? null : <TableCell>После</TableCell>}
                     <TableCell className="ceil_white">
@@ -1467,6 +1504,7 @@ function VendorItemsTableEdit(){
                       </>
                     }
                   </TableRow>
+
                 </React.Fragment>
               ))}
               { bill_items.length == 0 ? null : (

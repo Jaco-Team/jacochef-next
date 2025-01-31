@@ -55,7 +55,6 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import Draggable from 'react-draggable';
 
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
 const types = [
@@ -342,6 +341,31 @@ const useStore = create((set, get) => ({
 
   bill_base_id: 0,
 
+  dragIndex: null,
+
+  bill_items_initinal : [],
+  bill_initinal: null,
+
+  handleDrag: (event) => {
+    set({
+      dragIndex: event.currentTarget.id
+    });
+  },
+
+  handleDrop: (event) => {
+    let bill_items = get().bill_items;
+
+    const drop = bill_items[event.currentTarget.id];
+    const drag = bill_items[get().dragIndex];
+
+    bill_items[event.currentTarget.id] = drag;
+    bill_items[get().dragIndex] = drop;
+
+    set({
+      bill_items
+    });
+  },
+
   set_position: (is_horizontal, is_vertical) => {
     set({
       is_horizontal: is_horizontal,
@@ -434,6 +458,30 @@ const useStore = create((set, get) => ({
       is_load_store: true,
     });
 
+    const bill_items_initinal = res.bill_items.reduce((newItems, item) => {
+      let it = {};
+
+      it.pq = item.pq;
+      it.count = item.count;
+      it.item_id = item.item_id ?? item.id;
+      it.summ = item.price;
+      it.summ_w_nds = item.price_w_nds;
+
+      newItems.push(it);
+
+      return newItems;
+    }, []);
+
+    const bill_initinal = {
+      'date_create': parseInt(res?.bill?.type_bill) == 1 ? res?.bill.date : res?.bill.date_create,
+      'number': res?.bill.number,
+    }
+
+    if(parseInt(res?.bill?.type_bill) !== 1) {
+      bill_initinal.date_factur = res?.bill.date_factur;
+      bill_initinal.number_factur = res?.bill.number_factur;
+    }
+
     const bill_items = res.bill_items.map((item) => {
 
       item.all_ed_izmer = item.pq_item.map(it => {
@@ -497,7 +545,10 @@ const useStore = create((set, get) => ({
       number_factur: res.bill?.number_factur,
       date_factur: res.bill?.date_factur && res.bill?.date_factur !== "0000-00-00" ? dayjs(res.bill?.date_factur) : null,
 
-      bill_base_id: res?.bill.base_id
+      bill_base_id: res?.bill.base_id,
+
+      bill_items_initinal,
+      bill_initinal
     });
 
     let base_doc_name = docs.billings.find( item => item.number == res?.bill.number_base )?.name;
@@ -1570,7 +1621,7 @@ function FormVendorItems(){
 
 function VendorItemsTableEdit(){
 
-  const [ bill, type, deleteItem, changeDataTable ] = useStore( state => [ state.bill, state.type, state.deleteItem, state.changeDataTable ]);
+  const [ bill, type, deleteItem, changeDataTable, handleDrag, handleDrop ] = useStore( state => [ state.bill, state.type, state.deleteItem, state.changeDataTable, state.handleDrag, state.handleDrop ]);
   const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
 
   let summ_nds = 0;
@@ -1578,6 +1629,8 @@ function VendorItemsTableEdit(){
   bill_items.map( item => {
     summ_nds += parseFloat(item.summ_nds);
   } )
+
+  const draggable = parseInt(bill?.type) === 5 || parseInt(bill?.type) === 2 ? true : false;
 
   return (
     <>
@@ -1608,7 +1661,14 @@ function VendorItemsTableEdit(){
               {bill_items.map((item, key) => (
                 <React.Fragment key={key}>
                   {!item?.data_bill ? null :
-                    <TableRow style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                    <TableRow 
+                      style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}
+                      draggable={draggable}
+                      onDragStart={handleDrag}
+                      onDrop={handleDrop}
+                      id={key}
+                      onDragOver={(ev) => ev.preventDefault()}
+                    >
                       <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
                       <TableCell>До</TableCell>
                       <TableCell>{item?.data_bill?.pq} {item.ed_izmer_name}</TableCell>
@@ -1631,7 +1691,15 @@ function VendorItemsTableEdit(){
                     </TableRow>
                   }
 
-                  <TableRow hover style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                  <TableRow 
+                    hover 
+                    style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}
+                    draggable={draggable}
+                    onDragStart={handleDrag}
+                    onDrop={handleDrop}
+                    id={key}
+                    onDragOver={(ev) => ev.preventDefault()}
+                  >
                     {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
                     {!item?.data_bill ? null : <TableCell>После</TableCell>}
                     <TableCell className="ceil_white">
@@ -2182,7 +2250,7 @@ class Billing_Accordion extends React.Component {
   }
 
   render() {
-    const { bill_list, type } = this.props;
+    const { bill_list, bill_type, type } = this.props;
 
     return (
       <Grid item xs={12} sm={12} mb={5}>
@@ -2212,88 +2280,174 @@ class Billing_Accordion extends React.Component {
               </AccordionSummary>
 
               {bill_list.map((item, i) => (
-                <Accordion key={i}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" className="accordion_summary" style={{ paddingRight: '1%' }}>
-
-                    <Grid item xs display="flex" flexDirection='row'>
-
-                      <Typography component="div" style={{ width: '1%', backgroundColor: item.color, marginRight: '1%' }}></Typography>
-                      
-                      <Typography style={{ width: '4%', minWidth: '210px',  display: 'flex', alignItems: 'center' }}>
-                        {item.name}
-                      </Typography>
-
-                      
-
-                      <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
-                        {item.number}
-                      </Typography>
-
-                      <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
-                        {formatDateReverse(item.date_create)}
-                      </Typography>
-
-                      <Typography style={{ width: '14%', minWidth: '200px', display: 'flex', alignItems: 'center' }}>
-                        {item.creator_id}
-                      </Typography>
-
-                      <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
-                        {formatDateReverse(item.date_update)}
-                      </Typography>
-
-                      <Typography style={{ width: '14%', minWidth: '200px', display: 'flex', alignItems: 'center'}}>
-                        {item.editor_id}
-                      </Typography>
-
-                      <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
-                        {item.time_update}
-                      </Typography>
-
-                      
-
-                      <Typography style={{ width: '8%',  display: 'flex', alignItems: 'center' }}>
-                        {item.sum_w_nds}
-                      </Typography>
-                    </Grid>
-                  </AccordionSummary>
-
-                  <AccordionDetails>
-                    <Table>
-                      <TableHead>
-                        <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                          <TableCell>Товар</TableCell>
-                          <TableCell>Объем упак.</TableCell>
-                          <TableCell>Кол-во упак.</TableCell>
-                          <TableCell>Кол-во</TableCell>
-                          <TableCell>Сумма с НДС</TableCell>
-                        </TableRow>
-                      </TableHead>
-
-                      <TableBody>
-                        {item?.items?.map((item, key) => (
-                          <TableRow key={key} hover>
-                            <TableCell>{item.name}</TableCell>
-                            <TableCell style={{ textAlign: 'center' }}>{item.pq} {item.ei_name}</TableCell>
-                            <TableCell style={{ textAlign: 'center' }}>{item.count}</TableCell>
-                            <TableCell style={{ textAlign: 'center' }}>{item.fact_count} {item.ei_name}</TableCell>
-                            <TableCell style={{ textAlign: 'center' }}>{item.price_w_nds} ₽</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </AccordionDetails>
-                </Accordion>
+                <Billing_Accordion_item bill={item} index={i} bill_list={bill_list} key={i} bill_type={bill_type}/>
               ))}
+
             </AccordionDetails>
 
           </AccordionDetails>
         </Accordion>
 
-        
-        
       </Grid>
     );
   }
+}
+
+// Аккродион с данными сравнение для выделение изменений в истории
+function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
+
+  const item = JSON.parse(JSON.stringify(bill));
+
+  if(parseInt(index) !== 0) {
+    
+    let item_old = JSON.parse(JSON.stringify(bill_list[index - 1]));
+    
+    for (let key in item) {
+
+      if(key === 'base_id' && item[key] !== item_old[key]) {
+        item[key] = { key: item[key], color: 'true' }
+      }
+
+      if(key === 'number' && item[key] !== item_old[key]) {
+        item[key] = { key: item[key], color: 'true' }
+      }
+
+      if(parseInt(bill_type) === 1) {
+        if(key === 'date' && formatDateReverse(item[key]) !== formatDateReverse(item_old[key])) {
+          item[key] = { key: formatDateReverse(item[key]), color: 'true' }
+        }
+      } else {
+        if(key === 'date_create' && formatDateReverse(item[key]) !== formatDateReverse(item_old[key])) {
+          item[key] = { key: formatDateReverse(item[key]), color: 'true' }
+        }
+      }
+
+      if(key === 'items') {
+        item.items = item.items.reduce((newList, item) => {
+          const it_old = item_old.items.find((it) => parseInt(it.item_id) === parseInt(item.item_id));
+
+          if(it_old) {
+            for (let key in item) {
+              if(item[key] !== it_old[key]) {
+                item[key] = { key: item[key], color: 'true' }
+              }
+            }
+          } else {
+            for (let key in item) {
+              item[key] = { key: item[key], color: 'true' }
+            }
+          }
+          
+          return newList = [...newList,...[item]]
+        }, []).concat(item_old.items.filter((it) => {
+          if(!item.items.find((item) => parseInt(item.item_id) === parseInt(it.item_id))) {
+            for (let key in it) {
+              it[key] = { key: it[key], color: 'del' }
+            }
+            return it;
+          }
+        }));
+      }
+    }
+  } 
+
+  let date_create = '';
+
+  if(parseInt(bill_type) === 1) {
+    date_create = item.date;
+  } else {
+    date_create = item.date_create;
+  }
+
+  return (
+    <Accordion>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" className="accordion_summary" style={{ paddingRight: '1%' }}>
+
+        <Grid item xs display="flex" flexDirection='row'>
+
+          <Typography component="div" style={{ width: '1%', backgroundColor: item.color, marginRight: '1%' }}></Typography>
+          
+          <Typography style={{ width: '4%', minWidth: '210px',  display: 'flex', alignItems: 'center' }}>
+            {item.name}
+          </Typography>
+
+          <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
+            {item.number?.color ? item.number.key : item.number}
+          </Typography>
+
+          <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
+            {date_create?.color ? date_create?.key : formatDateReverse(date_create)}
+          </Typography>
+
+          <Typography style={{ width: '14%', minWidth: '200px', display: 'flex', alignItems: 'center' }}>
+            {item.creator_id}
+          </Typography>
+
+          <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
+            {formatDateReverse(item.date_update)}
+          </Typography>
+
+          <Typography style={{ width: '14%', minWidth: '200px', display: 'flex', alignItems: 'center'}}>
+            {item.editor_id}
+          </Typography>
+
+          <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
+            {item.time_update}
+          </Typography>
+
+          <Typography style={{ width: '8%',  display: 'flex', alignItems: 'center' }}>
+            {item.sum_w_nds}
+          </Typography>
+
+        </Grid>
+      </AccordionSummary>
+
+      <AccordionDetails>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+              <TableCell>Товар</TableCell>
+              <TableCell>Объем упак.</TableCell>
+              <TableCell>Кол-во упак.</TableCell>
+              <TableCell>Кол-во</TableCell>
+              <TableCell>Сумма с НДС</TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {item?.items?.map((item, key) => (
+              <TableRow key={key} hover>
+                <TableCell style={{ background: item.name?.color ? item.name.color === 'true' ? '#FFCF40' : '#fadadd' : null }}>{item.name?.color ? item.name.key : item.name}</TableCell>
+                <TableCell style={{ textAlign: 'center', background: item.pq?.color ? item.pq.color === 'true' ? '#FFCF40' : '#fadadd' : null }}>{item.pq?.color ? item.pq.key : item.pq} {item.ei_name?.color ? item.ei_name.key : item.ei_name}</TableCell>
+                <TableCell style={{ textAlign: 'center', background: item.count?.color ? item.count.color === 'true' ? '#FFCF40' : '#fadadd' : null }}>{item.count?.color ? item.count.key : item.count}</TableCell>
+                <TableCell style={{ textAlign: 'center', background: item.fact_count?.color ? item.fact_count.color === 'true' ? '#FFCF40' : '#fadadd' : null }}>{item.fact_count?.color ? item.fact_count.key : item.fact_count} {item.ei_name?.color ? item.ei_name.key : item.ei_name}</TableCell>
+                <TableCell style={{ textAlign: 'center', background: item.price_w_nds?.color ? item.price_w_nds.color === 'true' ? '#FFCF40' : '#fadadd' : null }}>{item.price_w_nds?.color ? item.price_w_nds.key : item.price_w_nds} ₽</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        <Table>
+          <TableHead>
+            <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+              <TableCell>Номер документа</TableCell>
+              <TableCell>Дата документа</TableCell>
+              <TableCell>Документ основание</TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            <TableRow hover>
+              <TableCell style={{ background: item.number?.color ? '#FFCF40' : null }}>{item.number?.color ? item.number.key : item.number}</TableCell>
+              <TableCell style={{ background: date_create?.color ? '#FFCF40' : null }}>{date_create?.color ? date_create?.key : formatDateReverse(date_create)}</TableCell>
+              <TableCell style={{ background: item.base_id?.color ? '#FFCF40' : null }}>{item.base_id?.color ? item.base_id.key : item.base_id ?? ''}</TableCell>
+            </TableRow>
+          </TableBody>
+
+        </Table>
+      </AccordionDetails>
+    </Accordion>
+  );
 }
 
 // модалка просмотра фото/картинок документов
@@ -2622,8 +2776,8 @@ class Billing_Edit_ extends React.Component {
     } else {
       res = await this.getData('get_one_bill_ex', bill);
     }
-
-    // console.log("🚀 === componentDidMount res:", res);
+    
+    //console.log("🚀 === componentDidMount res:", res);
 
     const points = await this.getData('get_points');
 
@@ -2633,7 +2787,7 @@ class Billing_Edit_ extends React.Component {
       point_id: bill['point_id'],
       vendor_id: res?.vendors[0]?.id,
     }
-
+   
     this.setState({
       acces: res?.acces,
       type_doc: data_bill[2]
@@ -2721,7 +2875,7 @@ class Billing_Edit_ extends React.Component {
 
     let new_bill_items = bill_items.filter( item => item.fact_unit.length == 0 || item.price_item.length == 0 || item.price_w_nds.length == 0 );
 
-    //console.log( 'bill_items', bill_items )
+    // console.log('saveEditBill bill_items', bill_items)
     //this.isClick = false;
     //return ;
 
@@ -2801,6 +2955,20 @@ class Billing_Edit_ extends React.Component {
       }
     }
 
+    let count_change = 0;
+
+    if(parseInt(bill?.type) === 7) {
+
+      const bill_new = {
+        'date_create': dateBill ? dateBill : null,
+        'date_factur': dateFactur ? dateFactur : null,
+        'number': number,
+        'number_factur': number_factur ?? null
+      }
+
+      count_change = this.get_count_change(bill_new, items, type);
+    }
+
     const data = {
       bill_id: bill.id,
       doc_info,
@@ -2819,7 +2987,8 @@ class Billing_Edit_ extends React.Component {
       point_id: bill.point_id,
       vendor_id: bill.vendor_id,
       type_save: type_save,
-      err_items: items_color
+      err_items: items_color,
+      count_change
     }
 
     const res = await this.getData('save_edit', data);
@@ -2861,6 +3030,61 @@ class Billing_Edit_ extends React.Component {
       }, 10000 );
 
     }
+  }
+
+  get_count_change(bill, bill_items, type_bill) {
+
+    const {bill_items_initinal, bill_initinal} = this.props.store;
+
+    let count = 0;
+
+    for (let key in bill) {
+
+      if(key === 'date_create' && bill[key] !== bill_initinal[key]) {
+        count += 1;
+      }
+
+      if(key === 'number' && bill[key] !== bill_initinal[key]) {
+        count += 1;
+      }
+
+      if(parseInt(type_bill) !== 1) {
+
+        if(key === 'date_factur' && bill[key] !== bill_initinal[key]) {
+          count += 1;
+        }
+
+        if(key === 'number_factur' && bill[key] !== bill_initinal[key]) {
+          count += 1;
+        }
+
+      }
+      
+    }
+
+    bill_items_initinal.forEach((item) => {
+      const it_old = bill_items.find((it) => parseInt(it.item_id) === parseInt(item.item_id));
+
+      if(it_old) {
+        for (let key in item) {
+          if(item[key] !== it_old[key]) {
+            count += 1;
+          }
+        }
+      } else {
+        count += 1;
+      }
+      
+    })
+
+    bill_items.forEach((it) => {
+      if(!bill_items_initinal.find((item) => parseInt(item.item_id) === parseInt(it.item_id))) {
+        count += 1;
+      }
+    });
+
+    return count;
+
   }
 
   async saveDelDoc () {
@@ -3017,7 +3241,7 @@ class Billing_Edit_ extends React.Component {
 
   render() {
 
-    const { acces, openAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical } = this.props.store;
+    const { acces, openAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical, type } = this.props.store;
 
     return (
       <>
@@ -3183,6 +3407,7 @@ class Billing_Edit_ extends React.Component {
           <Billing_Accordion
             bill_list={bill_list}
             bill_items={bill_items}
+            bill_type={type}
             type='edit'
           />
 
