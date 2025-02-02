@@ -28,7 +28,6 @@ import Tabs from '@mui/material/Tabs';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
@@ -192,22 +191,6 @@ class CafeEdit_Modal_History extends React.Component {
                     className={this.state.itemView ? this.state.itemView.kpp?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Управляющий"
-                    value={this.state.itemView ? this.state.itemView.manager_id?.color ? this.state.itemView.manager_id.key : this.state.itemView.manager_id : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.manager_id?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Количество столов сборки"
-                    value={this.state.itemView ? this.state.itemView.count_tables?.color ? this.state.itemView.count_tables.key : this.state.itemView.count_tables : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.count_tables?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
                 <Grid item xs={12} sm={4}>
                   <MyTextInput
                     label="Телефон управляющего"
@@ -351,10 +334,26 @@ class CafeEdit_Modal_History extends React.Component {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <MyTextInput
-                    label="Кафе работает"
+                    label="Кафе"
                     value={this.state.itemView ? this.state.itemView.cafe_handle_close?.color ? this.state.itemView.cafe_handle_close.key : this.state.itemView.cafe_handle_close : ''}
                     disabled={true}
                     className={this.state.itemView ? this.state.itemView.cafe_handle_close?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Управляющий"
+                    value={this.state.itemView ? this.state.itemView.manager_id?.color ? this.state.itemView.manager_id.key : this.state.itemView.manager_id : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.manager_id?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Количество столов сборки"
+                    value={this.state.itemView ? this.state.itemView.count_tables?.color ? this.state.itemView.count_tables.key : this.state.itemView.count_tables : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.count_tables?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
                   />
                 </Grid>
               </>
@@ -489,7 +488,7 @@ class CafeEdit_Modal_Close extends React.Component {
         <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false })}>
           <DialogTitle>Подтвердите действие</DialogTitle>
           <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
-            <Typography>Вы действительное хотите сохранить данные?</Typography>
+            <Typography>Вы действительно хотите сохранить данные?</Typography>
           </DialogContent>
           <DialogActions>
             <Button autoFocus onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
@@ -688,7 +687,7 @@ class CafeEdit_Modal_Zone extends React.Component {
         <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false })}>
           <DialogTitle>Подтвердите действие</DialogTitle>
           <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
-            <Typography>Вы действительное хотите сохранить данные?</Typography>
+            <Typography>Вы действительно хотите сохранить данные?</Typography>
           </DialogContent>
           <DialogActions>
             <Button autoFocus onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
@@ -711,7 +710,7 @@ class CafeEdit_Modal_Zone extends React.Component {
             </DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <div style={{ marginBottom: 20 }}>
-              <span>Если снять активность с выбранной зоны доставки, то прекратиться оформление новых заказов в данную зону</span>
+              <span>Если снять активность с выбранной зоны доставки, то прекратиться оформление новых доставок в данную зону</span>
             </div>
 
             <MyCheckBox 
@@ -902,9 +901,6 @@ class CafeEdit_ extends React.Component {
       openAlert: false,
       err_status: true,
       err_text: '',
-
-      actual_time_list: [],
-      dop_time_list: [],
 
       zone: [],
       other_zones: [],
@@ -1154,8 +1150,6 @@ class CafeEdit_ extends React.Component {
       upr_list: res.upr_list,
       cities: res.cities,
       point_info: res.point_info,
-      actual_time_list: res.actual_time_list,
-      dop_time_list: res.dop_time_list,
       other_zones: res.other_zones,
       zone: res.zone,
       reason_list: res.reason_list,
@@ -1179,19 +1173,30 @@ class CafeEdit_ extends React.Component {
 
   }
 
-  changeItemChecked(data, event) {
-    const value = event.target.checked === true ? 1 : 0;
+  changeActivePoint() {
+
     const point_info = this.state.point_info;
 
-    if(data === 'cafe_handle_close' && !value){
-      this.open_close_cafe();
-    }
- 
-    if(data === 'cafe_handle_close' && value){
+    const value = parseInt(point_info.cafe_handle_close) === 1 ? 0 : 1;
+
+    if(value) {
       setTimeout(() => {
         this.save_edit_point_sett();
       }, 300)
+    } else {
+      this.open_close_cafe();
     }
+
+    point_info.cafe_handle_close = value;
+
+    this.setState({
+      point_info
+    });
+  }
+
+  changeItemChecked(data, event) {
+    const value = event.target.checked === true ? 1 : 0;
+    const point_info = this.state.point_info;
 
     if(data === 'is_сlosed_technic'){
 
@@ -1789,7 +1794,7 @@ class CafeEdit_ extends React.Component {
       itemView.priority_order = parseInt(itemView.priority_order) ? 'Да' : 'Нет';
       itemView.rolls_pizza_dif = parseInt(itemView.rolls_pizza_dif) ? 'Да' : 'Нет';
       itemView.cook_common_stol = parseInt(itemView.cook_common_stol) ? 'Да' : 'Нет';
-      itemView.cafe_handle_close = parseInt(itemView.cafe_handle_close) === 1 ? 'Да' : 'Нет';
+      itemView.cafe_handle_close = parseInt(itemView.cafe_handle_close) === 1 ? 'Работает' : 'На стопе';
     }
 
     if(parseInt(index) !== 0) {
@@ -1805,7 +1810,7 @@ class CafeEdit_ extends React.Component {
         itemView_old.priority_order = parseInt(itemView_old.priority_order) ? 'Да' : 'Нет';
         itemView_old.rolls_pizza_dif = parseInt(itemView_old.rolls_pizza_dif) ? 'Да' : 'Нет';
         itemView_old.cook_common_stol = parseInt(itemView_old.cook_common_stol) ? 'Да' : 'Нет';
-        itemView_old.cafe_handle_close = parseInt(itemView_old.cafe_handle_close) === 1 ? 'Да' : 'Нет';
+        itemView_old.cafe_handle_close = parseInt(itemView_old.cafe_handle_close) === 1 ? 'Работает' : 'На стопе';
       }
       
       for (let key in itemView) {
@@ -1858,7 +1863,6 @@ class CafeEdit_ extends React.Component {
       type_modal,
       date_edit
     });
-
   }
 
   async open_hist_view_zone(index, type_modal) {
@@ -1980,7 +1984,6 @@ class CafeEdit_ extends React.Component {
                 onChange={ this.changeTab.bind(this)} 
                 variant='scrollable' 
                 scrollButtons={false}
-                //allowScrollButtonsMobile 
               >
                 {this.state.tabs_data?.map((item, index) => {
                   return <Tab label={item.name} {...a11yProps(index)} key={index} sx={{ minWidth: "fit-content", flex: 1 }} />
@@ -2072,30 +2075,12 @@ class CafeEdit_ extends React.Component {
                         func={this.changeData.bind(this, 'full_addr')}
                       />
                     </Grid>
-
-                    <Grid item xs={12} sm={4}>
-                      <MyAutocomplite
-                        label="Управляющий"
-                        multiple={false}
-                        data={this.state.upr_list}
-                        value={this.state.point_info?.manager_id ?? ''}
-                        func={this.changeUpr.bind(this, 'manager_id')}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={4}>
-                      <MyTextInput
-                        label="Количество столов сборки"
-                        value={this.state.point_info?.count_tables ?? ''}
-                        func={this.changeData.bind(this, 'count_tables')}
-                      />
-                    </Grid>
                   </>
                   : null
                 }
 
                 {parseInt(this.state.acces?.active_point) ?
-                  <Grid item xs={12} sm={4}>
+                  <Grid item xs={12} sm={12}>
                     <MyCheckBox
                       label="Активность"
                       value={parseInt(this.state.point_info?.is_active ?? 0) == 1 ? true : false}
@@ -2377,15 +2362,36 @@ class CafeEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
-                  <MyCheckBox 
-                    label='Кафе работает' 
-                    value={parseInt(this.state.point_info?.cafe_handle_close ?? 0) == 1 ? true : false} 
-                    func={this.changeItemChecked.bind(this, 'cafe_handle_close')} 
+                <Grid item xs={12} sm={4}>
+                  <MyAutocomplite
+                    label="Управляющий"
+                    multiple={false}
+                    data={this.state.upr_list}
+                    value={this.state.point_info?.manager_id ?? ''}
+                    func={this.changeUpr.bind(this, 'manager_id')}
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12} display='grid'>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    label="Количество столов сборки"
+                    value={this.state.point_info?.count_tables ?? ''}
+                    func={this.changeData.bind(this, 'count_tables')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <Button 
+                    onClick={this.changeActivePoint.bind(this)}  
+                    color={parseInt(this.state.point_info?.cafe_handle_close ?? 0) == 1 ? 'success' : 'primary'}
+                    variant="contained" 
+                    style={{ whiteSpace: 'nowrap'}}
+                  >
+                    {parseInt(this.state.point_info?.cafe_handle_close ?? 0) == 1 ? 'Поставить на стоп' : 'Снять со стопа' }
+                  </Button>
+                </Grid>
+
+                <Grid item xs={12} sm={6} display='grid'>
                   <Button 
                     onClick={this.save_edit_point_sett.bind(this)}  
                     color="success" 
@@ -2395,62 +2401,6 @@ class CafeEdit_ extends React.Component {
                     Сохранить изменения
                   </Button>
                 </Grid>
-
-                {!this.state.actual_time_list.length ? null :
-                  <Grid item xs={12} sm={12} mb={5}>
-                    <TableContainer component={Paper}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell colSpan={3}>Актуальное время доставки</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell style={{ width:'33%' }}>Зона</TableCell>
-                            <TableCell style={{ width:'33%' }}>Промежуток</TableCell>
-                            <TableCell style={{ width:'33%' }}>Время доставки</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {this.state.actual_time_list.map((item, key) =>
-                            <TableRow key={key}>
-                              <TableCell>{item.name}</TableCell>
-                              <TableCell>{item.time_start} - {item.time_end}</TableCell>
-                              <TableCell>{item.time_dev} мин.</TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Grid>
-                }
-
-                {!this.state.dop_time_list.length ? null :
-                  <Grid item xs={12} sm={12} mb={5}>
-                    <TableContainer component={Paper}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell colSpan={3}>Дополнительное время</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell style={{ width:'33%' }}>Зона</TableCell>
-                            <TableCell style={{ width:'33%' }}>Промежуток</TableCell>
-                            <TableCell style={{ width:'33%' }}>Время доставки</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {this.state.dop_time_list.map((item, key) =>
-                            <TableRow key={key}>
-                              <TableCell>{item.name}</TableCell>
-                              <TableCell>{item.time_start} - {item.time_end}</TableCell>
-                              <TableCell>{item.time_dev} мин.</TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Grid>
-                }
 
                 {!this.state.point_sett_hist.length ? null :
                   <Grid item xs={12} sm={12} mb={5}>
