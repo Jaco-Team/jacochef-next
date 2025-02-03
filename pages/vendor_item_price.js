@@ -22,7 +22,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MySelect, MyAlert, MyTextInput, MyAutocomplite } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api } from '@/src/api_new';
 
 class VendorItemPrice_ extends React.Component {
   constructor(props) {
@@ -66,50 +66,21 @@ class VendorItemPrice_ extends React.Component {
   }
   
   getData = (method, data = {}) => {
-    
     this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      console.log( err )
+      is_load: true,
     });
+
+    let res = api(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
   }
    
   async changeCity(event){
@@ -120,7 +91,7 @@ class VendorItemPrice_ extends React.Component {
     let res = await this.getData('get_vendors', data);
     
     this.setState({
-      vendors: res,
+      vendors: res.vendors,
       city: event.target.value,
       vendor: null,
       items: []
