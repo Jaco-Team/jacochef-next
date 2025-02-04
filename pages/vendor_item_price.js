@@ -22,7 +22,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MySelect, MyAlert, MyTextInput, MyAutocomplite } from '@/ui/elements';
 
-import { api } from '@/src/api_new';
+import { api, api_laravel } from '@/src/api_new';
 
 class VendorItemPrice_ extends React.Component {
   constructor(props) {
@@ -70,7 +70,7 @@ class VendorItemPrice_ extends React.Component {
       is_load: true,
     });
 
-    let res = api(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then(result => result.data)
       .finally( () => {
         setTimeout(() => {
