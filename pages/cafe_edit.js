@@ -1759,7 +1759,7 @@ class CafeEdit_ extends React.Component {
 
   }
 
-  async open_hist_view(index, type_modal) {
+  open_hist_view(index, type_modal) {
 
     let item;
 

@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckIcon from '@mui/icons-material/Check';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -22,15 +23,308 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 
-import { MySelect, MyTextInput, MyCheckBox, MyAlert } from '@/ui/elements';
+import { MySelect, MyTextInput, MyCheckBox, MyAlert, MyDatePickerNew } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api } from '@/src/api_new';
+import dayjs from 'dayjs';
+
+class ZoneModules_Modal_History_Map extends React.Component {
+  map_2 = null;
+  myGeoObject_2 = null;
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      zone_data: ''
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    //console.log(this.props.zone_data);
+
+    if (!this.props.zone_data) {
+      return;
+    }
+
+    if (this.props.zone_data !== prevProps.zone_data) {
+
+      this.getZone(this.props.zone_data);
+
+      this.setState({
+        zone_data: JSON.parse(JSON.stringify(this.props.zone_data)),
+      });
+    }
+  }
+
+  getZone(zone_data) {
+
+    if (!this.map_2) {
+      ymaps.ready(() => {
+
+        this.map_2 = new ymaps.Map(
+          'map_zone',
+          { center: JSON.parse(zone_data['xy_point']), zoom: 11 },
+          { searchControlProvider: 'yandex#search' }
+        );
+   
+        this.myGeoObject_2 = new ymaps.Polygon(
+          [JSON.parse(zone_data.coordinates)],
+          { geometry: { fillRule: 'nonZero' }},
+          {
+            fillOpacity: 0.4,
+            fillColor: 'rgb(240, 128, 128)',
+            strokeColor: 'rgb(187, 0, 37)',
+            strokeWidth: 5,
+          }
+        );
+
+        this.map_2.geoObjects.add(this.myGeoObject_2);
+
+        if(zone_data.coordinates_old && zone_data.coordinates_old !== 'last') {
+          let myGeoObject_3 = new ymaps.Polygon(
+            [JSON.parse(zone_data.coordinates_old)],
+            { geometry: { fillRule: 'nonZero' } },
+            {
+              fillColor: '#00FF00',
+              strokeColor: '#0000FF',
+              opacity: 0.5,
+              strokeWidth: 5,
+              strokeWidth: 5,
+            }
+          );
+  
+          this.map_2.geoObjects.add(myGeoObject_3);
+        }
+
+     
+      });
+    } else {
+
+      this.map_2.geoObjects.removeAll();
+ 
+      this.myGeoObject_2 = new ymaps.Polygon(
+        [JSON.parse(zone_data.coordinates)],
+        { geometry: { fillRule: 'nonZero' } },
+        {
+          fillOpacity: 0.4,
+          fillColor: 'rgb(240, 128, 128)',
+          strokeColor: 'rgb(187, 0, 37)',
+          strokeWidth: 5,
+        }
+      );
+
+      this.map_2.geoObjects.add(this.myGeoObject_2);
+
+      if(zone_data.coordinates_old && zone_data.coordinates_old !== 'last') {
+
+        let myGeoObject_3 = new ymaps.Polygon(
+          [JSON.parse(zone_data.coordinates_old)],
+          { geometry: { fillRule: 'nonZero' } },
+          {
+            fillColor: '#00FF00',
+            strokeColor: '#0000FF',
+            opacity: 0.5,
+            strokeWidth: 5,
+            strokeWidth: 5,
+          }
+        );
+
+        this.map_2.geoObjects.add(myGeoObject_3);
+      }
+
+    }
+  }
+
+  onClose() {
+    this.map_2 = null;
+    this.myGeoObject_2 = null;
+
+    this.setState({
+      zone_data: ''
+    });
+
+    this.props.onClose();
+  }
+
+  render() {
+
+    const { open, fullScreen, zone_data } = this.props;
+
+    return (
+      <Dialog
+        open={open}
+        onClose={this.onClose.bind(this)}
+        fullScreen={fullScreen}
+        fullWidth={true}
+        maxWidth={'xl'}
+      >
+        <DialogTitle className="button">
+          {`Зона: ${zone_data?.name ?? ''}`}
+          <IconButton onClick={this.onClose.bind(this)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          <Grid container spacing={3}>
+            {zone_data?.coordinates_old === 'last' ? null :
+              <Grid item xs={12} sm={12} mb={2}>
+                <Typography align="center" style={{ backgroundColor: '#ef5350', color: '#fff', padding: '10px 15px', fontWeight: 700 }}>
+                  {zone_data?.coordinates_old ? 'Красным цветом выделены границы прежней зоны, синим цветом выделены новые границы зоны' : 'Изменений в границах зоны не было'}
+                </Typography>
+              </Grid>
+            }
+            <Grid item xs={12} sm={12}>
+              <div id="map_zone" name="map_zone" style={{ width: '100%', height: 700, paddingTop: 10 }} />
+            </Grid>
+          </Grid>
+        </DialogContent>
+
+        <DialogActions>
+          <Button variant="contained" onClick={this.onClose.bind(this)}>
+            Закрыть
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+}
+
+class ZoneModules_Modal_History extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      itemView: null,
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    // console.log(this.props.itemView);
+
+    if (!this.props) {
+      return;
+    }
+
+    if (this.props !== prevProps) {
+      this.setState({
+        itemView: this.props.itemView
+      });
+    }
+  }
+
+  onClose() {
+    this.setState({
+      itemView: null,
+    });
+
+    this.props.onClose();
+  }
+
+  render() {
+
+    const { open, fullScreen, date_edit, open_map_zone, itemView_old } = this.props
+
+    return (
+      <Dialog
+        open={open}
+        fullWidth={true}
+        maxWidth={'md'}
+        onClose={this.onClose.bind(this)}
+        fullScreen={fullScreen}
+      >
+        <DialogTitle className="button">
+          <Typography style={{ alignSelf: 'center' }}>
+            Изменения выделены цветом
+          </Typography>
+          <IconButton onClick={this.onClose.bind(this)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={12}>
+              <Typography style={{ alignSelf: 'center', fontWeight: 'bold' }}>
+                Дата начала изменений: {date_edit}
+              </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <MyTextInput
+                label="Точка"
+                value={this.state.itemView ? this.state.itemView.point_id?.color ? this.state.itemView.point_id.key : this.state.itemView.point_id : ''}
+                disabled={true}
+                className={this.state.itemView ? this.state.itemView.point_id?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <MyTextInput
+                label="Название зоны"
+                value={this.state.itemView ? this.state.itemView.name?.color ? this.state.itemView.name.key : this.state.itemView.name : ''}
+                disabled={true}
+                className={this.state.itemView ? this.state.itemView.name?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <MyTextInput
+                label="Сумма для клиента"
+                value={this.state.itemView ? this.state.itemView.sum_div?.color ? this.state.itemView.sum_div.key : this.state.itemView.sum_div : ''}
+                disabled={true}
+                className={this.state.itemView ? this.state.itemView.sum_div?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <MyTextInput
+                label="Сумма для курьера"
+                value={this.state.itemView ? this.state.itemView.sum_div_driver?.color ? this.state.itemView.sum_div_driver.key : this.state.itemView.sum_div_driver : ''}
+                disabled={true}
+                className={this.state.itemView ? this.state.itemView.sum_div_driver?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <MyTextInput
+                label="Бесплатная доставка"
+                value={this.state.itemView ? this.state.itemView.free_drive?.color ? this.state.itemView.free_drive.key : this.state.itemView.free_drive : ''}
+                disabled={true}
+                className={this.state.itemView ? this.state.itemView.free_drive?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <MyTextInput
+                label="Активность"
+                value={this.state.itemView ? this.state.itemView.is_active?.color ? this.state.itemView.is_active.key : this.state.itemView.is_active : ''}
+                disabled={true}
+                className={this.state.itemView ? this.state.itemView.is_active?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Button onClick={open_map_zone.bind(this, this.state.itemView ? this.state.itemView : null, itemView_old)} variant="contained" color='success'>
+                Зона на карте
+              </Button>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={this.onClose.bind(this)} variant="contained">
+            Закрыть
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+}
 
 class ZoneModules_Modal extends React.Component {
   map = null;
@@ -44,7 +338,17 @@ class ZoneModules_Modal extends React.Component {
       isDrawing: true,
       confirmDialog: false,
       text: '',
-      zones: []
+      zones: [],
+      date_start: '',
+      date_edit: '',
+      dateDialog: false,
+      dates: [
+        {'id': 0, 'name': 'Применить сразу'},
+        {'id': 1, 'name': 'Применить с даты'},
+      ],
+      openAlert: false,
+      err_status: true,
+      err_text: '',
     };
   }
 
@@ -61,14 +365,22 @@ class ZoneModules_Modal extends React.Component {
         this.getZones(this.props.item.points[0], this.props.item.other_zone);
       }
 
-      if (this.props.mark === 'editZone') {
+      if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future') {
         this.getZones(this.props.item.zone, this.props.item.other_zone);
       }
 
       let zones = JSON.parse(JSON.stringify(this.props.zones));
 
       if (zones.length) {
-        zones = zones.filter(zone => zone.id !== this.props.item.zone.id)
+
+        if (this.props.mark === 'editZone') {
+          zones = zones.filter(zone => zone.id !== this.props.item.zone.id)
+        }
+
+        if (this.props.mark === 'editZone_future') {
+          zones = zones.filter(zone => zone.id !== this.props.item.zone.zone_id)
+        }
+
       } else {
         zones = [];
       }
@@ -100,7 +412,7 @@ class ZoneModules_Modal extends React.Component {
         this.map.geoObjects.add(myGeoObject1);
 
         // редактирование границ изменяемой зоны
-        if (this.props.mark === 'editZone') {
+        if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future') {
           // Создаем многоугольник, используя класс GeoObject.
           this.myGeoObject = new ymaps.Polygon(
             [JSON.parse(point['zone'])],
@@ -221,15 +533,15 @@ class ZoneModules_Modal extends React.Component {
         this.map.geoObjects.add(this.myGeoObject);
       }
     }
-    // }
   }
 
   startDrawing() {
+
     this.setState({
       isDrawing: !this.state.isDrawing,
     });
 
-    if (this.props.mark === 'editZone') {
+    if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future') {
       this.myGeoObject.editor.startEditing();
 
       return;
@@ -275,7 +587,7 @@ class ZoneModules_Modal extends React.Component {
       isDrawing: !this.state.isDrawing,
     });
 
-    if (this.props.mark === 'editZone') {
+    if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future') {
       this.myGeoObject.editor.stopEditing();
     } else if (this.props.mark === 'newZone' && this.myGeoObject) {
       this.myGeoObject.editor.stopEditing();
@@ -287,7 +599,9 @@ class ZoneModules_Modal extends React.Component {
   changePoint(data, event) {
     const item = this.state.item;
 
-    const point = item.points.find((point) => point.id === event.target.value);
+    let point = item.points.find((point) => point.id === event.target.value);
+
+    point.point_name = point.name;
 
     this.getZones(point, this.state.item.other_zone);
 
@@ -340,7 +654,7 @@ class ZoneModules_Modal extends React.Component {
       this.getZones(this.props.item.points[0], item.other_zone);
     }
 
-    if (this.props.mark === 'editZone') {
+    if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future') {
       this.getZones(this.props.item.zone, item.other_zone);
     }
 
@@ -350,20 +664,169 @@ class ZoneModules_Modal extends React.Component {
     });
   }
 
-  save() {
-    if (!this.myGeoObject) {
+  save_variant() {
+    const date_edit = this.state.date_edit;
+
+    if(date_edit === '') {
+
       this.setState({
-        confirmDialog: true,
-        text: 'Необходимо выделить новую зону на карте!',
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать вариант сохранения данных'
+      });
+
+    } else {
+
+      if(date_edit === 1) {
+
+        const date_now = dayjs();
+        
+        let date_start = this.state.date_start;
+    
+        if(!date_start){
+    
+          this.setState({
+            openAlert: true,
+            err_status: false,
+            err_text: 'Указание даты обязательно',
+          });
+    
+          return;
+        }
+    
+        date_start = dayjs(this.state.date_start);
+    
+        if(date_start.isSame(date_now, 'day') || date_start.isBefore(date_now, 'day')){
+    
+          this.setState({
+            openAlert: true,
+            err_status: false,
+            err_text: 'Сохранение возможно только при указании будущей даты (позже сегодняшней даты)'
+          });
+    
+          return;
+        }
+
+      }
+
+      this.setState({
+        dateDialog: false,
+      });
+
+      setTimeout(() => {
+        this.save();
+      }, 100);
+    }
+  }
+
+  changeDateRange(data, event) {
+    
+    if(event === null){
+
+      if(this.props.mark === 'editZone_future') {
+
+        const item = this.state.item;
+
+        const date_start =  item.zone.date_start;
+  
+        item.zone[data] = date_start;
+  
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: 'Указание даты обязательно',
+          item,
+        });
+  
+      } else {
+
+        this.setState({
+          date_edit: '',
+        });
+  
+      }
+
+      return;
+    }
+
+    const date_now = dayjs();
+    let date_start = dayjs(event ? event : '');
+
+    if(date_start.isSame(date_now, 'day') || date_start.isBefore(date_now, 'day')){
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Изменение даты возможно только при указании будущей даты (позже сегодняшней даты)'
       });
 
       return;
     }
-    const item = this.state.item.zone;
 
+    if(this.props.mark === 'editZone_future') {
+
+      const item = this.state.item;
+
+      item.zone[data] = event ? event : '';
+
+      this.setState({
+        item,
+      });
+
+    } else {
+
+      this.setState({
+        [data]: event ? event : ''
+      });
+
+    }
+   
+  }
+
+  changeSelect(event) {
+    const value = event.target.value;
+
+    this.setState({
+      date_edit: value
+    });
+  }
+
+  save() {
+    if (!this.myGeoObject) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выделить новую зону на карте!'
+      });
+
+      return;
+    }
+
+    const item = this.state.item.zone;
+    
     item.new_zone = JSON.stringify(this.myGeoObject.geometry.getCoordinates().flat(1));
 
-    this.props.save(item);
+    if (item.new_zone === '[]') {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выделить новую зону на карте!'
+      });
+
+      return;
+    }
+
+    const date_edit = this.state.date_edit;
+
+    let date_start;
+
+    if(date_edit === 1) {
+      date_start = dayjs(this.state.date_start).format('YYYY-MM-DD');
+    } else {
+      date_start = '';
+    }
+
+    this.props.save(item, date_start);
 
     this.onClose();
   }
@@ -377,15 +840,31 @@ class ZoneModules_Modal extends React.Component {
       isDrawing: true,
       confirmDialog: false,
       text: '',
-      zones: []
+      zones: [],
+      date_start: '',
+      date_edit: '',
+      dateDialog: false,
+      openAlert: false,
+      err_status: true,
+      err_text: '',
     });
 
     this.props.onClose();
   }
 
   render() {
+
+    const { zone_hist, open_hist_zone } = this.props;
+
     return (
       <>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="sm"
@@ -396,7 +875,46 @@ class ZoneModules_Modal extends React.Component {
           <DialogContent align="center" sx={{ fontWeight: 'bold' }}>{this.state.text}</DialogContent>
           <DialogActions>
             <Button autoFocus onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
-            <Button onClick={this.onClose.bind(this)}>Ok</Button>
+            <Button onClick={this.onClose.bind(this)}>Закрыть</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+          maxWidth="sm"
+          open={this.state.dateDialog}
+          onClose={() => this.setState({ dateDialog: false, date_edit: '' })}
+        >
+          <DialogTitle className="button">
+            Выбрать вариант сохранения данных
+            <IconButton onClick={() => this.setState({ dateDialog: false, date_edit: '' })} style={{ cursor: 'pointer' }}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ fontWeight: 'bold' }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={12} mt={2}>
+                <MySelect
+                  label="Вариант сохранения данных"
+                  is_none={false}
+                  data={this.state.dates}
+                  value={this.state.date_edit}
+                  func={this.changeSelect.bind(this)}
+                />
+              </Grid>
+              {!this.state.date_edit ? null :
+                <Grid item xs={12} sm={12}>
+                  <MyDatePickerNew
+                    label="Дата начала изменений"
+                    value={dayjs(this.state.date_start)}
+                    func={this.changeDateRange.bind(this, 'date_start')}
+                  />
+                </Grid>
+              }
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="contained" onClick={this.save_variant.bind(this)}>Выбрать</Button>
           </DialogActions>
         </Dialog>
 
@@ -416,11 +934,13 @@ class ZoneModules_Modal extends React.Component {
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3}>
 
-              {this.props.mark === 'editZone' ? (
-                <Grid item xs={12} sm={12} mb={2}>
-                  <Typography align="center" style={{ backgroundColor: '#ef5350', color: '#fff', padding: '10px 15px', fontWeight: 700 }}>
-                    Суммы доставки вступят в силу на следующий день
-                  </Typography>
+              {this.props.mark === 'editZone_future' ? (
+                <Grid item xs={12} sm={12}>
+                  <MyDatePickerNew
+                    label="Дата начала изменений"
+                    value={dayjs(this.state.item ? this.state.item.zone.date_start : '')}
+                    func={this.changeDateRange.bind(this, 'date_start')}
+                  />
                 </Grid>
               ) : null}
 
@@ -475,7 +995,11 @@ class ZoneModules_Modal extends React.Component {
               </Grid>
 
               <Grid item xs={12} sm={3}>
-                <Button variant="contained" onClick={this.state.isDrawing ? this.startDrawing.bind(this) : this.stopDrawing.bind(this)}>
+                <Button 
+                  variant="contained" 
+                  onClick={this.state.isDrawing ? this.startDrawing.bind(this) : this.stopDrawing.bind(this)}
+                  style={{ whiteSpace: 'nowrap' }}
+                >
                   {this.state.isDrawing ? 'Включить область редактирования' : 'Выключить область редактирования'}
                 </Button>
               </Grid>
@@ -500,9 +1024,44 @@ class ZoneModules_Modal extends React.Component {
                 </div>
               </Grid>
             </Grid>
+
+            {!zone_hist.length ? null :
+              <Grid item xs={12} sm={12} mb={5} mt={5}>
+                <Accordion style={{ width: '100%' }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Table size='small'>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>#</TableCell>
+                          <TableCell>Дата / время</TableCell>
+                          <TableCell>Сотрудник</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {zone_hist.map((it, k) =>
+                          <TableRow 
+                            hover 
+                            key={k} 
+                            style={{ cursor: 'pointer'}}
+                            onClick={open_hist_zone.bind(this, k)} 
+                          >
+                            <TableCell>{k+1}</TableCell>
+                            <TableCell>{it.date_time_update}</TableCell>
+                            <TableCell>{it.user_name}</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </AccordionDetails>
+                </Accordion>
+              </Grid>
+            }
           </DialogContent>
           <DialogActions>
-            <Button variant="contained" onClick={this.save.bind(this)}>
+            <Button variant="contained" onClick={this.props.mark === 'newZone' || this.props.mark === 'editZone_future' ? this.save.bind(this) : () => this.setState({ dateDialog: true })}>
               Сохранить
             </Button>
           </DialogActions>
@@ -525,6 +1084,7 @@ class ZoneModules_ extends React.Component {
       city: '',
 
       zones: [],
+      zones_future: [],
 
       fullScreen: false,
 
@@ -546,6 +1106,20 @@ class ZoneModules_ extends React.Component {
       openAlert: false,
       err_status: true,
       err_text: '',
+
+      zone_id_delete: null,
+      text_dialog_delete: '',
+      type_delete: '',
+
+      zone_hist: [],
+
+      modalDialogView: false,
+      itemView: null,
+      date_edit: null,
+
+      modalDialogMap: false,
+      zone_data: null,
+      itemView_old: null
     };
   }
 
@@ -560,6 +1134,7 @@ class ZoneModules_ extends React.Component {
 
     this.setState({
       zones: res.zones,
+      zones_future: res.zones_future,
       cities: data.cities,
       city: data.cities[0].id,
       module_name: data.module_info.name,
@@ -573,43 +1148,18 @@ class ZoneModules_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
-  };
+
+    return res;
+  }
 
   handleResize() {
     if (window.innerWidth < 601) {
@@ -633,13 +1183,17 @@ class ZoneModules_ extends React.Component {
     this.setState({
       zones: res.zones,
       city: event.target.value,
+      zones_future: res.zones_future,
     });
   }
 
-  async save(item) {
+  async save(item, date_start) {
+    const mark = this.state.mark;
+
     let res;
 
-    if (this.state.mark === 'newZone') {
+    if (mark === 'newZone') {
+
       const data = {
         point_id: item.point_id,
         name: item.zone_name,
@@ -650,9 +1204,11 @@ class ZoneModules_ extends React.Component {
       };
 
       res = await this.getData('save_new', data);
+
     }
 
-    if (this.state.mark === 'editZone') {
+    if (mark === 'editZone') {
+
       const data = {
         point_id: item.point_id,
         name: item.zone_name,
@@ -664,16 +1220,48 @@ class ZoneModules_ extends React.Component {
         is_active: item.is_active,
       };
 
-      res = await this.getData('save_edit', data);
+      if(date_start) {
+        data.date_start = date_start;
+        res = await this.getData('save_new_future', data);
+      } else {
+        res = await this.getData('update_zone', data);
+      }
+
+    }
+
+    if (mark === 'editZone_future') {
+
+      const data = {
+        point_id: item.point_id,
+        name: item.zone_name,
+        sum_div: item.sum_div,
+        sum_div_driver: item.sum_div_driver,
+        free_drive: item.free_drive,
+        new_zone: item.new_zone,
+        zone_id: item.id,
+        is_active: item.is_active,
+        date_start: dayjs(item.date_start).format('YYYY-MM-DD')
+      };
+
+      res = await this.getData('update_zone_future', data);
     }
 
     if(!res.st) {
+
       this.setState({
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
       });
+
     } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+      
       setTimeout( () => {
         this.update();
       }, 300)
@@ -691,10 +1279,11 @@ class ZoneModules_ extends React.Component {
 
     this.setState({
       zones: res.zones,
+      zones_future: res.zones_future,
     });
   }
 
-  async openModal(mark, method, zone_id) {
+  async openModal(mark, method, zone_id, id) {
     this.handleResize();
 
     const city_id = this.state.city;
@@ -734,8 +1323,170 @@ class ZoneModules_ extends React.Component {
         mark,
         item,
         itemName: item.zone.zone_name,
+        zone_hist: item.zone_hist
       });
     }
+
+    if (mark === 'editZone_future') {
+      const data = {
+        city_id,
+        zone_id,
+        id
+      };
+     
+      const item = await this.getData('get_one_future', data);
+
+      this.setState({
+        modalDialog: true,
+        method,
+        mark,
+        item,
+        itemName: item.zone.zone_name,
+      });
+    }
+  }
+
+  openConfigDialog(zone_id_delete, type_delete) {
+
+    const text_dialog_delete = type_delete === 'zone' ? 'Вы действительно хотите удалить данную зону?' : 'Вы действительно хотите удалить данные изменения?' ;
+
+    this.setState({
+      confirmDialog: true,
+      zone_id_delete,
+      text_dialog_delete,
+      type_delete
+    });
+
+  }
+
+  async deleteZone() {
+
+    this.setState({ confirmDialog: false })
+
+    const data = {
+      zone_id: this.state.zone_id_delete,
+    };
+
+    if(this.state.type_delete === 'zone') {
+      await this.getData('delete_zone', data);
+    } else {
+      await this.getData('delete_zone_future', data);
+    }
+ 
+    setTimeout( () => {
+      this.update();
+    }, 300)
+  }
+
+  open_hist_zone(index) {
+
+    const points = this.state.item.points;
+
+    let item = this.state.zone_hist;
+
+    let itemView = JSON.parse(JSON.stringify(item[index]));
+
+    itemView.free_drive = parseInt(itemView.free_drive) ? 'Да' : 'Нет';
+    itemView.is_active = parseInt(itemView.is_active) ? 'Да' : 'Нет';
+
+    let itemView_old;
+
+    if(parseInt(index) !== 0) {
+      
+      itemView_old = JSON.parse(JSON.stringify(item[index - 1]));
+     
+      itemView_old.free_drive = parseInt(itemView_old.free_drive) ? 'Да' : 'Нет';
+      itemView_old.is_active = parseInt(itemView_old.is_active) ? 'Да' : 'Нет';
+      
+      for (let key in itemView) {
+        if(itemView[key] !== itemView_old[key]) {
+
+          if(key === 'point_id') {
+            const name = points.find((item) => item.id === itemView.point_id)?.name;
+            itemView[key] = { key: name, color: 'true' }
+          } else {
+            itemView[key] = { key: itemView[key], color: 'true' }
+          }
+
+        } else {
+          if(key === 'point_id') {
+            itemView.point_id = points.find((item) => item.id === itemView.point_id)?.name ?? '';
+          } 
+        }
+      }
+      
+    } else {
+
+      itemView.point_id = points.find((item) => item.id === itemView.point_id)?.name ?? '';
+    
+    }
+
+    let date_edit;
+
+    if(itemView?.date_start?.key) {
+      date_edit = itemView?.date_start?.key;
+    } else {
+      date_edit = itemView?.date_start ?? '';
+    }
+
+    this.setState({
+      modalDialogView: true,
+      itemView,
+      date_edit,
+      itemView_old
+    });
+  }
+
+  open_map_zone(zone, zone_old) {
+    const points = this.state.item.points;
+
+    let zone_data = {};
+
+    if(zone?.name?.key) {
+      zone_data.name = zone?.name?.key;
+    } else {
+      zone_data.name = zone?.name ?? '';
+    }
+
+    if(zone?.zone?.key) {
+      zone_data.coordinates = zone?.zone?.key;
+    } else {
+      zone_data.coordinates = zone?.zone ?? '';
+    }
+
+    if(zone?.point_id?.key) {
+      zone_data.xy_point = points.find((item) => item.name === zone?.point_id?.key)?.xy_point ?? '';
+    } else {
+      zone_data.xy_point = points.find((item) => item.name === zone?.point_id)?.xy_point ?? '';
+    }
+
+    if(zone_old?.zone) {
+      if(zone_data.coordinates !== zone_old.zone) {
+        zone_data.coordinates_old = zone_old.zone
+      } else {
+        zone_data.coordinates_old = '';
+      }
+    } else {
+      zone_data.coordinates_old = 'last';
+    }
+    
+    if(Object.keys(zone_data).length) {
+
+      this.setState({
+        modalDialogMap: true,
+        zone_data
+      });
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Отсутствуют координаты зоны в данном изменении',
+      });
+
+    }
+
   }
 
   render() {
@@ -747,15 +1498,27 @@ class ZoneModules_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
 
+        <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false, zone_id_delete: null, text_dialog_delete: '' })}>
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+            <Typography>{this.state.text_dialog_delete}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button autoFocus onClick={() => this.setState({ confirmDialog: false, zone_id_delete: null, text_dialog_delete: '' })}>Отмена</Button>
+            <Button onClick={this.deleteZone.bind(this)}>Удалить</Button>
+          </DialogActions>
+        </Dialog>
+
         <MyAlert 
           isOpen={this.state.openAlert} 
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 
-          text={this.state.err_text} />
+          text={this.state.err_text} 
+        />
 
         <ZoneModules_Modal
           open={this.state.modalDialog}
-          onClose={() => this.setState({ modalDialog: false, itemName: '' })}
+          onClose={() => this.setState({ modalDialog: false, itemName: '', zone_hist: [] })}
           method={this.state.method}
           mark={this.state.mark}
           item={this.state.item}
@@ -763,6 +1526,25 @@ class ZoneModules_ extends React.Component {
           save={this.save.bind(this)}
           fullScreen={this.state.fullScreen}
           zones={this.state.zones}
+          zone_hist={this.state.zone_hist}
+          open_hist_zone={this.open_hist_zone.bind(this)}
+        />
+
+        <ZoneModules_Modal_History
+          open={this.state.modalDialogView}
+          onClose={() => this.setState({ modalDialogView: false, itemView: null, date_edit: null, itemView_old: null })}
+          itemView={this.state.itemView}
+          itemView_old={this.state.itemView_old}
+          fullScreen={this.state.fullScreen}
+          date_edit={this.state.date_edit}
+          open_map_zone={this.open_map_zone.bind(this)}
+        />
+
+        <ZoneModules_Modal_History_Map
+          open={this.state.modalDialogMap}
+          onClose={() => this.setState({ modalDialogMap: false })}
+          fullScreen={this.state.fullScreen}
+          zone_data={this.state.zone_data}
         />
 
         <Grid container spacing={3} mb={3} className='container_first_child'>
@@ -786,18 +1568,23 @@ class ZoneModules_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12} mb={10}>
+          <Grid item xs={12} sm={12} mb={this.state.zones_future.length ? 2 : 10}>
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell colSpan={9} style={{ fontWeight: 700 }}>Текущие данные</TableCell>
+                  </TableRow>
+                  <TableRow>
                     <TableCell style={{ width: '4%' }}>#</TableCell>
-                    <TableCell style={{ width: '16%' }}>Точка</TableCell>
-                    <TableCell style={{ width: '16%' }}>Зона</TableCell>
-                    <TableCell style={{ width: '16%' }} align="center">Сумма для клиента</TableCell>
-                    <TableCell style={{ width: '16%' }} align="center">Сумма для курьера</TableCell>
-                    <TableCell style={{ width: '16%' }} align="center">Бесплатная доставка</TableCell>
-                    <TableCell style={{ width: '16%' }} align="center">Активность</TableCell>
+                    <TableCell style={{ width: '12%' }}>Точка</TableCell>
+                    <TableCell style={{ width: '12%' }}>Зона</TableCell>
+                    <TableCell style={{ width: '12%' }}>Сортировка</TableCell>
+                    <TableCell style={{ width: '12%' }} align="center">Сумма для клиента</TableCell>
+                    <TableCell style={{ width: '12%' }} align="center">Сумма для курьера</TableCell>
+                    <TableCell style={{ width: '12%' }} align="center">Бесплатная доставка</TableCell>
+                    <TableCell style={{ width: '12%' }} align="center">Активность</TableCell>
+                    <TableCell style={{ width: '12%' }} align="center">Удалить</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -809,16 +1596,70 @@ class ZoneModules_ extends React.Component {
                       <TableCell onClick={this.openModal.bind(this, 'editZone', 'Редактирование зоны', item.id)} style={{ fontWeight: 700, cursor: 'pointer' }}>
                         {item.zone_name}
                       </TableCell>
+                      <TableCell align="center">{item.point_id}</TableCell>
                       <TableCell align="center">{item.sum_div}</TableCell>
                       <TableCell align="center">{item.sum_div_driver}</TableCell>
-                      <TableCell align="center">{item.free_drive === '0' ? <CloseIcon /> : <CheckIcon />}</TableCell>
-                      <TableCell align="center">{item.is_active === '0' ? <CloseIcon /> : <CheckIcon />}</TableCell>
+                      <TableCell align="center">{parseInt(item.free_drive) === 0 ? <CloseIcon /> : <CheckIcon />}</TableCell>
+                      <TableCell align="center">{parseInt(item.is_active) === 0 ? <CloseIcon /> : <CheckIcon />}</TableCell>
+                      <TableCell align="center">
+                        <IconButton onClick={this.openConfigDialog.bind(this, item.id, 'zone')}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </TableContainer>
           </Grid>
+
+          {!this.state.zones_future.length ? null :
+            <Grid item xs={12} sm={12} mb={10}>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell colSpan={9} style={{ fontWeight: 700 }}>Будущие изменения</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell style={{ width: '4%' }}>#</TableCell>
+                      <TableCell style={{ width: '12%' }}>Точка</TableCell>
+                      <TableCell style={{ width: '12%' }}>Зона</TableCell>
+                      <TableCell style={{ width: '12%' }}>Сортировка</TableCell>
+                      <TableCell style={{ width: '12%' }} align="center">Сумма для клиента</TableCell>
+                      <TableCell style={{ width: '12%' }} align="center">Сумма для курьера</TableCell>
+                      <TableCell style={{ width: '12%' }} align="center">Бесплатная доставка</TableCell>
+                      <TableCell style={{ width: '12%' }} align="center">Активность</TableCell>
+                      <TableCell style={{ width: '12%' }} align="center">Удалить</TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {this.state.zones_future.map((item, key) => (
+                      <TableRow key={key} hover>
+                        <TableCell>{key + 1}</TableCell>
+                        <TableCell>{item.point_name}</TableCell>
+                        <TableCell onClick={this.openModal.bind(this, 'editZone_future', 'Редактирование зоны', item.id, item.zone_id)} style={{ fontWeight: 700, cursor: 'pointer' }}>
+                          {item.zone_name}
+                        </TableCell>
+                        <TableCell align="center">{item.point_id}</TableCell>
+                        <TableCell align="center">{item.sum_div}</TableCell>
+                        <TableCell align="center">{item.sum_div_driver}</TableCell>
+                        <TableCell align="center">{parseInt(item.free_drive) === 0 ? <CloseIcon /> : <CheckIcon />}</TableCell>
+                        <TableCell align="center">{parseInt(item.is_active) === 0 ? <CloseIcon /> : <CheckIcon />}</TableCell>
+                        <TableCell align="center">
+                          <IconButton onClick={this.openConfigDialog.bind(this, item.id, 'future')}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Grid>
+          }
+
         </Grid>
       </>
     );
