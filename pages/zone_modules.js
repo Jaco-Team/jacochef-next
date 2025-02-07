@@ -36,7 +36,7 @@ import ListItem from '@mui/material/ListItem';
 
 import { MySelect, MyTextInput, MyCheckBox, MyAlert, MyDatePickerNew } from '@/ui/elements';
 
-import { api } from '@/src/api_new';
+import { api, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 class ZoneModules_Modal_History_Map extends React.Component {
@@ -1148,7 +1148,7 @@ class ZoneModules_ extends React.Component {
       is_load: true,
     });
 
-    let res = api(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then(result => result.data)
       .finally( () => {
         setTimeout(() => {
