@@ -8,7 +8,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MySelect, MyTextInput } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api, api_laravel } from '@/src/api_new';
 
 class SocialNetwork_ extends React.Component {
   constructor(props) {
@@ -44,48 +44,21 @@ class SocialNetwork_ extends React.Component {
   }
   
   getData = (method, data = {}) => {
-    
     this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      console.log( err )
-      this.setState({
-        is_load: false
-      })
+      is_load: true,
     });
+
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
   }
    
   changeCity(event){
@@ -110,7 +83,7 @@ class SocialNetwork_ extends React.Component {
     let res = await this.getData('get_data', data);
 
     this.setState({
-      dataInfo: res,
+      dataInfo: res.links,
       file: null
     })
   }
@@ -137,7 +110,7 @@ class SocialNetwork_ extends React.Component {
       file1: ''
     };
 
-    let res = await this.getData('save_data', data);
+    await this.getData('save_data', data);
     
     /*if( this.state.file ){
       setTimeout( () => {
@@ -172,15 +145,15 @@ class SocialNetwork_ extends React.Component {
     }*/
   }
 
-  handleFileInput(event){
-    let data = event.target.files[0];
+  // handleFileInput(event){
+  //   let data = event.target.files[0];
 
-    console.log( data )
+  //   console.log( data )
 
-    this.setState({
-      file: data
-    })
-  }
+  //   this.setState({
+  //     file: data
+  //   })
+  // }
 
   render(){
     return (
@@ -195,7 +168,7 @@ class SocialNetwork_ extends React.Component {
           </Grid>
           
           <Grid item xs={6} sm={6}>
-            <MySelect data={this.state.cityList} value={this.state.city_id} func={ this.changeCity.bind(this) } label='Город' />
+            <MySelect data={this.state.cityList} value={this.state.city_id} func={ this.changeCity.bind(this) } label='Город' is_none={false}/>
           </Grid>
           
           {this.state.dataInfo == null ? null :
