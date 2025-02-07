@@ -23,7 +23,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MySelect, MyTextInput, MyAlert } from '@/ui/elements';
 
-import { api } from '@/src/api_new';
+import { api, api_laravel } from '@/src/api_new';
 
 class SitePageText_Modal extends React.Component {
   constructor(props) {
@@ -339,14 +339,14 @@ class SitePageText_ extends React.Component {
   handleResize() {
 
     if (window.innerWidth < 601) {
-          this.setState({
-            fullScreen: true,
-          });
-        } else {
-          this.setState({
-            fullScreen: false,
-          });
-        }
+      this.setState({
+        fullScreen: true,
+      });
+    } else {
+      this.setState({
+        fullScreen: false,
+      });
+    }
   }
 
   getData = (method, data = {}) => {
@@ -355,7 +355,7 @@ class SitePageText_ extends React.Component {
       is_load: true,
     });
 
-    let res = api(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then(result => result.data)
       .finally( () => {
         setTimeout(() => {
