@@ -21,7 +21,7 @@ import TableRow from '@mui/material/TableRow';
 
 import { MyTextInput, MySelect, MyAlert } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api } from '@/src/api_new';
 
 class SiteCategory_Modal extends React.Component {
   constructor(props) {
@@ -30,6 +30,9 @@ class SiteCategory_Modal extends React.Component {
     this.state = {
       item: null,
       listCat: null,
+      openAlert: false,
+      err_status: true,
+      err_text: '',
     };
   }
 
@@ -61,6 +64,17 @@ class SiteCategory_Modal extends React.Component {
   save() {
     const item = this.state.item;
 
+    if (!item.name) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать название'
+      });
+
+      return;
+    } 
+
     this.props.save(item);
 
     this.onClose();
@@ -70,6 +84,9 @@ class SiteCategory_Modal extends React.Component {
     this.setState({
       item: null,
       listCat: null,
+      openAlert: false,
+      err_status: true,
+      err_text: '',
     });
 
     this.props.onClose();
@@ -77,56 +94,65 @@ class SiteCategory_Modal extends React.Component {
 
   render() {
     return (
-      <Dialog
-        open={this.props.open}
-        onClose={this.onClose.bind(this)}
-        fullScreen={this.props.fullScreen}
-        fullWidth={true}
-        maxWidth="md"
-      >
-        <DialogTitle className="button">
-          {this.props.method}
-          {this.props.itemName ? `: ${this.props.itemName}` : null}
-        </DialogTitle>
+      <>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
 
-        <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
-          <CloseIcon />
-        </IconButton>
+        <Dialog
+          open={this.props.open}
+          onClose={this.onClose.bind(this)}
+          fullScreen={this.props.fullScreen}
+          fullWidth={true}
+          maxWidth="md"
+        >
+          <DialogTitle className="button">
+            {this.props.method}
+            {this.props.itemName ? `: ${this.props.itemName}` : null}
+          </DialogTitle>
 
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={12}>
-              <MyTextInput
-                label="Название категории"
-                value={this.state.item ? this.state.item.name : ''}
-                func={this.changeItem.bind(this, 'name')}
-              />
+          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+            <CloseIcon />
+          </IconButton>
+
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={12}>
+                <MyTextInput
+                  label="Название категории"
+                  value={this.state.item ? this.state.item.name : ''}
+                  func={this.changeItem.bind(this, 'name')}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={12}>
+                <MyTextInput
+                  label="Сроки хранения"
+                  value={this.state.item ? this.state.item.shelf_life : ''}
+                  func={this.changeItem.bind(this, 'shelf_life')}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={12}>
+                <MySelect
+                  label="Дочерняя категория"
+                  data={this.state.listCat ? this.state.listCat : []}
+                  value={this.state.item ? this.state.item.parent_id : ''}
+                  func={this.changeItem.bind(this, 'parent_id')}
+                />
+              </Grid>
             </Grid>
-
-            <Grid item xs={12} sm={12}>
-              <MyTextInput
-                label="Сроки хранения"
-                value={this.state.item ? this.state.item.shelf_life : ''}
-                func={this.changeItem.bind(this, 'shelf_life')}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={12}>
-              <MySelect
-                label="Дочерняя категория"
-                data={this.state.listCat ? this.state.listCat : []}
-                value={this.state.item ? this.state.item.parent_id : ''}
-                func={this.changeItem.bind(this, 'parent_id')}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button variant="contained" onClick={this.save.bind(this)}>
-            Сохранить
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="contained" onClick={this.save.bind(this)}>
+              Сохранить
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
     );
   }
 }
@@ -179,46 +205,18 @@ class SiteCategory_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({
-          is_load: false,
-        });
+        }, 500);
       });
-  };
+
+    return res;
+  }
 
   handleResize() {
     if (window.innerWidth < 601) {
@@ -274,7 +272,7 @@ class SiteCategory_ extends React.Component {
       const data = {
         name: item.name,
         shelf_life: item.shelf_life,
-        cat_id: item.parent_id,
+        cat_id: item?.parent_id ?? 0,
       };
 
       res = await this.getData('save_new', data);
@@ -394,7 +392,7 @@ class SiteCategory_ extends React.Component {
           </Grid>
 
           {!this.state.main ? null : (
-            <Grid item xs={12} sm={12}>
+            <Grid item xs={12} sm={12} mb={10}>
               <TableContainer>
                 <Table size="small">
                   <TableHead>
