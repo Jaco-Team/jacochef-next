@@ -21,7 +21,7 @@ import TableRow from '@mui/material/TableRow';
 
 import { MyTextInput, MySelect, MyAlert } from '@/ui/elements';
 
-import { api } from '@/src/api_new';
+import { api, api_laravel } from '@/src/api_new';
 
 class SiteCategory_Modal extends React.Component {
   constructor(props) {
@@ -131,6 +131,8 @@ class SiteCategory_Modal extends React.Component {
               <Grid item xs={12} sm={12}>
                 <MyTextInput
                   label="Сроки хранения"
+                  multiline={true}
+                  maxRows={4}
                   value={this.state.item ? this.state.item.shelf_life : ''}
                   func={this.changeItem.bind(this, 'shelf_life')}
                 />
@@ -205,7 +207,7 @@ class SiteCategory_ extends React.Component {
       is_load: true,
     });
 
-    let res = api(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then(result => result.data)
       .finally( () => {
         setTimeout(() => {
