@@ -3,6 +3,10 @@ import React from 'react';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import Tooltip from '@mui/material/Tooltip';
+
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -15,8 +19,6 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
-import CloseIcon from '@mui/icons-material/Close';
 
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -31,10 +33,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox, MyTimePicker } from '@/ui/elements';
+import { MySelect, MyCheckBox, MyTimePicker, MyAlert } from '@/ui/elements';
 import Typography from '@mui/material/Typography';
 
-import queryString from 'query-string';
+import { api, api_laravel } from '@/src/api_new';
 
 class Events_ extends React.Component {
   constructor(props) {
@@ -66,15 +68,21 @@ class Events_ extends React.Component {
       
       expanded: '',
       dayEvents: [],
-      events_hist: []
+      events_hist: [],
+
+      openAlert: false,
+      err_status: false,
+      err_text: '',
+
+      confirmDialog: false,
+      del_id: null,
+      text_delete: ''
     };
   }
   
   async componentDidMount(){
     
     let data = await this.getData('get_all');
-    
-    console.log( data )
     
     this.setState({
       points: data.points,
@@ -94,45 +102,21 @@ class Events_ extends React.Component {
   }
   
   getData = (method, data = {}) => {
-    
     this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      console.log( err )
+      is_load: true,
     });
+
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
   }
    
   changePoint(event){
@@ -183,12 +167,11 @@ class Events_ extends React.Component {
     };
     
     let res = await this.getData('get_calendar', data);
-    
-    console.log( res )
-    
+
     this.setState({
       calendar: res.year,
     })
+   
   }
   
   async chooseDay(day){
@@ -212,8 +195,6 @@ class Events_ extends React.Component {
       };
       
       let res = await this.getData('get_calendar_day', data);
-      
-      console.log( 'res', res )
       
       this.setState({
         chooseDay: day,
@@ -267,23 +248,50 @@ class Events_ extends React.Component {
   }
   
   async save(){
+
+    if (!this.state.chooseEvent) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать событие'
+      });
+
+      return;
+    } 
+
+    if (this.state.eventPoint1 === '') {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать точку'
+      });
+
+      return;
+    } 
+
     let data = {
       date: this.state.chooseDay.full_day,
       point_id: this.state.eventPoint1,
       event: this.state.chooseEvent,
       every_year: this.state.everyYear1 === true ? 1 : 0,
-      
       time_start: this.state.timeStart2,
       time_end: this.state.timeEnd2,
     };
     
     let res = await this.getData('save_event', data);
     
-    console.log( res )
-    
-    if( res.st === false ){
-      alert(res.text)
-    }else{
+    if(res.st === false){
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: res.text
+      });
+
+    } else {
+
       this.setState({
         chooseDay: null,
         eventPoint1: this.state.point,
@@ -305,34 +313,40 @@ class Events_ extends React.Component {
       expanded: data
     })
   }
+
+  openConfigDialog(event) {
+
+    this.setState({
+      confirmDialog: true,
+      del_id: event.id,
+      text_delete: 'Удалить событие "'+event.title+' '+event.date+'" ?'
+    });
+
+  }
   
-  async delEvent(event){
-    console.log( 'delEvent', event )
+  async delEvent(){
+
+    this.setState({ confirmDialog: false })
     
-    if (confirm('Удалить событие "'+event.title+' '+event.date+'" ?')) {
-      let data = {
-        del_id: event.id
-      };
+    let data = {
+      del_id: this.state.del_id
+    };
       
-      let res = await this.getData('del_event', data);
-      
-      this.setState({
-        chooseDay: null,
-        eventPoint1: this.state.point,
-        chooseEvent: 0,
-        everyYear1: false,
-        timeStart2: '10:00',
-        timeEnd2: '21:30',
-        modalDialog: false
-      })
-      
-      setTimeout( () => {
-        this.updateData();
-      }, 300 )
-    } else {
-      
-    }
+    await this.getData('del_event', data);
     
+    this.setState({
+      chooseDay: null,
+      eventPoint1: this.state.point,
+      chooseEvent: 0,
+      everyYear1: false,
+      timeStart2: '10:00',
+      timeEnd2: '21:30',
+      modalDialog: false
+    })
+    
+    setTimeout( () => {
+      this.updateData();
+    }, 300 )
 
   }
   
@@ -342,6 +356,24 @@ class Events_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+
+        <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false, del_id: null, text_delete: '' })}>
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+            <Typography>{this.state.text_delete}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => this.setState({ confirmDialog: false, del_id: null, text_delete: '' })}>Отмена</Button>
+            <Button onClick={this.delEvent.bind(this)}>Удалить</Button>
+          </DialogActions>
+        </Dialog>
         
         <Dialog
           open={this.state.modalDialog}
@@ -349,7 +381,12 @@ class Events_ extends React.Component {
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
-          <DialogTitle id="alert-dialog-title">{this.state.chooseDay ? this.state.chooseDay.full_day : ''}</DialogTitle>
+          <DialogTitle id="alert-dialog-title" className="button">
+            {this.state.chooseDay ? this.state.chooseDay.full_day : ''}
+            <IconButton onClick={ () => { this.setState({ modalDialog: false }) } } style={{ position: 'absolute', top: 0, right: 0, padding: 20 }}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <DialogContentText id="alert-dialog-description">
               
@@ -362,17 +399,16 @@ class Events_ extends React.Component {
                 }
                 
                 <Grid item xs={12} sm={12}>
-                  <MySelect data={this.state.events} value={this.state.chooseEvent} func={ this.changeEvent.bind(this) } label='Событие' />
+                  <MySelect data={this.state.events} value={this.state.chooseEvent} func={ this.changeEvent.bind(this) } label='Событие' is_none={false} />
                 </Grid>
                 
                 <Grid item xs={12} sm={12}>
-                  <MySelect data={this.state.points} value={ this.state.eventPoint1 } func={ this.changePoint1.bind(this) } label='Точка' />
+                  <MySelect data={this.state.points} value={ this.state.eventPoint1 } func={ this.changePoint1.bind(this) } label='Точка' is_none={false} />
                 </Grid>
                 
                 { parseInt(this.state.chooseEvent) !== 2 ? null :
                   <>
                     <Grid item xs={6} sm={6}>
-                    {console.log(this.state.timeStart2)}
                       <MyTimePicker value={ this.state.timeStart2 } func={ this.changeTimeStart2.bind(this) } label='Время начала работы' />
                     </Grid>
                     <Grid item xs={6} sm={6}>
@@ -392,30 +428,32 @@ class Events_ extends React.Component {
                   <ListItem key={key}>
                     <ListItemText primary={item.title} />
                     { ( parseInt(item.type) == 4 ||  parseInt(item.type) == 6) ? null :
-                      <CloseIcon color="primary" onClick={this.delEvent.bind(this, item)} style={{ cursor: 'pointer' }} />
+                      <CloseIcon color="primary" onClick={this.openConfigDialog.bind(this, item)} style={{ cursor: 'pointer' }} />
                     }
                   </ListItem>
                 )}
               </List>
               
-              <Accordion>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="panel1a-content"
-                  id="panel1a-header"
-                >
-                  <Typography>История</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <List component="nav">
-                    { this.state.events_hist.map( (item, key) => 
-                      <ListItem key={key}>
-                        <ListItemText primary={item.title} />
-                      </ListItem>
-                    )}
-                  </List>
-                </AccordionDetails>
-              </Accordion>
+              {!this.state.events_hist.length ? null :
+                <Accordion>
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel1a-content"
+                    id="panel1a-header"
+                  >
+                    <Typography>История</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <List component="nav">
+                      { this.state.events_hist.map( (item, key) => 
+                        <ListItem key={key}>
+                          <ListItemText primary={item.title} />
+                        </ListItem>
+                      )}
+                    </List>
+                  </AccordionDetails>
+                </Accordion>
+              }
               
               
             </DialogContentText>
@@ -431,13 +469,13 @@ class Events_ extends React.Component {
           </Grid>
           
           <Grid item xs={12} sm={3}>
-            <MySelect  data={this.state.points} value={this.state.point} func={ this.changePoint.bind(this) } label='Точка' />
+            <MySelect  data={this.state.points} value={this.state.point} func={ this.changePoint.bind(this) } label='Точка' is_none={false} />
           </Grid>
           <Grid item xs={12} sm={3}>
-            <MySelect  data={this.state.mounths} value={this.state.mounth} func={ this.changeMounth.bind(this) } label='Месяц' />
+            <MySelect  data={this.state.mounths} value={this.state.mounth} func={ this.changeMounth.bind(this) } label='Месяц' is_none={false} />
           </Grid>
           <Grid item xs={12} sm={3}>
-            <MySelect  data={this.state.years} value={this.state.year} func={ this.changeYear.bind(this) } label='Год' />
+            <MySelect  data={this.state.years} value={this.state.year} func={ this.changeYear.bind(this) } label='Год' is_none={false} />
           </Grid>
           <Grid item xs={12} sm={3}>
             <Button variant="contained" onClick={this.updateData.bind(this)}>Обновить данные</Button>
@@ -467,14 +505,25 @@ class Events_ extends React.Component {
                       { item.map( (mounth, m_key) =>
                         <TableRow key={m_key}>
                           { mounth.map( (day, k) =>
+                          <>
                             <TableCell 
                               key={k} 
                               onClick={ this.chooseDay.bind(this, day) } 
                               
-                              style={{ color: day.dir ? 'yellow' : day.holy ? '#c03' : '#000', height: '6vw'}}
+                              style={{ color: day.dir ? 'yellow' : day.holy ? '#c03' : '#000', height: '6vw', position: 'relative' }}
 
                               className={ day.event ? 'customCel' : 'tableCel' }
-                            >{ day.day }</TableCell>
+                            >
+                            {day.day}
+
+                            {!day.event?.length ? null :
+                             <Tooltip title={<Typography color="inherit">Кол-во событий дня</Typography>}> 
+                              <span style={{ position: 'absolute', right: 5, top: 5, color: '#c03' }}>{day.event.length}</span>
+                             </Tooltip>
+                            }
+
+                            </TableCell>
+                          </>
                           ) }
                         </TableRow>
                       ) }
