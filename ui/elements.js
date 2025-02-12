@@ -514,8 +514,9 @@ export class MyDateTimePickerNew extends React.PureComponent {
           label={this.props.label}
           value={this.props.value}
           disabled={ this.props.disabled || this.props.disabled === true ? true : false }
-          onChange={this.props.func}
+          //onChange={this.props.func}
           onBlur={this.props.onBlur ? this.props.onBlur : null}
+          onAccept={this.props.func} // <-- Изменения применяются только при нажатии "OK"
           className={'datePicker'}
           slotProps={{
             textField: { size: "small" },

@@ -2,6 +2,7 @@ import React, {Fragment} from 'react';
 
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
@@ -23,7 +24,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import {MyAlert, MySelect, MyTextInput, formatDateMin, MyDatePickerNewViews, MyDateTimePickerNew} from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 
@@ -32,12 +33,30 @@ class Lamps_Modal_Add extends React.Component {
     super(props);
 
     this.state = {
-      active_id: this.props.lampEdit?.id ?? '',
-      number: this.props.lampEdit?.number ?? '',
-      name: this.props.lampEdit?.name ?? '',
-      resource: this.props.lampEdit?.resource ?? '',
-      place: this.props.lampEdit?.place ?? '',
+      active_id: '',
+      number: '',
+      name: '',
+      resource: '',
+      place: '',
     };
+  }
+
+  componentDidUpdate(prevProps) {
+    //console.log(this.props.lampEdit);
+
+    if (!this.props.lampEdit) {
+      return;
+    }
+
+    if (this.props.lampEdit !== prevProps.lampEdit) {
+      this.setState({
+        active_id: this.props.lampEdit?.id ?? '',
+        number: this.props.lampEdit?.number ?? '',
+        name: this.props.lampEdit?.name ?? '',
+        resource: this.props.lampEdit?.resource ?? '',
+        place: this.props.lampEdit?.place ?? '',
+      });
+    }
   }
 
   changeItem(data, event) {
@@ -63,6 +82,7 @@ class Lamps_Modal_Add extends React.Component {
 
   onClose() {
     this.setState({
+      active_id: '',
       number: '',
       name: '',
       resource: '',
@@ -81,8 +101,8 @@ class Lamps_Modal_Add extends React.Component {
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle className="button">
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+        <DialogTitle style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <IconButton onClick={this.onClose.bind(this)}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -134,11 +154,35 @@ class Lamps_Modal_Add_Active extends React.Component {
     super(props);
 
     this.state = {
-      active_id: this.props.itemEdit?.id ?? '',
-      lamp_id: this.props.itemEdit?.lamp_id ?? '',
-      time_start: this.props.itemEdit ? dayjs(this.props.itemEdit.time_start) : null,
-      time_end: this.props.itemEdit ? dayjs(this.props.itemEdit.time_end) : null
+      active_id: '',
+      lamp_id: '',
+      time_start: null,
+      time_end: null,
+      name_lamp: '',
+      confirmDialog: false,
+
+      openAlert: false,
+      err_status: true,
+      err_text: '',
     };
+  }
+
+  componentDidUpdate(prevProps) {
+    // console.log(this.props.itemEdit);
+
+    if (!this.props.itemEdit) {
+      return;
+    }
+
+    if (this.props.itemEdit !== prevProps.itemEdit) {
+      this.setState({
+        name_lamp: this.props.itemEdit?.name ?? '',
+        active_id: this.props.typeActive === 'edit' ? this.props.itemEdit?.id ?? '' : '',
+        lamp_id: this.props.typeActive === 'edit' ? this.props.itemEdit?.lamp_id ?? '' : this.props.itemEdit?.id ?? '',
+        time_start: this.props.itemEdit?.time_start ? dayjs(this.props.itemEdit.time_start) : null,
+        time_end: this.props.itemEdit?.time_end ? dayjs(this.props.itemEdit.time_end) : null,
+      });
+    }
   }
 
   changeItem(data, event) {
@@ -149,6 +193,45 @@ class Lamps_Modal_Add_Active extends React.Component {
   }
 
   add() {
+
+    const time_start = this.state.time_start;
+    const time_end = this.state.time_end;
+
+    if (!time_start || !time_end) {
+      
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Выберите оба времени!'
+      });
+
+      return;
+    };
+
+    const diffInMinutes = time_end.diff(time_start, "minute");
+
+    if (diffInMinutes <= 0) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Конечное время должно быть позже начального!"
+      });
+
+      return;
+    };
+
+    if (diffInMinutes > 5 * 60) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Разница во времени не должна превышать 5 часов!"
+      });
+
+      return;
+    };
+
     const data = {
       id: this.state.active_id,
       lamp_id: this.state.lamp_id,
@@ -160,27 +243,48 @@ class Lamps_Modal_Add_Active extends React.Component {
   }
 
   changeLamp(){
-    if(confirm('Точно заменить лампу ?')) {
-      const data = {
-        lamp_id: this.state.lamp_id,
-      };
-      
-      this.props.changeLamp(data);
-    }
+
+    this.setState ({
+      confirmDialog: false
+    });
+
+    const data = {
+      lamp_id: this.state.lamp_id,
+    };
+    
+    this.props.changeLamp(data);
   }
 
   onClose() {
     this.setState({
-      number: '',
-      name: '',
-      resource: '',
-      place: '',
+      active_id: '',
+      lamp_id: '',
+      time_start: null,
+      time_end: null,
+      name_lamp: '',
+      confirmDialog: false,
+      openAlert: false,
+      err_status: true,
+      err_text: '',
     });
 
     this.props.onClose();
   }
 
-  changeDateRange(data, event, test) {
+  changeDateRange(data, event) {
+    
+    const time_end = this.state.time_end;
+
+    if(data === 'time_start' && !time_end && event) {
+
+      const updatedEvent = dayjs(event);
+      const time_end = updatedEvent.add(1, 'hour');
+
+      this.setState({
+        time_end,
+      });
+
+    }
 
     this.setState({
       [data]: event ? event : '',
@@ -189,54 +293,71 @@ class Lamps_Modal_Add_Active extends React.Component {
 
   render() {
     return (
-      <Dialog
-        open={this.props.open}
-        onClose={this.onClose.bind(this)}
-        fullScreen={this.props.fullScreen}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle className="button">
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3}>
-            
-            <Grid item xs={12} sm={12}>
-              <MySelect
-                is_none={false}
-                disabled={ this.state.active_id == '' ? false : true }
-                data={this.props.lampList}
-                value={this.state.lamp_id}
-                func={this.changeItem.bind(this, 'lamp_id')}
-                label="Лампа"
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <MyDateTimePickerNew
-                value={this.state.time_start}
-                func={ newValue => this.changeDateRange('time_start', newValue)}
-                label="Время начала работы"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <MyDateTimePickerNew
-                value={this.state.time_end}
-                func={ newValue => this.changeDateRange('time_end', newValue)}
-                label="Время окончания работы"
-              />
-            </Grid>
+      <>
+
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+
+        <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false })}>
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+            <Typography>Точно заменить лампу ?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
+            <Button onClick={this.changeLamp.bind(this)}>Заменить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={this.props.open}
+          onClose={this.onClose.bind(this)}
+          fullScreen={this.props.fullScreen}
+          fullWidth
+          maxWidth="md"
+        >
+          <DialogTitle style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <IconButton onClick={this.onClose.bind(this)}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={12}>
+                <MyTextInput
+                  label="Лампа"
+                  value={this.state.name_lamp}
+                  className='disabled_input'
+                />
+              </Grid>
               
-          </Grid>
-        </DialogContent>
-        <DialogActions style={{ justifyContent: 'space-between' }}>
-          <Button variant="contained" onClick={this.changeLamp.bind(this)}>Замена лампы</Button>
-          <Button variant="contained" onClick={this.add.bind(this)}>Сохранить</Button>
-        </DialogActions>
-      </Dialog>
+              <Grid item xs={12} sm={6}>
+                <MyDateTimePickerNew
+                  value={this.state.time_start}
+                  func={ newValue => this.changeDateRange('time_start', newValue)}
+                  label="Время начала работы"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <MyDateTimePickerNew
+                  value={this.state.time_end}
+                  func={ newValue => this.changeDateRange('time_end', newValue)}
+                  label="Время окончания работы"
+                />
+              </Grid>
+                
+            </Grid>
+          </DialogContent>
+          <DialogActions style={{ justifyContent: 'space-between' }}>
+            <Button variant="contained" onClick={() => this.setState({ confirmDialog: true })}>Замена лампы</Button>
+            <Button variant="contained" onClick={this.add.bind(this)}>Сохранить</Button>
+          </DialogActions>
+        </Dialog>
+      </>
     );
   }
 }
@@ -253,8 +374,6 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
       points: [],
       point: '0',
 
-      
-
       type: '',
       pointModal: '',
       fullScreen: false,
@@ -263,14 +382,14 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
       err_status: true,
       err_text: '',
 
-
-
       modalAddLamp: false,
       modalAddActiveLamp: false,
       lampList: [],
       lampListActive: [],
       itemEdit: null,
       lampEdit: null,
+
+      typeActive: null,
 
       date_start: formatDateMin(new Date()),
       date_end: formatDateMin(new Date()),
@@ -290,51 +409,35 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
 
     setTimeout(() => {
       this.getLamps();
-    }, 100);
+    }, 50);
   }
 
-  getData = (method, data = {}) => {
+  getData = (method, data = {}, dop_type = {}) => {
+      
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
+    let res = api_laravel(this.state.module, method, data, dop_type)
+    .then(result => {
+
+      if(method === 'export_file_xls') {
+        return result;
+      } else {
+        return result.data;
+      }
+
     })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/auth';
-          return;
-        }
+    .finally( () => {
+      setTimeout(() => {
+        this.setState({
+          is_load: false,
+        });
+      }, 500);
+    });
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+    return res;
+  }
 
   handleResize() {
     if (window.innerWidth < 601) {
@@ -363,16 +466,28 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
   async getLamps() {
     const data = {
       point_id: this.state.point,
-      date_start: this.state.date_start,
-      date_end: this.state.date_end,
+      date_start: dayjs(this.state.date_start).format('YYYY-MM'),
+      date_end: dayjs(this.state.date_end).format('YYYY-MM'),
     };
 
     const res = await this.getData('get_lamps', data);
 
-    this.setState({
-      lampList: res.list,
-      lampListActive: res.active_lamp,
-    });
+    if (res.st) {
+
+      this.setState({
+        lampList: res.list,
+        lampListActive: res.active_lamp,
+      });
+
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: res.text,
+      });
+
+    }
   }
 
   async add(data) {
@@ -411,38 +526,27 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
         openAlert: true,
         err_status: true,
         err_text: 'Успешно сохранено!',
-
         modalAddActiveLamp: false
       });
 
       setTimeout(() => {
         this.getLamps();
       }, 300);
+
     } else {
+
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: res.text,
       });
+
     }
   }
 
   openModalAddLamp(){
     this.setState({
       modalAddLamp: true
-    })
-  }
-
-  openModalAddActiveLamp(){
-    this.setState({
-      modalAddActiveLamp: true
-    })
-  }
-
-  editActiveLamp(item){
-    this.setState({
-      modalAddActiveLamp: true,
-      itemEdit: item
     })
   }
 
@@ -453,21 +557,52 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
     })
   }
 
-  async downloadHJ(){
+  openModalAddActiveLamp(item, typeActive){
+    this.setState({
+      modalAddActiveLamp: true,
+      itemEdit: item,
+      typeActive
+    })
+  }
+
+  editActiveLamp(item, typeActive){
+
+    const name = this.state.lampList.find((lamp) => lamp.id === item.lamp_id)?.name ?? '';
+   
+    item.name = name;
+
+    this.setState({
+      modalAddActiveLamp: true,
+      itemEdit: item,
+      typeActive
+    })
+  }
+
+  async download(){
+
+    const date_start = dayjs(this.state.date_start).format('YYYY-MM');
+    const date_end = dayjs(this.state.date_end).format('YYYY-MM');
+
     let data = {
-      date_start: dayjs(this.state.date_start).format('YYYY-MM'),
-      date_end: dayjs(this.state.date_end).format('YYYY-MM'),
+      date_start,
+      date_end,
       point_id: this.state.point,
     };
 
-    const res =  await this.getData('downloadHJ', data);
-
-    // правка 26.12 скачивания файла в один клик
-    if( res.url){
-      const link = document.createElement('a');
-      link.href = res.url;
-      link.click();
+    const dop_type = {
+      responseType: 'blob',
     }
+
+    const res = await this.getData('export_file_xls', data, dop_type);
+
+    const url = window.URL.createObjectURL(new Blob([res]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Журнал учета работы бактерицидных ламп ${date_start}_${date_end}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
   }
 
   changeDateRange(type, data) {
@@ -486,7 +621,6 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
         openAlert: true,
         err_status: true,
         err_text: 'Успешно сохранено!',
-
         modalAddActiveLamp: false
       });
 
@@ -516,27 +650,24 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
           text={this.state.err_text}
         />
 
-        { this.state.modalAddLamp === false ? false :
-          <Lamps_Modal_Add
-            open={this.state.modalAddLamp}
-            add={this.add.bind(this)}
-            onClose={() => this.setState({ modalAddLamp: false, lampEdit: null })}
-            fullScreen={this.state.fullScreen}
-            lampEdit={this.state.lampEdit}
-            changeLamp={this.changeLamp.bind(this)}
-          />
-        }
+        <Lamps_Modal_Add
+          open={this.state.modalAddLamp}
+          add={this.add.bind(this)}
+          onClose={() => this.setState({ modalAddLamp: false, lampEdit: null })}
+          fullScreen={this.state.fullScreen}
+          lampEdit={this.state.lampEdit}
+        />
 
-        { this.state.modalAddActiveLamp === false ? false :
-          <Lamps_Modal_Add_Active
-            open={this.state.modalAddActiveLamp}
-            add={this.addActive.bind(this)}
-            onClose={() => this.setState({ modalAddActiveLamp: false, itemEdit: null })}
-            fullScreen={this.state.fullScreen}
-            lampList={this.state.lampList}
-            itemEdit={this.state.itemEdit}
-          />
-        }
+        <Lamps_Modal_Add_Active
+          open={this.state.modalAddActiveLamp}
+          add={this.addActive.bind(this)}
+          onClose={() => this.setState({ modalAddActiveLamp: false, itemEdit: null })}
+          fullScreen={this.state.fullScreen}
+          lampList={this.state.lampList}
+          itemEdit={this.state.itemEdit}
+          changeLamp={this.changeLamp.bind(this)}
+          typeActive={this.state.typeActive}
+        />
 
         <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
@@ -574,19 +705,14 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
               Обновить данные
             </Button>
           </Grid>
-          <Grid item xs={12} sm={2}>
+          <Grid item xs={12} sm={6}>
             <Button variant="contained" onClick={this.openModalAddLamp.bind(this)}>
               Добавить лампу
             </Button>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Button variant="contained" onClick={this.openModalAddActiveLamp.bind(this)}>
-              Добавить активацию
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Button variant="contained" onClick={this.downloadHJ.bind(this)}>
-              Скачать
+            <Button variant="contained" onClick={this.download.bind(this)}>
+              Скачать файл XLS
             </Button>
           </Grid>
 
@@ -634,13 +760,25 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
                         <Fragment key={k}>
                           <TableCell style={{ textAlign: 'center', color: 'red' }} onClick={ lamp.id == '' ? () => {} : this.editActiveLamp.bind(this, lamp)}>{lamp.only_time_start}</TableCell>
                           <TableCell style={{ textAlign: 'center', color: 'red' }} onClick={ lamp.id == '' ? () => {} : this.editActiveLamp.bind(this, lamp)}>{lamp.only_time_end}</TableCell>
-                          <TableCell style={{ textAlign: 'center', color: 'red', borderRight: '1px solid #e5e5e5' }} onClick={ lamp.id == '' ? () => {} : this.editActiveLamp.bind(this, lamp)}>{lamp.diff}</TableCell>
+                          <TableCell style={{ textAlign: 'center', color: 'red', borderRight: '1px solid #e5e5e5' }} onClick={ lamp.id == '' ? () => {} : this.editActiveLamp.bind(this, lamp, 'edit')}>{lamp.diff}</TableCell>
                         </Fragment>
                       ) }
 
                       <TableCell style={{ border: '1px solid #e5e5e5' }}>{item.manager}</TableCell>
                     </TableRow>
                   ))}
+
+                  <TableRow>
+                    <TableCell style={{ borderRight: '1px solid #e5e5e5', borderLeft: '1px solid #e5e5e5' }} />
+                    {this.state.lampList.map((item, key) =>
+                      <TableCell colSpan={3} key={key} style={{ borderRight: '1px solid #e5e5e5', textAlign: 'right' }}>
+                        <Button variant="contained" onClick={this.openModalAddActiveLamp.bind(this, item, 'new')}>
+                          Добавить активацию
+                        </Button>
+                      </TableCell>
+                    )}
+                    <TableCell style={{ borderRight: '1px solid #e5e5e5' }} />
+                  </TableRow>
 
                   <TableRow>
                     <TableCell style={{ border: '1px solid #e5e5e5' }}>Отработано часов</TableCell>
