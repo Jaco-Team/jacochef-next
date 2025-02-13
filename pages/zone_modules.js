@@ -5,6 +5,10 @@ import Script from 'next/script';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import Tooltip from '@mui/material/Tooltip';
+
+import Box from '@mui/material/Box';
+import Collapse from '@mui/material/Collapse';
 
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
@@ -39,7 +43,7 @@ import { MySelect, MyTextInput, MyCheckBox, MyAlert, MyDatePickerNew } from '@/u
 import { api, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
-class ZoneModules_Modal_History_Map extends React.Component {
+class ZoneModules_Modal_History extends React.Component {
   map_2 = null;
   myGeoObject_2 = null;
 
@@ -47,23 +51,28 @@ class ZoneModules_Modal_History_Map extends React.Component {
     super(props);
 
     this.state = {
-      zone_data: ''
+      itemView: null,
     };
   }
 
   componentDidUpdate(prevProps) {
-    //console.log(this.props.zone_data);
+    // console.log(this.props.itemView);
 
-    if (!this.props.zone_data) {
+    if (!this.props) {
       return;
     }
 
-    if (this.props.zone_data !== prevProps.zone_data) {
+    if (this.props.itemView !== prevProps.itemView) {
 
-      this.getZone(this.props.zone_data);
+      this.map_2 = null;
+      this.myGeoObject_2 = null;
+
+      if(this.props.zone_data){
+        this.getZone(this.props.zone_data);
+      } 
 
       this.setState({
-        zone_data: JSON.parse(JSON.stringify(this.props.zone_data)),
+        itemView: this.props.itemView
       });
     }
   }
@@ -75,7 +84,7 @@ class ZoneModules_Modal_History_Map extends React.Component {
 
         this.map_2 = new ymaps.Map(
           'map_zone',
-          { center: JSON.parse(zone_data['xy_point']), zoom: 11 },
+          { center: JSON.parse(zone_data['xy_point']), zoom: 10 },
           { searchControlProvider: 'yandex#search' }
         );
    
@@ -152,81 +161,6 @@ class ZoneModules_Modal_History_Map extends React.Component {
     this.myGeoObject_2 = null;
 
     this.setState({
-      zone_data: ''
-    });
-
-    this.props.onClose();
-  }
-
-  render() {
-
-    const { open, fullScreen, zone_data } = this.props;
-
-    return (
-      <Dialog
-        open={open}
-        onClose={this.onClose.bind(this)}
-        fullScreen={fullScreen}
-        fullWidth={true}
-        maxWidth={'xl'}
-      >
-        <DialogTitle className="button">
-          {`Зона: ${zone_data?.name ?? ''}`}
-          <IconButton onClick={this.onClose.bind(this)}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3}>
-            {zone_data?.coordinates_old === 'last' ? null :
-              <Grid item xs={12} sm={12} mb={2}>
-                <Typography align="center" style={{ backgroundColor: '#ef5350', color: '#fff', padding: '10px 15px', fontWeight: 700 }}>
-                  {zone_data?.coordinates_old ? 'Красным цветом выделены границы прежней зоны, синим цветом выделены новые границы зоны' : 'Изменений в границах зоны не было'}
-                </Typography>
-              </Grid>
-            }
-            <Grid item xs={12} sm={12}>
-              <div id="map_zone" name="map_zone" style={{ width: '100%', height: 700, paddingTop: 10 }} />
-            </Grid>
-          </Grid>
-        </DialogContent>
-
-        <DialogActions>
-          <Button variant="contained" onClick={this.onClose.bind(this)}>
-            Закрыть
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  }
-}
-
-class ZoneModules_Modal_History extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      itemView: null,
-    };
-  }
-
-  componentDidUpdate(prevProps) {
-    // console.log(this.props.itemView);
-
-    if (!this.props) {
-      return;
-    }
-
-    if (this.props !== prevProps) {
-      this.setState({
-        itemView: this.props.itemView
-      });
-    }
-  }
-
-  onClose() {
-    this.setState({
       itemView: null,
     });
 
@@ -235,7 +169,7 @@ class ZoneModules_Modal_History extends React.Component {
 
   render() {
 
-    const { open, fullScreen, date_edit, open_map_zone, itemView_old } = this.props
+    const { open, fullScreen, date_edit, zone_data } = this.props
 
     return (
       <Dialog
@@ -247,7 +181,7 @@ class ZoneModules_Modal_History extends React.Component {
       >
         <DialogTitle className="button">
           <Typography style={{ alignSelf: 'center' }}>
-            Изменения выделены цветом
+            Изменения в {`зоне: ${zone_data?.name ?? ''}`} выделены цветом
           </Typography>
           <IconButton onClick={this.onClose.bind(this)}>
             <CloseIcon />
@@ -309,10 +243,15 @@ class ZoneModules_Modal_History extends React.Component {
                 className={this.state.itemView ? this.state.itemView.is_active?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <Button onClick={open_map_zone.bind(this, this.state.itemView ? this.state.itemView : null, itemView_old)} variant="contained" color='success'>
-                Зона на карте
-              </Button>
+            {zone_data?.coordinates_old === 'last' ? null :
+              <Grid item xs={12} sm={12} mb={2}>
+                <Typography align="center" style={{ backgroundColor: '#ef5350', color: '#fff', padding: '10px 15px', fontWeight: 700 }}>
+                  {zone_data?.coordinates_old ? 'Красным цветом выделены границы прежней зоны, синим цветом выделены новые границы зоны' : 'Изменений в границах зоны не было'}
+                </Typography>
+              </Grid>
+            }
+            <Grid item xs={12} sm={12}>
+              <div id="map_zone" name="map_zone" style={{ width: '100%', height: 300, paddingTop: 10 }} />
             </Grid>
           </Grid>
         </DialogContent>
@@ -854,8 +793,6 @@ class ZoneModules_Modal extends React.Component {
 
   render() {
 
-    const { zone_hist, open_hist_zone } = this.props;
-
     return (
       <>
         <MyAlert
@@ -1024,41 +961,6 @@ class ZoneModules_Modal extends React.Component {
                 </div>
               </Grid>
             </Grid>
-
-            {!zone_hist.length ? null :
-              <Grid item xs={12} sm={12} mb={5} mt={5}>
-                <Accordion style={{ width: '100%' }}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Table size='small'>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>#</TableCell>
-                          <TableCell>Дата / время</TableCell>
-                          <TableCell>Сотрудник</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {zone_hist.map((it, k) =>
-                          <TableRow 
-                            hover 
-                            key={k} 
-                            style={{ cursor: 'pointer'}}
-                            onClick={open_hist_zone.bind(this, k)} 
-                          >
-                            <TableCell>{k+1}</TableCell>
-                            <TableCell>{it.date_time_update}</TableCell>
-                            <TableCell>{it.user_name}</TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </AccordionDetails>
-                </Accordion>
-              </Grid>
-            }
           </DialogContent>
           <DialogActions>
             <Button variant="contained" onClick={this.props.mark === 'newZone' || this.props.mark === 'editZone_future' ? this.save.bind(this) : () => this.setState({ dateDialog: true })}>
@@ -1072,6 +974,9 @@ class ZoneModules_Modal extends React.Component {
 }
 
 class ZoneModules_ extends React.Component {
+  map_hist = null;
+  myGeoObject_hist = null;
+
   constructor(props) {
     super(props);
 
@@ -1111,7 +1016,7 @@ class ZoneModules_ extends React.Component {
       text_dialog_delete: '',
       type_delete: '',
 
-      zone_hist: [],
+      zones_hist: [],
 
       modalDialogView: false,
       itemView: null,
@@ -1119,7 +1024,8 @@ class ZoneModules_ extends React.Component {
 
       modalDialogMap: false,
       zone_data: null,
-      itemView_old: null
+
+      points: []
     };
   }
 
@@ -1138,6 +1044,8 @@ class ZoneModules_ extends React.Component {
       cities: data.cities,
       city: data.cities[0].id,
       module_name: data.module_info.name,
+      zones_hist: res.all_hist,
+      points: res.points
     });
 
     document.title = data.module_info.name;
@@ -1184,6 +1092,8 @@ class ZoneModules_ extends React.Component {
       zones: res.zones,
       city: event.target.value,
       zones_future: res.zones_future,
+      zones_hist: res.all_hist,
+      points: res.points
     });
   }
 
@@ -1280,6 +1190,8 @@ class ZoneModules_ extends React.Component {
     this.setState({
       zones: res.zones,
       zones_future: res.zones_future,
+      zones_hist: res.all_hist,
+      points: res.points
     });
   }
 
@@ -1323,7 +1235,6 @@ class ZoneModules_ extends React.Component {
         mark,
         item,
         itemName: item.zone.zone_name,
-        zone_hist: item.zone_hist
       });
     }
 
@@ -1378,11 +1289,12 @@ class ZoneModules_ extends React.Component {
     }, 300)
   }
 
-  open_hist_zone(index) {
+  open_hist_zone(id, zone_id) {
+    const points = this.state.points;
+    const zones = this.state.zones;
 
-    const points = this.state.item.points;
-
-    let item = this.state.zone_hist;
+    const item = zones.find((zone) => parseInt(zone.id) === parseInt(zone_id))?.all_hist ?? [];
+    const index = item.findIndex((zone) => parseInt(zone.id) === parseInt(id));
 
     let itemView = JSON.parse(JSON.stringify(item[index]));
 
@@ -1429,16 +1341,18 @@ class ZoneModules_ extends React.Component {
       date_edit = itemView?.date_start ?? '';
     }
 
+    const zone_data = this.map_zone_modal_hist(itemView, itemView_old);
+
     this.setState({
       modalDialogView: true,
       itemView,
       date_edit,
-      itemView_old
+      zone_data
     });
   }
 
-  open_map_zone(zone, zone_old) {
-    const points = this.state.item.points;
+  map_zone_modal_hist(zone, zone_old) {
+    const points = this.state.points;
 
     let zone_data = {};
 
@@ -1469,24 +1383,89 @@ class ZoneModules_ extends React.Component {
     } else {
       zone_data.coordinates_old = 'last';
     }
-    
-    if(Object.keys(zone_data).length) {
 
-      this.setState({
-        modalDialogMap: true,
-        zone_data
+    return Object.keys(zone_data).length ? zone_data : [];
+
+  }
+
+  openHistZone(id){
+
+    this.map_hist = null;
+    this.myGeoObject_hist = null;
+    
+    const zones = this.state.zones;
+
+    zones.forEach(zone => {
+      if(parseInt(zone.id) === parseInt(id)) {
+        zone.is_open = !zone.is_open;
+
+        if(zone.is_open) {
+          zone.hist.forEach((z) => {
+  
+            let zone_data = {
+              coordinates: z.zone,
+              xy_point: z.xy_point
+            };
+  
+            this.getZone_hist(zone_data, `map_hist_${z.date_time_update}`);
+          })
+        }
+       
+      } else {
+        zone.is_open = false;
+      }
+
+    });
+
+    this.setState({
+      zones,
+    });
+    
+  } 
+
+  getZone_hist(zone_data, mapId) {
+    if (!this.map_hist) {
+      ymaps.ready(() => {
+
+        this.map_hist = new ymaps.Map(
+          mapId,
+          { center: JSON.parse(zone_data['xy_point']), zoom: 10 },
+          { searchControlProvider: 'yandex#search' }
+        );
+   
+        this.myGeoObject_hist = new ymaps.Polygon(
+          [JSON.parse(zone_data.coordinates)],
+          { geometry: { fillRule: 'nonZero' }},
+          {
+            fillOpacity: 0.4,
+            fillColor: 'rgb(240, 128, 128)',
+            strokeColor: 'rgb(187, 0, 37)',
+            strokeWidth: 5,
+          }
+        );
+
+        this.map_hist.geoObjects.add(this.myGeoObject_hist);
+     
       });
 
     } else {
 
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Отсутствуют координаты зоны в данном изменении',
-      });
+      this.map_hist.geoObjects.removeAll();
+ 
+      this.myGeoObject_hist = new ymaps.Polygon(
+        [JSON.parse(zone_data.coordinates)],
+        { geometry: { fillRule: 'nonZero' } },
+        {
+          fillOpacity: 0.4,
+          fillColor: 'rgb(240, 128, 128)',
+          strokeColor: 'rgb(187, 0, 37)',
+          strokeWidth: 5,
+        }
+      );
+
+      this.map_hist.geoObjects.add(this.myGeoObject_hist);
 
     }
-
   }
 
   render() {
@@ -1518,7 +1497,7 @@ class ZoneModules_ extends React.Component {
 
         <ZoneModules_Modal
           open={this.state.modalDialog}
-          onClose={() => this.setState({ modalDialog: false, itemName: '', zone_hist: [] })}
+          onClose={() => this.setState({ modalDialog: false, itemName: '' })}
           method={this.state.method}
           mark={this.state.mark}
           item={this.state.item}
@@ -1526,24 +1505,14 @@ class ZoneModules_ extends React.Component {
           save={this.save.bind(this)}
           fullScreen={this.state.fullScreen}
           zones={this.state.zones}
-          zone_hist={this.state.zone_hist}
-          open_hist_zone={this.open_hist_zone.bind(this)}
         />
 
         <ZoneModules_Modal_History
           open={this.state.modalDialogView}
-          onClose={() => this.setState({ modalDialogView: false, itemView: null, date_edit: null, itemView_old: null })}
+          onClose={() => this.setState({ modalDialogView: false, itemView: null, date_edit: null })}
           itemView={this.state.itemView}
-          itemView_old={this.state.itemView_old}
           fullScreen={this.state.fullScreen}
           date_edit={this.state.date_edit}
-          open_map_zone={this.open_map_zone.bind(this)}
-        />
-
-        <ZoneModules_Modal_History_Map
-          open={this.state.modalDialogMap}
-          onClose={() => this.setState({ modalDialogMap: false })}
-          fullScreen={this.state.fullScreen}
           zone_data={this.state.zone_data}
         />
 
@@ -1573,40 +1542,89 @@ class ZoneModules_ extends React.Component {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell colSpan={9} style={{ fontWeight: 700 }}>Текущие данные</TableCell>
+                    <TableCell colSpan={10} style={{ fontWeight: 700 }}>Текущие данные</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell style={{ width: '4%' }}>#</TableCell>
+                    <TableCell style={{ width: '4%' }}></TableCell>
                     <TableCell style={{ width: '12%' }}>Точка</TableCell>
                     <TableCell style={{ width: '12%' }}>Зона</TableCell>
                     <TableCell style={{ width: '12%' }}>Сортировка</TableCell>
                     <TableCell style={{ width: '12%' }} align="center">Сумма для клиента</TableCell>
                     <TableCell style={{ width: '12%' }} align="center">Сумма для курьера</TableCell>
-                    <TableCell style={{ width: '12%' }} align="center">Бесплатная доставка</TableCell>
-                    <TableCell style={{ width: '12%' }} align="center">Активность</TableCell>
+                    <TableCell style={{ width: '10%' }} align="center">Бесплатная доставка</TableCell>
+                    <TableCell style={{ width: '10%' }} align="center">Активность</TableCell>
                     <TableCell style={{ width: '12%' }} align="center">Удалить</TableCell>
                   </TableRow>
                 </TableHead>
 
                 <TableBody>
                   {this.state.zones.map((item, key) => (
-                    <TableRow key={key} hover>
-                      <TableCell>{key + 1}</TableCell>
-                      <TableCell>{item.point_name}</TableCell>
-                      <TableCell onClick={this.openModal.bind(this, 'editZone', 'Редактирование зоны', item.id)} style={{ fontWeight: 700, cursor: 'pointer' }}>
-                        {item.zone_name}
-                      </TableCell>
-                      <TableCell align="center">{item.point_id}</TableCell>
-                      <TableCell align="center">{item.sum_div}</TableCell>
-                      <TableCell align="center">{item.sum_div_driver}</TableCell>
-                      <TableCell align="center">{parseInt(item.free_drive) === 0 ? <CloseIcon /> : <CheckIcon />}</TableCell>
-                      <TableCell align="center">{parseInt(item.is_active) === 0 ? <CloseIcon /> : <CheckIcon />}</TableCell>
-                      <TableCell align="center">
-                        <IconButton onClick={this.openConfigDialog.bind(this, item.id, 'zone')}>
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
+                    <React.Fragment key={key}>
+                      <TableRow hover>
+                        <TableCell>{key + 1}</TableCell>
+                        <TableCell 
+                          onClick={item.hist.length ? this.openHistZone.bind(this, item.id) : null} 
+                          style={{ cursor: item.hist.length ? 'pointer' : 'unset' }}
+                        >
+                          {!item.hist.length ? null :
+                            <Tooltip title={<Typography color="inherit">История последних изменений</Typography>}> 
+                              <ExpandMoreIcon 
+                                style={{ display: 'flex', transform: item.is_open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                              />
+                            </Tooltip>
+                          }
+                        </TableCell>
+                        <TableCell>{item.point_name}</TableCell>
+                        <TableCell onClick={this.openModal.bind(this, 'editZone', 'Редактирование зоны', item.id)} style={{ fontWeight: 700, cursor: 'pointer' }}>
+                          {item.zone_name}
+                        </TableCell>
+                        <TableCell align="center">{item.point_id}</TableCell>
+                        <TableCell align="center">{item.sum_div}</TableCell>
+                        <TableCell align="center">{item.sum_div_driver}</TableCell>
+                        <TableCell align="center">{parseInt(item.free_drive) === 0 ? <CloseIcon /> : <CheckIcon />}</TableCell>
+                        <TableCell align="center">{parseInt(item.is_active) === 0 ? <CloseIcon /> : <CheckIcon />}</TableCell>
+                        <TableCell align="center">
+                          <IconButton onClick={this.openConfigDialog.bind(this, item.id, 'zone')}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell style={{ padding: 0 }} colSpan={10}>
+                          <Collapse in={item.is_open} timeout="auto" unmountOnExit>
+                            <Box sx={{ margin: '8px 0' }}>
+                              <Table>
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell style={{ width: '4%' }}>#</TableCell>
+                                    <TableCell style={{ width: '4%' }}></TableCell>
+                                    <TableCell>Зона</TableCell>
+                                    <TableCell>Сумма для клиента</TableCell>
+                                    <TableCell>Сумма для курьера</TableCell>
+                                    <TableCell style={{ width: '45%' }}>Границы зоны</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {item.hist.map((it, k) => 
+                                    <TableRow key={k}>
+                                      <TableCell style={{ verticalAlign: 'top' }}>{k + 1}</TableCell>
+                                      <TableCell style={{ verticalAlign: 'top' }}></TableCell>
+                                      <TableCell style={{ verticalAlign: 'top' }}>{it.name}</TableCell>
+                                      <TableCell style={{ verticalAlign: 'top' }}>{it.sum_div}</TableCell>
+                                      <TableCell style={{ verticalAlign: 'top' }}>{it.sum_div_driver}</TableCell>
+                                      <TableCell>
+                                        <div id={`map_hist_${it.date_time_update}`} name={`map_hist_${it.date_time_update}`} style={{ width: '100%', height: 250 }} />
+                                      </TableCell>
+                                    </TableRow>
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </Box>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    </React.Fragment>
                   ))}
                 </TableBody>
               </Table>
@@ -1614,7 +1632,7 @@ class ZoneModules_ extends React.Component {
           </Grid>
 
           {!this.state.zones_future.length ? null :
-            <Grid item xs={12} sm={12} mb={10}>
+            <Grid item xs={12} sm={12} mb={5}>
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -1657,6 +1675,43 @@ class ZoneModules_ extends React.Component {
                   </TableBody>
                 </Table>
               </TableContainer>
+            </Grid>
+          }
+          
+          {!this.state.zones_hist.length ? null :
+            <Grid item xs={12} sm={12} mb={5}>
+              <Accordion style={{ width: '100%' }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Table size='small'>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>#</TableCell>
+                        <TableCell>Зона</TableCell>
+                        <TableCell>Дата / время</TableCell>
+                        <TableCell>Сотрудник</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {this.state.zones_hist.map((it, k) =>
+                        <TableRow 
+                          hover 
+                          key={k} 
+                          style={{ cursor: 'pointer'}}
+                          onClick={this.open_hist_zone.bind(this, it.id, it.zone_id)}
+                        >
+                          <TableCell>{k+1}</TableCell>
+                          <TableCell>{it.name}</TableCell>
+                          <TableCell>{it.date_time_update}</TableCell>
+                          <TableCell>{it.user_name}</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </AccordionDetails>
+              </Accordion>
             </Grid>
           }
 
