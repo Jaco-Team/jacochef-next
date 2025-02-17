@@ -8,6 +8,8 @@ import Button from '@mui/material/Button';
 
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import EditIcon from '@mui/icons-material/Edit';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -30,6 +32,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import TableContainer from '@mui/material/TableContainer';
 
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -68,6 +71,416 @@ function a11yProps(index) {
     id: `simple-tab-${index}`,
     'aria-controls': `simple-tabpanel-${index}`,
   };
+}
+
+class CafeEdit_Modal_Kkt_Info extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      date_start: formatDate(new Date()),
+      date_end: formatDate(new Date()),
+      rn_kkt: '',
+      fn: '',
+      kassa: '',
+      dop_kassa: '',
+      base: '',
+      is_active: 1,
+      kass: [
+        { id: '1', name: '1' },
+        { id: '2', name: '2' },
+        { id: '3', name: '3' },
+        { id: '4', name: '4' },
+        { id: '5', name: '5' },
+        { id: '6', name: '6' },
+      ],
+      dop_kass: [
+        { id: '1', name: '1' },
+        { id: '2', name: '2' },
+        { id: '3', name: '3' },
+        { id: '4', name: '4' },
+        { id: '5', name: '5' },
+        { id: '6', name: '6' },
+      ],
+      all_fn: [],
+      new_fn: '',
+      openAlert: false,
+      err_status: true,
+      err_text: '',
+      addDialog: false,
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    //console.log(this.props);
+
+    if (!this.props) {
+      return;
+    }
+
+    if (this.props !== prevProps) {
+
+      this.setState({
+        all_fn: this.props.kkt?.all_fn ?? [],
+      });
+
+      if (this.props.type === 'update_kkt' || this.props.type === 'view_kkt') {
+
+        const dateStart = dayjs(this.props.kkt?.date_start).format('YYYY-MM-DD').split('-').reverse().join('-');
+        const dateEnd = dayjs(this.props.kkt?.date_end).format('YYYY-MM-DD').split('-').reverse().join('-');
+        const name = `${this.props.kkt?.fn} ( с ${dateStart} по ${dateEnd} )`;
+
+        let kkt_fn = { id: this.props.kkt?.fn, name, date_start: dayjs(this.props.kkt?.date_start).format('YYYY-MM-DD'), date_end: dayjs(this.props.kkt?.date_end).format('YYYY-MM-DD') };
+
+        this.setState({
+          rn_kkt: this.props.kkt.rn_kkt,
+          fn: kkt_fn,
+          kassa: this.props.kkt.kassa,
+          dop_kassa: this.props.kkt.dop_kassa,
+          base: this.props.kkt.base,
+          is_active: parseInt(this.props.kkt.is_active),
+        });
+
+      } else {
+
+        this.setState({
+          rn_kkt: '',
+          fn: '',
+          kassa: '',
+          dop_kassa: '',
+          base: '',
+          is_active: 1,
+        });
+
+      }
+    }
+  }
+
+  changeItem(data, event) {
+    this.setState({
+      [data]: event.target.value,
+    });
+  }
+
+  changeDateRange(data, event) {
+    this.setState({
+      [data]: event ? event : '',
+    });
+  }
+
+  changeSelect(data, event) {
+    this.setState({
+      [data]: event.target.value,
+    });
+  }
+
+  changeItemChecked(data, event) {
+    const value = event.target.checked === true ? 1 : 0;
+    this.setState({
+      [data]: value,
+    });
+  }
+
+  changeFN(event, value) {
+    if(value && parseInt(value?.id) === 0){
+
+      this.setState({
+        addDialog: true,
+      });
+
+    }
+
+    this.setState({
+      fn: value,
+    });
+
+  }
+
+  addFN() {
+    let { new_fn, date_start, date_end, all_fn } = this.state;
+
+    if(!date_start || !date_end){
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Указание дат обязательно',
+      });
+
+      return;
+    }
+
+    if(!new_fn){
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Указание номера обязательно',
+      });
+
+      return;
+    }
+
+    const dateStart = dayjs(date_start).format('YYYY-MM-DD').split('-').reverse().join('-');
+    const dateEnd = dayjs(date_end).format('YYYY-MM-DD').split('-').reverse().join('-');
+    const name = `${new_fn} ( с ${dateStart} по ${dateEnd} )`;
+
+    let add_fn = { id: new_fn, name, date_start: dayjs(date_start).format('YYYY-MM-DD'), date_end: dayjs(date_end).format('YYYY-MM-DD') };
+
+    all_fn = [...this.state.all_fn, ...[add_fn]];
+
+    this.setState({
+      date_start: formatDate(new Date()),
+      date_end: formatDate(new Date()),
+      new_fn: '',
+      all_fn,
+      addDialog: false,
+      fn: add_fn
+    });
+
+  }
+
+  close_modal() {
+    let { rn_kkt, fn, kassa, dop_kassa, base, is_active } = this.state;
+
+    if(!fn || parseInt(fn?.id) === 0) {
+        
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать ФН',
+      });
+
+      return;
+    }
+
+    if(!rn_kkt || !kassa || !dop_kassa || !base){
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо заполнить все поля',
+      });
+
+      return;
+    }
+
+    const data = {
+      date_start: fn.date_start,
+      date_end: fn.date_end,
+      fn: fn.id,
+      rn_kkt,
+      kassa,
+      dop_kassa,
+      base,
+      is_active,
+    };
+
+    this.props.save_kkt(data);
+
+    this.onClose();
+  }
+
+  onClose() {
+    this.setState({
+      date_start: formatDate(new Date()),
+      date_end: formatDate(new Date()),
+      rn_kkt: '',
+      fn: '',
+      kassa: '',
+      dop_kassa: '',
+      base: '',
+      is_active: 1,
+      all_fn: [],
+      new_fn: '',
+      openAlert: false,
+      err_status: true,
+      err_text: '',
+      addDialog: false,
+    });
+
+    this.props.onClose();
+  }
+
+  render() {
+    return (
+      <>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+      
+        <Dialog
+          open={this.state.addDialog}
+          onClose={() => this.setState({ addDialog: false })}
+          maxWidth="sm"
+        >
+          <DialogTitle style={{ display: 'flex', alignItems: 'center' }}>
+            Добавить ФН
+            <IconButton onClick={() => this.setState({ addDialog: false })} style={{ marginLeft: 'auto' }}><CloseIcon /></IconButton>
+          </DialogTitle>
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <MyDatePickerNew
+                  label="Дата регистрации"
+                  value={this.state.date_start}
+                  func={this.changeDateRange.bind(this, 'date_start')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <MyDatePickerNew
+                  label="Дата окончания"
+                  value={this.state.date_end}
+                  func={this.changeDateRange.bind(this, 'date_end')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={12}>
+                <MyTextInput
+                  label="ФН"
+                  value={this.state.new_fn}
+                  func={this.changeItem.bind(this, 'new_fn')}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="contained" onClick={this.addFN.bind(this)}>Добавить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={this.props.open}
+          onClose={this.onClose.bind(this)}
+          fullScreen={this.props.fullScreen}
+          fullWidth
+          maxWidth="md"
+        >
+          <DialogTitle style={{ display: 'flex', alignItems: 'center' }}>
+            <Typography>Точка:{' '}<span style={{ fontWeight: 'bold' }}>{this.props.pointModal}</span></Typography>
+            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', marginLeft: 'auto' }}><CloseIcon /></IconButton>
+          </DialogTitle>
+
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            <Grid container spacing={3}>
+            {this.props.type === 'view_kkt' ?
+              <>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Номер кассы"
+                    value={this.state.kassa}
+                    disabled={true}
+                    className="disabled_input"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Доп касса"
+                    value={this.state.dop_kassa}
+                    disabled={true}
+                    className="disabled_input"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="РН ККТ"
+                    value={this.state.rn_kkt}
+                    disabled={true}
+                    className="disabled_input"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="База"
+                    value={this.state.base}
+                    disabled={true}
+                    className="disabled_input"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={8}>
+                  <MyTextInput
+                    label="ФН"
+                    value={this.state.fn?.name ?? ''}
+                    disabled={true}
+                    className="disabled_input"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    label="Активность"
+                    value={parseInt(this.state.is_active) === 1 ? 'Активна' : 'Не активна'}
+                    disabled={true}
+                    className="disabled_input"
+                  />
+                </Grid>
+              </>
+              :
+              <>
+                <Grid item xs={12} sm={6}>
+                  <MySelect
+                    is_none={false}
+                    data={this.state.kass}
+                    value={this.state.kassa}
+                    func={this.changeSelect.bind(this, 'kassa')}
+                    label="Номер кассы"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MySelect
+                    is_none={false}
+                    data={this.state.dop_kass}
+                    value={this.state.dop_kassa}
+                    func={this.changeSelect.bind(this, 'dop_kassa')}
+                    label="Доп касса"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="РН ККТ"
+                    value={this.state.rn_kkt}
+                    func={this.changeItem.bind(this, 'rn_kkt')}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="База"
+                    value={this.state.base}
+                    func={this.changeItem.bind(this, 'base')}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={8}>
+                  <MyAutocomplite
+                    label="ФН"
+                    multiple={false}
+                    data={this.state.all_fn}
+                    value={this.state.fn}
+                    func={this.changeFN.bind(this)}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyCheckBox
+                    value={parseInt(this.state.is_active) === 1 ? true : false}
+                    func={this.changeItemChecked.bind(this, 'is_active')}
+                    label="Активность"
+                  />
+                </Grid>
+              </>
+            }
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            {this.props.type === 'view_kkt' ? null :
+              <Button variant="contained" onClick={this.close_modal.bind(this)}>
+                {this.props.type === 'update_kkt' ? 'Сохранить изменения' : 'Добавить кассу'}
+              </Button>
+            }
+          </DialogActions>
+        </Dialog>
+      </>
+    );
+  }
 }
 
 class CafeEdit_Modal_History extends React.Component {
@@ -889,6 +1302,7 @@ class CafeEdit_ extends React.Component {
       activeTab: 0,
 
       point_info: null,
+      point_info_copy: null,
 
       modalDialog: false,
       item: null,
@@ -936,9 +1350,20 @@ class CafeEdit_ extends React.Component {
       index_sett: -1,
       index_zone: -1,
       index_driver: -1,
+      index_kkt: -1,
       tabs_data: [],
 
       upr_list: [],
+    
+      confirmDialog: false,
+      nextTab: null,
+
+      kkt_info_active: [],
+      kkt_info_none_active: [],
+
+      modalDialog_kkt: false,
+      kkt_update: null,
+      pointModal: '',
 
     };
   }
@@ -1005,7 +1430,25 @@ class CafeEdit_ extends React.Component {
     }, 100);
   }
 
-  changeTab(event, value) {
+  async changeTab(event, value) {
+
+    const { point_info, point_info_copy } = this.state;
+
+    const hasChanges = !this.deepEqual(point_info, point_info_copy);
+
+    if (hasChanges) {
+
+      this.setState({
+        confirmDialog: true,
+        nextTab: value,
+      });
+
+      return;
+
+    }
+
+    this.setState({ is_load: true });
+
     const index_zone = this.state.index_zone;
     
     if(value === index_zone) {
@@ -1025,10 +1468,60 @@ class CafeEdit_ extends React.Component {
     } else {
       this.map = null;
     }
-
+    
     this.setState({
       activeTab: value,
     });
+
+    await this.getDataPoint();
+  }
+
+  deepEqual(obj1, obj2) {
+    if (obj1 === obj2) return true;
+  
+    if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
+      return false;
+    }
+  
+    let keys1 = Object.keys(obj1).filter(key => key !== 'cafe_handle_close');
+    let keys2 = Object.keys(obj2).filter(key => key !== 'cafe_handle_close');
+  
+    if (keys1.length !== keys2.length) return false;
+  
+    for (let key of keys1) {
+      if (!keys2.includes(key) || !this.deepEqual(this.normalizeValue(obj1[key]), this.normalizeValue(obj2[key]))) {
+        // console.log(`Difference found in key: ${key}`);
+        // console.log(`obj1[${key}]:`, obj1[key]);
+        // console.log(`obj2[${key}]:`, obj2[key]);
+        return false;
+      }
+    }
+  
+    return true;
+  }
+  
+  normalizeValue(value) {
+    if (typeof value === 'string') {
+      return value.trim().toLowerCase();
+    }
+    if (typeof value === 'number') {
+      return value.toString();
+    }
+    return value;
+  }
+  
+  async confirmTabChange() {
+
+    this.setState({ is_load: true });
+
+    this.setState({
+      activeTab: this.state.nextTab,
+      confirmDialog: false,
+      nextTab: null,
+    });
+
+    await this.getDataPoint();
+
   }
 
   changeData(data, event) {
@@ -1079,6 +1572,10 @@ class CafeEdit_ extends React.Component {
         if(key === 'settings_driver') {
           tabs_data.push({key, 'name': "Настройки курьеров"});
         }
+
+        if(key === 'kkt_info') {
+          tabs_data.push({key, 'name': "Информация о кассах"});
+        }
         
       }
     }
@@ -1121,6 +1618,12 @@ class CafeEdit_ extends React.Component {
         });
       }
 
+      if(item.key === 'kkt_info') {
+        this.setState({
+          index_kkt: index
+        });
+      }
+
     });
 
     this.setState({
@@ -1132,15 +1635,13 @@ class CafeEdit_ extends React.Component {
   async getDataPoint() {
     const point_id = this.state.point.id;
     const city_id = this.state.point.city_id;
-    const activeTab = this.state.activeTab;
-    const index_zone = this.state.index_zone;
 
     const data = {
       point_id,
       city_id
     };
 
-    const res = await this.getData('get_one', data);
+    let res = await this.getData('get_one', data);
 
     res.point_info.manager_id = {id: res.point_info.manager_id, name: res.point_info.manager_name};
     const upr = res.upr_list.find(upr => parseInt(upr.id) === parseInt(res.point_info?.manager_id?.id));
@@ -1150,6 +1651,7 @@ class CafeEdit_ extends React.Component {
       upr_list: res.upr_list,
       cities: res.cities,
       point_info: res.point_info,
+      point_info_copy: JSON.parse(JSON.stringify(res.point_info)), 
       other_zones: res.other_zones,
       zone: res.zone,
       reason_list: res.reason_list,
@@ -1158,10 +1660,12 @@ class CafeEdit_ extends React.Component {
       point_pay_hist: res.point_pay_hist,
       point_sett_hist: res.point_sett_hist,
       point_zone_hist: res.point_zone_hist,
-      point_sett_driver_hist: res.point_sett_driver_hist
+      point_sett_driver_hist: res.point_sett_driver_hist,
+      kkt_info_active: res.kkt_info_active,
+      kkt_info_none_active: res.kkt_info_none_active
     });
 
-    if(activeTab === index_zone && res.zone.length && res.other_zones.length) {
+    if(res.zone.length && res.other_zones.length) {
       setTimeout(() => {
         this.getZones(res.zone, res.other_zones);
       }, 300);
@@ -1223,7 +1727,7 @@ class CafeEdit_ extends React.Component {
     point_info[data] = value;
 
     this.setState({
-      point_info
+      point_info,
     });
   }
 
@@ -1624,6 +2128,12 @@ class CafeEdit_ extends React.Component {
     if (!this.map) {
       ymaps.ready(() => {
 
+        const mapElement = document.getElementById('map');
+        if (!mapElement) {
+          // console.log('Map element not found');
+          return;
+        }
+
         this.map = new ymaps.Map(
           'map',
           { center: JSON.parse(zone_main['xy_point']), zoom: 11 },
@@ -1891,6 +2401,69 @@ class CafeEdit_ extends React.Component {
     });
   }
 
+  async openModalKktInfo(type_modal, kkt) {
+    this.handleResize();
+
+    const {points, point, kkt_info_active} = this.state;
+
+    const pointModal = points.find((it) => parseInt(it.id) === parseInt(point.id)).name;
+
+    let all_fn = [{id: 0, name: 'Добавить новый ФН'}];
+
+    kkt_info_active.forEach((item) => {
+      const dateStart = item.date_start.split('-').reverse().join('-');
+      const dateEnd = item.date_end.split('-').reverse().join('-');
+      const name = `${item.fn} ( с ${dateStart} по ${dateEnd} )`;
+
+      all_fn.push({id: item.fn, name, date_start: dayjs(item.date_start).format('YYYY-MM-DD'), date_end: dayjs(item.date_end).format('YYYY-MM-DD')});
+    });
+
+    kkt.all_fn = all_fn;
+
+    this.setState({
+      type_modal,
+      pointModal,
+      modalDialog_kkt: true,
+      kkt_update: kkt,
+    });
+   
+  }
+
+  async save_kkt(data) {
+    const type_modal = this.state.type_modal;
+
+    data.point_id = this.state.point?.id;
+
+    let res;
+
+    if(type_modal === 'add_kkt') {
+      res = await this.getData('save_new_kkt', data);
+    } else {
+      const kkt = this.state.kkt_update;
+      data.id = kkt.id;
+      res = await this.getData('save_edit_kkt', data);
+    }
+
+    if (res.st) {
+      this.setState({
+        openAlert: true,
+        err_status: true,
+        err_text: res.text,
+      });
+
+      setTimeout(() => {
+        this.getDataPoint();
+      }, 300);
+
+    } else {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: res.text,
+      });
+    }
+  }
+
   render() {
     return (
       <>
@@ -1900,11 +2473,36 @@ class CafeEdit_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
 
+        <Dialog
+          open={this.state.confirmDialog}
+          onClose={() => this.setState({ confirmDialog: false })}
+          maxWidth="sm"
+        >
+        <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+            <Typography>Есть несохраненные изменения. Перейти на другую вкладку?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
+            <Button onClick={this.confirmTabChange.bind(this)}>Перейти</Button>
+          </DialogActions>
+        </Dialog>
+
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
+        />
+
+        <CafeEdit_Modal_Kkt_Info
+          type={this.state.type_modal}
+          open={this.state.modalDialog_kkt}
+          pointModal={this.state.pointModal}
+          kkt={this.state.kkt_update}
+          onClose={() => this.setState({ modalDialog_kkt: false })}
+          fullScreen={this.state.fullScreen}
+          save_kkt={this.save_kkt.bind(this)}
         />
 
         <CafeEdit_Modal_Close
@@ -2362,6 +2960,17 @@ class CafeEdit_ extends React.Component {
                   />
                 </Grid>
 
+                <Grid item xs={12} sm={12}>
+                  <Button 
+                    onClick={this.changeActivePoint.bind(this)}  
+                    color={parseInt(this.state.point_info?.cafe_handle_close ?? 0) == 1 ? 'success' : 'primary'}
+                    variant="contained" 
+                    style={{ whiteSpace: 'nowrap'}}
+                  >
+                    {parseInt(this.state.point_info?.cafe_handle_close ?? 0) == 1 ? 'Поставить на стоп' : 'Снять со стопа' }
+                  </Button>
+                </Grid>
+
                 <Grid item xs={12} sm={4}>
                   <MyAutocomplite
                     label="Управляющий"
@@ -2380,18 +2989,7 @@ class CafeEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  <Button 
-                    onClick={this.changeActivePoint.bind(this)}  
-                    color={parseInt(this.state.point_info?.cafe_handle_close ?? 0) == 1 ? 'success' : 'primary'}
-                    variant="contained" 
-                    style={{ whiteSpace: 'nowrap'}}
-                  >
-                    {parseInt(this.state.point_info?.cafe_handle_close ?? 0) == 1 ? 'Поставить на стоп' : 'Снять со стопа' }
-                  </Button>
-                </Grid>
-
-                <Grid item xs={12} sm={6} display='grid'>
+                <Grid item xs={12} sm={12} display='grid'>
                   <Button 
                     onClick={this.save_edit_point_sett.bind(this)}  
                     color="success" 
@@ -2561,6 +3159,102 @@ class CafeEdit_ extends React.Component {
                             )}
                           </TableBody>
                         </Table>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Grid>
+                }
+               
+              </Grid>
+            </TabPanel>
+          </Grid>
+
+          <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+            <TabPanel 
+              value={this.state.activeTab} 
+              index={this.state.index_kkt} 
+              id='clients'
+            >
+              <Grid container spacing={3}>
+
+                {parseInt(this.state.acces?.add_kkt) ?
+                  <Grid item xs={12} sm={2}>
+                    <Button 
+                      variant="contained" 
+                      style={{ whiteSpace: 'nowrap' }} 
+                      onClick={this.openModalKktInfo.bind(this, 'add_kkt', {})}
+                    >
+                      Добавить кассу
+                    </Button>
+                  </Grid>
+                : null}
+
+                <Grid item xs={12} sm={12} mb={5}>
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell colSpan={6} style={{ fontWeight: 700 }}>Активные кассы</TableCell>
+                        </TableRow>
+                        <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                          <TableCell style={{ minWidth: '50px' }}>№ кассы</TableCell>
+                          <TableCell>РН ККТ</TableCell>
+                          <TableCell>ФН</TableCell>
+                          <TableCell style={{ minWidth: '200px' }}>Дата регистрации</TableCell>
+                          <TableCell style={{ minWidth: '200px' }}>Дата окончания</TableCell>
+                          <TableCell>{parseInt(this.state.acces?.edit_kkt) ? 'Редактирование' : 'Просмотр'}</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {this.state.kkt_info_active.map((item, key) => (
+                          <TableRow key={key}>
+                            <TableCell>{item.kassa}</TableCell>
+                            <TableCell>{item.rn_kkt}</TableCell>
+                            <TableCell>{item.fn}</TableCell>
+                            <TableCell>{item.date_start}</TableCell>
+                            <TableCell>{item.date_end}</TableCell>
+                            <TableCell>
+                              <IconButton onClick={this.openModalKktInfo.bind(this, parseInt(this.state.acces?.edit_kkt) ? 'update_kkt' : 'view_kkt', item)}>
+                                {parseInt(this.state.acces?.edit_kkt) ? <EditIcon /> : <VisibilityIcon />}
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
+
+                {!this.state.kkt_info_none_active.length ? null :
+                  <Grid item xs={12} sm={12} mb={5}>
+                    <Accordion style={{ width: '100%' }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography style={{ fontWeight: 'bold' }}>Неактивные кассы</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <TableContainer>
+                          <Table>
+                            <TableHead>
+                              <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                                <TableCell style={{ minWidth: '80px' }}>№ кассы</TableCell>
+                                <TableCell>РН ККТ</TableCell>
+                                <TableCell>ФН</TableCell>
+                                <TableCell style={{ minWidth: '200px' }}>Дата регистрации</TableCell>
+                                <TableCell style={{ minWidth: '200px' }}>Дата окончания</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {this.state.kkt_info_none_active.map((item, key) => (
+                                <TableRow key={key}>
+                                  <TableCell>{item.kassa}</TableCell>
+                                  <TableCell>{item.rn_kkt}</TableCell>
+                                  <TableCell>{item.fn}</TableCell>
+                                  <TableCell>{item.date_start}</TableCell>
+                                  <TableCell>{item.date_end}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
                       </AccordionDetails>
                     </Accordion>
                   </Grid>
