@@ -40,6 +40,8 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 import Tooltip from '@mui/material/Tooltip';
+import TextareaAutosize from '@mui/material/TextareaAutosize';
+import Collapse from '@mui/material/Collapse';
 
 import { MySelect, MyAlert, MyTextInput, TextEditor22, MyAutocomplite, formatDate, MyDatePickerNew } from '@/ui/elements';
 
@@ -1042,6 +1044,7 @@ class SiteClients_ extends React.Component {
       err_text: '',
 
       activeTab: 0,
+      activeTab_address: 0,
 
       search: '',
       clients: [],
@@ -1054,12 +1057,16 @@ class SiteClients_ extends React.Component {
 
       cities: [],
       city_id: [],
+      city_id_addr: [],
 
       all_items: [],
       items: [],
 
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
+
+      date_start_addr: formatDate(new Date()),
+      date_end_addr: formatDate(new Date()),
 
       modalDialog: false,
       client_login: '',
@@ -1093,6 +1100,16 @@ class SiteClients_ extends React.Component {
 
       login_sms: [],
       login_yandex: [],
+
+      index_clients: -1,
+      index_orders: -1,
+      index_address: -1,
+      tabs_data: [],
+
+      address_list: '',
+      orders_list: [],
+      orders_list_addr: [],
+
     };
   }
 
@@ -1108,6 +1125,13 @@ class SiteClients_ extends React.Component {
       });
 
       document.title = data.module_info.name;
+
+      setTimeout(() => {
+        this.getTabIndex();
+      }, 100);
+
+      this.handleResize();
+
     }
 
   }
@@ -1150,10 +1174,70 @@ class SiteClients_ extends React.Component {
     }
   }
 
+  getTabIndex() {
+    const acces = this.state.acces;
+
+    let tabs_data = [];
+
+    for (let key in acces) {
+      if(parseInt(acces[key])) {
+
+        if(key === 'search_clients') {
+          tabs_data.push({key, 'name': "Поиск клиента"});
+        }
+
+        if(key === 'search_orders') {
+          tabs_data.push({key, 'name': "Поиск заказов"});
+        }
+        
+        if(key === 'search_address') {
+          tabs_data.push({key, 'name': "Заказы по адресам"});
+        }
+        
+      }
+    }
+
+    tabs_data.forEach((item, index) => {
+
+
+      if(item.key === 'search_clients') {
+        this.setState({
+          index_clients: index
+        });
+      }
+
+      if(item.key === 'search_orders') {
+        this.setState({
+          index_orders: index
+        });
+      }
+
+      if(item.key === 'search_address') {
+        this.setState({
+          index_address: index
+        });
+      }
+
+    });
+
+    this.setState({
+      tabs_data
+    });
+
+  }
+
   changeTab(event, val){
     this.setState({
       activeTab: val
     })
+  }
+
+  changeTab_address(event, val){
+    this.setState({
+      activeTab_address: val
+    })
+
+    this.getDataAddress();
   }
 
   changeInput(data, type, event) {
@@ -1579,6 +1663,103 @@ class SiteClients_ extends React.Component {
     }
   }
 
+  changeAddressList(type, event){
+    const value = event.target.value;
+   
+    this.setState({
+      [type]: value
+    });
+  }
+
+  async getDataAddress() {
+    const city_id = this.state.city_id_addr;
+    let date_start = this.state.date_start_addr;
+    let date_end = this.state.date_end_addr;
+    let addresses = this.state.address_list;
+
+    date_start = date_start ? dayjs(date_start).format('YYYY-MM-DD') : '';
+    date_end = date_end ? dayjs(date_end).format('YYYY-MM-DD') : '';
+
+    if (!city_id.length) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать город'
+      });
+
+      return;
+    } 
+
+    if ((!date_start && !date_end) || !date_start || !date_end) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать даты'
+      });
+
+      return;
+    } 
+
+    if (!addresses) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать адреса'
+      });
+
+      return;
+    } 
+
+    const data = {
+      city_id,
+      date_start,
+      date_end,
+      addresses,
+    }
+
+    const res = await this.getData('get_data_address', data);
+
+    if (res.orders.length || res.addresses.length) {
+
+      this.setState({
+        orders_list: res.orders,
+        orders_list_addr: res.addresses
+      });
+      
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Заказы с заданными параметрами не найдены',
+        search_orders: []
+      });
+
+    }
+
+  }
+
+  openAccordionAdrress(id){
+    
+    const orders_list_addr = this.state.orders_list_addr;
+
+    orders_list_addr.forEach(item => {
+      if(parseInt(item.id) === parseInt(id)) {
+        item.is_open = !item.is_open;
+      } else {
+        item.is_open = false;
+      }
+    });
+
+    this.setState({
+      orders_list_addr,
+    });
+    
+  } 
+
   render() {
     return (
       <>
@@ -1639,23 +1820,30 @@ class SiteClients_ extends React.Component {
 
           <Grid item xs={12} sm={12} style={{ paddingBottom: 24 }}>
             <Paper>
-              <Tabs value={this.state.activeTab} onChange={ this.changeTab.bind(this) } centered variant='fullWidth'>
-                {parseInt(this.state.acces?.search_clients) ? <Tab label="Поиск клиента" {...a11yProps(0)} /> : null}
-                {parseInt(this.state.acces?.search_orders) ? <Tab label="Поиск заказов" {...a11yProps(1)} /> : null}
+              <Tabs 
+                value={this.state.activeTab} 
+                onChange={ this.changeTab.bind(this)} 
+                variant={this.state.fullScreen ? 'scrollable' : 'fullWidth'} 
+                scrollButtons={false}
+              >
+                {this.state.tabs_data?.map((item, index) => {
+                  return <Tab label={item.name} {...a11yProps(index)} key={index} sx={{ minWidth: "fit-content", flex: 1 }} />
+                })}
               </Tabs>
             </Paper>
           </Grid>
 
           {/* Поиск клиента */}
-            {!parseInt(this.state.acces?.search_clients) ? null :
-              <Grid item xs={12} sm={12} style={{ paddingTop: 0, paddingBottom: '40px' }}>
-              <TabPanel 
-                value={this.state.activeTab} 
-                index={parseInt(this.state.acces?.search_clients) ? 0 : null} 
-                id='clients'
-              >
+          <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+            <TabPanel 
+              value={this.state.activeTab} 
+              index={this.state.index_clients} 
+              id='clients'
+            >
 
-                <Grid item xs={12} sm={6} mt={5} mr={5}>
+              <Grid container spacing={3}>
+
+                <Grid item xs={12} sm={6}>
                   <MyTextInput
                     type='number'
                     className="input_login"
@@ -1678,7 +1866,7 @@ class SiteClients_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4} mt={5}>
+                <Grid item xs={12} sm={4}>
                   <Button onClick={this.getClients.bind(this)} variant="contained">
                     Показать
                   </Button>
@@ -1711,242 +1899,450 @@ class SiteClients_ extends React.Component {
                     </Table>
                   </TableContainer>
                 </Grid>
-
-              </TabPanel>
               </Grid>
-            }
+            </TabPanel>
+          </Grid>
           {/* Поиск клиента */}
 
           {/* Поиск заказов */}
-            {!parseInt(this.state.acces?.search_orders) ? null :
-              <Grid item xs={12} sm={12} style={{ paddingTop: 0, paddingBottom: '40px' }}>
-                <TabPanel 
-                  value={this.state.activeTab} 
-                  index={parseInt(this.state.acces?.search_clients) && parseInt(this.state.acces?.search_orders) ? 1 : 0} 
-                  id='clients'
-                >
+          <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+            <TabPanel 
+              value={this.state.activeTab} 
+              index={this.state.index_orders} 
+              id='clients'
+            >
 
-                  <Grid container spacing={3}>
+              <Grid container spacing={3}>
 
-                    <Grid item xs={12} sm={4}>
-                      <MyAutocomplite
-                        label="Город"
-                        multiple={true}
-                        data={this.state.cities}
-                        value={this.state.city_id}
-                        func={this.changeAutocomplite.bind(this, 'city_id')}
-                      />
-                    </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyAutocomplite
+                    label="Город"
+                    multiple={true}
+                    data={this.state.cities}
+                    value={this.state.city_id}
+                    func={this.changeAutocomplite.bind(this, 'city_id')}
+                  />
+                </Grid>
 
-                    <Grid item xs={12} sm={4}>
-                      <MyDatePickerNew
-                        label="Дата от"
-                        customActions={true}
-                        value={dayjs(this.state.date_start)}
-                        func={this.changeDateRange.bind(this, 'date_start')}
-                      />
-                    </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyDatePickerNew
+                    label="Дата от"
+                    customActions={true}
+                    value={dayjs(this.state.date_start)}
+                    func={this.changeDateRange.bind(this, 'date_start')}
+                  />
+                </Grid>
 
-                    <Grid item xs={12} sm={4}>
-                      <MyDatePickerNew
-                        label="Дата до"
-                        customActions={true}
-                        value={dayjs(this.state.date_end)}
-                        func={this.changeDateRange.bind(this, 'date_end')}
-                      />
-                    </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyDatePickerNew
+                    label="Дата до"
+                    customActions={true}
+                    value={dayjs(this.state.date_end)}
+                    func={this.changeDateRange.bind(this, 'date_end')}
+                  />
+                </Grid>
 
-                    <Grid item xs={12} sm={4}>
-                      <MyTextInput
-                        type='number'
-                        className="input_login"
-                        label="Номер заказа"
-                        value={this.state.order}
-                        func={this.changeInput.bind(this, 'order', 'edit')}
-                        inputAdornment={{
-                          endAdornment: (
-                            <>
-                              {!this.state.order ? null :
-                                <InputAdornment position="end">
-                                <IconButton>
-                                  <ClearIcon onClick={this.changeInput.bind(this, 'order', 'clear')} />
-                                </IconButton>
-                              </InputAdornment>
-                              }
-                            </>
-                          )
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={4}>
-                      <MyTextInput
-                        type='number'
-                        className="input_login"
-                        label="Номер телефона"
-                        value={this.state.number}
-                        func={this.changeInput.bind(this, 'number', 'edit')}
-                        inputAdornment={{
-                          endAdornment: (
-                            <>
-                              {!this.state.number ? null :
-                                <InputAdornment position="end">
-                                <IconButton>
-                                  <ClearIcon onClick={this.changeInput.bind(this, 'number', 'clear')} />
-                                </IconButton>
-                              </InputAdornment>
-                              }
-                            </>
-                          )
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={4}>
-                      <MyTextInput
-                        type='text'
-                        className="input_promo"
-                        label="Промокод"
-                        value={this.state.promo}
-                        func={this.changeInput.bind(this, 'promo', 'edit')}
-                        inputAdornment={{
-                          endAdornment: (
-                            <>
-                              {!this.state.number ? null :
-                                <InputAdornment position="end">
-                                <IconButton>
-                                  <ClearIcon onClick={this.changeInput.bind(this, 'promo', 'clear')} />
-                                </IconButton>
-                              </InputAdornment>
-                              }
-                            </>
-                          )
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12}>
-                      <MyTextInput
-                        className="input_login"
-                        label="Адрес клиента"
-                        value={this.state.addr}
-                        func={this.changeInput.bind(this, 'addr', 'edit')}
-                        inputAdornment={{
-                          endAdornment: (
-                            <>
-                              {!this.state.addr ? null :
-                                <InputAdornment position="end">
-                                <IconButton>
-                                  <ClearIcon onClick={this.changeInput.bind(this, 'addr', 'clear')} />
-                                </IconButton>
-                              </InputAdornment>
-                              }
-                            </>
-                          )
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={8}>
-                      <MyAutocomplite
-                        label="Товары в заказе"
-                        multiple={true}
-                        data={this.state.all_items}
-                        value={this.state.items}
-                        func={this.changeAutocomplite.bind(this, 'items')}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={2}>
-                      <Button onClick={this.getOrders.bind(this)} variant="contained">
-                        Показать
-                      </Button>
-                    </Grid>
-
-                    {!parseInt(this.state.acces?.download_file) ? null :
-                      !this.state.search_orders.length ? null :
-                        <Grid item xs={12} sm={2} x={{ display: 'flex', alignItems: 'center' }}>
-                          <Tooltip title={<Typography color="inherit">{'Скачать таблицу в Excel'}</Typography>}> 
-                            <IconButton disableRipple sx={{ padding: 0 }} onClick={this.downLoad.bind(this)}>
-                              <ExlIcon />
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    type='number'
+                    className="input_login"
+                    label="Номер заказа"
+                    value={this.state.order}
+                    func={this.changeInput.bind(this, 'order', 'edit')}
+                    inputAdornment={{
+                      endAdornment: (
+                        <>
+                          {!this.state.order ? null :
+                            <InputAdornment position="end">
+                            <IconButton>
+                              <ClearIcon onClick={this.changeInput.bind(this, 'order', 'clear')} />
                             </IconButton>
-                          </Tooltip>
-                        </Grid>
-                    }
+                          </InputAdornment>
+                          }
+                        </>
+                      )
+                    }}
+                  />
+                </Grid>
 
-                  </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    type='number'
+                    className="input_login"
+                    label="Номер телефона"
+                    value={this.state.number}
+                    func={this.changeInput.bind(this, 'number', 'edit')}
+                    inputAdornment={{
+                      endAdornment: (
+                        <>
+                          {!this.state.number ? null :
+                            <InputAdornment position="end">
+                            <IconButton>
+                              <ClearIcon onClick={this.changeInput.bind(this, 'number', 'clear')} />
+                            </IconButton>
+                          </InputAdornment>
+                          }
+                        </>
+                      )
+                    }}
+                  />
+                </Grid>
 
-                  <Grid item xs={12} sm={12} mt={5}>
-                    <TableContainer sx={{ maxHeight: { xs: 'none', sm: 570 } }} component={Paper}>
-                        <Table size={'small'} stickyHeader>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Заказ</TableCell>
-                            <TableCell>Точка</TableCell>
-                            <TableCell>Оформил</TableCell>
-                            <TableCell>Номер клиента</TableCell>
-                            <TableCell>Адрес доставки</TableCell>
-                            <TableCell>Время открытия заказа</TableCell>
-                            <TableCell>Ко времени</TableCell>
-                            <TableCell>Закрыт на кухне</TableCell>
-                            <TableCell>Получен клиентом</TableCell>
-                            <TableCell>Время обещ</TableCell>
-                            <TableCell>Тип</TableCell>
-                            <TableCell>Статус</TableCell>
-                            <TableCell>Сумма</TableCell>
-                            <TableCell>Оплата</TableCell>
-                            <TableCell>Водитель</TableCell>
-                          </TableRow>
-                        </TableHead>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
+                    type='text'
+                    className="input_promo"
+                    label="Промокод"
+                    value={this.state.promo}
+                    func={this.changeInput.bind(this, 'promo', 'edit')}
+                    inputAdornment={{
+                      endAdornment: (
+                        <>
+                          {!this.state.number ? null :
+                            <InputAdornment position="end">
+                            <IconButton>
+                              <ClearIcon onClick={this.changeInput.bind(this, 'promo', 'clear')} />
+                            </IconButton>
+                          </InputAdornment>
+                          }
+                        </>
+                      )
+                    }}
+                  />
+                </Grid>
 
-                        <TableBody>
-                          
-                          { this.state.search_orders.map( (item, key) =>
-                            <TableRow 
-                              hover
-                              key={key} 
-                              style={parseInt(item.is_delete) == 1 ? {backgroundColor: 'red', color: '#fff', fontWeight: 'bold'} : {}}
-                              sx={{ cursor: 'pointer' }}
-                              onClick={this.openClientOrder.bind(this, item.id, item.point_id)} 
-                            >
-                              <TableCell 
-                                style={ parseInt(item.dist) >= 0 ? {backgroundColor: 'yellow', color: '#000', cursor: 'pointer', fontWeight: 'inherit'} : {color: 'inherit', cursor: 'pointer', fontWeight: 'inherit'} } 
-                              >
-                                {item.id}
-                              </TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.point_addr}</TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.type_user}</TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.number}</TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.street} {item.home}</TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.date_time_order}</TableCell>
-                              <TableCell 
-                                style={{ color: 'inherit', fontWeight: 'inherit', backgroundColor: parseInt(item.is_preorder) == 1 ? '#bababa' : 'inherit' }}
-                              >
-                                {item.need_time}
-                              </TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>
-                                { item.give_data_time == '00:00:00' ? '' : item.give_data_time}
-                              </TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.close_order}</TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>
-                                {item.unix_time_to_client == '0' || parseInt(item.is_preorder) == 1 ? '' : item.unix_time_to_client}
-                              </TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.type_order}</TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.status}</TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.order_price}</TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.type_pay}</TableCell>
-                              <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.driver}</TableCell>
-                            </TableRow>
-                          ) }
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Grid>
+                <Grid item xs={12}>
+                  <MyTextInput
+                    className="input_login"
+                    label="Адрес клиента"
+                    value={this.state.addr}
+                    func={this.changeInput.bind(this, 'addr', 'edit')}
+                    inputAdornment={{
+                      endAdornment: (
+                        <>
+                          {!this.state.addr ? null :
+                            <InputAdornment position="end">
+                            <IconButton>
+                              <ClearIcon onClick={this.changeInput.bind(this, 'addr', 'clear')} />
+                            </IconButton>
+                          </InputAdornment>
+                          }
+                        </>
+                      )
+                    }}
+                  />
+                </Grid>
 
-                </TabPanel>
+                <Grid item xs={12} sm={8}>
+                  <MyAutocomplite
+                    label="Товары в заказе"
+                    multiple={true}
+                    data={this.state.all_items}
+                    value={this.state.items}
+                    func={this.changeAutocomplite.bind(this, 'items')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={2}>
+                  <Button onClick={this.getOrders.bind(this)} variant="contained">
+                    Показать
+                  </Button>
+                </Grid>
+
+                {!parseInt(this.state.acces?.download_file) ? null :
+                  !this.state.search_orders.length ? null :
+                    <Grid item xs={12} sm={2} x={{ display: 'flex', alignItems: 'center' }}>
+                      <Tooltip title={<Typography color="inherit">{'Скачать таблицу в Excel'}</Typography>}> 
+                        <IconButton disableRipple sx={{ padding: 0 }} onClick={this.downLoad.bind(this)}>
+                          <ExlIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Grid>
+                }
+
               </Grid>
-            }
+
+              <Grid item xs={12} sm={12} mt={5}>
+                <TableContainer sx={{ maxHeight: { xs: 'none', sm: 570 } }} component={Paper}>
+                    <Table size={'small'} stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Заказ</TableCell>
+                        <TableCell>Точка</TableCell>
+                        <TableCell>Оформил</TableCell>
+                        <TableCell>Номер клиента</TableCell>
+                        <TableCell>Адрес доставки</TableCell>
+                        <TableCell>Время открытия заказа</TableCell>
+                        <TableCell>Ко времени</TableCell>
+                        <TableCell>Закрыт на кухне</TableCell>
+                        <TableCell>Получен клиентом</TableCell>
+                        <TableCell>Время обещ</TableCell>
+                        <TableCell>Тип</TableCell>
+                        <TableCell>Статус</TableCell>
+                        <TableCell>Сумма</TableCell>
+                        <TableCell>Оплата</TableCell>
+                        <TableCell>Водитель</TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      
+                      { this.state.search_orders.map( (item, key) =>
+                        <TableRow 
+                          hover
+                          key={key} 
+                          style={parseInt(item.is_delete) == 1 ? {backgroundColor: 'red', color: '#fff', fontWeight: 'bold'} : {}}
+                          sx={{ cursor: 'pointer' }}
+                          onClick={this.openClientOrder.bind(this, item.id, item.point_id)} 
+                        >
+                          <TableCell 
+                            style={ parseInt(item.dist) >= 0 ? {backgroundColor: 'yellow', color: '#000', cursor: 'pointer', fontWeight: 'inherit'} : {color: 'inherit', cursor: 'pointer', fontWeight: 'inherit'} } 
+                          >
+                            {item.id}
+                          </TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.point_addr}</TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.type_user}</TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.number}</TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.street} {item.home}</TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.date_time_order}</TableCell>
+                          <TableCell 
+                            style={{ color: 'inherit', fontWeight: 'inherit', backgroundColor: parseInt(item.is_preorder) == 1 ? '#bababa' : 'inherit' }}
+                          >
+                            {item.need_time}
+                          </TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>
+                            { item.give_data_time == '00:00:00' ? '' : item.give_data_time}
+                          </TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.close_order}</TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>
+                            {item.unix_time_to_client == '0' || parseInt(item.is_preorder) == 1 ? '' : item.unix_time_to_client}
+                          </TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.type_order}</TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.status}</TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.order_price}</TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.type_pay}</TableCell>
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.driver}</TableCell>
+                        </TableRow>
+                      ) }
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+
+            </TabPanel>
+          </Grid>
           {/* Поиск заказов */}
+
+          {/* Заказы по адресам */}
+          <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+            <TabPanel 
+              value={this.state.activeTab} 
+              index={this.state.index_address} 
+              id='clients'
+            >
+              <Grid container spacing={3}>
+
+                <Grid item xs={12} sm={4}>
+                  <MyAutocomplite
+                    label="Город"
+                    multiple={true}
+                    data={this.state.cities}
+                    value={this.state.city_id_addr}
+                    func={this.changeAutocomplite.bind(this, 'city_id_addr')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={4}>
+                  <MyDatePickerNew
+                    label="Дата от"
+                    customActions={true}
+                    value={dayjs(this.state.date_start_addr)}
+                    func={this.changeDateRange.bind(this, 'date_start_addr')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={4}>
+                  <MyDatePickerNew
+                    label="Дата до"
+                    customActions={true}
+                    value={dayjs(this.state.date_end_addr)}
+                    func={this.changeDateRange.bind(this, 'date_end_addr')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={8} style={{ paddingRight: '20px' }}>
+                  <TextareaAutosize
+                    aria-label="empty textarea"
+                    placeholder=""
+                    minRows={8}
+                    value={this.state.address_list}
+                    onChange={this.changeAddressList.bind(this, 'address_list')}
+                    label="Список адресов"
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px', 
+                      fontFamily: 'Arial, sans-serif', 
+                      fontSize: '16px', 
+                      borderRadius: '4px', 
+                      borderColor: '#ccc',
+                      maxWidth: '100%',
+                      resize: 'vertical',
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={2}>
+                  <Button onClick={this.getDataAddress.bind(this)} variant="contained">
+                    Показать
+                  </Button>
+                </Grid>
+
+                <Grid item xs={12} sm={12}>
+                  <Paper>
+                    <Tabs value={this.state.activeTab_address} onChange={ this.changeTab_address.bind(this) } centered variant='fullWidth'>
+                      <Tab label="Список заказов" {...a11yProps(0)} />
+                      <Tab label="Список адресов" {...a11yProps(1)} />
+                    </Tabs>
+                  </Paper>
+                </Grid>
+
+                {/* Список заказов */}
+                <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+                  <TabPanel 
+                    value={this.state.activeTab_address} 
+                    index={0} 
+                    id='clients'
+                  >
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} sm={12} mt={3} mb={5}>
+                        <TableContainer sx={{ maxHeight: { xs: 'none', sm: 570 } }} component={Paper}>
+                          <Table size={'small'} stickyHeader>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>#</TableCell>
+                                <TableCell>ИД заказа</TableCell>
+                                <TableCell>Точка</TableCell>
+                                <TableCell>Номер клиента</TableCell>
+                                <TableCell>Адрес заказа</TableCell>
+                                <TableCell>Сумма заказа</TableCell>
+                              </TableRow>
+                            </TableHead>
+
+                            <TableBody>
+                              {this.state.orders_list.map( (item, key) =>
+                                <TableRow 
+                                  hover
+                                  key={key} 
+                                  sx={{ cursor: 'pointer', backgroundColor: item.is_new ? '#fadadd' : 'inherit' }}
+                                  onClick={this.openClientOrder.bind(this, item.id, item.point_id)} 
+                                >
+                                  <TableCell>{key + 1}</TableCell>
+                                  <TableCell>{item.id}</TableCell>
+                                  <TableCell>{item.point_addr}</TableCell>
+                                  <TableCell>{item.number}</TableCell>
+                                  <TableCell>{item.addr}</TableCell>
+                                  <TableCell>{new Intl.NumberFormat('ru-RU').format(item.order_price ?? 0)} ₽</TableCell>
+                                </TableRow>
+                              )}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </Grid>
+                    </Grid>
+                  </TabPanel>
+                </Grid>
+                {/* Список заказов */}
+
+                {/* Список адресов */}
+                <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+                  <TabPanel 
+                    value={this.state.activeTab_address} 
+                    index={1} 
+                    id='clients'
+                  >
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} sm={12} mt={3} mb={5}>
+                        <TableContainer>
+                          <Table>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>#</TableCell>
+                                <TableCell>Адрес</TableCell>
+                                <TableCell>Количество заказов</TableCell>
+                                <TableCell>Сумма заказов</TableCell>
+                                <TableCell></TableCell>
+                              </TableRow>
+                            </TableHead>
+
+                            <TableBody>
+                              {this.state.orders_list_addr.map((item, key) => (
+                                <React.Fragment key={key}>
+                                  <TableRow hover onClick={this.openAccordionAdrress.bind(this, item.id)} style={{ cursor: 'pointer' }}>
+                                    <TableCell>{key + 1}</TableCell>
+                                    <TableCell>{item.address}</TableCell>
+                                    <TableCell>{item.orders_count}</TableCell>
+                                    <TableCell>{new Intl.NumberFormat('ru-RU').format(item.total_amount ?? 0)} ₽</TableCell>
+                                    <TableCell>
+                                      <Tooltip title={<Typography color="inherit">Все заказы по этому адресу</Typography>}> 
+                                        <ExpandMoreIcon 
+                                          style={{ display: 'flex', transform: item.is_open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                                        />
+                                      </Tooltip>
+                                    </TableCell>
+                                  </TableRow>
+                                  <TableRow>
+                                    <TableCell style={{ padding: 0 }} colSpan={10}>
+                                      <Collapse in={item.is_open} timeout="auto" unmountOnExit>
+                                        <Box sx={{ margin: '8px 0' }}>
+                                        <Table size={'small'} stickyHeader>
+                                          <TableHead>
+                                            <TableRow>
+                                              <TableCell>#</TableCell>
+                                              <TableCell>ИД заказа</TableCell>
+                                              <TableCell>Точка</TableCell>
+                                              <TableCell>Номер клиента</TableCell>
+                                              <TableCell>Адрес заказа</TableCell>
+                                              <TableCell>Сумма заказа</TableCell>
+                                            </TableRow>
+                                          </TableHead>
+
+                                          <TableBody>
+                                            {item.orders.map( (it, k) =>
+                                              <TableRow 
+                                                hover
+                                                key={k} 
+                                                sx={{ cursor: 'pointer', backgroundColor: it.is_new ? '#fadadd' : 'inherit' }}
+                                                onClick={this.openClientOrder.bind(this, it.id, it.point_id)}
+                                              >
+                                                <TableCell>{key + 1}</TableCell>
+                                                <TableCell>{it.id}</TableCell>
+                                                <TableCell>{it.point_addr}</TableCell>
+                                                <TableCell>{it.number}</TableCell>
+                                                <TableCell>{it.addr}</TableCell>
+                                                <TableCell>{new Intl.NumberFormat('ru-RU').format(it.order_price ?? 0)} ₽</TableCell>
+                                              </TableRow>
+                                            )}
+                                          </TableBody>
+                                        </Table>
+                                        </Box>
+                                      </Collapse>
+                                    </TableCell>
+                                  </TableRow>
+                                </React.Fragment>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </Grid>
+                    </Grid>
+                  </TabPanel>
+                </Grid>
+                {/* Список адресов */}
+
+              </Grid>
+            </TabPanel>
+          </Grid>
+          {/* Заказы по адресам */}
              
         </Grid>
       </>
