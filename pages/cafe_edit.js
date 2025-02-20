@@ -39,7 +39,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import {MyAutocomplite, MyTextInput, MySelect, MyCheckBox, MyAlert, formatDate, MyDatePickerNew, MyAutocomplite2} from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api, api_laravel, api_laravel_local } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 function TabPanel(props) {
@@ -2411,11 +2411,15 @@ class CafeEdit_ extends React.Component {
     let all_fn = [{id: 0, name: 'Добавить новый ФН'}];
 
     kkt_info_active.forEach((item) => {
-      const dateStart = item.date_start.split('-').reverse().join('-');
-      const dateEnd = item.date_end.split('-').reverse().join('-');
-      const name = `${item.fn} ( с ${dateStart} по ${dateEnd} )`;
 
-      all_fn.push({id: item.fn, name, date_start: dayjs(item.date_start).format('YYYY-MM-DD'), date_end: dayjs(item.date_end).format('YYYY-MM-DD')});
+      if( item.rn_kkt == kkt.rn_kkt ){
+
+        const dateStart = item.date_start.split('-').reverse().join('-');
+        const dateEnd = item.date_end.split('-').reverse().join('-');
+        const name = `${item.fn} ( с ${dateStart} по ${dateEnd} )`;
+
+        all_fn.push({id: item.fn, name, date_start: dayjs(item.date_start).format('YYYY-MM-DD'), date_end: dayjs(item.date_end).format('YYYY-MM-DD')});
+      }
     });
 
     kkt.all_fn = all_fn;
