@@ -2233,7 +2233,7 @@ class SiteClients_ extends React.Component {
                                 <TableRow 
                                   hover
                                   key={key} 
-                                  sx={{ cursor: 'pointer', backgroundColor: item.is_new ? '#fadadd' : 'inherit' }}
+                                  sx={{ cursor: 'pointer', backgroundColor: item.is_new ? '#ffcc00' : 'inherit' }}
                                   onClick={this.openClientOrder.bind(this, item.id, item.point_id)} 
                                 >
                                   <TableCell>{key + 1}</TableCell>
@@ -2311,7 +2311,7 @@ class SiteClients_ extends React.Component {
                                               <TableRow 
                                                 hover
                                                 key={k} 
-                                                sx={{ cursor: 'pointer', backgroundColor: it.is_new ? '#fadadd' : 'inherit' }}
+                                                sx={{ cursor: 'pointer', backgroundColor: it.is_new ? '#ffcc00' : 'inherit' }}
                                                 onClick={this.openClientOrder.bind(this, it.id, it.point_id)}
                                               >
                                                 <TableCell>{key + 1}</TableCell>
