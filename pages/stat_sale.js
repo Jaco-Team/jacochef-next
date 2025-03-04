@@ -1,0 +1,2069 @@
+import React from 'react';
+
+import Grid from '@mui/material/Grid';
+import Button from '@mui/material/Button';
+import CloseIcon from '@mui/icons-material/Close';
+import Typography from '@mui/material/Typography';
+
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+
+import Paper from '@mui/material/Paper';
+import PropTypes from 'prop-types';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Box from '@mui/material/Box';
+
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
+
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+
+import { MyAlert, MyTextInput, MyAutocomplite, MyDatePickerNewViews, formatDateMin } from '@/ui/elements';
+
+import { api_laravel_local, api_laravel } from '@/src/api_new';
+import dayjs from 'dayjs';
+import 'dayjs/locale/ru';
+dayjs.locale('ru'); 
+
+// ---------- Вспомогательные функции для переключения Табов ----------
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>{children}</Box>
+      )}
+    </div>
+  );
+}
+
+TabPanel.propTypes = {
+  children: PropTypes.node,
+  index: PropTypes.number.isRequired,
+  value: PropTypes.number.isRequired,
+};
+
+function a11yProps(index) {
+  return {
+    id: `simple-tab-${index}`,
+    'aria-controls': `simple-tabpanel-${index}`,
+  };
+}
+
+// ---------- Вспомогательные функции для конвертации цветов ----------
+
+function rgbToHex(r, g, b) {
+  const toHex = (v) => {
+    const h = v.toString(16);
+    return h.length === 1 ? '0' + h : h;
+  };
+  return '#' + toHex(r) + toHex(g) + toHex(b);
+}
+
+function hexToRgb(hex) {
+  let cleanHex = hex.replace(/^#/, '');
+  if (cleanHex.length === 3) {
+    cleanHex = cleanHex.split('').map(c => c + c).join('');
+  }
+  
+  let r, g, b, a = 255;
+  
+  if (cleanHex.length === 6) {
+    r = parseInt(cleanHex.substring(0, 2), 16);
+    g = parseInt(cleanHex.substring(2, 4), 16);
+    b = parseInt(cleanHex.substring(4, 6), 16);
+  } else if (cleanHex.length === 8) {
+    r = parseInt(cleanHex.substring(0, 2), 16);
+    g = parseInt(cleanHex.substring(2, 4), 16);
+    b = parseInt(cleanHex.substring(4, 6), 16);
+    a = parseInt(cleanHex.substring(6, 8), 16);
+  } else {
+    return null;
+  }
+  
+  return { r, g, b, a };
+}
+
+function hsvaToRgba({ h, s, v, a }) {
+  const f = (n, k = (n + h * 6) % 6) =>
+    v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+  const r = Math.round(f(5) * 255);
+  const g = Math.round(f(3) * 255);
+  const b = Math.round(f(1) * 255);
+  return { r, g, b, a };
+}
+
+function rgbaToHsva({ r, g, b, a }) {
+  const rP = r / 255, gP = g / 255, bP = b / 255;
+  const max = Math.max(rP, gP, bP), min = Math.min(rP, gP, bP);
+  const d = max - min;
+  let h = 0;
+  const s = (max === 0) ? 0 : d / max;
+  const v = max;
+
+  if (max !== min) {
+    switch (max) {
+      case rP:
+        h = ((gP - bP) / d + (gP < bP ? 6 : 0));
+        break;
+      case gP:
+        h = ((bP - rP) / d + 2);
+        break;
+      case bP:
+        h = ((rP - gP) / d + 4);
+        break;
+      default:
+        break;
+    }
+    h /= 6;
+  }
+
+  return { h, s, v, a };
+}
+
+function hsvaToCssRgba(hsva) {
+  const { r, g, b, a } = hsvaToRgba(hsva);
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+function hexToHsva(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) {
+    return { h: 0, s: 0, v: 0, a: 1 };
+  }
+  return rgbaToHsva({ ...rgb, a: 1 });
+}
+
+function hsvaToHex(hsva) {
+  const { r, g, b } = hsvaToRgba(hsva);
+  return rgbToHex(r, g, b);
+}
+
+// ---------- Кастомный колорпикер для выбора цвета в модалке Коэффициенты ----------
+
+class CustomColorPicker extends React.Component {
+  constructor(props) {
+    super(props);
+
+    // Проверяем, есть ли начальный цвет (HEX или HSVA).
+    let initialHsva = { h: 0, s: 1, v: 1, a: 1 };
+    if (props.initialColor) {
+      if (typeof props.initialColor === 'string') {
+        initialHsva = hexToHsva(props.initialColor);
+      } else if (
+        typeof props.initialColor === 'object' &&
+        props.initialColor.h !== undefined
+      ) {
+        initialHsva = props.initialColor;
+      }
+    }
+
+    this.state = {
+      hsva: initialHsva,
+      draggingAlpha: false,
+      draggingWheel: false,
+    };
+
+    // Ссылка на canvas (цветовое колесо)
+    this.wheelRef = React.createRef();
+
+    // Ссылка на div-обёртку слайдера прозрачности
+    this.alphaSliderRef = React.createRef();
+
+    // Параметры колеса
+    this.wheelSize = 200; // Диаметр canvas
+
+    // Параметры слайдера прозрачности
+    this.alphaWidth = 200;
+    this.alphaHeight = 20;
+
+    // Готовые цвета (swatches)
+    this.colorSwatches = [
+      '#FF0000', '#FF9900', '#FFFF00', '#00FF00',
+      '#00FFFF', '#0000FF', '#9900FF', '#FF00FF',
+      '#FF66CC', '#FF0066', '#663300', '#666666',
+      '#999999', '#CC0000', '#00CCFF', '#CCFF00',
+    ];
+  }
+
+  componentDidMount() {
+    this.drawColorWheel();
+  
+    window.addEventListener('touchmove', this.handleAlphaMove, { passive: false });
+    window.addEventListener('touchend', this.handleAlphaUp);
+    window.addEventListener('touchmove', this.handleWheelMove, { passive: false });
+    window.addEventListener('touchend', this.handleWheelUp);
+    window.addEventListener('mousemove', this.handleAlphaMove);
+    window.addEventListener('mouseup', this.handleAlphaUp);
+    window.addEventListener('mousemove', this.handleWheelMove);
+    window.addEventListener('mouseup', this.handleWheelUp);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('mousemove', this.handleAlphaMove);
+    window.removeEventListener('mouseup', this.handleAlphaUp);
+    window.removeEventListener('mousemove', this.handleWheelMove);
+    window.removeEventListener('mouseup', this.handleWheelUp);
+  }
+
+  // ---------- КОЛЕСО (CANVAS) ДЛЯ HUE/SATURATION ----------
+
+  drawColorWheel() {
+    const canvas = this.wheelRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const size = this.wheelSize;
+    const radius = size / 2;
+    
+    ctx.clearRect(0, 0, size, size);
+
+    const imageData = ctx.createImageData(size, size);
+    const data = imageData.data;
+
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const dx = x - radius;
+        const dy = y - radius;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > radius) {
+          // за пределами круга — прозрачный
+          const idx = (y * size + x) * 4;
+          data[idx + 3] = 0;
+          continue;
+        }
+        let angle = Math.atan2(dy, dx);
+        angle = (angle < 0) ? angle + 2 * Math.PI : angle;
+        const h = angle / (2 * Math.PI);
+        const s = dist / radius;
+        const v = 1;
+
+        const { r, g, b } = hsvaToRgba({ h, s, v, a: 1 });
+        const idx = (y * size + x) * 4;
+        data[idx] = r;
+        data[idx + 1] = g;
+        data[idx + 2] = b;
+        data[idx + 3] = 255;
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+  }
+
+  handleWheelClick = (e) => {
+    this.setState({ draggingWheel: true });
+    this.updateWheel(e);
+  };
+  
+  updateWheel = (e) => {
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const rect = this.wheelRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    const radius = this.wheelSize / 2;
+    const dx = x - radius;
+    const dy = y - radius;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > radius) return;
+  
+    let angle = Math.atan2(dy, dx);
+    angle = (angle < 0) ? angle + 2 * Math.PI : angle;
+    const h = angle / (2 * Math.PI);
+    const s = dist / radius;
+    const { v, a } = this.state.hsva;
+    const newHsva = { h, s, v, a };
+  
+    this.setState({ hsva: newHsva });
+    this.props.hsvaConvertHex(newHsva);
+  };
+  
+  // Обработчик движения мыши:
+  handleWheelMove = (e) => {
+    if (!this.state.draggingWheel) return;
+    this.updateWheel(e);
+  };
+  
+  // Обработчик отпускания кнопки мыши:
+  handleWheelUp = () => {
+    if (this.state.draggingWheel) {
+      this.setState({ draggingWheel: false });
+    }
+  };
+
+  // ---------- SWATCHES (ГОТОВЫЕ ЦВЕТА) ----------
+
+  handleSwatchClick = (hex) => {
+    const newHsva = hexToHsva(hex);
+    // Сохраняем текущую прозрачность
+    newHsva.a = this.state.hsva.a;
+    this.setState({ hsva: newHsva });
+
+    this.props.hsvaConvertHex(newHsva);
+  };
+
+  // ---------- CSS-СЛАЙДЕР ДЛЯ ПРОЗРАЧНОСТИ ----------
+
+  handleAlphaDown = (e) => {
+    // Начинаем перетаскивать
+    this.setState({ draggingAlpha: true });
+    this.updateAlpha(e);
+  };
+
+  handleAlphaMove = (e) => {
+    if (!this.state.draggingAlpha) return;
+    this.updateAlpha(e);
+  };
+
+  handleAlphaUp = () => {
+    if (this.state.draggingAlpha) {
+      this.setState({ draggingAlpha: false });
+    }
+  };
+
+  updateAlpha(e) {
+    if (e.cancelable) e.preventDefault();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    if (!this.alphaSliderRef.current) return;
+    const rect = this.alphaSliderRef.current.getBoundingClientRect();
+    let x = clientX - rect.left;
+    if (x < 0) x = 0;
+    if (x > rect.width) x = rect.width;
+    const alpha = x / rect.width;
+  
+    const { h, s, v } = this.state.hsva;
+    this.setState({ hsva: { h, s, v, a: alpha } });
+    this.props.hsvaConvertHex({ h, s, v, a: alpha });
+  }
+
+  // Отдельный метод для рендера слайдера
+  renderAlphaSlider() {
+    const { h, s, v, a } = this.state.hsva;
+
+    // Для градиента берём тот же цвет, но c a=1
+    const { r, g, b } = hsvaToRgba({ h, s, v, a: 1 });
+    const baseColor = `${r}, ${g}, ${b}`;
+
+    const sliderWidth = this.alphaWidth;
+    const sliderHeight = this.alphaHeight;
+    const handleSize = 20;
+
+    // Позиция ползунка (0..1) -> (0..sliderWidth - handleSize)
+    const handlePos = a * (sliderWidth - handleSize);
+
+    return (
+      <div
+        ref={this.alphaSliderRef}
+        style={{
+          position: 'relative',
+          width: sliderWidth,
+          height: sliderHeight,
+          borderRadius: 10,
+          margin: '0 auto',
+          cursor: 'pointer',
+          // Для наглядности без border/padding, чтобы ползунок не "вылетал"
+        }}
+        onMouseDown={this.handleAlphaDown}
+      >
+        {/* Шахматный фон */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: `
+              repeating-linear-gradient(
+                45deg,
+                #ccc 0,
+                #ccc 8px,
+                #fff 8px,
+                #fff 16px
+              )
+            `,
+            borderRadius: 10,
+          }}
+        />
+        {/* Градиент от прозрачного к полному baseColor */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: `linear-gradient(
+              to right,
+              rgba(${baseColor}, 0) 0%,
+              rgba(${baseColor}, 1) 100%
+            )`,
+            borderRadius: 10,
+          }}
+        />
+        {/* Ползунок */}
+        <div
+          style={{
+            position: 'absolute',
+            top: (sliderHeight - handleSize) / 2,
+            left: handlePos,
+            width: handleSize,
+            height: handleSize,
+            borderRadius: '50%',
+            background: '#fff',
+            border: '1px solid #ccc',
+            boxShadow: '0 0 3px rgba(0,0,0,0.3)',
+          }}
+        />
+      </div>
+    );
+  }
+
+  render() {
+    const { hsva } = this.state;
+    const currentColorRgba = hsvaToCssRgba(hsva);
+
+    const radius = this.wheelSize / 2;
+    const markerSize = 12;
+    const effectiveRadius = radius - markerSize;
+    const markerX = radius + hsva.s * effectiveRadius * Math.cos(hsva.h * 2 * Math.PI);
+    const markerY = radius + hsva.s * effectiveRadius * Math.sin(hsva.h * 2 * Math.PI);
+
+    return (
+      <div style={{ maxWidth: 300 }}>
+        <div style={{ marginBottom: 20 }}>
+          <h3>Выбрать цвет ячейки</h3>
+        </div>
+
+        {/* Цветовое колесо */}
+        <div
+          style={{
+            position: 'relative',
+            width: this.wheelSize,
+            height: this.wheelSize,
+            margin: '0 auto',
+          }}
+        >
+          <canvas
+            ref={this.wheelRef}
+            width={this.wheelSize}
+            height={this.wheelSize}
+            onMouseDown={this.handleWheelClick}
+            onTouchStart={this.handleWheelClick}
+            style={{ 
+              cursor: 'pointer', 
+              borderRadius: '50%',
+              display: 'block',
+            }}
+          />
+          {/* Маркер */}
+          <div
+            style={{
+              position: 'absolute',
+              left: markerX,
+              top: markerY,
+              width: markerSize,
+              height: markerSize,
+              borderRadius: '50%',
+              border: '2px solid #fff',
+              backgroundColor: currentColorRgba,
+              transform: 'translate(-50%, -50%)',
+              pointerEvents: 'none',
+            }}
+          />
+        </div>
+
+        {/* Слайдер прозрачности (CSS) */}
+        <div
+          ref={this.alphaSliderRef}
+          style={{
+            position: 'relative',
+            width: this.alphaWidth,
+            height: this.alphaHeight,
+            borderRadius: 10,
+            margin: '30px auto',
+            cursor: 'pointer',
+            touchAction: 'none',
+          }}
+          onMouseDown={this.handleAlphaDown}
+          onTouchStart={this.handleAlphaDown}
+        >
+          {this.renderAlphaSlider()}
+        </div>
+
+        {/* Swatches (готовые цвета) */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+          {this.colorSwatches.map((clr, idx) => (
+            <div
+              key={idx}
+              onClick={() => this.handleSwatchClick(clr)}
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: '50%',
+                cursor: 'pointer',
+                backgroundColor: clr,
+                border:
+                  hsvaToHex(this.state.hsva).toLowerCase() === clr.toLowerCase()
+                    ? '2px solid #000'
+                    : '2px solid transparent',
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+}
+
+// ---------- Компоненты страницы ---------- //
+
+
+// ---------- Инпут для модалки Коэффициенты ----------
+class StatSale_Tab_Sett_Modal_Input extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      item: this.props.data,
+    };
+  }
+
+  changeItem(event) {
+    let value = event.target.value;
+  
+    if (value === '') {
+      value = '0';
+    } else {
+      value = value.replace(/^0+(?=\d)/, '');
+    }
+  
+    if (this.props.item_type === 'rating') {
+      this.setState({ item: value });
+      return;
+    }
+  
+    let numericValue = Number(value);
+  
+    if (['percent', 'clients', 'active'].includes(this.props.item_type)) {
+      numericValue = Math.min(Math.max(numericValue, 0), 100);
+    } else {
+      numericValue = Math.max(numericValue, 0);
+    }
+  
+    this.setState({ item: numericValue.toString() });
+  }
+
+  render() {
+
+    const { type, handleChange, id, index, item_type } = this.props;
+    const { item } = this.state;
+
+    return (
+      <TextField
+        type={type}
+        value={this.state.item}
+        onChange={this.changeItem.bind(this)}
+        onBlur={handleChange.bind(this, index, item_type, item)}
+        variant="standard"
+        fullWidth
+        InputProps={{
+          disableUnderline: true,
+          inputProps: { min: 0, step: 1 },
+          endAdornment: [1, 2, 4].includes(id) ? <InputAdornment position="end">%</InputAdornment> : null,
+        }}
+        sx={{
+          margin: 0,
+          padding: 0,
+          '& input': {
+            fontWeight: id === 1 ? 'bold' : 'normal',
+          },
+        }}
+      />
+    )
+  }
+}
+
+// ---------- Модалка Коэффициенты ----------
+class StatSale_Tab_Sett_Modal_Rate extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      color: '#2ECC71',
+      rows: this.initializeRows(),
+    };
+  }
+
+  initializeRows() {
+    return [
+      { id: 1, type: 'percent', value: 0 },
+      { id: 2, name: '1.КЛИЕНТЫ', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#B22222', type: 'clients', value: 0 },
+      {},
+      { id: 4, name: '2.АКТИВНОСТЬ', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#FF8C00', value: 0, type: 'active' },
+      {},
+      { id: 6, name: '3.ЧАСТОТА ЗАКАЗОВ', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#3CB371', value: 0, type: 'rate' },
+      {},
+      { id: 8, name: '4.ЦЕЛИ ПО БЛЮДАМ', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#8B008B' },
+      { id: 9, name: 'Роллы', value: 0, type: 'rolls_count' },
+      { id: 10, name: 'Пицца', value: 0, type: 'pizza_count' },
+      {},
+      { id: 12, name: 'Роллы Х4 (город)', type: 'rolls_count_city', value: 0 },
+      { id: 13, name: 'Пицца Х4 (город)', type: 'pizza_count_city', value: 0 },
+      {},
+      { id: 15, name: 'Роллы Х8 (вся сеть)', type: 'rolls_count_all', value: 0 },
+      { id: 16, name: 'Пицца Х8 (вся сеть)', type: 'pizza_count_all', value: 0 },
+      {},
+      { id: 18, name: '4.СРЕДНИЙ ЧЕК', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#4169E1', value: 0, type: 'avg' },
+      { id: 19, name: 'рейтинг', value: '', type: 'rating' },
+    ];
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.rows && this.props.rows !== prevProps.rows && this.props.type_modal === 'edit') {
+
+      this.setState({ 
+        rows: this.props.rows, 
+        color: this.props.color_edit 
+      });
+
+    }
+  }
+
+  handleChange (index, type, value) {
+
+    this.setState(prevState => {
+      const rows = prevState.rows.map(row => ({ ...row }));
+      rows[index].value = value;
+      ['rolls_count', 'pizza_count'].forEach(baseType => {
+        if (type === baseType) {
+          rows.forEach(row => {
+            if (row.type === `${type}_city`) row.value = value * 4;
+            if (row.type === `${type}_all`) row.value = value * 8;
+          });
+        }
+      });
+      return { rows };
+    });
+
+  }
+
+  hsvaConvertHex({ h, s, v, a = 1 }) {
+    
+    const f = (n, k = (n + h * 6) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+    const r = Math.round(f(5) * 255);
+    const g = Math.round(f(3) * 255);
+    const b = Math.round(f(1) * 255);
+
+    const toHex = (num) => {
+      const hex = num.toString(16).toUpperCase();
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+
+    const alphaHex = toHex(Math.round(a * 255));
+
+    this.setState({ color: `#${toHex(r)}${toHex(g)}${toHex(b)}${alphaHex}` });
+  }
+
+  check() {
+
+    if (this.state.rows.some(row => row.type && row.type !== 'rating' && (!row.value || parseFloat(row.value) <= 0))) {
+      this.props.openAlert(false, 'Все значения должны быть заполнены и больше 0');
+      return;
+    }
+
+    this.save();
+  }
+  
+  save() {
+    const { rows, color } = this.state;
+    
+    const result = rows.reduce((acc, row) => {
+      if (row.type) acc[row.type] = row.value || 0;
+      return acc;
+    }, { percent_color: color });
+
+    this.props.save(result);
+
+    this.onClose();
+  }
+
+  onClose() {
+
+    this.setState({ 
+      color: '#2ECC71', 
+      rows: this.initializeRows() 
+    });
+
+    this.props.onClose();
+  }
+
+  render() {
+
+    const { open, fullScreen, type_modal } = this.props;
+    const { rows, color } = this.state;
+
+    const cellStyle_name = {
+      border: '1px solid #ccc',
+      minHeight: '15px',
+      width: '30%'
+    };
+
+    const cellStyle = {
+      border: '1px solid #ccc',
+      minHeight: '15px',
+      width: '14%'
+    };
+
+    const editableIds = [1, 2, 4, 6, 9, 10, 18, 19];
+    const textFieldIds = [12, 13, 15, 16];
+
+    return (
+      <Dialog
+        open={open}
+        onClose={this.onClose.bind(this)}
+        fullWidth={true}
+        maxWidth={'lg'}
+        fullScreen={fullScreen}
+      >
+        <DialogTitle className="button">
+          <Typography style={{ fontWeight: 'bold' }}>
+            {type_modal === 'edit' ? 'Редактировать данные в таблице Коэффициенты' : 'Добавить данные в таблицу Коэффициенты'}
+          </Typography>
+          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent>
+          
+          <Grid container spacing={10}>
+
+            <Grid item xs={12} sm={8} mt={3}>
+              <TableContainer component={Paper}>
+                <Table size='small'>
+                  <TableBody>
+                    {rows.map((item, key) =>
+                      <TableRow hover key={key}>
+                        <TableCell 
+                          style={{ 
+                            ...cellStyle_name, 
+                            backgroundColor: item.backgroundColor_name,
+                            fontWeight: item.fontWeight_name,
+                            color: item.color_name
+                          }}
+                        >
+                          {item?.name ?? "\u00A0"}
+                        </TableCell>
+                        <TableCell 
+                          style={{ 
+                            ...cellStyle,
+                            backgroundColor: parseInt(item.id) === 1 ? color : '#fff',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {editableIds.includes(parseInt(item.id)) ?
+                            <StatSale_Tab_Sett_Modal_Input
+                              type={parseInt(item.id) === 19 ? 'text' : 'number'}
+                              handleChange={this.handleChange.bind(this)}
+                              index={key}
+                              item_type={item.type}
+                              data={item.value}
+                              id={item.id}
+                              rows={rows}
+                            />
+                          : 
+                            textFieldIds.includes(parseInt(item.id)) ?
+                            <TextField
+                              value={item.value}
+                              variant="standard"
+                              fullWidth
+                              InputProps={{ disableUnderline: true }}
+                              sx={{ margin: 0, padding: 0 }}
+                            />
+                          : 
+                            " "
+                          }
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Grid>
+
+            <Grid item xs={12} sm={4} mt={3}>
+              <CustomColorPicker hsvaConvertHex={this.hsvaConvertHex.bind(this)} initialColor={color}/>
+            </Grid>
+
+          </Grid>
+
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={this.check.bind(this)}>
+            Сохранить
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+}
+
+// ---------- Таб Коэффициенты ----------
+class StatSale_Tab_Sett extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      active_tab: 0,
+      rows: this.initializeRows(),
+      rows_edit: [],
+      item_id_edit: null,
+      type_modal: null,
+      color_edit: null,
+      modalDialogRate: false,
+      points: []
+    };
+
+  }
+
+  initializeRows() {
+    return [
+      { id: 1, type: 'percent', data: [] },
+      { id: 2, name: '1.КЛИЕНТЫ', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#B22222', type: 'clients', data: [] },
+      { id: 3, data: [] },
+      { id: 4, name: '2.АКТИВНОСТЬ', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#FF8C00', type: 'active', data: [] },
+      { id: 5, data: [] },
+      { id: 6, name: '3.ЧАСТОТА ЗАКАЗОВ', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#3CB371', type: 'rate', data: [] },
+      { id: 7, data: [] },
+      { id: 8, name: '4.ЦЕЛИ ПО БЛЮДАМ', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#8B008B', data: [] },
+      { id: 9, name: 'Роллы', type: 'rolls_count', data: [] },
+      { id: 10, name: 'Пицца', type: 'pizza_count', data: [] },
+      { id: 11, data: [] },
+      { id: 12, name: 'Роллы Х4 (город)', type: 'rolls_count_city', data: [] },
+      { id: 13, name: 'Пицца Х4 (город)', type: 'pizza_count_city', data: [] },
+      { id: 14, data: [] },
+      { id: 15, name: 'Роллы Х8 (вся сеть)', type: 'rolls_count_all', data: [] },
+      { id: 16, name: 'Пицца Х8 (вся сеть)', type: 'pizza_count_all', data: [] },
+      { id: 17, data: [] },
+      { id: 18, name: '4.СРЕДНИЙ ЧЕК', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#4169E1', type: 'avg', data: [] },
+      { id: 19, name: 'рейтинг', type: 'rating', data: [] },
+    ];
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.rows !== prevProps.rows) {
+      this.get_data_rows();
+    }
+
+    if (this.props.points !== prevProps.points) {
+      this.setState({ points: this.props.points });
+    }
+  }
+
+  changeTab = (_, val) => {
+    this.setState({
+      active_tab: val
+    })
+  }
+
+  openModalRate = (type_modal, id) => {
+
+    let rows_edit = [];
+
+    if (type_modal === 'edit') {
+      rows_edit = this.state.rows.reduce((acc, row) => {
+
+        if (!row || !Array.isArray(row.data) || row.data.length === 0) {
+          acc.push(row);
+          return acc;
+        }
+
+        const found = row.data.find(item => parseInt(item.id) === parseInt(id));
+
+        if (found) {
+          if (row.type === "percent") {
+            this.setState({ color_edit: found.backgroundColor });
+          }
+
+          acc.push({ 
+            ...row, 
+            value: found.value ?? 0 
+          });
+
+        } else {
+          acc.push(row);
+        }
+
+        return acc;
+      }, []);
+    }
+
+    this.setState({
+        item_id_edit: id,
+        rows_edit,
+        type_modal,
+        modalDialogRate: true
+    });
+  }
+
+  save_sett_rate = async (data) => {
+
+    if (this.state.type_modal === 'edit') {
+      data.id = this.state.item_id_edit;
+    }
+
+    data.type = this.state.type_modal;
+
+    const res = await this.props.getData('save_sett_rate', data);
+
+    this.props.openAlert(res.st, res.text);
+
+    if (res.st) {
+      setTimeout(() => this.props.getDataSet(), 100);
+    }
+
+  }
+
+  get_data_rows() {
+    if (!Array.isArray(this.props.rows) || this.props.rows.length === 0) return;
+    
+    const updatedRows = this.state.rows.map(row => {
+      const typeKey = row.type?.trim().toLowerCase();
+    
+      return {
+        ...row,
+        data: this.props.rows.map(item => {
+          let value = item[typeKey] || '';
+          let value_percent = '';
+    
+          if (typeKey === 'percent') {
+            if (item.max_percent !== undefined && item.min_percent !== undefined) {
+              value_percent = `${item.max_percent} - ${item.min_percent}`;
+            } else {
+              value_percent = `${item.percent} - 0`;
+            }
+          }
+    
+          return {
+            id: item.id,
+            value,
+            value_percent,
+            backgroundColor: typeKey === 'percent' ? item.percent_color : undefined,
+            fontWeight: typeKey === 'percent' ? '900' : undefined
+          };
+        })
+      };
+    });
+    
+    this.setState({ rows: updatedRows });
+  }
+
+  changeItem = (index, event) => {
+    let value = event.target.value;
+  
+    if (value === '') {
+      value = '0';
+    } else {
+      value = value.replace(/^0+(?=\d)/, '');
+    }
+  
+    let numericValue = Math.max(Number(value), 0);
+  
+    let points = [...this.state.points];
+    points[index].count = numericValue.toString();
+  
+    this.setState({ points });
+  };
+
+  save_sett_points = async () => {
+    const points = this.state.points.map(point => ({
+      ...point,
+      count: Math.max(Number(point.count), 0)
+    }));
+
+    const data = {
+      points
+    }
+
+    const res = await this.props.getData('save_sett_points', data);
+
+    this.props.openAlert(res.st, res.text);
+
+    if (res.st) {
+      setTimeout(() => this.props.getDataSet(), 100);
+    }
+  
+  };
+
+  render() {
+
+    const { activeTab, fullScreen, openAlert } = this.props;
+    const { active_tab, rows, points } = this.state;
+
+    const cellStyles = {
+      name: {
+        border: '1px solid #ccc',
+        minHeight: '15px',
+        width: '400px',
+        position: 'sticky',
+        left: 0,
+        zIndex: 20,
+      },
+      default: {
+        border: '1px solid #ccc',
+        minHeight: '15px',
+        width: '150px',
+      },
+    };
+
+    const maxDataLength = Math.max(...rows.map(r => (r.data?.length || 0)));
+    const tableWidth = Math.max(500, maxDataLength * 150 + 500);
+
+    return (
+      <>
+
+        <StatSale_Tab_Sett_Modal_Rate
+          open={this.state.modalDialogRate}
+          onClose={() => this.setState({ modalDialogRate: false })}
+          fullScreen={fullScreen}
+          save={this.save_sett_rate.bind(this)}
+          rows={this.state.rows_edit}
+          type_modal={this.state.type_modal}
+          color_edit={this.state.color_edit}
+          openAlert={openAlert}
+        />
+
+        <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+          <TabPanel 
+            value={activeTab} 
+            index={2} 
+            id='clients'
+          >
+            <Grid container spacing={3}>
+
+              <Grid item xs={12} sm={12}>
+                <Paper>
+                  <Tabs 
+                    value={active_tab} 
+                    onChange={this.changeTab} 
+                    centered 
+                    variant='fullWidth'
+                  >
+                    <Tab label="Коэффициенты" {...a11yProps(0)} />
+                    <Tab label="Жители" {...a11yProps(1)} />
+                  </Tabs>
+                </Paper>
+              </Grid>
+
+              {/* Коэффициенты */}
+              <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+                <TabPanel 
+                  value={active_tab} 
+                  index={0} 
+                  id='clients'
+                >
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={12} mt={3} mb={5}>
+                      <TableContainer style={{ overflowX: 'auto', maxWidth: '100%', paddingBottom: 20, width: tableWidth }}>
+                        <Table size='small'>
+                          <TableBody>
+                            {rows.map((item, key) => (
+                              <TableRow key={key}>
+                                <TableCell 
+                                  style={{ 
+                                    ...cellStyles.name, 
+                                    backgroundColor: item.backgroundColor_name || '#fff', 
+                                    fontWeight: item.fontWeight_name, 
+                                    color: item.color_name 
+                                  }}
+                                >
+                                  {item?.name ?? '\u00A0'}
+                                </TableCell>
+                                {item?.data.map((it, k) => {
+
+                                  const cellContent = (
+                                    <>
+                                      {item.id === 1 ? it?.value_percent : it?.value ? it?.value : '\u00A0'}
+                                      {[1, 2, 4].includes(item?.id) ? '%' : ''}
+                                    </>
+                                  );
+
+                                  const cell = (
+                                    <TableCell
+                                      key={k}
+                                      style={{
+                                        ...cellStyles.default,
+                                        backgroundColor: it?.backgroundColor || '#fff',
+                                        textAlign: 'center',
+                                        fontWeight: it?.fontWeight || 'normal',
+                                        cursor: item.id === 1 ? 'pointer' : 'default'
+                                      }}
+                                      onClick={item.id === 1 ? () => this.openModalRate('edit', it.id) : null}
+                                    >
+                                      {cellContent}
+                                    </TableCell>
+                                  );
+
+                                  return item.id === 1 ? (
+                                    <Tooltip 
+                                      key={k} 
+                                      title={<Typography color="inherit">Редактировать данные в столбце</Typography>}
+                                    >
+                                      {cell}
+                                    </Tooltip>
+                                  ) : cell;
+
+                                })}
+
+                                {key === 0 && (
+                                  <TableCell 
+                                    rowSpan={19} 
+                                    onClick={() => this.openModalRate('new', null)} 
+                                    style={{ border: 'none' }}
+                                  >
+                                    <Button variant='contained'>+</Button>
+                                  </TableCell>
+                                )}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Grid>
+                  </Grid>
+                </TabPanel>
+              </Grid>
+              {/* Коэффициенты */}
+
+              {/* Жители */}
+              <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+                <TabPanel 
+                  value={active_tab} 
+                  index={1} 
+                  id='clients'
+                >
+                  <Grid container spacing={3}>
+
+                    <Grid item xs={12} sm={12} mt={3}>
+                        <TableContainer>
+                          <Table>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>#</TableCell>
+                                <TableCell>Точка</TableCell>
+                                <TableCell>Количество жителей</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {points.map((item, key) =>
+                                <TableRow key={key}>
+                                  <TableCell >{key + 1}</TableCell>
+                                  <TableCell >{item.addr}</TableCell>
+                                  <TableCell>
+                                    <MyTextInput
+                                      type='number'
+                                      value={item.count}
+                                      func={(e) => this.changeItem(key, e)} 
+                                      onBlur={(e) => this.changeItem(key, e)}
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                          
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                    </Grid>
+
+                    <Grid item xs={12} sm={12} mb={5} display='grid'>
+                      <Button 
+                        variant="contained" 
+                        color='success' 
+                        style={{ whiteSpace: 'nowrap', justifySelf: 'flex-end' }}
+                        onClick={this.save_sett_points} 
+                      >
+                        Сохранить
+                      </Button>
+                    </Grid>
+
+                  </Grid>
+                </TabPanel>
+              </Grid>
+              {/* Жители */}
+
+            
+            </Grid>
+          </TabPanel>
+        </Grid>
+
+      </>
+    );
+  }
+}
+
+// ---------- Вспомогательные функции для расчета значений в ячейках таблицы таба Клиенты ----------
+const formatNumber = (num) => new Intl.NumberFormat('ru-RU').format(num);
+
+const calcPercent = (num, total) => {
+  if (total === 0) return 0;
+  return Math.round((num / total) * 100);
+};
+
+const calcAvg = (num, total) => {
+  if (total === 0) return 0;
+  return Math.round((num / total) * 100) / 100;
+};
+
+const calcAverageCheck = (summ, orders) => {
+  if (orders === 0) return 0;
+  return Math.round(summ / orders);
+};
+
+// ---------- Таб Клиенты ----------
+class StatSale_Tab_Clients extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      point: [],
+
+      date_start: formatDateMin(new Date()),
+      date_end: formatDateMin(new Date()),
+
+      data_clients_list: [],
+    };
+
+  }
+
+  changePoints(data, event, value) {
+    this.setState({
+      [data]: value,
+    });
+  }
+
+  changeDateRange(type, data) {
+    this.setState({
+      [type]: formatDateMin(data),
+    });
+  }
+
+  get_data_clients = async () => {
+
+    const { point, date_start, date_end } = this.state;
+
+    if (!point.length) {
+      this.props.openAlert(false, 'Необходимо выбрать точку');
+      
+      return;
+    } 
+
+    const data = {
+      date_start,
+      date_end,
+      point: point.map(it => it.id).join(',')
+    };
+
+    const res = await this.props.getData('get_data_clients', data);
+
+    if(res.st) {
+
+      const processedData = res.data_list.map(table =>
+        table.map(item => {
+          const people = parseInt(item.people, 10);
+          const active = parseInt(item.active, 10);
+          const registred = parseInt(item.registred, 10);
+          const orders = parseInt(item.orders, 10);
+          const summ = parseInt(item.summ, 10);
+          return {
+            ...item,
+            peopleFormatted: formatNumber(people),
+            activeFormatted: formatNumber(active),
+            registredFormatted: formatNumber(registred),
+            ordersFormatted: formatNumber(orders),
+            summFormatted: formatNumber(summ),
+            percentClients: formatNumber(calcPercent(active, people)),
+            percentActiveAccounts: formatNumber(calcPercent(registred, active)),
+            ordersAvg: formatNumber(calcAvg(orders, active)),
+            averageCheck: formatNumber(calcAverageCheck(summ, orders)),
+          };
+        })
+      );
+      
+      this.setState({
+        data_clients_list: processedData,
+      });
+
+    } else {
+      this.props.openAlert(res.st, res.text);
+    }
+  
+  };
+
+  render() {
+
+    const { activeTab, points } = this.props;
+    const { data_clients_list } = this.state;
+
+    const borderStyle = { border: '1px solid #b7b7b7' };
+
+    const commonCellStyles = {
+      width: '100px',
+      fontSize: '14px',
+      fontWeight: 'normal',
+      lineHeight: '14px',
+    };
+
+    const cellStylesAbsolute = {
+      position: 'absolute',
+      left: '24px',
+      backgroundColor: '#fff',
+      zIndex: 10,
+      width: '200px',
+      borderTop: 'none',
+      textAlign: 'left !important',
+      fontWeight: 'bold',
+      height: '50px'
+    };
+
+    const cellStylesDop = {
+      borderTop: 'none !important',
+      borderBottom: 'none !important',
+      paddingLeft: '270px !important',
+      minWidth: '10px !important',
+    };
+
+    const rowStyles = {
+      minWidth: '330px',
+      color: '#fff !important'
+    };
+
+    const cellDataStyles = {
+      fontWeight: 'bold', 
+      fontSize: '26px !important'
+    };
+
+    const emptyCellStyle = {
+      border: 'none !important',
+    };
+
+    const emptyCellStyleBorder = {
+      borderLeft: '1px solid #b7b7b7', 
+      borderRight: '1px solid #b7b7b7'
+    };
+
+    const emptyCellContent = '\u00A0';
+
+    const customCell = (
+      <>
+        <TableCell sx={cellStylesAbsolute}>{emptyCellContent}</TableCell>
+        <TableCell sx={cellStylesDop}>{emptyCellContent}</TableCell>
+      </>
+    );
+
+    const customRow = (
+      <>
+        <TableCell colSpan={3} sx={emptyCellStyleBorder}>{emptyCellContent}</TableCell>
+        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+        <TableCell colSpan={3} sx={emptyCellStyleBorder}>{emptyCellContent}</TableCell>
+        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+        <TableCell colSpan={3} sx={emptyCellStyleBorder}>{emptyCellContent}</TableCell>
+        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+        <TableCell colSpan={3} sx={emptyCellStyleBorder}>{emptyCellContent}</TableCell>
+        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+      </>
+    );
+
+    return (
+      <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+        <TabPanel 
+          value={activeTab} 
+          index={1} 
+          id='clients'
+        >
+          <Grid container spacing={3}>
+
+          <Grid item xs={12} sm={6}>
+            <MyDatePickerNewViews
+              label="Дата от"
+              views={['month', 'year']}
+              value={this.state.date_start}
+              func={this.changeDateRange.bind(this, 'date_start')}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6} style={{ paddingLeft: 12 }}>
+            <MyDatePickerNewViews
+              label="Дата до"
+              views={['month', 'year']}
+              value={this.state.date_end}
+              func={this.changeDateRange.bind(this, 'date_end')}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={10}>
+            <MyAutocomplite
+              label="Точка"
+              multiple={true}
+              data={points}
+              value={this.state.point}
+              func={this.changePoints.bind(this, 'point')}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={2}>
+            <Button variant="contained" onClick={this.get_data_clients}>
+              Показать
+            </Button>
+          </Grid>
+
+          {!data_clients_list.length ? null : (
+            <Grid item xs={12} sm={12} mt={3} mb={5} sx={{ position: 'relative', overflow: 'hidden' }}>
+              <TableContainer sx={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', paddingBottom: 5 }}>
+                {data_clients_list.map((table, index) => (
+           
+                  <Table 
+                    key={index} 
+                    size="small" 
+                    sx={{ marginRight: 5, '& .MuiTableCell-root': { ...borderStyle, textAlign: 'center'}, maxWidth: '70%' }} 
+                  >
+                    <TableHead>
+
+                      <TableRow>
+
+                        {index === 0 && 
+                          <>
+                            <TableCell sx={cellStylesAbsolute}>Месяц / Год</TableCell>
+                            <TableCell sx={cellStylesDop}>{emptyCellContent}</TableCell>
+                          </>
+                        }
+
+                        <TableCell sx={{ backgroundColor: '#d3d3d3'}} colSpan={15}>
+                          {dayjs(table[0].month + '-01').format('MMMM YYYY').replace(/^./, (match) => match.toUpperCase())}
+                        </TableCell>
+
+                      </TableRow>
+
+                      <TableRow >
+
+                       {index === 0 && customCell}
+
+                        <TableCell colSpan={3} sx={{ ...rowStyles, backgroundColor: '#B22222' }}>1.КЛИЕНТЫ</TableCell>
+                        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                        <TableCell colSpan={3} sx={{ ...rowStyles, backgroundColor: '#FF8C00' }}>2.АКТИВНОСТЬ</TableCell>
+                        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                        <TableCell colSpan={3} sx={{ ...rowStyles, backgroundColor: '#3CB371'  }}>3.ЗАКАЗЫ</TableCell>
+                        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                        <TableCell colSpan={3} sx={{ ...rowStyles, backgroundColor: '#4169E1' }}>4.СРЕДНИЙ ЧЕК</TableCell>
+                      </TableRow>
+
+                      <TableRow>
+                        
+                        {index === 0 && customCell}
+
+                        <TableCell sx={commonCellStyles}>Ж/А</TableCell>
+                        <TableCell sx={commonCellStyles}>Кол-во</TableCell>
+                        <TableCell sx={commonCellStyles}>% клиентов</TableCell>
+                        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                        <TableCell sx={commonCellStyles}>А/А</TableCell>
+                        <TableCell sx={commonCellStyles}>Кол-во</TableCell>
+                        <TableCell sx={commonCellStyles}>% активных аккаунтов</TableCell>
+                        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                        <TableCell sx={commonCellStyles}>З/А</TableCell>
+                        <TableCell sx={commonCellStyles}>Кол-во</TableCell>
+                        <TableCell sx={commonCellStyles}>Заказов в среднем</TableCell>
+                        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                        <TableCell sx={commonCellStyles}>В/З</TableCell>
+                        <TableCell sx={commonCellStyles}>Кол-во</TableCell>
+                        <TableCell sx={commonCellStyles}>Средний чек, руб</TableCell>
+                      </TableRow>
+
+                      <TableRow>
+
+                        {index === 0 && customCell}
+                        {customRow}
+
+                      </TableRow>
+
+                    </TableHead>
+
+                    <TableBody>
+                      {table.map((item, key) => (
+                        <React.Fragment key={key}>
+                          <TableRow >
+
+                            {index === 0 && 
+                              <>
+                                <TableCell sx={{ ...cellStylesAbsolute, borderBottom: 'none !important' }}>{item.name}</TableCell>
+                                <TableCell rowSpan={2} sx={cellStylesDop}>{emptyCellContent}</TableCell>
+                              </>
+                            }
+
+                            <TableCell>жителей</TableCell>
+                            <TableCell>{item.peopleFormatted}</TableCell>
+                            <TableCell rowSpan={2} sx={cellDataStyles}>{item.percentClients}</TableCell>
+                            <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                            <TableCell>аккаунтов</TableCell>
+                            <TableCell>{item.activeFormatted}</TableCell>
+                            <TableCell rowSpan={2} sx={cellDataStyles}>{item.percentActiveAccounts}</TableCell>
+                            <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                            <TableCell>заказов</TableCell>
+                            <TableCell>{item.ordersFormatted}</TableCell>
+                            <TableCell rowSpan={2} sx={cellDataStyles}>{item.ordersAvg}</TableCell>
+                            <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                            <TableCell>выручка</TableCell>
+                            <TableCell>{item.summFormatted}</TableCell>
+                            <TableCell rowSpan={2} sx={cellDataStyles}>{item.averageCheck}</TableCell>
+                            <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                          </TableRow>
+
+                          <TableRow>
+     
+                            {index === 0 && 
+                              <TableCell 
+                                sx={{ 
+                                  ...cellStylesAbsolute, 
+                                  borderTop: 'none !important', 
+                                  borderBottom: key === table.length - 1 ? '1px solid #ccc' : 'none !important',
+                                  height: key === table.length - 1 ? 'none !important' : '50px'
+                                }}
+                              >
+                                {emptyCellContent}
+                              </TableCell>
+                            }
+
+                            <TableCell>аккаунтов</TableCell>
+                            <TableCell>{item.activeFormatted}</TableCell>
+                            <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                            <TableCell>актив акк</TableCell>
+                            <TableCell>{item.registredFormatted}</TableCell>
+                            <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                            <TableCell>аккаунтов</TableCell>
+                            <TableCell>{item.activeFormatted}</TableCell>
+                            <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                            <TableCell>заказов</TableCell>
+                            <TableCell>{item.ordersFormatted}</TableCell>
+                          </TableRow>
+
+                          <TableRow>
+
+                            {index === 0 && key === 0 && customCell}
+                            {index === 0 && !item.point_id && table[key + 1] && table[key + 1].point_id && customCell}
+                            {key === 0  && customRow}
+                            {!item.point_id && table[key + 1] && table[key + 1].point_id && customRow}
+
+                          </TableRow>
+
+                        </React.Fragment>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ))}
+              </TableContainer>
+            </Grid>
+          )}
+
+          </Grid>
+        </TabPanel>
+      </Grid>
+    );
+  }
+}
+
+// ---------- Таб Продажи ----------
+class StatSale_Tab_Sale extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      point: [],
+
+      date_start: formatDateMin(new Date()),
+      date_end: formatDateMin(new Date()),
+
+      data_sale_list: [],
+    };
+
+  }
+
+  changePoints(data, event, value) {
+    this.setState({
+      [data]: value,
+    });
+  }
+
+  changeDateRange(type, data) {
+    this.setState({
+      [type]: formatDateMin(data),
+    });
+  }
+
+  get_data_sale = async () => {
+
+    const { point, date_start, date_end } = this.state;
+
+    if (!point.length) {
+      this.props.openAlert(false, 'Необходимо выбрать точку');
+      
+      return;
+    } 
+
+    const data = {
+      date_start,
+      date_end,
+      point
+    };
+
+    const res = await this.props.getData('get_data_sale', data);
+
+    console.log("🚀 === res:", res);
+
+    if(res.st) {
+      
+      this.setState({
+        data_sale_list: res.data_sale_list,
+      });
+
+    } else {
+      this.props.openAlert(res.st, res.text);
+    }
+  
+  };
+
+  render() {
+
+    const { activeTab, points } = this.props;
+    const { data_sale_list } = this.state;
+
+    const borderStyle = { border: '1px solid #b7b7b7' };
+
+    const commonCellStyles = {
+      width: '100px',
+      fontSize: '14px',
+      fontWeight: 'normal',
+      lineHeight: '14px',
+    };
+
+    const cellStylesAbsolute = {
+      position: 'absolute',
+      left: '24px',
+      backgroundColor: '#fff',
+      zIndex: 10,
+      width: '200px',
+      borderTop: 'none',
+      textAlign: 'left !important',
+      fontWeight: 'bold',
+      height: '50px'
+    };
+
+    const cellStylesDop = {
+      borderTop: 'none !important',
+      borderBottom: 'none !important',
+      paddingLeft: '270px !important',
+      minWidth: '10px !important',
+    };
+
+    const rowStyles = {
+      minWidth: '330px',
+      color: '#fff !important'
+    };
+
+    const cellDataStyles = {
+      fontWeight: 'bold', 
+      fontSize: '26px !important'
+    };
+
+    const emptyCellStyle = {
+      border: 'none !important',
+    };
+
+    const emptyCellStyleBorder = {
+      borderLeft: '1px solid #b7b7b7', 
+      borderRight: '1px solid #b7b7b7'
+    };
+
+    const emptyCellContent = '\u00A0';
+
+    const customCell = (
+      <>
+        <TableCell sx={cellStylesAbsolute}>{emptyCellContent}</TableCell>
+        <TableCell sx={cellStylesDop}>{emptyCellContent}</TableCell>
+      </>
+    );
+
+    const customRow = (
+      <>
+        <TableCell colSpan={3} sx={emptyCellStyleBorder}>{emptyCellContent}</TableCell>
+        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+        <TableCell colSpan={3} sx={emptyCellStyleBorder}>{emptyCellContent}</TableCell>
+        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+        <TableCell colSpan={3} sx={emptyCellStyleBorder}>{emptyCellContent}</TableCell>
+        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+        <TableCell colSpan={3} sx={emptyCellStyleBorder}>{emptyCellContent}</TableCell>
+        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+      </>
+    );
+
+    return (
+      <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+        <TabPanel 
+          value={activeTab} 
+          index={0} 
+          id='clients'
+        >
+          <Grid container spacing={3}>
+
+            <Grid item xs={12} sm={6}>
+              <MyDatePickerNewViews
+                label="Дата от"
+                views={['month', 'year']}
+                value={this.state.date_start}
+                func={this.changeDateRange.bind(this, 'date_start')}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6} style={{ paddingLeft: 12 }}>
+              <MyDatePickerNewViews
+                label="Дата до"
+                views={['month', 'year']}
+                value={this.state.date_end}
+                func={this.changeDateRange.bind(this, 'date_end')}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={10}>
+              <MyAutocomplite
+                label="Точка"
+                multiple={true}
+                data={points}
+                value={this.state.point}
+                func={this.changePoints.bind(this, 'point')}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={2}>
+              <Button variant="contained" onClick={this.get_data_sale}>
+                Показать
+              </Button>
+            </Grid>
+
+            {!data_sale_list.length ? null : (
+              <Grid item xs={12} sm={12} mt={3} mb={5} sx={{ position: 'relative', overflow: 'hidden' }}>
+                <TableContainer sx={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', paddingBottom: 5 }}>
+                  {data_sale_list.map((table, index) => (
+            
+                    <Table 
+                      key={index} 
+                      size="small" 
+                      sx={{ marginRight: 5, '& .MuiTableCell-root': { ...borderStyle, textAlign: 'center'}, maxWidth: '70%' }} 
+                    >
+                      <TableHead>
+
+                        <TableRow>
+
+                          {index === 0 && 
+                            <>
+                              <TableCell sx={cellStylesAbsolute}>Месяц / Год</TableCell>
+                              <TableCell sx={cellStylesDop}>{emptyCellContent}</TableCell>
+                            </>
+                          }
+
+                          <TableCell sx={{ backgroundColor: '#d3d3d3'}} colSpan={15}>
+                            {dayjs(table[0].month + '-01').format('MMMM YYYY').replace(/^./, (match) => match.toUpperCase())}
+                          </TableCell>
+
+                        </TableRow>
+
+                        <TableRow>
+                          
+                          {index === 0 && customCell}
+
+                          <TableCell sx={commonCellStyles}>Кол-во</TableCell>
+                          <TableCell sx={commonCellStyles}>факт/п</TableCell>
+                          <TableCell sx={commonCellStyles}>эффект-ть</TableCell>
+                          <TableCell sx={commonCellStyles}>{table[0].month.slice(2,4)}/{(+(table[0].month.slice(0,4))-1).toString().slice(-2)}</TableCell> 
+
+                        </TableRow>
+
+                        {/* <TableRow>
+
+                          {index === 0 && customCell}
+                          {customRow}
+
+                        </TableRow> */}
+
+                      </TableHead>
+
+                      <TableBody>
+                        {table.map((item, key) => (
+                          <React.Fragment key={key}>
+                            <TableRow >
+
+                              {index === 0 && 
+                                <>
+                                  <TableCell sx={{ ...cellStylesAbsolute, borderBottom: 'none !important' }}>{item.group}</TableCell>
+                                  <TableCell rowSpan={2} sx={cellStylesDop}>{emptyCellContent}</TableCell>
+                                </>
+                              }
+
+                              <TableCell>{item.rolls_current}</TableCell>
+                              {/* <TableCell>{item.peopleFormatted}</TableCell>
+                              <TableCell rowSpan={2} sx={cellDataStyles}>{item.percentClients}</TableCell>
+                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                              <TableCell>аккаунтов</TableCell>
+                              <TableCell>{item.activeFormatted}</TableCell>
+                              <TableCell rowSpan={2} sx={cellDataStyles}>{item.percentActiveAccounts}</TableCell>
+                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                              <TableCell>заказов</TableCell>
+                              <TableCell>{item.ordersFormatted}</TableCell>
+                              <TableCell rowSpan={2} sx={cellDataStyles}>{item.ordersAvg}</TableCell>
+                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                              <TableCell>выручка</TableCell>
+                              <TableCell>{item.summFormatted}</TableCell>
+                              <TableCell rowSpan={2} sx={cellDataStyles}>{item.averageCheck}</TableCell>
+                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell> */}
+                            </TableRow>
+
+                            <TableRow>
+      
+                              {index === 0 && 
+                                <TableCell 
+                                  sx={{ 
+                                    ...cellStylesAbsolute, 
+                                    borderTop: 'none !important', 
+                                    borderBottom: key === table.length - 1 ? '1px solid #ccc' : 'none !important',
+                                    height: key === table.length - 1 ? 'none !important' : '50px'
+                                  }}
+                                >
+                                  {emptyCellContent}
+                                </TableCell>
+                              }
+
+                              {/* <TableCell>аккаунтов</TableCell>
+                              <TableCell>{item.activeFormatted}</TableCell>
+                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                              <TableCell>актив акк</TableCell>
+                              <TableCell>{item.registredFormatted}</TableCell>
+                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                              <TableCell>аккаунтов</TableCell>
+                              <TableCell>{item.activeFormatted}</TableCell>
+                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
+                              <TableCell>заказов</TableCell>
+                              <TableCell>{item.ordersFormatted}</TableCell> */}
+                            </TableRow>
+
+                            <TableRow>
+
+                              {index === 0 && key === 0 && customCell}
+                              {index === 0 && !item.point_id && table[key + 1] && table[key + 1].point_id && customCell}
+                              {/* {key === 0  && customRow} */}
+                              {/* {!item.point_id && table[key + 1] && table[key + 1].point_id && customRow} */}
+
+                            </TableRow>
+
+                          </React.Fragment>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ))}
+                </TableContainer>
+              </Grid>
+            )}
+          
+          </Grid>
+        </TabPanel>
+      </Grid>
+    );
+  }
+}
+
+// ---------- Стартовая / Основной компонент ----------
+class StatSale_ extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      module: 'stat_sale',
+      module_name: '',
+      is_load: false,
+
+      fullScreen: false,
+      activeTab: 0,
+
+      data_sett_rate: [],
+      data_sett_points: [],
+
+      points: [],
+      cities: [],
+    };
+  }
+
+  async componentDidMount() {
+    const data = await this.getData('get_all');
+
+    console.log("🚀 === data:", data);
+
+    this.setState({
+      data_sett_rate: data.data_sett_rate,
+      data_sett_points: data.data_sett_points,
+      module_name: data.module_info.name,
+      points: data.points,
+      cities: data.cities
+    });
+
+    document.title = data.module_info.name;
+
+    this.handleResize();
+  }
+
+  getData = (method, data = {}) => {
+    this.setState({
+      is_load: true,
+    });
+
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
+  };
+
+  handleResize() {
+    if (window.innerWidth < 601) {
+      this.setState({
+        fullScreen: true,
+      });
+    } else {
+      this.setState({
+        fullScreen: false,
+      });
+    }
+  }
+
+  changeTab = (event, val) => {
+    this.setState({ activeTab: val });
+  };
+
+  getDataSet = async () => {
+    const res = await this.getData('get_data_sett');
+
+    this.setState({
+      data_sett_rate: res.data_sett_rate,
+      data_sett_points: res.data_sett_points,
+    });
+  };
+
+  openAlert = (status, text) => {
+
+    this.setState({
+      openAlert: true,
+      err_status: status,
+      err_text: text
+    });
+
+  };
+
+  render() {
+    return (
+      <>
+        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+
+        <Grid container spacing={3} mb={3} className='container_first_child'>
+
+          <Grid item xs={12} sm={12}>
+            <h1>{this.state.module_name}</h1>
+          </Grid>
+
+          <Grid item xs={12} sm={12} style={{ paddingBottom: 24 }}>
+            <Paper>
+              <Tabs 
+                value={this.state.activeTab} 
+                onChange={this.changeTab}
+                variant={this.state.fullScreen ? 'scrollable' : 'fullWidth'} 
+                scrollButtons={false}
+              >
+                <Tab label="Продажи" {...a11yProps(0)} sx={{ minWidth: "fit-content", flex: 1 }}/>
+                <Tab label="Клиенты" {...a11yProps(1)} sx={{ minWidth: "fit-content", flex: 1 }}/>
+                <Tab label="Настройки" {...a11yProps(2)} sx={{ minWidth: "fit-content", flex: 1 }}/>
+              </Tabs>
+            </Paper>
+          </Grid>
+
+          {/* Продажи */}
+          <StatSale_Tab_Sale
+            activeTab={this.state.activeTab}
+            fullScreen={this.state.fullScreen}
+            points={this.state.points}
+            openAlert={this.openAlert}
+            getData={this.getData}
+          />
+          {/* Продажи */}
+
+          {/* Клиенты */}
+          <StatSale_Tab_Clients
+            activeTab={this.state.activeTab}
+            fullScreen={this.state.fullScreen}
+            points={this.state.points}
+            openAlert={this.openAlert}
+            getData={this.getData}
+          />
+          {/* Клиенты */}
+
+          {/* Настройки */}
+          <StatSale_Tab_Sett
+            activeTab={this.state.activeTab}
+            fullScreen={this.state.fullScreen}
+            rows={this.state.data_sett_rate}
+            getDataSet={this.getDataSet}
+            getData={this.getData}
+            points={this.state.data_sett_points}
+            openAlert={this.openAlert}
+          />
+          {/* Настройки */}
+             
+        </Grid>
+      </>
+    );
+  }
+}
+
+export default function StatSale() {
+  return <StatSale_ />;
+}

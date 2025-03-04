@@ -6,6 +6,8 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
+import EditIcon from '@mui/icons-material/Edit';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -19,16 +21,57 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 
+import Paper from '@mui/material/Paper';
+import PropTypes from 'prop-types';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Box from '@mui/material/Box';
+
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
+import { ExlIcon } from '@/ui/icons';
 
 import { MySelect, MyAlert, formatDate, MyTextInput, MyDatePickerNew } from '@/ui/elements';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
-import { ExlIcon } from '@/ui/icons';
+
 import axios from 'axios';
 import dayjs from 'dayjs';
 
+// ---------- Вспомогательные функции для переключения Табов ----------
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>{children}</Box>
+      )}
+    </div>
+  );
+}
+
+TabPanel.propTypes = {
+  children: PropTypes.node,
+  index: PropTypes.number.isRequired,
+  value: PropTypes.number.isRequired,
+};
+
+function a11yProps(index) {
+  return {
+    id: `simple-tab-${index}`,
+    'aria-controls': `simple-tabpanel-${index}`,
+  };
+}
+
+// ---------- Модальное окно Скачать/Загрузить файл XLS ----------
 class SitePriceLevel_Modal_XLS extends React.Component {
 
   render() {
@@ -79,16 +122,13 @@ class SitePriceLevel_Modal_XLS extends React.Component {
   }
 }
 
+// ---------- Модальное окно Добавить новый уровень цен ----------
 class SitePriceLevel_Modal_New extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
       item: null,
-
-      openAlert: false,
-      err_status: true,
-      err_text: ''
     };
   }
 
@@ -132,11 +172,7 @@ class SitePriceLevel_Modal_New extends React.Component {
 
     if (!item.city_id) {
 
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо выбрать город'
-      });
+      this.props.openAlert(false, 'Необходимо выбрать город');
 
       return;
 
@@ -144,23 +180,15 @@ class SitePriceLevel_Modal_New extends React.Component {
 
     if (!item.name) {
 
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо указать название'
-      });
+      this.props.openAlert(false, 'Необходимо указать название');
 
       return;
 
     } 
 
     if(!item.date_start) {
-      
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо указать дату'
-      });
+
+      this.props.openAlert(false, 'Необходимо указать дату');
       
       return;
     } 
@@ -168,13 +196,9 @@ class SitePriceLevel_Modal_New extends React.Component {
     const date_now = dayjs();
     const date_start = dayjs(item.date_start);
 
-    if(date_start.isSame(date_now, 'day') || date_start.isBefore(date_now, 'day')){
+    if(date_start.isBefore(date_now, 'day')){
 
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо указать будущую даты (позже сегодняшней даты)'
-      });
+      this.props.openAlert(false, 'Необходимо указать сегодняшнюю или будущую дату');
       
       return;
     }
@@ -189,10 +213,6 @@ class SitePriceLevel_Modal_New extends React.Component {
   onClose() {
     this.setState ({
       item: null,
-
-      openAlert: false,
-      err_status: true,
-      err_text: ''
     });
 
     this.props.onClose();
@@ -200,68 +220,604 @@ class SitePriceLevel_Modal_New extends React.Component {
 
   render() {
     return (
-      <>
-        <MyAlert
-          isOpen={this.state.openAlert}
-          onClose={() => this.setState({ openAlert: false })}
-          status={this.state.err_status}
-          text={this.state.err_text}
-        />
-      
-        <Dialog
-          open={this.props.open}
-          onClose={this.onClose.bind(this)}
-          fullScreen={this.props.fullScreen}
-          fullWidth={true}
-          maxWidth={'md'}
-        >
-          <DialogTitle className="button">
-            {this.props.method}
-            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={12}>
-                <MySelect
-                  is_none={false}
-                  label="Город"
-                  data={this.state.item ? this.state.item?.cities : []}
-                  value={this.state.item ? this.state.item?.level?.city_id : ''}
-                  func={this.changeItem.bind(this, 'city_id')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={12}>
-                <MyTextInput
-                  label="Название"
-                  value={this.state.item ? this.state.item?.level?.name : ''}
-                  func={this.changeItem.bind(this, 'name')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={12}>
-                <MyDatePickerNew
-                  label="Дата старта"
-                  value={dayjs(this.state.item?.level?.date_start)}
-                  func={this.changeDateRange.bind(this, 'date_start')}
-                />
-              </Grid>
-
+      <Dialog
+        open={this.props.open}
+        onClose={this.onClose.bind(this)}
+        fullScreen={this.props.fullScreen}
+        fullWidth={true}
+        maxWidth={'md'}
+      >
+        <DialogTitle className="button">
+          {this.props.method}
+          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={12}>
+              <MySelect
+                is_none={false}
+                label="Город"
+                data={this.state.item ? this.state.item?.cities : []}
+                value={this.state.item ? this.state.item?.level?.city_id : ''}
+                func={this.changeItem.bind(this, 'city_id')}
+              />
             </Grid>
+
+            <Grid item xs={12} sm={12}>
+              <MyTextInput
+                label="Название"
+                value={this.state.item ? this.state.item?.level?.name : ''}
+                func={this.changeItem.bind(this, 'name')}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={12}>
+              <MyDatePickerNew
+                label="Дата старта"
+                value={dayjs(this.state.item?.level?.date_start)}
+                func={this.changeDateRange.bind(this, 'date_start')}
+              />
+            </Grid>
+
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={this.save.bind(this)}>
+            Сохранить
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+}
+
+// ---------- Таб Динамика ----------
+class StatSale_Tab_Dynamic extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      city: '',
+
+      date_start: formatDate(new Date()),
+      date_end: formatDate(new Date()),
+
+      columns: [],
+      cats: []
+    };
+
+  }
+
+  changeCity = (event) => {
+    this.setState({ city: event.target.value });
+  };
+
+  changeDateRange(type, data) {
+    this.setState({
+      [type]: formatDate(data),
+    });
+  }
+
+  get_data_dynamic = async () => {
+
+    let { city, date_start, date_end } = this.state;
+
+    if (!city) {
+      this.props.openAlert(false, 'Необходимо выбрать город');
+      
+      return;
+    } 
+
+    const data = {
+      date_start: dayjs(date_start).format('YYYY-MM-DD'),
+      date_end: dayjs(date_end).format('YYYY-MM-DD'),
+      city
+    };
+
+    const res = await this.props.getData('get_data_dynamic', data);
+
+    if (res.st) {
+
+      this.setState({
+        columns: res.columns,
+        cats: res.cats
+      });
+
+    } else {
+
+      this.props.openAlert(false, res.text);
+
+    }
+  
+  };
+
+  render() {
+
+    const { activeTab, cities } = this.props;
+    const { columns, cats, city, date_start, date_end } = this.state;
+   
+    const columnsCount = columns.length ?? 0;
+    const totalCols = 2 + columnsCount;
+
+    return (
+      <Grid item xs={12} sm={12} style={{ paddingTop: '24px' }}>
+        <TabPanel 
+          value={activeTab} 
+          index={1} 
+          id="clients"
+        >
+          <Grid container spacing={3}>
+
+            <Grid item xs={12} sm={6}>
+              <MyDatePickerNew
+                label="Дата от"
+                value={date_start}
+                func={this.changeDateRange.bind(this, 'date_start')}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <MyDatePickerNew
+                label="Дата до"
+                value={date_end}
+                func={this.changeDateRange.bind(this, 'date_end')}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <MySelect
+                is_none={false}
+                data={cities}
+                value={city}
+                func={this.changeCity}
+                label="Город"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={2}>
+              <Button variant="contained" onClick={this.get_data_dynamic}>
+                Показать
+              </Button>
+            </Grid>
+
+            {columns.length && cats.length ?
+              <Grid item xs={12} sm={12} mt={3} mb={5}>
+                <TableContainer sx={{ maxHeight: 650, maxWidth: '100%', overflow: 'auto', p: 0, m: 0}}>
+                  <Table size="small" sx={{ borderCollapse: 'separate', borderSpacing: 0, '& .MuiTableCell-root': { textAlign: 'center', whiteSpace: 'nowrap' } }}>
+                    <TableHead>
+                      <TableRow sx={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#fff' }}>
+                        <TableCell sx={{ position: 'sticky', left: 0, zIndex: 11, backgroundColor: '#fff', borderLeft: 'none', minWidth: 200, width: 400 }}>
+                          Название
+                        </TableCell>
+
+                        {columns.map((col) => (
+                          <TableCell key={col.id} sx={{ minWidth: 120 }}>
+                            {col.name}
+                          </TableCell>
+                        ))}
+
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {cats.map(cat => {
+
+                        if (!cat.items || cat.items.length === 0) return null;
+
+                        return (
+                          <React.Fragment key={cat.id}>
+                            <TableRow>
+                              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', position: 'sticky', left: 0, zIndex: 9 }}>
+                                {cat.name}
+                              </TableCell>
+                              <TableCell colSpan={totalCols} sx={{ backgroundColor: '#f5f5f5' }} />
+                            </TableRow>
+
+                            {cat.items.map(item => (
+                              <TableRow key={item.id}>
+                                <TableCell sx={{ position: 'sticky', left: 0, zIndex: 9, backgroundColor: '#fff', borderLeft: 'none', boxShadow: '2px 0 5px -2px rgba(0,0,0,0.05)', minWidth: 200, width: 400, textOverflow: 'ellipsis', overflow: 'hidden'}}>
+                                  {item.name}
+                                </TableCell>
+
+                                {item.prices.map((price, idx) => {
+
+                                  const cellColor = item.price_colors?.[idx] ?? null;
+
+                                  return (
+                                    <TableCell
+                                      key={idx}
+                                      sx={{
+                                        minWidth: 120,
+                                        ...(cellColor ? { backgroundColor: cellColor, fontWeight: 'bold' } : {})
+                                      }}
+                                    >
+                                      {price !== null ? price : ''}
+                                    </TableCell>
+                                  );
+                                })}
+
+                              </TableRow>
+                            ))}
+                          </React.Fragment>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+            : null}
+
+          </Grid>
+        </TabPanel>
+      </Grid>
+    );
+  }
+}
+
+// ---------- Таб Уровни цен ----------
+class SitePriceLevel_Tab_Level extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      is_load: false,
+      city: '',
+      modalDialog: false,
+      modalDialog_XLS: false,
+      confirmDialog: false,
+      method: '',
+      item: null,
+      delete_level: null,
+      input_value: '',
+      itemNew: {
+        name: '',
+        date_start: formatDate(new Date()),
+        city_id: '',
+      },
+      levels: [],
+      levelsCopy: [],
+    };
+
+    this.changeCity = this.changeCity.bind(this);
+    this.openModal = this.openModal.bind(this);
+    this.save = this.save.bind(this);
+    this.getOneLevel = this.getOneLevel.bind(this);
+    this.downLoad = this.downLoad.bind(this);
+    this.uploadFile = this.uploadFile.bind(this);
+    this.delete_level = this.delete_level.bind(this);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.levels !== prevProps.levels) {
+
+      this.setState({
+        levels: this.props.levels,
+        levelsCopy: this.props.levels,
+        city: this.props.cities && this.props.cities.length > 0 ? this.props.cities[0].id : '',
+      });
+
+    }
+  }
+
+  changeCity(event) {
+    const selectedCity = event.target.value;
+
+    const { levelsCopy } = this.state;
+
+    const filteredLevels = levelsCopy.filter((level) => {
+      if (parseInt(selectedCity) === -1) return true;
+
+      return (
+        parseInt(level.city_id) === parseInt(selectedCity) || parseInt(level.city_id) === -1
+      );
+
+    });
+
+    this.setState({
+      city: selectedCity,
+      levels: filteredLevels,
+    });
+
+  }
+
+  async openModal(method) {
+
+    if (this.props.handleResize) {
+      this.props.handleResize();
+    }
+
+    const itemNewCopy = { ...this.state.itemNew };
+
+    const item = await this.props.getData('get_all_for_new');
+
+    item.level = itemNewCopy;
+
+    this.setState({
+      modalDialog: true,
+      method,
+      item,
+    });
+  }
+
+  async save(item) {
+    const data = {
+      name: item.name,
+      date_start: item.date_start,
+      city_id: item.city_id,
+      type: 'new'
+    };
+
+    const res = await this.props.getData('save_new', data);
+
+    if (!res.st) {
+
+      this.props.openAlert(res.st, res.text);
+
+    } else {
+
+      const link = document.createElement('a');
+      link.href = `/site_price_lavel/${res?.level_id}`;
+      link.target = '_blank';
+      link.click();
+
+      setTimeout(() => {
+        this.props.update();
+      }, 100);
+      
+    }
+  }
+
+  getOneLevel(level_id) {
+   
+    const link = document.createElement('a');
+    link.href = `/site_price_lavel/${level_id}`
+    link.target = '_blank'
+    link.click();
+
+  }
+
+  async downLoad() {
+
+    this.setState({ modalDialog_XLS: false })
+
+    const dop_type = {
+      responseType: 'blob',
+    }
+
+    const res = await this.props.getData('export_file_xls', {}, dop_type);
+
+    const url = window.URL.createObjectURL(new Blob([res]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Уровень цен (форма для заполнения).xlsx");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  
+  }
+
+  async uploadFile({ target }) {
+    const file = target.files[0];
+    if (!file) {
+      return;
+    }
+
+    this.setState({
+      modalDialog_XLS: false,
+      input_value: '',
+      is_load: true,
+    });
+
+    let formData = new FormData();
+
+    //const urlApi_dev = 'http://127.0.0.1:8000/api/site_price_lavel/import_file_xls';
+    const urlApi_dev = 'https://apichef.jacochef.ru/api/site_price_lavel/import_file_xls';
+
+    formData.append('file', file);
+    formData.append('login', localStorage.getItem('token'));
+    formData.append('method', 'import_file_xls');
+    formData.append('module', 'site_price_lavel');
+
+    try {
+      const response = await axios.post(urlApi_dev, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const res = response.data.data;
+
+      this.props.openAlert(res.st, res.text);
+
+      if (res.st) {
+
+        setTimeout(() => {
+          this.props.update();
+        }, 100);
+
+      }
+
+    } catch (error) {
+
+      // console.error('Ошибка загрузки файла', error);
+      this.props.openAlert(false, 'Ошибка загрузки файла');
+
+    } finally {
+
+      this.setState({
+        is_load: false,
+      });
+
+    }
+  }
+
+  async delete_level() {
+    const level = this.state.delete_level;
+
+    const data = {
+      date_start: level.date_start,
+      level_id: level.id,
+    };
+
+    const res = await this.props.getData('delete_level', data);
+
+    this.props.openAlert(res.st, res.text);
+
+    if (res.st) {
+
+      this.setState({
+        is_load: false,
+        confirmDialog: false,
+        delete_level: null,
+      });
+
+      setTimeout(() => {
+        this.props.update();
+      }, 100);
+
+    } else {
+
+      this.setState({
+        is_load: false,
+      });
+
+    }
+
+  }
+
+  render() {
+
+    const { activeTab, cities, acces, fullScreen, openAlert } = this.props;
+    const { levels, city, is_load, confirmDialog, modalDialog, modalDialog_XLS, method, item, input_value } = this.state;
+
+    return (
+      <>
+
+        <Dialog
+          sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+          maxWidth="sm"
+          open={confirmDialog}
+          onClose={() => this.setState({ confirmDialog: false, delete_level: null })}
+        >
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+            <Typography>Вы действительно хотите удалить данный уровень цен?</Typography>
           </DialogContent>
           <DialogActions>
-            <Button variant="contained" onClick={this.save.bind(this)}>
-              Сохранить
-            </Button>
+            <Button autoFocus onClick={() => this.setState({ confirmDialog: false, delete_level: null })}>Отмена</Button>
+            <Button onClick={this.delete_level}>Удалить</Button>
           </DialogActions>
         </Dialog>
+
+        <SitePriceLevel_Modal_New
+          open={modalDialog}
+          onClose={() => this.setState({ modalDialog: false })}
+          method={method}
+          item={item}
+          save={this.save}
+          fullScreen={fullScreen}
+          openAlert={openAlert}
+        />
+
+        <SitePriceLevel_Modal_XLS
+          open={modalDialog_XLS}
+          onClose={() => this.setState({ modalDialog_XLS: false })}
+          uploadFile={this.uploadFile}
+          downLoad={this.downLoad}
+          fullScreen={fullScreen}
+          input_value={input_value}
+        />
+
+        <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={is_load}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+
+        <Grid item xs={12} sm={12} style={{ paddingTop: '24px' }} mb={10}>
+          <TabPanel value={activeTab} index={0} id="clients">
+            <Grid container spacing={3}>
+
+              <Grid item xs={12} sm={4}>
+                <MySelect
+                  is_none={false}
+                  data={cities}
+                  value={city}
+                  func={this.changeCity}
+                  label="Город"
+                />
+              </Grid>
+
+              {parseInt(acces?.add_level) ? (
+                <Grid item xs={12} sm={2}>
+                  <Button onClick={() => this.openModal('Новый уровень цен')} variant="contained">
+                    Добавить
+                  </Button>
+                </Grid>
+              ) : null}
+
+              {parseInt(acces?.get_excel) ? (
+                <Grid item xs={12} sm={4}>
+                  <Button onClick={() => this.setState({ modalDialog_XLS: true })} variant="contained">
+                    Скачать/Загрузить файл XLS
+                  </Button>
+                </Grid>
+              ) : null}
+
+              <Grid item xs={12} sm={12}>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                        <TableCell style={{ width: '3%' }}>#</TableCell>
+                        <TableCell style={{ width: '25%' }}>Наименование</TableCell>
+                        <TableCell style={{ width: '18%' }}>Дата старта</TableCell>
+                        <TableCell style={{ width: '18%' }}>Город</TableCell>
+                        <TableCell style={{ width: '18%' }}>Редактировать / Просмотр</TableCell>
+                        <TableCell style={{ width: '18%' }}>Удалить</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {levels.map((level, index) => (
+                        <TableRow hover key={index}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell>{level.name}</TableCell>
+                          <TableCell>{level.date_start}</TableCell>
+                          <TableCell>{level.city_name}</TableCell>
+                          <TableCell>
+                            <IconButton onClick={() => this.getOneLevel(level.id)}>
+                              {parseInt(acces?.edit_level) && level?.edit ? (
+                                <Tooltip title={<Typography color="inherit">Редактировать</Typography>}>
+                                  <EditIcon />
+                                </Tooltip>
+                              ) : (
+                                <Tooltip title={<Typography color="inherit">Просмотр</Typography>}>
+                                  <VisibilityIcon />
+                                </Tooltip>
+                              )}
+                            </IconButton>
+                          </TableCell>
+                          <TableCell>
+                            {parseInt(acces?.delete_level) && level?.delete ? (
+                              <IconButton onClick={() => this.setState({ confirmDialog: true, delete_level: level })}>
+                                <CloseIcon />
+                              </IconButton>
+                            ) : null}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+            </Grid>
+          </TabPanel>
+        </Grid>
       </>
     );
   }
 }
 
+// ---------- Стартовая / Основной компонент ----------
 class SitePriceLevel_ extends React.Component {
 
   constructor(props) {
@@ -277,60 +833,17 @@ class SitePriceLevel_ extends React.Component {
       err_text: '',
 
       cities: [],
-      city: '',
-
-      modalDialog: false,
       fullScreen: false,
 
-      method: '',
-      mark: '',
-      item: null,
-
-      itemNew: {
-        name: '',
-        date_start: formatDate(new Date(new Date().getTime() + 24 * 60 * 60 * 1000)),
-        city_id: '',
-      },
-
       levels: [],
-      levelsCopy: [],
-     
-      input_value: '',
 
-      modalDialog_XLS: false,
-
-      confirmDialog: false,
-      delete_level: null
+      acces: null,
+      activeTab: 0,
     };
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all');
-
-    data.levels.forEach((level) => {
-      const date_now = dayjs();
-      const date_start = dayjs(level.date_start);
-
-      if(date_start.isSame(date_now, 'day') || date_start.isBefore(date_now, 'day')){
-        level.delete = false;        
-      } else {
-        level.delete = true; 
-      }
-
-    });
-
-    if( data ){
-      this.setState({
-        cities: data.cities,
-        city: data.cities[0].id,
-        levels: data.levels,
-        levelsCopy: data.levels,
-        module_name: data.module_info.name
-      });
-
-      document.title = data.module_info.name;
-    }
-
+    this.update();
   }
 
   getData = (method, data = {}, dop_type = {}) => {
@@ -360,338 +873,126 @@ class SitePriceLevel_ extends React.Component {
     return res;
   }
 
-  handleResize() {
-    if (window.innerWidth < 601) {
-      this.setState({
-        fullScreen: true,
-      });
-    } else {
-      this.setState({
-        fullScreen: false,
-      });
-    }
-  }
+  handleResize = () => {
+    this.setState({ fullScreen: window.innerWidth < 601 });
+  };
 
-  changeCity(event) {
-    const city = event.target.value;
-    let levels = JSON.parse(JSON.stringify(this.state.levelsCopy));
+  update = async () => {
+    try {
+      const data = await this.getData('get_all');
 
-    levels = levels.filter((level) => parseInt(city) !== -1 ? (parseInt(level.city_id) === parseInt(city) || parseInt(level.city_id) === -1 ) : level);
+      if (data && data.levels) {
+        const updatedLevels = data.levels.map((level) => {
+          const date_now = dayjs();
+          const date_start = dayjs(level.date_start);
 
-    this.setState({
-      city,
-      levels
-    });
-  }
+          return {
+            ...level,
+            delete: date_start.isAfter(date_now, 'day'),
+            edit: !date_start.isBefore(date_now, 'day'),
+          };
+        });
 
-  async openModal(method) {
-    this.handleResize();
+        this.setState({
+          cities: data.cities || [],
+          levels: updatedLevels,
+          acces: data.acces,
+          module_name: data.module_info?.name || "",
+        });
 
-    const itemNew = JSON.parse(JSON.stringify(this.state.itemNew));
-
-    const item = await this.getData('get_all_for_new');
-    
-    item.level = itemNew;
-
-    this.setState({
-      modalDialog: true,
-      method,
-      item
-    });
-  }
-
-  async save(item) {
-
-    const data = {
-      name: item.name,
-      date_start: item.date_start,
-      city_id: item.city_id,
-    };
-
-    const res = await this.getData('save_new', data);
-
-    if (!res.st) {
-
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
-      });
-
-    } else {
-
-      const link = document.createElement('a');
-      link.href = `/site_price_lavel/${res?.level_id}`
-      link.target = '_blank'
-      link.click();
-
-      setTimeout(async () => {
-        this.update();
-      }, 100);
-
-    }
-  }
-
-  async getOneLevel(level_id) {
-   
-    const link = document.createElement('a');
-    link.href = `/site_price_lavel/${level_id}`
-    link.target = '_blank'
-    link.click();
-
-  }
-
-  async update() {
-    const data = await this.getData('get_all');
-
-    data.levels.forEach((level) => {
-      const date_now = dayjs();
-      const date_start = dayjs(level.date_start);
-
-      if(date_start.isSame(date_now, 'day') || date_start.isBefore(date_now, 'day')){
-        level.delete = false;        
-      } else {
-        level.delete = true; 
+        if (data.module_info?.name) {
+          document.title = data.module_info.name;
+        }
       }
+    } catch (error) {
+      this.openAlert(false, "Ошибка обновления данных. Попробуйте позже.");
+    }
+  };
 
-    });
+  changeTab = (event, val) => {
+    if(parseInt(val) === 0) this.update();
+
+    this.setState({ activeTab: val });
+  };
+
+  openAlert = (status, text) => {
 
     this.setState({
-      cities: data.cities,
-      city: data.cities[0].id,
-      levels: data.levels,
-      levelsCopy: data.levels
+      openAlert: true,
+      err_status: status,
+      err_text: text
     });
-  }
-
-  async downLoad() {
-
-    this.setState({ modalDialog_XLS: false })
-
-    const dop_type = {
-      responseType: 'blob',
-    }
-
-    const res = await this.getData('export_file_xls', {}, dop_type);
-
-    const url = window.URL.createObjectURL(new Blob([res]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "Уровень цен (форма для заполнения).xlsx");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  
-  }
-
-  async uploadFile({ target }) {
-
-    const file = target.files[0];
-
-    if(!file) {
-      return;
-    }
-
-    this.setState({
-      modalDialog_XLS: false,
-      input_value: ''
-    });
-
-    let formData = new FormData();
-
-    //const urlApi_dev = 'http://127.0.0.1:8000/api/site_price_lavel/import_file_xls';
-    const urlApi_dev = 'https://apichef.jacochef.ru/api/site_price_lavel/import_file_xls';
-
-    formData.append('file', target.files[0]);
-    formData.append('login', localStorage.getItem('token'));
-    formData.append('method', 'import_file_xls');
-    formData.append('module', 'site_price_lavel');
-
-    this.setState({
-      is_load: true,
-    });
-
-    const res = await axios.post( urlApi_dev, formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    }
-    ).then(function(response){
-      return response.data.data;
-    })
-    .catch(function(){
-      // console.log('FAILURE!!');
-    });
-
-    if(res.st) {
-
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
-        is_load: false,
-      });
-
-      setTimeout(async () => {
-        this.update();
-      }, 100);
-
-    } else {
-
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
-        is_load: false,
-      });
-      
-    }
 
   };
 
-  async delete_level() {
-
-    const level = this.state.delete_level;
-
-    const data = {
-      date_start: level.date_start,
-      level_id: level.id
-    };
-    
-    const res = await this.getData('delete_level', data);
-
-    if(res.st) {
-
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
-        is_load: false,
-        confirmDialog: false, 
-        delete_level: null
-      });
-
-      setTimeout(async () => {
-        this.update();
-      }, 100);
-
-    } else {
-
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
-        is_load: false,
-      });
-      
-    }
-
-  }
-
   render() {
+    const { is_load, openAlert, err_status, err_text, module_name, activeTab, fullScreen, cities, levels, acces } = this.state;
+
+    const cities_city = cities.filter(city => city.id !== -1);
+
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop style={{ zIndex: 99 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false, delete_level: null })}>
-          <DialogTitle>Подтвердите действие</DialogTitle>
-          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
-            <Typography>Вы действительное хотите удалить данный уровень цен?</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button autoFocus onClick={() => this.setState({ confirmDialog: false, delete_level: null })}>Отмена</Button>
-            <Button onClick={this.delete_level.bind(this)}>Удалить</Button>
-          </DialogActions>
-        </Dialog>
-
         <MyAlert
-          isOpen={this.state.openAlert}
+          isOpen={openAlert}
           onClose={() => this.setState({ openAlert: false })}
-          status={this.state.err_status}
-          text={this.state.err_text}
+          status={err_status}
+          text={err_text}
         />
 
-        <SitePriceLevel_Modal_New
-          open={this.state.modalDialog}
-          onClose={() => this.setState({ modalDialog: false, itemName: '' })}
-          method={this.state.method}
-          item={this.state.item}
-          save={this.save.bind(this)}
-          fullScreen={this.state.fullScreen}
-        />
+        <Grid container spacing={3} mb={3} className="container_first_child">
 
-        <SitePriceLevel_Modal_XLS
-          open={this.state.modalDialog_XLS}
-          onClose={() => this.setState({ modalDialog_XLS: false })}
-          uploadFile={this.uploadFile.bind(this)}
-          downLoad={this.downLoad.bind(this)}
-          input_value={this.state.input_value}
-        />
-
-        <Grid container spacing={3} mb={3} className='container_first_child'>
-
-          <Grid item xs={12} sm={12}>
-            <h1>{this.state.module_name}</h1>
+          <Grid item xs={12}>
+            <h1>{module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
-            <MySelect
-              is_none={false}
-              data={this.state.cities}
-              value={this.state.city}
-              func={this.changeCity.bind(this)}
-              label="Город"
-            />
+          <Grid item xs={12} style={{ paddingBottom: 24 }}>
+            <Paper>
+              <Tabs
+                value={activeTab}
+                onChange={this.changeTab}
+                variant={fullScreen ? "scrollable" : "fullWidth"}
+                scrollButtons={false}
+              >
+                <Tab label="Уровни цен" {...a11yProps(0)} sx={{ minWidth: "fit-content", flex: 1 }}>
+                </Tab>
+                <Tab label="Динамика" {...a11yProps(1)} sx={{ minWidth: "fit-content", flex: 1 }} />
+              </Tabs>
+            </Paper>
           </Grid>
 
-          <Grid item xs={12} sm={2}>
-            <Button onClick={this.openModal.bind(this, 'Новый уровень цен')} variant="contained">
-              Добавить
-            </Button>
-          </Grid>
+          {/* Уровни цен */}
+            {activeTab === 0 &&
+              <SitePriceLevel_Tab_Level
+                activeTab={activeTab}
+                fullScreen={fullScreen}
+                cities={cities}
+                openAlert={this.openAlert}
+                getData={this.getData}
+                levels={levels}
+                acces={acces}
+                handleResize={this.handleResize}
+                update={this.update}
+              />
+            }
+          {/* /Уровни цен */}
 
-          <Grid item xs={12} sm={4}>
-            <Button onClick={() => this.setState({ modalDialog_XLS: true })} variant="contained">
-              Скачать/Загрузить файл XLS
-            </Button>
-          </Grid>
 
-          <Grid item xs={12} sm={12}>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                    <TableCell style={{ width: '5%' }}>#</TableCell>
-                    <TableCell style={{ width: '30%' }}>Наименование</TableCell>
-                    <TableCell style={{ width: '25%' }}>Дата старта</TableCell>
-                    <TableCell style={{ width: '20%' }}>Город</TableCell>
-                    <TableCell style={{ width: '20%' }}></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {this.state.levels.map((level, key) =>
-                    <TableRow hover key={key} style={{ cursor: 'pointer' }}>
-                      <TableCell onClick={this.getOneLevel.bind(this, level.id)}>{key + 1}</TableCell>
-                      <TableCell onClick={this.getOneLevel.bind(this, level.id)}>{level.name}</TableCell>
-                      <TableCell onClick={this.getOneLevel.bind(this, level.id)}>{level.date_start}</TableCell>
-                      <TableCell onClick={this.getOneLevel.bind(this, level.id)}>{level.city_name}</TableCell>
-                      <TableCell onClick={level?.delete ? null : this.getOneLevel.bind(this, level.id)} >
-                        {!level?.delete ? null :
-                          <IconButton>
-                            <CloseIcon onClick={() => this.setState ({ confirmDialog: true, delete_level: level })}/>
-                          </IconButton>
-                        }
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Grid>
-             
+          {/* Динамика */}
+            {activeTab === 1 &&
+              <StatSale_Tab_Dynamic
+                activeTab={activeTab}
+                fullScreen={fullScreen}
+                cities={cities_city}
+                openAlert={this.openAlert}
+                getData={this.getData}
+              />
+            }
+          {/* /Динамика */}
+
         </Grid>
       </>
     );
