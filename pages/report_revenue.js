@@ -76,7 +76,7 @@ class ReportRevenue_Table extends React.Component {
 
           <TableHead sx={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#fff' }}>
             <TableRow sx={{ height: 40 }}>
-              <TableCell sx={{ position: 'sticky', left: 0, zIndex: 11, backgroundColor: '#fff', minWidth: 200, width: 400 }}>
+              <TableCell sx={{ position: 'sticky', left: 0, zIndex: 11, backgroundColor: '#fff', minWidth: 200, width: 400, textAlign: 'left !important' }}>
                 Название
               </TableCell>
               {months.map(month => (
@@ -108,7 +108,7 @@ class ReportRevenue_Table extends React.Component {
             {cats.map(cat => cat.items?.length ? (
               <React.Fragment key={cat.id}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', position: 'sticky', left: 0 }}>{cat.name}</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', position: 'sticky', left: 0, textAlign: 'left !important' }}>{cat.name}</TableCell>
                   <TableCell colSpan={totalCols - 1} sx={{ backgroundColor: '#f5f5f5' }} />
                 </TableRow>
 
@@ -116,7 +116,7 @@ class ReportRevenue_Table extends React.Component {
                   const rowTotal = this.getRowTotal(item.data);
                   return (
                     <TableRow key={item.id}>
-                      <TableCell sx={{ position: 'sticky', left: 0, backgroundColor: '#fff', boxShadow: '2px 0 5px -2px rgba(0,0,0,0.05)', minWidth: 200 }}>
+                      <TableCell sx={{ position: 'sticky', left: 0, backgroundColor: '#fff', boxShadow: '2px 0 5px -2px rgba(0,0,0,0.05)', minWidth: 200, textAlign: 'left !important' }}>
                         {item.name}
                       </TableCell>
                       {item.data.map((d, idx) => (
