@@ -177,8 +177,8 @@ class SiteSale2_edit_ extends React.Component {
       ],
       type_order_list: [
         {id: 1, name: 'Все'},
-        {id: 2, name: 'Доставка'},
-        {id: 3, name: 'Самовывоз'},
+        {id: 3, name: 'Доставка'},
+        {id: 2, name: 'Самовывоз'},
         {id: 4, name: 'Зал'},
       ],
       where_order_list: [
