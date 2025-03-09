@@ -73,13 +73,146 @@ function a11yProps(index) {
   };
 }
 
-class CafeEdit_Modal_Kkt_Info extends React.Component {
+class CafeEdit_Modal_Kkt_Info_Add extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
+     
+      new_fn: '',
+
+      openAlert: false,
+      err_status: true,
+      err_text: '',
+   
+    };
+  }
+
+  changeItem(data, event) {
+    this.setState({
+      [data]: event.target.value,
+    });
+  }
+
+  changeDateRange(data, event) {
+    this.setState({
+      [data]: event ? event : '',
+    });
+  }
+
+  add_new_fn() {
+    let { new_fn, date_start, date_end } = this.state;
+
+    if(!date_start || !date_end){
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Указание дат обязательно',
+      });
+
+      return;
+    }
+
+    if(!new_fn){
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Указание номера обязательно',
+      });
+
+      return;
+    }
+
+    this.props.addFN(new_fn, date_start, date_end);
+
+    this.onClose();
+
+  }
+
+  onClose() {
+    this.setState({
+      date_start: formatDate(new Date()),
+      date_end: formatDate(new Date()),
+      new_fn: '',
+      openAlert: false,
+      err_status: true,
+      err_text: '',
+    });
+
+    this.props.onClose();
+  }
+
+  render() {
+
+    const { open, fullScreen } = this.props;
+
+    return (
+      <>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+      
+        <Dialog
+          open={open}
+          onClose={this.onClose.bind(this)}
+          fullScreen={fullScreen}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle style={{ display: 'flex', alignItems: 'center' }}>
+            Добавить ФН
+            <IconButton onClick={this.onClose.bind(this)} style={{ marginLeft: 'auto' }}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <MyDatePickerNew
+                  label="Дата регистрации"
+                  value={this.state.date_start}
+                  func={this.changeDateRange.bind(this, 'date_start')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <MyDatePickerNew
+                  label="Дата окончания"
+                  value={this.state.date_end}
+                  func={this.changeDateRange.bind(this, 'date_end')}
+                />
+              </Grid>
+              <Grid item xs={12} sm={12}>
+                <MyTextInput
+                  label="ФН"
+                  value={this.state.new_fn}
+                  func={this.changeItem.bind(this, 'new_fn')}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="contained" onClick={this.add_new_fn.bind(this)}>Добавить</Button>
+          </DialogActions>
+        </Dialog>
+
+      </>
+    );
+  }
+}
+
+class CafeEdit_Modal_Kkt_Info extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      date_license: null,
       rn_kkt: '',
       fn: '',
       kassa: '',
@@ -103,7 +236,6 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
         { id: '6', name: '6' },
       ],
       all_fn: [],
-      new_fn: '',
       openAlert: false,
       err_status: true,
       err_text: '',
@@ -112,7 +244,7 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    //console.log(this.props);
+    // console.log(this.props.kkt);
 
     if (!this.props) {
       return;
@@ -139,6 +271,7 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
           dop_kassa: this.props.kkt.dop_kassa,
           base: this.props.kkt.base,
           is_active: parseInt(this.props.kkt.is_active),
+          date_license: this.props.kkt.date_license ? formatDate(this.props.kkt.date_license) : null
         });
 
       } else {
@@ -196,8 +329,9 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
 
   }
 
-  addFN() {
-    let { new_fn, date_start, date_end, all_fn } = this.state;
+  addFN(new_fn, date_start, date_end) {
+
+    let { all_fn } = this.state;
 
     if(!date_start || !date_end){
 
@@ -241,7 +375,7 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
   }
 
   close_modal() {
-    let { rn_kkt, fn, kassa, dop_kassa, base, is_active } = this.state;
+    let { rn_kkt, fn, kassa, dop_kassa, base, is_active, date_license } = this.state;
 
     if(!fn || parseInt(fn?.id) === 0) {
         
@@ -254,7 +388,7 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
       return;
     }
 
-    if(!rn_kkt || !kassa || !dop_kassa || !base){
+    if(!rn_kkt || !kassa || !dop_kassa || !base || !date_license){
 
       this.setState({
         openAlert: true,
@@ -265,6 +399,8 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
       return;
     }
 
+    date_license = dayjs(date_license).format('YYYY-MM-DD');
+
     const data = {
       date_start: fn.date_start,
       date_end: fn.date_end,
@@ -274,6 +410,7 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
       dop_kassa,
       base,
       is_active,
+      date_license
     };
 
     this.props.save_kkt(data);
@@ -283,8 +420,7 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
 
   onClose() {
     this.setState({
-      date_start: formatDate(new Date()),
-      date_end: formatDate(new Date()),
+      date_license: null,
       rn_kkt: '',
       fn: '',
       kassa: '',
@@ -292,7 +428,6 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
       base: '',
       is_active: 1,
       all_fn: [],
-      new_fn: '',
       openAlert: false,
       err_status: true,
       err_text: '',
@@ -303,6 +438,9 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
   }
 
   render() {
+
+    const { open, fullScreen, pointModal, type, acces } = this.props;
+
     return (
       <>
         <MyAlert
@@ -312,60 +450,28 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
           text={this.state.err_text}
         />
       
-        <Dialog
+        <CafeEdit_Modal_Kkt_Info_Add
           open={this.state.addDialog}
           onClose={() => this.setState({ addDialog: false })}
-          maxWidth="sm"
-        >
-          <DialogTitle style={{ display: 'flex', alignItems: 'center' }}>
-            Добавить ФН
-            <IconButton onClick={() => this.setState({ addDialog: false })} style={{ marginLeft: 'auto' }}><CloseIcon /></IconButton>
-          </DialogTitle>
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <MyDatePickerNew
-                  label="Дата регистрации"
-                  value={this.state.date_start}
-                  func={this.changeDateRange.bind(this, 'date_start')}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <MyDatePickerNew
-                  label="Дата окончания"
-                  value={this.state.date_end}
-                  func={this.changeDateRange.bind(this, 'date_end')}
-                />
-              </Grid>
-              <Grid item xs={12} sm={12}>
-                <MyTextInput
-                  label="ФН"
-                  value={this.state.new_fn}
-                  func={this.changeItem.bind(this, 'new_fn')}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button variant="contained" onClick={this.addFN.bind(this)}>Добавить</Button>
-          </DialogActions>
-        </Dialog>
+          fullScreen={fullScreen}
+          addFN={this.addFN.bind(this)}
+        />
 
         <Dialog
-          open={this.props.open}
+          open={open}
           onClose={this.onClose.bind(this)}
-          fullScreen={this.props.fullScreen}
+          fullScreen={fullScreen}
           fullWidth
           maxWidth="md"
         >
           <DialogTitle style={{ display: 'flex', alignItems: 'center' }}>
-            <Typography>Точка:{' '}<span style={{ fontWeight: 'bold' }}>{this.props.pointModal}</span></Typography>
+            <Typography>Точка:{' '}<span style={{ fontWeight: 'bold' }}>{pointModal}</span></Typography>
             <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', marginLeft: 'auto' }}><CloseIcon /></IconButton>
           </DialogTitle>
 
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3}>
-            {this.props.type === 'view_kkt' ?
+            {type === 'view_kkt' ?
               <>
                 <Grid item xs={12} sm={6}>
                   <MyTextInput
@@ -399,10 +505,18 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
                     className="disabled_input"
                   />
                 </Grid>
-                <Grid item xs={12} sm={8}>
+                <Grid item xs={12} sm={12}>
                   <MyTextInput
                     label="ФН"
                     value={this.state.fn?.name ?? ''}
+                    disabled={true}
+                    className="disabled_input"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Лицензия ОФД дата завершения"
+                    value={this.state.date_license}
                     disabled={true}
                     className="disabled_input"
                   />
@@ -419,61 +533,131 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
               :
               <>
                 <Grid item xs={12} sm={6}>
-                  <MySelect
-                    is_none={false}
-                    data={this.state.kass}
-                    value={this.state.kassa}
-                    func={this.changeSelect.bind(this, 'kassa')}
-                    label="Номер кассы"
-                  />
+                  {type === 'add_kkt' || parseInt(acces?.edit_kassa) ?
+                    <MySelect
+                      is_none={false}
+                      data={this.state.kass}
+                      value={this.state.kassa}
+                      func={this.changeSelect.bind(this, 'kassa')}
+                      label="Номер кассы"
+                    />
+                    :
+                    <MyTextInput
+                      label="Номер кассы"
+                      value={this.state.kassa}
+                      disabled={true}
+                      className="disabled_input"
+                    />
+                  }
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <MySelect
-                    is_none={false}
-                    data={this.state.dop_kass}
-                    value={this.state.dop_kassa}
-                    func={this.changeSelect.bind(this, 'dop_kassa')}
-                    label="Доп касса"
-                  />
+                  {type === 'add_kkt' || parseInt(acces?.edit_dop_kassa) ?
+                    <MySelect
+                      is_none={false}
+                      data={this.state.dop_kass}
+                      value={this.state.dop_kassa}
+                      func={this.changeSelect.bind(this, 'dop_kassa')}
+                      label="Доп касса"
+                    />
+                    :
+                    <MyTextInput
+                      label="Доп касса"
+                      value={this.state.dop_kassa}
+                      disabled={true}
+                      className="disabled_input"
+                    />
+                  }
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="РН ККТ"
-                    value={this.state.rn_kkt}
-                    func={this.changeItem.bind(this, 'rn_kkt')}
-                  />
+                  {type === 'add_kkt' || parseInt(acces?.edit_rn_kkt) ?
+                    <MyTextInput
+                      label="РН ККТ"
+                      value={this.state.rn_kkt}
+                      func={this.changeItem.bind(this, 'rn_kkt')}
+                    />
+                    :
+                    <MyTextInput
+                      label="РН ККТ"
+                      value={this.state.rn_kkt}
+                      disabled={true}
+                      className="disabled_input"
+                    />
+                  }
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="База"
-                    value={this.state.base}
-                    func={this.changeItem.bind(this, 'base')}
-                  />
+                  {type === 'add_kkt' || parseInt(acces?.edit_base) ?
+                    <MyTextInput
+                      label="База"
+                      value={this.state.base}
+                      func={this.changeItem.bind(this, 'base')}
+                    />
+                    :
+                    <MyTextInput
+                      label="База"
+                      value={this.state.base}
+                      disabled={true}
+                      className="disabled_input"
+                    />
+                  }
                 </Grid>
-                <Grid item xs={12} sm={8}>
-                  <MyAutocomplite
-                    label="ФН"
-                    multiple={false}
-                    data={this.state.all_fn}
-                    value={this.state.fn}
-                    func={this.changeFN.bind(this)}
-                  />
+                <Grid item xs={12} sm={12}>
+                  {type === 'add_kkt' || parseInt(acces?.edit_fn) ?
+                    <MyAutocomplite
+                      label="ФН"
+                      multiple={false}
+                      data={this.state.all_fn}
+                      value={this.state.fn}
+                      func={this.changeFN.bind(this)}
+                    />
+                    :
+                    <MyTextInput
+                      label="ФН"
+                      value={this.state.fn?.name ?? ''}
+                      disabled={true}
+                      className="disabled_input"
+                    />
+                  }
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  {type === 'add_kkt' || parseInt(acces?.edit_license) ?
+                    <MyDatePickerNew
+                      label="Лицензия ОФД дата завершения"
+                      value={this.state.date_license}
+                      func={this.changeDateRange.bind(this, 'date_license')}
+                    />
+                    :
+                    <MyTextInput
+                      label="Лицензия ОФД дата завершения"
+                      value={this.state.date_license}
+                      disabled={true}
+                      className="disabled_input"
+                    />
+                  }
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <MyCheckBox
-                    value={parseInt(this.state.is_active) === 1 ? true : false}
-                    func={this.changeItemChecked.bind(this, 'is_active')}
-                    label="Активность"
-                  />
+                  {type === 'add_kkt' || parseInt(acces?.edit_active) ?
+                    <MyCheckBox
+                      value={parseInt(this.state.is_active) === 1 ? true : false}
+                      func={this.changeItemChecked.bind(this, 'is_active')}
+                      label="Активность"
+                    />
+                    :
+                    <MyTextInput
+                      label="Активность"
+                      value={parseInt(this.state.is_active) === 1 ? 'Активна' : 'Не активна'}
+                      disabled={true}
+                      className="disabled_input"
+                    />
+                  }
                 </Grid>
               </>
             }
             </Grid>
           </DialogContent>
           <DialogActions>
-            {this.props.type === 'view_kkt' ? null :
+            {type === 'view_kkt' ? null :
               <Button variant="contained" onClick={this.close_modal.bind(this)}>
-                {this.props.type === 'update_kkt' ? 'Сохранить изменения' : 'Добавить кассу'}
+                {type === 'update_kkt' ? 'Сохранить изменения' : 'Добавить кассу'}
               </Button>
             }
           </DialogActions>
@@ -804,6 +988,83 @@ class CafeEdit_Modal_History extends React.Component {
                     value={this.state.itemView ? this.state.itemView.summ_driver_min?.color ? this.state.itemView.summ_driver_min.key : this.state.itemView.summ_driver_min : ''}
                     disabled={true}
                     className={this.state.itemView ? this.state.itemView.summ_driver_min?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+              </>
+            : null}
+
+            {type_modal === 'kkt' ?
+              <>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Номер кассы"
+                    value={this.state.itemView ? this.state.itemView.kassa?.color ? this.state.itemView.kassa.key : this.state.itemView.kassa : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.kassa?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Доп касса"
+                    value={this.state.itemView ? this.state.itemView.dop_kassa?.color ? this.state.itemView.dop_kassa.key : this.state.itemView.dop_kassa : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.dop_kassa?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="РН ККТ"
+                    value={this.state.itemView ? this.state.itemView.number?.color ? this.state.itemView.number.key : this.state.itemView.number : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.number?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="База"
+                    value={this.state.itemView ? this.state.itemView.base?.color ? this.state.itemView.base.key : this.state.itemView.base : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.base?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={12}>
+                  <MyTextInput
+                    label="ФН"
+                    value={this.state.itemView ? this.state.itemView.fn?.color ? this.state.itemView.fn.key : this.state.itemView.fn : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.fn?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid> 
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Дата регистрации"
+                    value={this.state.itemView ? this.state.itemView.date_start?.color ? this.state.itemView.date_start.key : this.state.itemView.date_start : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.date_start?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Дата окончания"
+                    value={this.state.itemView ? this.state.itemView.date_end?.color ? this.state.itemView.date_end.key : this.state.itemView.date_end : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.date_end?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Лицензия ОФД дата завершения"
+                    value={this.state.itemView ? this.state.itemView.date_license?.color ? this.state.itemView.date_license.key : this.state.itemView.date_license : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.date_license?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Активность"
+                    value={this.state.itemView ? this.state.itemView.is_active?.color ? this.state.itemView.is_active.key : this.state.itemView.is_active : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.is_active?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
                   />
                 </Grid>
               </>
@@ -1338,6 +1599,7 @@ class CafeEdit_ extends React.Component {
       point_sett_hist: [],
       point_zone_hist: [],
       point_sett_driver_hist: [],
+      kkt_info_hist: [],
 
       modalDialogView: false,
       itemView: null,
@@ -1364,6 +1626,8 @@ class CafeEdit_ extends React.Component {
       modalDialog_kkt: false,
       kkt_update: null,
       pointModal: '',
+
+      modalDialog_kkt_add: false,
 
     };
   }
@@ -1662,7 +1926,8 @@ class CafeEdit_ extends React.Component {
       point_zone_hist: res.point_zone_hist,
       point_sett_driver_hist: res.point_sett_driver_hist,
       kkt_info_active: res.kkt_info_active,
-      kkt_info_none_active: res.kkt_info_none_active
+      kkt_info_none_active: res.kkt_info_none_active,
+      kkt_info_hist: res.kkt_info_hist,
     });
 
     if(res.zone.length && res.other_zones.length) {
@@ -2375,6 +2640,37 @@ class CafeEdit_ extends React.Component {
     });
   }
 
+  open_hist_kkt(id, kkt_id, type_modal) {
+    const kkt_info_hist = this.state.kkt_info_hist;
+
+    const kkt_list = kkt_info_hist.filter((kkt) => parseInt(kkt.kkt_id) === parseInt(kkt_id)).sort((a, b) => new Date(b.date_time_update) - new Date(a.date_time_update));
+
+    const index = kkt_list.findIndex((kkt) => parseInt(kkt.id) === parseInt(id));
+
+    let itemView = { ...kkt_list[index] };
+
+    itemView.is_active = parseInt(itemView.is_active) ? 'Да' : 'Нет';
+
+    let itemView_old = null;
+
+    if (index > 0) {
+      itemView_old = { ...kkt_list[index - 1] };
+      itemView_old.is_active = parseInt(itemView_old.is_active) ? 'Да' : 'Нет';
+  
+      Object.keys(itemView).forEach((key) => {
+        if (itemView[key] !== itemView_old[key]) {
+          itemView[key] = { key: itemView[key], color: "true" };
+        }
+      });
+    }
+
+    this.setState({
+      modalDialogView: true,
+      itemView,
+      type_modal,
+    });
+  }
+
   async open_hist_view_zone(index, type_modal) {
 
     const item = this.state.point_zone_hist;
@@ -2428,9 +2724,61 @@ class CafeEdit_ extends React.Component {
       type_modal,
       pointModal,
       modalDialog_kkt: true,
-      kkt_update: kkt,
+      kkt_update: kkt
     });
    
+  }
+
+  async openModalKktInfo_add(kkt) {
+    this.handleResize();
+
+    this.setState({
+      modalDialog_kkt_add: true,
+      kkt_update: kkt
+    });
+   
+  }
+
+  async add_new_fn(new_fn, start, end) {
+    const kkt = this.state.kkt_update;
+
+    const date_start = dayjs(start).format('YYYY-MM-DD');
+    const date_end = dayjs(end).format('YYYY-MM-DD')
+
+    const data = {
+      date_start,
+      date_end,
+      fn: new_fn,
+      rn_kkt: kkt.rn_kkt,
+      kassa: kkt.kassa,
+      dop_kassa: kkt.dop_kassa,
+      base: kkt.base,
+      is_active: kkt.is_active,
+      date_license: kkt.date_license,
+      point_id: this.state.point?.id,
+    };
+
+    const res = await this.getData('save_new_kkt', data);
+
+    if (res.st) {
+      this.setState({
+        openAlert: true,
+        err_status: true,
+        err_text: res.text,
+      });
+
+      setTimeout(() => {
+        this.getDataPoint();
+      }, 300);
+
+    } else {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: res.text,
+      });
+    }
+  
   }
 
   async save_kkt(data) {
@@ -2507,6 +2855,14 @@ class CafeEdit_ extends React.Component {
           onClose={() => this.setState({ modalDialog_kkt: false })}
           fullScreen={this.state.fullScreen}
           save_kkt={this.save_kkt.bind(this)}
+          acces={this.state.acces}
+        />
+
+        <CafeEdit_Modal_Kkt_Info_Add
+          open={this.state.modalDialog_kkt_add}
+          onClose={() => this.setState({ modalDialog_kkt_add: false })}
+          fullScreen={this.state.fullScreen}
+          addFN={this.add_new_fn.bind(this)}
         />
 
         <CafeEdit_Modal_Close
@@ -3197,7 +3553,7 @@ class CafeEdit_ extends React.Component {
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell colSpan={6} style={{ fontWeight: 700 }}>Активные кассы</TableCell>
+                          <TableCell colSpan={7} style={{ fontWeight: 700 }}>Активные кассы</TableCell>
                         </TableRow>
                         <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
                           <TableCell style={{ minWidth: '50px' }}>№ кассы</TableCell>
@@ -3205,6 +3561,10 @@ class CafeEdit_ extends React.Component {
                           <TableCell>ФН</TableCell>
                           <TableCell style={{ minWidth: '200px' }}>Дата регистрации</TableCell>
                           <TableCell style={{ minWidth: '200px' }}>Дата окончания</TableCell>
+                          {parseInt(this.state.acces?.add_fn) ?
+                            <TableCell style={{ minWidth: '200px' }}>Добавить новый ФН</TableCell>
+                            : null
+                          }
                           <TableCell>{parseInt(this.state.acces?.edit_kkt) ? 'Редактирование' : 'Просмотр'}</TableCell>
                         </TableRow>
                       </TableHead>
@@ -3216,6 +3576,18 @@ class CafeEdit_ extends React.Component {
                             <TableCell>{item.fn}</TableCell>
                             <TableCell>{item.date_start}</TableCell>
                             <TableCell>{item.date_end}</TableCell>
+                            {parseInt(this.state.acces?.add_fn) ?
+                              <TableCell>
+                                <Button 
+                                  variant="contained" 
+                                  style={{ whiteSpace: 'nowrap' }} 
+                                  onClick={this.openModalKktInfo_add.bind(this, item)}
+                                >
+                                  Новый ФН
+                                </Button>
+                              </TableCell>
+                              : null
+                            }
                             <TableCell>
                               <IconButton onClick={this.openModalKktInfo.bind(this, parseInt(this.state.acces?.edit_kkt) ? 'update_kkt' : 'view_kkt', item)}>
                                 {parseInt(this.state.acces?.edit_kkt) ? <EditIcon /> : <VisibilityIcon />}
@@ -3229,7 +3601,7 @@ class CafeEdit_ extends React.Component {
                 </Grid>
 
                 {!this.state.kkt_info_none_active.length ? null :
-                  <Grid item xs={12} sm={12} mb={5}>
+                  <Grid item xs={12} sm={12} mb={this.state.kkt_info_hist.length ? 0 : 5}>
                     <Accordion style={{ width: '100%' }}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Typography style={{ fontWeight: 'bold' }}>Неактивные кассы</Typography>
@@ -3259,6 +3631,43 @@ class CafeEdit_ extends React.Component {
                             </TableBody>
                           </Table>
                         </TableContainer>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Grid>
+                }
+
+                {!this.state.kkt_info_hist.length ? null :
+                  <Grid item xs={12} sm={12} mb={5}>
+                    <Accordion style={{ width: '100%' }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Table size='small'>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>#</TableCell>
+                              <TableCell>№ кассы</TableCell>
+                              <TableCell>Дата / время</TableCell>
+                              <TableCell>Сотрудник</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {this.state.kkt_info_hist.map((it, k) =>
+                              <TableRow 
+                                hover 
+                                key={k} 
+                                style={{ cursor: 'pointer'}}
+                                onClick={this.open_hist_kkt.bind(this, it.id, it.kkt_id, 'kkt')} 
+                              >
+                                <TableCell>{k+1}</TableCell>
+                                <TableCell>{it.kassa}</TableCell>
+                                <TableCell>{it.date_time_update}</TableCell>
+                                <TableCell>{it.user_name}</TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
                       </AccordionDetails>
                     </Accordion>
                   </Grid>
