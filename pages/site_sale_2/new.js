@@ -187,8 +187,8 @@ class SiteSale2_new_ extends React.Component {
       ],
       type_order_list: [
         {id: 1, name: 'Все'},
-        {id: 2, name: 'Доставка'},
-        {id: 3, name: 'Самовывоз'},
+        {id: 3, name: 'Доставка'},
+        {id: 2, name: 'Самовывоз'},
         {id: 4, name: 'Зал'},
       ],
       where_order_list: [
@@ -211,6 +211,8 @@ class SiteSale2_new_ extends React.Component {
       
       spamNameSMS: '',
         
+      for_new: false,
+
       auto_text: true,
       where_promo: 1,
       promo_name: '',
@@ -408,7 +410,8 @@ class SiteSale2_new_ extends React.Component {
         promo_items_sale: JSON.stringify(this.state.itemsAddPrice),
         promo_conditions_items: JSON.stringify(conditionItems),
         
-        date_between: dateList
+        date_between: dateList,
+        for_new: this.state.for_new ? 1 : 0
       };
       
       let res = await this.getData('save_new_promo', data);
@@ -926,6 +929,10 @@ class SiteSale2_new_ extends React.Component {
             
             <Grid item xs={12} sm={3}>
               <MyCheckBox value={this.state.generate_new} func={ this.changeDataCheck.bind(this, 'generate_new') } label='Сгенерировать' />
+            </Grid>
+
+            <Grid item xs={12} sm={3}>
+              <MyCheckBox value={this.state.for_new} func={ this.changeDataCheck.bind(this, 'for_new') } label='Для новых клиентов ( на первый заказ )' />
             </Grid>
             
             <Grid item xs={12} sm={3}>
