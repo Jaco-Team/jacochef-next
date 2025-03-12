@@ -37,6 +37,7 @@ import { MyAlert, MyTextInput, MyAutocomplite, MyDatePickerNewViews, formatDateM
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
+import { name } from 'dayjs/locale/ru';
 dayjs.locale('ru'); 
 
 // ---------- Вспомогательные функции для переключения Табов ----------
@@ -538,7 +539,7 @@ class CustomColorPicker extends React.Component {
 // ---------- Компоненты страницы ---------- //
 
 
-// ---------- Инпут для модалки Коэффициенты ----------
+// ---------- Инпут для модалки Коэффициенты (Продажи) ----------
 class StatSale_Tab_Sett_Modal_Input extends React.Component {
 
   constructor(props) {
@@ -604,7 +605,163 @@ class StatSale_Tab_Sett_Modal_Input extends React.Component {
   }
 }
 
-// ---------- Модалка Коэффициенты ----------
+// ---------- Модалка Коэффициенты (Клиенты) ----------
+class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      color: '#2ECC71',
+      value: 0,
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.type_modal === 'edit' && (this.props.value !== prevProps.value || this.props.color_edit !== prevProps.color_edit)) {
+      this.setState({ 
+        value: this.props.value, 
+        color: this.props.color_edit 
+      });
+    }
+  }
+  
+
+  changeItem = (event) => {
+    let value = event.target.value;
+  
+    if (value === '') {
+      value = '0';
+    } else {
+      value = value.replace(/^0+(?=\d)/, '');
+    }
+  
+    let numericValue = Math.max(Number(value), 0);
+    value = numericValue.toString();
+  
+    this.setState({ value });
+  };
+
+  hsvaConvertHex({ h, s, v, a = 1 }) {
+    
+    const f = (n, k = (n + h * 6) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+    const r = Math.round(f(5) * 255);
+    const g = Math.round(f(3) * 255);
+    const b = Math.round(f(1) * 255);
+
+    const toHex = (num) => {
+      const hex = num.toString(16).toUpperCase();
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+
+    const alphaHex = toHex(Math.round(a * 255));
+
+    this.setState({ color: `#${toHex(r)}${toHex(g)}${toHex(b)}${alphaHex}` });
+  }
+  
+  save() {
+    const { value, color } = this.state;
+
+    if(!value) {
+      this.props.openAlert(false, 'Значение должно быть больше 0');
+
+      return;
+    }
+
+    const result = {
+      value,
+      color,
+    };
+
+    this.props.save(result);
+
+    this.onClose();
+  }
+
+  onClose() {
+
+    this.setState({ 
+      color: '#2ECC71', 
+      value: 0,
+    });
+
+    this.props.onClose();
+  }
+
+  render() {
+
+    const { open, fullScreen, type_modal, name_row } = this.props;
+    const { value, color } = this.state;
+
+    return (
+      <Dialog
+        open={open}
+        onClose={this.onClose.bind(this)}
+        fullWidth={true}
+        maxWidth={'md'}
+        fullScreen={fullScreen}
+      >
+        <DialogTitle className="button">
+          <Typography style={{ fontWeight: 'bold' }}>
+            {type_modal === 'edit' ? `Редактировать данные в таблице Коэффициенты (Клиенты) в строке ${name_row}` : `Добавить данные в таблицу Коэффициенты (Клиенты) в строку ${name_row}`}
+          </Typography>
+          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent>
+          
+          <Grid container spacing={10}>
+
+            <Grid item xs={12} sm={6} mt={3}>
+              <TextField
+                type="number"
+                value={value}
+                variant="outlined"
+                onChange={(e) => this.changeItem(e)}
+                onBlur={(e) => this.changeItem(e)}
+                fullWidth
+                InputProps={{
+                  inputProps: { min: 0, step: 1 },
+                }}
+                sx={{
+                  margin: 0,
+                  padding: 0,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "transparent",
+                    },
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    fontWeight: "bold",
+                    backgroundColor: color,
+                    borderRadius: "8px",
+                    backgroundClip: "padding-box",
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6} mt={3}>
+              <CustomColorPicker hsvaConvertHex={this.hsvaConvertHex.bind(this)} initialColor={color}/>
+            </Grid>
+
+          </Grid>
+
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={this.save.bind(this)}>
+            Сохранить
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+}
+
+// ---------- Модалка Коэффициенты (Продажи) ----------
 class StatSale_Tab_Sett_Modal_Rate extends React.Component {
 
   constructor(props) {
@@ -830,7 +987,7 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
   }
 }
 
-// ---------- Таб Коэффициенты ----------
+// ---------- Таб Настройки ----------
 class StatSale_Tab_Sett extends React.Component {
   constructor(props) {
     super(props);
@@ -838,12 +995,17 @@ class StatSale_Tab_Sett extends React.Component {
     this.state = {
       active_tab: 0,
       rows: this.initializeRows(),
+      rows_clietns: this.initializeRows_clients(),
       rows_edit: [],
       item_id_edit: null,
       type_modal: null,
       color_edit: null,
       modalDialogRate: false,
-      points: []
+      modalDialogRate_clients: false,
+      points: [],
+      value_edit: 0,
+      name_row: '',
+      item_type: '',
     };
 
   }
@@ -872,9 +1034,25 @@ class StatSale_Tab_Sett extends React.Component {
     ];
   }
 
+  initializeRows_clients() {
+    return [
+      { id: 1, name: '1.КЛИЕНТЫ', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#B22222', type: 'clients', data: [] },
+      { id: 2, data: [] },
+      { id: 3, name: '2.АКТИВНОСТЬ', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#FF8C00', type: 'active', data: [] },
+      { id: 4, data: [] },
+      { id: 5, name: '3.ЗАКАЗЫ', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#3CB371', type: 'orders', data: [] },
+      { id: 6, data: [] },
+      { id: 7, name: '4.СРЕДНИЙ ЧЕК', fontWeight_name: 'bold', color_name: '#fff', backgroundColor_name: '#4169E1', type: 'avg', data: [] },
+    ];
+  }
+
   componentDidUpdate(prevProps) {
     if (this.props.rows !== prevProps.rows) {
       this.get_data_rows();
+    }
+
+    if (this.props.rows_clietns !== prevProps.rows_clietns) {
+      this.get_data_rows_clietns();
     }
 
     if (this.props.points !== prevProps.points) {
@@ -926,6 +1104,43 @@ class StatSale_Tab_Sett extends React.Component {
         type_modal,
         modalDialogRate: true
     });
+  }
+
+  openModalRate_clients = (type_modal, name_row, item_type, id, value_edit, color_edit) => {
+
+    this.setState({
+      value_edit,
+      color_edit,
+      item_id_edit: id,
+      type_modal,
+      item_type,
+      name_row: name_row.replace(/^\d+\./, '').toLowerCase().replace(/^./, char => char.toUpperCase()),
+      modalDialogRate_clients: true
+    });
+  }
+
+  save_sett_rate_clients = async (data) => {
+    if (this.state.type_modal === 'edit') {
+      data.id = this.state.item_id_edit;
+    }
+  
+    data.type = this.state.type_modal;
+    data.item_type = this.state.item_type;
+  
+    if (data.item_type === 'orders') {
+      const numericValue = Number(data.value);
+      if (numericValue > 0 && numericValue < 1) {
+        data.value = Math.round(numericValue * 100);
+      }
+    }
+  
+    const res = await this.props.getData('save_sett_rate_clients', data);
+  
+    this.props.openAlert(res.st, res.text);
+  
+    if (res.st) {
+      setTimeout(() => this.props.getDataSet(), 100);
+    }
   }
 
   save_sett_rate = async (data) => {
@@ -980,6 +1195,39 @@ class StatSale_Tab_Sett extends React.Component {
     this.setState({ rows: updatedRows });
   }
 
+  get_data_rows_clietns() {
+    if (!Array.isArray(this.props.rows_clietns) || this.props.rows_clietns.length === 0) return;
+  
+    const updatedRows = this.state.rows_clietns.map(row => {
+      const typeKey = row.type?.trim().toLowerCase();
+  
+      return {
+        ...row,
+        data: this.props.rows_clietns
+          .filter(item => item.type?.trim().toLowerCase() === typeKey)
+          .map(item => {
+            if (typeKey === 'orders') {
+              return {
+                id: item.id,
+                value: item.value / 100,
+                value_range: `${item.max_value / 100} - ${item.min_value / 100}`,
+                backgroundColor: item.value_color,
+              };
+            } else {
+              return {
+                id: item.id,
+                value: item.value,
+                value_range: `${item.max_value} - ${item.min_value}`,
+                backgroundColor: item.value_color,
+              };
+            }
+          })
+      };
+    });
+  
+    this.setState({ rows_clietns: updatedRows });
+  }
+
   changeItem = (index, event) => {
     let value = event.target.value;
   
@@ -1020,7 +1268,7 @@ class StatSale_Tab_Sett extends React.Component {
   render() {
 
     const { activeTab, fullScreen, openAlert } = this.props;
-    const { active_tab, rows, points } = this.state;
+    const { active_tab, rows, points, rows_clietns } = this.state;
 
     const cellStyles = {
       name: {
@@ -1041,6 +1289,9 @@ class StatSale_Tab_Sett extends React.Component {
     const maxDataLength = Math.max(...rows.map(r => (r.data?.length || 0)));
     const tableWidth = Math.max(500, maxDataLength * 150 + 500);
 
+    const maxDataLength_cliens = Math.max(...rows_clietns.map(r => (r.data?.length || 0)));
+    const tableWidth_clietns = Math.max(500, maxDataLength_cliens * 150 + 500);
+
     return (
       <>
 
@@ -1053,6 +1304,18 @@ class StatSale_Tab_Sett extends React.Component {
           type_modal={this.state.type_modal}
           color_edit={this.state.color_edit}
           openAlert={openAlert}
+        />
+
+        <StatSale_Tab_Sett_Modal_Rate_Clients
+          open={this.state.modalDialogRate_clients}
+          onClose={() => this.setState({ modalDialogRate_clients: false, value_edit: 0, type_modal: null, color_edit: null, name_row: '' })}
+          fullScreen={fullScreen}
+          save={this.save_sett_rate_clients.bind(this)}
+          value={this.state.value_edit}
+          type_modal={this.state.type_modal}
+          color_edit={this.state.color_edit}
+          openAlert={openAlert}
+          name_row={this.state.name_row}
         />
 
         <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
@@ -1071,13 +1334,14 @@ class StatSale_Tab_Sett extends React.Component {
                     centered 
                     variant='fullWidth'
                   >
-                    <Tab label="Коэффициенты" {...a11yProps(0)} />
-                    <Tab label="Жители" {...a11yProps(1)} />
+                    <Tab label="Коэффициенты (Продажи)" {...a11yProps(0)} />
+                    <Tab label="Коэффициенты (Клиенты)" {...a11yProps(1)} />
+                    <Tab label="Жители (Клиенты)" {...a11yProps(2)} />
                   </Tabs>
                 </Paper>
               </Grid>
 
-              {/* Коэффициенты */}
+              {/* Коэффициенты (Продажи) */}
               <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
                 <TabPanel 
                   value={active_tab} 
@@ -1155,13 +1419,80 @@ class StatSale_Tab_Sett extends React.Component {
                   </Grid>
                 </TabPanel>
               </Grid>
-              {/* Коэффициенты */}
+              {/* Коэффициенты (Продажи) */}
 
-              {/* Жители */}
+              {/* Коэффициенты (Клиенты) */}
               <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
                 <TabPanel 
                   value={active_tab} 
                   index={1} 
+                  id='clients'
+                >
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={12} mt={3} mb={5}>
+                      <TableContainer style={{ overflowX: 'auto', maxWidth: '100%', paddingBottom: 20, width: tableWidth_clietns }}>
+                        <Table size='small'>
+                          <TableBody>
+                            {rows_clietns.map((item, key) => (
+                              <TableRow key={key}>
+                                <TableCell 
+                                  style={{ 
+                                    ...cellStyles.name, 
+                                    backgroundColor: item.backgroundColor_name || '#fff', 
+                                    fontWeight: item.fontWeight_name, 
+                                    color: item.color_name,
+                                    border: item?.name ? '1px solid #ccc' : 'none',
+                                  }}
+                                >
+                                  {item?.name ?? '\u00A0'}
+                                </TableCell>
+                                {item?.data.map((it, k) => (
+                                  <Tooltip 
+                                    key={k} 
+                                    title={<Typography color="inherit">Редактировать данные в ячейке</Typography>}
+                                  >
+                                    <TableCell
+                                      style={{
+                                        ...cellStyles.default,
+                                        backgroundColor: it?.backgroundColor || '#fff',
+                                        textAlign: 'center',
+                                        fontWeight: '900',
+                                        cursor: 'pointer',
+                                        border: '1px solid #ccc'
+                                      }}
+                                      onClick={() => this.openModalRate_clients('edit', item.name, item.type, it.id, it.value, it.backgroundColor)}
+                                    >
+                                      {it?.value_range ?? 0}
+                                    </TableCell>
+                                  </Tooltip>
+                                ))}
+
+                                {item?.name && (
+                                  <TableCell 
+                                    onClick={() => this.openModalRate_clients('new', item.name, item.type, null, 0, null)} 
+                                    style={{ border: 'none' }}
+                                  >
+                                    <Button variant='contained'>+</Button>
+                                  </TableCell>
+                                )}
+
+                              </TableRow>
+                            ))}
+
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Grid>
+                  </Grid>
+                </TabPanel>
+              </Grid>
+              {/* Коэффициенты (Клиенты) */}
+
+              {/* Жители (Клиенты) */}
+              <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+                <TabPanel 
+                  value={active_tab} 
+                  index={2} 
                   id='clients'
                 >
                   <Grid container spacing={3}>
@@ -1211,8 +1542,7 @@ class StatSale_Tab_Sett extends React.Component {
                   </Grid>
                 </TabPanel>
               </Grid>
-              {/* Жители */}
-
+              {/* Жители (Клиенты) */}
             
             </Grid>
           </TabPanel>
@@ -1270,32 +1600,61 @@ class StatSale_Tab_Clients extends React.Component {
   }
 
   get_data_clients = async () => {
-
     const { point, date_start, date_end } = this.state;
-
+  
     if (!point.length) {
       this.props.openAlert(false, 'Необходимо выбрать точку');
-      
       return;
-    } 
-
+    }
+  
     const data = {
       date_start,
       date_end,
       point: point.map(it => it.id).join(',')
     };
-
+  
     const res = await this.props.getData('get_data_clients', data);
-
-    if(res.st) {
-
+  
+    if (res.st) {
+      const rates = this.props.rates;
+  
       const processedData = res.data_list.map(table =>
         table.map(item => {
-          const people = parseInt(item.people, 10);
-          const active = parseInt(item.active, 10);
+          const people    = parseInt(item.people, 10);
+          const active    = parseInt(item.active, 10);
           const registred = parseInt(item.registred, 10);
-          const orders = parseInt(item.orders, 10);
-          const summ = parseInt(item.summ, 10);
+          const orders    = parseInt(item.orders, 10);
+          const summ      = parseInt(item.summ, 10);
+  
+          const percentClientsRaw       = calcPercent(active, people);         
+          const percentActiveAccountsRaw = calcPercent(registred, active);         
+          const ordersAvgRaw            = calcAvg(orders, active);               
+          const averageCheckRaw         = calcAverageCheck(summ, orders);         
+  
+          const matchingClients = rates.find(rate =>
+            rate.type === 'clients' &&
+            percentClientsRaw <= rate.max_value &&
+            percentClientsRaw >= rate.min_value
+          );
+
+          const matchingActive = rates.find(rate =>
+            rate.type === 'active' &&
+            percentActiveAccountsRaw <= rate.max_value &&
+            percentActiveAccountsRaw >= rate.min_value
+          );
+
+          const matchingOrders = rates.find(rate =>
+            rate.type === 'orders' &&
+            ordersAvgRaw <= (rate.max_value / 100) &&
+            ordersAvgRaw >= (rate.min_value / 100)
+          );
+
+          const matchingAvg = rates.find(rate =>
+            rate.type === 'avg' &&
+            averageCheckRaw <= rate.max_value &&
+            averageCheckRaw >= rate.min_value
+          );
+  
           return {
             ...item,
             peopleFormatted: formatNumber(people),
@@ -1303,22 +1662,24 @@ class StatSale_Tab_Clients extends React.Component {
             registredFormatted: formatNumber(registred),
             ordersFormatted: formatNumber(orders),
             summFormatted: formatNumber(summ),
-            percentClients: formatNumber(calcPercent(active, people)),
-            percentActiveAccounts: formatNumber(calcPercent(registred, active)),
-            ordersAvg: formatNumber(calcAvg(orders, active)),
-            averageCheck: formatNumber(calcAverageCheck(summ, orders)),
+            percentClients: formatNumber(percentClientsRaw),
+            percentActiveAccounts: formatNumber(percentActiveAccountsRaw),
+            ordersAvg: formatNumber(ordersAvgRaw),
+            averageCheck: formatNumber(averageCheckRaw),
+            clientsColor: matchingClients ? matchingClients.value_color : null,
+            activeColor: matchingActive ? matchingActive.value_color : null,
+            ordersColor: matchingOrders ? matchingOrders.value_color : null,
+            avgColor: matchingAvg ? matchingAvg.value_color : null,
           };
         })
       );
-      
+  
       this.setState({
         data_clients_list: processedData,
       });
-
     } else {
       this.props.openAlert(res.st, res.text);
     }
-  
   };
 
   render() {
@@ -1522,19 +1883,19 @@ class StatSale_Tab_Clients extends React.Component {
 
                             <TableCell>жителей</TableCell>
                             <TableCell>{item.peopleFormatted}</TableCell>
-                            <TableCell rowSpan={2} sx={cellDataStyles}>{item.percentClients}</TableCell>
+                            <TableCell rowSpan={2} sx={{ ...cellDataStyles, backgroundColor: item.clientsColor ? item.clientsColor : null}}>{item.percentClients}</TableCell>
                             <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
                             <TableCell>аккаунтов</TableCell>
                             <TableCell>{item.activeFormatted}</TableCell>
-                            <TableCell rowSpan={2} sx={cellDataStyles}>{item.percentActiveAccounts}</TableCell>
+                            <TableCell rowSpan={2} sx={{ ...cellDataStyles, backgroundColor: item.activeColor ? item.activeColor : null }}>{item.percentActiveAccounts}</TableCell>
                             <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
                             <TableCell>заказов</TableCell>
                             <TableCell>{item.ordersFormatted}</TableCell>
-                            <TableCell rowSpan={2} sx={cellDataStyles}>{item.ordersAvg}</TableCell>
+                            <TableCell rowSpan={2} sx={{ ...cellDataStyles, backgroundColor: item.ordersColor ? item.ordersColor : null }}>{item.ordersAvg}</TableCell>
                             <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
                             <TableCell>выручка</TableCell>
                             <TableCell>{item.summFormatted}</TableCell>
-                            <TableCell rowSpan={2} sx={cellDataStyles}>{item.averageCheck}</TableCell>
+                            <TableCell rowSpan={2} sx={{ ...cellDataStyles, backgroundColor: item.avgColor ? item.avgColor : null }}>{item.averageCheck}</TableCell>
                             <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
                           </TableRow>
 
@@ -1591,6 +1952,175 @@ class StatSale_Tab_Clients extends React.Component {
   }
 }
 
+// ---------- Таблица в Таб Продажи ----------
+const DataTable = ({ tableData }) => {
+
+  const toRawMonth = (formatted) => {
+    const [month, year] = formatted.split('-');
+    return `${year}-${month}`;
+  };
+
+  const getPreviousPeriodHeader = (formatted) => {
+    const parts = formatted.split('-');
+    if (parts.length < 2) return formatted;
+    const year = parts[1];
+    const currentLastTwo = year.slice(-2);
+    const previousLastTwo = (parseInt(year, 10) - 1).toString().slice(-2);
+    return `${currentLastTwo}/${previousLastTwo}`;
+  };
+
+  const renderMonthHeader = (formattedMonth) => {
+    const parts = formattedMonth.split('-');
+    const isoDate = `${parts[1]}-${parts[0]}-01`;
+    return (
+      <TableCell key={formattedMonth} colSpan={4} sx={{ backgroundColor: "#dcdcdc", minWidth: 4 * 80, top: 0, zIndex: 1000, borderTop: thickBorder, borderRight: thickBorder, borderBottom: thickBorder }}>
+        {dayjs(isoDate).format('MMMM YYYY').replace(/^./, (match) => match.toUpperCase())}
+      </TableCell>
+    );
+  };
+
+  const { columns, rows } = tableData;
+  const totalColSpan = 2 + columns.months.length * 4;
+
+  const thinBorder = "1px solid #ccc";
+  const thickBorder = "2px solid #000 !important";
+
+  const paramColWidth = 150;
+  const typeColWidth = 100;
+
+  const cellStylesHeader = {
+    position: 'sticky',
+    top: 40,
+    zIndex: 1000,
+    minWidth: '80px',
+    borderRight: thickBorder,
+    borderBottom: thickBorder
+  };
+
+  const [month, year] = columns.months[0].split('-');
+  const firstMonthKey = `${year}-${month}`;
+    
+  return (
+    <TableContainer component={Paper} sx={{ overflowX: 'auto', overflowY: 'hidden', p: 0, m: 0, pb: 5 }}>
+      <Table stickyHeader size="small" sx={{ borderCollapse: 'separate', borderSpacing: 0, '& .MuiTableCell-root': { textAlign: 'center', whiteSpace: 'nowrap', border: thinBorder } }}>
+
+        <TableHead>
+          <TableRow sx={{ backgroundColor: 'white', height: 40 }}>
+
+            <TableCell colSpan={2} rowSpan={2} sx={{ position: 'sticky', left: 0, top: 0, backgroundColor: 'white', zIndex: 1300, minWidth: paramColWidth + typeColWidth, borderRight: thickBorder, textAlign: 'left !important'}}>
+              Месяц / год
+            </TableCell>
+
+            {columns.months.map((formattedMonth) => renderMonthHeader(formattedMonth))}
+
+          </TableRow>
+
+          <TableRow sx={{ backgroundColor: 'white', height: 40 }}>
+            {columns.months.map((formattedMonth) => (
+              <React.Fragment key={formattedMonth}>
+                <TableCell sx={cellStylesHeader}>кол-во</TableCell>
+                <TableCell sx={cellStylesHeader}>факт/п</TableCell>
+                <TableCell sx={cellStylesHeader}>эффект-ть</TableCell>
+                <TableCell sx={cellStylesHeader}>{getPreviousPeriodHeader(formattedMonth)}</TableCell>
+              </React.Fragment>
+            ))}
+          </TableRow>
+
+          <TableRow>
+            <TableCell colSpan={totalColSpan} sx={{ border: "none", p: 0, m: 0 }}>{'\u00A0'}</TableCell>
+          </TableRow>
+
+        </TableHead>
+
+        <TableBody>
+          {rows.map((row, rowIndex) => (
+            <React.Fragment key={row.parameter}>
+              <TableRow>
+
+                <TableCell rowSpan={2} sx={{ position: 'sticky', left: 0, backgroundColor: 'white', zIndex: 1100, minWidth: paramColWidth, borderRight: 'none !important', fontWeight: "bold", textAlign: 'left !important' }}>
+                  {row.parameter}
+                </TableCell>
+
+                <TableCell component="th" scope="row" sx={{ position: 'sticky', left: paramColWidth + 33.5, backgroundColor: 'white', zIndex: 1100, minWidth: typeColWidth, borderLeft: 'none !important', borderRight: thickBorder }}>
+                  Роллы
+                </TableCell>
+
+                {columns.months.map((formattedMonth) => {
+                  const rawMonth = toRawMonth(formattedMonth);
+                  const cellData = row.data[rawMonth] || {};
+
+                  return (
+                    <React.Fragment key={`${formattedMonth}-rolls`}>
+                      <TableCell sx={{ minWidth: '80px', backgroundColor: cellData?.point_id ? cellData.color_rolls ?? null : null, fontWeight: cellData?.point_id ? 'bold' : 'normal' }}>
+                        {formatNumber(cellData.rolls_current ?? 0)}
+                      </TableCell>
+                      <TableCell sx={{ minWidth: '80px', backgroundColor: cellData.color_rolls ?? null, fontWeight: 'bold' }}>
+                        {cellData.percent_fact_rolls ?? 0}%
+                      </TableCell>
+                      <TableCell rowSpan={2} sx={{ minWidth: '80px', backgroundColor: cellData.color_fact ?? null, fontWeight: 'bold', fontSize: '32px !important'  }}>
+                        {cellData.percent_fact ?? 0}%
+                      </TableCell>
+                      <TableCell sx={{ minWidth: '80px', color: Number(cellData.percent_compare_rolls) > 0 ? 'green' : 'red', borderRight: thickBorder }}>
+                        {cellData.percent_compare_rolls ?? 0}%
+                      </TableCell>
+                    </React.Fragment>
+                  );
+
+                })}
+
+              </TableRow>
+
+              <TableRow>
+
+                <TableCell component="th" scope="row" sx={{ position: 'sticky', left: paramColWidth + 33.5, backgroundColor: 'white', zIndex: 1100, minWidth: typeColWidth, borderLeft: 'none !important', borderRight: thickBorder }}>
+                  Пицца
+                </TableCell>
+
+                {columns.months.map((formattedMonth) => {
+                  const rawMonth = toRawMonth(formattedMonth);
+                  const cellData = row.data[rawMonth] || {};
+                  return (
+                    <React.Fragment key={`${formattedMonth}-pizza`}>
+                      <TableCell sx={{ minWidth: '80px', backgroundColor: cellData?.point_id ? cellData.color_pizza ?? null : null, fontWeight: cellData?.point_id ? 'bold' : 'normal' }}>
+                        {formatNumber(cellData.pizza_current ?? 0)}
+                      </TableCell>
+                      <TableCell sx={{ minWidth: '80px', backgroundColor: cellData.color_pizza ?? null, fontWeight: 'bold'  }}>
+                        {cellData.percent_fact_pizza ?? 0}%
+                      </TableCell>
+                      <TableCell sx={{ minWidth: '80px', color: Number(cellData.percent_compare_pizza) > 0 ? 'green' : 'red', borderRight: thickBorder }}>
+                        {cellData.percent_compare_pizza ?? 0}%
+                      </TableCell>
+                    </React.Fragment>
+                  );
+                })}
+
+              </TableRow>
+
+              {rowIndex === 0  && 
+                <TableRow>
+                  <TableCell colSpan={totalColSpan} sx={{ border: 'none', p: 0, m: 0 }}>
+                    {'\u00A0'}
+                  </TableCell>
+                </TableRow>
+              }
+
+              {rowIndex < rows.length - 1 && !rows[rowIndex].data[firstMonthKey]?.point_id && rows[rowIndex + 1].data[firstMonthKey]?.point_id &&
+                <TableRow>
+                  <TableCell colSpan={totalColSpan} sx={{ border: 'none', p: 0, m: 0 }}>
+                    {'\u00A0'}
+                  </TableCell>
+                </TableRow>
+              }
+
+            </React.Fragment>
+          ))}
+        </TableBody>
+     
+      </Table>
+    </TableContainer>
+  );
+};
+
 // ---------- Таб Продажи ----------
 class StatSale_Tab_Sale extends React.Component {
   constructor(props) {
@@ -1637,8 +2167,6 @@ class StatSale_Tab_Sale extends React.Component {
 
     const res = await this.props.getData('get_data_sale', data);
 
-    console.log("🚀 === res:", res);
-
     if(res.st) {
       
       this.setState({
@@ -1655,75 +2183,6 @@ class StatSale_Tab_Sale extends React.Component {
 
     const { activeTab, points } = this.props;
     const { data_sale_list } = this.state;
-
-    const borderStyle = { border: '1px solid #b7b7b7' };
-
-    const commonCellStyles = {
-      width: '100px',
-      fontSize: '14px',
-      fontWeight: 'normal',
-      lineHeight: '14px',
-    };
-
-    const cellStylesAbsolute = {
-      position: 'absolute',
-      left: '24px',
-      backgroundColor: '#fff',
-      zIndex: 10,
-      width: '200px',
-      borderTop: 'none',
-      textAlign: 'left !important',
-      fontWeight: 'bold',
-      height: '50px'
-    };
-
-    const cellStylesDop = {
-      borderTop: 'none !important',
-      borderBottom: 'none !important',
-      paddingLeft: '270px !important',
-      minWidth: '10px !important',
-    };
-
-    const rowStyles = {
-      minWidth: '330px',
-      color: '#fff !important'
-    };
-
-    const cellDataStyles = {
-      fontWeight: 'bold', 
-      fontSize: '26px !important'
-    };
-
-    const emptyCellStyle = {
-      border: 'none !important',
-    };
-
-    const emptyCellStyleBorder = {
-      borderLeft: '1px solid #b7b7b7', 
-      borderRight: '1px solid #b7b7b7'
-    };
-
-    const emptyCellContent = '\u00A0';
-
-    const customCell = (
-      <>
-        <TableCell sx={cellStylesAbsolute}>{emptyCellContent}</TableCell>
-        <TableCell sx={cellStylesDop}>{emptyCellContent}</TableCell>
-      </>
-    );
-
-    const customRow = (
-      <>
-        <TableCell colSpan={3} sx={emptyCellStyleBorder}>{emptyCellContent}</TableCell>
-        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
-        <TableCell colSpan={3} sx={emptyCellStyleBorder}>{emptyCellContent}</TableCell>
-        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
-        <TableCell colSpan={3} sx={emptyCellStyleBorder}>{emptyCellContent}</TableCell>
-        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
-        <TableCell colSpan={3} sx={emptyCellStyleBorder}>{emptyCellContent}</TableCell>
-        <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
-      </>
-    );
 
     return (
       <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
@@ -1768,128 +2227,11 @@ class StatSale_Tab_Sale extends React.Component {
               </Button>
             </Grid>
 
-            {!data_sale_list.length ? null : (
+            {data_sale_list && data_sale_list.columns && data_sale_list.columns.months.length ? (
               <Grid item xs={12} sm={12} mt={3} mb={5} sx={{ position: 'relative', overflow: 'hidden' }}>
-                <TableContainer sx={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', paddingBottom: 5 }}>
-                  {data_sale_list.map((table, index) => (
-            
-                    <Table 
-                      key={index} 
-                      size="small" 
-                      sx={{ marginRight: 5, '& .MuiTableCell-root': { ...borderStyle, textAlign: 'center'}, maxWidth: '70%' }} 
-                    >
-                      <TableHead>
-
-                        <TableRow>
-
-                          {index === 0 && 
-                            <>
-                              <TableCell sx={cellStylesAbsolute}>Месяц / Год</TableCell>
-                              <TableCell sx={cellStylesDop}>{emptyCellContent}</TableCell>
-                            </>
-                          }
-
-                          <TableCell sx={{ backgroundColor: '#d3d3d3'}} colSpan={15}>
-                            {dayjs(table[0].month + '-01').format('MMMM YYYY').replace(/^./, (match) => match.toUpperCase())}
-                          </TableCell>
-
-                        </TableRow>
-
-                        <TableRow>
-                          
-                          {index === 0 && customCell}
-
-                          <TableCell sx={commonCellStyles}>Кол-во</TableCell>
-                          <TableCell sx={commonCellStyles}>факт/п</TableCell>
-                          <TableCell sx={commonCellStyles}>эффект-ть</TableCell>
-                          <TableCell sx={commonCellStyles}>{table[0].month.slice(2,4)}/{(+(table[0].month.slice(0,4))-1).toString().slice(-2)}</TableCell> 
-
-                        </TableRow>
-
-                        {/* <TableRow>
-
-                          {index === 0 && customCell}
-                          {customRow}
-
-                        </TableRow> */}
-
-                      </TableHead>
-
-                      <TableBody>
-                        {table.map((item, key) => (
-                          <React.Fragment key={key}>
-                            <TableRow >
-
-                              {index === 0 && 
-                                <>
-                                  <TableCell sx={{ ...cellStylesAbsolute, borderBottom: 'none !important' }}>{item.group}</TableCell>
-                                  <TableCell rowSpan={2} sx={cellStylesDop}>{emptyCellContent}</TableCell>
-                                </>
-                              }
-
-                              <TableCell>{item.rolls_current}</TableCell>
-                              {/* <TableCell>{item.peopleFormatted}</TableCell>
-                              <TableCell rowSpan={2} sx={cellDataStyles}>{item.percentClients}</TableCell>
-                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
-                              <TableCell>аккаунтов</TableCell>
-                              <TableCell>{item.activeFormatted}</TableCell>
-                              <TableCell rowSpan={2} sx={cellDataStyles}>{item.percentActiveAccounts}</TableCell>
-                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
-                              <TableCell>заказов</TableCell>
-                              <TableCell>{item.ordersFormatted}</TableCell>
-                              <TableCell rowSpan={2} sx={cellDataStyles}>{item.ordersAvg}</TableCell>
-                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
-                              <TableCell>выручка</TableCell>
-                              <TableCell>{item.summFormatted}</TableCell>
-                              <TableCell rowSpan={2} sx={cellDataStyles}>{item.averageCheck}</TableCell>
-                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell> */}
-                            </TableRow>
-
-                            <TableRow>
-      
-                              {index === 0 && 
-                                <TableCell 
-                                  sx={{ 
-                                    ...cellStylesAbsolute, 
-                                    borderTop: 'none !important', 
-                                    borderBottom: key === table.length - 1 ? '1px solid #ccc' : 'none !important',
-                                    height: key === table.length - 1 ? 'none !important' : '50px'
-                                  }}
-                                >
-                                  {emptyCellContent}
-                                </TableCell>
-                              }
-
-                              {/* <TableCell>аккаунтов</TableCell>
-                              <TableCell>{item.activeFormatted}</TableCell>
-                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
-                              <TableCell>актив акк</TableCell>
-                              <TableCell>{item.registredFormatted}</TableCell>
-                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
-                              <TableCell>аккаунтов</TableCell>
-                              <TableCell>{item.activeFormatted}</TableCell>
-                              <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
-                              <TableCell>заказов</TableCell>
-                              <TableCell>{item.ordersFormatted}</TableCell> */}
-                            </TableRow>
-
-                            <TableRow>
-
-                              {index === 0 && key === 0 && customCell}
-                              {index === 0 && !item.point_id && table[key + 1] && table[key + 1].point_id && customCell}
-                              {/* {key === 0  && customRow} */}
-                              {/* {!item.point_id && table[key + 1] && table[key + 1].point_id && customRow} */}
-
-                            </TableRow>
-
-                          </React.Fragment>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ))}
-                </TableContainer>
+                 <DataTable tableData={data_sale_list} />
               </Grid>
-            )}
+            ) : null}
           
           </Grid>
         </TabPanel>
@@ -1914,6 +2256,7 @@ class StatSale_ extends React.Component {
 
       data_sett_rate: [],
       data_sett_points: [],
+      data_sett_rate_clients: [],
 
       points: [],
       cities: [],
@@ -1923,11 +2266,10 @@ class StatSale_ extends React.Component {
   async componentDidMount() {
     const data = await this.getData('get_all');
 
-    console.log("🚀 === data:", data);
-
     this.setState({
       data_sett_rate: data.data_sett_rate,
       data_sett_points: data.data_sett_points,
+      data_sett_rate_clients: data.data_sett_rate_clients,
       module_name: data.module_info.name,
       points: data.points,
       cities: data.cities
@@ -1969,6 +2311,8 @@ class StatSale_ extends React.Component {
   }
 
   changeTab = (event, val) => {
+    if(parseInt(val) === 2) this.getDataSet();
+
     this.setState({ activeTab: val });
   };
 
@@ -1978,6 +2322,7 @@ class StatSale_ extends React.Component {
     this.setState({
       data_sett_rate: res.data_sett_rate,
       data_sett_points: res.data_sett_points,
+      data_sett_rate_clients: res.data_sett_rate_clients,
     });
   };
 
@@ -1994,7 +2339,7 @@ class StatSale_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop style={{ zIndex: 9999 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
@@ -2027,35 +2372,43 @@ class StatSale_ extends React.Component {
           </Grid>
 
           {/* Продажи */}
-          <StatSale_Tab_Sale
-            activeTab={this.state.activeTab}
-            fullScreen={this.state.fullScreen}
-            points={this.state.points}
-            openAlert={this.openAlert}
-            getData={this.getData}
-          />
+          {this.state.activeTab === 0 &&
+            <StatSale_Tab_Sale
+              activeTab={this.state.activeTab}
+              fullScreen={this.state.fullScreen}
+              points={this.state.points}
+              openAlert={this.openAlert}
+              getData={this.getData}
+            />
+          }
           {/* Продажи */}
 
           {/* Клиенты */}
-          <StatSale_Tab_Clients
-            activeTab={this.state.activeTab}
-            fullScreen={this.state.fullScreen}
-            points={this.state.points}
-            openAlert={this.openAlert}
-            getData={this.getData}
-          />
+          {this.state.activeTab === 1 &&
+            <StatSale_Tab_Clients
+              activeTab={this.state.activeTab}
+              fullScreen={this.state.fullScreen}
+              points={this.state.points}
+              openAlert={this.openAlert}
+              getData={this.getData}
+              rates={this.state.data_sett_rate_clients}
+            />
+          }
           {/* Клиенты */}
 
           {/* Настройки */}
-          <StatSale_Tab_Sett
-            activeTab={this.state.activeTab}
-            fullScreen={this.state.fullScreen}
-            rows={this.state.data_sett_rate}
-            getDataSet={this.getDataSet}
-            getData={this.getData}
-            points={this.state.data_sett_points}
-            openAlert={this.openAlert}
-          />
+          {this.state.activeTab === 2 &&
+            <StatSale_Tab_Sett
+              activeTab={this.state.activeTab}
+              fullScreen={this.state.fullScreen}
+              rows={this.state.data_sett_rate}
+              rows_clietns={this.state.data_sett_rate_clients}
+              getDataSet={this.getDataSet}
+              getData={this.getData}
+              points={this.state.data_sett_points}
+              openAlert={this.openAlert}
+            />
+          }
           {/* Настройки */}
              
         </Grid>
