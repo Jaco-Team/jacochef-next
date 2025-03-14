@@ -329,9 +329,47 @@ class StatSale_Tab_Dynamic extends React.Component {
 
       this.props.openAlert(false, res.text);
 
+      this.setState({
+        columns: [],
+        cats: []
+      });
+
     }
   
   };
+
+  downLoad = async () => {
+    let { city, date_start, date_end } = this.state;
+
+    if (!city) {
+      this.props.openAlert(false, 'Необходимо выбрать город');
+      return;
+    } 
+
+    date_start = dayjs(date_start).format('YYYY-MM-DD');
+    date_end = dayjs(date_end).format('YYYY-MM-DD');
+
+    const data = {
+      date_start,
+      date_end,
+      city
+    };
+
+    const dop_type = {
+      responseType: 'blob',
+    };
+
+    const res = await this.props.getData('export_file_xls_dynamic', data, dop_type);
+
+    const url = window.URL.createObjectURL(new Blob([res]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Динамика цен за период ${date_start}_${date_end}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
 
   render() {
 
@@ -382,13 +420,24 @@ class StatSale_Tab_Dynamic extends React.Component {
               </Button>
             </Grid>
 
+            <Grid item xs={12} sm={4}>
+              <Button variant={!(columns.length && cats.length) ? "outlined" : "contained"} onClick={this.downLoad} disabled={!(columns.length && cats.length)}>
+                Скачать таблицу в XLS
+              </Button>
+            </Grid>
+
             {columns.length && cats.length ?
               <Grid item xs={12} sm={12} mt={3} mb={5}>
-                <TableContainer sx={{ maxHeight: 650, maxWidth: '100%', overflow: 'auto', p: 0, m: 0}}>
+                <TableContainer sx={{ maxHeight: 650, maxWidth: '100%', overflow: 'auto', p: 0, m: 0 }}>
                   <Table size="small" sx={{ borderCollapse: 'separate', borderSpacing: 0, '& .MuiTableCell-root': { textAlign: 'center', whiteSpace: 'nowrap' } }}>
                     <TableHead>
-                      <TableRow sx={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#fff' }}>
-                        <TableCell sx={{ position: 'sticky', left: 0, zIndex: 11, backgroundColor: '#fff', borderLeft: 'none', minWidth: 200, width: 400 }}>
+                      <TableRow sx={{ position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#fff' }}>
+
+                        <TableCell sx={{ position: 'sticky', left: 0, zIndex: 98,  backgroundColor: '#fff',  borderLeft: 'none',  minWidth: 50, width: 50 }}>
+                          ID Товара
+                        </TableCell>
+
+                        <TableCell sx={{ position: 'sticky', left: 104, zIndex: 95, backgroundColor: '#fff', borderLeft: 'none', minWidth: 200, width: 400 }}>
                           Название
                         </TableCell>
 
@@ -402,44 +451,40 @@ class StatSale_Tab_Dynamic extends React.Component {
                     </TableHead>
 
                     <TableBody>
-                      {cats.map(cat => {
-
+                      {cats.map((cat) => {
                         if (!cat.items || cat.items.length === 0) return null;
 
                         return (
                           <React.Fragment key={cat.id}>
+
                             <TableRow>
-                              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', position: 'sticky', left: 0, zIndex: 9 }}>
+                              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', position: 'sticky', left: 0, zIndex: 80 }} />
+                              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', position: 'sticky', left: 104, zIndex: 80 }}>
                                 {cat.name}
                               </TableCell>
                               <TableCell colSpan={totalCols} sx={{ backgroundColor: '#f5f5f5' }} />
                             </TableRow>
 
-                            {cat.items.map(item => (
-                              <TableRow key={item.id}>
-                                <TableCell sx={{ position: 'sticky', left: 0, zIndex: 9, backgroundColor: '#fff', borderLeft: 'none', boxShadow: '2px 0 5px -2px rgba(0,0,0,0.05)', minWidth: 200, width: 400, textOverflow: 'ellipsis', overflow: 'hidden'}}>
+                            {cat.items.map((item) => (
+                              <TableRow key={item.id} >
+                                <TableCell sx={{ position: 'sticky', left: 0, zIndex: 70, backgroundColor: '#fff', borderLeft: 'none', minWidth: 50, width: 50, textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                                  {item.id}
+                                </TableCell>
+                                <TableCell sx={{ position: 'sticky', left: 104, zIndex: 69, backgroundColor: '#fff', borderLeft: 'none', minWidth: 200, width: 400, textOverflow: 'ellipsis', overflow: 'hidden' }}>
                                   {item.name}
                                 </TableCell>
 
                                 {item.prices.map((price, idx) => {
-
                                   const cellColor = item.price_colors?.[idx] ?? null;
-
                                   return (
-                                    <TableCell
-                                      key={idx}
-                                      sx={{
-                                        minWidth: 120,
-                                        ...(cellColor ? { backgroundColor: cellColor, fontWeight: 'bold' } : {})
-                                      }}
-                                    >
-                                      {price !== null ? price : ''}
+                                    <TableCell key={idx} sx={{ minWidth: 120, ...(cellColor ? { backgroundColor: cellColor, fontWeight: 'bold' } : {}) }}>
+                                       {price ?? '0'}
                                     </TableCell>
                                   );
                                 })}
-
                               </TableRow>
                             ))}
+
                           </React.Fragment>
                         );
                       })}
@@ -729,7 +774,7 @@ class SitePriceLevel_Tab_Level extends React.Component {
           input_value={input_value}
         />
 
-        <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={is_load}>
+        <Backdrop style={{ zIndex: 999 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
@@ -855,7 +900,7 @@ class SitePriceLevel_ extends React.Component {
     let res = api_laravel(this.state.module, method, data, dop_type)
     .then(result => {
 
-      if(method === 'export_file_xls') {
+      if(method === 'export_file_xls' || method === 'export_file_xls_dynamic') {
         return result;
       } else {
         return result.data;
@@ -932,7 +977,7 @@ class SitePriceLevel_ extends React.Component {
 
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={is_load}>
+        <Backdrop style={{ zIndex: 999 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
 

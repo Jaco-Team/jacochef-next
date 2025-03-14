@@ -37,7 +37,6 @@ import { MyAlert, MyTextInput, MyAutocomplite, MyDatePickerNewViews, formatDateM
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
-import { name } from 'dayjs/locale/ru';
 dayjs.locale('ru'); 
 
 // ---------- Вспомогательные функции для переключения Табов ----------
@@ -678,6 +677,12 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
     this.onClose();
   }
 
+  delete() {
+    this.props.delete();
+
+    this.onClose();
+  }
+
   onClose() {
 
     this.setState({ 
@@ -751,11 +756,21 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
           </Grid>
 
         </DialogContent>
-        <DialogActions>
-          <Button variant="contained" onClick={this.save.bind(this)}>
+     
+        <DialogActions sx={{ display: 'flex', justifyContent: type_modal === 'edit' ? 'space-between' : 'flex-end' }}>
+
+          {type_modal === 'edit' && (
+            <Button variant="contained" onClick={this.delete.bind(this)}>
+              Удалить
+            </Button>
+          )}
+
+          <Button variant="contained" color="success" onClick={this.save.bind(this)}>
             Сохранить
           </Button>
+
         </DialogActions>
+
       </Dialog>
     );
   }
@@ -862,6 +877,12 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
     }, { percent_color: color });
 
     this.props.save(result);
+
+    this.onClose();
+  }
+
+  delete() {
+    this.props.delete();
 
     this.onClose();
   }
@@ -977,10 +998,19 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
           </Grid>
 
         </DialogContent>
-        <DialogActions>
-          <Button variant="contained" onClick={this.check.bind(this)}>
+
+        <DialogActions sx={{ display: 'flex', justifyContent: type_modal === 'edit' ? 'space-between' : 'flex-end' }}>
+
+          {type_modal === 'edit' && (
+            <Button variant="contained" onClick={this.delete.bind(this)}>
+              Удалить
+            </Button>
+          )}
+
+          <Button variant="contained" color="success" onClick={this.check.bind(this)}>
             Сохранить
           </Button>
+          
         </DialogActions>
       </Dialog>
     );
@@ -1099,10 +1129,10 @@ class StatSale_Tab_Sett extends React.Component {
     }
 
     this.setState({
-        item_id_edit: id,
-        rows_edit,
-        type_modal,
-        modalDialogRate: true
+      item_id_edit: id,
+      rows_edit,
+      type_modal,
+      modalDialogRate: true
     });
   }
 
@@ -1265,6 +1295,38 @@ class StatSale_Tab_Sett extends React.Component {
   
   };
 
+  delete_sett_rate = async () => {
+
+    const data = {
+      id: this.state.item_id_edit,
+    }
+
+    const res = await this.props.getData('delete_sett_rate', data);
+
+    this.props.openAlert(res.st, res.text);
+
+    if (res.st) {
+      setTimeout(() => this.props.getDataSet(), 100);
+    }
+
+  }
+
+  delete_sett_rate_clients = async () => {
+
+    const data = {
+      id: this.state.item_id_edit,
+    }
+
+    const res = await this.props.getData('delete_sett_rate_clients', data);
+
+    this.props.openAlert(res.st, res.text);
+
+    if (res.st) {
+      setTimeout(() => this.props.getDataSet(), 100);
+    }
+
+  }
+
   render() {
 
     const { activeTab, fullScreen, openAlert } = this.props;
@@ -1304,6 +1366,7 @@ class StatSale_Tab_Sett extends React.Component {
           type_modal={this.state.type_modal}
           color_edit={this.state.color_edit}
           openAlert={openAlert}
+          delete={this.delete_sett_rate.bind(this)}
         />
 
         <StatSale_Tab_Sett_Modal_Rate_Clients
@@ -1316,6 +1379,7 @@ class StatSale_Tab_Sett extends React.Component {
           color_edit={this.state.color_edit}
           openAlert={openAlert}
           name_row={this.state.name_row}
+          delete={this.delete_sett_rate_clients.bind(this)}
         />
 
         <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
@@ -1708,6 +1772,20 @@ class StatSale_Tab_Clients extends React.Component {
       height: '50px'
     };
 
+    const cellStylesAbsoluteName = {
+      position: 'absolute',
+      left: '24px',
+      backgroundColor: '#fff',
+      zIndex: 20,
+      width: '200px',
+      borderTop: 'none',
+      fontWeight: 'bold',
+      height: '50px',
+      display: 'flex',
+      alignItems: 'center',  
+      paddingTop: '10px'
+    };
+
     const cellStylesDop = {
       borderTop: 'none !important',
       borderBottom: 'none !important',
@@ -1876,7 +1954,7 @@ class StatSale_Tab_Clients extends React.Component {
 
                             {index === 0 && 
                               <>
-                                <TableCell sx={{ ...cellStylesAbsolute, borderBottom: 'none !important' }}>{item.name}</TableCell>
+                                <TableCell sx={{ ...cellStylesAbsoluteName, borderBottom: 'none !important' }}>{item.name}</TableCell>
                                 <TableCell rowSpan={2} sx={cellStylesDop}>{emptyCellContent}</TableCell>
                               </>
                             }
@@ -1907,7 +1985,7 @@ class StatSale_Tab_Clients extends React.Component {
                                   ...cellStylesAbsolute, 
                                   borderTop: 'none !important', 
                                   borderBottom: key === table.length - 1 ? '1px solid #ccc' : 'none !important',
-                                  height: key === table.length - 1 ? 'none !important' : '50px'
+                                  height: key === table.length - 1 ? 'none !important' : '50px',
                                 }}
                               >
                                 {emptyCellContent}

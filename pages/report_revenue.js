@@ -285,6 +285,11 @@ class ReportRevenue_ extends React.Component {
       
     } else {
       this.openAlert(false, res.text);
+
+      this.setState({
+        months: [],
+        reportCats: []
+      });
     }
   };
 
