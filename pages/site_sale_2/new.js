@@ -168,6 +168,7 @@ class SiteSale2_new_ extends React.Component {
         {id: 1, name: 'На товары'},
         {id: 2, name: 'На категории'},
         {id: 3, name: 'На все меню (кроме допов и закусок)'},
+        {id: 7, name: 'На все меню'},
       ],
       promo_conditions_list: [
         {id: 1, name: 'В корзине есть определенные товар(ы)'},
@@ -653,6 +654,9 @@ class SiteSale2_new_ extends React.Component {
       }
       if(parseInt(promo_type_sale) == 3){//все
         textTrue = 'скидку на всё меню, кроме напитков, соусов, приправ и палочек, в размере '+count_promo+(parseInt(promo_type) == 1 ? 'руб.' : '%');
+      }
+      if(parseInt(promo_type_sale) == 7){//все
+        textTrue = 'скидку на всё меню, в размере '+count_promo+(parseInt(promo_type) == 1 ? 'руб.' : '%');
       }
     }
     
