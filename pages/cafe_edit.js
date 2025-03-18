@@ -37,6 +37,9 @@ import TableContainer from '@mui/material/TableContainer';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import Chip from '@mui/material/Chip';
+import Tooltip from '@mui/material/Tooltip';
+
 import {MyAutocomplite, MyTextInput, MySelect, MyCheckBox, MyAlert, formatDate, MyDatePickerNew, MyAutocomplite2} from '@/ui/elements';
 
 import { api, api_laravel, api_laravel_local } from '@/src/api_new';
@@ -1911,6 +1914,24 @@ class CafeEdit_ extends React.Component {
     const upr = res.upr_list.find(upr => parseInt(upr.id) === parseInt(res.point_info?.manager_id?.id));
     if(!upr) res.upr_list.push(res.point_info?.manager_id);
 
+    const today = dayjs();
+
+    const kkt_info_active = res.kkt_info_active.map(item => {
+      const newItem = { ...item };
+    
+      if (item.date_end) {
+        const diffEnd = dayjs(item.date_end).diff(today, 'day');
+        newItem.days_left_end = diffEnd <= 0 ? '!' : diffEnd;
+      }
+    
+      if (item.date_license) {
+        const diffLic = dayjs(item.date_license).diff(today, 'day');
+        newItem.days_left_license = diffLic <= 0 ? '!' : diffLic;
+      }
+    
+      return newItem;
+    });
+
     this.setState({
       upr_list: res.upr_list,
       cities: res.cities,
@@ -1925,7 +1946,7 @@ class CafeEdit_ extends React.Component {
       point_sett_hist: res.point_sett_hist,
       point_zone_hist: res.point_zone_hist,
       point_sett_driver_hist: res.point_sett_driver_hist,
-      kkt_info_active: res.kkt_info_active,
+      kkt_info_active,
       kkt_info_none_active: res.kkt_info_none_active,
       kkt_info_hist: res.kkt_info_hist,
     });
@@ -2821,7 +2842,7 @@ class CafeEdit_ extends React.Component {
       <>
         <Script src="https://api-maps.yandex.ru/2.1/?apikey=665f5b53-8905-4934-9502-4a6a7b06a900&lang=ru_RU" />
 
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop style={{ zIndex: 999 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
@@ -3561,6 +3582,7 @@ class CafeEdit_ extends React.Component {
                           <TableCell>ФН</TableCell>
                           <TableCell style={{ minWidth: '200px' }}>Дата регистрации</TableCell>
                           <TableCell style={{ minWidth: '200px' }}>Дата окончания</TableCell>
+                          <TableCell style={{ minWidth: '200px' }}>Лицензия ОФД дата завершения</TableCell>
                           {parseInt(this.state.acces?.add_fn) ?
                             <TableCell style={{ minWidth: '200px' }}>Добавить новый ФН</TableCell>
                             : null
@@ -3575,7 +3597,77 @@ class CafeEdit_ extends React.Component {
                             <TableCell>{item.rn_kkt}</TableCell>
                             <TableCell>{item.fn}</TableCell>
                             <TableCell>{item.date_start}</TableCell>
-                            <TableCell>{item.date_end}</TableCell>
+
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {item.date_end ? (
+                                  <>
+                                    <Typography variant="body2" sx={{ margin: '16px 0' }}>
+                                      {item.date_end}
+                                    </Typography>
+                                    <Tooltip title={item.days_left_end === '!' ? "Дни просрочены" : "Осталось дней"}>
+                                      <Chip
+                                        label={item.days_left_end}
+                                        size="small"
+                                        sx={{
+                                          ml: 2,
+                                          height: 22,
+                                          cursor: 'default',
+                                          '&:hover': {
+                                            cursor: 'default',
+                                          },
+                                          '& .MuiChip-label': {
+                                            fontSize: '14px !important',
+                                            fontWeight: 'bold',
+                                            lineHeight: 1,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            px: 1.2,
+                                            color: item.days_left_end === '!' ? 'red' : 'inherit'
+                                          }
+                                        }}
+                                      />
+                                    </Tooltip>
+                                  </>
+                                ) : null}
+                              </Box>
+                            </TableCell>
+
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {item.date_license ? (
+                                  <>
+                                    <Typography variant="body2" sx={{ margin: '16px 0' }}>
+                                      {item.date_license}
+                                    </Typography>
+                                    <Tooltip title={item.days_left_license === '!' ? "Дни просрочены" : "Осталось дней"}>
+                                      <Chip
+                                        label={item.days_left_license}
+                                        size="small"
+                                        sx={{
+                                          ml: 2,
+                                          height: 22,
+                                          cursor: 'default',
+                                          '&:hover': {
+                                            cursor: 'default',
+                                          },
+                                          '& .MuiChip-label': {
+                                            fontSize: '14px !important',
+                                            fontWeight: 'bold',
+                                            lineHeight: 1,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            px: 1.2,
+                                            color: item.days_left_license === '!' ? 'red' : 'inherit'
+                                          }
+                                        }}
+                                      />
+                                    </Tooltip>
+                                  </>
+                                ) : null}
+                              </Box>
+                            </TableCell>
+
                             {parseInt(this.state.acces?.add_fn) ?
                               <TableCell>
                                 <Button 
@@ -3616,6 +3708,7 @@ class CafeEdit_ extends React.Component {
                                 <TableCell>ФН</TableCell>
                                 <TableCell style={{ minWidth: '200px' }}>Дата регистрации</TableCell>
                                 <TableCell style={{ minWidth: '200px' }}>Дата окончания</TableCell>
+                                <TableCell style={{ minWidth: '200px' }}>Лицензия ОФД дата завершения</TableCell>
                               </TableRow>
                             </TableHead>
                             <TableBody>
@@ -3626,6 +3719,7 @@ class CafeEdit_ extends React.Component {
                                   <TableCell>{item.fn}</TableCell>
                                   <TableCell>{item.date_start}</TableCell>
                                   <TableCell>{item.date_end}</TableCell>
+                                  <TableCell>{item.date_license}</TableCell>
                                 </TableRow>
                               ))}
                             </TableBody>

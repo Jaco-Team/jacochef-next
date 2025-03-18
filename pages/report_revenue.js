@@ -13,6 +13,9 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+
 import { MyDatePickerNew, MyAlert, formatDate, MyAutocomplite } from '@/ui/elements';
 
 import { api, api_laravel } from '@/src/api_new';
@@ -22,28 +25,67 @@ import 'dayjs/locale/ru';
 dayjs.locale('ru'); 
 
 class ReportRevenue_Table extends React.Component {
-  shouldComponentUpdate(nextProps) {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      sort: {
+        monthIndex: null,
+        field: null,
+        order: 'desc'
+      }
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    if (
+      JSON.stringify(this.props.months) !== JSON.stringify(prevProps.months) ||
+      JSON.stringify(this.props.cats) !== JSON.stringify(prevProps.cats)
+    ) {
+      this.setState({
+        sort: { monthIndex: null, field: null, order: 'desc' }
+      });
+    }
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
     return (
       JSON.stringify(this.props.months) !== JSON.stringify(nextProps.months) ||
-      JSON.stringify(this.props.cats) !== JSON.stringify(nextProps.cats)
+      JSON.stringify(this.props.cats) !== JSON.stringify(nextProps.cats) ||
+      JSON.stringify(this.state.sort) !== JSON.stringify(nextState.sort)
     );
   }
 
-  formatNumber = (num) => new Intl.NumberFormat('ru-RU').format(num);
+  handleSort = (monthIndex, field) => {
+    this.setState(prevState => {
+      let newOrder;
+      if (prevState.sort.monthIndex === monthIndex && prevState.sort.field === field) {
+        newOrder = prevState.sort.order === 'asc' ? 'desc' : 'asc';
+      } else {
+        newOrder = 'desc';
+      }
+      return { sort: { monthIndex, field, order: newOrder } };
+    });
+  };
 
-  formatCurrency = (num) => new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    minimumFractionDigits: 0
-  }).format(num);
+  formatNumber = (num) =>
+    new Intl.NumberFormat('ru-RU').format(num);
 
-  getRowTotal = (data) => data.reduce(
-    (acc, d) => ({
-      count: acc.count + d.count,
-      price: acc.price + d.price
-    }),
-    { count: 0, price: 0 }
-  );
+  formatCurrency = (num) =>
+    new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: 'RUB',
+      minimumFractionDigits: 0
+    }).format(num);
+
+  getRowTotal = (data) =>
+    data.reduce(
+      (acc, d) => ({
+        count: acc.count + d.count,
+        price: acc.price + d.price
+      }),
+      { count: 0, price: 0 }
+    );
 
   calculateGrandTotals(months, cats) {
     const grandTotals = {
@@ -65,86 +107,160 @@ class ReportRevenue_Table extends React.Component {
     return grandTotals;
   }
 
+  renderArrow = (currentMonthIndex, activeField) => {
+    const { sort } = this.state;
+
+    if (sort.monthIndex === currentMonthIndex && sort.field === activeField) {
+      return sort.order === 'asc' ? (
+        <ArrowDownwardIcon style={{ verticalAlign: 'middle', fontSize: 'small' }} />
+      ) : (
+        <ArrowUpwardIcon style={{ verticalAlign: 'middle', fontSize: 'small' }} />
+      );
+    }
+
+    return (
+      <ArrowDownwardIcon
+        style={{ verticalAlign: 'middle', fontSize: 'small', opacity: 0.5 }}
+      />
+    );
+
+  };
+
   render() {
     const { months, cats } = this.props;
+    const { sort } = this.state;
     const totalCols = 1 + (2 * months.length) + 2;
     const grandTotals = this.calculateGrandTotals(months, cats);
 
     return (
-      <TableContainer sx={{ maxHeight: 650, overflow: 'auto', p: 0, m: 0, pb: 5 }}>
-        <Table size="small" sx={{ borderCollapse: 'separate', borderSpacing: 0, '& .MuiTableCell-root': { textAlign: 'center', whiteSpace: 'nowrap' } }}>
-
-          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#fff' }}>
+      <TableContainer sx={{ maxHeight: 650, maxWidth: '100%', overflow: 'auto', p: 0, m: 0, pb: 5 }}>
+        <Table stickyHeader size="small" sx={{ borderCollapse: 'separate', borderSpacing: 0, '& .MuiTableCell-root': { textAlign: 'center', whiteSpace: 'nowrap' } }}>
+          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#fff' }}>
             <TableRow sx={{ height: 40 }}>
-              <TableCell sx={{ position: 'sticky', left: 0, zIndex: 11, backgroundColor: '#fff', minWidth: 200, width: 400, textAlign: 'left !important' }}>
+              <TableCell sx={{ position: 'sticky', left: 0, zIndex: 98, backgroundColor: '#fff', borderLeft: 'none', minWidth: 20, width: 20 }}>
+                ID Товара
+              </TableCell>
+              <TableCell sx={{ position: 'sticky', left: 104, zIndex: 95, backgroundColor: '#fff', minWidth: 200, width: 400, textAlign: 'left !important' }}>
                 Название
               </TableCell>
-              {months.map(month => (
-                <TableCell key={month} colSpan={2} align="center" sx={{ minWidth: 240 }}>
-                  {dayjs(month + '-01').format('MMMM YYYY').replace(/^./, m => m.toUpperCase())}
+              {months.map((month, idx) => (
+                <TableCell key={month} colSpan={2} sx={{ minWidth: 240 }}>
+                  {dayjs(month + '-01').format('MMMM YYYY').replace(/^./, ch => ch.toUpperCase())}
                 </TableCell>
               ))}
-              <TableCell colSpan={2} align="center" sx={{ minWidth: 240 }}>
+              <TableCell colSpan={2} sx={{ minWidth: 240 }}>
                 Итого
               </TableCell>
             </TableRow>
 
             <TableRow sx={{ height: 40 }}>
-              <TableCell sx={{ position: 'sticky', left: 0, zIndex: 11, backgroundColor: '#fff', minWidth: 200 }} />
-
-              {months.map((_, idx) => (
+              <TableCell colSpan={2} sx={{ position: 'sticky', left: 0, zIndex: 11, backgroundColor: '#fff', minWidth: 200 }} />
+              {months.map((__, idx) => (
                 <React.Fragment key={idx}>
-                  <TableCell align="center">Кол-во, шт</TableCell>
-                  <TableCell align="center">Выручка, руб</TableCell>
+                  <TableCell onClick={() => this.handleSort(idx, 'count')} sx={{ cursor: 'pointer' }}>
+                    Кол-во, шт&nbsp;{this.renderArrow(idx, 'count')}
+                  </TableCell>
+                  <TableCell onClick={() => this.handleSort(idx, 'price')} sx={{ cursor: 'pointer' }}>
+                    Выручка, руб&nbsp;{this.renderArrow(idx, 'price')}
+                  </TableCell>
                 </React.Fragment>
               ))}
 
-              <TableCell align="center">Кол-во, шт</TableCell>
-              <TableCell align="center">Выручка, руб</TableCell>
+              <TableCell onClick={() => this.handleSort(-1, 'count')} sx={{ cursor: 'pointer' }}>
+                Кол-во, шт&nbsp;{this.renderArrow(-1, 'count')}
+              </TableCell>
+              <TableCell onClick={() => this.handleSort(-1, 'price')} sx={{ cursor: 'pointer' }}>
+                Выручка, руб&nbsp;{this.renderArrow(-1, 'price')}
+              </TableCell>
+
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {cats.map(cat => cat.items?.length ? (
-              <React.Fragment key={cat.id}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', position: 'sticky', left: 0, textAlign: 'left !important' }}>{cat.name}</TableCell>
-                  <TableCell colSpan={totalCols - 1} sx={{ backgroundColor: '#f5f5f5' }} />
-                </TableRow>
+            {cats.map(cat =>
+              cat.items?.length ? (
+                <React.Fragment key={cat.id}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', position: 'sticky', left: 0, zIndex: 80 }} />
+                    <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', position: 'sticky', left: 104, textAlign: 'left !important', zIndex: 69 }}>
+                      {cat.name}
+                    </TableCell>
+                    <TableCell colSpan={totalCols - 1} sx={{ backgroundColor: '#f5f5f5' }} />
+                  </TableRow>
 
-                {cat.items.map(item => {
-                  const rowTotal = this.getRowTotal(item.data);
-                  return (
-                    <TableRow key={item.id}>
-                      <TableCell sx={{ position: 'sticky', left: 0, backgroundColor: '#fff', boxShadow: '2px 0 5px -2px rgba(0,0,0,0.05)', minWidth: 200, textAlign: 'left !important' }}>
-                        {item.name}
-                      </TableCell>
-                      {item.data.map((d, idx) => (
-                        <React.Fragment key={idx}>
-                          <TableCell>{d.count ? this.formatNumber(d.count) : 0}</TableCell>
-                          <TableCell>{d.price ? this.formatCurrency(d.price) : 0}</TableCell>
-                        </React.Fragment>
-                      ))}
-                      <TableCell>{rowTotal.count ? this.formatNumber(rowTotal.count) : 0}</TableCell>
-                      <TableCell>{rowTotal.price ? this.formatCurrency(rowTotal.price) : 0}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </React.Fragment>
-            ) : null)}
+                  {(() => {
+
+                    let items = cat.items;
+                    if (sort.monthIndex !== null && sort.field !== null) {
+                      items = [...items].sort((a, b) => {
+                        let aValue, bValue;
+                        if (sort.monthIndex === -1) {
+                          aValue = this.getRowTotal(a.data)[sort.field] || 0;
+                          bValue = this.getRowTotal(b.data)[sort.field] || 0;
+                        } else {
+                          aValue = a.data[sort.monthIndex] ? a.data[sort.monthIndex][sort.field] : 0;
+                          bValue = b.data[sort.monthIndex] ? b.data[sort.monthIndex][sort.field] : 0;
+                        }
+                        return sort.order === 'asc' ? aValue - bValue : bValue - aValue;
+                      });
+                    }
+
+                    return items.map(item => {
+                      const rowTotal = this.getRowTotal(item.data);
+                      return (
+                        <TableRow key={item.id}>
+
+                          <TableCell sx={{ position: 'sticky', left: 0, zIndex: 70, backgroundColor: '#fff', borderLeft: 'none', minWidth: 50, width: 50, textOverflow: 'ellipsis', overflow: 'hidden'}}>
+                            {item.id}
+                          </TableCell>
+                          <TableCell sx={{ position: 'sticky', left: 104, zIndex: 69, backgroundColor: '#fff', boxShadow: '2px 0 5px -2px rgba(0,0,0,0.05)', minWidth: 200, textAlign: 'left !important'}}>
+                            {item.name}
+                          </TableCell>
+
+                          {item.data.map((d, idx) => (
+                            <React.Fragment key={idx}>
+                              <TableCell>{d.count ? this.formatNumber(d.count) : 0}</TableCell>
+                              <TableCell>{d.price ? this.formatCurrency(d.price) : 0}</TableCell>
+                            </React.Fragment>
+                          ))}
+
+                          <TableCell>{rowTotal.count ? this.formatNumber(rowTotal.count) : 0}</TableCell>
+                          <TableCell>{rowTotal.price ? this.formatCurrency(rowTotal.price) : 0}</TableCell>
+
+                        </TableRow>
+                      );
+                    });
+                  })()}
+                </React.Fragment>
+              ) : null
+            )}
 
             <TableRow sx={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>
-              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#e0e0e0', position: 'sticky', left: 0 }}>Итого</TableCell>
+
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#e0e0e0', position: 'sticky', left: 0 }}>
+                Итого
+              </TableCell>
+
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#e0e0e0', position: 'sticky', left: 104, textAlign: 'left', zIndex: 69}} />
 
               {grandTotals.months.map((total, idx) => (
                 <React.Fragment key={idx}>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>{total.count ? this.formatNumber(total.count) : 0}</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>{total.price ? this.formatCurrency(total.price) : 0}</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>
+                    {total.count ? this.formatNumber(total.count) : 0}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>
+                    {total.price ? this.formatCurrency(total.price) : 0}
+                  </TableCell>
                 </React.Fragment>
               ))}
 
-              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>{grandTotals.overall.count ? this.formatNumber(grandTotals.overall.count) : 0}</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>{grandTotals.overall.price ? this.formatCurrency(grandTotals.overall.price) : 0}</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>
+                {grandTotals.overall.count ? this.formatNumber(grandTotals.overall.count) : 0}
+              </TableCell>
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>
+                {grandTotals.overall.price ? this.formatCurrency(grandTotals.overall.price) : 0}
+              </TableCell>
+              
             </TableRow>
           </TableBody>
         </Table>
@@ -176,7 +292,7 @@ class ReportRevenue_ extends React.Component {
       cat: [],
 
       months: [],
-      reportCats: []
+      reportCats: [],
     };
   }
   
@@ -280,7 +396,7 @@ class ReportRevenue_ extends React.Component {
 
       this.setState({
         months: res.months,
-        reportCats: res.cats
+        reportCats: res.cats,
       });
       
     } else {
@@ -288,11 +404,12 @@ class ReportRevenue_ extends React.Component {
 
       this.setState({
         months: [],
-        reportCats: []
+        reportCats: [],
+        total: {}
       });
     }
   };
-
+  
   downLoad = async () => {
 
     let { point, date_start, date_end, cat } = this.state;
@@ -337,7 +454,7 @@ class ReportRevenue_ extends React.Component {
 
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={is_load}>
+        <Backdrop style={{ zIndex: 999 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
@@ -403,7 +520,10 @@ class ReportRevenue_ extends React.Component {
 
           {months.length && reportCats.length ? (
             <Grid item xs={12} sm={12} mt={3}>
-              <ReportRevenue_Table months={months} cats={reportCats} />
+              <ReportRevenue_Table 
+                months={months} 
+                cats={reportCats} 
+              />
             </Grid>
           ) : null}
 
