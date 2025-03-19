@@ -579,7 +579,7 @@ class StatSale_Modal_Graph extends React.Component {
         fullScreen={fullScreen}
         fullWidth
         maxWidth="calc(95% - 32px)"
-        PaperProps={{ style: { height: '70vh' } }}
+        PaperProps={{ style: { height: '90vh' } }}
       >
         <DialogTitle className="button">
           <Typography style={{ fontWeight: 'bold' }}>
@@ -2545,10 +2545,13 @@ class StatSale_ extends React.Component {
 
       Object.keys(item.data).forEach(key => {
         const datum = item.data[key];
-        seriesData.push({
-          date: dayjs(datum.month, "YYYY-MM").valueOf(),
-          value: datum.percent_fact,
-        });
+
+        if( datum?.month ){
+          seriesData.push({
+            date: dayjs(datum.month, "YYYY-MM").valueOf(),
+            value: datum.percent_fact,
+          });
+        }
       });
 
       seriesData.sort((a, b) => a.date - b.date);
