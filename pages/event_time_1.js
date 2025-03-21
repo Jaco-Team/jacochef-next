@@ -340,7 +340,7 @@ class EventTime1_Data extends React.Component {
         <Grid item sm={6} xs={12}>
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content">
-              <Typography style={{ whiteSpace: 'nowrap' }}> Особые дни </Typography>
+              <Typography style={{ whiteSpace: 'nowrap', fontWeight: 'bold ' }}> Особые дни </Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Accordion>
@@ -492,6 +492,7 @@ class EventTime1_ extends React.Component {
 
       item_one: [],
       itemData_one: [],
+      itemData_hist: [],
       modalDialog_one: false,
       zone_name: '',
     };
@@ -671,11 +672,24 @@ class EventTime1_ extends React.Component {
       });
     });
 
+    let itemData_hist = JSON.parse(JSON.stringify(this.state.cardData));
+
+    res.dows_hist.forEach((item) => {
+      itemData_hist.forEach((el) => {
+        if (parseInt(item.dow) === parseInt(el.day_id)) {
+          el.data.push(item);
+        }
+      });
+    });
+
+    itemData_hist = itemData_hist.filter(day => day.data.length > 0).sort((a, b) => parseInt(a.day_id) - parseInt(b.day_id));
+
     this.setState({
       item: res.other_days,
       itemData,
       item_one: res.other_days,
       itemData_one: itemData,
+      itemData_hist
     });
   }
 
@@ -932,6 +946,53 @@ class EventTime1_ extends React.Component {
                   openModal={this.openModal.bind(this)}
                   type='zone'
                 />
+
+                {!this.state.itemData_hist.length ? null : (
+                  <Grid item xs={12} sm={12} mb={5}>
+                    <Accordion>
+
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}  aria-controls="main-accordion-content" id="main-accordion-header">
+                        <Typography sx={{ fontWeight: 'bold '}}>История изменений в днях недели</Typography>
+                      </AccordionSummary>
+
+                      <AccordionDetails>
+                        {this.state.itemData_hist.map((day) => (
+                          <Accordion key={day.day_id}>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls={`accordion-day-${day.day_id}-content`} id={`accordion-day-${day.day_id}-header`}>
+                              <Typography sx={{ fontWeight: 'bold '}}>{day.day_week}</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                              <TableContainer component={Paper}>
+                                <Table>
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell>#</TableCell>
+                                      <TableCell>Дата / время изменений</TableCell>
+                                      <TableCell>Время</TableCell>
+                                      <TableCell>Доставка</TableCell>
+                                      <TableCell>Сотрудник</TableCell>
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                                    {day.data.map((row, key) => (
+                                      <TableRow key={key}>
+                                        <TableCell>{key + 1}</TableCell>
+                                        <TableCell>{row.date_time}</TableCell>
+                                        <TableCell>{row.time_start} - {row.time_end}</TableCell>
+                                        <TableCell>{row.time_dev}</TableCell>
+                                        <TableCell>{row.user_name}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </TableContainer>
+                            </AccordionDetails>
+                          </Accordion>
+                        ))}
+                      </AccordionDetails>
+                    </Accordion>
+                  </Grid>
+                )}
 
               </Grid>
             </TabPanel>
