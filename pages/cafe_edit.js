@@ -101,7 +101,7 @@ class CafeEdit_Modal_Kkt_Info_Add extends React.Component {
 
   changeDateRange(data, event) {
     this.setState({
-      [data]: event ? event : '',
+      [data]: event || null,
     });
   }
 
@@ -300,7 +300,7 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
 
   changeDateRange(data, event) {
     this.setState({
-      [data]: event ? event : '',
+      [data]: event || null,
     });
   }
 
