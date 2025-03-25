@@ -312,15 +312,13 @@ class EventTime1_Modal extends React.Component {
 }
 
 class EventTime1_Data extends React.Component {
+
   shouldComponentUpdate(nextProps) {
-    var array1 = nextProps.itemData;
-    var array2 = this.props.itemData;
-
-    var same = array1.length == array2.length && array1.every(function (element, index) {
-      return element === array2[index];
-    });
-
-    return !same;
+    return (
+      JSON.stringify(nextProps.itemData) !== JSON.stringify(this.props.itemData) ||
+      JSON.stringify(nextProps.item) !== JSON.stringify(this.props.item) ||
+      nextProps.type !== this.props.type
+    );
   }
 
   render() {
