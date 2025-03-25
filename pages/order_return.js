@@ -537,7 +537,6 @@ class OrderReturn_Modal_Order extends React.Component {
     });
   };
   
-  
   onClose() {
     this.setState({
       showOrder: null,
@@ -710,7 +709,7 @@ class OrderReturn_Modal_Order extends React.Component {
                             <TableCell></TableCell>
                             <TableCell></TableCell>
                             <TableCell></TableCell>
-                            <TableCell ></TableCell>
+                            <TableCell></TableCell>
                           </TableRow>
 
                           {Array.isArray(item.set_items) && item.set_items.map(subItem => {
@@ -1167,17 +1166,7 @@ class OrderReturn_ extends React.Component {
   }
 
   render() {
-    const {is_load, openAlert, err_status,
-      err_text,
-      module_name,
-      points,
-      point,
-      order,
-      orders,
-      showOrder,
-      modalDialog_order,
-      fullScreen
-    } = this.state;
+    const {is_load, openAlert, err_status, err_text, module_name, points, point, order, orders, showOrder, modalDialog_order, fullScreen} = this.state;
 
     return (
       <>
