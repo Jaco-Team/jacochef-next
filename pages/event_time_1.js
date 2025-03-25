@@ -672,7 +672,7 @@ class EventTime1_ extends React.Component {
 
     let itemData_hist = JSON.parse(JSON.stringify(this.state.cardData));
 
-    res.dows_hist.forEach((item) => {
+    res?.dows_hist?.forEach((item) => {
       itemData_hist.forEach((el) => {
         if (parseInt(item.dow) === parseInt(el.day_id)) {
           el.data.push(item);
