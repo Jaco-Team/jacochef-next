@@ -45,6 +45,7 @@ class OrderReturn_Modal_Order extends React.Component {
       showOrder: null,
       ordersReturn: [],
       totalSummReturn: 0,
+      confirmDialog: false
     };
   }
 
@@ -68,59 +69,58 @@ class OrderReturn_Modal_Order extends React.Component {
     const { showOrder, ordersReturn } = this.state;
     const priceOneItem = parseInt(price) / parseInt(maxCount);
   
-    let found = false;
+    const itemIndex = showOrder.order_items.findIndex((item) => parseInt(item.item_id) === parseInt(id));
+    
+    let selectedId = null;
+    
+    const updatedOrderItems = showOrder.order_items.map((item, idx) => {
 
-    const newOrdersReturn = ordersReturn.map((order) => {
-      if (parseInt(order.id) === parseInt(id)) {
-        found = true;
-        if (order.count < order.maxCount) {
-          const newCount = order.count + 1;
-          return {
-            ...order,
-            count: newCount,
-            price: order.price + priceOneItem,
-          };
-        }
-      }
-      return order;
-    });
-  
-    if (!found) {
-      newOrdersReturn.push({
-        id: parseInt(id),
-        count: 1,
-        maxCount: parseInt(maxCount),
-        price: priceOneItem,
-      });
-    }
-  
-    const updatedOrderItems = showOrder.order_items.map((item) => {
-      if (parseInt(item.item_id) === parseInt(id)) {
-
-        let currentCount = (typeof item.count_return === 'number') ? item.count_return : parseInt(maxCount);
-  
+      if (idx === itemIndex) {
+        let currentCount = typeof item.count_return === 'number' ? item.count_return : parseInt(maxCount);
         currentCount = currentCount > 0 ? currentCount - 1 : 0;
-  
+        let newItemRowIds = Array.isArray(item.item_row_ids) ? [...item.item_row_ids] : [];
+
+        if (newItemRowIds.length > 0) {
+          selectedId = newItemRowIds.shift();
+        }
+        
         return {
           ...item,
           count_return: currentCount,
           price_return: (item.price_return ?? 0) + priceOneItem,
+          item_row_ids: newItemRowIds,
         };
       }
+
       return item;
     });
+  
+    const newOrdersReturn = [
+      ...ordersReturn,
+      ...(selectedId !== null
+        ? [
+            {
+              id: parseInt(id),
+              count: 1,
+              maxCount: parseInt(maxCount),
+              price: priceOneItem,
+              item_row_id: selectedId,
+            },
+          ]
+        : []),
+    ];
+  
+    const totalSummReturn = newOrdersReturn.reduce((acc, order) => acc + order.price, 0);
   
     const updatedShowOrder = {
       ...showOrder,
       order_items: updatedOrderItems,
     };
-
-    const totalSummReturn = newOrdersReturn.reduce((acc, item) => acc + item.price, 0);
   
     this.setState({
       ordersReturn: newOrdersReturn,
       showOrder: updatedShowOrder,
-      totalSummReturn
+      totalSummReturn,
     });
   };
 
@@ -128,32 +128,33 @@ class OrderReturn_Modal_Order extends React.Component {
     const { showOrder, ordersReturn } = this.state;
     const priceOneItem = parseInt(price) / parseInt(maxCount);
   
-    const newOrdersReturn = ordersReturn.map((order) => {
-      if (parseInt(order.id) === parseInt(id)) {
-        if (order.count > 0) {
-          const newCount = order.count - 1;
-          return {
-            ...order,
-            count: newCount,
-            price: order.price - priceOneItem,
-          };
-        }
+    let removedOrder = null;
+    const newOrdersReturn = ordersReturn.filter(order => {
+      if (!removedOrder && parseInt(order.id) === parseInt(id)) {
+        removedOrder = order;
+        return false;
       }
-      return order;
+      return true;
     });
   
-    const updatedOrderItems = showOrder.order_items.map((item) => {
+    const updatedOrderItems = showOrder.order_items.map(item => {
       if (parseInt(item.item_id) === parseInt(id)) {
-        let currentCount = (typeof item.count_return === 'number') ? item.count_return : parseInt(maxCount);
- 
+        let currentCount = typeof item.count_return === 'number' ? item.count_return : parseInt(maxCount);
         currentCount = currentCount < parseInt(maxCount) ? currentCount + 1 : parseInt(maxCount);
-  
+        
+        const newPriceReturn = (item.price_return ?? 0) - priceOneItem;
+        
+        let newItemRowIds = Array.isArray(item.item_row_ids) ? [...item.item_row_ids] : [];
+        if (removedOrder && removedOrder.item_row_id) {
+          newItemRowIds.push(removedOrder.item_row_id);
+        }
+        
         return {
           ...item,
           count_return: currentCount,
-          price_return: (item.price_return ?? 0) - priceOneItem,
+          price_return: newPriceReturn,
+          item_row_ids: newItemRowIds
         };
-
       }
       return item;
     });
@@ -162,8 +163,8 @@ class OrderReturn_Modal_Order extends React.Component {
       ...showOrder,
       order_items: updatedOrderItems,
     };
-
-    const totalSummReturn = newOrdersReturn.reduce((acc, item) => acc + item.price, 0);
+  
+    const totalSummReturn = newOrdersReturn.reduce((acc, order) => acc + order.price, 0);
   
     this.setState({
       ordersReturn: newOrdersReturn,
@@ -174,28 +175,31 @@ class OrderReturn_Modal_Order extends React.Component {
 
   handleFullReturn = (key, count, price) => {
     const { showOrder, ordersReturn } = this.state;
-  
+    const priceOneItem = parseInt(price) / parseInt(count);
+    
     const targetItem = showOrder.order_items.find(item => parseInt(item.item_id) === parseInt(key));
-  
+    
     const isCurrentlyFullReturn = targetItem && targetItem.count_return === 0;
-  
+    
     let updatedOrderItems, updatedOrdersReturn;
-  
+    
     if (isCurrentlyFullReturn) {
-  
       updatedOrderItems = showOrder.order_items.map(item => {
         if (parseInt(item.item_id) === parseInt(key)) {
+          const returnedIds = ordersReturn.filter(order => parseInt(order.id) === parseInt(key)).map(order => order.item_row_id);
+
           return {
             ...item,
             count_return: item.count,
             price_return: 0,
+            item_row_ids: returnedIds
           };
         }
         return item;
       });
-
+      
       updatedOrdersReturn = ordersReturn.filter(order => parseInt(order.id) !== parseInt(key));
-
+      
     } else {
 
       updatedOrderItems = showOrder.order_items.map(item => {
@@ -204,52 +208,39 @@ class OrderReturn_Modal_Order extends React.Component {
             ...item,
             count_return: 0,
             price_return: price,
+            item_row_ids: []
           };
         }
         return item;
       });
 
-      const existingOrder = ordersReturn.find(order => parseInt(order.id) === parseInt(key));
-
-      if (existingOrder) {
-
-        updatedOrdersReturn = ordersReturn.map(order => {
-          if (parseInt(order.id) === parseInt(key)) {
-            return {
-              ...order,
-              count: count,
-              price: price,
-            };
-          }
-          return order;
-        });
-
-      } else {
-
-        updatedOrdersReturn = [
-          ...ordersReturn,
-          {
+      const newReturnItems = (targetItem && Array.isArray(targetItem.item_row_ids))
+        ? targetItem.item_row_ids.map(rowId => ({
             id: parseInt(key),
-            count: count,
+            count: 1,
             maxCount: count,
-            price: price,
-          }
-        ];
-
-      }
+            price: priceOneItem,
+            item_row_id: rowId
+          }))
+        : [];
+      
+      updatedOrdersReturn = [
+        ...ordersReturn.filter(order => parseInt(order.id) !== parseInt(key)),
+        ...newReturnItems,
+      ];
     }
-  
+    
     const updatedShowOrder = {
       ...showOrder,
       order_items: updatedOrderItems,
     };
-
-    const totalSummReturn = updatedOrdersReturn.reduce((acc, item) => acc + item.price, 0);
-  
+    
+    const totalSummReturn = updatedOrdersReturn.reduce((acc, order) => acc + order.price, 0);
+    
     this.setState({
       showOrder: updatedShowOrder,
       ordersReturn: updatedOrdersReturn,
-      totalSummReturn
+      totalSummReturn,
     });
   };
   
@@ -261,9 +252,7 @@ class OrderReturn_Modal_Order extends React.Component {
       if (parseInt(item.id) === parseInt(setId)) {
         const updatedSetItems = item.set_items.map(sub => {
           if (parseInt(sub.item_id) === parseInt(subItemId)) {
-
-            let currentCount = (typeof sub.count_return === 'number') ? sub.count_return : parseInt(maxCount);
-
+            let currentCount = typeof sub.count_return === 'number' ? sub.count_return : parseInt(maxCount);
             currentCount = currentCount > 0 ? currentCount - 1 : 0;
 
             return {
@@ -271,29 +260,29 @@ class OrderReturn_Modal_Order extends React.Component {
               count_return: currentCount,
               price_return: (sub.price_return ?? 0) + priceOneItem,
             };
-
           }
-
           return sub;
-
         });
-
         return { ...item, set_items: updatedSetItems };
-
       }
-
       return item;
     });
   
     const updatedShowOrder = { ...showOrder, order_items: updatedOrderItems };
   
+    const targetSet = updatedShowOrder.order_items.find(item => parseInt(item.id) === parseInt(setId));
+    let subItemRowId = null;
+    if (targetSet) {
+      const targetSub = targetSet.set_items.find(sub => parseInt(sub.item_id) === parseInt(subItemId));
+      if (targetSub) {
+        subItemRowId = targetSub.item_row_id;
+      }
+    }
+  
     let found = false;
-
     const newOrdersReturn = ordersReturn.map(order => {
       if (parseInt(order.id) === parseInt(subItemId) && parseInt(order.set_id) === parseInt(setId)) {
-
         found = true;
-
         if (order.count < order.maxCount) {
           const newCount = order.count + 1;
           return {
@@ -302,11 +291,8 @@ class OrderReturn_Modal_Order extends React.Component {
             price: order.price + priceOneItem,
           };
         }
-
       }
-
       return order;
-
     });
   
     if (!found) {
@@ -316,9 +302,10 @@ class OrderReturn_Modal_Order extends React.Component {
         maxCount: parseInt(maxCount),
         price: priceOneItem,
         set_id: parseInt(setId),
+        item_row_id: subItemRowId,
       });
     }
-
+  
     const totalSummReturn = newOrdersReturn.reduce((acc, item) => acc + item.price, 0);
   
     this.setState({
@@ -331,50 +318,51 @@ class OrderReturn_Modal_Order extends React.Component {
   handleDecrement_set = (setId, subItemId, maxCount, price) => {
     const { showOrder, ordersReturn } = this.state;
     const priceOneItem = parseInt(price) / parseInt(maxCount);
-
-    const newOrdersReturn = ordersReturn.map(order => {
+ 
+    let removedItemRowId = null;
+    let updatedOrdersReturn = ordersReturn.map(order => {
       if (parseInt(order.id) === parseInt(subItemId) && parseInt(order.set_id) === parseInt(setId)) {
-
         if (order.count > 0) {
           const newCount = order.count - 1;
+
+          if (newCount === 0) {
+            removedItemRowId = order.item_row_id;
+            return null;
+          }
+
           return {
             ...order,
             count: newCount,
             price: order.price - priceOneItem,
           };
         }
-
       }
-
       return order;
-    });
-
+    }).filter(order => order !== null);
+  
     const updatedOrderItems = showOrder.order_items.map(item => {
-
       if (parseInt(item.id) === parseInt(setId)) {
-
         const updatedSetItems = item.set_items.map(sub => {
-
           if (parseInt(sub.item_id) === parseInt(subItemId)) {
-
-            let currentCount = (typeof sub.count_return === 'number') ? sub.count_return : parseInt(maxCount);
+            let currentCount = typeof sub.count_return === 'number' ? sub.count_return : parseInt(maxCount);
             currentCount = currentCount < parseInt(maxCount) ? currentCount + 1 : parseInt(maxCount);
-
-            return {
+    
+            let newSub = {
               ...sub,
               count_return: currentCount,
               price_return: (sub.price_return ?? 0) - priceOneItem,
             };
-
+     
+            if (removedItemRowId && !newSub.item_row_id) {
+              newSub.item_row_id = removedItemRowId;
+            }
+    
+            return newSub;
           }
-
           return sub;
-
         });
-
         return { ...item, set_items: updatedSetItems };
       }
-
       return item;
     });
   
@@ -382,33 +370,32 @@ class OrderReturn_Modal_Order extends React.Component {
       ...showOrder,
       order_items: updatedOrderItems,
     };
-
-    const totalSummReturn = newOrdersReturn.reduce((acc, item) => acc + item.price, 0);
+  
+    const totalSummReturn = updatedOrdersReturn.reduce((acc, order) => acc + order.price, 0);
   
     this.setState({
-      ordersReturn: newOrdersReturn,
+      ordersReturn: updatedOrdersReturn,
       showOrder: updatedShowOrder,
-      totalSummReturn
+      totalSummReturn,
     });
   };
   
   handleFullReturn_set = (setId, subItemId, count, price) => {
     const { showOrder, ordersReturn } = this.state;
-  
-    const targetSet = showOrder.order_items.find(item => parseInt(item.id) === parseInt(setId));
     
-    let targetSub;
+    const targetSet = showOrder.order_items.find(item => parseInt(item.id) === parseInt(setId));
+    let targetSub = null;
     if (targetSet) {
       targetSub = targetSet.set_items.find(sub => parseInt(sub.item_id) === parseInt(subItemId));
     }
-
+    
     const currentCountReturn = targetSub ? (typeof targetSub.count_return === 'number' ? targetSub.count_return : targetSub.count) : null;
     const isCurrentlyFullReturn = currentCountReturn === 0;
-  
+    
     let updatedOrderItems, updatedOrdersReturn;
-  
+    
     if (isCurrentlyFullReturn) {
-  
+ 
       updatedOrderItems = showOrder.order_items.map(item => {
         if (parseInt(item.id) === parseInt(setId)) {
           const updatedSetItems = item.set_items.map(sub => {
@@ -417,6 +404,7 @@ class OrderReturn_Modal_Order extends React.Component {
                 ...sub,
                 count_return: sub.count,
                 price_return: 0,
+                item_row_id: targetSub && targetSub.item_row_id ? targetSub.item_row_id : sub.item_row_id
               };
             }
             return sub;
@@ -427,7 +415,7 @@ class OrderReturn_Modal_Order extends React.Component {
       });
 
       updatedOrdersReturn = ordersReturn.filter(order => !(parseInt(order.id) === parseInt(subItemId) && parseInt(order.set_id) === parseInt(setId)));
-
+      
     } else {
 
       updatedOrderItems = showOrder.order_items.map(item => {
@@ -438,32 +426,29 @@ class OrderReturn_Modal_Order extends React.Component {
                 ...sub,
                 count_return: 0,
                 price_return: price,
+                item_row_id: null
               };
             }
-
             return sub;
           });
-
           return { ...item, set_items: updatedSetItems };
         }
-
         return item;
       });
-
+      
       const existingOrder = ordersReturn.find(order => parseInt(order.id) === parseInt(subItemId) && parseInt(order.set_id) === parseInt(setId));
 
       if (existingOrder) {
+
         updatedOrdersReturn = ordersReturn.map(order => {
           if (parseInt(order.id) === parseInt(subItemId) && parseInt(order.set_id) === parseInt(setId)) {
-
             return {
               ...order,
               count: count,
               price: price,
+              item_row_id: targetSub && targetSub.item_row_id ? targetSub.item_row_id : order.item_row_id
             };
-
           }
-
           return order;
         });
 
@@ -477,17 +462,18 @@ class OrderReturn_Modal_Order extends React.Component {
             maxCount: count,
             price: price,
             set_id: parseInt(setId),
+            item_row_id: targetSub && targetSub.item_row_id ? targetSub.item_row_id : null
           },
         ];
 
       }
     }
-  
+    
     const updatedShowOrder = {
       ...showOrder,
       order_items: updatedOrderItems,
     };
-
+  
     const totalSummReturn = updatedOrdersReturn.reduce((acc, item) => acc + item.price, 0);
     
     this.setState({
@@ -497,37 +483,36 @@ class OrderReturn_Modal_Order extends React.Component {
     });
   };
 
-  handleReturn_div = (id) => {
+  handleReturn_dev = (id) => {
     const { showOrder, ordersReturn } = this.state;
-
+  
     let updatedOrdersReturn = [...ordersReturn];
     let updatedShowOrder = { ...showOrder };
   
-    const existing = updatedOrdersReturn.find(item => parseInt(item.item_id) === parseInt(id));
+    const existing = updatedOrdersReturn.find(item => parseInt(item.id) === parseInt(id));
     
     if (existing) {
-      updatedOrdersReturn = updatedOrdersReturn.filter(item => parseInt(item.item_id) !== parseInt(id));
-
+      updatedOrdersReturn = updatedOrdersReturn.filter(item => parseInt(item.id) !== parseInt(id));
+  
       updatedShowOrder.order = { 
         ...updatedShowOrder.order,
         delivery_return: false 
       };
-
+  
     } else {
-
       updatedOrdersReturn.push({
-        item_id: id,
+        id: id,
         count: 1,
-        price: showOrder?.order?.summ_div || 0
+        price: showOrder?.order?.summ_div || 0,
+        item_row_id: id
       });
-
+  
       updatedShowOrder.order = { 
         ...updatedShowOrder.order,
         delivery_return: true 
       };
-
     }
-
+  
     const totalSummReturn = updatedOrdersReturn.reduce((acc, item) => acc + item.price, 0);
     
     this.setState({
@@ -536,12 +521,32 @@ class OrderReturn_Modal_Order extends React.Component {
       totalSummReturn
     });
   };
+
+  save = () => {
+
+    const { showOrder, ordersReturn } = this.state;
+
+    if(!ordersReturn.length) {
+      return this.props.openAlert(false, 'Не выбрано товаров для оформления возврата');
+    }
+
+    const data = {
+      orders: ordersReturn,
+      order_id: showOrder.order.order_id,
+    }
+
+    this.props.save(data);
+
+    this.onClose();
+
+  }
   
   onClose() {
     this.setState({
       showOrder: null,
       ordersReturn: [],
       totalSummReturn: 0,
+      confirmDialog: false
     });
 
     this.props.onClose();
@@ -551,7 +556,7 @@ class OrderReturn_Modal_Order extends React.Component {
 
     const { open, fullScreen } = this.props;
 
-    const { showOrder, totalSummReturn } = this.state;
+    const { showOrder, totalSummReturn, confirmDialog } = this.state;
 
     const order = showOrder?.order;
 
@@ -568,273 +573,305 @@ class OrderReturn_Modal_Order extends React.Component {
     }
 
     return (
-      <Dialog
-        open={open}
-        onClose={this.onClose.bind(this)}
-        fullWidth={true}
-        maxWidth='lg'
-        fullScreen={fullScreen}
-      >
-        <DialogTitle className="button">
-          <Typography style={{ fontWeight: 'bold', alignSelf: 'center' }}>Заказ #{showOrder?.order?.order_id}</Typography>
-          <IconButton onClick={this.onClose.bind(this)}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+      <>
+        <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={confirmDialog} onClose={() => this.setState({ confirmDialog: false })}>
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+            <Typography>Вы действительно хотите оформить возврат?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
+            <Button onClick={this.save}>Сохранить</Button>
+          </DialogActions>
+        </Dialog>
 
-        <DialogContent>
-          
-          <Grid container spacing={3}>
+        <Dialog
+          open={open}
+          onClose={this.onClose.bind(this)}
+          fullWidth={true}
+          maxWidth='lg'
+          fullScreen={fullScreen}
+        >
+          <DialogTitle className="button">
+            <Typography style={{ fontWeight: 'bold', alignSelf: 'center' }}>Заказ #{showOrder?.order?.order_id}</Typography>
+            <IconButton onClick={this.onClose.bind(this)}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
 
-            <Grid item xs={12}>
-              <b>Точка: </b>
-              <span>{showOrder?.order?.point_addr}</span>
-            </Grid>
+          <DialogContent>
             
-            <Grid item xs={12}>
-              <b>Дата и время заказа: </b> 
-              <span>{formattedDate}</span> 
-            </Grid>
+            <Grid container spacing={3}>
 
-            {showOrder?.order?.number?.length > 1 ? 
               <Grid item xs={12}>
-                <b>Телефон: </b> 
-                <span>{showOrder?.order?.number}</span> 
+                <b>Точка: </b>
+                <span>{showOrder?.order?.point_addr}</span>
               </Grid>
-            : null}
-
-            <Grid item xs={12}>
-              <Table size={'small'} style={{ marginTop: 15 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Товар</TableCell>
-                    <TableCell>Количество</TableCell>
-                    <TableCell>Стоимость</TableCell>
-                    <TableCell></TableCell>
-                    <TableCell>К возврату</TableCell>
-                    <TableCell>Полный возврат</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {(showOrder?.order_items ?? []).map(item => {
-
-                    const isSet = Array.isArray(item.set_items) && item.set_items.length > 0;
-
-                    if (!isSet) {
-
-                      const key = item.item_id;
               
-                      return (
-                        <TableRow key={key} hover>
-                          <TableCell>{item.name}</TableCell>
-                          <TableCell>{item.count}</TableCell>
-                          <TableCell>
-                            {new Intl.NumberFormat('ru-RU').format(item.price || 0)} ₽
-                          </TableCell>
-                          <TableCell align="center">
-                            <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                              <IconButton
-                                disableRipple
-                                onClick={() => this.handleIncrement(key, item.count, item.price)}
-                                disabled={(item.count_return ?? item.count) === 0}
-                                sx={{
-                                  backgroundColor: (item.count_return ?? item.count) === 0 ? 'transparent' : '#CC0033',
-                                  color: 'white',
-                                  transition: 'none',
-                                  '&:hover': {
-                                    backgroundColor: (item.count_return ?? item.count) === 0 ? 'transparent' : '#b30000'
-                                  },
-                                  '&.Mui-disabled': {
-                                    backgroundColor: 'transparent !important',
-                                    pointerEvents: 'none'
-                                  },
-                                  width: 32,
-                                  height: 32,
-                                  borderRadius: 1
-                                }}
-                              >
-                                <AddIcon fontSize="small" />
-                              </IconButton>
+              <Grid item xs={12}>
+                <b>Дата и время заказа: </b> 
+                <span>{formattedDate}</span> 
+              </Grid>
 
-                              <Typography variant="body1" minWidth={24} textAlign="center">
-                                {item?.count_return ?? item.count}
+              {showOrder?.order?.number?.length > 1 ? 
+                <Grid item xs={12}>
+                  <b>Телефон: </b> 
+                  <span>{showOrder?.order?.number}</span> 
+                </Grid>
+              : null}
+
+              <Grid item xs={12}>
+                <Table size={'small'} style={{ marginTop: 15 }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Товар</TableCell>
+                      <TableCell>Количество</TableCell>
+                      <TableCell>Стоимость</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell>К возврату</TableCell>
+                      <TableCell>Полный возврат</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(showOrder?.order_items ?? []).map(item => {
+
+                      const isSet = Array.isArray(item.set_items) && item.set_items.length > 0;
+
+                      if (!isSet) {
+
+                        const key = item.item_id;
+                
+                        return (
+                          <TableRow key={key} hover>
+                            <TableCell>{item.name}</TableCell>
+                            <TableCell>{item.count}</TableCell>
+                            <TableCell>
+                              {new Intl.NumberFormat('ru-RU').format(item.price || 0)} ₽
+                            </TableCell>
+                            <TableCell align="center">
+                              <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                                <IconButton
+                                  disableRipple
+                                  onClick={() => this.handleIncrement(key, item.count, item.price)}
+                                  disabled={(item.count_return ?? item.count) === 0}
+                                  sx={{
+                                    backgroundColor: (item.count_return ?? item.count) === 0 ? 'transparent' : '#CC0033',
+                                    color: 'white',
+                                    transition: 'none',
+                                    '&:hover': {
+                                      backgroundColor: (item.count_return ?? item.count) === 0 ? 'transparent' : '#b30000'
+                                    },
+                                    '&.Mui-disabled': {
+                                      backgroundColor: 'transparent !important',
+                                      pointerEvents: 'none'
+                                    },
+                                    width: 32,
+                                    height: 32,
+                                    borderRadius: 1
+                                  }}
+                                >
+                                  <RemoveIcon fontSize="small" />
+                                </IconButton>
+
+                                <Typography variant="body1" minWidth={24} textAlign="center">
+                                  {item?.count_return ?? item.count}
+                                </Typography>
+
+                                <IconButton
+                                  disableRipple
+                                  onClick={() => this.handleDecrement(key, item.count, item.price)}
+                                  disabled={(item.count_return ?? item.count) === item.count}
+                                  sx={{
+                                    backgroundColor: (item.count_return ?? item.count) === item.count ? 'transparent' : '#CC0033',
+                                    color: 'white',
+                                    transition: 'none',
+                                    '&:hover': {
+                                      backgroundColor: (item.count_return ?? item.count) === item.count ? 'transparent' : '#b30000'
+                                    },
+                                    '&.Mui-disabled': {
+                                      backgroundColor: 'transparent !important',
+                                      pointerEvents: 'none'
+                                    },
+                                    width: 32,
+                                    height: 32,
+                                    borderRadius: 1
+                                  }}
+                                >
+                                  <AddIcon fontSize="small" />
+                                </IconButton>
+
+                              </Box>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                {new Intl.NumberFormat('ru-RU').format(item?.price_return || 0)} ₽
                               </Typography>
-
-                              <IconButton
-                                disableRipple
-                                onClick={() => this.handleDecrement(key, item.count, item.price)}
-                                disabled={(item.count_return ?? item.count) === item.count}
-                                sx={{
-                                  backgroundColor: (item.count_return ?? item.count) === item.count ? 'transparent' : '#CC0033',
-                                  color: 'white',
-                                  transition: 'none',
-                                  '&:hover': {
-                                    backgroundColor: (item.count_return ?? item.count) === item.count ? 'transparent' : '#b30000'
-                                  },
-                                  '&.Mui-disabled': {
-                                    backgroundColor: 'transparent !important',
-                                    pointerEvents: 'none'
-                                  },
-                                  width: 32,
-                                  height: 32,
-                                  borderRadius: 1
-                                }}
-                              >
-                                <RemoveIcon fontSize="small" />
-                              </IconButton>
-
-                            </Box>
-                          </TableCell>
-                          <TableCell align="center">
-                            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                              {new Intl.NumberFormat('ru-RU').format(item?.price_return || 0)} ₽
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="center">
-                            <MyCheckBox
-                              value={(item.count_return ?? item.count) === 0}
-                              func={() => this.handleFullReturn(key, item.count, item.price)}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      );
-
-                    } else {
-
-                      return (
-                        <React.Fragment key={item.item_id}>
-                          <TableRow key={`set-${item.item_id}`}>
-                            <TableCell sx={{ fontWeight: 'bold' }}>{item.name}</TableCell>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
+                            </TableCell>
+                            <TableCell align="center">
+                              <MyCheckBox
+                                value={(item.count_return ?? item.count) === 0}
+                                func={() => this.handleFullReturn(key, item.count, item.price)}
+                              />
+                            </TableCell>
                           </TableRow>
+                        );
 
-                          {Array.isArray(item.set_items) && item.set_items.map(subItem => {
-                              const key = subItem.item_id;
-                              return (
-                                <TableRow key={key} hover>
-                                  <TableCell style={{ paddingLeft: 30 }}>• {subItem.name}</TableCell>
-                                  <TableCell>{subItem.count}</TableCell>
-                                  <TableCell>
-                                    {new Intl.NumberFormat('ru-RU').format(subItem.price || 0)} ₽
-                                  </TableCell>
-                                  <TableCell align="center">
-                                    <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                                      <IconButton
-                                        disableRipple
-                                        onClick={() => this.handleIncrement_set(item.id, key, subItem.count, subItem.price)}
-                                        disabled={(subItem.count_return ?? subItem.count) === 0}
-                                        sx={{
-                                          backgroundColor: (subItem.count_return ?? subItem.count) === 0 ? 'transparent' : '#CC0033',
-                                          color: 'white',
-                                          transition: 'none',
-                                          '&:hover': {
-                                            backgroundColor: (subItem.count_return ?? subItem.count) === 0 ? 'transparent' : '#b30000'
-                                          },
-                                          '&.Mui-disabled': {
-                                            backgroundColor: 'transparent !important',
-                                            pointerEvents: 'none'
-                                          },
-                                          width: 32,
-                                          height: 32,
-                                          borderRadius: 1,
-                                        }}
-                                      >
-                                        <AddIcon fontSize="small" />
-                                      </IconButton>
+                      } else {
 
-                                      <Typography variant="body1" minWidth={24} textAlign="center">
-                                        {subItem.count_return ?? subItem.count}
+                        return (
+                          <React.Fragment key={item.item_id}>
+                            <TableRow key={`set-${item.item_id}`}>
+                              <TableCell sx={{ fontWeight: 'bold' }}>{item.name}</TableCell>
+                              <TableCell></TableCell>
+                              <TableCell></TableCell>
+                              <TableCell></TableCell>
+                              <TableCell></TableCell>
+                              <TableCell></TableCell>
+                            </TableRow>
+
+                            {Array.isArray(item.set_items) && item.set_items.map(subItem => {
+                                const key = subItem.item_id;
+                                return (
+                                  <TableRow key={key} hover>
+                                    <TableCell style={{ paddingLeft: 30 }}>• {subItem.name}</TableCell>
+                                    <TableCell>{subItem.count}</TableCell>
+                                    <TableCell>
+                                      {new Intl.NumberFormat('ru-RU').format(subItem.price || 0)} ₽
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                                        <IconButton
+                                          disableRipple
+                                          onClick={() => this.handleIncrement_set(item.id, key, subItem.count, subItem.price)}
+                                          disabled={(subItem.count_return ?? subItem.count) === 0}
+                                          sx={{
+                                            backgroundColor: (subItem.count_return ?? subItem.count) === 0 ? 'transparent' : '#CC0033',
+                                            color: 'white',
+                                            transition: 'none',
+                                            '&:hover': {
+                                              backgroundColor: (subItem.count_return ?? subItem.count) === 0 ? 'transparent' : '#b30000'
+                                            },
+                                            '&.Mui-disabled': {
+                                              backgroundColor: 'transparent !important',
+                                              pointerEvents: 'none'
+                                            },
+                                            width: 32,
+                                            height: 32,
+                                            borderRadius: 1,
+                                          }}
+                                        >
+                                          <RemoveIcon fontSize="small" />
+                                        </IconButton>
+
+                                        <Typography variant="body1" minWidth={24} textAlign="center">
+                                          {subItem.count_return ?? subItem.count}
+                                        </Typography>
+                                    
+                                        <IconButton
+                                          disableRipple
+                                          onClick={() => this.handleDecrement_set(item.id, key, subItem.count, subItem.price)}
+                                          disabled={(subItem.count_return ?? subItem.count) === subItem.count}
+                                          sx={{
+                                            backgroundColor: (subItem.count_return ?? subItem.count) === subItem.count ? 'transparent' : '#CC0033',
+                                            color: 'white',
+                                            transition: 'none',
+                                            '&:hover': {
+                                              backgroundColor: (subItem.count_return ?? subItem.count) === subItem.count ? 'transparent' : '#b30000'
+                                            },
+                                            '&.Mui-disabled': {
+                                              backgroundColor: 'transparent !important',
+                                              pointerEvents: 'none'
+                                            },
+                                            width: 32,
+                                            height: 32,
+                                            borderRadius: 1,
+                                          }}
+                                        >
+                                          <AddIcon fontSize="small" />
+                                        </IconButton>
+
+                                      </Box>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                                        {new Intl.NumberFormat('ru-RU').format(subItem?.price_return || 0)} ₽
                                       </Typography>
-                                  
-                                      <IconButton
-                                        disableRipple
-                                        onClick={() => this.handleDecrement_set(item.id, key, subItem.count, subItem.price)}
-                                        disabled={(subItem.count_return ?? subItem.count) === subItem.count}
-                                        sx={{
-                                          backgroundColor: (subItem.count_return ?? subItem.count) === subItem.count ? 'transparent' : '#CC0033',
-                                          color: 'white',
-                                          transition: 'none',
-                                          '&:hover': {
-                                            backgroundColor: (subItem.count_return ?? subItem.count) === subItem.count ? 'transparent' : '#b30000'
-                                          },
-                                          '&.Mui-disabled': {
-                                            backgroundColor: 'transparent !important',
-                                            pointerEvents: 'none'
-                                          },
-                                          width: 32,
-                                          height: 32,
-                                          borderRadius: 1,
-                                        }}
-                                      >
-                                        <RemoveIcon fontSize="small" />
-                                      </IconButton>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      <MyCheckBox
+                                        value={(subItem.count_return ?? subItem.count) === 0}
+                                        func={() => this.handleFullReturn_set(item.id, key, subItem.count, subItem.price)}
+                                      />
+                                    </TableCell>
+                                  </TableRow>
 
-                                    </Box>
-                                  </TableCell>
-                                  <TableCell align="center">
-                                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                      {new Intl.NumberFormat('ru-RU').format(subItem?.price_return || 0)} ₽
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell align="center">
-                                    <MyCheckBox
-                                      value={(subItem.count_return ?? subItem.count) === 0}
-                                      func={() => this.handleFullReturn_set(item.id, key, subItem.count, subItem.price)}
-                                    />
-                                  </TableCell>
-                                </TableRow>
+                                );
+                              })}
 
-                              );
-                            })}
+                          </React.Fragment>
+                        );
+                      }
+                    })}
 
-                        </React.Fragment>
-                      );
+                    {(showOrder?.items_order_return ?? []).map((item, key) => (
+                      <TableRow key={key} sx={{ backgroundColor: '#fadadd', '& .MuiTableCell-root': { borderBottom: '1px solid rgba(0, 0, 0, 0.2)', height: '40px' } }}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.count}</TableCell>
+                        <TableCell>
+                          {new Intl.NumberFormat('ru-RU').format(item.price || 0)} ₽
+                        </TableCell>
+                        <TableCell colSpan={3} align='center' sx={{ fontWeight: 'bold' }}>Оформлен возврат</TableCell>
+                      </TableRow>
+                    ))}
+
+                    {showOrder?.order.is_return ? null :
+                      <TableRow hover>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Доставка</TableCell>
+                        <TableCell></TableCell>
+                        <TableCell>{new Intl.NumberFormat('ru-RU').format(showOrder?.order?.summ_div || 0)} ₽</TableCell>
+                        <TableCell></TableCell>
+                        <TableCell align='center' sx={{ fontWeight: 'bold' }}>{showOrder?.order?.delivery_return ? `${new Intl.NumberFormat('ru-RU').format(showOrder?.order?.summ_div || 0)} ₽` : "0 ₽"}</TableCell>
+                        <TableCell>
+                          <MyCheckBox
+                            value={showOrder?.order?.delivery_return || false}
+                            func={() => this.handleReturn_dev(-1)}
+                          />
+                        </TableCell>
+                      </TableRow>
                     }
-                  })}
 
-                  <TableRow hover>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Доставка</TableCell>
-                    <TableCell></TableCell>
-                    <TableCell>{new Intl.NumberFormat('ru-RU').format(showOrder?.order?.summ_div || 0)} ₽</TableCell>
-                    <TableCell></TableCell>
-                    <TableCell align='center' sx={{ fontWeight: 'bold' }}>{showOrder?.order?.delivery_return ? `${new Intl.NumberFormat('ru-RU').format(showOrder?.order?.summ_div || 0)} ₽` : "0 ₽"}</TableCell>
-                    <TableCell>
-                      <MyCheckBox
-                        value={showOrder?.order?.delivery_return || false}
-                        func={() => this.handleReturn_div(-1)}
-                      />
-                    </TableCell>
-                  </TableRow>
+                  </TableBody>
 
-                </TableBody>
+                  <TableFooter>
+                    <TableRow style={{ height: '60px' }}>
+                      <TableCell colSpan={2} style={{fontWeight: 'bold', color: '#000'}}>Сумма заказа</TableCell>
+                      <TableCell style={{fontWeight: 'bold', color: '#000'}}>{new Intl.NumberFormat('ru-RU').format(showOrder?.order?.sum_order)} ₽</TableCell>
+                      <TableCell style={{fontWeight: 'bold', color: '#000'}} align='center'>Итого к возврату</TableCell>
+                      <TableCell style={{fontWeight: 'bold', color: '#000'}} align='center'>{new Intl.NumberFormat('ru-RU').format(totalSummReturn)} ₽</TableCell>
+                      <TableCell />
+                    </TableRow>
+                  </TableFooter>
 
-                <TableFooter>
-                  <TableRow style={{ height: '60px' }}>
-                    <TableCell colSpan={2} style={{fontWeight: 'bold', color: '#000'}}>Сумма заказа</TableCell>
-                    <TableCell style={{fontWeight: 'bold', color: '#000'}}>{new Intl.NumberFormat('ru-RU').format(showOrder?.order?.sum_order)} ₽</TableCell>
-                    <TableCell style={{fontWeight: 'bold', color: '#000'}} align='center'>Итого к возврату</TableCell>
-                    <TableCell style={{fontWeight: 'bold', color: '#000'}} align='center'>{new Intl.NumberFormat('ru-RU').format(totalSummReturn)} ₽</TableCell>
-                    <TableCell />
-                  </TableRow>
-                </TableFooter>
-
-              </Table>
+                </Table>
+              </Grid>
+              
             </Grid>
-            
-          </Grid>
-        </DialogContent>
+          </DialogContent>
 
-        <DialogActions>
-          <Button variant="contained" onClick={this.onClose.bind(this)}>
-            Оформить возврат
-          </Button>
-        </DialogActions>
+          <DialogActions>
+            {showOrder?.order_items.length ?
+              <Button variant="contained" onClick={() => this.setState({ confirmDialog: true })}>
+                Оформить возврат
+              </Button>
+              :
+              <Button variant="contained" onClick={this.onClose.bind(this)}>
+                Закрыть
+              </Button>
+            }
+          </DialogActions>
 
-      </Dialog>
+        </Dialog>
+      </>
     );
   }
 }
@@ -857,25 +894,7 @@ class OrderReturn_ extends React.Component {
       err_text: '',
 
       order: '',
-      // orders: [],
-
-      orders: [
-        {
-            "point_addr": "Тольятти, Ленинградская 47",
-            "point_id": "1",
-            "id": 771785,
-            "unix_time": "1742823527.000000",
-            "status": "У клиента",
-            "number": "89677268864",
-            "date_time_order": "2025-03-24 17:38:47",
-            "date_time_preorder": "0000-00-00 00:00:00",
-            "is_preorder": 0,
-            "close_order": "2025-03-24 18:41:08",
-            "type_pay": "Безнал",
-            "order_price": 1728,
-            "is_return": true
-        }
-    ],
+      orders: [],
 
       modalDialog_order: false,
       showOrder: null,
@@ -977,8 +996,6 @@ class OrderReturn_ extends React.Component {
         };
       });
 
-      console.log('🚀 === get_orders modifiedOrders:', modifiedOrders);
-
       this.setState({
         orders: modifiedOrders,
       });
@@ -1010,153 +1027,7 @@ class OrderReturn_ extends React.Component {
       point_id
     };
 
-    let res = await this.getData('get_one_order', data);
-    console.log("🚀 === res:", res);
-
-    res = {
-      order:{
-        "order_id": 771785,
-        "number": "89677268864",
-        "sum_order": 1728,
-        "point_id": "1",
-        "date_time_order": "2025-03-24 17:38:47",
-        "date_time_preorder": "0000-00-00 00:00:00",
-        "is_preorder": 0,
-        "point_addr": "Ленинградская 47",
-        "summ_div"
-: 
-189
-    },
-      
-     order_items: [
-        {
-            "id": 3534653,
-            "name": "Мадагаскар сет",
-            "item_id": 296,
-            "count": 1,
-            "price": 2159,
-            "set_items": [
-                {
-                    "item_id": 124,
-                    "name": "Акваланг запечённый унаги",
-                    "count": 1,
-                    "price": 318
-                },
-                {
-                    "item_id": 48,
-                    "name": "Филадельфия",
-                    "count": 1,
-                    "price": 468
-                },
-                {
-                    "item_id": 173,
-                    "name": "Везувий запечённый унаги",
-                    "count": 1,
-                    "price": 318
-                },
-                {
-                    "item_id": 7,
-                    "name": "Филадельфия жареный",
-                    "count": 1,
-                    "price": 358
-                },
-                {
-                    "item_id": 53,
-                    "name": "Закат жареный",
-                    "count": 1,
-                    "price": 358
-                },
-                {
-                    "item_id": 50,
-                    "name": "Лиана",
-                    "count": 1,
-                    "price": 339
-                }
-            ]
-        },
-        {
-          "id": 3534383,
-          "name": "Скала сет",
-          "item_id": 126,
-          "count": 1,
-          "price": 1509,
-          "set_items": [
-              {
-                  "item_id": 45,
-                  "name": "Цезарь с лососем",
-                  "count": 1,
-                  "price": 318
-              },
-              {
-                  "item_id": 27,
-                  "name": "Коралл",
-                  "count": 1,
-                  "price": 278
-              },
-              {
-                  "item_id": 58,
-                  "name": "Сёрфинг жареный",
-                  "count": 1,
-                  "price": 298
-              },
-              {
-                  "item_id": 207,
-                  "name": "Алоха",
-                  "count": 1,
-                  "price": 318
-              },
-              {
-                  "item_id": 59,
-                  "name": "Цезарь с курицей жареный",
-                  "count": 1,
-                  "price": 297
-              }
-          ]
-      },
-        {
-            "id": 3534654,
-            "name": "Калифорния с лососем Люкс",
-            "item_id": 165,
-            "count": 1,
-            "price": 359
-        },
-        {
-            "id": 3534655,
-            "name": "Цезарь с креветкой запечённый унаги",
-            "item_id": 253,
-            "count": 1,
-            "price": 319
-        },
-        {
-            "id": 3534656,
-            "name": "Соевый соус ",
-            "item_id": 19,
-            "count": 4,
-            "price": 60
-        },
-        {
-            "id": 3534657,
-            "name": "Имбирь",
-            "item_id": 18,
-            "count": 3,
-            "price": 45
-        },
-        {
-            "id": 3534658,
-            "name": "Васаби",
-            "item_id": 22,
-            "count": 1,
-            "price": 9
-        },
-        {
-            "id": 3534659,
-            "name": "Палочки",
-            "item_id": 17,
-            "count": 3,
-            "price": 0
-        }
-    ]
-  };
+    const res = await this.getData('get_one_order', data);
 
     this.setState({
       showOrder: res,
@@ -1164,6 +1035,27 @@ class OrderReturn_ extends React.Component {
     });
 
   }
+
+  save_return = async (data) => {
+    const point = this.state.point;
+
+    data.point_id = point;
+
+    const res = await this.getData('save_return', data);
+
+    if (res.st) {
+
+      this.setState({
+        modalDialog_order: false,
+        showOrder: null,
+      });
+
+      this.openAlert(true, 'Возврат заказа оформлен');
+    } else {
+      this.openAlert(false, 'Возврат заказа не оформлен');
+    }
+
+  };
 
   render() {
     const {is_load, openAlert, err_status, err_text, module_name, points, point, order, orders, showOrder, modalDialog_order, fullScreen} = this.state;
@@ -1186,6 +1078,8 @@ class OrderReturn_ extends React.Component {
           onClose={() => this.setState({ modalDialog_order: false })}
           showOrder={showOrder}
           fullScreen={fullScreen}
+          openAlert={this.openAlert}
+          save={this.save_return}
         />
 
         <Grid container spacing={3} className="container_first_child">
