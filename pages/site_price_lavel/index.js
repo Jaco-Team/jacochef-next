@@ -829,17 +829,20 @@ class SitePriceLevel_Tab_Level extends React.Component {
                           <TableCell>{level.date_start}</TableCell>
                           <TableCell>{level.city_name}</TableCell>
                           <TableCell>
-                            <IconButton onClick={() => this.getOneLevel(level.id)}>
-                              {parseInt(acces?.edit_level) && level?.edit ? (
-                                <Tooltip title={<Typography color="inherit">Редактировать</Typography>}>
-                                  <EditIcon />
-                                </Tooltip>
-                              ) : (
-                                <Tooltip title={<Typography color="inherit">Просмотр</Typography>}>
-                                  <VisibilityIcon />
-                                </Tooltip>
-                              )}
-                            </IconButton>
+                            <a href={'/site_price_lavel/'+level.id} target='_blank'>
+                              <IconButton /*onClick={() => this.getOneLevel(level.id)}*/>
+                                {parseInt(acces?.edit_level) && level?.edit ? (
+                                  <Tooltip title={<Typography color="inherit">Редактировать</Typography>}>
+                                    <EditIcon />
+                                  </Tooltip>
+                                ) : (
+                                  <Tooltip title={<Typography color="inherit">Просмотр</Typography>}>
+                                    <VisibilityIcon />
+                                  </Tooltip>
+                                )}
+                              </IconButton>
+                            </a>
+                            
                           </TableCell>
                           <TableCell>
                             {parseInt(acces?.delete_level) && level?.delete ? (

@@ -318,6 +318,7 @@ class SitePriceLevelEdit_ extends React.Component {
       } else {
         window.location.href = '/site_price_lavel';
       }
+      
       return;
     }
   
@@ -348,7 +349,6 @@ class SitePriceLevelEdit_ extends React.Component {
     }
   }
   
-
   async changeInput(key_cat, key_item, item_id, value) {
     let cats = this.state.cats;
 
