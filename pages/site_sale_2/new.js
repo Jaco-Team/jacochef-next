@@ -213,6 +213,7 @@ class SiteSale2_new_ extends React.Component {
       spamNameSMS: '',
         
       for_new: false,
+      once_number: false,
 
       auto_text: true,
       where_promo: 1,
@@ -412,7 +413,8 @@ class SiteSale2_new_ extends React.Component {
         promo_conditions_items: JSON.stringify(conditionItems),
         
         date_between: dateList,
-        for_new: this.state.for_new ? 1 : 0
+        for_new: this.state.for_new ? 1 : 0,
+        once_number: this.state.once_number ? 1 : 0
       };
       
       let res = await this.getData('save_new_promo', data);
@@ -937,6 +939,9 @@ class SiteSale2_new_ extends React.Component {
 
             <Grid item xs={12} sm={3}>
               <MyCheckBox value={this.state.for_new} func={ this.changeDataCheck.bind(this, 'for_new') } label='Для новых клиентов ( на первый заказ )' />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <MyCheckBox value={this.state.once_number} func={ this.changeDataCheck.bind(this, 'once_number') } label='1 раз на номер телефона' />
             </Grid>
             
             <Grid item xs={12} sm={3}>
