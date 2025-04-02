@@ -4,24 +4,26 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && npm run sentry:sourcemaps",
     "start": "next start",
     "lint": "next lint",
     "deploy:local": "next build && pm2 startOrRestart ecosystem.config.js --env local",
     "deploy:dev": "next build && pm2 startOrRestart ecosystem.config.js --env development",
-    "deploy:prod": "npm update && next build && pm2 startOrRestart ecosystem.config.js --env production"
+    "deploy:prod": "npm update && next build && pm2 startOrRestart ecosystem.config.js --env production",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org sentry --project jacosoft-dop-react ./out && sentry-cli --url https://sentry.jacochef.ru/ sourcemaps upload --org sentry --project jacosoft-dop-react ./out"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@mui/styled-engine-sc": "^5.14.12",
-    "styled-components": "^5.3.11",
     "@mui/icons-material": "^5.17.1",
     "@mui/lab": "^5.0.0-alpha.175",
     "@mui/material": "^5.17.1",
     "@mui/material-nextjs": "^5.16.14",
+    "@mui/styled-engine-sc": "^5.14.12",
     "@mui/x-date-pickers": "^7.28.2",
+    "@sentry/cli": "^2.43.0",
+    "@sentry/react": "^9.10.1",
     "@tinymce/tinymce-react": "^5.1.1",
     "axios": "^1.8.4",
     "childprocess": "^2.0.2",
@@ -39,11 +41,9 @@
     "react-draggable": "^4.4.6",
     "react-modal-image": "^2.6.0",
     "react-multi-date-picker": "^4.5.2",
+    "sass": "^1.86.0",
+    "styled-components": "^5.3.11",
     "tinymce": "^7.7.2",
-    "zustand": "^4.5.6",
-    "sass": "^1.86.0"
-  },
-  "devDependencies": {
-   
+    "zustand": "^4.5.6"
   }
 }
