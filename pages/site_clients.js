@@ -1110,6 +1110,9 @@ class SiteClients_ extends React.Component {
       orders_list: [],
       orders_list_addr: [],
 
+      select_toggle: 'city',
+      points: [],
+      point_id: [],
     };
   }
 
@@ -1120,6 +1123,7 @@ class SiteClients_ extends React.Component {
       this.setState({
         all_items: data.all_items,
         cities: data.cities,
+        points: data.points,
         acces: data.acces,
         module_name: data.module_info.name
       });
@@ -1293,18 +1297,10 @@ class SiteClients_ extends React.Component {
     });
   }
 
-  async downLoad() {
-
-    const number = this.state.number;
-    const city_id = this.state.city_id;
-    let date_start = this.state.date_start;
-    let date_end = this.state.date_end;
-    let order = this.state.order;
-    let items = this.state.items;
-    let addr = this.state.addr;
-    let promo = this.state.promo;
-
-    if (!city_id.length) {
+  get_data_request() {
+    let { number, city_id, date_start, date_end, order, items, addr, promo, select_toggle, point_id } = this.state;
+  
+    if (select_toggle === 'city' && !city_id.length) {
 
       this.setState({
         openAlert: true,
@@ -1312,28 +1308,53 @@ class SiteClients_ extends React.Component {
         err_text: 'Необходимо выбрать город'
       });
 
-      return;
-    } 
+      return null;
 
+    }
+  
+    if (select_toggle === 'point') {
+
+      if (!point_id.length) {
+
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: 'Необходимо выбрать точку'
+        });
+
+        return null;
+
+      }
+  
+      point_id = point_id.map(item => {
+        const parts = item.name.split(',');
+        return {
+          ...item,
+          addr: parts.length > 1 ? parts.slice(1).join(',').trim() : item.name,
+        };
+      });
+
+    }
+  
+    date_start = date_start ? dayjs(date_start).format('YYYY-MM-DD') : '';
+    date_end = date_end ? dayjs(date_end).format('YYYY-MM-DD') : '';
+  
     if ( (!date_start && !date_end) || !date_start || !date_end) {
 
       if( number.length > 0 || order.length > 0 || items.length > 0 || addr.length > 0 || promo.length > 0 ) {
 
-      }else{
+      } else {
         this.setState({
           openAlert: true,
           err_status: false,
           err_text: 'Необходимо указать дату или что-то кроме нее'
         });
   
-        return;
+        return null;
       }
     } 
-
-    date_start = dayjs(date_start).format('YYYY-MM-DD');
-    date_end = dayjs(date_end).format('YYYY-MM-DD');
-
-    const data = {
+  
+    return {
       number,
       city_id,
       date_start,
@@ -1341,8 +1362,17 @@ class SiteClients_ extends React.Component {
       order,
       items,
       addr,
-      promo
-    }
+      promo,
+      point_id,
+      type: select_toggle
+    };
+  }
+
+  async downLoad() {
+
+    const data = this.get_data_request();
+
+    if (!data) return;
 
     const dop_type = {
       responseType: 'blob',
@@ -1408,55 +1438,11 @@ class SiteClients_ extends React.Component {
   }
 
   async getOrders() {
-    const number = this.state.number;
-    const city_id = this.state.city_id;
-    let date_start = this.state.date_start;
-    let date_end = this.state.date_end;
-    let order = this.state.order;
-    let items = this.state.items;
-    let addr = this.state.addr;
-    let promo = this.state.promo;
 
-    date_start = date_start ? dayjs(date_start).format('YYYY-MM-DD') : '';
-    date_end = date_end ? dayjs(date_end).format('YYYY-MM-DD') : '';
+    const data = this.get_data_request();
 
-    if (!city_id.length) {
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо выбрать город'
-      });
-
-      return;
-    } 
-
-    if ( (!date_start && !date_end) || !date_start || !date_end) {
-
-      if( number.length > 0 || order.length > 0 || items.length > 0 || addr.length > 0 || promo.length > 0 ) {
-
-      }else{
-        this.setState({
-          openAlert: true,
-          err_status: false,
-          err_text: 'Необходимо указать дату или что-то кроме нее'
-        });
-  
-        return;
-      }
-    } 
-
-    const data = {
-      number,
-      city_id,
-      date_start,
-      date_end,
-      order,
-      items,
-      addr,
-      promo
-    }
-
+    if (!data) return;
+    
     const res = await this.getData('get_orders', data);
 
     if (res.search_orders.length) {
@@ -1760,6 +1746,28 @@ class SiteClients_ extends React.Component {
     
   } 
 
+  handleToggleChange = (event, newSelection) => {
+    if (newSelection !== null) {
+
+      this.setState({
+        select_toggle: newSelection,
+      });
+
+      if(newSelection === 'city') {
+        this.setState({
+          point_id: [],
+        });
+      }
+
+      if(newSelection === 'point') {
+        this.setState({
+          city_id: [],
+        });
+      }
+
+    }
+  };
+
   render() {
     return (
       <>
@@ -1913,18 +1921,59 @@ class SiteClients_ extends React.Component {
             >
 
               <Grid container spacing={3}>
-
-                <Grid item xs={12} sm={4}>
-                  <MyAutocomplite
-                    label="Город"
-                    multiple={true}
-                    data={this.state.cities}
-                    value={this.state.city_id}
-                    func={this.changeAutocomplite.bind(this, 'city_id')}
-                  />
+                
+                <Grid item xs={12} sm={12}>
+                  <ToggleButtonGroup
+                    value={this.state.select_toggle}
+                    exclusive
+                    onChange={this.handleToggleChange}
+                    sx={{
+                      display: 'flex',
+                      '& .MuiToggleButton-root': {
+                        fontSize: 16,
+                        textTransform: 'none',
+                        '&::first-letter': {
+                          textTransform: 'uppercase',
+                        },
+                        borderRadius: 2,        
+                        px: 3,
+                        py: 0.5,                      
+                      },
+                      '& .MuiToggleButton-root.Mui-selected': {
+                        backgroundColor: 'primary.main',
+                        color: 'primary.contrastText',
+                        '&:hover': {
+                          backgroundColor: 'primary.dark',
+                        },
+                      }
+                    }}
+                  >
+                    <ToggleButton value="city">Город</ToggleButton>
+                    <ToggleButton value="point">Точка</ToggleButton>
+                  </ToggleButtonGroup>
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={12}>
+                  {this.state.select_toggle === 'city' ?
+                      <MyAutocomplite
+                        label="Город"
+                        multiple={true}
+                        data={this.state.cities}
+                        value={this.state.city_id}
+                        func={this.changeAutocomplite.bind(this, 'city_id')}
+                      />
+                    :
+                      <MyAutocomplite
+                        label="Точка"
+                        multiple={true}
+                        data={this.state.points}
+                        value={this.state.point_id}
+                        func={this.changeAutocomplite.bind(this, 'point_id')}
+                      />
+                  }
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
                   <MyDatePickerNew
                     label="Дата от"
                     customActions={true}
@@ -1933,7 +1982,7 @@ class SiteClients_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6}>
                   <MyDatePickerNew
                     label="Дата до"
                     customActions={true}
@@ -2067,6 +2116,7 @@ class SiteClients_ extends React.Component {
                     <Table size={'small'} stickyHeader>
                     <TableHead>
                       <TableRow>
+                        <TableCell>#</TableCell>
                         <TableCell>Заказ</TableCell>
                         <TableCell>Точка</TableCell>
                         <TableCell>Оформил</TableCell>
@@ -2095,6 +2145,7 @@ class SiteClients_ extends React.Component {
                           sx={{ cursor: 'pointer' }}
                           onClick={this.openClientOrder.bind(this, item.id, item.point_id)} 
                         >
+                          <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{key + 1}</TableCell>
                           <TableCell 
                             style={ parseInt(item.dist) >= 0 ? {backgroundColor: 'yellow', color: '#000', cursor: 'pointer', fontWeight: 'inherit'} : {color: 'inherit', cursor: 'pointer', fontWeight: 'inherit'} } 
                           >
