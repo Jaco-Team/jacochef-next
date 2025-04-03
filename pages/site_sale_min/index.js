@@ -138,6 +138,10 @@ class SiteSaleMin_ extends React.Component {
     }
   }
   
+  // <Link href={"/site_sale_min/new"} style={{ zIndex: 10 }}>
+  //   <Button variant="contained">Новый промокод</Button>
+  // </Link>
+
   render(){
     return (
       <>
@@ -173,9 +177,7 @@ class SiteSaleMin_ extends React.Component {
             
             <Grid item xs={12}>
               
-              <Link href={"/site_sale_min/new"} style={{ zIndex: 10 }}>
-                <Button variant="contained">Новый промокод</Button>
-              </Link>
+              
               
               <Link href={"/site_sale_min/stat_list"} style={{ zIndex: 10, marginLeft: 20 }}>
                 <Button variant="contained">Выписанные промокоды</Button>
