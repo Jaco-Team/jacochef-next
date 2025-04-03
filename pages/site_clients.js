@@ -1932,12 +1932,17 @@ class SiteClients_ extends React.Component {
                       '& .MuiToggleButton-root': {
                         fontSize: 16,
                         textTransform: 'none',
-                        '&::first-letter': {
-                          textTransform: 'uppercase',
-                        },
-                        borderRadius: 2,        
+                        borderRadius: 0,
                         px: 3,
-                        py: 0.5,                      
+                        py: 0.5,
+                      },
+                      '& .MuiToggleButton-root:first-of-type': {
+                        borderTopLeftRadius: 4,
+                        borderBottomLeftRadius: 4,
+                      },
+                      '& .MuiToggleButton-root:last-of-type': {
+                        borderTopRightRadius: 4,
+                        borderBottomRightRadius: 4,
                       },
                       '& .MuiToggleButton-root.Mui-selected': {
                         backgroundColor: 'primary.main',
@@ -1945,7 +1950,7 @@ class SiteClients_ extends React.Component {
                         '&:hover': {
                           backgroundColor: 'primary.dark',
                         },
-                      }
+                      },
                     }}
                   >
                     <ToggleButton value="city">Город</ToggleButton>
