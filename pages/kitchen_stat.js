@@ -21,7 +21,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 
@@ -66,42 +66,17 @@ class KitchenStat_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
+
+    return res;
   };
 
   changePoint(data, event, value) {
@@ -136,7 +111,7 @@ class KitchenStat_ extends React.Component {
       list.push({ id: item.id, base: item.base });
       return list;
     }, []);
-
+    
     const data = {
       start_date: dayjs(date_start).format('YYYY-MM-DD'),
       end_date: dayjs(date_end).format('YYYY-MM-DD'),
@@ -146,18 +121,18 @@ class KitchenStat_ extends React.Component {
     const res = await this.getData('get_this_stat', data);
 
     const arrayOrdersByH = Object.entries(res.orders_by_h).reduce((data, [key, value]) => {
-        if (!isNaN(Number(key))) {
+      if (!isNaN(Number(key))) {
 
-          if (key.startsWith('0')) {
-            key = key.substring(1);
-          }
-
-          value = { ...{ h: key }, ...value };
-          data = [...data, ...[value]];
+        if (key.startsWith('0')) {
+          key = key.substring(1);
         }
 
-        return data;
-      }, []).sort((a, b) => a.h - b.h);
+        value = { ...{ h: key }, ...value };
+        data = [...data, ...[value]];
+      }
+
+      return data;
+    }, []).sort((a, b) => a.h - b.h);
 
     const statAllItemsCount = res.stat_all_items.reduce((count, item) => count + Number(item.count), 0);
 
