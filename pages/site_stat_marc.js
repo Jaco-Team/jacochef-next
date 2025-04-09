@@ -16,9 +16,9 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 
-import { MyTextInput, MySelect, MyAutocomplite, MyCheckBox, MyDatePickerNew, formatDate } from '@/ui/elements';
+import { MyTextInput, MySelect, MyAutocomplite, MyCheckBox, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 
@@ -64,6 +64,10 @@ class SiteStatMarc_ extends React.Component {
       roll_stat:    [],
       set_stat:     [],
       pizza_stat:   [],
+
+      openAlert: false,
+      err_status: true,
+      err_text: '',
    //
       typesShow: [
         {id: 1, name: 'Итоговый результат'},
@@ -74,11 +78,9 @@ class SiteStatMarc_ extends React.Component {
 
         // правка от 06.06.22
         colors: [0x679499, 0x2941A, 0x62941A, 0xFF0000, 0x46bdc6, 0xFFB6C1,
-            0x679499, 0x2941A, 0x62941A, 0xFF0000, 0x46bdc6, 0xFFB6C1]
+            0x679499, 0x2941A, 0x62941A, 0xFF0000, 0x46bdc6, 0xFFB6C1],
     };
   }
-
-   
 
   async componentDidMount(){
     let data = await this.getData('get_all');
@@ -92,61 +94,47 @@ class SiteStatMarc_ extends React.Component {
   }
   
   getData = (method, data = {}) => {
-    
     this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      console.log( err )
-      this.setState({
-        is_load: false
-      })
+      is_load: true,
     });
+
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
+  };
+  
+  changeChekBox(type, event) {
+      this.setState({
+          [type]: event.target.checked
+      })
   }
-   
-    changeChekBox(type, event) {
-        this.setState({
-            [type]: event.target.checked
-        })
-    }
 
   async show() {
+
+    const choosePoint = this.state.choosePoint;
+
+    if (!choosePoint.length) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Выберите точку!',
+      });
+
+      return;
+    }
+    
     let data = {
-      points: this.state.choosePoint,
-      dateStart  : dayjs(this.state.date_start).format('YYYY-MM-DD'),
-      dateEnd    : dayjs(this.state.date_end).format('YYYY-MM-DD'),
+      points: choosePoint,
+      dateStart: dayjs(this.state.date_start).format('YYYY-MM-DD'),
+      dateEnd: dayjs(this.state.date_end).format('YYYY-MM-DD'),
       typeShow: this.state.typeShow,
       promoName: this.state.promoName,
       advData: this.state.advData,
@@ -154,38 +142,41 @@ class SiteStatMarc_ extends React.Component {
 
     let res = await this.getData('show', data);
 
-      console.log(res);
+    console.log(res);
 
     // Итоговый результат
-      if (parseInt(this.state.typeShow) == 1) {
-         
-          this.setState({
-            newUsersTable: res.new_users,
-            countOrdersTable: res.count_orders,
-            avgSumm: res.avg_summ,
-            countPos: res.count_pos,
-            fakeUsers: res.fake_users,
-            roll_stat: res.roll_stat,
-            set_stat: res.set_stat,
-            pizza_stat: res.pizza_stat,
-          })
-      }
+    if (parseInt(this.state.typeShow) == 1) {
+        
+      this.setState({
+        newUsersTable: res.new_users,
+        countOrdersTable: res.count_orders,
+        avgSumm: res.avg_summ,
+        countPos: res.count_pos,
+        fakeUsers: res.fake_users,
+        roll_stat: res.roll_stat,
+        set_stat: res.set_stat,
+        pizza_stat: res.pizza_stat,
+      })
+    }
 
     // графики по месяцам
-    if( parseInt( this.state.typeShow ) == 2 ){
+    if (parseInt( this.state.typeShow ) == 2){
+
       this.renderGraphNewUsers(res.new_users);
       this.renderGraphOrders(res.count_orders);
       this.renderGraphAvgSumm(res.avg_summ);
       this.renderCountPos(res.count_pos);
-      }
 
-     // графики по дням
-      if (parseInt(this.state.typeShow) == 3) {
-        
-        this.renderGraphNewUsersD(res.new_users);
-        this.renderGraphOrdersD(res.count_orders);
-        this.renderGraphAvgSummD(res.avg_summ);
-        this.renderCountPosD(res.count_pos);
+    }
+
+    // графики по дням
+    if (parseInt(this.state.typeShow) == 3) {
+
+      this.renderGraphNewUsersD(res.new_users);
+      this.renderGraphOrdersD(res.count_orders);
+      this.renderGraphAvgSummD(res.avg_summ);
+      this.renderCountPosD(res.count_pos);
+
     }
   }
 
@@ -1628,6 +1619,13 @@ class SiteStatMarc_ extends React.Component {
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
+
+          <MyAlert
+            isOpen={this.state.openAlert}
+            onClose={() => this.setState({ openAlert: false })}
+            status={this.state.err_status}
+            text={this.state.err_text}
+          />
 
           <Grid item xs={12} sm={3}>
             <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDateRange.bind(this, 'date_start') } />
