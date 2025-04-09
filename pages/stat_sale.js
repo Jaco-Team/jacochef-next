@@ -187,8 +187,16 @@ function hexToHsva(hex) {
 
 function hsvaToHex(hsva) {
   const { r, g, b } = hsvaToRgba(hsva);
-  return rgbToHex(r, g, b);
+  const hex = rgbToHex(r, g, b);
+
+  if (Math.abs(hsva.a - 1) < 0.001) {
+    return hex;
+  }
+  const alpha = Math.round(hsva.a * 255);
+  const alphaHex = alpha.toString(16).padStart(2, '0').toUpperCase();
+  return hex + alphaHex;
 }
+
 
 // ---------- Компоненты страницы ---------- //
 
@@ -198,8 +206,8 @@ class CustomColorPicker extends React.Component {
   constructor(props) {
     super(props);
 
-    // Проверяем, есть ли начальный цвет (HEX или HSVA).
     let initialHsva = { h: 0, s: 1, v: 1, a: 1 };
+    
     if (props.initialColor) {
       if (typeof props.initialColor === 'string') {
         initialHsva = hexToHsva(props.initialColor);
@@ -213,6 +221,7 @@ class CustomColorPicker extends React.Component {
 
     this.state = {
       hsva: initialHsva,
+      hexInput: hsvaToHex(initialHsva),
       draggingAlpha: false,
       draggingWheel: false,
     };
@@ -303,6 +312,11 @@ class CustomColorPicker extends React.Component {
   }
 
   handleWheelClick = (e) => {
+
+    if (document.activeElement) {
+      document.activeElement.blur();
+    }
+
     this.setState({ draggingWheel: true });
     this.updateWheel(e);
   };
@@ -329,8 +343,10 @@ class CustomColorPicker extends React.Component {
     const s = dist / radius;
     const { v, a } = this.state.hsva;
     const newHsva = { h, s, v, a };
+
+    const finalHex = hsvaToHex(newHsva);
   
-    this.setState({ hsva: newHsva });
+    this.setState({ hsva: newHsva, hexInput: finalHex });
     this.props.hsvaConvertHex(newHsva);
   };
   
@@ -353,7 +369,10 @@ class CustomColorPicker extends React.Component {
     const newHsva = hexToHsva(hex);
     // Сохраняем текущую прозрачность
     newHsva.a = this.state.hsva.a;
-    this.setState({ hsva: newHsva });
+
+    const finalHex = hsvaToHex(newHsva);
+
+    this.setState({ hsva: newHsva, hexInput: finalHex });
 
     this.props.hsvaConvertHex(newHsva);
   };
@@ -361,6 +380,11 @@ class CustomColorPicker extends React.Component {
   // ---------- CSS-СЛАЙДЕР ДЛЯ ПРОЗРАЧНОСТИ ----------
 
   handleAlphaDown = (e) => {
+
+    if (document.activeElement) {
+      document.activeElement.blur();
+    }
+
     // Начинаем перетаскивать
     this.setState({ draggingAlpha: true });
     this.updateAlpha(e);
@@ -388,7 +412,10 @@ class CustomColorPicker extends React.Component {
     const alpha = x / rect.width;
   
     const { h, s, v } = this.state.hsva;
-    this.setState({ hsva: { h, s, v, a: alpha } });
+
+    const finalHex = hsvaToHex({ h, s, v, a: alpha });
+
+    this.setState({ hsva: { h, s, v, a: alpha }, hexInput: finalHex });
     this.props.hsvaConvertHex({ h, s, v, a: alpha });
   }
 
@@ -469,8 +496,48 @@ class CustomColorPicker extends React.Component {
     );
   }
 
+  // ---------- Инпут ввода цвета в формате hex ----------
+
+  handleHexInputChange = (e) => {
+    const inputValue = e.target.value;
+
+    this.setState({ hexInput: inputValue });
+  };
+  
+  handleHexInputBlur = () => {
+    let { hexInput, hsva } = this.state;
+  
+    hexInput = hexInput.trim();
+  
+    if (!hexInput) {
+      this.setState({ hexInput: hsvaToHex(hsva) });
+      return;
+    }
+  
+    if (!hexInput.startsWith('#')) {
+      hexInput = '#' + hexInput;
+    }
+  
+    const hexRegex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
+
+    if (!hexRegex.test(hexInput)) {
+      this.setState({ hexInput: hsvaToHex(hsva) });
+      return;
+    }
+  
+    const newHsva = hexToHsva(hexInput);
+  
+    const finalHex = hsvaToHex(newHsva);
+  
+    this.setState({ hsva: newHsva, hexInput: finalHex });
+  
+    if (this.props.hsvaConvertHex) {
+      this.props.hsvaConvertHex(newHsva);
+    }
+  };
+
   render() {
-    const { hsva } = this.state;
+    const { hsva, hexInput } = this.state;
     const currentColorRgba = hsvaToCssRgba(hsva);
 
     const radius = this.wheelSize / 2;
@@ -519,6 +586,43 @@ class CustomColorPicker extends React.Component {
               backgroundColor: currentColorRgba,
               transform: 'translate(-50%, -50%)',
               pointerEvents: 'none',
+            }}
+          />
+        </div>
+
+        {/* инпут ввода цвета в формате hex */}
+        <div style={{ marginTop: 20 }}>
+          <TextField
+            label="Указать цвет в формате hex"
+            variant="outlined"
+            fullWidth
+            value={hexInput}
+            onChange={this.handleHexInputChange}
+            onBlur={this.handleHexInputBlur}
+            inputProps={{ maxLength: 9, style: { padding: "10px 16px" } }}
+            sx={{
+              marginTop: 2,
+              "& .MuiInputBase-root": {
+                fontWeight: "bold",
+                fontSize: "1.2rem",
+                minHeight: "40px",
+                borderRadius: "4px",
+              },
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#c03",
+              },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#c03",
+              },
+              "& .MuiOutlinedInput-notchedOutline legend": {
+                maxWidth: "170px",
+              },
+              "&:hover .MuiInputLabel-root": {
+                color: "#c03",
+              },
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: "#c03",
+              },
             }}
           />
         </div>
@@ -739,7 +843,7 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
 
       return;
     }
-
+    
     const result = {
       value,
       color,
@@ -1952,7 +2056,7 @@ class StatSale_Tab_Clients extends React.Component {
 
           {!data_clients_list.length ? null : (
             <Grid item xs={12} sm={12} mt={3} mb={5} sx={{ position: 'relative', overflow: 'hidden' }}>
-              <TableContainer sx={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', paddingBottom: 5 }}>
+              <TableContainer sx={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', overflowY: 'hidden', paddingBottom: 5 }}>
                 {data_clients_list.map((table, index) => (
            
                   <Table 
