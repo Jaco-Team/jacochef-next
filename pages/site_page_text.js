@@ -2,6 +2,7 @@ import React from 'react';
 
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
@@ -21,7 +22,7 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyTextInput, MyAlert } from '@/ui/elements';
+import { MySelect, MyTextInput, MyAlert, TextEditor, MyAutocomplite } from '@/ui/elements';
 
 import { api, api_laravel } from '@/src/api_new';
 
@@ -41,7 +42,7 @@ class SitePageText_Modal extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    // console.log(this.props.item);
+    //console.log(this.props.item);
 
     if (!this.props.item) {
       return;
@@ -53,6 +54,28 @@ class SitePageText_Modal extends React.Component {
       });
     }
   }
+
+  changeItemText(data, value) {
+    let item = this.state.item;
+
+    if (!item || !item.page) return;
+
+    item.page[data] = value;
+
+    this.setState({
+      item,
+    });
+  }
+
+  changeAutocomplite = (data, event, value) => {
+    let item = this.state.item;
+
+    item.page[data] = value;
+
+    this.setState({
+      item,
+    });
+  };
 
   changeItem(data, event) {
     const item = this.state.item;
@@ -167,7 +190,7 @@ class SitePageText_Modal extends React.Component {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо указать description'
+        err_text: 'Необходимо указать описание'
       });
       
       return;
@@ -217,13 +240,23 @@ class SitePageText_Modal extends React.Component {
           </DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={12}>
+              <Grid item xs={12} sm={6}>
                 <MySelect
                   is_none={false}
                   label="Город"
                   data={this.state.item ? this.state.item.cities : []}
                   value={this.state.item ? this.state.item.page.city_id : ''}
                   func={this.changeItem.bind(this, 'city_id')}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <MyAutocomplite
+                  label="Категория"
+                  multiple={false}
+                  data={this.state.item ? this.state.item.category : []}
+                  value={this.state.item ? this.state.item.page.category_id : ''}
+                  func={this.changeAutocomplite.bind(this, 'category_id')}
                 />
               </Grid>
 
@@ -261,11 +294,21 @@ class SitePageText_Modal extends React.Component {
 
               <Grid item xs={12} sm={12}>
                 <MyTextInput
-                  label="Description"
+                  label="Описание (description)"
                   multiline={true}
                   maxRows={5}
                   value={this.state.item ? this.state.item.page.description : ''}
                   func={this.changeItem.bind(this, 'description')}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={12}>
+                <Typography gutterBottom>
+                  Текст на сайте
+                </Typography>
+                <TextEditor
+                  value={this.state.item?.page?.content || ''}
+                  func={this.changeItemText.bind(this, 'content')}
                 />
               </Grid>
             
@@ -310,7 +353,9 @@ class SitePageText_ extends React.Component {
         page_h: '',
         title: '',
         description: '',
-        link: ''
+        link: '',
+        content: '',
+        category_id: {'id': 0, 'name': 'Без категории'}
       },
 
       fullScreen: false,
@@ -405,6 +450,8 @@ class SitePageText_ extends React.Component {
 
       const item = await this.getData('get_one', data);
 
+      item.page.category_id = item.category.find(cat => parseInt(cat.id) === parseInt(item.page.category_id)) ?? null;
+
       this.setState({
         modalDialog: true,
         method,
@@ -428,7 +475,8 @@ class SitePageText_ extends React.Component {
         page_h: item.page_h,
         page_title: item.title,
         page_description: item.description,
-        page_text: '',
+        page_text: item.content,
+        category_id: item.category_id ? item.category_id.id : 0,
       };
 
       res = await this.getData('save_new', data);
@@ -445,6 +493,7 @@ class SitePageText_ extends React.Component {
         page_title: item.title,
         page_description: item.description,
         page_text: item.content,
+        category_id: item.category_id ? item.category_id.id : 0,
       };
 
       res =await this.getData('save_edit', data);
@@ -548,8 +597,8 @@ class SitePageText_ extends React.Component {
                     <TableCell style={{ width: '2%' }}>#</TableCell>
                     <TableCell style={{ width: '10%' }}>Название</TableCell>
                     <TableCell style={{ width: '8%' }}>Город</TableCell>
-                    <TableCell style={{ width: '20%' }}>Заголовок</TableCell>
-                    <TableCell style={{ width: '45%' }}>Текст на сайте</TableCell>
+                    <TableCell style={{ width: '20%' }}>Заголовок (title)</TableCell>
+                    <TableCell style={{ width: '45%' }}>Описание (description)</TableCell>
                     <TableCell style={{ width: '15%' }}>Последнее обновление</TableCell>
                   </TableRow>
                 </TableHead>
