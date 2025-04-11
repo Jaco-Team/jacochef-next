@@ -1,59 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 import Avatar from '@mui/material/Avatar';
 import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
-
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
 import Link from 'next/link';
 
 import api from '@/src/api';
 
 import Cookies from 'js-cookie';
 
+import { EyeShow, EyeHide } from '@/ui/icons';
+import { MyAlert} from '@/ui/elements';
+
 export default function Auth(){
 
-  const [ isLoad, setIsLoad ] = useState(false);
-  const [ isDialogOpen, setDialogOpen ] = useState(false);
-  const [ isDialogText, setIsDialogText ] = useState('');
-  const [ isDialogTitle, setIsDialogTitle ] = useState('');
+  const [isLoad, setIsLoad] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [openAlert, setOpenAlert] = useState(false);
+  const [errText, setErrText] = useState(false);
 
-  function openDialog(title = '', text = '') {
-    setDialogOpen( open => !open )
-
-    if(text && text.length > 0) {
-      setIsDialogText(text);
-    }
-    if(title && title.length > 0) {
-      setIsDialogTitle(title);
-    }
-  }
-
-  function checkPhone(event){
+  const checkPhone = (event) => {
     let v = event.target.value;
-    let maxLen = 0;
+    v = v.replace(/[^\d+]/ig, "");
 
-    v       = v.replace(/[^\d+]/ig, "");
-    maxLen  = v.substring(0, 1) == '+' ? 12 : 11;
-    v       = v.substring(0, maxLen);
-    document.getElementById('phone').value = v;
-  }
+    if (v.charAt(0) !== '+') {
+      v = v.replace(/\+/g, "");
+    } else {
+      v = '+' + v.slice(1).replace(/\+/g, "");
+    }
+
+    let maxLen = v.charAt(0) === '+' ? 12 : 11;
+    v = v.substring(0, maxLen);
+
+    setPhone(v);
+  };
+
+  const setLogin = (event) => {
+    setPassword(event.target.value.replaceAll(' ', ''));
+  };
 
   async function login(){
+
+    if (!password.trim() || !phone || phone.length < 11) {
+      setErrText('Пожалуйста, заполните все поля корректно: телефон должен содержать 11 цифр, а пароль не должен быть пустым');
+      setOpenAlert(true);
+
+      return;
+    }
+
     setIsLoad(true);
 
     let data = {
-      login: document.getElementById('phone').value,
-      pwd: document.getElementById('password').value
+      login: phone,
+      pwd: password
     };
 
     let res = await api('auth', 'auth', data);
@@ -61,11 +68,15 @@ export default function Auth(){
     console.log(res)
 
     if (res.st === false) {
+
       setTimeout(() => {
-        openDialog('Предупреждение', res.text)
+        setErrText(res.text)
+        setOpenAlert(true);
         setIsLoad(false);
       }, 500)
+
     } else {
+
       localStorage.setItem('token', res.token);
       Cookies.set('token', res.token, { expires: 60 });
 
@@ -73,6 +84,7 @@ export default function Auth(){
         setIsLoad(false);
         window.location.pathname = '/'
       }, 300)
+
     }
   }
 
@@ -82,18 +94,12 @@ export default function Auth(){
         <CircularProgress color="inherit" />
       </Backdrop>
 
-      <Dialog
-        open={isDialogOpen}
-        onClose={openDialog}
-      >
-        <DialogTitle>{isDialogTitle}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>{isDialogText}</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={openDialog} color="primary" autoFocus>Хорошо</Button>
-        </DialogActions>
-      </Dialog>
+      <MyAlert
+        isOpen={openAlert}
+        onClose={() => setOpenAlert(false)}
+        status={false}
+        text={errText}
+      />
 
       <Grid container spacing={3} direction="row" justifyContent="center" alignItems="center">
         <Grid item xs={12} sm={6} md={6} lg={4} xl={3}>
@@ -102,18 +108,20 @@ export default function Auth(){
               <img alt="Жако доставка роллов и пиццы" src="/Favikon.png" style={{ height: '100%' }} />
             </Avatar>
             <form style={{ width: '100%' }} noValidate>
+
               <TextField
                 variant="outlined"
                 margin="normal"
                 size="small"
                 fullWidth
-                id="phone"
                 label="Номер телефона"
                 name="phone"
                 autoComplete="phone"
                 autoFocus
+                value={phone}
                 onChange={checkPhone}
               />
+
               <TextField
                 variant="outlined"
                 margin="normal"
@@ -121,10 +129,26 @@ export default function Auth(){
                 fullWidth
                 name="password"
                 label="Пароль"
-                type="password"
-                id="password"
+                type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
+                value={password}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        onClick={() => setShowPassword(!showPassword)}
+                        disableRipple
+                        disableFocusRipple
+                      >
+                        {showPassword ? <EyeShow style={{ fontSize: 30 }} /> : <EyeHide style={{ fontSize: 30 }}/>}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                onChange={setLogin}
               />
+
               <Button
                 fullWidth
                 variant="contained"
@@ -134,11 +158,13 @@ export default function Auth(){
               >
                 Войти
               </Button>
+
               <Grid container style={{ marginTop: 10 }}>
                 <Grid item>
                   <Link href={`/registration`} style={{ color: '#c03' }}>Восстановить пароль</Link>
                 </Grid>
               </Grid>
+
             </form>
           </div>
         </Grid>

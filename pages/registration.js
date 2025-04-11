@@ -1,15 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 import Avatar from '@mui/material/Avatar';
 import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
-
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
 
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -18,107 +12,166 @@ import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+
 import Link from 'next/link';
 
 import api from '@/src/api';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import Cookies from 'js-cookie';
 
-export default function Registration(){
+import { EyeShow, EyeHide } from '@/ui/icons';
+import { MyAlert} from '@/ui/elements';
 
-  const [ isLoad, setIsLoad ] = useState(false);
-  const [ steps, setSteps ] = useState(['Телефон', 'Подтверждение', 'Новый пароль']);
-  const [ activeStep, setActiveStep ] = useState(0);
+export default function Registration() {
+  const steps = ['Телефон', 'Подтверждение', 'Новый пароль'];
 
-  const [ phone, setPhone ] = useState('');
-  const [ code, setCode ] = useState('');
+  const [isLoad, setIsLoad] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [ isDialogOpen, setDialogOpen ] = useState(false);
-  const [ isDialogText, setIsDialogText ] = useState('');
-  const [ isDialogTitle, setIsDialogTitle ] = useState('');
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
 
-  function openDialog(title = '', text = '') {
-    setDialogOpen( open => !open )
+  const [openAlert, setOpenAlert] = useState(false);
+  const [errText, setErrText] = useState('');
 
-    if(text && text.length > 0) {
-      setIsDialogText(text);
-    }
-    if(title && title.length > 0) {
-      setIsDialogTitle(title);
-    }
-  }
+  const isMinLength = password.length >= 8;
+  const hasNumber = /\d/.test(password);
+  const hasMixedCase = /(?=.*[a-z])(?=.*[A-Z])/.test(password);
+  const isPasswordValid = activeStep === 2 ? isMinLength && hasNumber && hasMixedCase : true;
 
-  function checkPhone(event){
+  const handlePasswordChange = (event) => {
+    setPassword(event.target.value.replaceAll(' ', ''));
+  };
+
+  const checkPhone = (event) => {
     let v = event.target.value;
-    let maxLen = 0;
+    v = v.replace(/[^\d+]/g, "");
+    
+    if (v.startsWith('+7')) {
+      v = '8' + v.slice(2);
+    } else {
+      v = v.replace(/\+/g, "");
+    }
+    
+    v = v.substring(0, 11);
+    setPhone(v);
+  };
 
-    v = v.replace(/[^\d+]/ig, "");
-    maxLen = v.substring(0, 1) == '+' ? 12 : 11;
-    v = v.substring(0, maxLen);
-    document.getElementById('phone').value = v;
-  }
+  const handleSetCode = (event) => {
+    const newCode = event.target.value.replaceAll(' ', '');
+    setCode(newCode);
+  
+    if (activeStep === 1 && newCode.length === 4) {
+      nextStep(newCode);
+    }
+  };
 
-  function enterNextStep(event){
-    if (event.charCode == 13) {
-      //nextStep();
+  const handleNextStep = () => {
+    if (activeStep === 1) {
+      nextStep(code);
+    } else {
+      nextStep();
+    }
+  };
+
+  async function nextStep(currentCode = '') {
+    setIsLoad(true);
+
+    try {
+      if (activeStep === 0) {
+
+        if (!phone || phone.length < 11) {
+          setErrText('Телефон должен содержать 11 цифр');
+          setOpenAlert(true);
+          return;
+        }
+  
+        let data = { login: phone };
+        let res = await api_laravel_local('auth', 'check_phone', data);
+        res = res.data;
+  
+        if (res.st === false) {
+          setErrText(res.text);
+          setOpenAlert(true);
+        } else {
+          setActiveStep(prev => prev + 1);
+        }
+
+      } else if (activeStep === 1) {
+
+        if (currentCode.length !== 4) {
+          setErrText('Код должен состоять ровно из 4 символов');
+          setOpenAlert(true);
+          return;
+        }
+
+        let data = { login: phone, code: currentCode };
+        let res = await api('auth', 'check_code', data);
+  
+        if (res.st === false) {
+          setErrText(res.text);
+          setOpenAlert(true);
+        } else {
+          setActiveStep(prev => prev + 1);
+        }
+
+      } else if (activeStep === 2) {
+
+        let data = { login: phone, code: code, pwd: password };
+        let res = await api('auth', 'save_new_pwd', data);
+  
+        if (res.st === false) {
+          setErrText(res.text);
+          setOpenAlert(true);
+        } else {
+
+          localStorage.setItem('token', res.token);
+          Cookies.set('token', res.token, { expires: 60 });
+
+          setTimeout(() => {
+            window.location.pathname = '/';
+          }, 300);
+          
+        }
+      }
+
+    } catch (error) {
+
+      setErrText('Произошла ошибка. Попробуйте позже.');
+      setOpenAlert(true);
+
+    } finally {
+
+      setIsLoad(false);
+
     }
   }
 
-  async function nextStep() {
-    if(activeStep == 0) {
-      let data = {
-        login: document.getElementById('phone').value
-      }
+  const isButtonDisabled = () => {
 
-      let res = await api('auth', 'check_phone', data);
-
-      if (res.st === false) {
-        setTimeout(() => {
-          openDialog('Предупреждение', res.text)
-        }, 500)
-      } else {
-        setActiveStep(activeStep_ => activeStep_ + 1);
-        setPhone(data.login)
-      }
-    } else if (activeStep == 1) {
-      let data = {
-        login: phone,
-        code: document.getElementById('code').value
-      }
-
-      let res = await api('auth', 'check_code', data);
-
-      if (res.st === false) {
-        setTimeout(() => {
-          openDialog('Предупреждение', res.text)
-        }, 500)
-      } else {
-        setActiveStep(activeStep_ => activeStep_ + 1);
-        setCode(data.code)
-      }
-    } else if (activeStep == 2) {
-      let data = {
-        login: phone,
-        code: code,
-        pwd: document.getElementById('password').value
-      }
-
-      let res = await api('auth', 'save_new_pwd', data);
-
-      if (res.st === false) {
-        setTimeout(() => {
-          openDialog('Предупреждение', res.text)
-        }, 500)
-      } else {
-        localStorage.setItem('token', res.token);
-        Cookies.set('token', res.token, { expires: 60 });
-
-        setTimeout(() => {
-          window.location.pathname = '/'
-        }, 300)
-      }
+    if (activeStep === 0) {
+      return !phone || phone.length < 11;
+    } else if (activeStep === 1) {
+      return code.length !== 4;
+    } else if (activeStep === 2) {
+      return !isPasswordValid;
     }
-  }
+
+    return true;
+    
+  };
 
   return (
     <>
@@ -126,22 +179,16 @@ export default function Registration(){
         <CircularProgress color="inherit" />
       </Backdrop>
 
-      <Dialog
-        open={isDialogOpen}
-        onClose={openDialog}
-      >
-        <DialogTitle>{isDialogTitle}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>{isDialogText}</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={openDialog} color="primary" autoFocus>Хорошо</Button>
-        </DialogActions>
-      </Dialog>
+      <MyAlert
+        isOpen={openAlert}
+        onClose={() => setOpenAlert(false)}
+        status={false}
+        text={errText}
+      />
 
       <Grid container spacing={3} direction="row" justifyContent="center" alignItems="center">
         <Grid item xs={12} sm={6} md={6} lg={4} xl={3}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Avatar style={{ borderRadius: 0, width: '100%', height: 150, margin: 0, backgroundColor: '#fff', marginBottom: 20 }}>
               <img alt="Жако доставка роллов и пиццы" src="/Favikon.png" style={{ height: '100%' }} />
             </Avatar>
@@ -155,82 +202,150 @@ export default function Registration(){
             </Stepper>
 
             <div style={{ width: '100%' }}>
-
-              {activeStep == 0 ?
+              {activeStep === 0 && (
                 <TextField
                   variant="outlined"
                   margin="normal"
                   size="small"
                   fullWidth
-                  id="phone"
                   label="Номер телефона"
                   name="phone"
                   autoComplete="phone"
                   autoFocus
-                  onKeyPress={enterNextStep}
+                  value={phone}
+                  inputProps={{ maxLength: 11 }}
                   onChange={checkPhone}
                 />
-                  :
-                null
-              }
+              )}
 
-              {activeStep == 1 ?
+              {activeStep === 1 && (
                 <TextField
                   variant="outlined"
                   margin="normal"
                   size="small"
                   fullWidth
-                  id="code"
                   label="Код из смс"
                   name="code"
                   autoComplete="code"
                   autoFocus
-                  onKeyPress={enterNextStep}
+                  value={code}
+                  inputProps={{ maxLength: 4 }}
+                  onChange={handleSetCode}
                 />
-                  :
-                null
-              }
+              )}
 
-              {activeStep == 2 ?
-                <TextField
-                  variant="outlined"
-                  margin="normal"
-                  size="small"
-                  fullWidth
-                  name="password"
-                  label="Пароль"
-                  type="password"
-                  id="password"
-                  autoComplete="current-password"
-                  onKeyPress={enterNextStep}
-                />
-                  :
-                null
-              }
+              {activeStep === 2 && (
+                <>
+                  <TextField
+                    variant="outlined"
+                    margin="normal"
+                    size="small"
+                    fullWidth
+                    name="password"
+                    label="Пароль"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    value={password}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            size="small"
+                            onClick={() => setShowPassword(!showPassword)}
+                            disableRipple
+                            disableFocusRipple
+                          >
+                            {showPassword ? <EyeShow style={{ fontSize: 30 }} /> : <EyeHide style={{ fontSize: 30 }} />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    onChange={handlePasswordChange}
+                  />
+
+                  <Typography variant="subtitle2" sx={{ mt: 1, fontSize: '0.8rem !important', ml: 1 }}>
+                    Пароль должен содержать:
+                  </Typography>
+                  <List dense sx={{ ml: 1 }}>
+                    <ListItem disablePadding sx={{ height: '20px !important', py: 0, mb: 0 }}>
+                      <ListItemIcon sx={{ minWidth: 20, m: 0 }}>
+                        <FiberManualRecordIcon style={{ fontSize: 10, color: isMinLength ? '#c03' : '#bbb' }} color="disabled" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Не менее 8 символов"
+                        primaryTypographyProps={{
+                          variant: 'caption',
+                          sx: {
+                            fontSize: '0.8rem !important',
+                            m: 0,
+                            p: 0,
+                            color: isMinLength ? '#c03' : 'text.secondary',
+                          },
+                        }}
+                      />
+                    </ListItem>
+                    <ListItem disablePadding sx={{ height: '20px !important', py: 0, mb: 0 }}>
+                      <ListItemIcon sx={{ minWidth: 20, m: 0 }}>
+                        <FiberManualRecordIcon style={{ fontSize: 10, color: hasNumber ? '#c03' : '#bbb' }} color="disabled" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Цифры"
+                        primaryTypographyProps={{
+                          variant: 'caption',
+                          sx: {
+                            fontSize: '0.8rem !important',
+                            m: 0,
+                            p: 0,
+                            color: hasNumber ? '#c03' : 'text.secondary',
+                          },
+                        }}
+                      />
+                    </ListItem>
+                    <ListItem disablePadding sx={{ height: '20px !important', py: 0, mb: 0 }}>
+                      <ListItemIcon sx={{ minWidth: 20, m: 0 }}>
+                        <FiberManualRecordIcon style={{ fontSize: 10, color: hasMixedCase ? '#c03' : '#bbb' }} color="disabled" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Буквы верхнего и нижнего регистра"
+                        primaryTypographyProps={{
+                          variant: 'caption',
+                          sx: {
+                            fontSize: '0.8rem !important',
+                            m: 0,
+                            p: 0,
+                            color: hasMixedCase ? '#c03' : 'text.secondary',
+                          },
+                        }}
+                      />
+                    </ListItem>
+                  </List>
+                </>
+              )}
 
               <Button
                 fullWidth
-                variant="contained"
+                variant={isButtonDisabled() ? "outlined" : "contained"}
                 color="primary"
                 style={{ marginTop: 10, marginBottom: 10 }}
-                onClick={nextStep}
+                onClick={handleNextStep}
+                disabled={isButtonDisabled()}
               >
                 Дальше
               </Button>
 
               <Grid container style={{ marginTop: 10 }}>
                 <Grid item>
-                  <Link href={`/auth`} style={{ color: '#c03' }}>Вернуться к авторизации</Link>
+                  <Link href={`/auth`} style={{ color: '#c03' }}>
+                    Вернуться к авторизации
+                  </Link>
                 </Grid>
               </Grid>
-
-
             </div>
           </div>
         </Grid>
       </Grid>
     </>
-  )
+  );
 }
 
 export async function getServerSideProps({ req, res, query }) {
