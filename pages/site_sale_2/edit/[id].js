@@ -1,7 +1,5 @@
 import React from 'react';
 
-import { useRouter } from 'next/router'
-
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
@@ -249,9 +247,11 @@ class SiteSale2_edit_ extends React.Component {
   }
   
   async componentDidMount(){
+
+    let promo_id = window.location.pathname.split('/')[3];
     
     let data = {
-      promo_id: this.props.promoId
+      promo_id
     }
     
     let res = await this.getData('get_all_for_edit', data);
@@ -895,7 +895,5 @@ class SiteSale2_edit_ extends React.Component {
 }
 
 export default function SiteSale2_Edit () {
-  const router = useRouter()
-  
-  return <SiteSale2_edit_ promoId={router.query.id} />;
+  return <SiteSale2_edit_ />;
 }

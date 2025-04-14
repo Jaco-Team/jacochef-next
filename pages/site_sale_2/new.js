@@ -21,7 +21,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox, MyTimePicker, MyTextInput, MyAutocomplite, MyDatePickerNew, formatDate } from '@/ui/elements';
+import { MySelect, MyCheckBox, MyTimePicker, MyTextInput, MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
 import Typography from '@mui/material/Typography';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 
@@ -273,7 +273,13 @@ class SiteSale2_new_ extends React.Component {
       conditionItems: [],
       
       testDate: [],
-      createdPromo: []
+      createdPromo: [],
+
+      openAlert: false,
+      err_status: true,
+      err_text: '',
+
+      cert_text: '',
     };
   }
   
@@ -329,7 +335,17 @@ class SiteSale2_new_ extends React.Component {
         count_promo = parseInt(this.state.promo_sale);
       }
 
-      
+      if (this.state.promo_name.length < 3) {
+
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: 'Название промокода должно содержать не менее 3 символов'
+        });
+  
+        return;
+  
+      } 
       
       let conditionItems = [];
       
@@ -358,11 +374,21 @@ class SiteSale2_new_ extends React.Component {
       } )
       
       dateList = dateList.join(',')
+
+      let { for_new, promo_prizw_vk, cert_text, promo_desc_true, promo_desc_false, textSMS } = this.state;
+
+      if (for_new) {
+        promo_prizw_vk += "\nТолько на первый заказ.";
+        cert_text += ". Только на первый заказ.";
+        promo_desc_true += ". Только на первый заказ.";
+        promo_desc_false += ". Только на первый заказ.";
+        textSMS += ". Только на первый заказ.";
+      }
       
       let data = {
         spamNameSMS: this.state.spamNameSMS,
-        promo_vk_prize: this.state.promo_prizw_vk,
-        cert_text: this.state.cert_text,
+        promo_vk_prize: promo_prizw_vk,
+        cert_text: cert_text,
         addr: this.state.numberList,
         where_promo: this.state.where_promo,
         promo_count: this.state.promo_count,
@@ -401,9 +427,9 @@ class SiteSale2_new_ extends React.Component {
         promo_city: this.state.city,
         promo_point: this.state.point,
         
-        about_promo_text: this.state.promo_desc_true,
-        condition_promo_text: this.state.promo_desc_false,
-        textSMS: this.state.textSMS,
+        about_promo_text: promo_desc_true,
+        condition_promo_text: promo_desc_false,
+        textSMS: textSMS,
         
         
         promo_items: JSON.stringify(promo_items),
@@ -413,7 +439,7 @@ class SiteSale2_new_ extends React.Component {
         promo_conditions_items: JSON.stringify(conditionItems),
         
         date_between: dateList,
-        for_new: this.state.for_new ? 1 : 0,
+        for_new: for_new ? 1 : 0,
         once_number: this.state.once_number ? 1 : 0
       };
       
@@ -890,6 +916,13 @@ class SiteSale2_new_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
         
         <Dialog
           open={this.state.modalDialog}
