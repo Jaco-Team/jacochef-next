@@ -1861,7 +1861,12 @@ function FormImage_new({ type_edit }){
     <>
       <Grid item xs={12} sm={parseInt(type) === 2 && parseInt(doc_base_id) == 5 ? 6 : 12}>
         <TableContainer>
-          <Grid display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
+          <Grid 
+            display="flex" 
+            flexDirection="row"   
+            flexWrap="wrap"
+            style={{ fontWeight: 'bold', gap: '10px' }}
+          >
             {!imgs_bill.length ? '' :
               <>
                 {imgs_bill.map((img, key) => (
@@ -1880,7 +1885,15 @@ function FormImage_new({ type_edit }){
       </Grid>
 
       {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
-        <Grid item xs={12} sm={6} display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
+        <Grid 
+          item 
+          xs={12} 
+          sm={6} 
+          display="flex" 
+          flexDirection="row" 
+          flexWrap="wrap"
+          style={{ fontWeight: 'bold', gap: '10px' }}
+        >
           {!imgs_factur.length ? '' :
             <>
               {imgs_factur.map((img, key) => (
@@ -1944,7 +1957,12 @@ function FormImage_new({ type_edit }){
 
           <Grid item xs={12}>
             <TableContainer>
-              <Grid display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
+              <Grid 
+                display="flex" 
+                flexDirection="row" 
+                flexWrap="wrap"
+                style={{ fontWeight: 'bold', gap: '10px' }}
+              >
                 {!imgs_factur.length ? '' :
                   <>
                     {imgs_factur.map((img, key) => (

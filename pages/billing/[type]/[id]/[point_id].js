@@ -2004,7 +2004,12 @@ function FormImage_new({ type_edit, type_doc }){
     <>
       <Grid item xs={12} sm={parseInt(type) === 2 ? 6 : 12}>
         <TableContainer>
-          <Grid display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
+          <Grid 
+            display="flex" 
+            flexDirection="row"   
+            flexWrap="wrap"
+            style={{ fontWeight: 'bold', gap: '10px' }}
+          >
             {!imgs_bill.length ? 'Фото отсутствует' :
               <>
                 {imgs_bill.map((img, key) => (
@@ -2028,8 +2033,16 @@ function FormImage_new({ type_edit, type_doc }){
         </TableContainer>
       </Grid>
 
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen && type_doc === 'bill' ? (
-        <Grid item xs={12} sm={6} display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen && type_doc === 'bill' ?
+        <Grid 
+          item 
+          xs={12} 
+          sm={6} 
+          display="flex" 
+          flexDirection="row" 
+          flexWrap="wrap"
+          style={{ fontWeight: 'bold', gap: '10px' }}
+        >
           {!imgs_factur.length ? 'Фото отсутствует' :
             <>
               {imgs_factur.map((img, key) => (
@@ -2050,7 +2063,7 @@ function FormImage_new({ type_edit, type_doc }){
             </>
           }
         </Grid>
-      ) : null}
+      : null}
 
       { type_edit === 'edit' ?
         <Grid item xs={12} sm={parseInt(type) === 2 && parseInt(doc_base_id) == 5 ? 6 : 12}>
@@ -2063,7 +2076,6 @@ function FormImage_new({ type_edit, type_doc }){
           :
         null
       }
-
 
       {type_edit === 'edit' && parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
         <Grid item xs={12} sm={6}>
@@ -2099,7 +2111,12 @@ function FormImage_new({ type_edit, type_doc }){
 
           <Grid item xs={12}>
             <TableContainer>
-              <Grid display="flex" flexDirection="row" style={{ fontWeight: 'bold' }}>
+              <Grid 
+                display="flex" 
+                flexDirection="row" 
+                flexWrap="wrap"
+                style={{ fontWeight: 'bold', gap: '10px' }}
+              >
                 {!imgs_factur.length ? 'Фото отсутствует' :
                   <>
                     {imgs_factur.map((img, key) => (
@@ -3401,7 +3418,7 @@ class Billing_Edit_ extends React.Component {
 
           <FormHeader_new type_doc={this.state.type_doc} page={'edit'} type_edit={ parseInt(this.state.acces?.header) == 1 ? 'edit' : 'show' } />
           
-          <FormImage_new type_doc={this.state.type_doc} type_edit={ parseInt(this.state.acces?.photo) == 1 ? 'edit' : 'show' } />
+          <FormImage_new type_doc={this.state.type_doc} type_edit={ parseInt(this.state.acces?.photo) == 1 ? 'edit' : 'show' }  />
 
           { parseInt(this.state.acces?.items) == 1 ? 
             <>
@@ -3451,7 +3468,7 @@ class Billing_Edit_ extends React.Component {
                 Сохранить
               </Button>
             </Grid>
-              :
+            :
             false
           }
          
