@@ -49,8 +49,8 @@ export default function Auth(){
 
   async function login(){
 
-    if (!password.trim() || !phone || phone.length < 11) {
-      setErrText('Пожалуйста, заполните все поля корректно: телефон должен содержать 11 цифр, а пароль не должен быть пустым');
+    if (!password.trim() || !phone || (phone.startsWith('+7') && phone.length < 12) || (phone.startsWith('8') && phone.length < 11)) {
+      setErrText('Пожалуйста, заполните все поля корректно: телефон и пароль');
       setOpenAlert(true);
 
       return;

@@ -57,22 +57,23 @@ export default function Registration() {
 
   const checkPhone = (event) => {
     let v = event.target.value;
-    v = v.replace(/[^\d+]/g, "");
+    v = v.replace(/[^\d+]/g, '');
     
     if (v.startsWith('+7')) {
-      v = '8' + v.slice(2);
+      v = v.substring(0, 12);
+    } else if (v.startsWith('8')) {
+      v = v.substring(0, 11);
     } else {
-      v = v.replace(/\+/g, "");
+      v = v.substring(0, 11);
     }
     
-    v = v.substring(0, 11);
     setPhone(v);
   };
 
   const handleSetCode = (event) => {
     const newCode = event.target.value.replaceAll(' ', '');
     setCode(newCode);
-  
+
     if (activeStep === 1 && newCode.length === 4) {
       nextStep(newCode);
     }
@@ -91,24 +92,24 @@ export default function Registration() {
 
     try {
       if (activeStep === 0) {
+        if (!phone || (phone.startsWith('+7') && phone.length < 12) || (phone.startsWith('8') && phone.length < 11)) {
 
-        if (!phone || phone.length < 11) {
-          setErrText('Телефон должен содержать 11 цифр');
+          setErrText('Введите корректный номер телефона');
           setOpenAlert(true);
           return;
+
         }
-  
+
         let data = { login: phone };
         let res = await api_laravel_local('auth', 'check_phone', data);
         res = res.data;
-  
+
         if (res.st === false) {
           setErrText(res.text);
           setOpenAlert(true);
         } else {
-          setActiveStep(prev => prev + 1);
+          setActiveStep((prev) => prev + 1);
         }
-
       } else if (activeStep === 1) {
 
         if (currentCode.length !== 4) {
@@ -119,22 +120,24 @@ export default function Registration() {
 
         let data = { login: phone, code: currentCode };
         let res = await api('auth', 'check_code', data);
-  
+
         if (res.st === false) {
           setErrText(res.text);
           setOpenAlert(true);
         } else {
-          setActiveStep(prev => prev + 1);
+          setActiveStep((prev) => prev + 1);
         }
 
       } else if (activeStep === 2) {
 
         let data = { login: phone, code: code, pwd: password };
         let res = await api('auth', 'save_new_pwd', data);
-  
+
         if (res.st === false) {
+
           setErrText(res.text);
           setOpenAlert(true);
+
         } else {
 
           localStorage.setItem('token', res.token);
@@ -143,10 +146,9 @@ export default function Registration() {
           setTimeout(() => {
             window.location.pathname = '/';
           }, 300);
-          
+
         }
       }
-
     } catch (error) {
 
       setErrText('Произошла ошибка. Попробуйте позже.');
@@ -160,17 +162,19 @@ export default function Registration() {
   }
 
   const isButtonDisabled = () => {
-
     if (activeStep === 0) {
-      return !phone || phone.length < 11;
+      if (phone.startsWith('+7')) {
+        return phone.length !== 12;
+      } else if (phone.startsWith('8')) {
+        return phone.length !== 11;
+      }
+      return true;
     } else if (activeStep === 1) {
       return code.length !== 4;
     } else if (activeStep === 2) {
       return !isPasswordValid;
     }
-
     return true;
-    
   };
 
   return (
@@ -189,7 +193,16 @@ export default function Registration() {
       <Grid container spacing={3} direction="row" justifyContent="center" alignItems="center">
         <Grid item xs={12} sm={6} md={6} lg={4} xl={3}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Avatar style={{ borderRadius: 0, width: '100%', height: 150, margin: 0, backgroundColor: '#fff', marginBottom: 20 }}>
+            <Avatar
+              style={{
+                borderRadius: 0,
+                width: '100%',
+                height: 150,
+                margin: 0,
+                backgroundColor: '#fff',
+                marginBottom: 20,
+              }}
+            >
               <img alt="Жако доставка роллов и пиццы" src="/Favikon.png" style={{ height: '100%' }} />
             </Avatar>
 
@@ -213,7 +226,6 @@ export default function Registration() {
                   autoComplete="phone"
                   autoFocus
                   value={phone}
-                  inputProps={{ maxLength: 11 }}
                   onChange={checkPhone}
                 />
               )}
@@ -243,7 +255,7 @@ export default function Registration() {
                     fullWidth
                     name="password"
                     label="Пароль"
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
                     value={password}
                     InputProps={{
@@ -255,7 +267,11 @@ export default function Registration() {
                             disableRipple
                             disableFocusRipple
                           >
-                            {showPassword ? <EyeShow style={{ fontSize: 30 }} /> : <EyeHide style={{ fontSize: 30 }} />}
+                            {showPassword ? (
+                              <EyeShow style={{ fontSize: 30 }} />
+                            ) : (
+                              <EyeHide style={{ fontSize: 30 }} />
+                            )}
                           </IconButton>
                         </InputAdornment>
                       ),
@@ -324,7 +340,7 @@ export default function Registration() {
 
               <Button
                 fullWidth
-                variant={isButtonDisabled() ? "outlined" : "contained"}
+                variant={isButtonDisabled() ? 'outlined' : 'contained'}
                 color="primary"
                 style={{ marginTop: 10, marginBottom: 10 }}
                 onClick={handleNextStep}
@@ -335,7 +351,7 @@ export default function Registration() {
 
               <Grid container style={{ marginTop: 10 }}>
                 <Grid item>
-                  <Link href={`/auth`} style={{ color: '#c03' }}>
+                  <Link href="/auth" style={{ color: '#c03' }}>
                     Вернуться к авторизации
                   </Link>
                 </Grid>
