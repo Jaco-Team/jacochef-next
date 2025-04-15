@@ -377,13 +377,13 @@ class SiteSale2_new_ extends React.Component {
 
       let { for_new, promo_prizw_vk, cert_text, promo_desc_true, promo_desc_false, textSMS } = this.state;
 
-      if (for_new) {
-        promo_prizw_vk += "\nТолько на первый заказ.";
-        cert_text += ". Только на первый заказ.";
-        promo_desc_true += ". Только на первый заказ.";
-        promo_desc_false += ". Только на первый заказ.";
-        textSMS += ". Только на первый заказ.";
-      }
+      // if (for_new) {
+      //   promo_prizw_vk += "\nТолько на первый заказ.";
+      //   cert_text += ". Только на первый заказ.";
+      //   promo_desc_true += ". Только на первый заказ.";
+      //   promo_desc_false += ". Только на первый заказ.";
+      //   textSMS += ". Только на первый заказ.";
+      // }
       
       let data = {
         spamNameSMS: this.state.spamNameSMS,
@@ -642,6 +642,7 @@ class SiteSale2_new_ extends React.Component {
     
     let promo_action = this.state.promo_action;
     let textTrue = '';
+    let for_new = this.state.for_new
     
     if(parseInt(promo_action) == 1){//скидка
       var promo_type_sale = this.state.type_sale,
@@ -718,6 +719,10 @@ class SiteSale2_new_ extends React.Component {
     
     let textSMS = 'Промокод --promo_name--, действует до '+formatDateName(this.state.date_end)+'. Заказывай на jacofood.ru!'
     
+    // if( for_new === true ){
+    //   textTrue += ". Только на первый заказ.";
+    // }
+
     this.setState({
       promo_desc_true: textTrue,
       textSMS: textSMS,
@@ -732,10 +737,8 @@ class SiteSale2_new_ extends React.Component {
     }
     
     var dop_text = '';
-    
+    let for_new = this.state.for_new
     let text = '';
-    
-    console.log( this.state.testDate )
     
     if( this.state.testDate.length > 0 ){
       
@@ -782,6 +785,10 @@ class SiteSale2_new_ extends React.Component {
     
     let textFalse = 'Промокод действует c '+dateStart+' до '+dateEnd+' с '+this.state.time_start+' до '+this.state.time_end+' '+text+dop_text;
     
+    if( for_new === true ){
+      textFalse += ". Только на первый заказ.";
+    }
+
     this.setState({
       promo_desc_false: textFalse
     })
