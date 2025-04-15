@@ -9,21 +9,73 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
 
-import {
-  MySelect,
-  MyDatePickerNew,
-  MyTimePicker,
-  MyCheckBox,
-} from '@/ui/elements';
+import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 
-import { api, api_laravel } from '@/src/api_new';
+import HelpIcon from '@mui/icons-material/Help';
+
+import {MySelect, MyDatePickerNew, MyTimePicker, MyCheckBox } from '@/ui/elements';
+
+import { api_laravel, api_laravel_local } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+
+const formatNumber = (num) => new Intl.NumberFormat('ru-RU').format(num);
+
+const formatCurrency = (num) =>
+  new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    minimumFractionDigits: 0
+  }).format(num);
+
+const HotMap_Modal = ({ open, onClose, stats }) => {
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Статистика заказов</DialogTitle>
+      <DialogContent dividers>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Typography variant="body1">
+              <span style={{ fontWeight: 'bold' }}>Заказов в зоне: </span>
+              {formatNumber(stats.statTrueCount)} ( {stats.statTruePercent}% )
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="body1">
+              <span style={{ fontWeight: 'bold' }}>Сумма заказов в зоне: </span>
+              {formatCurrency(stats.statTrueAllSumm)}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="body1">
+              <span style={{ fontWeight: 'bold' }}>Средний чек в зоне: </span>
+              {formatCurrency(stats.statTrueAvgSumm)}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="body1">
+              <span style={{ fontWeight: 'bold' }}>Всего заказов в городе: </span>
+              {formatNumber(stats.statAllCount)}
+            </Typography>
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary">
+          Закрыть
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+};
 
 export default class HotMap extends React.PureComponent {
   map = null;
   heatmap = null;
   myGeoObject = null;
+  selectedZone = null;
 
   constructor(props) {
     super(props);
@@ -41,16 +93,21 @@ export default class HotMap extends React.PureComponent {
       time_start: '00:00',
       time_end: '23:59',
 
-      statAllCount: '',
-      statTrueCount: '',
-      statTrueAllSumm: '',
-      statTrueAvgSumm: '',
+      statsModalOpen: false,
+      stats: {
+        statTruePercent: '',
+        statTrueCount: '',
+        statTrueAllSumm: '',
+        statTrueAvgSumm: '',
+        statAllCount: '',
+      },
+   
       is_chooseZone: false,
 
       is_new: 0,
       is_pick_order: 0,
 
-      isDrawing: true,
+      isDrawing: false,
     };
   }
 
@@ -85,21 +142,33 @@ export default class HotMap extends React.PureComponent {
   }
 
   changeCity = (event) => {
-    let data = event.target.value;
-    this.setState({ city_id: data });
+    const data = event.target.value;
+    
+    if (this.myGeoObject && this.myGeoObject.editor) {
+      this.myGeoObject.editor.stopDrawing && this.myGeoObject.editor.stopDrawing();
+    }
+    
+    this.myGeoObject = null;
+    this.selectedZone = null;
+    
+    this.setState(
+      { city_id: data, is_chooseZone: false, isDrawing: false },
+      () => {
+        this.updateData();
+      }
+    );
   };
 
   updateData = async () => {
-    if (this.state.statAllCount) {
-      this.setState({
-        statAllCount: '',
-        statTrueCount: '',
-        statTrueAllSumm: '',
-        statTrueAvgSumm: '',
-      });
-    }
 
-    this.setState({ isDrawing: true });
+    this.setState({
+      statAllCount: '',
+      statTrueCount: '',
+      statTrueAllSumm: '',
+      statTrueAvgSumm: '',
+      is_chooseZone: false,
+      isDrawing: false,
+    });
 
     let data = {
       city_id: this.state.city_id,
@@ -186,8 +255,9 @@ export default class HotMap extends React.PureComponent {
             this.map.geoObjects.add(myGeoObject2);
           });
 
-          this.map.geoObjects.events.add('click', this.changeColorPolygon);
         });
+
+        this.map.geoObjects.events.add('click', this.changeColorPolygon);
 
         ymaps.modules.require(['Heatmap'], (Heatmap) => {
           this.heatmap = new Heatmap(new_data, {
@@ -197,8 +267,12 @@ export default class HotMap extends React.PureComponent {
           });
           this.heatmap.setMap(this.map);
         });
+
       });
+
     } else {
+      this.map.geoObjects.events.remove('click', this.changeColorPolygon);
+
       this.map.geoObjects.removeAll();
       this.heatmap.destroy();
 
@@ -263,20 +337,18 @@ export default class HotMap extends React.PureComponent {
           this.map.geoObjects.add(myGeoObject2);
         });
 
-        this.map.geoObjects.events.add('click', this.changeColorPolygon);
       });
+
+      this.map.geoObjects.events.add('click', this.changeColorPolygon);
     }
   };
 
   getCount = async () => {
-    var new_this_zone = [];
 
-    if (this.state.is_chooseZone) {
-      this.map.geoObjects.each(function (geoObject) {
-        new_this_zone = new_this_zone.concat(
-          geoObject.geometry.getCoordinates()
-        );
-      });
+    let zoneCoordinates = [];
+
+    if (this.state.is_chooseZone && this.selectedZone) {
+      zoneCoordinates = this.selectedZone.geometry.getCoordinates()[0];
     }
 
     let data = {
@@ -287,7 +359,7 @@ export default class HotMap extends React.PureComponent {
       time_end: this.state.time_end,
       is_pick_order: this.state.is_pick_order,
       is_new: this.state.is_new,
-      zone: new_this_zone[new_this_zone.length - 1],
+      zone: zoneCoordinates,
     };
 
     let res = await this.getData('getCount', data);
@@ -295,13 +367,17 @@ export default class HotMap extends React.PureComponent {
     res = res.counts;
 
     this.setState({
-      statAllCount: res.all_count,
-      statTrueCount: res.true + ' ( ' + res.true_percent + '% ) ',
-      statTrueAllSumm: res.price,
-      statTrueAvgSumm: res.avg_price,
+      stats: {
+        statTrueCount: res.true,
+        statTruePercent: res.true_percent,
+        statTrueAllSumm: res.price,
+        statTrueAvgSumm: res.avg_price,
+        statAllCount: res.all_count,
+      },
+
+      statsModalOpen: true
     });
 
-    // console.log('getCount', res);
   };
 
   changeDateRange = (data, event) => {
@@ -329,60 +405,108 @@ export default class HotMap extends React.PureComponent {
   };
 
   startDrawing = () => {
-    this.setState({ isDrawing: !this.state.isDrawing });
+    
+    if (this.myGeoObject) {
 
-    ymaps
-      .geoQuery(this.map.geoObjects)
-      .setOptions('strokeColor', 'rgb(187, 0, 37)');
+      if (!this.state.isDrawing) {
 
-    this.myGeoObject = new ymaps.GeoObject(
-      {
-        geometry: {
-          type: 'Polygon',
-          coordinates: [],
-          fillRule: 'nonZero',
-        },
-      },
-      {
-        fillColor: '#00FF00',
-        strokeColor: '#0000FF',
-        opacity: 0.5,
-        strokeWidth: 5,
-        strokeStyle: 'shortdash',
+        this.myGeoObject.options.set({ strokeColor: 'rgb(187, 0, 37)' });
+
+        this.setState({ isDrawing: true }, () => {
+          if (this.myGeoObject.editor && this.myGeoObject.editor.startEditing) {
+            this.myGeoObject.editor.startEditing();
+          } 
+        });
+
       }
-    );
 
-    this.map.geoObjects.add(this.myGeoObject);
-    this.myGeoObject.editor.startDrawing();
+      return;
+    }
+  
+    this.setState({ isDrawing: true }, () => {
+      this.myGeoObject = new ymaps.GeoObject(
+        {
+          geometry: {
+            type: 'Polygon',
+            coordinates: [],
+            fillRule: 'nonZero',
+          },
+        },
+        {
+          fillColor: '#00FF00',
+          strokeColor: '#0000FF',
+          opacity: 0.5,
+          strokeWidth: 5,
+          strokeStyle: 'shortdash',
+        }
+      );
+
+      this.map.geoObjects.add(this.myGeoObject);
+      this.myGeoObject.editor.startDrawing();
+    });
   };
 
   stopDrawing = () => {
-    this.setState({ isDrawing: !this.state.isDrawing });
-    this.myGeoObject.editor.stopDrawing();
+    if (this.myGeoObject && this.myGeoObject.editor) {
+     
+      if (this.myGeoObject.editor.stopEditing) {
+
+        this.myGeoObject.editor.stopEditing();
+
+      } else {
+
+        this.myGeoObject.editor.stopDrawing();
+      }
+    }
+
+    this.setState({ isDrawing: false });
   };
 
   changeColorPolygon = (event) => {
-    if (!this.state.is_chooseZone) {
-      event.get('target').options.set({ strokeColor: 'rgb(255, 255, 0)' });
-
-      const result = ymaps
-        .geoQuery(this.map.geoObjects)
-        .search('options.strokeColor = "rgb(255, 255, 0)"');
-
-      if (result._objects.length > 1) {
-        result.setOptions('strokeColor', 'rgb(187, 0, 37)');
-      }
-
-      if (result) {
-        this.map.geoObjects.add(result._objects[0]);
-      }
+    const clickedPolygon = event.get('target');
+    
+    if (this.state.is_chooseZone && this.selectedZone && this.selectedZone !== clickedPolygon) {
+      this.selectedZone.options.set({ strokeColor: 'rgb(187, 0, 37)' });
+      this.selectedZone = null;
+    }
+    
+    if (!this.state.is_chooseZone || this.selectedZone !== clickedPolygon) {
+      clickedPolygon.options.set({ strokeColor: 'rgb(255, 255, 0)' });
+      this.selectedZone = clickedPolygon;
 
       this.setState({ is_chooseZone: true });
+
+      setTimeout(() => {
+        this.getCount();
+      }, 1000);
+
     } else {
-      ymaps
-        .geoQuery(this.map.geoObjects)
-        .setOptions('strokeColor', 'rgb(187, 0, 37)');
+
+      clickedPolygon.options.set({ strokeColor: 'rgb(187, 0, 37)' });
+      this.selectedZone = null;
       this.setState({ is_chooseZone: false });
+
+    }
+  };
+
+  handleModalClose = () => {
+    this.setState({ statsModalOpen: false });
+
+    setTimeout(() => {
+      if (this.selectedZone) {
+        this.selectedZone.options.set({ strokeColor: 'rgb(187, 0, 37)' });
+        this.selectedZone = null;
+      }
+      this.setState({ is_chooseZone: false });
+    }, 1000);
+  };
+
+  removeDrawing = () => {
+    if (this.myGeoObject && this.myGeoObject.editor) {
+      this.myGeoObject.editor.stopDrawing();
+      this.map.geoObjects.remove(this.myGeoObject);
+      this.myGeoObject = null;
+      this.setState({ isDrawing: false });
     }
   };
 
@@ -394,61 +518,28 @@ export default class HotMap extends React.PureComponent {
         </Backdrop>
 
         <Grid container spacing={3} className="container_first_child">
+
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
+          <HotMap_Modal
+            open={this.state.statsModalOpen}
+            onClose={this.handleModalClose}
+            stats={this.state.stats}
+          />
+
           <Grid item xs={12} sm={6}>
             <MySelect
+              is_none={false}
               data={this.state.cities}
               value={this.state.city_id}
               func={this.changeCity}
               label="Город"
             />
           </Grid>
-          <Grid item xs={12} sm={3}>
-            <MyCheckBox
-              value={this.state.is_new === 1}
-              func={this.changeData.bind(this, 'is_new')}
-              label="Только новые клиенты"
-            />
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <Button variant="contained" onClick={this.updateData}>
-              Обновить данные
-            </Button>
-          </Grid>
 
           <Grid item xs={12} sm={3}>
-            <MyDatePickerNew
-              label="Дата от"
-              value={this.state.date_start}
-              func={this.changeDateRange.bind(this, 'date_start')}
-            />
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <MyTimePicker
-              label="Время от"
-              value={this.state.time_start}
-              func={this.changeData.bind(this, 'time_start')}
-            />
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <MyDatePickerNew
-              label="Дата до"
-              value={this.state.date_end}
-              func={this.changeDateRange.bind(this, 'date_end')}
-            />
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <MyTimePicker
-              label="Время до"
-              value={this.state.time_end}
-              func={this.changeData.bind(this, 'time_end')}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
             <Tooltip
               title={
                 <span style={{ fontSize: '18px', lineHeight: '1.5' }}>
@@ -477,48 +568,75 @@ export default class HotMap extends React.PureComponent {
                   func={this.changeData.bind(this, 'is_pick_order')}
                   label="Домашние адреса"
                 />
+                <HelpIcon />
               </span>
             </Tooltip>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <Button variant="contained" onClick={this.getCount}>
-              Подсчитать количество
-            </Button>
+          <Grid item xs={12} sm={3}>
+            <MyCheckBox
+              value={this.state.is_new === 1}
+              func={this.changeData.bind(this, 'is_new')}
+              label="Только новые клиенты"
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={3}>
+            <MyDatePickerNew
+              label="Дата от"
+              value={this.state.date_start}
+              func={this.changeDateRange.bind(this, 'date_start')}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={3}>
+            <MyTimePicker
+              label="Время от"
+              value={this.state.time_start}
+              func={this.changeData.bind(this, 'time_start')}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={3}>
+            <MyDatePickerNew
+              label="Дата до"
+              value={this.state.date_end}
+              func={this.changeDateRange.bind(this, 'date_end')}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={3}>
+            <MyTimePicker
+              label="Время до"
+              value={this.state.time_end}
+              func={this.changeData.bind(this, 'time_end')}
+            />
           </Grid>
 
           <Grid item xs={12} sm={6}>
+            <Button variant="contained" onClick={this.updateData}>
+              Обновить данные
+            </Button>
+          </Grid>
+
+          <Grid item xs={12} sm={3}>
             <Button
-              variant="contained"
-              onClick={
-                this.state.isDrawing ? this.startDrawing : this.stopDrawing
-              }
+              variant={this.map ? "contained" : "outlined"}
+              onClick={this.state.isDrawing ? this.stopDrawing : this.startDrawing}
+              disabled={!this.map} 
             >
-              {this.state.isDrawing
-                ? 'Включить область редактирования'
-                : 'Выключить область редактирования'}
+              {this.state.isDrawing ? 'Выключить область редактирования' : 'Включить область редактирования'}
             </Button>
           </Grid>
 
-          <Grid item xs={12}>
-            <Grid container spacing={3}>
-              <Grid item xs={6}>
-                <Typography>
-                  Заказов в зоне: {this.state.statTrueCount}
-                </Typography>
-                <Typography>
-                  Сумма заказов в зоне: {this.state.statTrueAllSumm}
-                </Typography>
-                <Typography>
-                  Средний чек в зоне: {this.state.statTrueAvgSumm}
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography>
-                  Всего заказов в городе: {this.state.statAllCount}
-                </Typography>
-              </Grid>
-            </Grid>
+          <Grid item xs={12} sm={3}>
+            <Button
+              variant={this.map && this.myGeoObject ? "contained" : "outlined"}
+              onClick={this.removeDrawing}
+              disabled={!this.map || !this.myGeoObject}
+            >
+              Очистить область редактирования
+            </Button>
           </Grid>
 
           <Grid item xs={12} sm={12} mb={10}>
@@ -528,6 +646,7 @@ export default class HotMap extends React.PureComponent {
               style={{ width: '100%', height: 700, paddingTop: 10 }}
             />
           </Grid>
+
         </Grid>
       </>
     );
