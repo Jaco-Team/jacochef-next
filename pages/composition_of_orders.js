@@ -55,18 +55,17 @@ import { api_laravel, api_laravel_local } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 function Row(props) {
-  const { row } = props;
-  const [open, setOpen] = React.useState(false);
+  const { row, open, onToggle } = props;
 
   const [showMore, setShowMore] = React.useState(false);
 
   const handleClick = () => {
-    setOpen(!open);
+    onToggle(row.name);
 
-    if( row?.arr.length == 0 ) {
+    if (row?.arr.length === 0) {
       props.getData(row?.name)
     }
-  }
+  };
 
   return (
     <React.Fragment>
@@ -243,6 +242,8 @@ class CompositionOfOrders_ extends React.Component {
       sort_count_percent: 'asc',
       sort_price_percent: 'desc',
       sort_price: 'asc',
+
+      openRows: {},
     };
   }
 
@@ -340,6 +341,8 @@ class CompositionOfOrders_ extends React.Component {
       sort_price_percent: 'desc',
       sort_price: 'asc',
     });
+
+    this.resetOpenRows();
   }
 
   async getDataRow(row_name){
@@ -358,22 +361,26 @@ class CompositionOfOrders_ extends React.Component {
 
     let res = await this.getData('get_stat_orders_row', data);
     
-    stat.map( ( item, key ) => {
-      if( item.name == row_name ){
+    const newStat = stat.map(item =>
+      item.name === row_name
+        ? {
+            ...item,
+            arr_main: res?.array.slice(0, 20),
+            arr_dop: res?.array.slice(20),
+            arr: res?.array
+          }
+        : item
+    );
+    
+    console.log( newStat )
 
-        stat[key].arr_main = res?.array.slice(0, 20)
-        stat[key].arr_dop = res?.array.slice(20)
-        stat[key].arr = res?.array
-      }
-    } )
+    this.setState({ stat: newStat });
 
-    console.log( stat )
-
-    this.setState({
-      stat: stat,
-      //all_price: res?.all_price,
-      //all_count: res?.all_count,
-    });
+    // this.setState({
+      // stat: stat,
+      // all_price: res?.all_price,
+      // all_count: res?.all_count,
+    //});
   }
 
   get_new_type_sort(active){
@@ -446,6 +453,16 @@ class CompositionOfOrders_ extends React.Component {
         stat: type_sort == 'asc' ? this.state.stat.sort((a, b) => parseInt(a.price) - parseInt(b.price)) : this.state.stat.sort((a, b) => parseInt(b.price) - parseInt(a.price)),
       });
     }
+  }
+
+  resetOpenRows = () => {
+    const openRows = {};
+
+    this.state.stat.forEach(row => {
+      openRows[row.name] = false;
+    });
+    
+    this.setState({ openRows });
   }
 
   render() {
@@ -552,7 +569,20 @@ class CompositionOfOrders_ extends React.Component {
               </TableHead>
               <TableBody>
                 {this.state.stat.map((row) => (
-                  <Row key={row.name} row={row} getData={this.getDataRow.bind(this)} />
+                  <Row
+                    key={row.name}
+                    row={row}
+                    open={this.state.openRows[row.name] || false}
+                    getData={this.getDataRow.bind(this)}
+                    onToggle={(rowName) => {
+                      this.setState((prevState) => ({
+                        openRows: {
+                          ...prevState.openRows,
+                          [rowName]: !prevState.openRows[rowName],
+                        },
+                      }));
+                    }}
+                  />
                 ))}
               </TableBody>
               <TableFooter>
