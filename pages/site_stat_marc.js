@@ -332,6 +332,7 @@ class SiteStatMarc_ extends React.Component {
 
     var data_site = [];
     var data_center = [];
+    var data_kassa = [];
     var data_all = [];
    
 
@@ -346,6 +347,14 @@ class SiteStatMarc_ extends React.Component {
     MyData.center.map( (item) => {
       let date = item.date_new.split('-');
       data_center.push({
+        date: new Date(date[0], parseInt(date[1])-1, parseInt(date[2])).getTime(),
+        value: parseInt(item.count)
+      })
+    } )
+
+    MyData.kassa.map( (item) => {
+      let date = item.date_new.split('-');
+      data_kassa.push({
         date: new Date(date[0], parseInt(date[1])-1, parseInt(date[2])).getTime(),
         value: parseInt(item.count)
       })
@@ -416,6 +425,7 @@ class SiteStatMarc_ extends React.Component {
       }
 
     createSeries("Сайт", "value", data_site);
+    createSeries("Касса", "value", data_kassa);
     createSeries("Контакт-центр", "value", data_center);
     createSeries("Всего", "value", data_all);
    
@@ -1661,6 +1671,7 @@ class SiteStatMarc_ extends React.Component {
                   <TableHead>
                     <TableRow>
                       <TableCell style={{ textAlign: 'center' }}>Всего</TableCell>
+                      <TableCell style={{ textAlign: 'center' }}>Касса</TableCell>
                       <TableCell style={{ textAlign: 'center' }}>Контакт-центр</TableCell>
                       <TableCell style={{ textAlign: 'center' }}>Сайт</TableCell>
                     </TableRow>
@@ -1669,6 +1680,7 @@ class SiteStatMarc_ extends React.Component {
                   
                     <TableRow>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.newUsersTable.all ? this.state.newUsersTable.all : 0}</TableCell>
+                      <TableCell style={{ textAlign: 'center' }}>{this.state.newUsersTable.kassa ? this.state.newUsersTable.kassa : 0}</TableCell>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.newUsersTable.center ? this.state.newUsersTable.center : 0}</TableCell>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.newUsersTable.site ? this.state.newUsersTable.site : 0}</TableCell>
                     </TableRow>
