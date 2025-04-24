@@ -18,7 +18,7 @@ import Paper from '@mui/material/Paper';
 
 import { MyTextInput, MySelect, MyAutocomplite, MyCheckBox, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api, api_laravel, api_laravel_local } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 
@@ -98,7 +98,7 @@ class SiteStatMarc_ extends React.Component {
       is_load: true,
     });
 
-    let res = api_laravel(this.state.module, method, data)
+    let res = api_laravel_local(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {
