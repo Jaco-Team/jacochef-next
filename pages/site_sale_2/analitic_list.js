@@ -209,6 +209,8 @@ class SiteSale2_AnaliticList_ extends React.Component {
                   <br />
                   <span>Оформил контакт-центр: {item.stat.is_center}</span>
                   <br />
+                  <span>Оформили на кассе: {item?.stat?.is_hall}</span>
+                  <br />
                 </AccordionDetails>
               </Accordion>
             ) }
