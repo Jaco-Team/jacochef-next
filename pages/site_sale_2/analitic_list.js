@@ -193,7 +193,7 @@ class SiteSale2_AnaliticList_ extends React.Component {
                   <br />
                   <span>Не заказывали 90 и более и сделали заказ по промику: {item.stat.is_return_90}</span>
                   <br />
-                  <span>(относительно количества выписанных промиков)</span>
+                  <span>(от общего числа заказов)</span>
                   <br />
                   <span>------------------------------</span>
                   <br />
@@ -202,6 +202,8 @@ class SiteSale2_AnaliticList_ extends React.Component {
                   <span>Самовывоз: {item.stat.type_pic}</span>
                   <br />
                   <span>Зал: {item.stat.type_hall}</span>
+                  <br />
+                  <span>Всего: {item.stat.type_all}</span>
                   <br />
                   <span>------------------------------</span>
                   <br />
