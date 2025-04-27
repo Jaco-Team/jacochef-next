@@ -2,6 +2,7 @@ import React from 'react';
 
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
@@ -24,9 +25,135 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyTextInput, MySelect, MyCheckBox } from '@/ui/elements';
+import { MyTextInput, MySelect, MyCheckBox, MyAlert, MyDatePickerNew } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api_laravel, api_laravel_local } from '@/src/api_new';
+
+import dayjs from 'dayjs';
+
+class CitiesModules_Levels_Modal extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      date_start: dayjs(),
+      selectedLevel: null,
+      levels: [
+        { id: 0, name: 'Не выбран' },
+        { id: 1, name: 'Уровень 1' },
+        { id: 2, name: 'Уровень 2' },
+        { id: 3, name: 'Уровень 3' },
+        { id: 4, name: 'Уровень 4' },
+        { id: 5, name: 'Уровень 5' },
+        { id: 6, name: 'Уровень 6' },
+        { id: 7, name: 'Уровень 7' },
+      ],
+    };
+    
+  }
+
+  componentDidUpdate(prevProps) {
+    const { kassir_lavel } = this.props;
+
+    if (kassir_lavel && prevProps.kassir_lavel !== kassir_lavel) {
+
+      this.setState({
+        date_start: kassir_lavel.date_start && kassir_lavel.date_start !== '0000-00-00' ? dayjs(kassir_lavel.date_start) : dayjs(),
+        selectedLevel: kassir_lavel.kassir_lavel,
+      });
+    }
+  }
+
+  changeDate = (date) => {
+    this.setState({ date_start: date || dayjs() });
+  };
+
+  changeLevel = (event) => {
+    this.setState({ selectedLevel: event.target.value });
+  };
+
+  save = () => {
+    const { date_start, selectedLevel } = this.state;
+    const { kassir_lavel, openAlert, onSave } = this.props;
+
+    if (!date_start.isValid() || date_start.isBefore(dayjs(), 'day')) {
+      openAlert(false, 'Сохранение возможно только при указании сегодняшней или будущей даты');
+
+      return;
+    }
+
+    let date = '';
+
+    if(selectedLevel !== 0) {
+      date = date_start.format('YYYY-MM-DD');
+    }
+    
+    const data = {
+      city_id: kassir_lavel.city_id,
+      date_start: date,
+      kassir_lavel: selectedLevel,
+    };
+
+    onSave(data);
+    this.close();
+  };
+
+  close = () => {
+    this.setState({ date_start: dayjs(), selectedLevel: null });
+    this.props.onClose();
+  };
+
+  render() {
+    const { open, fullScreen, kassir_lavel } = this.props;
+    const { date_start, levels, selectedLevel } = this.state;
+
+    return (
+      <Dialog
+        open={open}
+        onClose={this.close}
+        fullScreen={fullScreen}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>
+          Город: {kassir_lavel?.city_name ?? ''}<br/>
+          Выберите уровень кассира и укажите дату с которой будут действовать изменения
+          <IconButton onClick={this.close} sx={{ position: 'absolute', top: 8, right: 8 }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ pt: 2, pb: 2 }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sx={{ mt: 2 }}>
+              <MyDatePickerNew
+                label="Дата изменений"
+                value={date_start}
+                func={this.changeDate}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <MySelect
+                label="Уровень кассира за регистрацию"
+                is_none={false}
+                data={levels}
+                value={selectedLevel}
+                func={this.changeLevel}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+
+        <DialogActions>
+          <Button variant="contained" color="success" onClick={this.save}>
+            Сохранить изменения
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+}
 
 class CitiesModules_Modal extends React.Component {
   constructor(props) {
@@ -74,7 +201,34 @@ class CitiesModules_Modal extends React.Component {
   save() {
     const item = this.state.item;
 
-    this.props.save(item.city);
+    const city = item.city;
+
+    if (this.props.mark === 'newItem') {
+
+      if (!city.name || city.name.trim() === '') {
+  
+        this.props.openAlert(false, 'Название города не указано');
+  
+        return;
+      }
+    
+      if (!city.name_2 || city.name_2.trim() === '') {
+  
+        this.props.openAlert(false, 'Склонение не указано');
+  
+        return;
+      }
+    
+      if (!city.link || city.link.trim() === '') {
+  
+        this.props.openAlert(false, 'Адрес не указан');
+  
+        return;
+      }
+
+    }
+
+    this.props.save(city);
 
     this.onClose();
   }
@@ -98,11 +252,9 @@ class CitiesModules_Modal extends React.Component {
       >
         <DialogTitle className="button">
           {this.props.method}{this.props.itemName ? `: ${this.props.itemName}` : null}
-          {this.props.fullScreen ? (
-            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
-              <CloseIcon />
-            </IconButton>
-          ) : null}
+          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+            <CloseIcon />
+          </IconButton>
         </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
@@ -198,8 +350,8 @@ class CitiesModules_Modal extends React.Component {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button color="primary" onClick={this.save.bind(this)}>
-            Сохранить
+          <Button variant="contained" color="success" onClick={this.save.bind(this)}>
+            Сохранить изменения
           </Button>
         </DialogActions>
       </Dialog>
@@ -235,6 +387,13 @@ class CitiesModules_ extends React.Component {
         k_rolls: '',
         k_pizza: '',
       },
+
+      openAlert: false,
+      err_status: false,
+      err_text: '',
+
+      modalDialog_lavel: false,
+      kassir_lavel: null,
     };
   }
 
@@ -254,43 +413,18 @@ class CitiesModules_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
-  };
+
+    return res;
+  }
 
   handleResize() {
     if (window.innerWidth < 601) {
@@ -306,13 +440,13 @@ class CitiesModules_ extends React.Component {
 
   async save(item) {
 
+    let res;
+
     if (this.state.mark === 'newItem') {
 
       const data = item;
 
-      // console.log(data);
-
-      await this.getData('save_new', data);
+      res = await this.getData('save_new', data);
     }
 
     if (this.state.mark === 'editItem') {
@@ -328,14 +462,14 @@ class CitiesModules_ extends React.Component {
         driver_dop_price_radius: item.driver_dop_price_radius,
       }
 
-      // console.log(data);
-
-      await this.getData('save_edit', data);
+      res = await this.getData('save_edit', data);
     }
 
-    setTimeout(() => {
+    this.openAlert(res.st, res.text);
+
+    if (res.st) {
       this.update();
-    }, 300);
+    }
   }
 
   async update() {
@@ -381,12 +515,66 @@ class CitiesModules_ extends React.Component {
     }
   }
 
+  openAlert (status, text) {
+    this.setState({
+      openAlert: true,
+      err_status: status,
+      err_text: text
+    });
+  };
+
+  async openLevels (city_id) {
+    this.handleResize();
+
+    const city_name = this.state.cities.find(item => parseInt(item.id) === parseInt(city_id))?.name || '';
+
+    const data = {
+      city_id,
+    };
+
+    let res = await this.getData('get_kassir_lavel', data);
+
+    res.kassir_lavel.city_name = city_name;
+
+    this.setState({
+      modalDialog_lavel: true,
+      kassir_lavel: res.kassir_lavel,
+    });
+
+  };
+
+  async saveLevel (data) {
+    const res = await this.getData('save_kassir_lavel', data);
+
+    this.openAlert(res.st, res.text);
+
+    if (res.st) {
+      this.update();
+    }
+  }
+
   render() {
     return (
       <>
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+
+        <CitiesModules_Levels_Modal
+          open={this.state.modalDialog_lavel}
+          kassir_lavel={this.state.kassir_lavel}
+          onSave={this.saveLevel.bind(this)}
+          onClose={() => this.setState({ modalDialog_lavel: false })}
+          openAlert={this.openAlert.bind(this)}
+          fullScreen={this.state.fullScreen}
+        />
 
         <CitiesModules_Modal
           open={this.state.modalDialog}
@@ -397,6 +585,7 @@ class CitiesModules_ extends React.Component {
           itemName={this.state.itemName}
           save={this.save.bind(this)}
           fullScreen={this.state.fullScreen}
+          openAlert={this.openAlert.bind(this)}
         />
 
         <Grid container spacing={3} mb={3} className='container_first_child'>
@@ -415,10 +604,11 @@ class CitiesModules_ extends React.Component {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell style={{ width: '5%' }}>#</TableCell>
-                    <TableCell style={{ width: '30%' }}>Название города</TableCell>
-                    <TableCell style={{ width: '30%' }}>Уровень цен</TableCell>
-                    <TableCell style={{ width: '35%' }}>Активность</TableCell>
+                    <TableCell style={{ width: '8%' }}>#</TableCell>
+                    <TableCell style={{ width: '23%' }}>Название города</TableCell>
+                    <TableCell style={{ width: '23%' }}>Уровень цен</TableCell>
+                    <TableCell style={{ width: '23%' }}>Уровень кассира за регистрацию</TableCell>
+                    <TableCell style={{ width: '23%' }}>Активность</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -430,6 +620,13 @@ class CitiesModules_ extends React.Component {
                         {item.name}
                       </TableCell>
                       <TableCell>{item.lavel_name}</TableCell>
+                      <TableCell>
+                        <IconButton onClick={this.openLevels.bind(this, item.id)} title='Редактировать уровень кассира' disableRipple disableFocusRipple>
+                           <Typography component="span" sx={{ display: 'table-cell', verticalAlign: 'inherit', textAlign: 'left', fontSize: '1rem !important', color: 'rgba(0,0,0,0.87)', fontWeight: 700}}>
+                            {parseInt(item.kassir_lavel) === 0 ? 'Не выбран' :  `${item.kassir_lavel} уровень с ${item.date_start.split('-').reverse().join('-')}`}
+                          </Typography>
+                        </IconButton>
+                      </TableCell>
                       <TableCell >{parseInt(item.is_show) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon />}</TableCell>
                     </TableRow>
                   ))}
