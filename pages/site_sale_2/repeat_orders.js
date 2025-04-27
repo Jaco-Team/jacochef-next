@@ -217,7 +217,7 @@ class SiteSale2_RepeatOrders_ extends React.Component {
                 <TableHead>
                   <TableRow>
                     <TableCell>Заказов</TableCell>
-                    <TableCell>Количество</TableCell>
+                    <TableCell>Клиентов</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

@@ -101,7 +101,7 @@ export default function Registration() {
         }
 
         let data = { login: phone };
-        let res = await api_laravel_local('auth', 'check_phone', data);
+        let res = await api_laravel('auth', 'check_phone', data);
         res = res.data;
 
         if (res.st === false) {

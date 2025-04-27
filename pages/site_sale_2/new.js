@@ -279,7 +279,7 @@ class SiteSale2_new_ extends React.Component {
       err_status: true,
       err_text: '',
 
-      cert_text: '',
+      cert_text: '', 
     };
   }
   
@@ -335,7 +335,7 @@ class SiteSale2_new_ extends React.Component {
         count_promo = parseInt(this.state.promo_sale);
       }
 
-      if (this.state.promo_name.length < 3) {
+      if( this.state.generate_new === false && this.state.promo_name.length < 3) {
 
         this.setState({
           openAlert: true,
