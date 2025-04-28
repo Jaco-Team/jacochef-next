@@ -623,7 +623,9 @@ class CitiesModules_ extends React.Component {
                       <TableCell>
                         <IconButton onClick={this.openLevels.bind(this, item.id)} title='Редактировать уровень кассира' disableRipple disableFocusRipple>
                            <Typography component="span" sx={{ display: 'table-cell', verticalAlign: 'inherit', textAlign: 'left', fontSize: '1rem !important', color: 'rgba(0,0,0,0.87)', fontWeight: 700}}>
-                            {parseInt(item.kassir_lavel) === 0 ? 'Не выбран' :  `${item.kassir_lavel} уровень с ${item.date_start.split('-').reverse().join('-')}`}
+                            {item.actual_lavel == null ? 'Не выбран' :  `Текущий - ${item.actual_lavel} уровень с ${item.actual_date}` }
+                            <br />
+                            {item.next_lavel == null ? '' :  `Будущий - ${item.next_lavel} уровень с ${item.next_date}` }
                           </Typography>
                         </IconButton>
                       </TableCell>

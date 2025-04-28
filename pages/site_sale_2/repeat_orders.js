@@ -218,13 +218,15 @@ class SiteSale2_RepeatOrders_ extends React.Component {
                   <TableRow>
                     <TableCell>Заказов</TableCell>
                     <TableCell>Клиентов</TableCell>
+                    <TableCell>Сумма</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {this.state.promo_list.map( (item, key) =>
                     <TableRow key={key}>
                       <TableCell>{item.orders}</TableCell>
-                      <TableCell>{item.count}</TableCell>
+                      <TableCell>{new Intl.NumberFormat('ru-RU').format(item.count)}</TableCell>
+                      <TableCell>{new Intl.NumberFormat('ru-RU').format(item.summ)}</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
