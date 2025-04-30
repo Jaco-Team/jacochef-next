@@ -11,6 +11,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Tooltip from '@mui/material/Tooltip';
 import PostAddIcon from '@mui/icons-material/PostAdd';
+import ClearIcon from '@mui/icons-material/Clear';
+import InputAdornment from '@mui/material/InputAdornment';
+import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
 
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -37,8 +40,78 @@ import { MyAutocomplite, TextEditor22, MyTextInput, MyAlert } from '@/ui/element
 
 import { api_laravel, api_laravel_local } from '@/src/api_new';
 
+class OverviewModules_Modal_View extends React.Component {
+
+  render() {
+    const { open, fullScreen, item_name, method, itemView, loading, onClose } = this.props;
+
+    return (
+      <Dialog 
+        open={open} 
+        fullWidth 
+        maxWidth="xl" 
+        onClose={onClose} 
+        fullScreen={fullScreen}
+      >
+
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6">{method}{item_name && `: ${item_name}`}</Typography>
+          <IconButton onClick={onClose}><CloseIcon/></IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ minHeight: 200, position: 'relative' }}>
+          {loading ? (
+            <Box sx={{ display:'flex', justifyContent:'center', alignItems:'center', height:200 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6} sx={{ mt: 1 }}>
+                <MyTextInput
+                  label="Название"
+                  value={itemView?.name || ''}
+                  disabled
+                  className="disabled_input"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} sx={{ mt: 1}}>
+                <MyTextInput
+                  label="Тэги"
+                  value={itemView?.tags || ''}
+                  disabled
+                  className="disabled_input"
+                />
+              </Grid>
+              <Grid item xs={12} sm={12}>
+                <Typography gutterBottom>Описание модуля</Typography>
+                <Box
+                  sx={{
+                    border: '1px solid rgba(0,0,0,0.23)',
+                    borderRadius: 1,
+                    p: 2,
+                    maxHeight: 500,
+                    overflowY: 'auto',
+                    backgroundColor: '#fff',
+                    '& *': { userSelect: 'none' }
+                  }}
+                >
+                  <div dangerouslySetInnerHTML={{ __html: itemView?.text || '' }} />
+                </Box>
+              </Grid>
+           
+            </Grid>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button variant="contained" onClick={onClose}>Закрыть</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+}
+
 class OverviewModules_Modal extends React.Component {
-  click = false;
 
   constructor(props) {
     super(props);
@@ -89,14 +162,14 @@ class OverviewModules_Modal extends React.Component {
 
   save = () => {
     const { item } = this.state;
-    const { type, save, openAlert } = this.props;
+    const { type, save, openAlert, onClose } = this.props;
     
     if (!item.name?.trim()) {
       openAlert(false, 'Необходимо указать название');
       return;
     }
     
-    if ((type === 'art' || type === 'art_edit')) {
+    if ((type === 'add' || type === 'edit')) {
       
       const content = this.myRef.current?.getContent?.() || '';
       
@@ -108,118 +181,149 @@ class OverviewModules_Modal extends React.Component {
       item.text = content;
     }
 
-    console.log("🚀 === item:", item);
-
-    //save(item);
-    //this.props.onClose();
+    save(item);
+    onClose();
   };
 
   render() {
     const { item } = this.state;
-    const { open, fullScreen, method, item_name, tags, type, onClose } = this.props;
+    const { open, fullScreen, method, item_name, tags, type, onClose, acces, openHistoryView } = this.props;
+
+    const isEditing = type === 'add' || type === 'edit';
 
     return (
-    
+      <Dialog
+        open={open}
+        onClose={onClose}
+        fullScreen={fullScreen}
+        fullWidth={true}
+        maxWidth={'xl'}
+      >
+        <DialogTitle className="button">
+          {method}
+          {item_name ? `: ${item_name}` : null}
+          <IconButton onClick={onClose}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
 
-        <Dialog
-          open={open}
-          onClose={onClose}
-          fullScreen={fullScreen}
-          fullWidth={true}
-          maxWidth={'xl'}
-        >
-          <DialogTitle className="button">
-            {method}
-            {item_name ? `: ${item_name}` : null}
-            <IconButton onClick={onClose}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-
-          {item &&
-            <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Название"
-                    value={item.name}
-                    func={this.changeItem('name')}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <MyAutocomplite
-                    label="Тэги"
-                    multiple
-                    data={tags}
-                    value={item.tag_id || []}
-                    func={this.onTagsChange}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={12}>
-                  <Typography gutterBottom>
-                    Описание модуля
-                  </Typography>
-                  <TextEditor22 
-                    id="EditorNew" 
-                    func={this.changeEditor} 
-                    value={item?.text} 
-                    refs_={this.myRef} 
-                    toolbar={true} 
-                    menubar={true} 
-                  />
-                </Grid>
-
-                {/* {(type === 'art' || type === 'art_edit') && this.state.item?.hist && parseInt(acces?.show_hist) ?  */}
-                  <Grid item xs={12} sm={12}>
-                    <Accordion style={{ width: '100%' }}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Table>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>#</TableCell>
-                              <TableCell>Дата / время</TableCell>
-                              <TableCell>Сотрудник</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {item?.hist.map((it, k) =>
-                              <TableRow hover key={k}>
-                                <TableCell>{k+1}</TableCell>
-                                <TableCell>{it.date_update}</TableCell>
-                                <TableCell>{it.user}</TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-                      </AccordionDetails>
-                    </Accordion>
-                  </Grid>
-                  {/* : null
-                } */}
-               
+        {item &&
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <MyTextInput
+                  label="Название"
+                  value={item.name}
+                  func={this.changeItem('name')}
+                />
               </Grid>
-            </DialogContent>
-          }
 
-          <DialogActions>
-            {/* {type !== 'section' && type !== 'art' && parseInt(acces?.delete) ?
-              <Button onClick={() => this.setState({ confirmDialog: true })} variant="contained" style={{ backgroundColor: 'rgba(53,59,72,1.000)' }}>
-                Удалить
-              </Button>
-            : null}
-            {parseInt(acces?.edit) || parseInt(acces?.create)? */}
-              <Button variant="contained" onClick={this.save}>
-                Сохранить
-              </Button>
-            {/* : null} */}
-          </DialogActions>
+              <Grid item xs={12} sm={6}>
+                <MyAutocomplite
+                  label="Тэги"
+                  multiple
+                  data={tags}
+                  value={item.tag_id || []}
+                  func={this.onTagsChange}
+                />
+              </Grid>
 
-        </Dialog>
+              <Grid item xs={12} sm={12}>
+                <Typography gutterBottom>
+                  Описание модуля
+                </Typography>
+                <TextEditor22 
+                  id="EditorNew" 
+                  func={this.changeEditor} 
+                  value={item?.text} 
+                  refs_={this.myRef} 
+                  toolbar={true} 
+                  menubar={true} 
+                />
+              </Grid>
+
+              {isEditing && item?.hist && parseInt(acces?.edit) ? 
+                <Grid item xs={12} sm={12}>
+                  <Accordion style={{ width: '100%' }}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>#</TableCell>
+                            <TableCell>Дата / время</TableCell>
+                            <TableCell>Автор / редактор</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {item?.hist.map((it, k) =>
+                            <TableRow hover key={k} onClick={() => openHistoryView(it)} sx={{ cursor: 'pointer' }}>
+                              <TableCell>{k+1}</TableCell>
+                              <TableCell>{it.date_update}</TableCell>
+                              <TableCell>{it.user_name}</TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </AccordionDetails>
+                  </Accordion>
+                </Grid>
+              : null}
+              
+            </Grid>
+          </DialogContent>
+        }
+
+        <DialogActions>
+          <Button variant="contained" onClick={isEditing ? this.save : onClose}>
+            {isEditing ? 'Сохранить' : 'Закрыть'}
+          </Button>
+        </DialogActions>
+
+      </Dialog>
+    );
+  }
+}
+
+class OverviewModules_SearchBar extends React.PureComponent {
+  state = {
+    localValue: this.props.value || ''
+  };
+
+  handleInput = e => {
+    this.setState({ localValue: e.target.value });
+  };
+
+  handleBlur = () => {
+    this.props.onSearch(this.state.localValue);
+  };
+
+  handleClear = () => {
+    this.setState({ localValue: '' }, () => {
+      this.props.onSearch('');
+    });
+  };
+
+  render() {
+    return (
+      <MyTextInput
+        className="input_login"
+        label="Ввести данные для поиска"
+        value={this.state.localValue}
+        func={this.handleInput}
+        onBlur={this.handleBlur}
+        inputAdornment={{
+          endAdornment: this.state.localValue ? (
+            <InputAdornment position="end">
+              <IconButton onClick={this.handleClear}>
+                <ClearIcon />
+              </IconButton>
+            </InputAdornment>
+          ) : null
+        }}
+      />
     );
   }
 }
@@ -253,42 +357,48 @@ class OverviewModules_ extends React.Component {
         name: '',
         text: '',
         tag_id: [],
-        hist: [],
       },
 
-      tags:[
-        {id: 1, name: 'Склад'},
-        {id: 2, name: 'Кафе'},
-        {id: 3, name: 'Админка'},
-        {id: 4, name: 'Продажи'},
-        {id: 5, name: 'Ревизия'},
-        {id: 6, name: 'Поставщики'}, 
-        {id: 7, name: 'Сайт'},
-        {id: 8, name: 'Товары'},
-        {id: 9, name: 'Уборка'},
-        {id: 10, name: 'Клиент'},
-      ]
+      tags:[],
+      selectedTagIds: [],
+
+      modalDialogView: false,
+
+
+      viewLoading: false,
+      viewItem: null,
+
+      modalDialogHist: false,
+      histItem: null,
+      method_hist: '',
   
     };
   }
   
   async componentDidMount(){
     let data = await this.getData('get_all');
-    console.log("🚀 === data:", data);
-
-    let acces = {
-      "edit": "1",
-      "create": "1",
-    }
     
     this.setState({
       category: data.category,
-      //acces: data.acces,
-      acces,
+      acces: data.acces,
+      tags: data.tags,
       module_name: data.module_info.name,
     });
     
     document.title = data.module_info.name;
+
+    const params = new URLSearchParams(window.location.search);
+    const viewId = params.get('view');
+
+    if (viewId) {
+  
+      const allCats = data.category.flatMap(p => p.cats);
+      const cat = allCats.find(c => String(c.modul_id) === viewId);
+
+      if (cat) {
+        this.handleRowClick(cat, true);
+      }
+    }
   }
   
   getData = (method, data = {}) => {
@@ -329,31 +439,75 @@ class OverviewModules_ extends React.Component {
     });
   };
 
-  search = (event) => {}
+  handleSearch = (newValue) => {
+    this.setState({ searchItem: newValue });
+  };
 
   handleTag = (id) => {
     this.setState(({ tags }) => {
+      const newTags = id === -1
+        ? tags.map(t => ({ ...t, active: false }))
+        : tags.map(t =>
+            t.id === id
+              ? { ...t, active: !t.active }
+              : t
+          );
 
-      if (id === -1) {
-        return { tags: tags.map(t => ({ ...t, active: false })) };
-      }
+      const selectedTagIds = newTags.filter(t => t.active).map(t => t.id);
 
       return {
-        tags: tags.map(t =>
-          t.id === id ? { ...t, active: !t.active } : t
-        )
+        tags: newTags,
+        selectedTagIds
       };
-
     });
   };
 
-  openModal = (method, type, cat) => {
+  handleSearchClick = async () => {
+    const { searchItem, selectedTagIds } = this.state;  
+
+    const data = {
+      search: searchItem,
+      tags: selectedTagIds
+    };    
+
+    const res = await this.getData('search_overview', data);
+
+    this.setState({
+      category: res.category,
+    });
+
+  }
+
+  openModal = async (method, type, cat) => {
     this.handleResize();
 
     if(type === 'add') {
 
-      const item = JSON.parse(JSON.stringify(this.state.item_new));
+      let item = JSON.parse(JSON.stringify(this.state.item_new));
+
+      item.module_id = cat.modul_id;
   
+      this.setState({
+        modalDialog: true,
+        method,
+        type,
+        item,
+        item_name: cat.name
+      });
+    }
+
+    if(type === 'edit') {
+
+      const data = {
+        module_id: cat.modul_id,
+      }
+
+      const res = await this.getData('get_overview', data);
+
+      let item = res.module;
+
+      item.module_id = cat.modul_id;
+
       this.setState({
         modalDialog: true,
         method,
@@ -365,10 +519,103 @@ class OverviewModules_ extends React.Component {
 
   }
 
-  save = () => {}
+  save = async (data) => {
+
+    const res = await this.getData('save_overview', data);
+
+    this.openAlert(res.st, res.text);
+
+    if (res.st) {
+      this.update();
+    }
+  }
+
+  update = async () => {
+    const data = await this.getData('get_all');
+
+    this.setState({
+      category: data.category,
+      acces: data.acces,
+      tags: data.tags,
+    });
+  }
+
+  canInteract = (cat) => {
+    const create = this.state.acces?.create === '1';
+    return Boolean(cat.desc) || create;
+  };
+
+  handleRowClick = async (cat, forceView = false) => {
+    if (!this.canInteract(cat)) return;
+
+    const create = this.state.acces?.create === '1';
+    const edit = this.state.acces?.edit === '1';
+    const hasDesc = Boolean(cat.desc);
+
+    const isView = forceView || (hasDesc && !edit && !create);
+  
+    if (isView) {
+
+      this.setState({
+        modalDialogView: true,
+        method: 'Просмотр описания модуля',
+        viewLoading: true,
+        viewItem: null,
+        item_name: cat.name
+      });
+
+      const newUrl = `${window.location.pathname}?view=${cat.modul_id}`;
+      window.history.pushState(null, '', newUrl);
+
+      this.handleResize();
+
+      this.getData('get_overview', { module_id: cat.modul_id }).then(res => {
+
+        const loaded = res.module;
+        loaded.tags = loaded.tag_id.map(t => t.name).join(', ');
+
+        this.setState({
+          viewItem: loaded,
+          viewLoading: false
+        });
+
+      });
+
+      return;
+
+    }
+  
+    if (hasDesc) {
+      this.openModal('Редактирование описания модуля', 'edit', cat);
+    } else {
+      this.openModal('Добавление описания модуля', 'add', cat);
+    }
+  
+  };
+
+  closeModal = () => {
+    this.setState({ modalDialogView: false, viewItem: null, item_name: '', viewLoading: false });
+    window.history.pushState(null, '', window.location.pathname);
+  };
+
+  openHistoryView = (hist) => {
+    this.handleResize();
+
+    hist.tags = hist.tag_id.map(t => t.name).join(', ');
+
+    this.setState({
+      modalDialogHist: true,
+      histItem: hist,
+      method_hist: `${hist.user_name} внес изменения ${hist.date_update} в модуль`,
+    });
+  };
+
+  closeHistoryView = () => {
+    this.setState({ modalDialogHist: false, histItem: null, method_hist: '' });
+  };
 
   render() {
-    const { is_load, openAlert, err_status, err_text, module_name, category, searchItem, tags, acces, fullScreen, modalDialog, item, item_name, method, type } = this.state;
+    const { is_load, openAlert, err_status, err_text, module_name, category, searchItem, tags, acces, fullScreen, modalDialog, item, item_name, method, type, modalDialogView, viewLoading, viewItem, modalDialogHist, histItem, method_hist } = this.state;
 
     return (
       <>
@@ -394,6 +641,28 @@ class OverviewModules_ extends React.Component {
           tags={tags}
           item_name={item_name}
           openAlert={this.openAlert}
+          acces={acces}
+          openHistoryView={this.openHistoryView}
+        />
+
+        <OverviewModules_Modal_View
+          open={modalDialogView}
+          onClose={this.closeModal}
+          itemView={viewItem}
+          fullScreen={fullScreen}
+          method={method}
+          item_name={item_name}
+          loading={viewLoading}
+        />
+
+        <OverviewModules_Modal_View
+          open={modalDialogHist}
+          onClose={this.closeHistoryView}
+          itemView={histItem}
+          fullScreen={fullScreen}
+          method={method_hist}
+          item_name={item_name}
+          loading={false}
         />
         
         <Grid container spacing={3} className='container_first_child'>
@@ -402,11 +671,9 @@ class OverviewModules_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={12}>
-            <MyTextInput
-              label="Поиск"
+            <OverviewModules_SearchBar
               value={searchItem}
-              func={(event) => {this.setState({ searchItem: event.target.value })}}
-              onBlur={this.search}
+              onSearch={this.handleSearch}
             />
           </Grid>
 
@@ -488,72 +755,77 @@ class OverviewModules_ extends React.Component {
 
           </Grid>
 
-          <Grid item xs={12} sm={12} sx={{ pb: 5 }}>
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: 'bold' }}>Список модулей</Typography>
-              </AccordionSummary>
-
-              <AccordionDetails>
-                {category.map((item, key) => (
-                  <Accordion key={key}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>{item.name}</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <TableContainer component={Paper} elevation={0} sx={{ boxShadow: 'none' }}>
-                        <Table size="small">
-                          <TableBody>
-                            {item.cats.map((cat, k) => (
-                              <TableRow key={k} hover>
-                                <TableCell>{cat.name}</TableCell>
-
-                                <TableCell padding="none" sx={{ position: 'relative', pl: 0, pr: 0 }}>
-                                  <Box component="span" sx={{ position: 'absolute', top: '50%', right: 20, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    {Boolean(cat?.desc) ? acces?.edit === '1' || acces?.create === '1' ? 
-                                      <Tooltip title="Редактировать описание">
-                                        <EditIcon
-                                          // onClick={e => { e.stopPropagation(); handleEdit(cat); }}
-                                          sx={{ cursor: 'pointer' }}
-                                        />
-                                      </Tooltip>
-                                      : 
-                                      <Tooltip title="Просмотр описания">
-                                        <VisibilityIcon
-                                          // onClick={e => { e.stopPropagation(); handleView(cat); }}
-                                          sx={{ cursor: 'pointer' }}
-                                        />
-                                      </Tooltip>
-                                      : acces.create === '1' ?
-                                      <Tooltip title="Добавить описание">
-                                        <PostAddIcon
-                                          onClick={e => {
-                                            e.stopPropagation();
-                                            this.openModal('Добавление описания модуля', 'add', cat);
-                                          }}
-                                          sx={{ cursor: 'pointer' }}
-                                        />
-                                      </Tooltip>
-                                      :
-                                      <Typography variant="body2" color="text.disabled" sx={{ fontStyle: 'italic',   whiteSpace: 'nowrap'  }}>
-                                        Описание отсутствует
-                                      </Typography>
-                                    }
-                                  </Box>
-                                </TableCell>
-
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
-              </AccordionDetails>
-
-            </Accordion>
+          <Grid item xs={12} sm={12}>
+            <Button onClick={this.handleSearchClick} variant="contained" sx={{ whiteSpace: 'nowrap' }}>
+              Поиск по тэгам и описанию в модулях
+            </Button>
           </Grid>
+
+          {category.length ? 
+            <Grid item xs={12} sm={12} sx={{ pb: 5 }}>
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography sx={{ fontWeight: 'bold' }}>Список модулей</Typography>
+                </AccordionSummary>
+
+                <AccordionDetails>
+                  {category.map((item, key) => (
+                    <Accordion key={key}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography>{item.name}</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <TableContainer component={Paper} elevation={0} sx={{ boxShadow: 'none' }}>
+                          <Table size="small">
+                          <TableBody>
+                              {item.cats.map(cat => {
+                                const clickable = this.canInteract(cat);
+
+                                return (
+                                  <TableRow key={cat.id} hover onClick={clickable ? () => this.handleRowClick(cat) : undefined} sx={{ cursor: clickable ? 'pointer' : 'default' }}>
+
+                                    <TableCell sx={{ pr: { xs: '64px', sm: '32px' } }}>
+                                      <Typography noWrap>{cat.name}</Typography>
+                                    </TableCell>
+
+                                    <TableCell padding="none" sx={{ position: 'relative', pl: 0, pr: 0 }}>
+                                      <Box component="span" sx={{ position: 'absolute', top: '50%', right: 20, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        {cat.desc ? (
+                                          acces?.edit === '1' || acces?.create === '1' ? (
+                                            <Tooltip title="Редактировать описание">
+                                              <EditIcon fontSize="small" />
+                                            </Tooltip>
+                                          ) : (
+                                            <Tooltip title="Просмотр описания">
+                                              <VisibilityIcon />
+                                            </Tooltip>
+                                          )
+                                        ) : acces?.create === '1' ? (
+                                          <Tooltip title="Добавить описание">
+                                            <PostAddIcon/>
+                                          </Tooltip>
+                                        ) : (
+                                          <Tooltip title="Описание отсутствует">
+                                            <InsertDriveFileOutlinedIcon sx={{ color: 'text.disabled', opacity: 0.6 }} />
+                                          </Tooltip>
+                                        )}
+                                      </Box>
+                                    </TableCell>
+
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+                </AccordionDetails>
+
+              </Accordion>
+            </Grid>
+          : null}
 
         </Grid>
       </>

@@ -359,13 +359,17 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
 
   constructor(props) {
     super(props);
+
     this.state = {
       addModalOpen: false,
       dateModalOpen: false,
       dateModalData: null,
       expanded: null,
-      kassir_registr: props.kassir_registr
+      kassir_registr: props.kassir_registr,
+      confirmDialog: false,
+      delete_block: null,
     };
+
   }
 
   componentDidUpdate(prevProps) {
@@ -380,6 +384,10 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
     const startOfDate = dayjs(date).startOf('day');
     const startOfToday = dayjs().startOf('day');
     return startOfDate.diff(startOfToday) >= 0;
+  };
+
+  isDelete = (date) => {
+    return dayjs(date).startOf('day').isAfter(dayjs().startOf('day'));
   };
 
   handleModalOpen  = () => this.setState({ addModalOpen: true });
@@ -417,11 +425,37 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
     this.setState({ kassir_registr: newArr });
   };
 
+  handleConfirm = (delete_block) => {
+    this.setState({ delete_block, confirmDialog: true });
+  };
+
+  handleDelete = () => {
+    this.props.onDelete(this.state.delete_block);
+    this.setState({ confirmDialog: false, delete_block: null });
+  };
+
   render() {
-    const { expanded, addModalOpen, kassir_registr, dateModalOpen, dateModalData } = this.state;
+    const { expanded, addModalOpen, kassir_registr, dateModalOpen, dateModalData, confirmDialog } = this.state;
 
     return (
       <Grid item xs={12} mb={5}>
+
+        <Dialog
+          open={confirmDialog}
+          onClose={() => this.setState({ confirmDialog: false })}
+          maxWidth="sm"
+        >
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+            <Typography>Точно удалить уровень?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => this.setState({ confirmDialog: false })}>
+              Отмена
+            </Button>
+            <Button onClick={this.handleDelete}>Удалить</Button>
+          </DialogActions>
+        </Dialog>
 
         <Box sx={{ display: 'flex', mb: 2 }}>
           <Button variant="contained" onClick={this.handleModalOpen}>
@@ -435,14 +469,16 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '10%' }}>#</TableCell>
-                <TableCell sx={{ width: '40%' }}>Дата старта</TableCell>
-                <TableCell sx={{ width: '50%' }}>Редактировать / Просмотр</TableCell>
+                <TableCell sx={{ width: '30%' }}>Дата старта</TableCell>
+                <TableCell sx={{ width: '40%' }}>Редактировать / Просмотр</TableCell>
+                <TableCell sx={{ width: '20%' }}>Удалить</TableCell>
               </TableRow>
             </TableHead>
 
             <TableBody>
             {kassir_registr.map((block, i) => {
                 const editable = this.isEditable(block.date_start);
+                const deltable = this.isDelete(block.date_start);
                 return (
                   <React.Fragment key={i}>
 
@@ -454,18 +490,31 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
                           {editable ? <EditIcon /> : <VisibilityIcon />}
                         </IconButton>
                       </TableCell>
+                      <TableCell>
+                        {deltable && (
+                          <IconButton color="error" onClick={() => this.handleConfirm(block)} title="Удалить">
+                            <DeleteOutline />
+                          </IconButton>
+                        )}
+                      </TableCell>
                     </TableRow>
 
                     <TableRow>
-                      <TableCell colSpan={3} style={{ padding: 0 }}>
+                      <TableCell colSpan={4} style={{ padding: 0 }}>
                         <Collapse in={expanded === i} timeout="auto" unmountOnExit>
-                          <Box sx={{ margin: '8px 16px' }}>
-                            <Table size="small">
+                          <Box sx={{ px: 2, pt: 1, pb: 2 }}>
+                            <Table size="small" sx={{
+                              width: '100%',
+                              borderCollapse: 'collapse',
+                              '& td, & th': {
+                                borderBottom: '1px solid #ddd',
+                              }
+                            }}>
                               <TableHead>
                                 <TableRow>
                                   <TableCell sx={{ width: '10%' }} />
-                                  <TableCell sx={{ width: '40%' }} >Уровень</TableCell>
-                                  <TableCell sx={{ width: '50%' }} >Сумма</TableCell>
+                                  <TableCell sx={{ width: '30%' }}>Уровень</TableCell>
+                                  <TableCell colSpan={2} sx={{ width: '60%' }}>Сумма</TableCell>
                                 </TableRow>
                               </TableHead>
                               <TableBody>
@@ -473,7 +522,7 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
                                   <TableRow key={j}>
                                     <TableCell />
                                     <TableCell>{lvl.lavel}</TableCell>
-                                    <TableCell>
+                                    <TableCell colSpan={2}>
                                       <MyTextInput
                                         type="number"
                                         tabindex={{ min: 0 }}
@@ -488,11 +537,12 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
                                 ))}
                               </TableBody>
                             </Table>
+
                             {editable && 
                               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, mb: 2 }}>
                                 <Button 
                                   color="success" 
-                                  variant="contained" 
+                                  variant="contained"
                                   style={{ whiteSpace: 'nowrap' }}
                                   onClick={() => this.openDateModal(block)}
                                 >
@@ -517,7 +567,6 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
           open={addModalOpen}
           onClose={this.handleModalClose}
           onSave={this.props.onSave}
-          saveKey={this.props.saveKey}
           openAlert={this.props.openAlert}
         />
 
@@ -527,7 +576,6 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
           onClose={this.closeDateModal}
           dateModalData={dateModalData}  
           onSave={this.props.onSave}
-          saveKey={this.props.saveKey}
           openAlert={this.props.openAlert}
         />
 
@@ -1617,6 +1665,19 @@ class EventTime2_ extends React.Component {
     }
   } 
 
+  deleteTabData_registr = async (block) => {
+
+    const data = { level_id: block.id, date_start: block.date_start };
+
+    const res = await this.getData('delete_kassir_lavel', data);
+
+    this.openAlert(res.st, res.text);
+
+    if (res.st) {
+      this.getDataSett();
+    }
+  } 
+
   render() {
     const { is_load, openAlert, err_status, err_text, module_name, activeTab, tabs_data, time_cook, index_time_cook, index_time_manager, time_manager, index_time_smena, time_smena, rate, index_rate, index_kassir_time, kassir_time, index_table_lv, table_lv, index_cur, cur, kassir_registr, index_kassir_registr, confirmDialog } = this.state;
 
@@ -1783,6 +1844,7 @@ class EventTime2_ extends React.Component {
                 kassir_registr={kassir_registr}
                 onSave={this.saveTabData_registr}
                 openAlert={this.openAlert}
+                onDelete={this.deleteTabData_registr}
               />
             )}
           {/* Мотивации кассира за регистрацию */}
