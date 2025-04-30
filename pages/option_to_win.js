@@ -23,7 +23,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MyTextInput, MyAutocomplite, MyCheckBox } from '@/ui/elements';
 
-import { api } from '@/src/api_new';
+import { api, api_laravel, api_laravel_local } from '@/src/api_new';
 
 class OptionToWin_Modal extends React.Component {
   constructor(props) {
@@ -252,13 +252,15 @@ class OptionToWin_ extends React.Component {
       is_load: true,
     });
 
-    let res = api(this.state.module, method, data).then(result => result.data);
-
-    setTimeout(() => {
-      this.setState({
-        is_load: false,
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
       });
-    }, 500);
 
     return res;
   };

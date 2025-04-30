@@ -441,6 +441,7 @@ class WorkSchedule_Table extends React.Component {
                       {parseInt(item.data.check_period) == 1
                         ? parseInt(item.data.dop_bonus) +
                           parseInt(item.data.dir_price) +
+                          parseInt(item.data.register_price) +
                           parseInt(item.data.dir_price_dop) +
                           parseInt(item.data.h_price) +
                           parseInt(item.data.my_bonus) -
@@ -477,6 +478,7 @@ class WorkSchedule_Table extends React.Component {
                       {parseInt(item.data.check_period) == 1
                         ? parseInt(item.data.dop_bonus) +
                           parseInt(item.data.dir_price) +
+                          parseInt(item.data.register_price) +
                           parseInt(item.data.dir_price_dop) +
                           parseInt(item.data.h_price) +
                           parseInt(item.data.my_bonus) -
@@ -720,6 +722,7 @@ class WorkSchedule_Table_without_functions extends React.Component {
                           {parseInt(item.data.check_period) == 1
                             ? parseInt(item.data.dop_bonus) +
                               parseInt(item.data.dir_price) +
+                              parseInt(item.data.register_price) +
                               parseInt(item.data.dir_price_dop) +
                               parseInt(item.data.h_price) +
                               parseInt(item.data.my_bonus) -

@@ -123,7 +123,7 @@ class MainTableRow extends React.Component {
 
     const kassa_text = this.props.table == 'fiz' ? 'Физические кассы' : 'Курьерская наличка';
 
-    console.log( this.props.table, this.props.type, this.props?.is_delete, this.props?.is_edit, this.props?.is_delete == false && this.props?.is_edit === false )
+    //console.log( this.props.table, this.props.type, this.props?.is_delete, this.props?.is_edit, this.props?.is_delete == false && this.props?.is_edit === false )
 
     return(
       <React.Fragment>

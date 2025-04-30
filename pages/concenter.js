@@ -37,7 +37,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { MySelect, MyDatePickerNew, MyTextInput, formatDate } from '@/ui/elements';
 import Typography from '@mui/material/Typography';
 
-import { api } from '@/src/api_new';
+import { api, api_laravel, api_laravel_local } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 
@@ -108,14 +108,13 @@ class Concenter_ extends React.Component {
   }
   
   getData = (method, data = {}) => {
-    
     this.setState({
       is_load: true,
     });
 
-    let res = api(this.state.module, method, data)
-      .then(result => result.data)
-      .finally( () => {
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
@@ -124,7 +123,7 @@ class Concenter_ extends React.Component {
       });
 
     return res;
-  }
+  };
    
   changeCity(event){
     this.setState({
