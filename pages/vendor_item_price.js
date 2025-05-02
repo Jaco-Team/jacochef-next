@@ -22,7 +22,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MySelect, MyAlert, MyTextInput, MyAutocomplite } from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 class VendorItemPrice_ extends React.Component {
   constructor(props) {

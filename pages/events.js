@@ -36,7 +36,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { MySelect, MyCheckBox, MyTimePicker, MyAlert } from '@/ui/elements';
 import Typography from '@mui/material/Typography';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 class Events_ extends React.Component {
   constructor(props) {

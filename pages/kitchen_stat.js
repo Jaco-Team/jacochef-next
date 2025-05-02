@@ -21,7 +21,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 

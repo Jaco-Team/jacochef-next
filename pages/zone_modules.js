@@ -40,7 +40,7 @@ import ListItem from '@mui/material/ListItem';
 
 import { MySelect, MyTextInput, MyCheckBox, MyAlert, MyDatePickerNew } from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 class ZoneModules_Modal_History extends React.Component {

@@ -38,7 +38,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import {MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyAlert} from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 class SkladItemsModule_Modal_History_View extends React.Component {
   constructor(props) {
@@ -744,7 +744,7 @@ class SkladItemsModule_ extends React.Component {
       is_load: true,
     });
 
-    let res = api(this.state.module, method, data)
+    let res = api_laravel_local(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {

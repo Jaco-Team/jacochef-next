@@ -8,7 +8,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MySelect, MyTextInput } from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 class SocialNetwork_ extends React.Component {
   constructor(props) {

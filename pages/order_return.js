@@ -31,7 +31,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import {MyCheckBox, MyTextInput, MyAutocomplite, MyAlert} from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';

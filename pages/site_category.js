@@ -21,7 +21,7 @@ import TableRow from '@mui/material/TableRow';
 
 import { MyTextInput, MySelect, MyAlert } from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 class SiteCategory_Modal extends React.Component {
   constructor(props) {

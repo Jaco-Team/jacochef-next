@@ -25,7 +25,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import {MyTextInput, MyCheckBox, MySelect, MyTimePicker, MyAutocomplite, MyAlert} from '@/ui/elements';
 
-import { api } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 class AppWorkTable extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -180,7 +180,7 @@ class AppWork_ extends React.Component {
       is_load: true,
     });
 
-    let res = api(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then(result => result.data)
       .finally( () => {
         setTimeout(() => {

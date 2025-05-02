@@ -24,7 +24,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MySelect, MyTextInput, MyAlert, TextEditor, MyAutocomplite } from '@/ui/elements';
 
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 class SitePageText_Modal extends React.Component {
   constructor(props) {

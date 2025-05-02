@@ -34,7 +34,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import {MySelect, MyCheckBox, MyTextInput, MyDatePickerNew, formatDate, MyAlert, MyAutocomplite} from '@/ui/elements';
 
 import Dropzone from 'dropzone';
-import { api, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 function roundTo(n, digits) {
@@ -2385,7 +2385,7 @@ class SiteItems_ extends React.Component {
       is_load: true,
     });
 
-    let res = api(this.state.module, method, data)
+    let res = api_laravel_local(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {

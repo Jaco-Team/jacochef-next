@@ -27,7 +27,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import {MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyDatePickerNew, MyAlert} from '@/ui/elements';
 
 import Dropzone from 'dropzone';
-import { api } from '@/src/api_new';
+import { api_laravel, api_laravel_local } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 class SiteUserManagerTable extends React.Component {
@@ -192,7 +192,7 @@ class SiteUserManager_ extends React.Component {
       is_load: true,
     });
 
-    let res = api(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {
