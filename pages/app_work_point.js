@@ -18,9 +18,9 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import { MyTextInput, MySelect } from '@/ui/elements';
+import { MyTextInput, MySelect, MyAlert } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 class AppWorkPoint_ extends React.Component {
   constructor(props) {
@@ -39,81 +39,63 @@ class AppWorkPoint_ extends React.Component {
 
       allList: [],
       allListRender: [],
-      thisList: []
+      thisList: [],
+
+      openAlert: false,
+      err_status: true,
+      err_text: '',
     };
   }
   
   async componentDidMount(){
     let data = await this.getData('get_all');
-    
-    this.setState({
-      module_name: data.module_info.name,
-      points: data.points,
-      point_id: data.points[0].id,
-      apps: data.apps,
-      app_id: data.apps[0].id
-    })
+
+    this.setState(
+      {
+        module_name: data.module_info.name,
+        points: data.points,
+        point_id: data.points[0].id,
+        apps: data.apps,
+        app_id: data.apps[0].id
+      },
+      () => {
+        this.getWorks();
+      }
+    );
     
     document.title = data.module_info.name;
 
-    setTimeout( () => {
-      this.getWorks();
-    }, 300 )
   }
   
   getData = (method, data = {}) => {
-    
+      
     this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      console.log( err )
-      this.setState({
-        is_load: false
-      })
+      is_load: true,
     });
+
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
   }
    
   changeApp(event){
-    this.setState({
-      app_id: event.target.value
-    });
 
-    setTimeout( () => {
-      this.getWorks();
-    }, 300 )
+    this.setState({
+        app_id: event.target.value
+      },
+      () => {
+        this.getWorks();
+      }
+    );
+
   }
 
   async getWorks(){
@@ -124,79 +106,48 @@ class AppWorkPoint_ extends React.Component {
 
     let res = await this.getData('get_works', data);
 
-    console.log( res )
-
     this.setState({
-      allList: res.all_work,
-      thisList: res.this_work,
-    })
-
-    setTimeout( () => {
-      this.checkList();
-    }, 300 )
+        allList: res.all_work,
+        thisList: res.this_work,
+      },
+      () => {
+        this.checkList();
+      }
+    );
   }
 
-  checkList(){
+  checkList() {
+    const { allList, thisList } = this.state;
+
+    const thisListIds = new Set(thisList.map(item => Number(item.id)));
+  
+    const allListRender = allList.filter(item => !thisListIds.has(Number(item.id)));
+  
+    this.setState({ allListRender });
+  }
+  
+  add(id, name) {
+    let thisList = [...this.state.thisList];
     let allList = this.state.allList;
-    let thisList = this.state.thisList;
-
-    thisList.map( (Titem) => {
-      let newArr = [];
-
-        allList.map( (Aitem) => {
-          if( parseInt(Aitem.id) != parseInt(Titem.id) ){
-            newArr.push(Aitem);
-          }
-        })
-
-        allList = newArr;
-    } )
-
-    this.setState({
-      allListRender: allList
-    })
+  
+    let check = thisList.find(item => parseInt(item.id) === parseInt(id));
+    let thisItem = allList.find(item => parseInt(item.id) === parseInt(id));
+  
+    if (!check && thisItem) {
+      thisList.push({ id, name, dop_time: 0, time_min: thisItem.time_min });
+    }
+  
+    this.setState({ thisList }, this.checkList);
   }
 
-  add(id, name){
-    let thisList = this.state.thisList;
-    let allList = this.state.allList;
-
-    let check = thisList.find( (item, key) => parseInt(item['id']) == parseInt(id) );
-    let thisItem = allList.find( (item, key) => parseInt(item['id']) == parseInt(id) );
-
-		if( !check ){
-			thisList.push({id: id, name: name, dop_time: 0, time_min: thisItem.time_min})
-		}
-
-		this.setState({
-      thisList: thisList
-    })
-
-    setTimeout( () => {
-      this.checkList();
-    }, 300 )
+  del(id) {
+    const new_arr = this.state.thisList.filter(item => parseInt(item.id) !== parseInt(id));
+  
+    this.setState({ thisList: new_arr }, this.checkList);
   }
-
-  del(id, name){
-    let new_arr = [];
-    let thisList = this.state.thisList;
-
-		thisList.map(function(item, key){
-			if( parseInt(item['id']) != parseInt(id) ){
-				new_arr.push( item )
-			}
-		})
-
-		this.setState({
-      thisList: new_arr
-    })
-
-    setTimeout( () => {
-      this.checkList();
-    }, 300 )
-	}
 
   async save(){
+
     let data = {
       point_id: this.state.point_id,
       app_id: this.state.app_id,
@@ -205,39 +156,59 @@ class AppWorkPoint_ extends React.Component {
 
     let fake_item = null;
 
-    this.state.thisList.map( (item, key) => {
-      if( item.dop_time.length == 0 ){
+    this.state.thisList.map((item) => {
+
+      if(item.dop_time.length == 0){
         fake_item = item;
       }
-    } )
 
-    console.log(fake_item  )
+    })
 
-    if( fake_item ){
-      alert('У позиции "'+fake_item.name+'" не указано доп время');
+    // console.log(fake_item  )
+
+    if(fake_item){
+      this.openAlert(false, 'У позиции "'+fake_item.name+'" не указано доп время');
 
       return ;
     }
 
     let res = await this.getData('save', data);
 
-    console.log( res )
+    //console.log( res )
 
-    alert(res.text)
-  }
+    this.openAlert(res.st, res.text);
 
-  changeDopTime(key, event){
-    let data = event.target.value;
-    let list = this.state.thisList;
-
-    if( !isNaN(data) || data == ''  ){
-      list[ key ]['dop_time'] = data == '' ? '' : parseInt(data);
-
-      this.setState({
-        thisList: list
-      })
+    if(res.st){
+      this.getWorks();
     }
   }
+
+  changeDopTime(key, event) {
+    let raw = event.target.value;
+
+    let digitsOnly = raw.replace(/\D/g, '');
+
+    let value = digitsOnly === '' ? 0 : parseInt(digitsOnly, 10);
+    value = Math.max(0, value);
+  
+    this.setState(prev => {
+      const newList = [...prev.thisList];
+      newList[key] = {
+        ...newList[key],
+        dop_time: value,
+      };
+      return { thisList: newList };
+    });
+
+  }
+
+  openAlert = (status, text) => {
+    this.setState({
+      openAlert: true,
+      err_status: status,
+      err_text: text
+    });
+  };
 
   render(){
     return (
@@ -245,6 +216,13 @@ class AppWorkPoint_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
         
         <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
@@ -252,17 +230,28 @@ class AppWorkPoint_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={3}>
-            <MySelect data={this.state.points} value={this.state.point_id} func={ (event) => { this.setState({ point_id: event.target.value }) } } label='Точка' />
+            <MySelect is_none={false} data={this.state.points} value={this.state.point_id} func={ (event) => { this.setState({ point_id: event.target.value }) } } label='Точка' />
           </Grid>
           <Grid item xs={12} sm={3}>
-            <MySelect data={this.state.apps} value={this.state.app_id} func={ this.changeApp.bind(this) } label='Должность' />
+            <MySelect is_none={false} data={this.state.apps} value={this.state.app_id} func={ this.changeApp.bind(this) } label='Должность' />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid item xs={12} sm={2}>
             <Button variant="contained" onClick={this.getWorks.bind(this)}>Обновить данные</Button>
           </Grid>
+       
+          <Grid item xs={12} sm={4}>
+            <Button 
+              onClick={this.save.bind(this)}
+              color="success" 
+              variant="contained" 
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              Сохранить изменения
+            </Button>
+          </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={6} mb={5}>
             <List style={{ width: '100%' }}>
               { this.state.allListRender.map( (item, key) =>
                 <ListItem key={key} style={{ borderBottom: '1px solid #e5e5e5' }}>
@@ -273,7 +262,7 @@ class AppWorkPoint_ extends React.Component {
             </List>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={6} mb={5}>
             <Table size='small'>
               <TableHead>
                 <TableRow>
@@ -303,10 +292,6 @@ class AppWorkPoint_ extends React.Component {
             
             </Table>
 
-          </Grid>
-        
-          <Grid item xs={12} sm={3}>
-            <Button variant="contained" onClick={this.save.bind(this)}>Сохранить</Button>
           </Grid>
 
         </Grid>
