@@ -11,8 +11,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Tooltip from '@mui/material/Tooltip';
 import PostAddIcon from '@mui/icons-material/PostAdd';
-import ClearIcon from '@mui/icons-material/Clear';
-import InputAdornment from '@mui/material/InputAdornment';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
 
 import Accordion from '@mui/material/Accordion';
@@ -120,20 +118,25 @@ class OverviewModules_Modal extends React.Component {
 
     this.state = {
       item: null,
+      openTagModal: false,
+      newTagName: '',
+      tags: props.tags || [],
     };
+
   }
 
   componentDidUpdate(prevProps) {
-    //console.log('componentDidUpdate', this.props);
-
     if (this.props.open && this.props.item !== prevProps.item) {
-      this.setState({ item: this.props.item });
-    }
 
+      this.setState({ 
+        item: this.props.item, 
+        tags: this.props.tags || [] 
+      });
+
+    }
   }
 
   changeItem = (field) => (event) => {
-
     const value = event.target.value;
 
     this.setState((prev) => ({
@@ -152,137 +155,219 @@ class OverviewModules_Modal extends React.Component {
 
   onTagsChange = (event, newValue) => {
 
+    const addPlaceholder = newValue.find(tag => tag.id === -1);
+    let selected = newValue;
+
+    if (addPlaceholder) {
+      selected = newValue.filter(tag => tag.id !== -1);
+      this.setState({ openTagModal: true, newTagName: '' });
+    }
+
     this.setState(prev => ({
-      item: {
-        ...prev.item,
-        tag_id: newValue
-      }
+      item: { ...prev.item, tag_id: selected }
     }));
+
+  };
+
+  handleNewTagChange = (event) => {
+    this.setState({ newTagName: event.target.value });
+  };
+
+  handleSaveNewTag = () => {
+    const { newTagName, tags } = this.state;
+
+    if (!newTagName.trim()) {
+      this.props.openAlert(false, 'Необходимо указать название нового тэга');
+      return;
+    }
+
+    const newName = newTagName.trim().toLowerCase();
+    const existName = tags.some(t => t.name.toLowerCase() === newName);
+
+    if (existName) {
+      this.props.openAlert(false, 'Тэг с таким названием уже существует');
+      return;
+    }
+
+    const newTag = { id: tags.length + 101, name: newTagName.trim(), status: 'new' };
+
+    this.setState(prev => ({
+      tags: [...prev.tags, newTag],
+      item: { ...prev.item, tag_id: [...(prev.item.tag_id || []), newTag] },
+      openTagModal: false,
+      newTagName: '',
+    }));
+
+  };
+
+  handleCancelNewTag = () => {
+    this.setState({ openTagModal: false, newTagName: '' });
   };
 
   save = () => {
     const { item } = this.state;
-    const { type, save, openAlert, onClose } = this.props;
-    
+    const { type, save, openAlert } = this.props;
+
     if (!item.name?.trim()) {
       openAlert(false, 'Необходимо указать название');
       return;
     }
-    
-    if ((type === 'add' || type === 'edit')) {
-      
+
+    if (type === 'add' || type === 'edit') {
+
       const content = this.myRef.current?.getContent?.() || '';
-      
+
       if (!content.trim()) {
         openAlert(false, 'В описании модуля пусто');
         return;
       }
-      
+
       item.text = content;
+
     }
 
-    save(item);
-    onClose();
+    const data = {
+      module_id: item.module_id,
+      name: item.name,
+      text: item.text,
+      tag_id: item.tag_id
+    };
+    
+    save(data);
+    this.handleClose();
+  };
+
+  handleClose = () => {
+
+    setTimeout(() => {
+      this.setState({
+        item: null,
+        openTagModal: false,
+        newTagName: '',
+        tags: [],
+      });
+    }, 300);
+
+    this.props.onClose();
   };
 
   render() {
-    const { item } = this.state;
-    const { open, fullScreen, method, item_name, tags, type, onClose, acces, openHistoryView } = this.props;
-
+    const { item, openTagModal, newTagName, tags } = this.state;
+    const { open, fullScreen, method, item_name, type, acces, openHistoryView } = this.props;
     const isEditing = type === 'add' || type === 'edit';
 
+    const tagsWithAdd = [
+      { id: -1, name: 'Добавить новый тег' },
+      ...tags,
+    ];
+
     return (
-      <Dialog
-        open={open}
-        onClose={onClose}
-        fullScreen={fullScreen}
-        fullWidth={true}
-        maxWidth={'xl'}
-      >
-        <DialogTitle className="button">
-          {method}
-          {item_name ? `: ${item_name}` : null}
-          <IconButton onClick={onClose}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+      <>
+        <Dialog 
+          open={open} 
+          onClose={this.handleClose} 
+          fullScreen={fullScreen} 
+          fullWidth 
+          maxWidth="xl"
+        >
+          <DialogTitle className="button">
+            {method}{item_name ? `: ${item_name}` : null}
+            <IconButton onClick={this.handleClose}><CloseIcon /></IconButton>
+          </DialogTitle>
 
-        {item &&
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <MyTextInput
-                  label="Название"
-                  value={item.name}
-                  func={this.changeItem('name')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <MyAutocomplite
-                  label="Тэги"
-                  multiple
-                  data={tags}
-                  value={item.tag_id || []}
-                  func={this.onTagsChange}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={12}>
-                <Typography gutterBottom>
-                  Описание модуля
-                </Typography>
-                <TextEditor22 
-                  id="EditorNew" 
-                  func={this.changeEditor} 
-                  value={item?.text} 
-                  refs_={this.myRef} 
-                  toolbar={true} 
-                  menubar={true} 
-                />
-              </Grid>
-
-              {isEditing && item?.hist && parseInt(acces?.edit) ? 
-                <Grid item xs={12} sm={12}>
-                  <Accordion style={{ width: '100%' }}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Table>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>#</TableCell>
-                            <TableCell>Дата / время</TableCell>
-                            <TableCell>Автор / редактор</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {item?.hist.map((it, k) =>
-                            <TableRow hover key={k} onClick={() => openHistoryView(it)} sx={{ cursor: 'pointer' }}>
-                              <TableCell>{k+1}</TableCell>
-                              <TableCell>{it.date_update}</TableCell>
-                              <TableCell>{it.user_name}</TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </AccordionDetails>
-                  </Accordion>
+          {item && (
+            <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput 
+                    label="Название" 
+                    value={item.name} 
+                    func={this.changeItem('name')} 
+                  />
                 </Grid>
-              : null}
-              
+                <Grid item xs={12} sm={6}>
+                  <MyAutocomplite
+                    label="Тэги"
+                    multiple
+                    data={tagsWithAdd}
+                    value={item.tag_id || []}
+                    func={this.onTagsChange}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={12}>
+                  <Typography gutterBottom>Описание модуля</Typography>
+                  <TextEditor22 
+                    id="EditorNew" 
+                    func={this.changeEditor} 
+                    value={item?.text} 
+                    refs_={this.myRef} 
+                    toolbar 
+                    menubar 
+                  />
+                </Grid>
+                {isEditing && item?.hist && parseInt(acces?.edit) && (
+                  <Grid item xs={12} sm={12}>
+                    <Accordion style={{ width: '100%' }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}> 
+                        <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>#</TableCell>
+                              <TableCell>Дата / время</TableCell>
+                              <TableCell>Автор / редактор</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {item.hist.map((it, k) => (
+                              <TableRow hover key={k} onClick={() => openHistoryView(it)} sx={{ cursor: 'pointer' }}>
+                                <TableCell>{k + 1}</TableCell>
+                                <TableCell>{it.date_update}</TableCell>
+                                <TableCell>{it.user_name}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Grid>
+                )}
+              </Grid>
+            </DialogContent>
+          )}
+
+          <DialogActions>
+            <Button variant="contained" onClick={isEditing ? this.save : this.handleClose}>
+              {isEditing ? 'Сохранить' : 'Закрыть'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog 
+          open={openTagModal} 
+          onClose={this.handleCancelNewTag} 
+          fullWidth 
+          maxWidth="sm"
+        >
+          <DialogTitle>Добавить новый тег</DialogTitle>
+          <DialogContent>
+            <Grid item xs={12} sm={12} mt={2}>
+              <MyTextInput 
+                label="Название тега" 
+                value={newTagName} 
+                func={this.handleNewTagChange} 
+              />
             </Grid>
           </DialogContent>
-        }
-
-        <DialogActions>
-          <Button variant="contained" onClick={isEditing ? this.save : onClose}>
-            {isEditing ? 'Сохранить' : 'Закрыть'}
-          </Button>
-        </DialogActions>
-
-      </Dialog>
+          <DialogActions>
+            <Button onClick={this.handleCancelNewTag}>Отмена</Button>
+            <Button variant="contained" onClick={this.handleSaveNewTag}>Сохранить</Button>
+          </DialogActions>
+        </Dialog>
+        
+      </>
     );
   }
 }
@@ -292,37 +377,30 @@ class OverviewModules_SearchBar extends React.PureComponent {
     localValue: this.props.value || ''
   };
 
+  componentDidUpdate(prevProps) {
+    if (prevProps.value !== this.props.value) {
+      this.setState({ localValue: this.props.value || '' });
+    }
+  }
+
   handleInput = e => {
     this.setState({ localValue: e.target.value });
   };
 
   handleBlur = () => {
-    this.props.onSearch(this.state.localValue);
-  };
-
-  handleClear = () => {
-    this.setState({ localValue: '' }, () => {
-      this.props.onSearch('');
-    });
+    if (this.state.localValue !== this.props.value) {
+      this.props.onSearch(this.state.localValue);
+    }
   };
 
   render() {
     return (
       <MyTextInput
-        className="input_login"
+        className="input_login_white"
         label="Ввести данные для поиска"
         value={this.state.localValue}
         func={this.handleInput}
         onBlur={this.handleBlur}
-        inputAdornment={{
-          endAdornment: this.state.localValue ? (
-            <InputAdornment position="end">
-              <IconButton onClick={this.handleClear}>
-                <ClearIcon />
-              </IconButton>
-            </InputAdornment>
-          ) : null
-        }}
       />
     );
   }
@@ -440,7 +518,7 @@ class OverviewModules_ extends React.Component {
   };
 
   handleSearch = (newValue) => {
-    this.setState({ searchItem: newValue });
+    this.setState({ searchItem: newValue }, this.handleSearchClick);
   };
 
   handleTag = (id) => {
@@ -455,11 +533,18 @@ class OverviewModules_ extends React.Component {
 
       const selectedTagIds = newTags.filter(t => t.active).map(t => t.id);
 
-      return {
-        tags: newTags,
-        selectedTagIds
+      const newState = { 
+        tags: newTags, 
+        selectedTagIds 
       };
-    });
+
+      if (id === -1) {
+        newState.searchItem = '';
+      }
+
+      return newState;
+
+    }, this.handleSearchClick);
   };
 
   handleSearchClick = async () => {
@@ -671,14 +756,12 @@ class OverviewModules_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={12}>
-            <OverviewModules_SearchBar
-              value={searchItem}
-              onSearch={this.handleSearch}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={12}>
             <Box sx={{ bgcolor: '#F5F5F5', borderRadius: 2, p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+
+              <OverviewModules_SearchBar
+                value={searchItem}
+                onSearch={this.handleSearch}
+              />
 
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, overflowX: 'auto' }}>
 
@@ -763,67 +846,58 @@ class OverviewModules_ extends React.Component {
 
           {category.length ? 
             <Grid item xs={12} sm={12} sx={{ pb: 5 }}>
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography sx={{ fontWeight: 'bold' }}>Список модулей</Typography>
-                </AccordionSummary>
+              {category.map((item, key) => (
+                <Accordion key={key}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography sx={{ fontWeight: 'bold' }}>{item.name}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <TableContainer component={Paper} elevation={0} sx={{ boxShadow: 'none' }}>
+                      <Table size="small">
+                      <TableBody>
+                          {item.cats.map(cat => {
+                            const clickable = this.canInteract(cat);
 
-                <AccordionDetails>
-                  {category.map((item, key) => (
-                    <Accordion key={key}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography>{item.name}</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <TableContainer component={Paper} elevation={0} sx={{ boxShadow: 'none' }}>
-                          <Table size="small">
-                          <TableBody>
-                              {item.cats.map(cat => {
-                                const clickable = this.canInteract(cat);
+                            return (
+                              <TableRow key={cat.id} hover onClick={clickable ? () => this.handleRowClick(cat) : undefined} sx={{ cursor: clickable ? 'pointer' : 'default' }}>
 
-                                return (
-                                  <TableRow key={cat.id} hover onClick={clickable ? () => this.handleRowClick(cat) : undefined} sx={{ cursor: clickable ? 'pointer' : 'default' }}>
+                                <TableCell sx={{ pr: { xs: '64px', sm: '32px' } }}>
+                                  <Typography noWrap>{cat.name}</Typography>
+                                </TableCell>
 
-                                    <TableCell sx={{ pr: { xs: '64px', sm: '32px' } }}>
-                                      <Typography noWrap>{cat.name}</Typography>
-                                    </TableCell>
+                                <TableCell padding="none" sx={{ position: 'relative', pl: 0, pr: 0 }}>
+                                  <Box component="span" sx={{ position: 'absolute', top: '50%', right: 20, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    {cat.desc ? (
+                                      acces?.edit === '1' || acces?.create === '1' ? (
+                                        <Tooltip title="Редактировать описание">
+                                          <EditIcon fontSize="small" />
+                                        </Tooltip>
+                                      ) : (
+                                        <Tooltip title="Просмотр описания">
+                                          <VisibilityIcon />
+                                        </Tooltip>
+                                      )
+                                    ) : acces?.create === '1' ? (
+                                      <Tooltip title="Добавить описание">
+                                        <PostAddIcon/>
+                                      </Tooltip>
+                                    ) : (
+                                      <Tooltip title="Описание отсутствует">
+                                        <InsertDriveFileOutlinedIcon sx={{ color: 'text.disabled', opacity: 0.6 }} />
+                                      </Tooltip>
+                                    )}
+                                  </Box>
+                                </TableCell>
 
-                                    <TableCell padding="none" sx={{ position: 'relative', pl: 0, pr: 0 }}>
-                                      <Box component="span" sx={{ position: 'absolute', top: '50%', right: 20, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        {cat.desc ? (
-                                          acces?.edit === '1' || acces?.create === '1' ? (
-                                            <Tooltip title="Редактировать описание">
-                                              <EditIcon fontSize="small" />
-                                            </Tooltip>
-                                          ) : (
-                                            <Tooltip title="Просмотр описания">
-                                              <VisibilityIcon />
-                                            </Tooltip>
-                                          )
-                                        ) : acces?.create === '1' ? (
-                                          <Tooltip title="Добавить описание">
-                                            <PostAddIcon/>
-                                          </Tooltip>
-                                        ) : (
-                                          <Tooltip title="Описание отсутствует">
-                                            <InsertDriveFileOutlinedIcon sx={{ color: 'text.disabled', opacity: 0.6 }} />
-                                          </Tooltip>
-                                        )}
-                                      </Box>
-                                    </TableCell>
-
-                                  </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      </AccordionDetails>
-                    </Accordion>
-                  ))}
-                </AccordionDetails>
-
-              </Accordion>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
             </Grid>
           : null}
 

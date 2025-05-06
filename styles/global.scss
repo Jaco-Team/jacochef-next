@@ -576,6 +576,18 @@ a{
   }
 }
 
+.input_login_white {
+  & .MuiInputBase-root.MuiOutlinedInput-root {
+    background-color: #FFFFFF;
+
+    & input::-webkit-outer-spin-button,
+    & input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+    }
+
+  }
+}
+
 .mail_box {
   display: flex;
   align-items: center;
