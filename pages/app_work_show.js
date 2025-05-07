@@ -24,7 +24,7 @@ import Typography from '@mui/material/Typography';
 
 import { MySelect } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -108,94 +108,61 @@ class AppWorkShow_ extends React.Component {
   }
   
   async componentDidMount(){
-    let points = await this.getData('get_points');
+    let res = await this.getData('get_all');
     
     this.setState({
-      points: points,
-      point_id: points[0]['id']
-    })
+      module_name: res.module_info.name,
+      points: res.points,
+      point_id: res.points[0]['id']
+    }, this.getWorks)
 
-    setTimeout( () => {
-      this.getWorks();
-    }, 300 )
+    document.title = res.module_info.name;
   }
   
   getData = (method, data = {}) => {
-    
+        
     this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      console.log( err )
-      this.setState({
-        is_load: false
-      })
+      is_load: true,
     });
+
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
   }
-   
+
+  getActiveTabValue(tabIndex) {
+    const map = [5, 6, 21];
+    return map[parseInt(tabIndex)];
+  }
+  
   async getWorks(){
+
     let data = {
       point_id: this.state.point_id
     };
 
-    let res = await this.getData('get_all', data);
+    let res = await this.getData('get_works', data);
 
     res.items.map( (item, key) => {
       res.items[key]['dow_name'] = this.state.dows.find( (it) => parseInt(it.id) == parseInt(item.dow) )['name'];
-    } )
+    })
 
-    let activeTab = parseInt(this.state.activeTab);
-
-    if( activeTab == 0 ){
-      activeTab = 5;
-    }
-    if( activeTab == 1 ){
-      activeTab = 6;
-    }
-    if( activeTab == 2 ){
-      activeTab = 21;
-    }
+    const activeTab = this.getActiveTabValue(this.state.activeTab);
 
     this.setState({
-      module_name: res.module_info.name,
       items: res.items,
-      showItems: res.items.filter( (item) => parseInt(item.app_id) == parseInt(activeTab) ),
+      showItems: res.items.filter((item) => parseInt(item.app_id) == parseInt(activeTab)),
       items_min: res.items_min
     })
 
-    document.title = res.module_info.name;
   }
 
   async openWork(id){
@@ -206,31 +173,23 @@ class AppWorkShow_ extends React.Component {
 
     let res = await this.getData('get_one', data);
 
-    console.log( res )
-
     this.setState({
       itemsEdit: res,
       modalDialog: true,
     })
   }
 
-  changeTab(event, val){
-    let activeTab = parseInt(val);
-
-    if( val == 0 ){
-      activeTab = 5;
-    }
-    if( val == 1 ){
-      activeTab = 6;
-    }
-    if( val == 2 ){
-      activeTab = 21;
-    }
-
+  changeTab(event, val) {
+    const activeTab = this.getActiveTabValue(val);
+  
     this.setState({
       activeTab: val,
-      showItems: this.state.items.filter( (item) => parseInt(item.app_id) == parseInt(activeTab) )
-    })
+      showItems: this.state.items.filter(item => parseInt(item.app_id) === activeTab),
+    });
+  }
+
+  changePoint(event) {
+    this.setState({ point_id: event.target.value }, this.getWorks);
   }
 
   render(){
@@ -239,8 +198,6 @@ class AppWorkShow_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
-        
 
         <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
@@ -248,14 +205,20 @@ class AppWorkShow_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={3}>
-            <MySelect data={this.state.points} value={this.state.point_id} func={ (event) => { this.setState({ point_id: event.target.value }) } } label='Точка' />
+            <MySelect 
+              is_none={false} 
+              data={this.state.points} 
+              value={this.state.point_id} 
+              func={this.changePoint.bind(this)} 
+              label='Точка' 
+            />
           </Grid>
 
-          { !this.state.itemsEdit ? null :
+          {!this.state.itemsEdit ? null :
             <Dialog
               open={this.state.modalDialog}
               maxWidth={'md'}
-              onClose={ () => { this.setState({ modalDialog: false, itemsEdit: null, nameWork: '' }) } }
+              onClose={() => {this.setState({ modalDialog: false, itemsEdit: null, nameWork: '' })}}
             >
               <DialogTitle>Уборка "{this.state.itemsEdit.item.name}"</DialogTitle>
               <DialogContent>
@@ -266,7 +229,7 @@ class AppWorkShow_ extends React.Component {
                     <Typography>{this.state.itemsEdit.item.cat_name}</Typography>
                   </Grid>
 
-                  { this.state.itemsEdit.item.show_time == false ? null :
+                  {this.state.itemsEdit.item?.show_time == false ? null :
                     <Grid item xs={12}>
                       <Typography>Время за уборку: {this.state.itemsEdit.item.time_min} мин.</Typography>
                     </Grid>
@@ -309,14 +272,14 @@ class AppWorkShow_ extends React.Component {
 
               <TableBody>
                 
-                { this.state.showItems.map( (item, key) =>
+                {this.state.showItems.map( (item, key) =>
                   <TableRow key={key}>
                     <TableCell onClick={ this.openWork.bind(this, item.id) } style={{ color: '#c03', cursor: 'pointer', fontWeight: 'bold' }}>{item.work_name}</TableCell>
                     <TableCell>{item.dow_name} {item.need_work_name}</TableCell>
                     <TableCell>{item.times_open}</TableCell>
                     <TableCell>{item.times_close}</TableCell>
                   </TableRow>
-                ) }
+                )}
               
               </TableBody>
             

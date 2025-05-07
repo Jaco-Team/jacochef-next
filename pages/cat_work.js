@@ -14,9 +14,45 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 
-import { MyTextInput, TextEditor } from '@/ui/elements';
+import { MyTextInput, TextEditor, MyAlert } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
+
+class CatWork_Modal extends React.PureComponent {
+  render() {
+    const { open, title, name, text, onNameChange, onTextChange, onSave, onClose } = this.props;
+
+    return (
+      <Dialog 
+        open={open} 
+        onClose={onClose}
+      >
+        <DialogTitle>{title}</DialogTitle>
+
+        <DialogContent style={{ paddingTop: 10 }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <MyTextInput
+                value={name}
+                func={e => onNameChange(e.target.value)}
+                label="Название категории"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextEditor value={text} func={onTextChange} />
+            </Grid>
+          </Grid>
+        </DialogContent>
+
+        <DialogActions>
+          <Button color="primary" onClick={onSave}>Сохранить</Button>
+        </DialogActions>
+
+      </Dialog>
+    );
+  }
+}
 
 class CatWork_ extends React.Component {
   constructor(props) {
@@ -37,11 +73,11 @@ class CatWork_ extends React.Component {
       nameCatNew: '',
       editTextNew: '',
 
-      config: {
-        readonly: false // all options from https://xdsoft.net/jodit/doc/
-      },
+      showCat: null,
 
-      showCat: null
+      openAlert: false,
+      err_status: true,
+      err_text: '',
     };
   }
   
@@ -57,61 +93,38 @@ class CatWork_ extends React.Component {
   }
   
   getData = (method, data = {}) => {
-    
+          
     this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      console.log( err )
-      this.setState({
-        is_load: false
-      })
+      is_load: true,
     });
+
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
   }
    
   openCat(item){
+
     this.setState({
       modalDialog: true,
       showCat: item,
       nameCat: item.name,
       editText: item.text
     })
+
   }
 
   async save(){
-    let data = {
+
+    const data = {
       cat_id: this.state.showCat.id,
       name: this.state.nameCat,
       text: this.state.showCat.text
@@ -119,60 +132,126 @@ class CatWork_ extends React.Component {
 
     let res = await this.getData('save_edit', data);
 
-    if( res.st === false ){
-      alert(res.text)
-    }else{
+    this.openAlert(res.st, res.text);
+
+    if(res.st){
+    
       this.setState({ 
         modalDialog: false, 
-        showCat: null, 
-        nameCat: '' 
       })
 
-      //document.getElementById('EditorEdit').value = '';
+      setTimeout(() => {
+        this.setState({
+          showCat: null,
+          nameCat: '',
+          editText: ''
+        });
+      }, 100);
 
       res = await this.getData('get_all');
     
       this.setState({
         cats: res.cats
       })
+
     }
   }
 
   async saveNew(){
-    let data = {
+
+    const data = {
       name: this.state.nameCatNew,
-      text: document.getElementById('EditorNew').value
+      text: this.state.editTextNew
     };
 
     let res = await this.getData('save_new', data);
 
-    if( res.st === false ){
-      alert(res.text)
-    }else{
+    this.openAlert(res.st, res.text);
+
+    if(res.st){
+  
       this.setState({ 
         modalDialogNew: false, 
-        editTextNew: '', 
-        nameCatNew: '' 
       })
 
-      document.getElementById('EditorNew').value = '';
+      setTimeout(() => {
+        this.setState({
+          nameCatNew: '',
+          editTextNew: ''
+        });
+      }, 100);
 
       res = await this.getData('get_all');
     
       this.setState({
         cats: res.cats
       })
+
     }
   }
 
-  changeText(data){
-    let showCat = this.state.showCat;
+  changeText(type, value) {
+    if (type === 'edit') {
 
-    showCat.text = data
+      this.setState(prevState => ({
+        showCat: {
+          ...prevState.showCat,
+          text: value
+        }
+      }));
+
+    } else if (type === 'new') {
+
+      this.setState({
+        editTextNew: value
+      });
+
+    }
+  }
+
+  openAlert = (status, text) => {
 
     this.setState({
-      showCat: showCat
-    })
+      openAlert: true,
+      err_status: status,
+      err_text: text
+    });
+
+  };
+
+  сhangeName(type, value) {
+    if (type === 'edit') {
+      this.setState({ nameCat: value });
+    } else if (type === 'new') {
+      this.setState({ nameCatNew: value });
+    }
+  }
+
+  closeEdit() {
+    this.setState({
+      modalDialog: false,
+    });
+
+    setTimeout(() => {
+      this.setState({
+        showCat: null,
+        nameCat: '',
+        editText: ''
+      });
+    }, 100);
+  }
+
+  closeNew() {
+    this.setState({
+      modalDialogNew: false,
+    });
+
+    setTimeout(() => {
+      this.setState({
+        nameCatNew: '',
+        editTextNew: ''
+      });
+    }, 100);
   }
 
   render(){
@@ -181,58 +260,35 @@ class CatWork_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
-        { !this.state.showCat ? null :
-          <Dialog
-            open={this.state.modalDialog}
-            onClose={ () => { this.setState({ modalDialog: false, showCat: null, editText: '', nameCat: '' }) } }
-          >
-            <DialogTitle>Категория уборки "{this.state.showCat.name}"</DialogTitle>
-            <DialogContent style={{ paddingTop: 10 }}>
-              
-              <Grid container spacing={3}>
-                
-                <Grid item xs={12} sm={12}>
-                  <MyTextInput value={ this.state.nameCat } func={ (event) => { this.setState({ nameCat: event.target.value }) } } label='Название категории' />
-                </Grid>
 
-                <Grid item xs={12} sm={12}>
-                  <TextEditor id="EditorEdit" value={this.state.showCat.text} func={ this.changeText.bind(this) } />
-                </Grid>
-                
-              </Grid>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
 
-            </DialogContent>
-            <DialogActions>
-              <Button color="primary" onClick={this.save.bind(this)}>Сохранить</Button>
-            </DialogActions>
-          </Dialog>
-        }
+        <CatWork_Modal
+          open={this.state.modalDialog}
+          title={`Категория уборки "${this.state.showCat?.name}"`}
+          name={this.state.nameCat}
+          text={this.state.showCat?.text ?? ''}
+          onNameChange={this.сhangeName.bind(this, 'edit')}
+          onTextChange={this.changeText.bind(this, 'edit')}
+          onSave={this.save.bind(this)}
+          onClose={this.closeEdit.bind(this)}
+        />
 
-        <Dialog
+        <CatWork_Modal
           open={this.state.modalDialogNew}
-          onClose={ () => { this.setState({ modalDialogNew: false, editTextNew: '', nameCatNew: '' }) } }
-        >
-          <DialogTitle>Новая категория уборки</DialogTitle>
-          <DialogContent style={{ paddingTop: 10 }}>
-            
-            <Grid container spacing={3}>
-              
-              <Grid item xs={12} sm={12}>
-                <MyTextInput value={ this.state.nameCatNew } func={ (event) => { this.setState({ nameCatNew: event.target.value }) } } label='Название категории' />
-              </Grid>
-
-              <Grid item xs={12} sm={12}>
-                <TextEditor id="EditorNew" value={''} />
-              </Grid>
-              
-            </Grid>
-
-          </DialogContent>
-          <DialogActions>
-            <Button color="primary" onClick={this.saveNew.bind(this)}>Сохранить</Button>
-          </DialogActions>
-        </Dialog>
+          title="Новая категория уборки"
+          name={this.state.nameCatNew}
+          text={this.state.editTextNew}
+          onNameChange={this.сhangeName.bind(this, 'new')}
+          onTextChange={this.changeText.bind(this, 'new')}
+          onSave={this.saveNew.bind(this)}
+          onClose={this.closeNew.bind(this)}
+        />       
         
         <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
@@ -243,13 +299,13 @@ class CatWork_ extends React.Component {
             <Button variant="contained" color="primary" onClick={ () => { this.setState({ modalDialogNew: true }) } }>Добавить категорию</Button>
           </Grid>
           
-          <Grid item xs={12} sm={12}>
+          <Grid item xs={12} sm={12} mb={5}>
             <List style={{ width: '100%' }}>
-              { this.state.cats.map( (item, key) =>
+              {this.state.cats.map( (item, key) =>
                 <ListItem button key={key} onClick={ this.openCat.bind(this, item) }>
                   <ListItemText primary={ item.name } />
                 </ListItem>
-              ) }
+              )}
             </List>
           </Grid>
         
