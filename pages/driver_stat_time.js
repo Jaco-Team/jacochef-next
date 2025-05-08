@@ -32,7 +32,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 import { MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 class DriverStatTime_Modal extends React.Component {
@@ -224,49 +224,23 @@ class DriverStatTime_ extends React.Component {
     document.title = data.module_info.name;
   }
   
-  getData = (method, data = {}) => {
-    
+ getData = (method, data = {}) => {
+         
     this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      console.log( err )
-      this.setState({
-        is_load: false
-      })
+      is_load: true,
     });
+
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
   }
   
   changeAutocomplite(type, event, data) {
@@ -284,13 +258,11 @@ class DriverStatTime_ extends React.Component {
   async showData(){
 
     const { date_end, date_start, point } = this.state;
-      
-    console.log( point )
 
     const dateStart = date_start ? dayjs(date_start).format('YYYY-MM-DD') : '';
     const dateEnd = date_end ? dayjs(date_end).format('YYYY-MM-DD') : '';
 
-    if( point.length == 0 || dateStart == '' || dateEnd == '' ){
+    if (!point.length || !dateStart || !dateEnd) {
       this.setState({
         operAlert: true,
         err_status: false,
@@ -299,8 +271,8 @@ class DriverStatTime_ extends React.Component {
 
       return ;
     }
-
-    let data = {
+    
+    const data = {
       date_start: dateStart,
       date_end: dateEnd,
       point_id: point.length == 1 ? point[0].id : '',
@@ -309,10 +281,23 @@ class DriverStatTime_ extends React.Component {
 
     let res = await this.getData('show_data', data);
 
-    this.setState({
-      svod: res.avg_orders,
-      orders: res.all_orders
-    })
+    if(res.st) {
+
+      this.setState({
+        svod: res.avg_orders,
+        orders: res.all_orders
+      })
+
+    } else {
+
+      this.setState({
+        operAlert: true,
+        err_status: false,
+        err_text: res.text,
+      });
+
+    }
+    
   }
 
   openOrder(order) {
