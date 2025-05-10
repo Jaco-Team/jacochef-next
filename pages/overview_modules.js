@@ -397,7 +397,7 @@ class OverviewModules_SearchBar extends React.PureComponent {
     return (
       <MyTextInput
         className="input_login_white"
-        label="Ввести данные для поиска"
+        label="Поиск по статьям"
         value={this.state.localValue}
         func={this.handleInput}
         onBlur={this.handleBlur}
