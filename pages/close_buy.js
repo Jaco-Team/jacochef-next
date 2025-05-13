@@ -25,9 +25,9 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox } from '@/ui/elements';
+import { MySelect, MyCheckBox, MyAlert } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 class CloseBuy_ extends React.Component {
   constructor(props) {
@@ -45,84 +45,50 @@ class CloseBuy_ extends React.Component {
 
       confirmDialog: false,
       cat: [],
+
+      openAlert: false,
+      err_status: false,
+      err_text: '',
     };
   }
 
   async componentDidMount() {
     const data = await this.getData('get_all');
 
-    const point = {
-      point_id: data.points[0].id,
-    };
-
-    const res = await this.getData('get_items', point);
-
     this.setState({
       points: data.points,
       point: data.points[0].id,
       module_name: data.module_info.name,
-      cats: res.items,
-    });
+    }, this.update);
 
     document.title = data.module_info.name;
   }
 
   getData = (method, data = {}) => {
+        
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
-  };
 
-  async changePoint(event) {
+    return res;
+  }
+
+  changePoint(event) {
     const point = event.target.value;
-
-    const data = {
-      point_id: point,
-    };
-
-    const res = await this.getData('get_items', data);
 
     this.setState({
       point,
-      cats: res.items,
-    });
+    }, this.update);
   }
 
   openConfirm(cat, event) {
@@ -181,15 +147,22 @@ class CloseBuy_ extends React.Component {
       items,
     };
 
-    // console.log(data);
-
-    await this.getData('save_active', data);
+    const res = await this.getData('save_active', data);
 
     this.setState({
       cats,
     });
 
-    this.update();
+    if (res.st) {
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      }, this.update);
+
+    }
+
   }
 
   async update() {
@@ -213,6 +186,13 @@ class CloseBuy_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
 
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="sm"
@@ -234,6 +214,7 @@ class CloseBuy_ extends React.Component {
 
           <Grid item xs={12} sm={4}>
             <MySelect
+              is_none={false}
               data={this.state.points}
               value={this.state.point}
               func={this.changePoint.bind(this)}
@@ -247,7 +228,7 @@ class CloseBuy_ extends React.Component {
             return (
               <Accordion key={key}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <CheckBoxIcon style={{ marginRight: 30 }} color="error" onClick={this.openConfirm.bind(this, cat)}/>
+                  <CheckBoxIcon style={{ marginRight: 30, color: '#c03' }} onClick={this.openConfirm.bind(this, cat)}/>
                   <Typography>{cat.name}</Typography>
                 </AccordionSummary>
                 <AccordionDetails style={{ width: '100%', overflow: 'scroll' }}>
