@@ -33,7 +33,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { MySelect, MyAutocomplite, MyAlert, MyDatePickerNew, MyTextInput } from '@/ui/elements';
 
 import moment from 'moment';
-import queryString from 'query-string';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 
@@ -169,7 +169,7 @@ class Experience_Modal_User extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    //console.log(this.props);
+    //console.log('Experience_Modal_User', this.props);
 
     if (!this.props.user) {
       return;
@@ -212,13 +212,13 @@ class Experience_Modal_User extends React.Component {
   }
 
   changeDateRange(data, type, date, val) {
-    const value = val ? val : '';
+    const value = val ? dayjs(val).format('YYYY-MM-DD') : '';
 
     if (data === 'list') {
       const listData = this.state.listData;
 
       listData.forEach((item) =>
-        item.type === type ? (item.start = dayjs(value).format('YYYY-MM-DD')) : item
+        item.type === type ? (item.start = value) : item
       );
 
       this.setState({
@@ -228,7 +228,7 @@ class Experience_Modal_User extends React.Component {
       const listClothUserActive = this.state.listClothUserActive;
 
       listClothUserActive.forEach((item) =>
-        item.cloth_id === type ? (item[date] = dayjs(value).format('YYYY-MM-DD')) : item
+        item.cloth_id === type ? (item[date] = value) : item
       );
 
       this.setState({
@@ -238,7 +238,7 @@ class Experience_Modal_User extends React.Component {
     } else {
       const item = this.state.item;
 
-      item.date_registration = dayjs(value).format('YYYY-MM-DD');
+      item.date_registration = value;
 
       this.setState({
         item,
@@ -296,6 +296,8 @@ class Experience_Modal_User extends React.Component {
     this.setState({
       setEdit: false,
     });
+
+    this.onClose();
   }
 
   saveHealthBook() {
@@ -677,8 +679,8 @@ class Experience_ extends React.Component {
     document.title = data.module_info.name;
 
     setTimeout(() => {
-      this.getInfo();
-    }, 300);
+      this.getInfo()
+    }, 500);
   }
 
   handleResize() {
@@ -694,55 +696,23 @@ class Experience_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
+          
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
-        if(json?.user?.kind) {
-          const user_kind = json.user.kind;
-
-          this.setState({
-            user_kind,
-          });
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
-  };
+
+    return res;
+  }
 
   changeCity(event) {
     const data = JSON.parse(JSON.stringify(this.state.pointsCopy));
@@ -758,40 +728,26 @@ class Experience_ extends React.Component {
     });
   }
 
-  changePoint(event, point) {
-    const pointName = event.target.innerText;
-
-    if (!point.length) {
-      this.setState({ point });
-
+  changePoint = (event, newValue, reason, details) => {
+    const clicked = details?.option;
+  
+    if (reason === 'clear') {
+      this.setState({ point: [] });
       return;
     }
-
-    if (pointName === 'Все точки') {
-      const pointFilter = point.filter((value) => value.id === -1);
-
-      this.setState({ point: pointFilter });
-
+  
+    if (reason === 'removeOption') {
+      this.setState({ point: newValue });
       return;
     }
-
-    if (pointName === 'Офис') {
-      const pointFilter = point.filter((value) => value.id === -2);
-
-      this.setState({ point: pointFilter });
-
+  
+    if (reason === 'selectOption' && (clicked.id === -1 || clicked.id === -2)) {
+      this.setState({ point: [clicked] });
       return;
     }
-
-    if (point[0].id === -1 || point[0].id === -2) {
-      const pointFilter = point.filter((value) => value.id === point[0].id);
-
-      this.setState({ point: pointFilter });
-
-      return;
-    }
-
-    this.setState({ point });
+   
+    const normalPoints = newValue.filter(p => p.id > 0);
+    this.setState({ point: normalPoints });
   }
 
   async getInfo() {
@@ -806,16 +762,20 @@ class Experience_ extends React.Component {
 
       return;
     }
-
+    
     const data = {
       point_id: point,
     };
 
-    let { stat, users, stat_of } = await this.getData('get_info', data);
+    let res = await this.getData('get_info', data);
 
-    users.sort((a, b) => new Date(a.date_registration) - new Date(b.date_registration));
+    res.users.sort((a, b) => new Date(a.date_registration) - new Date(b.date_registration));
 
-    this.setState({ stat, users, stat_of });
+    this.setState({ 
+      stat: res.stat,
+      users: res.users, 
+      stat_of: res.stat_of, 
+    });
   }
 
   async openModal(user_id, ItemTab) {
@@ -828,8 +788,6 @@ class Experience_ extends React.Component {
     };
 
     const res = await this.getData('get_user_info', data);
-
-    console.log(res)
 
     listData.forEach((item) => {
       item.change = '';
@@ -859,46 +817,62 @@ class Experience_ extends React.Component {
   }
 
   async saveEdit(date_registration, user_id) {
+
     const data = {
       user_id,
       date_registration,
     };
 
-    let { st, text } = await this.getData('save_date_registration', data);
+    const res = await this.getData('save_date_registration', data);
 
-    if (st) {
+    if (res.st) {
+
       this.setState({
         openAlert: true,
-        err_status: true,
-        err_text: 'Изменения сохранены!',
+        err_status: res.st,
+        err_text: res.text,
       });
 
       setTimeout(() => {
         this.getInfo();
       }, 300);
+
     } else {
+
       this.setState({
         openAlert: true,
-        err_status: false,
-        err_text: text,
+        err_status: res.st,
+        err_text: res.text,
       });
+
     }
   }
 
   async saveHealthBook(data) {
-    let { st, text } = await this.getData('save_health_book', data);
+    const res = await this.getData('save_health_book', data);
 
-    if (st) {
+    if (res.st) {
+
+     this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
       setTimeout(() => {
         this.getInfo();
       }, 300);
+
     } else {
+
       this.setState({
         openAlert: true,
-        err_status: false,
-        err_text: text,
+        err_status: res.st,
+        err_text: res.text,
       });
+
     }
+
   }
 
   async getDataСloth() {
@@ -913,6 +887,7 @@ class Experience_ extends React.Component {
   }
 
   async saveClothList(items) {
+
     const data = {
       items,
     };
@@ -920,46 +895,60 @@ class Experience_ extends React.Component {
     const res = await this.getData('save_cloth_list', data);
 
     if (res.st) {
+
       this.setState({
         openAlert: true,
-        err_status: true,
-        err_text: 'Список одежды сохранен',
+        err_status: res.st,
+        err_text: res.text,
       });
+
+      setTimeout(() => {
+        this.getInfo();
+      }, 300);
+
     } else {
+
       this.setState({
         openAlert: true,
-        err_status: false,
-        err_text: text,
+        err_status: res.st,
+        err_text: res.text,
       });
+
     }
+    
   }
 
   async saveListClothUser(data) {
-    console.log(data);
-
     const res = await this.getData('save_cloth_user', data);
 
-    console.log(res);
-
     if (res.st) {
+
       this.setState({
         openAlert: true,
-        err_status: true,
-        err_text: 'Список одежды для сотрудника сохранен',
+        err_status: res.st,
+        err_text: res.text,
       });
+
+      setTimeout(() => {
+        this.getInfo();
+      }, 300);
+
     } else {
+
       this.setState({
         openAlert: true,
-        err_status: false,
-        err_text: text,
+        err_status: res.st,
+        err_text: res.text,
       });
+
     }
   }
 
   render() {
+
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop style={{ zIndex: 999 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
@@ -991,7 +980,6 @@ class Experience_ extends React.Component {
           listCloth={this.state.listCloth}
           saveClothList={this.saveClothList.bind(this)}
         />
-
 
         <Grid container spacing={3} className='container_first_child'>
 
@@ -1034,9 +1022,6 @@ class Experience_ extends React.Component {
             : null
           }
 
-        </Grid>
-
-        <Grid container spacing={3} mt={3} mb={5}>
           {/* статистика */}
           {!this.state.stat ? null : (
             <Grid item xs={12} sm={4}>
@@ -1083,12 +1068,10 @@ class Experience_ extends React.Component {
               </TableContainer>
             </Grid>
           )}
-        </Grid>
 
-        {/* таблица */}
-        {!this.state.users ? null : (
-          <Grid container mb={10}>
-            <Grid item xs={12} sm={12}>
+          {/* таблица */}
+          {!this.state.users ? null : (
+            <Grid item xs={12} sm={12} mb={5}>
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -1125,8 +1108,10 @@ class Experience_ extends React.Component {
                 </Table>
               </TableContainer>
             </Grid>
-          </Grid>
-        )}
+          )}
+
+        </Grid>
+
       </>
     );
   }
