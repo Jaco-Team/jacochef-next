@@ -397,7 +397,7 @@ class OverviewModules_SearchBar extends React.PureComponent {
     return (
       <MyTextInput
         className="input_login_white"
-        label="Ввести данные для поиска"
+        label="Поиск по статьям"
         value={this.state.localValue}
         func={this.handleInput}
         onBlur={this.handleBlur}
@@ -484,7 +484,7 @@ class OverviewModules_ extends React.Component {
       is_load: true,
     });
 
-    let res = api_laravel_local(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then(result => result.data)
       .finally( () => {
         setTimeout(() => {
