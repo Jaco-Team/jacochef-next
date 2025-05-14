@@ -13,9 +13,9 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyDatePickerNew, formatDate, MyAlert, MyTextInput } from '@/ui/elements';
+import { MySelect, MyDatePickerNew, MyAlert, MyTextInput } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 class TableBrak_ extends React.Component {
@@ -30,8 +30,8 @@ class TableBrak_ extends React.Component {
       points: [],
       point: '',
 
-      date_start: formatDate(new Date()),
-      date_end: formatDate(new Date()),
+      date_start: dayjs(),
+      date_end: dayjs(),
 
       items: [],
       itemsCopy: [],
@@ -56,48 +56,32 @@ class TableBrak_ extends React.Component {
     document.title = data.module_info.name;
   }
 
-  getData = (method, data = {}) => {
+  getData = (method, data = {}, dop_type = {}) => {
+         
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
+    let res = api_laravel(this.state.module, method, data, dop_type)
+    .then(result => {
+
+      if(method === 'export_file_xls') {
+        return result;
+      } else {
+        return result.data;
+      }
+
     })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
+    .finally( () => {
+      setTimeout(() => {
+        this.setState({
+          is_load: false,
+        });
+      }, 500);
+    });
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+    return res;
+  }
 
   changePoint(data, event) {
     this.setState({
@@ -105,16 +89,32 @@ class TableBrak_ extends React.Component {
     });
   }
 
-  changeDateRange(data, event) {
-    this.setState({
-      [data]: event ? event : '',
-    });
-  }
+  changeDateRange = (field, newDate) => {
+    this.setState({ [field]: newDate });
+  };
 
   async getStat() {
-    const point_id = this.state.point;
-    const date_start = dayjs(this.state.date_start).format('YYYY-MM-DD');
-    const date_end = dayjs(this.state.date_end).format('YYYY-MM-DD');
+
+    this.setState({
+      searchItem: '',
+    });
+
+    let { point, points, date_start, date_end } = this.state;
+
+    if (!date_start || !date_end) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать все даты'
+      });
+
+      return;
+    } 
+
+    date_start = dayjs(date_start).format('YYYY-MM-DD');
+    date_end = dayjs(date_end).format('YYYY-MM-DD');
+    const point_id = points.find(item => parseInt(item.id) === parseInt(point));
 
     const data = {
       date_start,
@@ -125,41 +125,97 @@ class TableBrak_ extends React.Component {
     const res = await this.getData('get_stat', data);
 
     if (!res.st) {
+
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: res.text,
       });
+
     } else {
-      const url = 'https://jacochef.ru/api/point_' + point_id + '_start_' + date_start + '_end_' + date_end + '.xls';
 
       this.setState({
-        url,
         items: res.items,
         itemsCopy: res.items,
       });
+
     }
   }
+ 
+  onDownload = async () => {
+  
+    let { point, points, date_start, date_end } = this.state;
 
-  onDownload() {
-    const url = this.state.url;
-    const link = document.createElement('a');
+    if (!date_start || !date_end) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать все даты'
+      });
+
+      return;
+    } 
+    
+    const d_start = dayjs(date_start);
+    const d_end = dayjs(date_end);
+    const diffDays = d_end.diff(d_start, 'day');
+    
+    if (diffDays > 7) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Нельзя выбрать больше 7 дней',
+      });
+
+      return;
+    }
+
+    date_start = d_start.format('YYYY-MM-DD');
+    date_end = d_end.format('YYYY-MM-DD');
+    const point_id = points.find(item => parseInt(item.id) === parseInt(point));
+    
+    const data = {
+      date_start,
+      date_end,
+      point_id,
+    };
+    
+    const dop_type = {
+      responseType: 'blob',
+    }
+
+    const res = await this.getData('export_file_xls', data, dop_type);
+
+    const url = window.URL.createObjectURL(new Blob([res]));
+    const link = document.createElement("a");
     link.href = url;
+    link.setAttribute("download", `Журнал бракеража точки ${point_id.name} за период ${date_start}_${date_end}.xlsx`);
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+  
   }
 
-  search(event) {
-    const searchItem = event.target.value;
+  search = (event) => {
+    const searchItem = event.target.value.trim();  
+    this.setState({ searchItem });
 
-    const items = this.state.itemsCopy;
+    if (!searchItem) {
+      this.setState({ items: this.state.itemsCopy });
+      return;
+    }
 
-    const itemsFilter = items.filter((item) => searchItem ? item.order_id.includes(searchItem) : item);
+    const search = searchItem.toLowerCase();
 
-    this.setState({
-      searchItem,
-      items: itemsFilter,
+    const filterItems = this.state.itemsCopy.filter(item => {
+      const order_str = String(item.order_id).toLowerCase();
+      return order_str.includes(search);
     });
-  }
+
+    this.setState({ items: filterItems });
+  };
 
   render() {
     return (
@@ -235,7 +291,7 @@ class TableBrak_ extends React.Component {
 
           {/* таблица */}
           {!this.state.items.length ? null : (
-            <Grid item xs={12} sm={12} mt={5}>
+            <Grid item xs={12} sm={12} mt={5} mb={5}>
               <TableContainer>
                 <Table size="small">
                   <TableHead>
