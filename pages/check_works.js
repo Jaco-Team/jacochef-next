@@ -45,9 +45,9 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 
-import { MySelect, MyDatePickerNew, MyTextInput, MyAlert, formatDate } from '@/ui/elements';
+import { MySelect, MyDatePickerNew, MyTextInput, MyAlert } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 
@@ -281,7 +281,7 @@ class CheckWorks_Modal_Edit extends React.Component {
                 Уборку подтвердил
               </Typography>
               <Typography sx={{ fontWeight: 'normal', whiteSpace: 'nowrap' }}>
-                {this.state.item ? this.state.item.namager_name ? this.state.item.namager_name : 'Не указано' : 'Не указано'}
+                {this.state.item ? this.state.item.manager_name ? this.state.item.manager_name : 'Не указано' : 'Не указано'}
               </Typography>
             </Grid>
             
@@ -306,43 +306,44 @@ class CheckWorks_Modal_Edit extends React.Component {
 
             {/* аккордион */}
             {this.state.item ? this.state.item.hist.length === 0 ? null : (
-                <Grid item xs={12} sm={12}>
-                  <Accordion>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>История изменений</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <TableContainer>
-                        <Table>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell style={{ width: '20%' }}>Сотрудник</TableCell>
-                              <TableCell style={{ width: '20%' }}>Время обновления</TableCell>
-                              <TableCell style={{ width: '15%' }}>Заготовки ДО</TableCell>
-                              <TableCell style={{ width: '15%' }}>Отходов ДО</TableCell>
-                              <TableCell style={{ width: '15%' }}>Заготовки ПОСЛЕ</TableCell>
-                              <TableCell style={{ width: '15%' }}>Отходов ПОСЛЕ</TableCell>
-                            </TableRow>
-                          </TableHead>
+              <Grid item xs={12} sm={12}>
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>История изменений</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell style={{ width: '20%' }}>Сотрудник</TableCell>
+                            <TableCell style={{ width: '20%' }}>Время обновления</TableCell>
+                            <TableCell style={{ width: '15%' }}>Заготовки ДО</TableCell>
+                            <TableCell style={{ width: '15%' }}>Отходов ДО</TableCell>
+                            <TableCell style={{ width: '15%' }}>Заготовки ПОСЛЕ</TableCell>
+                            <TableCell style={{ width: '15%' }}>Отходов ПОСЛЕ</TableCell>
+                          </TableRow>
+                        </TableHead>
 
-                          <TableBody>
-                            {this.state.item.hist.map((it, k) => (
-                              <TableRow key={k}>
-                                <TableCell>{it.user_name}</TableCell>
-                                <TableCell>{it.date_time}</TableCell>
-                                <TableCell>{it.old_count_pf}</TableCell>
-                                <TableCell>{it.old_count_trash}</TableCell>
-                                <TableCell>{it.new_count_pf}</TableCell>
-                                <TableCell>{it.new_count_trash}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </AccordionDetails>
-                  </Accordion>
-                </Grid>
-              ) : null}
+                        <TableBody>
+                          {this.state.item.hist.map((it, k) => (
+                            <TableRow key={k}>
+                              <TableCell>{it.user_name}</TableCell>
+                              <TableCell>{it.date_time}</TableCell>
+                              <TableCell>{it.old_count_pf}</TableCell>
+                              <TableCell>{it.old_count_trash}</TableCell>
+                              <TableCell>{it.new_count_pf}</TableCell>
+                              <TableCell>{it.new_count_trash}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </AccordionDetails>
+                </Accordion>
+              </Grid>
+            ) : null}
+
           </Grid>
         </DialogContent>
 
@@ -367,8 +368,8 @@ class Checkworks_ extends React.Component {
       points: [],
       point: '',
 
-      date_start: formatDate(new Date()),
-      date_end: formatDate(new Date()),
+      date_start: dayjs(),
+      date_end: dayjs(),
 
       all_work: [],
       work: [],
@@ -410,115 +411,73 @@ class Checkworks_ extends React.Component {
 
     document.title = data.module_info.name;
 
-    setTimeout( () => {
+    setTimeout(() => {
       this.getItems();
-    }, 300 )
+    }, 510)
     
   }
 
   handleResize() {
-
     if (window.innerWidth < 601) {
-          this.setState({
-            fullScreen: true,
-          });
-        } else {
-          this.setState({
-            fullScreen: false,
-          });
-        }
+      this.setState({
+        fullScreen: true,
+      });
+    } else {
+      this.setState({
+        fullScreen: false,
+      });
+    }
   }
 
   getData = (method, data = {}) => {
+        
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
-  };
 
-  changeDateRange(data, event) {
-    this.setState({
-      [data]: event ? (event) : '',
-    });
+    return res;
   }
 
-  async changePoint(event) {
-    const date_start = this.state.date_start;
-    const date_end = this.state.date_end;
+  changeDateRange = (field, newDate) => {
+    this.setState({ [field]: newDate });
+  };
 
+  async changePoint(event) {
     this.setState({
       point: event.target.value,
-    });
-
-    if (!date_start || !date_end) {
-      return;
-    }
-
-    const data = {
-      point_id: event.target.value,
-      date_start,
-      date_end,
-    };
-
-    const res = await this.getData('get_data', data);
-
-    this.setState({
-      all_work: res.all_work,
-      work: res.work,
-      pf_list: res.pf_list,
-      filter: false,
-      check_cook: res.check_cook,
-    });
+    }, this.getItems);
   }
 
   async getItems() {
-    const date_start = this.state.date_start;
-    const date_end = this.state.date_end;
+    const { point, date_start, date_end, points } = this.state;
 
     if (!date_start || !date_end) {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать все даты',
+      });
+
       return;
     }
-
+    
+    const point_id = points.find(item => parseInt(item.id) === parseInt(point));
+    
     const data = {
-      point_id: this.state.point,
-      date_start: dayjs(this.state.date_start).format('YYYY-MM-DD'),
-      date_end: dayjs(this.state.date_end).format('YYYY-MM-DD'),
+      point_id,
+      date_start: dayjs(date_start).format('YYYY-MM-DD'),
+      date_end: dayjs(date_end).format('YYYY-MM-DD'),
     };
 
     const res = await this.getData('get_data', data);
@@ -527,7 +486,6 @@ class Checkworks_ extends React.Component {
       all_work: res.all_work,
       work: res.work,
       pf_list: res.pf_list,
-      filter: false,
       check_cook: res.check_cook,
     });
   }
@@ -547,15 +505,14 @@ class Checkworks_ extends React.Component {
   }
 
   async deleteItem(text) {
-    const item = this.state.item;
-
-    const mark = this.state.mark;
+    const { mark, item, points } = this.state;
+    const point_id = points.find(it => parseInt(it.id) === parseInt(item.point_id));
 
     let res;
 
     const data = {
       work_id: item.id,
-      point_id: item.point_id,
+      point_id,
       text,
     };
 
@@ -568,29 +525,37 @@ class Checkworks_ extends React.Component {
     }
 
     if(!res.st) {
+
       this.setState({
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
       });
+
     } else {
-      setTimeout( () => {
-        this.update();
-      }, 300 )
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+      setTimeout(() => {
+        this.getItems();
+      }, 300)
     }
 
   }
 
   async saveItem() {
-    const item = this.state.item;
-
-    const mark = this.state.mark;
+    const { mark, item, points } = this.state;
+    const point_id = points.find(it => parseInt(it.id) === parseInt(item.point_id));
 
     let res;
 
     const data = {
       work_id: item.id,
-      point_id: item.point_id,
+      point_id,
     };
 
     if (mark === 'saveWork') {
@@ -606,26 +571,37 @@ class Checkworks_ extends React.Component {
     }
 
     if(!res.st) {
+
       this.setState({
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
       });
+
     } else {
-      setTimeout( () => {
-        this.update();
-      }, 300 )
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+      setTimeout(() => {
+        this.getItems();
+      }, 300)
+
     }
   }
 
   async saveWork(work) {
-    const mark = this.state.mark;
+    const { mark, point, points } = this.state;
 
-    const point_id = this.state.point;
+    const point_id = points.find(item => parseInt(item.id) === parseInt(point));
 
     let res;
 
     if (mark === 'newItem') {
+
       const data = {
         point_id,
         work_id: work.id,
@@ -646,20 +622,31 @@ class Checkworks_ extends React.Component {
     }
 
     if(!res.st) {
+
       this.setState({
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
       });
+
     } else {
-      setTimeout( () => {
-        this.update();
-      }, 300 )
+
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+      setTimeout(() => {
+        this.getItems();
+      }, 300)
+
     }
    
   }
 
   async openModal(mark, method, itemEdit) {
+
     if (mark === 'newItem') {
       const point_id = this.state.point;
 
@@ -667,17 +654,18 @@ class Checkworks_ extends React.Component {
         point_id,
       };
 
-      const works = await this.getData('get_add_work', data);
-
+      let res = await this.getData('get_add_work', data);
+   
       this.setState({
         modalDialogNew: true,
-        works,
+        works: res.works,
         method,
         mark,
       });
     }
 
     if (mark === 'editItem') {
+
       this.handleResize();
 
       this.setState({
@@ -686,28 +674,16 @@ class Checkworks_ extends React.Component {
         method,
         mark,
       });
+
     }
   }
 
-  async update() {
-    const data = {
-      point_id: this.state.point,
-      date_start: dayjs(this.state.date_start).format('YYYY-MM-DD'),
-      date_end: dayjs(this.state.date_end).format('YYYY-MM-DD'),
-    };
-
-    const res = await this.getData('get_data', data);
-
-    this.setState({
-      all_work: res.all_work,
-      work: res.work,
-      pf_list: res.pf_list,
-      filter: false,
-      check_cook: res.check_cook,
-    });
-  }
-
   render() {
+
+    const { work, filter } = this.state;
+
+    const filter_work = filter ? work.filter(item => parseInt(item.is_delete, 10) === 1) : work;
+
     return (
       <>
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
@@ -790,10 +766,8 @@ class Checkworks_ extends React.Component {
               Обновить
             </Button>
           </Grid>
-        </Grid>
 
-        {/* таблицы */}
-        {this.state.point < 1 ? null : (
+          {/* таблицы */}
           <Grid item xs={12} sm={12}>
             <TabContext value={this.state.ItemTab}>
               <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -804,160 +778,165 @@ class Checkworks_ extends React.Component {
                 </TabList>
               </Box>
 
-              <TabPanel value="1">
-                <Grid item xs={12} sm={12}>
+              <TabPanel value="1" sx={{ p: 0 }}>
+                <Grid item xs={12} sm={12} mb={5}>
                   <TableContainer>
-                    <Grid mb={2} mt={2}>
-                      <Button variant="contained" onClick={() => this.setState({ filter: !this.state.filter })} style={{ backgroundColor: '#9e9e9e' }}>
-                       Только удаленные / Все
+                    <Grid mb={5} mt={5}>
+                      <Button 
+                        variant="contained" 
+                        onClick={() => this.setState({ filter: !filter })} 
+                        style={{ backgroundColor: '#9e9e9e' }}
+                      >
+                        Только удаленные / Все
                       </Button>
                     </Grid>
-                    {!this.state.work.length ? null : (
-                      <Table>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell style={{ width: '25%' }} >Уборка</TableCell>
-                            <TableCell style={{ width: '10%' }} >Сотрудник</TableCell>
-                            <TableCell style={{ width: '10%' }} >Дата уборки</TableCell>
-                            <TableCell style={{ width: '15%' }} >Уборку начали</TableCell>
-                            <TableCell style={{ width: '15%' }} >Уборку закончили</TableCell>
-                            <TableCell style={{ width: '15%' }} >Подтвердили</TableCell>
-                            <TableCell style={{ width: '10%', padding: 0 }} >Подтвердивший</TableCell>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell style={{ width: '25%' }} >Уборка</TableCell>
+                          <TableCell style={{ width: '10%' }} >Сотрудник</TableCell>
+                          <TableCell style={{ width: '10%' }} >Дата уборки</TableCell>
+                          <TableCell style={{ width: '15%' }} >Уборку начали</TableCell>
+                          <TableCell style={{ width: '15%' }} >Уборку закончили</TableCell>
+                          <TableCell style={{ width: '15%' }} >Подтвердили</TableCell>
+                          <TableCell style={{ width: '10%', padding: 0 }} >Подтвердивший</TableCell>
+                        </TableRow>
+                      </TableHead>
+
+                      <TableBody>
+                        {filter_work.map((item, key) => (
+                          <TableRow key={key} hover sx={{ '& td': {backgroundColor: parseInt(item.is_delete) === 1 ? '#eb4d4b' : null, color: parseInt(item.is_delete) === 1 ? '#fff' : null, fontWeight: parseInt(item.is_delete) === 1 ? 700 : null} }}>
+                            <TableCell >{item.name_work}</TableCell>
+                            <TableCell >{item.user_name}</TableCell>
+                            <TableCell >{item.date_start_work}</TableCell>
+                            <TableCell >{item.date_time_start}</TableCell>
+                            <TableCell >{item.date_time_end}</TableCell>
+                            <TableCell >{item.manager_time}</TableCell>
+                            <TableCell  style={{ padding: 0 }}>
+                              {item.manager_name || parseInt(item.is_delete) === 1 || this.state.check_cook ? item.manager_name ?? '' : (
+                                <Grid display="flex" sx={{ justifyContent: { sm: 'space-evenly', xs: 'space-around', width: 300 } }}>
+                                  
+                                  <Button onClick={this.openConfirm.bind(this, item, 'clearWork')} style={{ cursor: 'pointer', backgroundColor: 'yellow' }} variant="contained">
+                                    <KeyboardBackspaceIcon />
+                                  </Button>
+
+                                  <Button onClick={this.openConfirm.bind(this, item, 'deleteWork')} style={{ cursor: 'pointer' }} color="error" variant="contained">
+                                    <ClearIcon />
+                                  </Button>
+
+                                  {item.date_time_end ? (
+                                    <Button onClick={this.openConfirm.bind(this, item, 'saveWork')} style={{ cursor: 'pointer' }} color="success" variant="contained">
+                                      <CheckIcon />
+                                    </Button>
+                                  ) : false}
+                                </Grid>
+                              )}
+                            </TableCell>
                           </TableRow>
-                        </TableHead>
-
-                        <TableBody>
-                          {this.state.work
-                          .filter(item => this.state.filter ? item.is_delete === '1' : item)
-                          .map((item, key) => (
-                            <TableRow key={key} hover sx={{ '& td': {backgroundColor: item.is_delete === '1' ? '#eb4d4b' : null, color: item.is_delete === '1' ? '#fff' : null, fontWeight: item.is_delete === '1' ? 700 : null} }}>
-                              <TableCell >{item.name_work}</TableCell>
-                              <TableCell >{item.user_name}</TableCell>
-                              <TableCell >{item.date_start_work}</TableCell>
-                              <TableCell >{item.date_time_start}</TableCell>
-                              <TableCell >{item.date_time_end}</TableCell>
-                              <TableCell >{item.manager_time}</TableCell>
-                              <TableCell  style={{ padding: 0 }}>
-                                {item.namager_name || item.is_delete === '1' || this.state.check_cook ? item.namager_name ?? '' : (
-                                  <Grid display="flex" sx={{ justifyContent: { sm: 'space-evenly', xs: 'space-around', width: 300 } }}>
-                                    
-                                    <Button onClick={this.openConfirm.bind(this, item, 'clearWork')} style={{ cursor: 'pointer', backgroundColor: 'yellow' }} variant="contained">
-                                      <KeyboardBackspaceIcon />
-                                    </Button>
-
-                                    <Button onClick={this.openConfirm.bind(this, item, 'deleteWork')} style={{ cursor: 'pointer' }} color="error" variant="contained">
-                                      <ClearIcon />
-                                    </Button>
-
-                                    {item.date_time_end ? (
-                                      <Button onClick={this.openConfirm.bind(this, item, 'saveWork')} style={{ cursor: 'pointer' }} color="success" variant="contained">
-                                        <CheckIcon />
-                                      </Button>
-                                    ) : false}
-                                  </Grid>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
+                        ))}
+                      </TableBody>
+                    </Table>
                   </TableContainer>
                 </Grid>
               </TabPanel>
 
-              <TabPanel value="2">
-                {!this.state.all_work.length ? null : (
-                  <Grid item xs={12} sm={12}>
-                    <TableContainer>
-                      <Table>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell style={{ width: '15%' }} >Дата добавления</TableCell>
-                            <TableCell style={{ width: '45%' }} >Уборки</TableCell>
-                            <TableCell style={{ width: '30%' }} >Должность уборки</TableCell>
-                            <TableCell style={{ width: '10%' }} ></TableCell>
-                          </TableRow>
-                        </TableHead>
+              <TabPanel value="2" sx={{ p: 0 }}>
+                <Grid item xs={12} sm={12} mt={5} mb={5}>
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell style={{ width: '15%' }} >Дата добавления</TableCell>
+                          <TableCell style={{ width: '45%' }} >Уборки</TableCell>
+                          <TableCell style={{ width: '30%' }} >Должность уборки</TableCell>
+                          <TableCell style={{ width: '10%' }} ></TableCell>
+                        </TableRow>
+                      </TableHead>
 
-                        <TableBody>
-                          {this.state.all_work.map((item, key) => (
-                            <TableRow key={key} hover>
-                              <TableCell >{item.date}</TableCell>
-                              <TableCell >{item.name_work}</TableCell>
-                              <TableCell >{item.app_name}</TableCell>
-                              <TableCell >
-                                {this.state.check_cook ? null : (
-                                  <Button onClick={this.openConfirm.bind(this, item, 'deleteWork')} style={{ cursor: 'pointer' }} color="error" variant="contained">
-                                    <ClearIcon />
-                                  </Button>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Grid>
-                )}
+                      <TableBody>
+                        {this.state.all_work.map((item, key) => (
+                          <TableRow key={key} hover>
+                            <TableCell >{item.date}</TableCell>
+                            <TableCell >{item.name_work}</TableCell>
+                            <TableCell >{item.app_name}</TableCell>
+                            <TableCell >
+                              {this.state.check_cook ? null : (
+                                <Button onClick={this.openConfirm.bind(this, item, 'deleteWork')} style={{ cursor: 'pointer' }} color="error" variant="contained">
+                                  <ClearIcon />
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
               </TabPanel>
 
-              <TabPanel value="3">
-                {!this.state.pf_list.length ? null : (
-                  <Grid item xs={12} sm={12}>
-                    <TableContainer>
-                      <Table>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Позиция</TableCell>
-                            <TableCell>Время забития</TableCell>
-                            <TableCell>Объем заготовки</TableCell>
-                            <TableCell>Объем отходов</TableCell>
-                            <TableCell>Ед измерения</TableCell>
-                            <TableCell>Сотрудник</TableCell>
-                            <TableCell>Помошник</TableCell>
-                            <TableCell>Подтвердили</TableCell>
-                            <TableCell>Подтвердивший</TableCell>
-                          </TableRow>
-                        </TableHead>
+              <TabPanel value="3" sx={{ p: 0 }}>
+                <Grid item xs={12} sm={12} mt={5} mb={5}>
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Позиция</TableCell>
+                          <TableCell>Время забития</TableCell>
+                          <TableCell>Объем заготовки</TableCell>
+                          <TableCell>Объем отходов</TableCell>
+                          <TableCell>Ед измерения</TableCell>
+                          <TableCell>Сотрудник</TableCell>
+                          <TableCell>Помощник</TableCell>
+                          <TableCell>Подтвердили</TableCell>
+                          <TableCell>Подтвердивший</TableCell>
+                        </TableRow>
+                      </TableHead>
 
-                        <TableBody>
-                          {this.state.pf_list.map((item, key) => (
-                            <TableRow key={key} hover sx={{ '& td': {backgroundColor: item.is_delete === '1' ? '#eb4d4b' : null,  fontWeight: item.is_delete === '1' ? 700 : null, 
-                            color: item.is_delete === '1' ? '#fff' : null } }}>
-                              <TableCell  sx={{cursor: 'pointer' }} onClick={this.openModal.bind(this, 'editItem', 'Редактирование заготовки', item)}>
-                                  <Link variant="button" underline='none' color={item.is_delete === '1' ? "inherit" : "primary"} style={{ fontWeight: 700 }}> {item.name_work}</Link>
-                              </TableCell>
-                              <TableCell >{item.date_time}</TableCell>
-                              <TableCell >{item.count_pf}</TableCell>
-                              <TableCell >{item.count_trash}</TableCell>
-                              <TableCell >{item.ei_name}</TableCell>
-                              <TableCell >{item.user_name}</TableCell>
-                              <TableCell >{item.user_name2}</TableCell>
-                              <TableCell >{item.manager_time}</TableCell>
-                              <TableCell  style={{ padding: 0 }}>
-                                {item.namager_name || this.state.check_cook ? item.namager_name ?? '' : (
-                                  <Grid display="flex" justifyContent="space-evenly">
-                                    <Button onClick={this.openConfirm.bind(this, item, 'savePf')} style={{cursor: 'pointer'}} color="success" variant="contained">
-                                      <CheckIcon />
-                                    </Button>
-                                    <Button onClick={this.openConfirm.bind(this, item, 'deletePf')} style={{cursor: 'pointer'}} color="error" variant="contained">
-                                      <ClearIcon />
-                                    </Button>
-                                  </Grid>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Grid>
-                )}
+                      <TableBody>
+                        {this.state.pf_list.map((item, key) => (
+                          <TableRow key={key} hover sx={{ '& td': {backgroundColor: parseInt(item.is_delete) === 1 ? '#eb4d4b' : null,  fontWeight: parseInt(item.is_delete) === 1 ? 700 : null, 
+                          color: parseInt(item.is_delete) === 1 ? '#fff' : null } }}>
+                            <TableCell 
+                              sx={{ cursor: parseInt(item.is_delete) === 1 ? 'default' : 'pointer', color: parseInt(item.is_delete) === 1 ? '#fff' : '#c03', fontWeight: 700 }} 
+                              onClick={parseInt(item.is_delete) === 1 ? null : this.openModal.bind(this, 'editItem', 'Редактирование заготовки', item)}
+                            >
+                              {parseInt(item.is_delete) === 1 ? 
+                                item.name_work
+                                :
+                                <Link variant="button" underline='none' color={parseInt(item.is_delete) === 1 ? "inherit" : "primary"} style={{ fontWeight: 700 }}>{item.name_work}</Link>
+                              } 
+                            </TableCell>
+                            <TableCell >{item.date_time}</TableCell>
+                            <TableCell >{item.count_pf}</TableCell>
+                            <TableCell >{item.count_trash}</TableCell>
+                            <TableCell >{item.ei_name}</TableCell>
+                            <TableCell >{item.user_name}</TableCell>
+                            <TableCell >{item.user_name2}</TableCell>
+                            <TableCell >{item.manager_time}</TableCell>
+                            <TableCell  style={{ padding: 0 }}>
+                              {item.manager_name || this.state.check_cook ? item.manager_name ?? '' : (
+                                <Grid display="flex" justifyContent="space-evenly">
+                                  <Button onClick={this.openConfirm.bind(this, item, 'savePf')} style={{cursor: 'pointer'}} color="success" variant="contained">
+                                    <CheckIcon />
+                                  </Button>
+                                  <Button onClick={this.openConfirm.bind(this, item, 'deletePf')} style={{cursor: 'pointer'}} color="error" variant="contained">
+                                    <ClearIcon />
+                                  </Button>
+                                </Grid>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
               </TabPanel>
             </TabContext>
           </Grid>
-        )}
+
+        </Grid>
+
       </>
     );
   }
