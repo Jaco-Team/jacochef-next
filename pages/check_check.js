@@ -11,6 +11,11 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableContainer from '@mui/material/TableContainer';
 
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -21,13 +26,113 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 import CloseIcon from '@mui/icons-material/Close';
 import IconButton from '@mui/material/IconButton';
-import SaveIcon from '@mui/icons-material/Save';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import ArchiveIcon from '@mui/icons-material/Archive';
 
-import {MySelect, MyDatePickerNew, MyTextInput, MyAlert, formatDate} from '@/ui/elements';
+import Chip from '@mui/material/Chip';
+import Box from '@mui/material/Box';
+import Tooltip from '@mui/material/Tooltip';
+import Stack from '@mui/material/Stack';
+import Paper from '@mui/material/Paper';
 
-import queryString from 'query-string';
+import {MySelect, MyDatePickerNew, MyAlert, MyAutocomplite, formatDateReverse} from '@/ui/elements';
+
+import { api_laravel_local, api_laravel } from '@/src/api_new';
+
+import dayjs from 'dayjs';
+
+const formatNumber = (num) => new Intl.NumberFormat('ru-RU').format(num);
+
+class CheckCheck_Accordion extends React.Component {
+  render() {
+    const { data, type } = this.props;
+
+    return (
+      <Box>
+        <Accordion>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              justifyContent="space-between"
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              spacing={2}
+              width="100%"
+            >
+              <Typography sx={{ fontWeight: 'bold' }}>{type}</Typography>
+
+              <Stack direction="row" spacing={1}>
+                <Typography>Наличные за период:</Typography>
+                <Typography sx={{ fontWeight: 'bold' }}>
+                  {formatNumber(data?.all_cash ?? 0)} ₽
+                </Typography>
+              </Stack>
+
+              <Stack direction="row" spacing={1}>
+                <Typography>Безнал за период:</Typography>
+                <Typography sx={{ fontWeight: 'bold' }}>
+                  {formatNumber(data?.all_bank ?? 0)} ₽
+                </Typography>
+              </Stack>
+
+            </Stack>
+          </AccordionSummary>
+
+          <AccordionDetails>
+   
+            {data?.days.map((day) => (
+              <Accordion key={day.date} sx={{ mb: 1 }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Stack direction="row" justifyContent="space-between" width="100%">
+
+                    <Typography sx={{ fontWeight: 'bold' }}>{formatDateReverse(day.date)}</Typography>
+
+                    <Stack direction="row" spacing={1}>
+                      <Typography>Наличные за день:</Typography>
+                      <Typography sx={{ fontWeight: 'bold' }}>
+                        {formatNumber(day.summ_cash ?? 0)} ₽
+                      </Typography>
+                    </Stack>
+
+                    <Stack direction="row" spacing={1}>
+                      <Typography>Безнал за день:</Typography>
+                      <Typography sx={{ fontWeight: 'bold' }}>
+                        {formatNumber(day.summ_bank ?? 0)} ₽
+                      </Typography>
+                    </Stack>
+
+                  </Stack>
+                </AccordionSummary>
+
+                <AccordionDetails>
+                  <Paper elevation={1} sx={{ width: '100%', overflowX: 'auto' }}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Касса</TableCell>
+                          <TableCell align="right">Наличные</TableCell>
+                          <TableCell align="right">Безнал</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {day.kass.map((k) => (
+                          <TableRow key={k.kassa}>
+                            <TableCell component="th" scope="row"> {`${k.kassa}${k.kassa === 2 ? ' (онлайн)' : ''}`}</TableCell>
+                            <TableCell align="right">{formatNumber(k.summ_cash ?? 0)} ₽</TableCell>
+                            <TableCell align="right">{formatNumber(k.summ_bank ?? 0)} ₽</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Paper>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+          </AccordionDetails>
+        </Accordion>
+      </Box>
+    );
+  }
+}
 
 class CheckCheck_Modal extends React.Component {
   constructor(props) {
@@ -35,6 +140,9 @@ class CheckCheck_Modal extends React.Component {
 
     this.state = {
       orders: [],
+      order_id: '',
+      type_pay: '',
+      confirmDialog: false,
     };
   }
 
@@ -52,153 +160,128 @@ class CheckCheck_Modal extends React.Component {
     }
   }
 
-  onClose() {
+  openConfirm = (order_id, type_pay) => {
+    this.setState({
+      confirmDialog: true,
+      order_id,
+      type_pay
+    });
+  }
+
+  save = () => {
+    this.setState ({
+      confirmDialog: false
+    });
+
+    this.props.saveOrder(this.props.order?.id, this.state.order_id, this.state.type_pay, this.props.order?.summ_check);
+
+    this.onClose();
+  }
+
+  onClose = () => {
     this.setState({
       orders: [],
+      confirmDialog: false,
+      order_id: '',
+      type_pay: '',
     });
 
     this.props.onClose();
   }
 
   render() {
-    return (
-      <Dialog
-        open={this.props.open}
-        onClose={this.onClose.bind(this)}
-        fullScreen={this.props.fullScreen}
-        fullWidth={true}
-        maxWidth={'lg'}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle className="button">
-          <Typography style={{ fontWeight: 'bold' }}>Заказы</Typography>
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
 
-        <DialogContent style={{ paddingTop: 10, paddingBottom: 10 }}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Номер заказа</TableCell>
-                  <TableCell>Точка</TableCell>
-                  <TableCell>Дата/Время заказа</TableCell>
-                  <TableCell>Тип заказа</TableCell>
-                  <TableCell>Сумма заказа</TableCell>
-                  <TableCell>Выбрать</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {this.state.orders.map((item, key) => (
-                  <TableRow key={key}>
-                    <TableCell>{key + 1}</TableCell>
-                    <TableCell>{item.id}</TableCell>
-                    <TableCell>{item.addr}</TableCell>
-                    <TableCell>{item.date}</TableCell>
-                    <TableCell>{item.type}</TableCell>
-                    <TableCell>{item.sum}</TableCell>
-                    <TableCell>
-                      <Button style={{ cursor: 'pointer' }} onClick={this.props.selectOrder.bind(this, item.id)}>
-                        <CheckCircleIcon className="icon" />
-                      </Button>
-                    </TableCell>
+    const { orders, confirmDialog } = this.state;
+    const { order, open, fullScreen } = this.props;
+
+    return (
+      <>
+        <Dialog
+          sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+          maxWidth="sm"
+          open={confirmDialog}
+          onClose={() => this.setState({ confirmDialog: false })}
+        >
+          <DialogTitle sx={{ fontWeight: 'bold' }}>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>Сохранить данные выбранного заказа ?</DialogContent>
+          <DialogActions>
+            <Button autoFocus variant="contained" onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
+            <Button variant="contained" color='success' onClick={this.save}>Сохранить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={open}
+          onClose={this.onClose}
+          fullScreen={fullScreen}
+          fullWidth={true}
+          maxWidth={'lg'}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle className="button">
+            <Typography style={{ fontWeight: 'bold' }}>Выбрать из списка подходящий заказ</Typography>
+            <IconButton onClick={this.onClose}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+
+          <DialogContent style={{ paddingTop: 10, paddingBottom: 10 }}>
+
+            <Grid item xs={12} sm={6} display="flex" flexDirection="column" marginBottom={2}>
+              <Grid display="flex" flexDirection="row">
+                <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', marginRight: 2 }}>Дата/Время заказа:</Typography>
+                <Typography sx={{ whiteSpace: 'nowrap' }}>{order?.date} {order?.time}</Typography>
+              </Grid>
+
+              <Grid display="flex" flexDirection="row">
+                <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', marginRight: 2 }}>Сумма заказа:</Typography>
+                <Typography sx={{ whiteSpace: 'nowrap' }}>{formatNumber(order?.summ_check ?? 0)} ₽</Typography>
+              </Grid>
+            </Grid>
+
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell colSpan={5}>Список заказов</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </DialogContent>
+                  <TableRow>
+                    <TableCell>#</TableCell>
+                    <TableCell>Номер заказа</TableCell>
+                    <TableCell>Дата/Время заказа</TableCell>
+                    <TableCell>Сумма заказа</TableCell>
+                    <TableCell>Выбрать</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {orders.map((item, key) => (
+                    <TableRow key={key}>
+                      <TableCell>{key + 1}</TableCell>
+                      <TableCell>{item.id}</TableCell>
+                      <TableCell>{item.date}</TableCell>
+                      <TableCell>{formatNumber(item.summ_check ?? 0)} ₽</TableCell>
+                      <TableCell>
+                        <IconButton title={'Сохранить'} onClick={()=>this.openConfirm(item.id, item.type_pay)}>
+                          <ArchiveIcon sx={{ color: '#c03' }} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-        <DialogActions>
-          <Button style={{ color: '#DC143C' }} onClick={this.onClose.bind(this)}>
-            Закрыть
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  }
-}
+          </DialogContent>
 
-class CheckCheck_Table extends React.Component {
-  constructor(props) {
-    super(props);
+          <DialogActions>
+            <Button variant="contained" onClick={this.onClose}>
+              Закрыть
+            </Button>
+          </DialogActions>
 
-    this.state = {
-      orders: [],
-    };
-  }
-
-  componentDidUpdate(prevProps) {
-    // console.log(this.props.orders);
-
-    if (!this.props.orders) {
-      return;
-    }
-
-    if (this.props.orders !== prevProps.orders) {
-      this.setState({
-        orders: this.props.orders,
-      });
-    }
-  }
-
-  componentDidMount() {
-    this.setState({
-      orders: this.props.orders,
-    });
-  }
-
-  render() {
-    return (
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>#</TableCell>
-              <TableCell>Номер заказа</TableCell>
-              <TableCell>Точка</TableCell>
-              <TableCell>Тип заказа</TableCell>
-              <TableCell>Номер кассы</TableCell>
-              <TableCell>Сумма заказа</TableCell>
-              <TableCell>Дата/Время заказа</TableCell>
-              <TableCell>Найти заказ</TableCell>
-              <TableCell>Сохранить</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {this.state.orders.map((item, key) => (
-              <TableRow key={key}>
-                <TableCell>{key + 1}</TableCell>
-                <TableCell>
-                  <MyTextInput
-                    value={item.order_id}
-                    func={this.props.changeOrderId.bind(this, item.id)}
-                  />
-                </TableCell>
-                <TableCell>{item.addr}</TableCell>
-                <TableCell>{item.type}</TableCell>
-                <TableCell>{item.kassa}</TableCell>
-                <TableCell>{item.sum}</TableCell>
-                <TableCell>{item.date} {item.time}</TableCell>
-                <TableCell>
-                  <Button onClick={this.props.openModal.bind(this, item.sum, item.date, item.point_id, item.id)}>
-                    <OpenInNewIcon className="icon" />
-                  </Button>
-                </TableCell>
-                <TableCell>
-                  <Button onClick={this.props.saveOrder.bind(this, item.id, item.order_id, item.point_id)}>
-                    <SaveIcon className="icon" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+        </Dialog>
+      </>
     );
   }
 }
@@ -207,101 +290,70 @@ class CheckCheck_ extends React.Component {
   constructor(props) {
     super(props);
 
-    let date_start = new Date();
-    date_start.setDate(date_start.getDate() - 5);
-
     this.state = {
       module: 'check_check',
       module_name: '',
       is_load: false,
 
-      point_list: [],
-      type_list: [],
-      kassa_list: [],
+      points: [],
+      kass: [],
 
-      date_start: formatDate(date_start),
-      date_end: formatDate(new Date()),
+      date_start: dayjs(),
+      date_end: dayjs(),
 
       point_id: '',
-      type: '',
-      kassa: '',
+      kassa: [],
 
       openAlert: false,
       err_status: true,
       err_text: '',
 
-      allOrder: [],
+      complete_data: [],
+      summ_ofd: null,
+      summ_chef: null,
 
-      order_id: '',
-
+      order: null,
       modalOrder: false,
       fullScreen: false,
       orders: [],
+
+      isAccordionOpen: false,
+
     };
   }
 
-  getData = (method, data = {}) => {
-      this.setState({
-        is_load: true,
-      });
-
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 300);
-        console.log(err);
-      });
-  };
-
   async componentDidMount() {
-    const res = await this.getData('get_points');
+    const data = await this.getData('get_all');
 
     this.setState({
-      kassa_list: res.kassa_list,
-      point_list: res.point_list,
-      type_list: res.type_list,
-      module_name: res.module_info.name,
+      kass: data.kass,
+      points: data.points,
+      module_name: data.module_info.name,
     });
 
-    document.title = res.module_info.name;
+    document.title = data.module_info.name;
   }
 
-  handleResize() {
+  getData = (method, data = {}) => {
+        
+    this.setState({
+      is_load: true,
+    });
+
+    let res = api_laravel_local(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
+  }
+
+  handleResize = () => {
     if (window.innerWidth < 601) {
       this.setState({
         fullScreen: true,
@@ -311,220 +363,289 @@ class CheckCheck_ extends React.Component {
         fullScreen: false,
       });
     }
-  }
+  };
 
-  changeDateRange(data, event) {
-    this.setState({
-      [data]: event ? formatDate(event) : '',
-    });
-  }
+  changeDateRange = (field, newDate) => {
+    this.setState({ [field]: newDate });
+  };
 
-  changeSort(type, event) {
+  changeSort = (type, event) => {
     this.setState({
       [type]: event.target.value,
     });
+  };
+
+  changeKass = (data, event, value) => {
+    this.setState({
+      [data]: value,
+    });
   }
 
-  // получение заказов по указанному фильтру
-  async getOrder() {
+  getOrders = async () => {
+    let { date_start, date_end, point_id, kassa, points } = this.state;
+    
+    if (!date_start || !date_end || !point_id || !Array.isArray(kassa) || kassa.length === 0) {
+      this.openAlert(false, 'Необходимо заполнить даты начала и конца, указать точку и выбрать кассу');
+      return;
+    }
+    
+    date_start = dayjs(date_start).format('YYYY-MM-DD');
+    date_end = dayjs(date_end).format('YYYY-MM-DD');
+    const point = points.find(it => parseInt(it.id) === parseInt(point_id));
+    
     const data = {
-      date_start: this.state.date_start,
-      date_end: this.state.date_end,
-      point_id: this.state.point_id,
-      type: this.state.type,
-      kassa: this.state.kassa,
+      date_start,
+      date_end,
+      point,
+      kassa,
     };
+    
+    console.log("🚀 === getOrders data:", data);
 
-    const res = await this.getData('show', data);
+    const res = await this.getData('get_orders', data);
 
-    // console.log('getOrder res', res);
+    console.log("🚀 === getOrders res:", res);
 
     if (!res.st) {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: res.text,
-      });
-    } else {
-      if (res.orders.length) {
-        this.setState({
-          allOrder: res.orders,
-        });
-      } else {
-        this.setState({
-          openAlert: true,
-          err_status: true,
-          err_text: 'Заказы за указанный период отсутствуют',
-        });
-      }
-    }
-  }
 
-  // модалка заказов
-  async openModal(sum, date, point_id, order_id) {
+      this.openAlert(false, res.text);
+
+    } else {
+
+      this.setState({
+        complete_data: res.complete_data,
+        summ_ofd: res.summ_ofd,
+        summ_chef: res.summ_chef,
+      });
+
+    }
+
+  };
+
+  openModal = async (summ, date, order) => {
     this.handleResize();
 
+    const { point_id, points } = this.state;
+
+    const point = points.find(it => parseInt(it.id) === parseInt(point_id));
+
     const data = {
-      sum,
-      point_id,
+      summ,
+      point,
       date,
-      type: this.state.type,
     };
 
     const res = await this.getData('find_order', data);
 
-    // console.log(res);
-
     this.setState({
       modalOrder: true,
       orders: res.orders,
+      order,
+    });
+  };
+
+  saveOrder = async (id, order_id, type_pay, summ) => {
+
+    const { point_id, points } = this.state;
+    const point = points.find(it => parseInt(it.id) === parseInt(point_id));
+    const type = parseInt(type_pay) === 1 ? 'sum_cash' : 'sum_bank';
+
+    const data = {
+      id,
       order_id,
-    });
-  }
-
-  // выбор заказа в модалке
-  selectOrder(id) {
-    const allOrder = this.state.allOrder;
-    const order_id = this.state.order_id;
-
-    allOrder.map((el) => order_id === el.id ? (el.order_id = id) : el.order_id);
-
-    this.setState({
-      modalOrder: false,
-      order_id: '',
-      allOrder,
-    });
-  }
-
-  // изменения в ручную номера заказа в таблице
-  changeOrderId(id, event) {
-    const allOrder = this.state.allOrder;
-
-    allOrder.map((el) => id === el.id ? (el.order_id = event.target.value) : el.order_id);
-
-    this.setState({
-      allOrder,
-    });
-  }
-
-  // сохранении order_id
-  async saveOrder(id, order_id, point_id) {
-    let data = {
-      id: id,
-      order_id: order_id,
-      point_id: point_id,
+      point,
+      type,
+      summ
     };
 
-    // console.log(data);
+    console.log('saveOrder data', data);
 
-    const res = await this.getData('saveItem', data);
+    const res = await this.getData('save_order', data);
+
+    this.openAlert(res.st, res.text);
 
     if (res.st) {
-      this.setState({
-        openAlert: true,
-        err_status: true,
-        err_text: 'Данные успешно сохранены!',
-      });
-
       setTimeout(() => {
-        this.getOrder();
+        this.getOrders();
       }, 300);
-    } else {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: res.text,
-      });
     }
+
   }
 
+  openAlert = (status, text) => {
+    this.setState({
+      openAlert: true,
+      err_status: status,
+      err_text: text
+    });
+  };
+
+  handleAccordionChange = (event, isExpanded) => {
+    this.setState({ isAccordionOpen: isExpanded });
+  };
+
+  set_orders = () => {
+    console.log('set_orders');
+  };
+
+  send_to_1c = () => {
+    console.log('send_to_1c');
+  };
+
   render() {
+    const { is_load, openAlert, err_status, err_text, modalOrder, fullScreen, orders, module_name, date_start, date_end, points, kass, point_id, kassa, complete_data, order, summ_ofd, summ_chef} = this.state;
+
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop style={{ zIndex: 99 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
         <MyAlert
-          isOpen={this.state.openAlert}
+          isOpen={openAlert}
           onClose={() => this.setState({ openAlert: false })}
-          status={this.state.err_status}
-          text={this.state.err_text}
+          status={err_status}
+          text={err_text}
         />
 
         <CheckCheck_Modal
-          open={this.state.modalOrder}
-          onClose={() => this.setState({ modalOrder: false })}
-          fullScreen={this.state.fullScreen}
-          orders={this.state.orders}
-          selectOrder={this.selectOrder.bind(this)}
+          open={modalOrder}
+          onClose={() => this.setState({ modalOrder: false, orders: [], order: null })}
+          fullScreen={fullScreen}
+          orders={orders}
+          order={order}
+          saveOrder={this.saveOrder}
         />
-
+       
         <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
-            <h1>{this.state.module_name}</h1>
+            <h1>{module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid item xs={12} sm={6}>
             <MyDatePickerNew
               label="Начало периода"
-              value={this.state.date_start}
-              func={this.changeDateRange.bind(this, 'date_start')}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={3}>
-            <MyDatePickerNew
-              label="Конец периода"
-              value={this.state.date_end}
-              func={this.changeDateRange.bind(this, 'date_end')}
+              value={date_start}
+              func={newDate => this.changeDateRange('date_start', newDate)}
             />
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <Button onClick={this.getOrder.bind(this)} variant="contained">
-              Выполнить
+            <MyDatePickerNew
+              label="Конец периода"
+              value={date_end}
+              func={newDate => this.changeDateRange('date_end', newDate)}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <MySelect
+              label="Точка"
+              is_none={false}
+              data={points}
+              value={point_id}
+              func={event => this.changeSort('point_id', event)}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <MyAutocomplite
+              label="Касса"
+              multiple={true}
+              data={kass}
+              value={kassa}
+              func={(event, value) => this.changeKass('kassa', event, value)}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Button onClick={this.getOrders} variant="contained">
+              Показать
             </Button>
           </Grid>
 
           <Grid item xs={12} sm={3}>
-            <MySelect
-              label="Точка"
-              is_none={false}
-              data={this.state.point_list}
-              value={this.state.point_id}
-              func={this.changeSort.bind(this, 'point_id')}
-            />
+            <Button onClick={this.set_orders} variant="contained" sx={{ whiteSpace: 'nowrap'}} color="success">
+              Расставить номера заказов / суммы
+            </Button>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
-            <MySelect
-              label="Тип"
-              is_none={false}
-              data={this.state.type_list}
-              value={this.state.type}
-              func={this.changeSort.bind(this, 'type')}
-            />
+          <Grid item xs={12} sm={3} container justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
+            <Button onClick={this.send_to_1c} variant="contained" color="info" sx={{ whiteSpace: 'nowrap' }}>
+              Выгрузить в 1С
+            </Button>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
-            <MySelect
-              label="Касса"
-              is_none={false}
-              data={this.state.kassa_list}
-              value={this.state.kassa}
-              func={this.changeSort.bind(this, 'kassa')}
-            />
-          </Grid>
+          {!complete_data.length ? null :
+            <Grid item xs={12} sm={12} mb={summ_ofd ? 0 : 5}>
+              <Accordion
+                style={{ width: '100%' }}
+                expanded={complete_data.length > 100 ? false : this.state.isAccordionOpen}
+                onChange={complete_data.length > 100 ? undefined : this.handleAccordionChange}
+                disabled={complete_data.length > 100}
+              >
+                <AccordionSummary expandIcon={complete_data.length > 100 ? null : <ExpandMoreIcon />}>
+                  <Box display="flex" alignItems="center" width="100%">
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Проверка на заполненность данных
+                    </Typography>
+                    <Tooltip title="Количество заказов" arrow>
+                      <Chip label={complete_data.length} color="primary" size="small" sx={{ ml: 1 }} />
+                    </Tooltip>
+                  </Box>
+                </AccordionSummary>
+                {complete_data.length <= 100 &&
+                  <AccordionDetails>
+                    <Table size='small'>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>#</TableCell>
+                          <TableCell>Номер кассы </TableCell>
+                          <TableCell>Сумма заказа</TableCell>
+                          <TableCell>Дата / время</TableCell>
+                          <TableCell>Найти заказ</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {complete_data.map((it, k) =>
+                          <TableRow hover key={k}>
+                            <TableCell>{k + 1}</TableCell>
+                            <TableCell>{it.kassa}</TableCell>
+                            <TableCell>{formatNumber(it.summ_check ?? 0)} ₽</TableCell>
+                            <TableCell>{it.date} {it.time}</TableCell>
+                            <TableCell>
+                              <IconButton onClick={() => this.openModal(it.summ_check, it.date, it)}>
+                                <ReceiptLongIcon sx={{ color: '#c03' }} />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </AccordionDetails>
+                }
+              </Accordion>
+            </Grid>
+          }
 
-          <Grid item xs={12}>
-            <CheckCheck_Table
-              orders={this.state.allOrder}
-              openModal={this.openModal.bind(this)}
-              saveOrder={this.saveOrder.bind(this)}
-              changeOrderId={this.changeOrderId.bind(this)}
-            />
-          </Grid>
+          {!summ_ofd ? null :
+            <Grid item xs={12} sm={6} mb={5}>
+              <CheckCheck_Accordion
+                data={summ_ofd}
+                type='Суммы из выгруженного ОФД'
+              />
+            </Grid>
+          }
+
+          {!summ_chef ? null :
+            <Grid item xs={12} sm={6} mb={5}>
+              <CheckCheck_Accordion
+                data={summ_chef}
+                type='Суммы из системы ШЕФ'
+              />
+            </Grid>
+          }
+         
         </Grid>
       </>
     );
