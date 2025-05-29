@@ -35,11 +35,16 @@ import Tooltip from '@mui/material/Tooltip';
 import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
 
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+
 import {MySelect, MyDatePickerNew, MyAlert, MyAutocomplite, formatDateReverse} from '@/ui/elements';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+import { e } from 'mathjs';
 
 const formatNumber = (num) => new Intl.NumberFormat('ru-RU').format(num);
 
@@ -319,6 +324,7 @@ class CheckCheck_ extends React.Component {
 
       isAccordionOpen: false,
 
+      confirmDialog: false,
     };
   }
 
@@ -381,26 +387,32 @@ class CheckCheck_ extends React.Component {
     });
   }
 
-  getOrders = async () => {
+  check_data() {
     let { date_start, date_end, point_id, kassa, points } = this.state;
-    
+
     if (!date_start || !date_end || !point_id || !Array.isArray(kassa) || kassa.length === 0) {
       this.openAlert(false, 'Необходимо заполнить даты начала и конца, указать точку и выбрать кассу');
-      return;
+      return null;
     }
-    
-    date_start = dayjs(date_start).format('YYYY-MM-DD');
-    date_end = dayjs(date_end).format('YYYY-MM-DD');
-    const point = points.find(it => parseInt(it.id) === parseInt(point_id));
-    
-    const data = {
-      date_start,
-      date_end,
+
+    const formattedStart = dayjs(date_start).format('YYYY-MM-DD');
+    const formattedEnd = dayjs(date_end).format('YYYY-MM-DD');
+
+    const point = points.find(it => parseInt(it.id, 10) === parseInt(point_id, 10));
+
+    return {
+      date_start: formattedStart,
+      date_end: formattedEnd,
       point,
       kassa,
     };
-    
-    console.log("🚀 === getOrders data:", data);
+  }
+
+  getOrders = async () => {
+    const data = this.check_data();
+    if (!data) return;
+
+     console.log("🚀 === getOrders data:", data);
 
     const res = await this.getData('get_orders', data);
 
@@ -434,8 +446,11 @@ class CheckCheck_ extends React.Component {
       point,
       date,
     };
+    console.log("🚀 === openModal data:", data);
 
     const res = await this.getData('find_order', data);
+
+    console.log("🚀 === openModal res:", res);
 
     this.setState({
       modalOrder: true,
@@ -462,6 +477,8 @@ class CheckCheck_ extends React.Component {
 
     const res = await this.getData('save_order', data);
 
+    console.log("🚀 === saveOrder res:", res);
+
     this.openAlert(res.st, res.text);
 
     if (res.st) {
@@ -484,22 +501,120 @@ class CheckCheck_ extends React.Component {
     this.setState({ isAccordionOpen: isExpanded });
   };
 
-  set_orders = () => {
-    console.log('set_orders');
+  set_orders = async () => {
+    const data = this.check_data();
+    if (!data) return;
+
+    console.log("🚀 === set_orders data:", data);
+
+    const res = await this.getData('set_orders', data);
+
+    console.log("🚀 === set_orders res:", res);
+
+    this.openAlert(res.st, res.text);
+
+    if (res.st) {
+      setTimeout(() => {
+        this.getOrders();
+      }, 300);
+    }
   };
 
-  send_to_1c = () => {
-    console.log('send_to_1c');
+  check_data_for_1C = async () => {
+    const data = this.check_data();
+    if (!data) return;
+
+    console.log("🚀 === check_data_1C data:", data);
+
+    const res = await this.getData('check_data_1C', data);
+
+    console.log("🚀 === check_data_1C res:", res);
+
+    if(res.st) {  
+
+      this.setState({
+        confirmDialog: true,
+      });
+
+    } else {
+      this.openAlert(res.st, res.text);
+    }
+
+  };
+
+  upload_data_1C = async (type) => {
+
+    this.setState({
+      confirmDialog: false,
+    });
+
+    const data = this.check_data();
+    if (!data) return;
+
+    data.type = type;      
+
+    console.log("🚀 === upload_data_1C data:", data);
+
+    const res = await this.getData('upload_data_1C', data);
+
+    console.log("🚀 === upload_data_1C res:", res);
+
+    this.openAlert(res.st, res.text);
   };
 
   render() {
-    const { is_load, openAlert, err_status, err_text, modalOrder, fullScreen, orders, module_name, date_start, date_end, points, kass, point_id, kassa, complete_data, order, summ_ofd, summ_chef} = this.state;
+    const { is_load, openAlert, err_status, err_text, modalOrder, fullScreen, orders, module_name, date_start, date_end, points, kass, point_id, kassa, complete_data, order, summ_ofd, summ_chef, confirmDialog} = this.state;
 
     return (
       <>
         <Backdrop style={{ zIndex: 99 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+
+        <Dialog
+          sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+          maxWidth="sm"
+          open={confirmDialog}
+          onClose={() => this.setState({ confirmDialog: false })}
+        >
+          <DialogTitle>Выберите действие</DialogTitle>
+          <DialogContent>
+            <List>
+              <ListItemButton
+                onClick={() => this.upload_data_1C('export')}
+                sx={{
+                  mb: 1,
+                  border: '1px solid',
+                  borderColor: 'primary.main',
+                  borderRadius: 1,
+                }}
+              >
+                <ListItemText
+                  primary="Выгрузить данные в 1С"
+                  primaryTypographyProps={{ fontWeight: 'medium', color: 'primary.main' }}
+                />
+              </ListItemButton>
+              <ListItemButton
+                onClick={() => this.upload_data_1C('clear')}
+                sx={{
+                  bgcolor: '#c03',
+                  mb: 1,
+                  border: '1px solid #a00',
+                  borderRadius: 1,
+                  '&:hover': { bgcolor: '#b02' },
+                }}
+              >
+                <ListItemText
+                  primary="Очистить данные в 1С и после выгрузить данные в 1С"
+                  primaryTypographyProps={{ fontWeight: 'medium', color: '#fff' }}
+                />
+              </ListItemButton>
+            </List>
+          </DialogContent>
+          <DialogActions>
+            <Button variant='contained' onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
+          </DialogActions>
+        </Dialog>
 
         <MyAlert
           isOpen={openAlert}
@@ -571,7 +686,7 @@ class CheckCheck_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={3} container justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
-            <Button onClick={this.send_to_1c} variant="contained" color="info" sx={{ whiteSpace: 'nowrap' }}>
+            <Button onClick={this.check_data_for_1C} variant="contained" color="info" sx={{ whiteSpace: 'nowrap' }}>
               Выгрузить в 1С
             </Button>
           </Grid>
