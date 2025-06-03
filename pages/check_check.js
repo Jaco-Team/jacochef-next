@@ -44,7 +44,6 @@ import {MySelect, MyDatePickerNew, MyAlert, MyAutocomplite, formatDateReverse} f
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
-import { e } from 'mathjs';
 
 const formatNumber = (num) => new Intl.NumberFormat('ru-RU').format(num);
 
@@ -412,11 +411,7 @@ class CheckCheck_ extends React.Component {
     const data = this.check_data();
     if (!data) return;
 
-     console.log("🚀 === getOrders data:", data);
-
     const res = await this.getData('get_orders', data);
-
-    console.log("🚀 === getOrders res:", res);
 
     if (!res.st) {
 
@@ -446,11 +441,8 @@ class CheckCheck_ extends React.Component {
       point,
       date,
     };
-    console.log("🚀 === openModal data:", data);
 
     const res = await this.getData('find_order', data);
-
-    console.log("🚀 === openModal res:", res);
 
     this.setState({
       modalOrder: true,
@@ -473,11 +465,7 @@ class CheckCheck_ extends React.Component {
       summ
     };
 
-    console.log('saveOrder data', data);
-
     const res = await this.getData('save_order', data);
-
-    console.log("🚀 === saveOrder res:", res);
 
     this.openAlert(res.st, res.text);
 
@@ -505,11 +493,7 @@ class CheckCheck_ extends React.Component {
     const data = this.check_data();
     if (!data) return;
 
-    console.log("🚀 === set_orders data:", data);
-
     const res = await this.getData('set_orders', data);
-
-    console.log("🚀 === set_orders res:", res);
 
     this.openAlert(res.st, res.text);
 
@@ -524,11 +508,7 @@ class CheckCheck_ extends React.Component {
     const data = this.check_data();
     if (!data) return;
 
-    console.log("🚀 === check_data_1C data:", data);
-
     const res = await this.getData('check_data_1C', data);
-
-    console.log("🚀 === check_data_1C res:", res);
 
     if(res.st) {  
 
@@ -553,11 +533,7 @@ class CheckCheck_ extends React.Component {
 
     data.type = type;      
 
-    console.log("🚀 === upload_data_1C data:", data);
-
     const res = await this.getData('upload_data_1C', data);
-
-    console.log("🚀 === upload_data_1C res:", res);
 
     this.openAlert(res.st, res.text);
   };
