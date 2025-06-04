@@ -47,9 +47,68 @@ import dayjs from 'dayjs';
 
 const formatNumber = (num) => new Intl.NumberFormat('ru-RU').format(num);
 
-class CheckCheck_Accordion extends React.Component {
+function getColor(val1, val2) {
+  const n1 = Number(val1) || 0;
+  const n2 = Number(val2) || 0;
+  return n1 === n2 ? 'green' : 'red';
+}
+
+class CheckCheck_Accordion_online extends React.Component {
+
   render() {
-    const { data, type } = this.props;
+    const { orders } = this.props;
+
+    return (
+      <Box>
+        <Accordion>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography sx={{ fontWeight: 'bold' }}>Не фискализированные онлайн заказы</Typography>
+            <Tooltip title="Количество заказов" arrow>
+              <Chip label={orders.length} color="primary" size="small" sx={{ ml: 1 }} />
+            </Tooltip>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>№ заказа</TableCell>
+                  <TableCell>Дата / время заказа</TableCell>
+                  <TableCell>Тип оплаты</TableCell>
+                  <TableCell>Сумма заказа</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {orders.map((order, k) => (
+                  <TableRow key={k} hover>
+                    <TableCell>{k + 1}</TableCell>
+                    <TableCell>{order.id}</TableCell>
+                    <TableCell>{order.date_time}</TableCell>
+                    <TableCell>{order.type_pay_text}</TableCell>
+                    <TableCell>{formatNumber(order?.summ_order ?? 0)} ₽</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </AccordionDetails>
+        </Accordion>
+      </Box>
+    );
+  }
+}
+
+class CheckCheck_Accordion extends React.Component {
+
+  getDay(compareDays, date) {
+    return compareDays?.find(d => d.date === date) || {};
+  }
+
+  getKassa(compareKass, kassaId) {
+    return compareKass?.find(k => k.kassa === kassaId) || {};
+  }
+
+  render() {
+    const { data, compareData, type } = this.props;
 
     return (
       <Box>
@@ -66,71 +125,90 @@ class CheckCheck_Accordion extends React.Component {
 
               <Stack direction="row" spacing={1}>
                 <Typography>Наличные за период:</Typography>
-                <Typography sx={{ fontWeight: 'bold' }}>
+                <Typography sx={{ fontWeight: 'bold', color: getColor(data?.all_cash, compareData?.all_cash)}}>
                   {formatNumber(data?.all_cash ?? 0)} ₽
                 </Typography>
+                <Tooltip title="Количество чеков" arrow>
+                  <Chip label={formatNumber(data?.count_cash_checks ?? 0)} size="small" sx={{ ml: 1, fontWeight: 500 }}/>
+                </Tooltip>
               </Stack>
 
               <Stack direction="row" spacing={1}>
                 <Typography>Безнал за период:</Typography>
-                <Typography sx={{ fontWeight: 'bold' }}>
+                <Typography sx={{ fontWeight: 'bold', color: getColor(data?.all_bank, compareData?.all_bank)}}>
                   {formatNumber(data?.all_bank ?? 0)} ₽
                 </Typography>
+                <Tooltip title="Количество чеков" arrow>
+                  <Chip label={formatNumber(data?.count_bank_checks ?? 0)} size="small" sx={{ ml: 1, fontWeight: 500 }}/>
+                </Tooltip>
               </Stack>
-
             </Stack>
           </AccordionSummary>
 
           <AccordionDetails>
-   
-            {data?.days.map((day) => (
-              <Accordion key={day.date} sx={{ mb: 1 }}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Stack direction="row" justifyContent="space-between" width="100%">
+            {data?.days.map((day) => {
+              const compareDay = this.getDay(compareData?.days, day.date);
+              return (
+                <Accordion key={day.date} sx={{ mb: 1 }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Stack direction="row" justifyContent="space-between" width="100%">
+                      <Typography sx={{ fontWeight: 'bold' }}>{formatDateReverse(day.date)}</Typography>
 
-                    <Typography sx={{ fontWeight: 'bold' }}>{formatDateReverse(day.date)}</Typography>
+                      <Stack direction="row" spacing={1}>
+                        <Typography>Наличные за день:</Typography>
+                        <Typography sx={{ fontWeight: 'bold', color: getColor(day.summ_cash, compareDay?.summ_cash) }}>
+                          {formatNumber(day.summ_cash ?? 0)} ₽
+                        </Typography>
+                        <Tooltip title="Количество чеков" arrow>
+                          <Chip label={formatNumber(day?.count_cash_checks ?? 0)} size="small" sx={{ ml: 1, fontWeight: 500 }}/>
+                        </Tooltip>
+                      </Stack>
 
-                    <Stack direction="row" spacing={1}>
-                      <Typography>Наличные за день:</Typography>
-                      <Typography sx={{ fontWeight: 'bold' }}>
-                        {formatNumber(day.summ_cash ?? 0)} ₽
-                      </Typography>
+                      <Stack direction="row" spacing={1}>
+                        <Typography>Безнал за день:</Typography>
+                        <Typography sx={{ fontWeight: 'bold', color: getColor(day.summ_bank, compareDay?.summ_bank) }} >
+                          {formatNumber(day.summ_bank ?? 0)} ₽
+                        </Typography>
+                        <Tooltip title="Количество чеков" arrow>
+                          <Chip label={formatNumber(day?.count_bank_checks ?? 0)} size="small" sx={{ ml: 1, fontWeight: 500 }}/>
+                        </Tooltip>
+                      </Stack>
                     </Stack>
+                  </AccordionSummary>
 
-                    <Stack direction="row" spacing={1}>
-                      <Typography>Безнал за день:</Typography>
-                      <Typography sx={{ fontWeight: 'bold' }}>
-                        {formatNumber(day.summ_bank ?? 0)} ₽
-                      </Typography>
-                    </Stack>
-
-                  </Stack>
-                </AccordionSummary>
-
-                <AccordionDetails>
-                  <Paper elevation={1} sx={{ width: '100%', overflowX: 'auto' }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Касса</TableCell>
-                          <TableCell align="right">Наличные</TableCell>
-                          <TableCell align="right">Безнал</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {day.kass.map((k) => (
-                          <TableRow key={k.kassa}>
-                            <TableCell component="th" scope="row"> {`${k.kassa}${k.kassa === 2 ? ' (онлайн)' : ''}`}</TableCell>
-                            <TableCell align="right">{formatNumber(k.summ_cash ?? 0)} ₽</TableCell>
-                            <TableCell align="right">{formatNumber(k.summ_bank ?? 0)} ₽</TableCell>
+                  <AccordionDetails>
+                    <Paper elevation={1} sx={{ width: '100%', overflowX: 'auto' }}>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Касса</TableCell>
+                            <TableCell align="right">Наличные</TableCell>
+                            <TableCell align="right">Безнал</TableCell>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </Paper>
-                </AccordionDetails>
-              </Accordion>
-            ))}
+                        </TableHead>
+                        <TableBody>
+                          {day.kass.map((k) => {
+                            const compareK = this.getKassa(compareDay?.kass, k.kassa);
+                            return (
+                              <TableRow key={k.kassa}>
+                                <TableCell component="th" scope="row">{`${k.kassa}${k.kassa === 2 ? ' (онлайн)' : ''}`}
+                                </TableCell>
+                                <TableCell align="right" sx={{ color: getColor(k.summ_cash, compareK?.summ_cash) }}>
+                                  {formatNumber(k.summ_cash ?? 0)} ₽
+                                </TableCell>
+                                <TableCell align="right" sx={{ color: getColor(k.summ_bank, compareK?.summ_bank) }}>
+                                  {formatNumber(k.summ_bank ?? 0)} ₽
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </Paper>
+                  </AccordionDetails>
+                </Accordion>
+              );
+            })}
           </AccordionDetails>
         </Accordion>
       </Box>
@@ -248,11 +326,12 @@ class CheckCheck_Modal extends React.Component {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell colSpan={5}>Список заказов</TableCell>
+                    <TableCell colSpan={6}>Список заказов</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell>#</TableCell>
                     <TableCell>Номер заказа</TableCell>
+                    <TableCell>Тип заказа</TableCell>
                     <TableCell>Дата/Время заказа</TableCell>
                     <TableCell>Сумма заказа</TableCell>
                     <TableCell>Выбрать</TableCell>
@@ -263,6 +342,7 @@ class CheckCheck_Modal extends React.Component {
                     <TableRow key={key}>
                       <TableCell>{key + 1}</TableCell>
                       <TableCell>{item.id}</TableCell>
+                      <TableCell>{item.order_type}</TableCell>
                       <TableCell>{item.date}</TableCell>
                       <TableCell>{formatNumber(item.summ_check ?? 0)} ₽</TableCell>
                       <TableCell>
@@ -324,6 +404,8 @@ class CheckCheck_ extends React.Component {
       isAccordionOpen: false,
 
       confirmDialog: false,
+
+      unfisc_online_orders: null
     };
   }
 
@@ -423,6 +505,7 @@ class CheckCheck_ extends React.Component {
         complete_data: res.complete_data,
         summ_ofd: res.summ_ofd,
         summ_chef: res.summ_chef,
+        unfisc_online_orders: res.unfisc_online_orders,
       });
 
     }
@@ -510,7 +593,10 @@ class CheckCheck_ extends React.Component {
 
     const res = await this.getData('check_data_1C', data);
 
-    if(res.st) {  
+    if(res.st && res.need_upload) {  
+      this.upload_data_1C('export');
+
+    } else if (res.st && !res.need_upload) {
 
       this.setState({
         confirmDialog: true,
@@ -539,7 +625,7 @@ class CheckCheck_ extends React.Component {
   };
 
   render() {
-    const { is_load, openAlert, err_status, err_text, modalOrder, fullScreen, orders, module_name, date_start, date_end, points, kass, point_id, kassa, complete_data, order, summ_ofd, summ_chef, confirmDialog} = this.state;
+    const { is_load, openAlert, err_status, err_text, modalOrder, fullScreen, orders, module_name, date_start, date_end, points, kass, point_id, kassa, complete_data, order, summ_ofd, summ_chef, confirmDialog, unfisc_online_orders} = this.state;
 
     return (
       <>
@@ -549,40 +635,65 @@ class CheckCheck_ extends React.Component {
 
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
-          maxWidth="sm"
+          maxWidth="md"
           open={confirmDialog}
           onClose={() => this.setState({ confirmDialog: false })}
         >
-          <DialogTitle>Выберите действие</DialogTitle>
+          <DialogTitle>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Выберите действие
+            </Typography>
+            <Typography variant="body1" gutterBottom sx={{ fontWeight: 'bold' }}>
+              По выбранным параметрам (точка, период, кассы) в 1С уже есть данные
+            </Typography>
+          </DialogTitle>
           <DialogContent>
             <List>
               <ListItemButton
                 onClick={() => this.upload_data_1C('export')}
                 sx={{
-                  mb: 1,
+                  mb: 3,
                   border: '1px solid',
                   borderColor: 'primary.main',
                   borderRadius: 1,
+                  bgcolor: 'background.paper',
+                  '&:hover': { bgcolor: 'primary.lighter' }
                 }}
               >
                 <ListItemText
-                  primary="Выгрузить данные в 1С"
+                  primary="Все равно выгрузить данные в 1С (возможны дубли!)"
                   primaryTypographyProps={{ fontWeight: 'medium', color: 'primary.main' }}
                 />
               </ListItemButton>
               <ListItemButton
                 onClick={() => this.upload_data_1C('clear')}
                 sx={{
-                  bgcolor: '#c03',
-                  mb: 1,
-                  border: '1px solid #a00',
+                  mb: 3,
+                  border: '1px solid',
+                  borderColor: 'primary.main',
                   borderRadius: 1,
-                  '&:hover': { bgcolor: '#b02' },
+                  bgcolor: 'background.paper',
+                  '&:hover': { bgcolor: 'primary.lighter' }
                 }}
               >
                 <ListItemText
-                  primary="Очистить данные в 1С и после выгрузить данные в 1С"
-                  primaryTypographyProps={{ fontWeight: 'medium', color: '#fff' }}
+                  primary="Очистить данные в 1С по выбранным параметрам и после выгрузить данные в 1С"
+                  primaryTypographyProps={{ fontWeight: 'medium', color: 'primary.main' }}
+                />
+              </ListItemButton>
+              <ListItemButton
+                onClick={() => this.upload_data_1C('all')}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'primary.main',
+                  borderRadius: 1,
+                  bgcolor: 'background.paper',
+                  '&:hover': { bgcolor: 'primary.lighter' }
+                }}
+              >
+                <ListItemText
+                  primary="Очистить ВСЕ данные в 1С по точке и выбранным кассам и после выгрузить данные в 1С"
+                  primaryTypographyProps={{ fontWeight: 'medium', color: 'primary.main' }}
                 />
               </ListItemButton>
             </List>
@@ -687,7 +798,7 @@ class CheckCheck_ extends React.Component {
                 </AccordionSummary>
                 {complete_data.length <= 100 &&
                   <AccordionDetails>
-                    <Table size='small'>
+                    <Table>
                       <TableHead>
                         <TableRow>
                           <TableCell>#</TableCell>
@@ -719,10 +830,19 @@ class CheckCheck_ extends React.Component {
             </Grid>
           }
 
+          {!unfisc_online_orders ? null :
+            <Grid item xs={12} sm={12}>
+              <CheckCheck_Accordion_online
+                orders={unfisc_online_orders}
+              />
+            </Grid>
+          }
+
           {!summ_ofd ? null :
             <Grid item xs={12} sm={6} mb={5}>
               <CheckCheck_Accordion
                 data={summ_ofd}
+                compareData={summ_chef}
                 type='Суммы из выгруженного ОФД'
               />
             </Grid>
@@ -732,6 +852,7 @@ class CheckCheck_ extends React.Component {
             <Grid item xs={12} sm={6} mb={5}>
               <CheckCheck_Accordion
                 data={summ_chef}
+                compareData={summ_ofd}
                 type='Суммы из системы ШЕФ'
               />
             </Grid>
