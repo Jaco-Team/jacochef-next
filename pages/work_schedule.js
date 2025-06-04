@@ -225,7 +225,7 @@ class HeaderItem extends React.Component {
                   <CloseIcon style={{ fontSize: 30, color: 'red' }} />}
               </TableCell>
               <TableCell style={{ textAlign: 'center', cursor: 'pointer' }} onClick={this.props.kind == 'manager' || this.props.kind == 'dir' ? () => {} : this.props.changeLVDir}>
-                
+
               </TableCell>
             </>
           )}
@@ -362,7 +362,7 @@ class WorkSchedule_Table extends React.Component {
                   this.props.kind !== 'manager' &&
                   this.props.kind !== 'other' ? (
                     <TableRow>
-                      <TableCell colSpan={this.props.number.days.length + 3 + 8 + 2} style={{ textAlign: 'left', fontSize: '3rem', cursor: 'pointer' }} 
+                      <TableCell colSpan={this.props.number.days.length + 3 + 8 + 2} style={{ textAlign: 'left', fontSize: '3rem', cursor: 'pointer' }}
                         onClick={this.props.addSmena.bind(this)}>
                         Добавить смену
                       </TableCell>
@@ -373,9 +373,9 @@ class WorkSchedule_Table extends React.Component {
                 <TableRow key={key} style={{ backgroundColor: item?.color ? '#D3D3D3' : '#fff'}}>
 
                   <TableCell className="name_pinning"
-                    style={{ 
+                    style={{
                       background: item?.color ? '#D3D3D3' : parseInt(item.data.type) == 0 ? '#fff' : parseInt(item.data.type) == 1 ? '#fff' : parseInt(item.data.type) == 2 ? '#ffcc00' : '#c03',
-                      color: item?.color ? '#000' : parseInt(item.data.type) == 0 ? '#000' : parseInt(item.data.type) == 1 ? '#000' : parseInt(item.data.type) == 2 ? '#000' : '#fff' 
+                      color: item?.color ? '#000' : parseInt(item.data.type) == 0 ? '#000' : parseInt(item.data.type) == 1 ? '#000' : parseInt(item.data.type) == 2 ? '#000' : '#fff'
                     }}
                     onClick={this.props.kind == 'manager' ? () => {} : this.props.openM.bind(this, item.data)}>
                     {item.data.user_name}
@@ -398,9 +398,14 @@ class WorkSchedule_Table extends React.Component {
                   {item.data.dates.map((date, date_k) => (
                     <TableCell onClick={this.props.openH.bind(this, item.data, date.date)}
                       className="min_block"
+                      sx={item.data?.smena_id === '-1' ? {
+                        opacity: 0.5,
+                        pointerEvents: 'none',
+                        cursor: 'not-allowed',
+                      } : null}
                       style={{
-                        backgroundColor: item?.color ? '#D3D3D3' : date.info ? date.info.color : '#fff', 
-                        color: item?.color ? '#000' : date.info ? date.info.colorT : '#000', 
+                        backgroundColor: item?.color ? '#D3D3D3' : date.info ? date.info.color : '#fff',
+                        color: item?.color ? '#000' : date.info ? date.info.colorT : '#000',
                         cursor: 'pointer' }}
                       key={date_k}
                     >
@@ -408,7 +413,7 @@ class WorkSchedule_Table extends React.Component {
                     </TableCell>
                   ))}
 
-                  <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }} 
+                  <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}
                     onClick={this.props.kind == 'manager' ? () => {} : this.props.pricePerHour.bind(this, item.data)}
                   >
                     {item.data.price_p_h}
@@ -427,10 +432,10 @@ class WorkSchedule_Table extends React.Component {
                   <TableCell style={{ textAlign: 'center' }}>
                     {parseInt(item.data.check_period) == 1 ? item.data.err_price : ' - '}
                   </TableCell>
-                  
-                  <TableCell 
-                    style={{ textAlign: 'center', cursor: item.data.app_type == 'dir' && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') ? 'pointer' : 'default', backgroundColor: this.props.numberChoose == 2 && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') && item.data.app_type == 'dir' ? '#e5e5e5' : '#fff' }} 
-                    onClick={ this.props.numberChoose == 2 && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') && item.data.app_type == 'dir' ? this.props.openModalDirBonus.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data) : () => { console.log( this.props.numberChoose, this.props.kind, item.data.app_type, this.props.numberChoose == 2 && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') && item.data.app_type == 'dir' ) } } 
+
+                  <TableCell
+                    style={{ textAlign: 'center', cursor: item.data.app_type == 'dir' && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') ? 'pointer' : 'default', backgroundColor: this.props.numberChoose == 2 && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') && item.data.app_type == 'dir' ? '#e5e5e5' : '#fff' }}
+                    onClick={ this.props.numberChoose == 2 && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') && item.data.app_type == 'dir' ? this.props.openModalDirBonus.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data) : () => { console.log( this.props.numberChoose, this.props.kind, item.data.app_type, this.props.numberChoose == 2 && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') && item.data.app_type == 'dir' ) } }
                     //onClick={ item.data.app_type == 'dir' || this.props.kind == 'dir' ? () => {} : this.props.openZPCart.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data)}
                   >
                     {parseInt(item.data.check_period) == 1 ? item.data.my_bonus : ' - '}
@@ -732,7 +737,7 @@ class WorkSchedule_Table_without_functions extends React.Component {
                         </TableCell>
                       ) : null}
 
-                      {item.data.app_type == 'driver' ? <TableCell style={{ textAlign: 'center' }}></TableCell> : 
+                      {item.data.app_type == 'driver' ? <TableCell style={{ textAlign: 'center' }}></TableCell> :
                         <TableCell style={{ textAlign: 'center' }}>
                           {item.data.given}
                         </TableCell>
@@ -742,7 +747,7 @@ class WorkSchedule_Table_without_functions extends React.Component {
                         {item.data.given_cart}
                       </TableCell>
                       <TableCell style={{ textAlign: 'center' }}>
-                      
+
                       </TableCell>
                     </>
                   )}
@@ -1454,7 +1459,7 @@ class WorkSchedule_ extends React.Component {
       textConfirm: 'Точно сменить точку с сегоднешнего дня ?',
     });
   }
- 
+
   async fastPoint(point_id, smena_id) {
     let data = {
       new_point_id: point_id,
@@ -1691,7 +1696,7 @@ class WorkSchedule_ extends React.Component {
       if(res.type === this.state.typeTimeAdd) {
 
         let newArr = arr.filter((item) => item.date !== newValue);
-  
+
         this.setState({
           arrTimeAdd: newArr,
         });
@@ -1763,7 +1768,7 @@ class WorkSchedule_ extends React.Component {
       parseInt(user.dir_price) +
       parseInt(user.dir_price_dop) +
       parseInt(user.dop_bonus) -
-      parseInt(user.err_price) - 
+      parseInt(user.err_price) -
       parseInt(user.given_cart);
 
     this.setState({
@@ -2280,7 +2285,7 @@ class WorkSchedule_ extends React.Component {
           item.color = false
         }
       })
-  
+
       this.setState({
         test_one,
       });
@@ -2296,7 +2301,7 @@ class WorkSchedule_ extends React.Component {
           item.color = false
         }
       })
-  
+
       this.setState({
         test_two,
       });
@@ -2373,7 +2378,7 @@ class WorkSchedule_ extends React.Component {
           onClose={() => this.setState({ confirmDialog: false, textConfirm: '', methodConfirm: null })}
           textConfirm={this.state.textConfirm}
           methodConfirm={this.state.methodConfirm}
-        /> 
+        />
 
         <Dialog onClose={() => this.setState({ mainMenuAddUsersMounth: false })} open={this.state.mainMenuAddUsersMounth}>
           <List sx={{ pt: 0 }}>
@@ -3412,7 +3417,7 @@ class WorkSchedule_ extends React.Component {
         {/* бонус директора */}
         <Dialog onClose={() => this.setState({ isModalDirBonus: false, dir_bonus: 0 })} open={this.state.isModalDirBonus}>
           <DialogTitle>Бонус директора {this.state?.userInfo?.name} {this.state?.userInfo?.date}</DialogTitle>
-          
+
           <DialogContent>
             <Grid container spacing={3} style={{ marginTop: 10 }}>
 
@@ -3424,7 +3429,7 @@ class WorkSchedule_ extends React.Component {
                 />
               </Grid>
 
-              
+
             </Grid>
           </DialogContent>
           <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -3462,7 +3467,7 @@ class WorkSchedule_ extends React.Component {
             <Button variant="contained" onClick={this.updateData.bind(this)}>
               Обновить данные
             </Button>
-         
+
             <Button variant="contained" onClick={() => this.setState({ isOpenWS: true })}>
               Распечатать
             </Button>
@@ -3480,7 +3485,7 @@ class WorkSchedule_ extends React.Component {
                 value={this.state.tabTable}
                 onChange={(event, data) => {
                   localStorage.setItem('tabTable', data);
-                  this.setState({ 
+                  this.setState({
                     tabTable: data,
                     addUsers: []
                   });
