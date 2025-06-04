@@ -398,7 +398,7 @@ class WorkSchedule_Table extends React.Component {
                   {item.data.dates.map((date, date_k) => (
                     <TableCell onClick={this.props.openH.bind(this, item.data, date.date)}
                       className="min_block"
-                      sx={!date.info?.hours ? {
+                      sx={item.data?.smena_id === '-1' ? {
                         opacity: 0.5,
                         pointerEvents: 'none',
                         cursor: 'not-allowed',
