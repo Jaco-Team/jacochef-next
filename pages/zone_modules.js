@@ -14,6 +14,7 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -69,7 +70,7 @@ class ZoneModules_Modal_History extends React.Component {
 
       if(this.props.zone_data){
         this.getZone(this.props.zone_data);
-      } 
+      }
 
       this.setState({
         itemView: this.props.itemView
@@ -87,7 +88,7 @@ class ZoneModules_Modal_History extends React.Component {
           { center: JSON.parse(zone_data['xy_point']), zoom: 10 },
           { searchControlProvider: 'yandex#search' }
         );
-   
+
         this.myGeoObject_2 = new ymaps.Polygon(
           [JSON.parse(zone_data.coordinates)],
           { geometry: { fillRule: 'nonZero' }},
@@ -113,16 +114,16 @@ class ZoneModules_Modal_History extends React.Component {
               strokeWidth: 5,
             }
           );
-  
+
           this.map_2.geoObjects.add(myGeoObject_3);
         }
 
-     
+
       });
     } else {
 
       this.map_2.geoObjects.removeAll();
- 
+
       this.myGeoObject_2 = new ymaps.Polygon(
         [JSON.parse(zone_data.coordinates)],
         { geometry: { fillRule: 'nonZero' } },
@@ -304,7 +305,7 @@ class ZoneModules_Modal extends React.Component {
         this.getZones(this.props.item.points[0], this.props.item.other_zone);
       }
 
-      if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future') {
+      if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future' || this.props.mark === 'copyZone') {
         this.getZones(this.props.item.zone, this.props.item.other_zone);
       }
 
@@ -312,7 +313,7 @@ class ZoneModules_Modal extends React.Component {
 
       if (zones.length) {
 
-        if (this.props.mark === 'editZone') {
+        if (this.props.mark === 'editZone' || this.props.mark === 'copyZone') {
           zones = zones.filter(zone => zone.id !== this.props.item.zone.id)
         }
 
@@ -351,7 +352,7 @@ class ZoneModules_Modal extends React.Component {
         this.map.geoObjects.add(myGeoObject1);
 
         // редактирование границ изменяемой зоны
-        if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future') {
+        if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future' || this.props.mark === 'copyZone') {
           // Создаем многоугольник, используя класс GeoObject.
           this.myGeoObject = new ymaps.Polygon(
             [JSON.parse(point['zone'])],
@@ -480,7 +481,7 @@ class ZoneModules_Modal extends React.Component {
       isDrawing: !this.state.isDrawing,
     });
 
-    if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future') {
+    if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future' || this.props.mark === 'copyZone') {
       this.myGeoObject.editor.startEditing();
 
       return;
@@ -526,7 +527,7 @@ class ZoneModules_Modal extends React.Component {
       isDrawing: !this.state.isDrawing,
     });
 
-    if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future') {
+    if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future' || this.props.mark === 'copyZone') {
       this.myGeoObject.editor.stopEditing();
     } else if (this.props.mark === 'newZone' && this.myGeoObject) {
       this.myGeoObject.editor.stopEditing();
@@ -593,7 +594,7 @@ class ZoneModules_Modal extends React.Component {
       this.getZones(this.props.item.points[0], item.other_zone);
     }
 
-    if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future') {
+    if (this.props.mark === 'editZone' || this.props.mark === 'editZone_future' || this.props.mark === 'copyZone') {
       this.getZones(this.props.item.zone, item.other_zone);
     }
 
@@ -619,30 +620,30 @@ class ZoneModules_Modal extends React.Component {
       if(date_edit === 1) {
 
         const date_now = dayjs();
-        
+
         let date_start = this.state.date_start;
-    
+
         if(!date_start){
-    
+
           this.setState({
             openAlert: true,
             err_status: false,
             err_text: 'Указание даты обязательно',
           });
-    
+
           return;
         }
-    
+
         date_start = dayjs(this.state.date_start);
-    
+
         if(date_start.isSame(date_now, 'day') || date_start.isBefore(date_now, 'day')){
-    
+
           this.setState({
             openAlert: true,
             err_status: false,
             err_text: 'Сохранение возможно только при указании будущей даты (позже сегодняшней даты)'
           });
-    
+
           return;
         }
 
@@ -659,7 +660,7 @@ class ZoneModules_Modal extends React.Component {
   }
 
   changeDateRange(data, event) {
-    
+
     if(event === null){
 
       if(this.props.mark === 'editZone_future') {
@@ -667,22 +668,22 @@ class ZoneModules_Modal extends React.Component {
         const item = this.state.item;
 
         const date_start =  item.zone.date_start;
-  
+
         item.zone[data] = date_start;
-  
+
         this.setState({
           openAlert: true,
           err_status: false,
           err_text: 'Указание даты обязательно',
           item,
         });
-  
+
       } else {
 
         this.setState({
           date_edit: '',
         });
-  
+
       }
 
       return;
@@ -719,7 +720,7 @@ class ZoneModules_Modal extends React.Component {
       });
 
     }
-   
+
   }
 
   changeSelect(event) {
@@ -742,7 +743,7 @@ class ZoneModules_Modal extends React.Component {
     }
 
     const item = this.state.item.zone;
-    
+
     item.new_zone = JSON.stringify(this.myGeoObject.geometry.getCoordinates().flat(1));
 
     if (item.new_zone === '[]') {
@@ -932,8 +933,8 @@ class ZoneModules_Modal extends React.Component {
               </Grid>
 
               <Grid item xs={12} sm={3}>
-                <Button 
-                  variant="contained" 
+                <Button
+                  variant="contained"
                   onClick={this.state.isDrawing ? this.startDrawing.bind(this) : this.stopDrawing.bind(this)}
                   style={{ whiteSpace: 'nowrap' }}
                 >
@@ -963,7 +964,7 @@ class ZoneModules_Modal extends React.Component {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button variant="contained" onClick={this.props.mark === 'newZone' || this.props.mark === 'editZone_future' ? this.save.bind(this) : () => this.setState({ dateDialog: true })}>
+            <Button variant="contained" onClick={this.props.mark === 'newZone' || this.props.mark === 'editZone_future' || this.props.mark === 'copyZone' ? this.save.bind(this) : () => this.setState({ dateDialog: true })}>
               Сохранить
             </Button>
           </DialogActions>
@@ -1117,6 +1118,23 @@ class ZoneModules_ extends React.Component {
 
     }
 
+    if (mark === 'copyZone') {
+
+      const data = {
+        point_id: item.point_id,
+        name: item.zone_name,
+        sum_div: item.sum_div,
+        sum_div_driver: item.sum_div_driver,
+        free_drive: item.free_drive,
+        new_zone: item.new_zone,
+        zone_id: item.id,
+        is_active: item.is_active,
+      };
+
+      res = await this.getData('copy_zone', data);
+
+    }
+
     if (mark === 'editZone') {
 
       const data = {
@@ -1171,7 +1189,7 @@ class ZoneModules_ extends React.Component {
         err_status: res.st,
         err_text: res.text,
       });
-      
+
       setTimeout( () => {
         this.update();
       }, 300)
@@ -1221,6 +1239,32 @@ class ZoneModules_ extends React.Component {
       });
     }
 
+    if (mark === 'copyZone') {
+      const data = {
+        city_id,
+        zone_id,
+      };
+      let item = await this.getData('get_one', data);
+      item = {
+        ...item,
+        zone: {
+          ...item.zone,
+          zone_name: 'Новая ' + item.zone.zone_name,
+          is_active: 1,
+        }
+      }
+
+      item.zone.point_id = item.points[0].id;
+
+      this.setState({
+        modalDialog: true,
+        method,
+        mark,
+        item,
+        itemName: item.zone.zone_name,
+      });
+    }
+
     if (mark === 'editZone') {
       const data = {
         city_id,
@@ -1244,7 +1288,7 @@ class ZoneModules_ extends React.Component {
         zone_id,
         id
       };
-     
+
       const item = await this.getData('get_one_future', data);
 
       this.setState({
@@ -1283,7 +1327,7 @@ class ZoneModules_ extends React.Component {
     } else {
       await this.getData('delete_zone_future', data);
     }
- 
+
     setTimeout( () => {
       this.update();
     }, 300)
@@ -1304,12 +1348,12 @@ class ZoneModules_ extends React.Component {
     let itemView_old;
 
     if(parseInt(index) !== 0) {
-      
+
       itemView_old = JSON.parse(JSON.stringify(item[index - 1]));
-     
+
       itemView_old.free_drive = parseInt(itemView_old.free_drive) ? 'Да' : 'Нет';
       itemView_old.is_active = parseInt(itemView_old.is_active) ? 'Да' : 'Нет';
-      
+
       for (let key in itemView) {
         if(itemView[key] !== itemView_old[key]) {
 
@@ -1323,14 +1367,14 @@ class ZoneModules_ extends React.Component {
         } else {
           if(key === 'point_id') {
             itemView.point_id = points.find((item) => item.id === itemView.point_id)?.name ?? '';
-          } 
+          }
         }
       }
-      
+
     } else {
 
       itemView.point_id = points.find((item) => item.id === itemView.point_id)?.name ?? '';
-    
+
     }
 
     let date_edit;
@@ -1392,7 +1436,7 @@ class ZoneModules_ extends React.Component {
 
     this.map_hist = null;
     this.myGeoObject_hist = null;
-    
+
     const zones = this.state.zones;
 
     zones.forEach(zone => {
@@ -1401,16 +1445,16 @@ class ZoneModules_ extends React.Component {
 
         if(zone.is_open) {
           zone.hist.forEach((z) => {
-  
+
             let zone_data = {
               coordinates: z.zone,
               xy_point: z.xy_point
             };
-  
+
             this.getZone_hist(zone_data, `map_hist_${z.date_time_update}`);
           })
         }
-       
+
       } else {
         zone.is_open = false;
       }
@@ -1420,8 +1464,8 @@ class ZoneModules_ extends React.Component {
     this.setState({
       zones,
     });
-    
-  } 
+
+  }
 
   getZone_hist(zone_data, mapId) {
     if (!this.map_hist) {
@@ -1432,7 +1476,7 @@ class ZoneModules_ extends React.Component {
           { center: JSON.parse(zone_data['xy_point']), zoom: 10 },
           { searchControlProvider: 'yandex#search' }
         );
-   
+
         this.myGeoObject_hist = new ymaps.Polygon(
           [JSON.parse(zone_data.coordinates)],
           { geometry: { fillRule: 'nonZero' }},
@@ -1445,13 +1489,13 @@ class ZoneModules_ extends React.Component {
         );
 
         this.map_hist.geoObjects.add(this.myGeoObject_hist);
-     
+
       });
 
     } else {
 
       this.map_hist.geoObjects.removeAll();
- 
+
       this.myGeoObject_hist = new ymaps.Polygon(
         [JSON.parse(zone_data.coordinates)],
         { geometry: { fillRule: 'nonZero' } },
@@ -1488,11 +1532,11 @@ class ZoneModules_ extends React.Component {
           </DialogActions>
         </Dialog>
 
-        <MyAlert 
-          isOpen={this.state.openAlert} 
-          onClose={() => this.setState({ openAlert: false }) } 
-          status={this.state.err_status} 
-          text={this.state.err_text} 
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false }) }
+          status={this.state.err_status}
+          text={this.state.err_text}
         />
 
         <ZoneModules_Modal
@@ -1555,6 +1599,7 @@ class ZoneModules_ extends React.Component {
                     <TableCell style={{ width: '10%' }} align="center">Бесплатная доставка</TableCell>
                     <TableCell style={{ width: '10%' }} align="center">Активность</TableCell>
                     <TableCell style={{ width: '12%' }} align="center">Удалить</TableCell>
+                    <TableCell style={{ width: '10%' }} align="center">Копировать</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -1563,13 +1608,13 @@ class ZoneModules_ extends React.Component {
                     <React.Fragment key={key}>
                       <TableRow hover>
                         <TableCell>{key + 1}</TableCell>
-                        <TableCell 
-                          onClick={item.hist.length ? this.openHistZone.bind(this, item.id) : null} 
+                        <TableCell
+                          onClick={item.hist.length ? this.openHistZone.bind(this, item.id) : null}
                           style={{ cursor: item.hist.length ? 'pointer' : 'unset' }}
                         >
                           {!item.hist.length ? null :
-                            <Tooltip title={<Typography color="inherit">История последних изменений</Typography>}> 
-                              <ExpandMoreIcon 
+                            <Tooltip title={<Typography color="inherit">История последних изменений</Typography>}>
+                              <ExpandMoreIcon
                                 style={{ display: 'flex', transform: item.is_open ? 'rotate(180deg)' : 'rotate(0deg)' }}
                               />
                             </Tooltip>
@@ -1589,6 +1634,11 @@ class ZoneModules_ extends React.Component {
                             <DeleteIcon />
                           </IconButton>
                         </TableCell>
+                        <TableCell align="center">
+                          <IconButton onClick={this.openModal.bind(this, 'copyZone', 'Копирование зоны', item.id)}>
+                            <ContentCopyIcon />
+                          </IconButton>
+                        </TableCell>
                       </TableRow>
                       <TableRow>
                         <TableCell style={{ padding: 0 }} colSpan={10}>
@@ -1606,7 +1656,7 @@ class ZoneModules_ extends React.Component {
                                   </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                  {item.hist.map((it, k) => 
+                                  {item.hist.map((it, k) =>
                                     <TableRow key={k}>
                                       <TableCell style={{ verticalAlign: 'top' }}>{k + 1}</TableCell>
                                       <TableCell style={{ verticalAlign: 'top' }}></TableCell>
@@ -1677,7 +1727,7 @@ class ZoneModules_ extends React.Component {
               </TableContainer>
             </Grid>
           }
-          
+
           {!this.state.zones_hist.length ? null :
             <Grid item xs={12} sm={12} mb={5}>
               <Accordion style={{ width: '100%' }}>
@@ -1696,9 +1746,9 @@ class ZoneModules_ extends React.Component {
                     </TableHead>
                     <TableBody>
                       {this.state.zones_hist.map((it, k) =>
-                        <TableRow 
-                          hover 
-                          key={k} 
+                        <TableRow
+                          hover
+                          key={k}
                           style={{ cursor: 'pointer'}}
                           onClick={this.open_hist_zone.bind(this, it.id, it.zone_id)}
                         >
