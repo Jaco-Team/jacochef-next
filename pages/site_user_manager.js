@@ -1052,9 +1052,6 @@ class SiteUserManager_ extends React.Component {
                         <Accordion>
                           <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
                             <Typography sx={{fontWeight: 'bold'}}>История измненений</Typography>
-                            <Tooltip title="Количество заказов" arrow>
-                              <Chip label={this.state.editUser.user.history.length} color="primary" size="small" sx={{ml: 1}}/>
-                            </Tooltip>
                           </AccordionSummary>
                           <AccordionDetails>
                             <TableContainer component={Paper}>
@@ -1100,9 +1097,6 @@ class SiteUserManager_ extends React.Component {
                         <Accordion>
                           <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
                             <Typography sx={{fontWeight: 'bold'}}>История отпусков</Typography>
-                            <Tooltip title="Количество заказов" arrow>
-                              <Chip label={this.state.editUser.user.vacation.length} color="primary" size="small" sx={{ml: 1}}/>
-                            </Tooltip>
                           </AccordionSummary>
                           <AccordionDetails>
                             <TableContainer component={Paper}>
