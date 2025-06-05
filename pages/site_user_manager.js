@@ -29,6 +29,14 @@ import {MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyDatePickerNew, MyAl
 import Dropzone from 'dropzone';
 import { api_laravel, api_laravel_local } from '@/src/api_new';
 import dayjs from 'dayjs';
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import Typography from "@mui/material/Typography";
+import Tooltip from "@mui/material/Tooltip";
+import Chip from "@mui/material/Chip";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import Box from "@mui/material/Box";
 
 class SiteUserManagerTable extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -66,7 +74,7 @@ class SiteUserManagerTable extends React.Component {
                 <TableCell>{key + 1}</TableCell>
                 <TableCell>
                   {item['img_name'] === null ? null : (
-                    <img 
+                    <img
                       alt={item.name}
                       src={'https://storage.yandexcloud.net/user-img/min-img/' + item['img_name'] + '?' + item['img_update']}
                       style={{ maxWidth: 100, maxHeight: 100 }}
@@ -148,6 +156,7 @@ class SiteUserManager_ extends React.Component {
       usersCopy: [],
       editUser: null,
       modalUserEdit: false,
+      modalVacation: false,
       modalUserNew: false,
 
       textDel: '',
@@ -310,7 +319,7 @@ class SiteUserManager_ extends React.Component {
   changeItem(data, event) {
     let vendor = this.state.editUser;
 
-    if (data == 'birthday') {
+    if (data == 'birthday' || data == 'vacationStart' || data == 'vacationEnd') {
       vendor.user[data] = event;
     } else {
       if (data == 'acc_to_kas') {
@@ -481,7 +490,6 @@ class SiteUserManager_ extends React.Component {
         textDel: this.state.textDel,
         graphType: graphType,
       };
-
       let res = await this.getData('saveEditUser', data);
 
       if (res.st === false) {
@@ -516,6 +524,57 @@ class SiteUserManager_ extends React.Component {
       setTimeout(() => {
         this.click = false;
       }, 300);
+    }
+  }
+
+  async saveVacationUser() {
+    if (!this.click) {
+      this.click = true;
+      const { user } = this.state.editUser;
+      user.app_id = this.state.chose_app !== null ? this.state.chose_app.id : 0;
+
+      if (user.birthday) {
+        user.birthday = dayjs(user.birthday).format('YYYY-MM-DD');
+      }
+
+      if (user.vacationStart) {
+        user.vacationStart = dayjs(user.vacationStart).format('YYYY-MM-DD');
+      }
+
+      if (user.vacationEnd) {
+        user.vacationEnd = dayjs(user.vacationEnd).format('YYYY-MM-DD');
+      }
+
+      let data = {
+        user,
+      };
+      let res = await this.getData('saveVacationUser', data);
+
+      if (res.st === false) {
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: res.text,
+        });
+      } else {
+        this.isInit = false;
+
+        this.setState({
+          modalVacation: false,
+        }, async () => {
+          let data = {
+            user_id: user.id,
+          };
+
+          let res = await this.getData('getUser', data);
+          this.setState({
+            editUser: res,
+            chose_app: res.user.app_id,
+            modalUserEdit: true,
+          });
+          this.click = false;
+        });
+      }
     }
   }
 
@@ -813,6 +872,42 @@ class SiteUserManager_ extends React.Component {
         </Dialog>
 
         <Dialog
+            open={this.state.modalVacation}
+            fullWidth={true}
+            maxWidth={'md'}
+            onClose={() => this.setState({modalVacation: false})}
+        >
+          <DialogTitle>Добавление отпуска сотруднику</DialogTitle>
+          <DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
+            {this.state.editUser && this.state.modalUserEdit ? (
+                <Grid item xs={12}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <MyDatePickerNew
+                          label="Дата начала"
+                          value={this.state.editUser.user.vacationStart ? dayjs(this.state.editUser.user.vacationStart) : null}
+                          func={this.changeItem.bind(this, 'vacationStart')}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <MyDatePickerNew
+                          label="Дата окончания"
+                          value={this.state.editUser.user.vacationEnd ? dayjs(this.state.editUser.user.vacationEnd) : null}
+                          func={this.changeItem.bind(this, 'vacationEnd')}
+                      />
+                    </Grid>
+                  </Grid>
+                </Grid>
+            ) : null}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={this.saveVacationUser.bind(this)} color="primary">
+              Добавить
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
           open={this.state.modalUserEdit}
           fullWidth={true}
           maxWidth={'md'}
@@ -944,44 +1039,97 @@ class SiteUserManager_ extends React.Component {
                             is_none={false}
                           />
                         </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <Button onClick={() => this.setState({ modalVacation: true })} color="primary" variant="contained">
+                            Отпуск
+                          </Button>
+                        </Grid>
                       </Grid>
                     </Grid>
 
                     <Grid item xs={12}>
-                      <TableContainer component={Paper}>
-                        <Table size={'small'}>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell style={{ minWidth: 125 }}>Дата</TableCell>
-                              <TableCell>Кто обновлял</TableCell>
-                              <TableCell>Имя</TableCell>
-                              <TableCell>Телефон</TableCell>
-                              <TableCell>Код авторизации</TableCell>
-                              <TableCell>ИНН</TableCell>
-                              <TableCell>Должность</TableCell>
-                              <TableCell>Город</TableCell>
-                              <TableCell>Точка</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {this.state.editUser.user.history.map(
-                              (item, key) => (
-                                <TableRow key={key}>
-                                  <TableCell style={{ minWidth: 125 }}>{item.date_time_update}</TableCell>
-                                  <TableCell>{item.update_name}</TableCell>
-                                  <TableCell>{item.name}</TableCell>
-                                  <TableCell>{item.login}</TableCell>
-                                  <TableCell>{item.auth_code}</TableCell>
-                                  <TableCell>{item.inn}</TableCell>
-                                  <TableCell>{item.app_name}</TableCell>
-                                  <TableCell>{item.city_name}</TableCell>
-                                  <TableCell>{item.point_name}</TableCell>
-                                </TableRow>
-                              )
-                            )}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
+                      <Box>
+                        <Accordion>
+                          <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+                            <Typography sx={{fontWeight: 'bold'}}>История измненений</Typography>
+                            <Tooltip title="Количество заказов" arrow>
+                              <Chip label={this.state.editUser.user.history.length} color="primary" size="small" sx={{ml: 1}}/>
+                            </Tooltip>
+                          </AccordionSummary>
+                          <AccordionDetails>
+                            <TableContainer component={Paper}>
+                              <Table size={'small'}>
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell style={{minWidth: 125}}>Дата</TableCell>
+                                    <TableCell>Кто обновлял</TableCell>
+                                    <TableCell>Имя</TableCell>
+                                    <TableCell>Телефон</TableCell>
+                                    <TableCell>Код авторизации</TableCell>
+                                    <TableCell>ИНН</TableCell>
+                                    <TableCell>Должность</TableCell>
+                                    <TableCell>Город</TableCell>
+                                    <TableCell>Точка</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {this.state.editUser.user.history.map(
+                                    (item, key) => (
+                                      <TableRow key={key}>
+                                        <TableCell style={{minWidth: 125}}>{item.date_time_update}</TableCell>
+                                        <TableCell>{item.update_name}</TableCell>
+                                        <TableCell>{item.name}</TableCell>
+                                        <TableCell>{item.login}</TableCell>
+                                        <TableCell>{item.auth_code}</TableCell>
+                                        <TableCell>{item.inn}</TableCell>
+                                        <TableCell>{item.app_name}</TableCell>
+                                        <TableCell>{item.city_name}</TableCell>
+                                        <TableCell>{item.point_name}</TableCell>
+                                      </TableRow>
+                                    )
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          </AccordionDetails>
+                        </Accordion>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Box>
+                        <Accordion>
+                          <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+                            <Typography sx={{fontWeight: 'bold'}}>История отпусков</Typography>
+                            <Tooltip title="Количество заказов" arrow>
+                              <Chip label={this.state.editUser.user.vacation.length} color="primary" size="small" sx={{ml: 1}}/>
+                            </Tooltip>
+                          </AccordionSummary>
+                          <AccordionDetails>
+                            <TableContainer component={Paper}>
+                              <Table size={'small'}>
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell style={{minWidth: 125}}>№</TableCell>
+                                    <TableCell style={{minWidth: 125}}>Дата начала</TableCell>
+                                    <TableCell>Дата окончания</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {this.state.editUser.user.vacation.map(
+                                    (item, key) => (
+                                      <TableRow key={key}>
+                                        <TableCell>{key + 1}</TableCell>
+                                        <TableCell>{item.date_start}</TableCell>
+                                        <TableCell>{item.date_end}</TableCell>
+                                      </TableRow>
+                                    )
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          </AccordionDetails>
+                        </Accordion>
+                      </Box>
                     </Grid>
                   </Grid>
                 </Grid>
