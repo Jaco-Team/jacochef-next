@@ -22,11 +22,63 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import TextField from '@mui/material/TextField';
+
 import {MyAlert, MySelect, MyTextInput, formatDateMin, MyDatePickerNewViews, MyDateTimePickerNew} from '@/ui/elements';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+import 'dayjs/locale/ru'; // импортируем русскую локаль
+
+// для редактирования времени (при этом дату нельзя редактировать)
+class DateWithEditableTimePicker extends React.PureComponent {
+
+  handleTimeChange = (newTime) => {
+    const { value, onChange } = this.props;
+    if (!newTime) return;
+    if (value) {
+      const fixedDate = dayjs(value).format('YYYY-MM-DD');
+      const updated = dayjs(`${fixedDate} ${dayjs(newTime).format('HH:mm')}`);
+      onChange(updated);
+    }
+  };
+
+  render() {
+    const { value, labelDate, labelTime, disabled, ...rest } = this.props;
+    return (
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
+        <div style={{ display: 'flex', gap: 8 }}>
+          <TextField
+            label={labelDate || "Дата"}
+            value={value ? dayjs(value).format("YYYY-MM-DD") : ''}
+            InputProps={{ readOnly: true }}
+            size="small"
+            fullWidth
+          />
+          <TimePicker
+            label={labelTime || "Время"}
+            value={value || null}
+            onChange={this.handleTimeChange}
+            disabled={disabled}
+            ampm={false}
+            views={['hours', 'minutes']}
+            slotProps={{
+              textField: {
+                size: "small",
+                inputProps: { readOnly: true },
+              },
+            }}
+            disableClearable
+            {...rest}
+          />
+        </div>
+      </LocalizationProvider>
+    );
+  }
+}
 
 class Lamps_Modal_Add extends React.Component {
   constructor(props) {
@@ -168,7 +220,7 @@ class Lamps_Modal_Add_Active extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    // console.log(this.props.itemEdit);
+    //console.log(this.props.itemEdit);
 
     if (!this.props.itemEdit) {
       return;
@@ -287,11 +339,14 @@ class Lamps_Modal_Add_Active extends React.Component {
     }
 
     this.setState({
-      [data]: event ? event : '',
+      [data]: event ? event : null,
     });
   }
 
   render() {
+
+    const { typeActive } = this.props;
+
     return (
       <>
 
@@ -336,18 +391,36 @@ class Lamps_Modal_Add_Active extends React.Component {
               </Grid>
               
               <Grid item xs={12} sm={6}>
-                <MyDateTimePickerNew
-                  value={this.state.time_start}
-                  func={ newValue => this.changeDateRange('time_start', newValue)}
-                  label="Время начала работы"
-                />
+                {typeActive === 'new' ?
+                  <MyDateTimePickerNew
+                    value={this.state.time_start}
+                    func={newValue => this.changeDateRange('time_start', newValue)}
+                    label="Время начала работы"
+                  />
+                  :
+                  <DateWithEditableTimePicker
+                    value={this.state.time_start}
+                    onChange={newValue => this.changeDateRange('time_start', newValue)}
+                    labelDate="Дата начала работы"
+                    labelTime="Время начала"
+                  />
+                }
               </Grid>
               <Grid item xs={12} sm={6}>
-                <MyDateTimePickerNew
-                  value={this.state.time_end}
-                  func={ newValue => this.changeDateRange('time_end', newValue)}
-                  label="Время окончания работы"
-                />
+                {typeActive === 'new' ?
+                  <MyDateTimePickerNew
+                    value={this.state.time_end}
+                    func={newValue => this.changeDateRange('time_end', newValue)}
+                    label="Время окончания работы"
+                  />
+                  :
+                  <DateWithEditableTimePicker
+                    value={this.state.time_end}
+                    onChange={newValue => this.changeDateRange('time_end', newValue)}
+                    labelDate="Дата окончания работы"
+                    labelTime="Время окончания"
+                  />
+                }
               </Grid>
                 
             </Grid>
@@ -409,7 +482,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
 
     setTimeout(() => {
       this.getLamps();
-    }, 50);
+    }, 500);
   }
 
   getData = (method, data = {}, dop_type = {}) => {
@@ -460,7 +533,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
 
     setTimeout(() => {
       this.getLamps();
-    }, 50);
+    }, 500);
   }
 
   async getLamps() {
@@ -506,7 +579,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
 
       setTimeout(() => {
         this.getLamps();
-      }, 300);
+      }, 500);
     } else {
       this.setState({
         openAlert: true,
@@ -531,7 +604,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
 
       setTimeout(() => {
         this.getLamps();
-      }, 300);
+      }, 500);
 
     } else {
 
@@ -567,7 +640,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
 
   editActiveLamp(item, typeActive){
 
-    const name = this.state.lampList.find((lamp) => lamp.id === item.lamp_id)?.name ?? '';
+    const name = this.state.lampList.find((lamp) => parseInt(lamp.id) === parseInt(item.lamp_id))?.name ?? '';
    
     item.name = name;
 
@@ -626,7 +699,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
 
       setTimeout(() => {
         this.getLamps();
-      }, 300);
+      }, 500);
     } else {
       this.setState({
         openAlert: true,
@@ -661,7 +734,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
         <Lamps_Modal_Add_Active
           open={this.state.modalAddActiveLamp}
           add={this.addActive.bind(this)}
-          onClose={() => this.setState({ modalAddActiveLamp: false, itemEdit: null })}
+          onClose={() => this.setState({ modalAddActiveLamp: false, itemEdit: null, typeActive: null })}
           fullScreen={this.state.fullScreen}
           lampList={this.state.lampList}
           itemEdit={this.state.itemEdit}
@@ -758,8 +831,8 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
                         
                       {item.lamps.map( (lamp, k) =>
                         <Fragment key={k}>
-                          <TableCell style={{ textAlign: 'center', color: 'red' }} onClick={ lamp.id == '' ? () => {} : this.editActiveLamp.bind(this, lamp)}>{lamp.only_time_start}</TableCell>
-                          <TableCell style={{ textAlign: 'center', color: 'red' }} onClick={ lamp.id == '' ? () => {} : this.editActiveLamp.bind(this, lamp)}>{lamp.only_time_end}</TableCell>
+                          <TableCell style={{ textAlign: 'center', color: 'red' }} onClick={ lamp.id == '' ? () => {} : this.editActiveLamp.bind(this, lamp, 'edit')}>{lamp.only_time_start}</TableCell>
+                          <TableCell style={{ textAlign: 'center', color: 'red' }} onClick={ lamp.id == '' ? () => {} : this.editActiveLamp.bind(this, lamp, 'edit')}>{lamp.only_time_end}</TableCell>
                           <TableCell style={{ textAlign: 'center', color: 'red', borderRight: '1px solid #e5e5e5' }} onClick={ lamp.id == '' ? () => {} : this.editActiveLamp.bind(this, lamp, 'edit')}>{lamp.diff}</TableCell>
                         </Fragment>
                       ) }
