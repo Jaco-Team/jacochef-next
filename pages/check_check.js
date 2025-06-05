@@ -72,7 +72,7 @@ class CheckCheck_Accordion_online extends React.Component {
               <TableHead>
                 <TableRow>
                   <TableCell>#</TableCell>
-                  <TableCell>№ заказа</TableCell>
+                  <TableCell>Номер заказа</TableCell>
                   <TableCell>Дата / время заказа</TableCell>
                   <TableCell>Тип оплаты</TableCell>
                   <TableCell>Сумма заказа</TableCell>
@@ -593,8 +593,11 @@ class CheckCheck_ extends React.Component {
 
     const res = await this.getData('check_data_1C', data);
 
-    if(res.st && res.need_upload) {  
-      this.upload_data_1C('export');
+    if(res.st && res.need_upload) { 
+
+      setTimeout(() => {
+        this.upload_data_1C('export');
+      }, 500);
 
     } else if (res.st && !res.need_upload) {
 
@@ -802,7 +805,8 @@ class CheckCheck_ extends React.Component {
                       <TableHead>
                         <TableRow>
                           <TableCell>#</TableCell>
-                          <TableCell>Номер кассы </TableCell>
+                          <TableCell>Номер заказа</TableCell>
+                          <TableCell>Номер кассы</TableCell>
                           <TableCell>Сумма заказа</TableCell>
                           <TableCell>Дата / время</TableCell>
                           <TableCell>Найти заказ</TableCell>
@@ -812,6 +816,7 @@ class CheckCheck_ extends React.Component {
                         {complete_data.map((it, k) =>
                           <TableRow hover key={k}>
                             <TableCell>{k + 1}</TableCell>
+                            <TableCell>{it.id}</TableCell>
                             <TableCell>{it.kassa}</TableCell>
                             <TableCell>{formatNumber(it.summ_check ?? 0)} ₽</TableCell>
                             <TableCell>{it.date} {it.time}</TableCell>
@@ -830,7 +835,7 @@ class CheckCheck_ extends React.Component {
             </Grid>
           }
 
-          {!unfisc_online_orders ? null :
+          {unfisc_online_orders?.length > 0 && 
             <Grid item xs={12} sm={12}>
               <CheckCheck_Accordion_online
                 orders={unfisc_online_orders}
