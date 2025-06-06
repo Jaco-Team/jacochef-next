@@ -244,7 +244,7 @@ class SiteUserManager_ extends React.Component {
       search: this.state.textSearch,
     };
 
-    let res = await this.getData('getUsers', data);
+    let res = await this.getData('get_users', data);
 
     const total_rows = res.length;
     const resCopy = JSON.parse(JSON.stringify(res));
@@ -276,7 +276,7 @@ class SiteUserManager_ extends React.Component {
       user_id: user_id,
     };
 
-    let res = await this.getData('getUser', data);
+    let res = await this.getData('get_one_user', data);
 
     // хак для автокомплита
     res.user.app_id = res.appointment.find((app) => parseInt(app.id) == parseInt(res.user.app_id));
@@ -297,7 +297,7 @@ class SiteUserManager_ extends React.Component {
   }
 
   async openNewUser() {
-    let res = await this.getData('getAllForNew');
+    let res = await this.getData('get_all_for_new');
 
     // хак для автокомплита
     res.user.app_id = null;
@@ -490,7 +490,7 @@ class SiteUserManager_ extends React.Component {
         textDel: this.state.textDel,
         graphType: graphType,
       };
-      let res = await this.getData('saveEditUser', data);
+      let res = await this.getData('save_edit_user', data);
 
       if (res.st === false) {
         // alert(res.text);
@@ -548,7 +548,7 @@ class SiteUserManager_ extends React.Component {
       let data = {
         user,
       };
-      let res = await this.getData('saveVacationUser', data);
+      let res = await this.getData('save_vacation_user', data);
 
       if (res.st === false) {
         this.setState({
@@ -566,7 +566,7 @@ class SiteUserManager_ extends React.Component {
             user_id: user.id,
           };
 
-          let res = await this.getData('getUser', data);
+          let res = await this.getData('get_one_user', data);
           this.setState({
             editUser: res,
             chose_app: res.user.app_id,
@@ -677,7 +677,7 @@ class SiteUserManager_ extends React.Component {
         graphType: is_graph === true ? 1 : 0,
       };
 
-      let res = await this.getData('saveNewUser', data);
+      let res = await this.getData('save_new_user', data);
 
       if (res.st === false) {
         // alert(res.text);
