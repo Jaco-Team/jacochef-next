@@ -182,7 +182,7 @@ class MainTableRow extends React.Component {
                       <React.Fragment key={key}>
                         <TableRow onClick={this.props.toogleCollapseTableRow.bind(this, this.props.type, this.props.table, key)} style={{ cursor: 'pointer' }}>
                           <TableCell>{item.date}</TableCell>
-                          <TableCell>{item.summ}</TableCell>
+                          <TableCell>{new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(item.summ)}</TableCell>
                           <TableCell><ExpandMoreIcon style={{ display: 'flex', transform: item.is_open ? 'rotate(180deg)' : 'rotate(0deg)' }}/></TableCell>
                         </TableRow>
                         <TableRow>
@@ -207,7 +207,7 @@ class MainTableRow extends React.Component {
                                         <TableCell>{item.user_name}</TableCell>
                                         <TableCell>{item.date}</TableCell>
                                         <TableCell>{item.comment}</TableCell>
-                                        <TableCell>{item.summ}</TableCell>
+                                        <TableCell>{new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(item.summ)}</TableCell>
                                         <TableCell>
 
                                           { this.props?.is_delete == false || this.props?.is_edit === false ? false :
