@@ -66,7 +66,7 @@ class MainTableRow extends React.Component {
   //tooltip
 
   /**
-   * 
+   *
    * <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={3}>
             <Collapse in={this.props?.is_open} timeout="auto" unmountOnExit>
               <Box sx={{ margin: 1 }}>
@@ -81,16 +81,16 @@ class MainTableRow extends React.Component {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-  
-                    {this.props.data_hist?.map( item => 
-                      
+
+                    {this.props.data_hist?.map( item =>
+
                       <TableRow key={item.id}>
                         <TableCell>{item.user_name}</TableCell>
                         <TableCell>{item.date}</TableCell>
                         <TableCell>{item.comment}</TableCell>
                         <TableCell>{item.summ}</TableCell>
                         <TableCell>
-                          
+
                           { this.props?.is_delete === true ?
                             <IconButton onClick={this.props.updateData.bind(this, item, 'Редактирование ' + kassa_text+': '+this.props?.label)}>
                               <EditIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
@@ -117,7 +117,7 @@ class MainTableRow extends React.Component {
             </Collapse>
           </TableCell>
    */
-  
+
 
   render () {
 
@@ -130,39 +130,38 @@ class MainTableRow extends React.Component {
         <TableRow>
           <TableCell onClick={this.props.toogleCollapseTable.bind(this, this.props.type, this.props.table)} style={{ cursor: 'pointer' }}>
             { this.props?.is_edit === false ?
-              <Typography 
+              <Typography
                 component="span"
               >
                 {this.props?.label}
               </Typography>
                 :
-              <Typography 
+              <Typography
                 component="span"
-                //onClick={this.props.addData.bind(this, 'virycka', this.props.table, this.props?.virycka_arr, kassa_text+': Выручка')} 
+                //onClick={this.props.addData.bind(this, 'virycka', this.props.table, this.props?.virycka_arr, kassa_text+': Выручка')}
                 //onClick={this.props.toogleCollapseTable.bind(this, this.props.type, this.props.table)}
                 style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
               >
                 {this.props?.label}
-                <Tooltip title={<Typography color="inherit">{ this.props.tooltip }</Typography>}> 
+                <Tooltip title={<Typography color="inherit">{ this.props.tooltip }</Typography>}>
                   <IconButton>
                     <HelpIcon color="primary" />
                   </IconButton>
                 </Tooltip>
               </Typography>
             }
-            
+
           </TableCell>
-          <TableCell 
+          <TableCell
             style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff', cursor: 'pointer' }}
             onClick={this.props.addData.bind(this, this.props.type, this.props.table, this.props.data_hist, kassa_text+': '+this.props?.label)}
           >
-            {this.props?.data_plus ?? ''}
+            {this.props?.data_plus ? new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(this.props?.data_plus) : ''}
           </TableCell>
-          <TableCell 
+          <TableCell
             style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff', cursor: 'pointer' }}
-            onClick={this.props.addData.bind(this, this.props.type, this.props.table, this.props.data_hist, kassa_text+': '+this.props?.label)}
-          >{
-            this.props?.data_minus ?? ''}
+            onClick={this.props.addData.bind(this, this.props.type, this.props.table, this.props.data_hist, kassa_text+': '+this.props?.label)}>
+            {this.props?.data_minus ? new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(this.props?.data_minus) : ''}
           </TableCell>
         </TableRow>
         <TableRow>
@@ -178,12 +177,12 @@ class MainTableRow extends React.Component {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-  
-                    {this.props.data_hist?.map( (item, key) => 
+
+                    {this.props.data_hist?.map( (item, key) =>
                       <React.Fragment key={key}>
                         <TableRow onClick={this.props.toogleCollapseTableRow.bind(this, this.props.type, this.props.table, key)} style={{ cursor: 'pointer' }}>
                           <TableCell>{item.date}</TableCell>
-                          <TableCell>{item.summ}</TableCell>
+                          <TableCell>{new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(item.summ)}</TableCell>
                           <TableCell><ExpandMoreIcon style={{ display: 'flex', transform: item.is_open ? 'rotate(180deg)' : 'rotate(0deg)' }}/></TableCell>
                         </TableRow>
                         <TableRow>
@@ -201,16 +200,16 @@ class MainTableRow extends React.Component {
                                     </TableRow>
                                   </TableHead>
                                   <TableBody>
-                  
-                                    {item['data']?.map( item => 
-                                      
+
+                                    {item['data']?.map( item =>
+
                                       <TableRow key={item.id}>
                                         <TableCell>{item.user_name}</TableCell>
                                         <TableCell>{item.date}</TableCell>
                                         <TableCell>{item.comment}</TableCell>
-                                        <TableCell>{item.summ}</TableCell>
+                                        <TableCell>{new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(item.summ)}</TableCell>
                                         <TableCell>
-                                          
+
                                           { this.props?.is_delete == false || this.props?.is_edit === false ? false :
                                             <IconButton onClick={this.props.updateData.bind(this, item, 'Редактирование ' + kassa_text+': '+this.props?.label)}>
                                               <EditIcon style={{ color: 'rgba(255, 3, 62, 1)' }} />
@@ -245,7 +244,7 @@ class MainTableRow extends React.Component {
 
 
 
-          
+
         </TableRow>
       </React.Fragment>
     )
@@ -274,31 +273,31 @@ class MainTable extends React.Component {
             </TableRow>
           </TableHead>
           <TableBody>
-            
+
             <TableRow>
               <TableCell>
                 { this.props?.ostatok_nachalo_dnya_is_edit === false ?
-                  <Typography 
+                  <Typography
                     component="span"
                   >
                     Остаток на начало дня
                   </Typography>
                     :
-                  <Typography 
+                  <Typography
                     component="span"
-                    onClick={this.props.addData.bind(this, 'ostatok_nachalo_dnya', this.props.table, this.props?.ostatok_nachalo_dnya_arr, kassa_text+': Остаток на начало дня')} 
+                    onClick={this.props.addData.bind(this, 'ostatok_nachalo_dnya', this.props.table, this.props?.ostatok_nachalo_dnya_arr, kassa_text+': Остаток на начало дня')}
                     style={{ cursor: 'pointer', color: '#c03', padding: '15px 15px 15px 0px' }}
                   >
                     Остаток на начало дня
                   </Typography>
                 }
               </TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.ostatok_nachalo_dnya}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(this.props?.ostatok_nachalo_dnya)}</TableCell>
               <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
             </TableRow>
 
-            
-            <MainTableRow 
+
+            <MainTableRow
               label={'Выручка'}
               is_edit={'show'}
               is_open={this.props?.virycka_is_open}
@@ -315,11 +314,11 @@ class MainTable extends React.Component {
 
               is_delete={false}
             />
-            
+
 
             { this.props.table == 'fiz' ?
               this.props?.cash_from_bank_is_edit === false ? false :
-              <MainTableRow 
+              <MainTableRow
                 label={'Снятие наличных в банке'}
                 is_edit={this.props?.cash_from_bank_is_edit}
                 is_open={this.props?.cash_from_bank_is_open}
@@ -338,12 +337,12 @@ class MainTable extends React.Component {
                 deleteData={this.props.deleteData.bind(this)}
                 updateData={this.props.updateData.bind(this)}
               />
-                : 
+                :
               false
             }
 
             { this.props?.zaim_is_edit === false ? false :
-              <MainTableRow 
+              <MainTableRow
                 label={this.props.table == 'fiz' ? 'Заемные средства' : 'Выдано'}
                 is_edit={this.props?.zaim_is_edit}
                 is_open={this.props?.zaim_is_open}
@@ -365,7 +364,7 @@ class MainTable extends React.Component {
             }
 
             { this.props?.vedomosm_zp_is_edit === false ? false :
-              <MainTableRow 
+              <MainTableRow
                 label={this.props.table == 'fiz' ? 'Платежная ведомость на выплату заработной платы' : 'Выплата за услуги курьера'}
                 is_edit={this.props?.vedomosm_zp_is_edit}
                 is_open={this.props?.vedomosm_zp_is_open}
@@ -375,7 +374,7 @@ class MainTable extends React.Component {
                 data_minus={this.props?.vedomosm_zp}
                 data_hist={this.props?.vedomosm_zp_arr}
                 tooltip={this.props.table == 'fiz' ? text.zp_fiz : text.zp_driver}
-                
+
 
                 toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
                 toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
@@ -389,7 +388,7 @@ class MainTable extends React.Component {
 
             { this.props.table == 'fiz' ?
               this.props?.incasacia_is_edit === false ? false :
-              <MainTableRow 
+              <MainTableRow
                 label={'Инкассация'}
                 is_edit={this.props?.incasacia_is_edit}
                 is_open={this.props?.incasacia_is_open}
@@ -413,7 +412,7 @@ class MainTable extends React.Component {
             }
 
             { this.props?.vozvrat_zaim_is_edit === false ? false :
-              <MainTableRow 
+              <MainTableRow
                 label={this.props.table == 'fiz' ? 'Возврат займа' : 'Сдано'}
                 is_edit={this.props?.vozvrat_zaim_is_edit}
                 is_open={this.props?.vozvrat_zaim_is_open}
@@ -436,7 +435,7 @@ class MainTable extends React.Component {
 
             { this.props.table == 'fiz' ?
               this.props?.vidacha_otchet_is_edit === false ? false :
-                <MainTableRow 
+                <MainTableRow
                   label={'Выдача в подотчет'}
                   is_edit={this.props?.vidacha_otchet_is_edit}
                   is_open={this.props?.vidacha_otchet_is_open}
@@ -461,7 +460,7 @@ class MainTable extends React.Component {
 
             { this.props.table == 'driver_cash' ?
               this.props?.vidacha_otchet_is_edit === false ? false :
-                <MainTableRow 
+                <MainTableRow
                   label={'Расходы управляющего'}
                   is_edit={this.props?.vidacha_otchet_is_edit}
                   is_open={this.props?.vidacha_otchet_is_open}
@@ -483,16 +482,16 @@ class MainTable extends React.Component {
                   :
                 false
             }
-            
-            
+
+
             <TableRow>
               <TableCell>Итого</TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.itog_plus}</TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{this.props?.itog_minus}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(this.props?.itog_plus)}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}>{new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(this.props?.itog_minus)}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell>Остаток на конец дня</TableCell>
-              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{this.props?.ostatok_konec_dnya}</TableCell>
+              <TableCell style={{ backgroundColor: 'rgba(3, 192, 60, 0.8)', color: '#fff' }}>{new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(this.props?.ostatok_konec_dnya)}</TableCell>
               <TableCell style={{ backgroundColor: 'rgba(255, 3, 62, 1)', color: '#fff' }}></TableCell>
             </TableRow>
 
@@ -508,15 +507,15 @@ class CashBook_ extends React.Component {
 
   constructor(props) {
     super(props);
-        
+
     this.state = {
       module: 'cash_book',
       module_name: '',
       is_load: false,
-      
+
       points: [],
       point: '0',
-      
+
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
       date: formatDate(new Date()),
@@ -525,7 +524,7 @@ class CashBook_ extends React.Component {
       modalDialog: false,
       modalDialogEdit: false,
 
-    
+
       summ: 0,
 
       getSumm: 0,
@@ -558,75 +557,75 @@ class CashBook_ extends React.Component {
       hist: []
     };
   }
-  
+
   async componentDidMount(){
-    
+
     let data = await this.getData('get_all');
-    
+
     this.setState({
       points: data.points,
       point: data.points[0].id,
       module_name: data.module_info.name,
     })
-    
+
     document.title = data.module_info.name;
-    
+
     setTimeout( () => {
       this.updateData();
     }, 50 )
   }
-  
+
   getData = (method, data = {}) => {
-    
+
     this.setState({
       is_load: true
     })
-    
+
     return fetch('https://jacochef.ru/api/index_new.php', {
       method: 'POST',
       headers: {
         'Content-Type':'application/x-www-form-urlencoded'},
       body: queryString.stringify({
-        method: method, 
+        method: method,
         module: this.state.module,
         version: 2,
         login: localStorage.getItem('token'),
         data: JSON.stringify( data )
       })
     }).then(res => res.json()).then(json => {
-      
+
       if( json.st === false && json.type == 'redir' ){
         window.location.pathname = '/';
         return;
       }
-      
+
       if( json.st === false && json.type == 'auth' ){
         window.location.pathname = '/auth';
         return;
       }
-      
+
       setTimeout( () => {
         this.setState({
           is_load: false
         })
       }, 300 )
-      
+
       return json;
     })
-    .catch(err => { 
+    .catch(err => {
       console.log( err )
     });
   }
-   
+
   async updateData(){
     let data = {
       point_id: this.state.point,
       date_start  : dayjs(this.state.date_start).format('YYYY-MM-DD'),
       date_end    : dayjs(this.state.date_end).format('YYYY-MM-DD'),
     };
-    
+
     let res = await this.getData('get_data', data);
-    
+
     if( res?.st === true ){
       this.setState({
         fiz_kassa: res.fiz_kassa,
@@ -640,7 +639,7 @@ class CashBook_ extends React.Component {
       })
     }
   }
-  
+
   changeDate(data, event){
     this.setState({
       [data]: (event)
@@ -653,7 +652,7 @@ class CashBook_ extends React.Component {
 
   changePoint(event){
     let data = event.target.value;
-    
+
     this.setState({
       point: data
     })
@@ -697,7 +696,7 @@ class CashBook_ extends React.Component {
       kassa: this.state.openModalKassa,
       date: dayjs(this.state.date).format('YYYY-MM-DD'),
     };
-    
+
     let res = await this.getData('save_give', data);
 
     if( res['st'] == true ){
@@ -758,7 +757,7 @@ class CashBook_ extends React.Component {
         openModalKassa: kassa,
         openModalTitle: title,
         openModalHist_data: hist,
-  
+
         modalDialog: true,
         comment: '',
         summ: 0,
@@ -876,8 +875,8 @@ class CashBook_ extends React.Component {
 
     let res = await this.getData('get_hist', data);
 
-    this.setState({ 
-      hist: res 
+    this.setState({
+      hist: res
     });
   }
 
@@ -901,7 +900,7 @@ class CashBook_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
+
         <Dialog
           fullWidth={true}
           maxWidth={'md'}
@@ -910,7 +909,7 @@ class CashBook_ extends React.Component {
         >
           <DialogTitle>{this.state.openModalTitle}</DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            
+
             <Grid container spacing={3}>
 
               { this.state.openModalType_edit === false ? false :
@@ -946,8 +945,8 @@ class CashBook_ extends React.Component {
                     </TableHead>
                     <TableBody>
 
-                      {this.state.hist?.map( item => 
-                        
+                      {this.state.hist?.map( item =>
+
                         <TableRow key={item.id}>
                           <TableCell>{item.date_time_update}</TableCell>
                           <TableCell>{this.get_type(item.event)}</TableCell>
@@ -965,7 +964,7 @@ class CashBook_ extends React.Component {
 
             </Grid>
 
-            
+
 
           </DialogContent>
           { this.state.openModalType_edit === false ? false :
@@ -984,32 +983,32 @@ class CashBook_ extends React.Component {
         >
           <DialogTitle>{this.state.openModalTitle}</DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            
+
             <Grid container spacing={3}>
 
               <Grid item xs={12} sm={6}>
                 <MyTextInput label="Сумма" value={this.state.summ} type={'number'} func={this.changeSumm.bind(this)} />
               </Grid>
-              
+
               <Grid item xs={12} sm={6}>
                 <MyDatePickerNew label="Дата" value={ this.state.date } func={ this.changeDate.bind(this, 'date') } />
               </Grid>
-              
+
               <Grid item xs={12} sm={12}>
                 <MyTextInput label="Комментарий" value={this.state.comment} multiline={true} maxRows={3} type={'text'} func={this.changeComment.bind(this, 'comment')} />
               </Grid>
-            
+
             </Grid>
 
-            
+
 
           </DialogContent>
-          
+
           <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
             <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.saveUpdateAction.bind(this)}>Обновить</Button>
             <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => { this.setState({ modalDialog: false, comment: '', openModalType: '', openModalKassa: '', summ: 0 }) }}>Отмена</Button>
           </DialogActions>
-          
+
         </Dialog>
 
         <Dialog
@@ -1022,13 +1021,13 @@ class CashBook_ extends React.Component {
               { this.state?.type_action === 'delete' ? 'Удалить' : '' } данные ?
             </DialogContentText>
 
-            <MyTextInput 
-              label="Комментарий" 
-              value={this.state.comment_action} 
-              multiline={true} 
-              maxRows={3} 
-              type={'text'} 
-              func={this.changeComment.bind(this, 'comment_action')} 
+            <MyTextInput
+              label="Комментарий"
+              value={this.state.comment_action}
+              multiline={true}
+              maxRows={3}
+              type={'text'}
+              func={this.changeComment.bind(this, 'comment_action')}
             />
 
           </DialogContent>
@@ -1042,7 +1041,7 @@ class CashBook_ extends React.Component {
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
-          
+
           <Grid item xs={12} sm={6}>
             <MySelect data={this.state.points} value={this.state.point} func={ this.changePoint.bind(this) } label='Точка' />
           </Grid>
@@ -1054,11 +1053,11 @@ class CashBook_ extends React.Component {
             <MyDatePickerNew label="Дата до" value={ this.state.date_end } func={ this.changeDate.bind(this, 'date_end') } />
           </Grid>
 
-          
+
           <Grid item xs={12}>
             <Button variant="contained" onClick={this.updateData.bind(this)}>Обновить данные</Button>
           </Grid>
-        
+
           <Grid item xs={12} sm={6}>
             <MainTable
               table={'fiz'}
@@ -1071,7 +1070,7 @@ class CashBook_ extends React.Component {
               ostatok_nachalo_dnya={this.state.fiz_kassa?.ostatok_nachalo_dnya}
               ostatok_nachalo_dnya_is_edit={this.state.fiz_kassa?.ostatok_nachalo_dnya_is_edit}
               ostatok_nachalo_dnya_arr={this.state.fiz_kassa?.ostatok_nachalo_dnya_arr}
-              
+
               virycka={this.state.fiz_kassa?.virycka}
               virycka_is_edit={this.state.fiz_kassa?.virycka_is_edit}
               virycka_is_open={this.state.fiz_kassa?.virycka_is_open}
@@ -1115,7 +1114,7 @@ class CashBook_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <MainTable 
+            <MainTable
               table={'driver_cash'}
               addData={this.addData.bind(this)}
               deleteData={this.deleteData.bind(this)}
@@ -1126,7 +1125,7 @@ class CashBook_ extends React.Component {
               ostatok_nachalo_dnya={this.state.driver_kassa?.ostatok_nachalo_dnya}
               ostatok_nachalo_dnya_is_edit={this.state.driver_kassa?.ostatok_nachalo_dnya_is_edit}
               ostatok_nachalo_dnya_arr={this.state.driver_kassa?.ostatok_nachalo_dnya_arr}
-              
+
               virycka={this.state.driver_kassa?.virycka}
               virycka_is_edit={this.state.driver_kassa?.virycka_is_edit}
               virycka_is_open={this.state.driver_kassa?.virycka_is_open}
@@ -1168,9 +1167,9 @@ class CashBook_ extends React.Component {
             />
           </Grid>
 
-          
 
-          
+
+
         </Grid>
       </>
     )
