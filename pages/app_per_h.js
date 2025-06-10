@@ -56,7 +56,7 @@ class AppPerH_ extends React.Component {
 
     return api_laravel(this.state.module, method, data, dop_type)
         .then(result => {
-        return result;
+        return result.data;
         })
         .finally(() => {
           setTimeout(() => {
