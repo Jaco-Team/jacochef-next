@@ -1,21 +1,17 @@
 import React from 'react';
-
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
-
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
-
-import { MyTextInput, MySelect, MyAlert } from '@/ui/elements';
-
-import queryString from 'query-string';
+import {MyAlert, MySelect, MyTextInput} from '@/ui/elements';
+import {api_laravel_local} from "@/src/api_new";
+import Typography from "@mui/material/Typography";
 
 class AppPerH_ extends React.Component {
   constructor(props) {
@@ -25,12 +21,9 @@ class AppPerH_ extends React.Component {
       module: 'app_per_h',
       module_name: '',
       is_load: false,
-
       cities: [],
       city: '',
-
       items: [],
-
       openAlert: false,
       err_status: true,
       err_text: '',
@@ -39,7 +32,6 @@ class AppPerH_ extends React.Component {
 
   async componentDidMount() {
     const data = await this.getData('get_all');
-
     const city = {
       city_id: data.cities[0].id,
     };
@@ -56,48 +48,24 @@ class AppPerH_ extends React.Component {
     document.title = data.module_info.name;
   }
 
-  getData = (method, data = {}) => {
+  getData = (method, data = {}, dop_type = {}) => {
+
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+    return api_laravel_local(this.state.module, method, data, dop_type)
+        .then(result => {
+        return result;
+        })
+        .finally(() => {
+          setTimeout(() => {
+            this.setState({
+              is_load: false,
+            });
+          }, 500);
+        });
+  }
 
   async changeCity(event) {
     const data = {
@@ -127,16 +95,12 @@ class AppPerH_ extends React.Component {
   }
 
   async save() {
-    const city_id = this.state.city;
-
-    const app_list = this.state.items;
+    const {city, items} = this.state;
 
     const data = {
-      city_id,
-      app_list,
+      city_id: city,
+      app_list: items,
     };
-
-    console.log(data);
 
     await this.getData('save_edit', data);
 
@@ -144,18 +108,14 @@ class AppPerH_ extends React.Component {
       openAlert: true,
       err_status: true,
       err_text: 'Обновлено',
-    });
-
-    setTimeout(() => {
-      this.update();
-    }, 300);
+    }, () => this.update());
   }
 
   async update() {
-    const city_id = this.state.city;
+    const {city} = this.state;
 
     const data = {
-      city_id,
+      city_id: city,
     };
 
     const res = await this.getData('get_one', data);
@@ -166,29 +126,32 @@ class AppPerH_ extends React.Component {
   }
 
   render() {
+    const {is_load, items, openAlert, err_text, err_status, module_name, cities, city } = this.state;
+    const itemsInGraph = items.filter(value => value.is_graph === 1);
+    const itemsNotGraph = items.filter(value => value.is_graph === 0);
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop style={{ zIndex: 99 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        <MyAlert 
-          isOpen={this.state.openAlert} 
-          onClose={() => this.setState({ openAlert: false }) } 
-          status={this.state.err_status} 
-          text={this.state.err_text} />
+        <MyAlert
+          isOpen={openAlert}
+          onClose={() => this.setState({ openAlert: false }) }
+          status={err_status}
+          text={err_text} />
 
         <Grid container spacing={3} mb={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
-            <h1>{this.state.module_name}</h1>
+            <h1>{module_name}</h1>
           </Grid>
 
           <Grid item xs={12} sm={3}>
             <MySelect
               label="Город"
               is_none={false}
-              data={this.state.cities}
-              value={this.state.city}
+              data={cities}
+              value={city}
               func={this.changeCity.bind(this)}
             />
           </Grid>
@@ -205,58 +168,13 @@ class AppPerH_ extends React.Component {
             </span>
           </Grid>
 
+          <SectionHeader title="В графике работы"/>
           <Grid item xs={12} sm={12}>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell style={{ width: '5%' }}>#</TableCell>
-                    <TableCell style={{ width: '35%' }}>Должность</TableCell>
-                    <TableCell style={{ width: '15%' }}>Оклад</TableCell>
-                    <TableCell style={{ width: '15%' }}>Минимальная ставка</TableCell>
-                    <TableCell style={{ width: '15%' }}>Средняя ставка</TableCell>
-                    <TableCell style={{ width: '15%' }}>Максимальная ставка</TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {this.state.items.map((item, key) => (
-                    <TableRow key={key} hover>
-                      <TableCell>{key + 1}</TableCell>
-                      <TableCell>{item.app_name}</TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          label=""
-                          value={item.oklad}
-                          func={this.changeItem.bind(this, 'oklad', item.app_id)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          label=""
-                          value={item.min_price}
-                          func={this.changeItem.bind(this, 'min_price', item.app_id)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          label=""
-                          value={item.avg_price}
-                          func={this.changeItem.bind(this, 'avg_price', item.app_id)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          label=""
-                          value={item.max_price}
-                          func={this.changeItem.bind(this, 'max_price', item.app_id)}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            <SalaryTable items={itemsInGraph} onChange={this.changeItem}/>
+          </Grid>
+          <SectionHeader title="Без графика"/>
+          <Grid item xs={12} sm={12}>
+            <SalaryTable items={itemsNotGraph} onChange={this.changeItem}/>
           </Grid>
         </Grid>
       </>
@@ -267,6 +185,65 @@ class AppPerH_ extends React.Component {
 export default function AppPerH() {
   return <AppPerH_ />;
 }
+
+const tableCellStyles = {
+  '#': { width: '5%' },
+  'Должность': { width: '35%' },
+  'Оклад': { width: '15%' },
+  'Минимальная ставка': { width: '15%' },
+  'Средняя ставка': { width: '15%' },
+  'Максимальная ставка': { width: '15%' },
+};
+
+const SalaryTable = ({ items, onChange }) => {
+  const fields = ['oklad', 'min_price', 'avg_price', 'max_price'];
+  const fieldLabels = ['Оклад', 'Минимальная ставка', 'Средняя ставка', 'Максимальная ставка'];
+
+  return (
+    <TableContainer>
+      <Table>
+        <TableHead>
+          <TableRow>
+            {Object.entries(tableCellStyles).map(([label, style]) => (
+              <TableCell key={label} style={style}>{label}</TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {items.length > 0 ? (
+            items.map((item, index) => (
+              <TableRow key={item.app_id} hover>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>{item.app_name}</TableCell>
+                {fields.map((field) => (
+                  <TableCell key={`${item.app_id}-${field}`}>
+                    <MyTextInput
+                      label=""
+                      value={item[field]}
+                      func={onChange.bind(this, field, item.app_id)}
+                    />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={6} align="center">Нет данных</TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+};
+
+const SectionHeader = ({ title }) => (
+  <Grid item xs={12} sm={12}>
+    <Typography variant="h5" component="h1" gutterBottom>
+      {title}
+    </Typography>
+  </Grid>
+);
 
 export async function getServerSideProps({ req, res, query }) {
   res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
