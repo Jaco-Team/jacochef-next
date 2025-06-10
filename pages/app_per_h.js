@@ -10,7 +10,7 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import {MyAlert, MySelect, MyTextInput} from '@/ui/elements';
-import {api_laravel_local} from "@/src/api_new";
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 import Typography from "@mui/material/Typography";
 
 class AppPerH_ extends React.Component {
@@ -54,7 +54,7 @@ class AppPerH_ extends React.Component {
       is_load: true,
     });
 
-    return api_laravel_local(this.state.module, method, data, dop_type)
+    return api_laravel(this.state.module, method, data, dop_type)
         .then(result => {
         return result;
         })
