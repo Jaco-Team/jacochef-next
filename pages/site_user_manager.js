@@ -215,26 +215,26 @@ class SiteUserManager_ extends React.Component {
   };
 
   changeSort = (() => {
-  let lastCallTime = 0;
-  const throttleDelay = 300;
+    let lastCallTime = 0;
+    const throttleDelay = 300;
 
-  return (type, event, data) => {
-    if (type === 'app_id') {
-      this.setState({
-        app_id: data !== null ? data : null,
-      });
-    } else {
-      this.setState({
-        [type]: event.target.value,
-      });
-    }
+    return (type, event, data) => {
+      if (type === 'app_id') {
+        this.setState({
+          app_id: data !== null ? data : null,
+        });
+      } else {
+        this.setState({
+          [type]: event.target.value,
+        });
+      }
 
-    const now = Date.now();
-    if (now - lastCallTime >= throttleDelay) {
-      lastCallTime = now;
-      this.getUsers();
-    }
-  };
+      const now = Date.now();
+      if (now - lastCallTime >= throttleDelay) {
+        lastCallTime = now;
+        this.getUsers();
+      }
+    };
   })();
 
   async getUsers() {
