@@ -32,7 +32,7 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import { MyTextInput, MySelect, MyAlert, MyCheckBox } from '@/ui/elements';
-import queryString from 'query-string';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 class Appointment_Modal_param extends React.Component {
   constructor(props) {
@@ -663,43 +663,18 @@ class Appointment_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
-  };
+
+    return res;
+  }
 
   handleResize() {
     if (window.innerWidth < 601) {
@@ -720,13 +695,14 @@ class Appointment_ extends React.Component {
 
     let res = await this.getData('save_sort', data);
 
-    if (res.st === false) {
+    if (res.st) {
+
       this.setState({
         openAlert: true,
-        err_status: false,
+        err_status: res.st,
         err_text: res.text
       });
-    } else {
+
       this.updateList();
     }
  
@@ -748,7 +724,7 @@ class Appointment_ extends React.Component {
   }
   
   async updateList() {
-    const res = await this.getData('get_items'); 
+    const res = await this.getData('get_all'); 
 
     this.setState({
       items: res.apps,
@@ -781,16 +757,22 @@ class Appointment_ extends React.Component {
     const res = await this.getData('save_edit', data);
 
     if (res.st === false) {
+
       this.setState({
         openAlert: true,
-        err_status: false,
+        err_status: res.st,
         err_text: res.text
       });
+
     } else {
+
       this.setState({
         modalDialog: false,
         openApp: null,
-        full_menu: []
+        full_menu: [],
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text
       });
 
       this.updateList();
@@ -798,6 +780,7 @@ class Appointment_ extends React.Component {
   }
 
   async saveNew(app, full_menu){
+    
     const data = {
       app, 
       full_menu
@@ -806,16 +789,22 @@ class Appointment_ extends React.Component {
     const res = await this.getData('save_new', data);
 
     if (res.st === false) {
+
       this.setState({
         openAlert: true,
-        err_status: false,
+        err_status: res.st,
         err_text: res.text
       });
+
     } else {
+
       this.setState({
         modalDialog: false,
         openApp: null,
-        full_menu: []
+        full_menu: [],
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text
       });
 
       this.updateList();
