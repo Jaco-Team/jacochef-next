@@ -214,25 +214,28 @@ class SiteUserManager_ extends React.Component {
     return res;
   };
 
-  changeSort(type, event, data) {
-    // автокомлит для должностей
+  changeSort = (() => {
+    let lastCallTime = 0;
+    const throttleDelay = 300;
 
-    if (type == 'app_id') {
-      this.setState({
-        app_id: data !== null ? data : null,
-        // app_id: data !== null ? data.id : 0,
-        // app_filter: data,
-      });
-    } else {
-      this.setState({
-        [type]: event.target.value,
-      });
-    }
+    return (type, event, data) => {
+      if (type === 'app_id') {
+        this.setState({
+          app_id: data !== null ? data : null,
+        });
+      } else {
+        this.setState({
+          [type]: event.target.value,
+        });
+      }
 
-    setTimeout(() => {
-      this.getUsers();
-    }, 300);
-  }
+      const now = Date.now();
+      if (now - lastCallTime >= throttleDelay) {
+        lastCallTime = now;
+        this.getUsers();
+      }
+    };
+  })();
 
   async getUsers() {
     const app_id = this.state.app_id ? this.state.app_id.id : 0;
