@@ -491,7 +491,7 @@ class StatErrCash_Modal extends React.Component {
                     ) : 'Фото отсутствует'}
                 </Grid>
               </Grid>
-              {this.state.access_action_modal ? (
+              {parseInt(this.state.acces?.organization_point) ? (
                 <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
                 <Grid mb={5}>
                   <Button variant="contained" onClick={this.openConfirm.bind(this, '50')} style={{ minWidth: '130px' }}>Снять 50%</Button>
@@ -528,7 +528,7 @@ class StatErrCash_ extends React.Component {
 
       points: [],
       point: '0',
-      access_action_modal: false,
+      acces: false,
 
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
@@ -559,7 +559,7 @@ class StatErrCash_ extends React.Component {
       points: data.points,
       point: data.points[0].id,
       module_name: data.module_info.name,
-      access_action_modal: data.acces
+      acces: data.acces
     });
 
     document.title = data.module_info.name;
@@ -636,15 +636,22 @@ class StatErrCash_ extends React.Component {
     });
   }
 
-  openModal(mark, method, item) {
+  async openModal(mark, method, item) {
     this.handleResize();
+    const data = {
+      point_id: this.state.point,
+      err_id: mark === 'errOrder' ? item.err_id : item.id,
+      mark,
+    };
+
+    const res = await this.getData('get_data_one', data);
 
     if (mark === 'errOrder') {
       this.setState({
         modalDialog: true,
         method,
         mark,
-        item,
+        item: res.item,
       });
     }
 
@@ -653,7 +660,7 @@ class StatErrCash_ extends React.Component {
         modalDialog: true,
         method,
         mark,
-        item,
+        item: res.item,
       });
     }
   }
@@ -858,7 +865,6 @@ class StatErrCash_ extends React.Component {
                     <TableCell align="center">Дата и время совершения ошибки</TableCell>
                     <TableCell align="center">Ошибка</TableCell>
                     <TableCell align="center">Сумма ошибки</TableCell>
-                    <TableCell align="center">Фото</TableCell>
                     <TableCell align="center">Обжалована</TableCell>
                     <TableCell align="center">Изменина сумма</TableCell>
                     <TableCell align="center"></TableCell>
@@ -876,12 +882,6 @@ class StatErrCash_ extends React.Component {
                       <TableCell align="center">{item.date} {item.time}</TableCell>
                       <TableCell align="center">{item.fine_name}</TableCell>
                       <TableCell align="center">{item.price}</TableCell>
-                      <TableCell align="center">
-                        {!item.imgs.length ? null : (
-                          <img src={'https://jacochef.ru/src/img/fine_err/uploads/' + item.imgs[0]} style={{ maxWidth: 100, maxHeight: 100 }}/>
-                        )}
-                      </TableCell>
-
                       <TableCell align="center">{ parseInt(item.change_win) == 1 ? <CheckIcon /> : null }</TableCell>
                       <TableCell align="center">{ parseInt(item.change_sum) == 1 ? <CheckIcon /> : null }</TableCell>
                       <TableCell align="center">{item.answer}</TableCell>
@@ -909,7 +909,6 @@ class StatErrCash_ extends React.Component {
                         <TableCell align="center">Ошибка</TableCell>
                         <TableCell align="center">Довоз</TableCell>
                         <TableCell align="center">Сумма ошибки</TableCell>
-                        <TableCell align="center">Фото</TableCell>
                         <TableCell align="center"></TableCell>
                       </TableRow>
                     </TableHead>
@@ -924,11 +923,6 @@ class StatErrCash_ extends React.Component {
                           <TableCell align="center">{item.pr_name}</TableCell>
                           <TableCell align="center">{!item.new_order_id ? null : <DirectionsCarIcon />}</TableCell>
                           <TableCell align="center">{item.my_price}</TableCell>
-                          <TableCell align="center">
-                            {!item.imgs.length ? null : (
-                              <img src={'https://jacochef.ru/src/img/err_orders/uploads/' + item.imgs[0]} style={{ maxWidth: 100, maxHeight: 100 }}/>
-                            )}
-                          </TableCell>
                           <TableCell align="center">{item.answer}</TableCell>
                         </TableRow>
                       ))}
