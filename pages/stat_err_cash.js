@@ -592,7 +592,7 @@ class StatErrCash_ extends React.Component {
       is_load: true,
     });
 
-    return api_laravel_local(this.state.module, method, data, dop_type)
+    return api_laravel(this.state.module, method, data, dop_type)
         .then(result => {
         return result.data;
         })
