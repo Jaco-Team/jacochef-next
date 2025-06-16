@@ -395,11 +395,11 @@ class StatErrCash_Modal extends React.Component {
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Сотрудник</Typography>
                 <Typography sx={{ fontWeight: 'normal', whiteSpace: 'nowrap' }}>
                   {this.props.mark === 'errOrder' ? this.state.item ? this.state.item.full_user_name : 'Не указан' : this.state.item ? this.state.item.user_name : 'Не указан'}
-                  <IconButton onClick={this.getStaffs}>
+                  {parseInt(this.state.acces?.close_err) ? (<IconButton onClick={this.getStaffs}>
                     <Tooltip title={<Typography color="inherit">Редактировать</Typography>}>
                       <EditIcon/>
                     </Tooltip>
-                  </IconButton>
+                  </IconButton>) : null}
                 </Typography>
               </Grid>
 
@@ -491,7 +491,7 @@ class StatErrCash_Modal extends React.Component {
                     ) : 'Фото отсутствует'}
                 </Grid>
               </Grid>
-              {parseInt(this.state.acces?.organization_point) ? (
+              {parseInt(this.state.acces?.close_err) ? (
                 <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
                 <Grid mb={5}>
                   <Button variant="contained" onClick={this.openConfirm.bind(this, '50')} style={{ minWidth: '130px' }}>Снять 50%</Button>
