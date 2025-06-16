@@ -61,7 +61,8 @@ class StatErrCash_Modal extends React.Component {
       openAlert: false,
       err_status: true,
       err_text: '',
-      answer: ''
+      answer: '',
+      acces: {},
     };
   }
 
@@ -77,6 +78,10 @@ class StatErrCash_Modal extends React.Component {
         item: this.props.item,
       });
     }
+
+    // this.setState({
+    //   acces: this.props.acces,
+    // });
 
     // console.log(this.props.item)
   }
@@ -270,6 +275,8 @@ class StatErrCash_Modal extends React.Component {
   }
 
   render() {
+    const { acces } = this.props;
+
     return (
       <>
         <MyAlert
@@ -395,11 +402,12 @@ class StatErrCash_Modal extends React.Component {
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Сотрудник</Typography>
                 <Typography sx={{ fontWeight: 'normal', whiteSpace: 'nowrap' }}>
                   {this.props.mark === 'errOrder' ? this.state.item ? this.state.item.full_user_name : 'Не указан' : this.state.item ? this.state.item.user_name : 'Не указан'}
-                  {parseInt(this.state.acces?.close_err) ? (<IconButton onClick={this.getStaffs}>
-                    <Tooltip title={<Typography color="inherit">Редактировать</Typography>}>
-                      <EditIcon/>
-                    </Tooltip>
-                  </IconButton>) : null}
+                  {parseInt(acces?.close_err) == 1 &&
+                    <IconButton onClick={this.getStaffs}>
+                      <Tooltip title={<Typography color="inherit">Редактировать</Typography>}>
+                        <EditIcon/>
+                      </Tooltip>
+                    </IconButton>}
                 </Typography>
               </Grid>
 
@@ -491,7 +499,7 @@ class StatErrCash_Modal extends React.Component {
                     ) : 'Фото отсутствует'}
                 </Grid>
               </Grid>
-              {parseInt(this.state.acces?.close_err) ? (
+              {parseInt(acces?.close_err) ? (
                 <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
                 <Grid mb={5}>
                   <Button variant="contained" onClick={this.openConfirm.bind(this, '50')} style={{ minWidth: '130px' }}>Снять 50%</Button>
@@ -584,7 +592,7 @@ class StatErrCash_ extends React.Component {
       is_load: true,
     });
 
-    return api_laravel(this.state.module, method, data, dop_type)
+    return api_laravel_local(this.state.module, method, data, dop_type)
         .then(result => {
         return result.data;
         })
@@ -712,6 +720,7 @@ class StatErrCash_ extends React.Component {
           getData={this.getData.bind(this)}
           update={this.getItems.bind(this)}
           fullScreen={this.state.fullScreen}
+          acces={this.state.acces}
         />
 
         <Grid container spacing={3} className='container_first_child'>
