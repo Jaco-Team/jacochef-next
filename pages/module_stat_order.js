@@ -357,7 +357,7 @@ class StatOrder_ extends React.Component {
           if (exist) {
             let existIndex = newData.indexOf(exist);
 
-            newData[existIndex].count = (parseInt(item.sum_orders) + parseInt(newData[existIndex].count)) / 2;
+            newData[existIndex].count = (parseInt(item.sum_orders) + parseInt(newData[existIndex].count));
 
             if (newData[existIndex]?.avd_data && item?.avd?.length) {
               newData[existIndex]?.avd_data?.push(...item.avd);
@@ -421,7 +421,7 @@ class StatOrder_ extends React.Component {
           if (exist) {
             let existIndex = newData.indexOf(exist);
 
-            newData[existIndex].count = (parseInt(item.count_orders) + parseInt(newData[existIndex].count)) / 2;
+            newData[existIndex].count = (parseInt(item.count_orders) + parseInt(newData[existIndex].count));
 
             if (newData[existIndex]?.avd_data && item?.avd?.length) {
               newData[existIndex]?.avd_data?.push(...item.avd);
