@@ -256,6 +256,7 @@ class StatErrCash_Modal extends React.Component {
       err_id: item.id,
       row_id: item.row_id ?? 0,
       staff: this.state.newStaff,
+      answer: this.state.answer,
       flag
     };
 
@@ -263,12 +264,14 @@ class StatErrCash_Modal extends React.Component {
     if (res.st) {
         this.setState({
           dialogEdit: false,
+          answer: '',
           staffs: '',
         }, () => {this.props.update()});
       } else {
         this.setState({
           openAlert: true,
           err_status: res.st,
+          answer: '',
           err_text: res.text,
         });
       }
@@ -369,6 +372,14 @@ class StatErrCash_Modal extends React.Component {
                     </div>
                   </li>
               )}
+            />
+            <h4>Укажите причину</h4>
+            <MyTextInput
+              label="Причина"
+              value={this.state.answer}
+              multiline={true}
+              maxRows={5}
+              func={ event => { this.setState({ answer: event.target.value }) } }
             />
           </DialogContent>
           <DialogActions>
