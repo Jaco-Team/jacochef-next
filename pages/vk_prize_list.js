@@ -8,7 +8,7 @@ import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 
 
-import {formatDate, MyAlert, MyDatePickerNew} from '@/ui/elements';
+import {formatDate, MyAlert, MyDatePickerNew, MyTextInput} from '@/ui/elements';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import Button from "@mui/material/Button";
@@ -86,12 +86,21 @@ const DebouncedInput = ({ onChange, delay = 300, ...props }) => {
     }, delay);
   };
 
+  // <TextField
+  //     {...props}
+  //     value={inputValue}
+  //     onChange={handleChange}
+  //   />
+
   return (
-    <TextField
-      {...props}
-      value={inputValue}
-      onChange={handleChange}
-    />
+    <Grid item xs={12} sm={4}>
+      <MyTextInput
+        {...props}
+        label={props.label}
+        value={inputValue}
+        func={handleChange}
+      />
+    </Grid>
   );
 };
 
@@ -136,7 +145,7 @@ class VkPrizeList_ extends React.Component {
       is_load: true,
     });
 
-    let res = api_laravel(this.state.module, method, data)
+    let res = api_laravel_local(this.state.module, method, data)
       .then(result => result.data)
       .finally( () => {
         setTimeout(() => {
@@ -278,37 +287,12 @@ class VkPrizeList_ extends React.Component {
             <Button variant="contained" onClick={this.getList}>Показать</Button>
           </Grid>
               <Grid item xs={12} sm={12}>
-                <h2>Поиск победителей</h2>
                 <DebouncedInput
-                    label="Введите имя"
+                    label="Поиск по имени"
                     variant="outlined"
                     onChange={this.getListBySearch}
                     delay={500}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        height: 40,
-                      },
-                      '& .MuiInputLabel-outlined': {
-                        transform: 'translate(14px, 13px) scale(1)',
-                      },
-                      '& .MuiInputLabel-outlined.MuiInputLabel-shrink': {
-                        transform: 'translate(14px, -6px) scale(0.75)',
-                      },
-                      margin: 0,
-                      padding: 0,
-                      width: '80%',
-                      maxWidth: '500px',
-                    }}
-                    InputProps={{
-                      sx: {
-                        fontSize: '0.875rem',
-                      }
-                    }}
-                    InputLabelProps={{
-                      sx: {
-                        fontSize: '0.875rem',
-                      }
-                    }}
+                    
                 />
               </Grid>
           <Grid item xs={12}>
