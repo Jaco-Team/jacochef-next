@@ -327,7 +327,7 @@ class VkPrizeList_ extends React.Component {
                 {currentItems.map((value, key) =>
                     <TableRow key={value.id}>
                       <TableCell>{value.first_name}</TableCell>
-                      <TableCell><div dangerouslySetInnerHTML={{__html: value.prize}}/></TableCell>
+                      <TableCell><pre style={{maxWidth: '700px', whiteSpace: 'break-spaces'}}>{value.prize}</pre></TableCell>
                       <TableCell>{value.status ? <CheckIcon style={{ color: "green" }}/> : <ClearIcon style={{ color: "red" }} />}</TableCell>
                       <TableCell>
                         <IconButton onClick={() => this.CopyToClipboard(value.prize)}>
@@ -335,9 +335,11 @@ class VkPrizeList_ extends React.Component {
                         </IconButton>
                       </TableCell>
                       <TableCell>
-                        <IconButton onClick={() => {!value.status ? this.openDeleteDialog(value) : this.delete(value)}}>
+                        {!value.status ? (
+                            <IconButton onClick={() => this.openDeleteDialog(value)}>
                           <DeleteIcon style={{ color: "red" }} />
                         </IconButton>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                 )}
