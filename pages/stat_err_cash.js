@@ -34,13 +34,11 @@ import ModalImage from "react-modal-image";
 
 import { MySelect, MyDatePickerNew, MyAlert, MyTextInput, formatDate } from '@/ui/elements';
 
-import queryString from 'query-string';
-
 import dayjs from 'dayjs';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 import Tooltip from "@mui/material/Tooltip";
 import EditIcon from "@mui/icons-material/Edit";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+//import VisibilityIcon from "@mui/icons-material/Visibility";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 
@@ -252,6 +250,7 @@ class StatErrCash_Modal extends React.Component {
     }
 
     const data = {
+      date: item.date_close,
       point_id: item.point_id,
       err_id: flag === 'order' ? item.err_id : item.id,
       row_id: item.row_id ?? 0,
