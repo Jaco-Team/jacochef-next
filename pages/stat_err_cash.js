@@ -253,7 +253,7 @@ class StatErrCash_Modal extends React.Component {
 
     const data = {
       point_id: item.point_id,
-      err_id: item.id,
+      err_id: flag === 'order' ? item.err_id : item.id,
       row_id: item.row_id ?? 0,
       staff: this.state.newStaff,
       answer: this.state.answer,
@@ -523,6 +523,39 @@ class StatErrCash_Modal extends React.Component {
                 </Grid>
               </Grid>
               ) : null}
+              <Grid item xs={12}>
+                {this.state.item?.history?.length ? (
+                    <Accordion>
+                      <AccordionSummary
+                          expandIcon={<ExpandMoreIcon/>}
+                      >
+                        <Typography>Список изменений</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell style={{width: '10%'}}>#</TableCell>
+                              <TableCell style={{width: '20%'}}>Пользователь</TableCell>
+                              <TableCell style={{width: '40%'}}>Описание</TableCell>
+                              <TableCell style={{width: '30%'}}>Дата</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {this.state.item.history.map((value, key) =>
+                                <TableRow key={key}>
+                                  <TableCell>{key + 1}</TableCell>
+                                  <TableCell>{value.user_name}</TableCell>
+                                  <TableCell>{value.description}</TableCell>
+                                  <TableCell>{value.date_time}</TableCell>
+                                </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </AccordionDetails>
+                    </Accordion>
+                ) : null}
+          </Grid>
             </Grid>
           </DialogContent>
           <DialogActions>
