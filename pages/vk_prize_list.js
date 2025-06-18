@@ -28,7 +28,6 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Dialog from "@mui/material/Dialog";
-import TextField from "@mui/material/TextField";
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -145,7 +144,7 @@ class VkPrizeList_ extends React.Component {
       is_load: true,
     });
 
-    let res = api_laravel_local(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then(result => result.data)
       .finally( () => {
         setTimeout(() => {
