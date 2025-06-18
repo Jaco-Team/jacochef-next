@@ -34,9 +34,13 @@ import ModalImage from "react-modal-image";
 
 import { MySelect, MyDatePickerNew, MyAlert, MyTextInput, formatDate } from '@/ui/elements';
 
-import queryString from 'query-string';
-
 import dayjs from 'dayjs';
+import {api_laravel, api_laravel_local} from "@/src/api_new";
+import Tooltip from "@mui/material/Tooltip";
+import EditIcon from "@mui/icons-material/Edit";
+//import VisibilityIcon from "@mui/icons-material/Visibility";
+import TextField from "@mui/material/TextField";
+import Autocomplete from "@mui/material/Autocomplete";
 
 class StatErrCash_Modal extends React.Component {
   constructor(props) {
@@ -47,12 +51,16 @@ class StatErrCash_Modal extends React.Component {
 
       confirmDialog: false,
       confirmDialogDel: false,
+      dialogEdit: false,
+      staffs: [],
+      newStaff: '',
       percent: 0,
 
       openAlert: false,
       err_status: true,
       err_text: '',
-      answer: ''
+      answer: '',
+      acces: {},
     };
   }
 
@@ -68,6 +76,10 @@ class StatErrCash_Modal extends React.Component {
         item: this.props.item,
       });
     }
+
+    // this.setState({
+    //   acces: this.props.acces,
+    // });
 
     // console.log(this.props.item)
   }
@@ -211,13 +223,68 @@ class StatErrCash_Modal extends React.Component {
     this.props.onClose();
   }
 
+  search(event, value) {
+    let search = event?.target?.value ? event.target.value : value ? value : '';
+    this.setState({newStaff: value})
+  }
+
+  getStaffs = async () => {
+    const item = this.state.item;
+    this.setState({newStaff: ''});
+    const data = {
+      point_id: item.point_id,
+      err_id: item.id,
+      date: item.date_time_order ? item.date_time_order : item.date,
+    };
+
+    const res = await this.props.getData('get_staffs', data);
+    this.setState({dialogEdit: true, staffs: res.staffs});
+  }
+
+  changeStaffs = async () => {
+    const item = this.state.item;
+    let flag = 'order';
+
+    if (!item.date_time_order) {
+      flag = 'camera';
+    }
+
+    const data = {
+      date: item.date_close,
+      point_id: item.point_id,
+      err_id: flag === 'order' ? item.err_id : item.id,
+      row_id: item.row_id ?? 0,
+      staff: this.state.newStaff,
+      answer: this.state.answer,
+      flag
+    };
+
+    const res = await this.props.getData('edit_staff', data);
+    if (res.st) {
+        this.setState({
+          dialogEdit: false,
+          answer: '',
+          staffs: '',
+        }, () => {this.props.update()});
+      } else {
+        this.setState({
+          openAlert: true,
+          err_status: res.st,
+          answer: '',
+          err_text: res.text,
+        });
+      }
+  }
+
   render() {
+    const { acces } = this.props;
+
     return (
       <>
-        <MyAlert 
-          isOpen={this.state.openAlert} 
-          onClose={() => this.setState({ openAlert: false }) } 
-          status={this.state.err_status} 
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false }) }
+          status={this.state.err_status}
           text={this.state.err_text} />
 
         <Dialog
@@ -273,6 +340,56 @@ class StatErrCash_Modal extends React.Component {
         </Dialog>
 
         <Dialog
+          sx={{ '& .MuiDialog-paper': { width: '100%', maxHeight: 435 } }}
+          maxWidth="sm"
+          open={this.state.dialogEdit}
+          onClose={() => this.setState({ dialogEdit: false })}
+        >
+          <DialogTitle>Изменить сотрудника</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+            <h4>Сотрудник</h4>
+            <Autocomplete
+              freeSolo={true}
+              size="small"
+              disableCloseOnSelect={true}
+              options={this.state.staffs}
+              getOptionLabel={(option) => option?.staff_name ?? ''}
+              value={this.state.newStaff}
+              onChange={this.search.bind(this)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={'Поиск'}
+                  onChange={(event) => this.search(event)}
+                />
+              )}
+              renderOption={(props, option) => (
+                  <li {...props} key={option.user_id}>
+                    <div>
+                      <strong>{option.staff_name}</strong>
+                      <span style={{marginLeft: 4, fontSize: '12px'}}>({option.appointment_name})</span>
+                    </div>
+                  </li>
+              )}
+            />
+            <h4>Укажите причину</h4>
+            <MyTextInput
+              label="Причина"
+              value={this.state.answer}
+              multiline={true}
+              maxRows={5}
+              func={ event => { this.setState({ answer: event.target.value }) } }
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button autoFocus onClick={() => this.setState({ dialogEdit: false }) }>
+              Отмена
+            </Button>
+            <Button onClick={this.changeStaffs}>Сохранить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
           open={this.props.open}
           onClose={this.onClose.bind(this)}
           fullScreen={this.props.fullScreen}
@@ -295,6 +412,12 @@ class StatErrCash_Modal extends React.Component {
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Сотрудник</Typography>
                 <Typography sx={{ fontWeight: 'normal', whiteSpace: 'nowrap' }}>
                   {this.props.mark === 'errOrder' ? this.state.item ? this.state.item.full_user_name : 'Не указан' : this.state.item ? this.state.item.user_name : 'Не указан'}
+                  {parseInt(acces?.close_err) == 1 &&
+                    <IconButton onClick={this.getStaffs}>
+                      <Tooltip title={<Typography color="inherit">Редактировать</Typography>}>
+                        <EditIcon/>
+                      </Tooltip>
+                    </IconButton>}
                 </Typography>
               </Grid>
 
@@ -373,7 +496,7 @@ class StatErrCash_Modal extends React.Component {
                           hideZoom={false}
                           showRotate={true}
                         />
-                      ) 
+                      )
                       : 'Фото отсутствует'
                   : this.state.item ? !this.state.item.imgs.length ? 'Фото отсутствует' : (
                         <ModalImage
@@ -386,8 +509,8 @@ class StatErrCash_Modal extends React.Component {
                     ) : 'Фото отсутствует'}
                 </Grid>
               </Grid>
-
-              <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+              {parseInt(acces?.close_err) ? (
+                <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
                 <Grid mb={5}>
                   <Button variant="contained" onClick={this.openConfirm.bind(this, '50')} style={{ minWidth: '130px' }}>Снять 50%</Button>
                 </Grid>
@@ -398,6 +521,40 @@ class StatErrCash_Modal extends React.Component {
                   <Button variant="contained" onClick={this.openConfirmDel.bind(this)} style={{ minWidth: '130px' }}>Удалить</Button>
                 </Grid>
               </Grid>
+              ) : null}
+              <Grid item xs={12}>
+                {this.state.item?.history?.length ? (
+                    <Accordion>
+                      <AccordionSummary
+                          expandIcon={<ExpandMoreIcon/>}
+                      >
+                        <Typography>Список изменений</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell style={{width: '10%'}}>#</TableCell>
+                              <TableCell style={{width: '20%'}}>Пользователь</TableCell>
+                              <TableCell style={{width: '40%'}}>Описание</TableCell>
+                              <TableCell style={{width: '30%'}}>Дата</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {this.state.item.history.map((value, key) =>
+                                <TableRow key={key}>
+                                  <TableCell>{key + 1}</TableCell>
+                                  <TableCell>{value.user_name}</TableCell>
+                                  <TableCell>{value.description}</TableCell>
+                                  <TableCell>{value.date_time}</TableCell>
+                                </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </AccordionDetails>
+                    </Accordion>
+                ) : null}
+          </Grid>
             </Grid>
           </DialogContent>
           <DialogActions>
@@ -422,6 +579,7 @@ class StatErrCash_ extends React.Component {
 
       points: [],
       point: '0',
+      acces: false,
 
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
@@ -452,6 +610,7 @@ class StatErrCash_ extends React.Component {
       points: data.points,
       point: data.points[0].id,
       module_name: data.module_info.name,
+      acces: data.acces
     });
 
     document.title = data.module_info.name;
@@ -470,48 +629,24 @@ class StatErrCash_ extends React.Component {
         }
   }
 
-  getData = (method, data = {}) => {
+  getData = (method, data = {}, dop_type = {}) => {
+
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+    return api_laravel(this.state.module, method, data, dop_type)
+        .then(result => {
+        return result.data;
+        })
+        .finally(() => {
+          setTimeout(() => {
+            this.setState({
+              is_load: false,
+            });
+          }, 500);
+        });
+  }
 
   async changePoint(event) {
     const point = event.target.value;
@@ -552,15 +687,22 @@ class StatErrCash_ extends React.Component {
     });
   }
 
-  openModal(mark, method, item) {
+  async openModal(mark, method, item) {
     this.handleResize();
+    const data = {
+      point_id: this.state.point,
+      err_id: mark === 'errOrder' ? item.err_id : item.id,
+      mark,
+    };
+
+    const res = await this.getData('get_data_one', data);
 
     if (mark === 'errOrder') {
       this.setState({
         modalDialog: true,
         method,
         mark,
-        item,
+        item: res.item,
       });
     }
 
@@ -569,7 +711,7 @@ class StatErrCash_ extends React.Component {
         modalDialog: true,
         method,
         mark,
-        item,
+        item: res.item,
       });
     }
   }
@@ -621,6 +763,7 @@ class StatErrCash_ extends React.Component {
           getData={this.getData.bind(this)}
           update={this.getItems.bind(this)}
           fullScreen={this.state.fullScreen}
+          acces={this.state.acces}
         />
 
         <Grid container spacing={3} className='container_first_child'>
@@ -774,7 +917,6 @@ class StatErrCash_ extends React.Component {
                     <TableCell align="center">Дата и время совершения ошибки</TableCell>
                     <TableCell align="center">Ошибка</TableCell>
                     <TableCell align="center">Сумма ошибки</TableCell>
-                    <TableCell align="center">Фото</TableCell>
                     <TableCell align="center">Обжалована</TableCell>
                     <TableCell align="center">Изменина сумма</TableCell>
                     <TableCell align="center"></TableCell>
@@ -792,12 +934,6 @@ class StatErrCash_ extends React.Component {
                       <TableCell align="center">{item.date} {item.time}</TableCell>
                       <TableCell align="center">{item.fine_name}</TableCell>
                       <TableCell align="center">{item.price}</TableCell>
-                      <TableCell align="center">
-                        {!item.imgs.length ? null : (
-                          <img src={'https://jacochef.ru/src/img/fine_err/uploads/' + item.imgs[0]} style={{ maxWidth: 100, maxHeight: 100 }}/>
-                        )}
-                      </TableCell>
-
                       <TableCell align="center">{ parseInt(item.change_win) == 1 ? <CheckIcon /> : null }</TableCell>
                       <TableCell align="center">{ parseInt(item.change_sum) == 1 ? <CheckIcon /> : null }</TableCell>
                       <TableCell align="center">{item.answer}</TableCell>
@@ -825,7 +961,6 @@ class StatErrCash_ extends React.Component {
                         <TableCell align="center">Ошибка</TableCell>
                         <TableCell align="center">Довоз</TableCell>
                         <TableCell align="center">Сумма ошибки</TableCell>
-                        <TableCell align="center">Фото</TableCell>
                         <TableCell align="center"></TableCell>
                       </TableRow>
                     </TableHead>
@@ -838,13 +973,8 @@ class StatErrCash_ extends React.Component {
                           <TableCell align="center">{item.date_time_order}</TableCell>
                           <TableCell align="center">{item.item_name}</TableCell>
                           <TableCell align="center">{item.pr_name}</TableCell>
-                          <TableCell align="center">{item.new_order_id === '0' ? null : <DirectionsCarIcon />}</TableCell>
+                          <TableCell align="center">{!item.new_order_id ? null : <DirectionsCarIcon />}</TableCell>
                           <TableCell align="center">{item.my_price}</TableCell>
-                          <TableCell align="center">
-                            {!item.imgs.length ? null : (
-                              <img src={'https://jacochef.ru/src/img/err_orders/uploads/' + item.imgs[0]} style={{ maxWidth: 100, maxHeight: 100 }}/>
-                            )}
-                          </TableCell>
                           <TableCell align="center">{item.answer}</TableCell>
                         </TableRow>
                       ))}

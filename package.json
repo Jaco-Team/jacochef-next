@@ -9,7 +9,8 @@
     "lint": "next lint",
     "deploy:local": "next build && pm2 startOrRestart ecosystem.config.js --env local",
     "deploy:dev": "next build && pm2 startOrRestart ecosystem.config.js --env development",
-    "deploy:prod": "npm update && next build && npm run sentry:sourcemaps && pm2 startOrRestart ecosystem.config.js --env production",
+    "deploy_test:prod": "npm update && next build && npm run sentry:sourcemaps && pm2 startOrRestart ecosystem.config.js --env production",
+    "deploy:prod": "npm update && next build && pm2 startOrRestart ecosystem.config.js --env production",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org sentry --project jacosoft-dop-react ./out && sentry-cli --url https://sentry.jacochef.ru/ sourcemaps upload --org sentry --project jacosoft-dop-react ./out"
   },
   "dependencies": {
