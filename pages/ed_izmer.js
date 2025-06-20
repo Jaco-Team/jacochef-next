@@ -21,6 +21,7 @@ import TableRow from '@mui/material/TableRow';
 import { MyTextInput, MySelect, MyAlert } from '@/ui/elements';
 
 import queryString from 'query-string';
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 
 class EdIzmer_Modal extends React.Component {
 
@@ -45,7 +46,7 @@ class EdIzmer_Modal extends React.Component {
         item: this.props.item,
         items: this.props.items,
       });
-     
+
     }
   }
 
@@ -130,7 +131,7 @@ class EdIzmer_Modal extends React.Component {
                     func={this.changeItem.bind(this, 'con_count')}
                   />
                 </Grid>
-                
+
               </Grid>
             </DialogContent>
           <DialogActions>
@@ -189,49 +190,22 @@ class EdIzmer_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
+
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({
-          is_load: false,
-        });
+        }, 500);
       });
+
+    return res;
   }
 
   handleResize() {
@@ -286,7 +260,7 @@ class EdIzmer_ extends React.Component {
     const mark = this.state.mark;
 
     let res;
-    
+
     if(mark === 'add') {
       res = await this.getData('save_new', data);
     }
