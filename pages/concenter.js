@@ -8,10 +8,11 @@ import PropTypes from 'prop-types';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
+
 import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
+const Table = dynamic(() => import('@mui/material/Table'), { ssr: true });
+const TableBody = dynamic(() => import('@mui/material/TableBody'), { ssr: true });
+const TableHead = dynamic(() => import('@mui/material/TableHead'), { ssr: true });
 import TableRow from '@mui/material/TableRow';
 import TableFooter from '@mui/material/TableFooter';
 
@@ -40,6 +41,9 @@ import Typography from '@mui/material/Typography';
 import { api, api_laravel, api_laravel_local } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+import dynamic from "next/dynamic";
+import Paper from "@mui/material/Paper";
+import TableContainer from "@mui/material/TableContainer";
 
 function a11yProps(index) {
   return {
@@ -51,17 +55,22 @@ function a11yProps(index) {
 class Concenter_ extends React.Component {
   constructor(props) {
     super(props);
-        
+
     this.state = {
       module: 'concenter',
       module_name: '',
       is_load: false,
-      
+      acces: {},
+      err_info: {},
+
       modalDialog: false,
       modalDialogDel: false,
-      
+      modalDialogDriver: false,
+      confirmDialog: false,
+
       cities: [],
       city_id: 1,
+      text: '',
       date: formatDate(new Date()),
       point_list: [],
       need_point_list: [],
@@ -86,10 +95,10 @@ class Concenter_ extends React.Component {
       addr: ''
     };
   }
-  
+
   async componentDidMount(){
     let data = await this.getData('get_all');
-    
+
     let need_points = data.points.filter( (item, key) => parseInt(item.city_id) == parseInt(data.cities[0].id) );
 
     this.setState({
@@ -97,16 +106,17 @@ class Concenter_ extends React.Component {
       cities: data.cities,
       point_list: data.points,
       need_point_list: need_points,
-      point_id: parseInt(need_points[0].id)
+      point_id: parseInt(need_points[0].id),
+      acces: data.acces
     })
-    
+
     document.title = data.module_info.name;
 
     setTimeout( () => {
       this.getOrders();
     }, 300 )
   }
-  
+
   getData = (method, data = {}) => {
     this.setState({
       is_load: true,
@@ -124,7 +134,7 @@ class Concenter_ extends React.Component {
 
     return res;
   };
-   
+
   changeCity(event){
     this.setState({
       number: '',
@@ -132,7 +142,7 @@ class Concenter_ extends React.Component {
     })
 
     let data = event.target.value;
-    
+
     let need_points = this.state.point_list.filter( (item, key) => parseInt(item.city_id) == parseInt(data) );
 
     this.setState({
@@ -146,7 +156,7 @@ class Concenter_ extends React.Component {
       this.getOrders();
     }, 300 )
   }
-  
+
   async changePoint(point_id, index){
     //let point_id = event.target.id;
     //point_id = point_id.split('-')[2]
@@ -159,7 +169,7 @@ class Concenter_ extends React.Component {
     setTimeout( () => {
       this.getOrders();
     }, 300 )
-    
+
   }
 
   async getOrders(){
@@ -167,13 +177,14 @@ class Concenter_ extends React.Component {
       point_id: this.state.point_id,
       date: dayjs(this.state.date).format('YYYY-MM-DD'),
     };
-    
+
     let res = await this.getData('get_orders', data);
 
     console.log( res )
 
     this.setState({
-      orders: res.orders
+      orders: res.orders,
+      err_info: res.err_info
     })
 
     setTimeout( () => {
@@ -210,17 +221,20 @@ class Concenter_ extends React.Component {
     this.setState({ modalDialogDel: true })
   }
 
-  async closeOrderTrue(){
+  closeDriver(){
+    this.setState({ modalDialogDelDriver: true })
+  }
+
+  async closeOrderTrue() {
     let deltype = this.state.radiogroup_options.find( (item) => item.id == this.state.typeDel );
-        
-    if (confirm("Отменить заказ #"+this.state.showOrder.order.order_id)) {
+
       let data = {
         typeCreate: 'center',
         order_id: this.state.showOrder.order.order_id,
         point_id: this.state.showOrder.order.point_id,
         ans: parseInt(deltype.id) == 4 ? this.state.textDel : deltype.label
       };
-  
+
       let res = await this.getData('close_order_center', data);
 
       //setTimeout(() => {
@@ -229,18 +243,40 @@ class Concenter_ extends React.Component {
             modalDialogDel: false,
             modalDialog: false,
           });
-          
-          this.getOrders();
+
+          await this.getOrders();
         }else{
           alert( res['text'] );
         }
       //}, 300);
+  }
+
+  async closeDriverTrue() {
+    let data = {
+      order_id: this.state.showOrder.order.order_id,
+      point_id: this.state.showOrder.order.point_id,
+    };
+
+    let res = await this.getData('close_order_driver', data);
+
+    if (res['st'] === true) {
+      this.setState({
+        modalDialogDelDriver: false,
+      });
+
+      await this.showOrder(this.state.showOrder.order.order_id);
+    } else {
+      this.setState({
+        modalDialogDelDriver: false,
+      });
+      alert(res['text']);
     }
+
   }
 
   async fakeUser(){
     let type_check = 0;
-
+    let text = this.state.text;
     if( parseInt(this.state.showOrder.order.check_pos) >= 0 ){
       if( parseInt(this.state.showOrder.order.check_pos) <= 100 ){
         type_check = 1;
@@ -255,24 +291,22 @@ class Concenter_ extends React.Component {
     //1 - сразу
     //2 - уточнить
 
-    
+
     if( parseInt(type_check) == 0 ){
       alert('Создать обращение не возможно')
       return ;
     }
 
     if( parseInt(type_check) == 1 ){
-      let text = prompt('Комментарий к ситуации', '');
-
-      if(text.length > 0){
+      if(text) {
         let data = {
           text: text,
           point_id: parseInt(this.state.showOrder.order.point_id),
           order_id: parseInt(this.state.showOrder.order.order_id),
         };
-    
+
         let res = await this.getData('fake_user', data);
-  
+
         if(res['st'] == true){
           alert('Обращение зафиксировано')
           this.setState({ modalDialog: false })
@@ -286,18 +320,14 @@ class Concenter_ extends React.Component {
     }
 
     if( parseInt(type_check) == 2 ){
-      const result = confirm('Курьер, предположительно, находиться далеко от клиента, точно оформить довоз ?');
 
-      if (result) {
-        var text = prompt('Комментарий к ситуации', '');
-
-        if(text.length > 0){
+        if(text) {
           let data = {
             text: text,
             point_id: parseInt(this.state.showOrder.order.point_id),
             order_id: parseInt(this.state.showOrder.order.order_id),
           };
-      
+
           let res = await this.getData('fake_user', data);
 
           if(res['st'] == true){
@@ -309,7 +339,6 @@ class Concenter_ extends React.Component {
         }else{
           alert('надо указать комментарий')
         }
-      }
     }
   }
 
@@ -328,7 +357,7 @@ class Concenter_ extends React.Component {
       number: '',
       addr: ''
     })
-    
+
     this.setState({
       date: (val)
     })
@@ -340,7 +369,7 @@ class Concenter_ extends React.Component {
 
   changeNumber(event){
     let value = event.target.value;
-    
+
     if( isNaN(value) ){
       return ;
     }
@@ -354,7 +383,7 @@ class Concenter_ extends React.Component {
 
   changeAddrSt(event){
     let value = event.target.value;
-    
+
     this.setState({ addr: value })
 
     setTimeout( () => {
@@ -378,14 +407,17 @@ class Concenter_ extends React.Component {
     })
   }
 
+  hasAccess = (flag) => flag === "1" || flag === 1;
+
   render(){
+    const { acces, err_info } = this.state;
     return (
       <>
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
-        { !this.state.showOrder ? null : 
+
+        { !this.state.showOrder ? null :
           <Dialog
             open={this.state.modalDialog}
             onClose={ () => { this.setState({ modalDialog: false }) } }
@@ -394,7 +426,7 @@ class Concenter_ extends React.Component {
           >
             <DialogTitle style={{textAlign: 'center'}}>Заказ #{this.state.showOrder.order.order_id}</DialogTitle>
             <DialogContent>
-              
+
               <Grid container spacing={0}>
                 <Grid item xs={12}>
                   <span>{this.state.showOrder.order.type_order}: {this.state.showOrder.order.type_order_addr_new}</span>
@@ -415,25 +447,25 @@ class Concenter_ extends React.Component {
                   <span>{this.state.showOrder.order.time_order_name}: {this.state.showOrder.order.time_order}</span>
                 </Grid>
 
-                { this.state.showOrder.order.number.length > 1 ? 
+                { this.state.showOrder.order.number.length > 1 && this.hasAccess(acces?.tel) ?
                   <Grid item xs={12}>
-                    <b>Телефон: </b> 
-                    <span>{this.state.showOrder.order.number}</span> 
+                    <b>Телефон: </b>
+                    <span>{this.state.showOrder.order.number}</span>
                   </Grid>
-                    : 
+                    :
                   null
                 }
 
                 { this.state.showOrder.order.delete_reason.length > 0 ? <Grid item xs={12}><span style={{ color: 'red' }}>Удален: {this.state.showOrder.order.date_time_delete}</span></Grid> : null}
                 { this.state.showOrder.order.delete_reason.length > 0 ? <Grid item xs={12}><span style={{ color: 'red' }}>{this.state.showOrder.order.delete_reason}</span></Grid> : null}
-                
+
                 { parseInt(this.state.showOrder.order.is_preorder) == 1 ? null :
                   <Grid item xs={12}><span>{this.state.showOrder.order.text_time}{this.state.showOrder.order.time_to_client}</span></Grid>
                 }
-                
+
                 <Grid item xs={12}><span>{this.state.showOrder.order.textTime}</span></Grid>
-                
-                
+
+
                 { this.state.showOrder.order.promo_name == null || this.state.showOrder.order.promo_name.length == 0 ? null :
                   <>
                     <Grid item xs={12}>
@@ -445,21 +477,42 @@ class Concenter_ extends React.Component {
                     </Grid>
                   </>
                 }
-                
+
                 { this.state.showOrder.order.comment == null || this.state.showOrder.order.comment.length == 0 ? null :
                   <Grid item xs={12}>
                     <b>Комментарий: </b>
                     <span>{this.state.showOrder.order.comment}</span>
                   </Grid>
                 }
-                
+
                 { this.state.showOrder.order.sdacha == null || parseInt(this.state.showOrder.order.sdacha) == 0 ? null :
                   <Grid item xs={12}>
                     <b>Сдача: </b>
                     <span>{this.state.showOrder.order.sdacha}</span>
                   </Grid>
                 }
-                
+
+                { this.state.showOrder.order.client_name &&
+                  <Grid item xs={12}>
+                    Клиент:
+                    <span> {this.state.showOrder.order.client_name}</span>
+                  </Grid>
+                }
+
+                { this.state.showOrder.order.driver_name &&
+                  <Grid item xs={12}>
+                    Курьер:
+                    <span> {this.state.showOrder.order.driver_name}</span>
+                  </Grid>
+                }
+
+                { (this.state.showOrder.order.type_pay && this.hasAccess(acces?.type_order)) &&
+                  <Grid item xs={12}>
+                    Тип оплаты:
+                    <span> {this.state.showOrder.order.type_pay}</span>
+                  </Grid>
+                }
+
                 <Grid item xs={12}>
                   <b>Сумма заказа: </b>
                   <span>{this.state.showOrder.order.sum_order} р</span>
@@ -493,7 +546,8 @@ class Concenter_ extends React.Component {
                   </Table>
                 </Grid>
 
-                <Accordion style={{ width: '100%' }}>
+                {(this.hasAccess(acces?.disband)) &&
+                  <Accordion style={{ width: '100%' }}>
                   <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
                   >
@@ -512,11 +566,34 @@ class Concenter_ extends React.Component {
                     </Table>
                   </AccordionDetails>
                 </Accordion>
+                }
+                {(this.hasAccess(acces?.list_driver) && this.state.showOrder.order.type_order_ === 1 && this.state.showOrder.driver_stat.length) &&
+                    <Accordion style={{width: '100%'}}>
+                      <AccordionSummary
+                          expandIcon={<ExpandMoreIcon/>}
+                      >
+                        <Typography>Курьеры</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Table size={'small'} style={{marginTop: 15}}>
+                          <TableBody>
+                            {this.state.showOrder.driver_stat.map((item, key) =>
+                                <TableRow key={key}>
+                                  <TableCell>{item.date_time}</TableCell>
+                                  <TableCell>{item.type}</TableCell>
+                                  <TableCell>{item.driver}</TableCell>
+                                </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </AccordionDetails>
+                    </Accordion>
+                }
               </Grid>
 
             </DialogContent>
 
-            { parseInt( this.state.showOrder.order.is_delete ) == 0 && parseInt( this.state.showOrder.order.status_order ) !== 6 ? 
+            { parseInt( this.state.showOrder.order.is_delete ) == 0 && parseInt( this.state.showOrder.order.status_order ) !== 6 && parseInt(acces?.del_ord) ?
               <DialogActions style={{ justifyContent: 'flex-end', padding: '15px 0px' }}>
                 <ButtonGroup disableElevation={true} disableRipple={true} variant="contained" className="BtnBorderOther" style={{ marginRight: 24 }}>
                   <Button variant="contained" className="BtnCardMain CardInCardItem" onClick={ this.closeOrder.bind(this) }>Отменить заказ</Button>
@@ -526,10 +603,20 @@ class Concenter_ extends React.Component {
               null
             }
 
-            { parseInt( this.state.showOrder.order.type_order_ ) == 1 && parseInt( this.state.showOrder.order.status_order ) > 4 && parseInt( this.state.showOrder.order.check_pos ) >= 0 ? 
+            { parseInt( this.state.showOrder.order.is_delete ) == 0 && parseInt( this.state.showOrder.order.driver_id ) && parseInt(acces?.withdraw_an_order)  ?
               <DialogActions style={{ justifyContent: 'flex-end', padding: '15px 0px' }}>
                 <ButtonGroup disableElevation={true} disableRipple={true} variant="contained" className="BtnBorderOther" style={{ marginRight: 24 }}>
-                  <Button variant="contained" className="BtnCardMain CardInCardItemYellow" onClick={ this.fakeUser.bind(this) }>Клиент не вышел на связь</Button>
+                  <Button variant="contained" className="BtnCardMain CardInCardItem" onClick={ this.closeDriver.bind(this) }>Снять заказ с курьера</Button>
+                </ButtonGroup>
+              </DialogActions>
+                :
+              null
+            }
+
+            { parseInt( this.state.showOrder.order.type_order_ ) == 1 && parseInt( this.state.showOrder.order.status_order ) > 4 && parseInt( this.state.showOrder.order.check_pos ) >= 0 && parseInt(acces?.client_not) ?
+              <DialogActions style={{ justifyContent: 'flex-end', padding: '15px 0px' }}>
+                <ButtonGroup disableElevation={true} disableRipple={true} variant="contained" className="BtnBorderOther" style={{ marginRight: 24 }}>
+                  <Button variant="contained" className="BtnCardMain CardInCardItemYellow" onClick={ () => this.setState({confirmDialog: true}) }>Клиент не вышел на связь</Button>
                 </ButtonGroup>
               </DialogActions>
                 :
@@ -538,7 +625,7 @@ class Concenter_ extends React.Component {
           </Dialog>
         }
 
-        { !this.state.showOrder ? null : 
+        {!this.state.showOrder ? null :
           <Dialog
             open={this.state.modalDialogDel}
             onClose={ () => { this.setState({ modalDialogDel: false }) } }
@@ -547,10 +634,10 @@ class Concenter_ extends React.Component {
           >
             <DialogTitle style={{textAlign: 'center'}}>Отмена заказа {this.state.showOrder.order.order_id}</DialogTitle>
             <DialogContent>
-              
+
               <FormControl component="fieldset">
                 <RadioGroup name="typeDel" value={ this.state.typeDel } onChange={this.changeAddr} >
-                  {this.state.radiogroup_options.map((item, key) => 
+                  {this.state.radiogroup_options.map((item, key) =>
                     <FormControlLabel key={key} value={item.id} control={<Radio />} label={item.label} />
                   )}
                 </RadioGroup>
@@ -575,21 +662,92 @@ class Concenter_ extends React.Component {
               <ButtonGroup disableElevation={true} disableRipple={true} variant="contained" className="BtnBorderOther" style={{ marginRight: 24 }}>
                 <Button variant="contained" className="BtnCardMain CardInCardItem" onClick={() => { this.setState({delOrder: false}) }}>К заказу</Button>
               </ButtonGroup>
-              
+
               <ButtonGroup disableElevation={true} disableRipple={true} variant="contained" className="BtnBorderOther" style={{ marginRight: 24 }}>
-                <Button variant="contained" className="BtnCardMain CardInCardItem" onClick={this.closeOrderTrue.bind(this)}>Отменить заказ</Button>
+                <Button variant="contained" className="BtnCardMain CardInCardItem" onClick={() => this.setState({confirmDialogDel: true})}>Отменить заказ</Button>
               </ButtonGroup>
 
             </DialogActions>
-                
+
           </Dialog>
         }
-        
+
+        <Dialog
+          sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+          maxWidth="xs"
+          open={this.state.confirmDialog}
+          onClose={() => this.setState({ confirmDialog: false })}
+        >
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+            <p style={{ marginBottom: 20 }}>Курьер, предположительно, находиться далеко от клиента, точно оформить довоз?</p>
+
+            <MyTextInput
+              label="Причина"
+              value={this.state.text}
+              multiline={true}
+              maxRows={5}
+              func={ event => { this.setState({ text: event.target.value }) } }
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button autoFocus onClick={() => this.setState({ confirmDialog: false }) }>
+              Отмена
+            </Button>
+            <Button onClick={this.fakeUser.bind(this)}>Подтвердить</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+          maxWidth="xs"
+          open={this.state.confirmDialogDel}
+          onClose={() => this.setState({ confirmDialogDel: false })}
+        >
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+            <p style={{ marginBottom: 20 }}>"Отменить заказ #{this.state.showOrder?.order?.order_id}?</p>
+          </DialogContent>
+          <DialogActions>
+            <Button autoFocus onClick={() => this.setState({ confirmDialogDel: false }) }>
+              Отмена
+            </Button>
+            <Button onClick={this.closeOrderTrue.bind(this)}>Подтвердить</Button>
+          </DialogActions>
+        </Dialog>
+
+        { !this.state.showOrder ? null :
+          <Dialog
+            open={this.state.modalDialogDelDriver}
+            onClose={ () => { this.setState({ modalDialogDelDriver: false }) } }
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+          >
+            <DialogTitle style={{textAlign: 'center'}}>Снять с курьера заказ {this.state.showOrder.order.order_id}</DialogTitle>
+            <DialogContent>
+              Снять с курьера заказ {this.state.showOrder.order.order_id}
+            </DialogContent>
+
+            <DialogActions style={{ paddingBottom: 24 }}>
+
+              <ButtonGroup disableElevation={true} disableRipple={true} variant="contained" className="BtnBorderOther" style={{ marginRight: 24 }}>
+                <Button variant="contained" className="BtnCardMain CardInCardItem" onClick={() => { this.setState({modalDialogDelDriver: false}) }}>Отмена</Button>
+              </ButtonGroup>
+
+              <ButtonGroup disableElevation={true} disableRipple={true} variant="contained" className="BtnBorderOther" style={{ marginRight: 24 }}>
+                <Button variant="contained" className="BtnCardMain CardInCardItem" onClick={this.closeDriverTrue.bind(this)}>Да</Button>
+              </ButtonGroup>
+
+            </DialogActions>
+
+          </Dialog>
+        }
+
         <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
-          
+
           <Grid item xs={12} sm={3}>
             <MySelect data={this.state.cities} value={this.state.city_id} func={ this.changeCity.bind(this) } label='Город' />
           </Grid>
@@ -605,80 +763,118 @@ class Concenter_ extends React.Component {
             <MyTextInput label={'Адрес'} value={this.state.addr} func={ this.changeAddrSt.bind(this) } />
           </Grid>
 
-          
-          
-          
-          <Grid item xs={12} sm={3}>
+
+
+
+          <Grid item xs={12} sm={12}>
             <Button variant="contained" onClick={this.btnGetOrders.bind(this)}>Обновить</Button>
           </Grid>
-          
+
+          <Grid item xs={12} sm={6}>
+            {err_info.all_green ? (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{fontWeight: 'bold'}}>Тип</TableCell>
+                    <TableCell align="center" sx={{backgroundColor: 'yellow'}}></TableCell>
+                    <TableCell align="center" sx={{backgroundColor: 'green'}}></TableCell>
+                    <TableCell align="center" sx={{backgroundColor: 'red'}}></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{fontWeight: 'bold'}}>Кухня</TableCell>
+                    <TableCell align="center">{err_info.yellow_cook}</TableCell>
+                    <TableCell align="center">{err_info.green_cook}</TableCell>
+                    <TableCell align="center">{err_info.red_cook}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{fontWeight: 'bold'}}>Курьеры</TableCell>
+                    <TableCell align="center">{err_info.yellow_dev}</TableCell>
+                    <TableCell align="center">{err_info.green_dev}</TableCell>
+                    <TableCell align="center">{err_info.red_dev}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{fontWeight: 'bold'}}>Тип</TableCell>
+                    <TableCell align="center" sx={{fontWeight: 'bold'}}>Вовремя клиенту</TableCell>
+                    <TableCell align="center" colSpan={2} sx={{fontWeight: 'bold'}}>Опоздали клиенту</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{fontWeight: 'bold'}}>Отчет</TableCell>
+                    <TableCell align="center">{err_info.all_green}</TableCell>
+                    <TableCell align="center" colSpan={2}>{err_info.all_red}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>) : null}
+          </Grid>
+
           <Grid item xs={12}>
             <Tabs value={this.state.indexTab}>
-              { this.state.need_point_list.map( (item, key) =>
+              {this.state.need_point_list.map( (item, key) =>
                 <Tab key={key} label={item.name} onClick={this.changePoint.bind(this, item.id, key)} {...a11yProps(parseInt(item.id))} />
-              ) }
+              )}
             </Tabs>
           </Grid>
 
           <Grid item xs={12}>
-            
-            <Table size={'small'}>
+            {this.state.ordersRender.length ? (
+                <Table size={'small'}>
               <TableHead>
                 <TableRow>
                   <TableCell>Заказ</TableCell>
-                  <TableCell>Оформил</TableCell>
-                  <TableCell>Номер клиента</TableCell>
-                  <TableCell>Адрес доставки</TableCell>
+                  {this.hasAccess(acces?.issuedd) && <TableCell>Оформил</TableCell>}
+                  {this.hasAccess(acces?.num_client) && <TableCell>Номер клиента</TableCell>}
+                  {this.hasAccess(acces?.address) && <TableCell>Адрес доставки</TableCell>}
                   <TableCell>Время открытия заказа</TableCell>
-                  
+
                   <TableCell>Ко времени</TableCell>
                   <TableCell>Закрыт на кухне</TableCell>
                   <TableCell>Получен клиентом</TableCell>
-
-                  <TableCell>До просрочки</TableCell>
-                  <TableCell>Время обещ</TableCell>
+                  {this.hasAccess(acces?.delay) && <TableCell>До просрочки</TableCell>}
+                  {this.hasAccess(acces?.time_promise) && <TableCell>Время обещ</TableCell>}
 
                   <TableCell>Тип</TableCell>
                   <TableCell>Статус</TableCell>
 
-                  <TableCell>Сумма</TableCell>
-                  <TableCell>Оплата</TableCell>
-                  <TableCell>Водитель</TableCell>
+                  {this.hasAccess(acces?.summ) && <TableCell>Сумма</TableCell>}
+                  {this.hasAccess(acces?.payment) && <TableCell>Оплата</TableCell>}
+                  {this.hasAccess(acces?.driver) && <TableCell>Водитель</TableCell>}
                 </TableRow>
               </TableHead>
 
               <TableBody>
-                
+
                 { this.state.ordersRender.map( (item, key) =>
-                  <TableRow key={key} style={ parseInt(item.is_delete) == 1 ? {backgroundColor: 'red', color: '#fff', fontWeight: 'bold'} : {} }>
+                  <TableRow key={key} style={ parseInt(item.is_delete) == 1 &&  this.hasAccess(acces?.late) ? {backgroundColor: 'red', color: '#fff', fontWeight: 'bold'} : {} }>
                     <TableCell style={ parseInt(item.dist) >= 0 ? {backgroundColor: 'yellow', color: '#000', cursor: 'pointer', fontWeight: 'inherit'} : {color: 'inherit', cursor: 'pointer', fontWeight: 'inherit'} } onClick={this.showOrder.bind(this, item.id)}>{item.id}</TableCell>
-                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.type_user}</TableCell>
-                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.number}</TableCell>
-                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.street} {item.home}</TableCell>
+                    {this.hasAccess(acces?.issuedd) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.type_user}</TableCell>}
+                    {this.hasAccess(acces?.num_client) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.number}</TableCell>}
+                    {this.hasAccess(acces?.address) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.street} {item.home}</TableCell>}
                     <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.date_time_order}</TableCell>
 
-                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit', backgroundColor: parseInt(item.is_preorder) == 1 ? '#bababa' : 'inherit' }}>{item.need_time}</TableCell>
-                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{ item.give_data_time == '00:00:00' ? '' : item.give_data_time}</TableCell>
-                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.close_order}</TableCell>
-
-                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.to_time}</TableCell>
-                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.unix_time_to_client == '0' || parseInt(item.is_preorder) == 1 ? '' : item.unix_time_to_client}</TableCell>
+                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit', backgroundColor: this.hasAccess(item.is_preorder) ? '#bababa' : 'inherit' }}>{item.need_time}</TableCell>
+                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit', backgroundColor: this.hasAccess(acces?.late) ? item.cook_color : '' }}>{ item.give_data_time == '00:00:00' ? '' : item.give_data_time}</TableCell>
+                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit', backgroundColor: this.hasAccess(acces?.late) ? item.all_color : '' }}>{item.close_order}</TableCell>
+                    {this.hasAccess(acces?.delay) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.to_time}</TableCell>}
+                    {this.hasAccess(acces?.time_promise) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.unix_time_to_client == '0' || this.hasAccess(item.is_preorder) == 1 ? '' : item.unix_time_to_client}</TableCell>}
 
                     <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.type_order}</TableCell>
                     <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.status}</TableCell>
 
-                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.order_price}</TableCell>
-                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.type_pay}</TableCell>
-                    <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.driver}</TableCell>
+                    {this.hasAccess(acces?.summ) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.order_price}</TableCell>}
+                    {this.hasAccess(acces?.payment) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.type_pay}</TableCell>}
+                    {this.hasAccess(acces?.driver) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.driver}</TableCell>}
                   </TableRow>
                 ) }
-              
+
               </TableBody>
-            
-            </Table>
-            
+
+            </Table>) : null}
+
           </Grid>
-          
+
         </Grid>
       </>
     )
