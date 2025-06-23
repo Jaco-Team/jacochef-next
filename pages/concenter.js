@@ -603,7 +603,7 @@ class Concenter_ extends React.Component {
               null
             }
 
-            { parseInt( this.state.showOrder.order.is_delete ) == 0 && parseInt( this.state.showOrder.order.driver_id ) && parseInt(acces?.withdraw_an_order)  ?
+            { parseInt( this.state.showOrder.order.is_delete ) == 0 && parseInt( this.state.showOrder.order.driver_id ) && parseInt(acces?.withdraw_an_order) && parseInt( this.state.showOrder.order.status_order ) !== 6  ?
               <DialogActions style={{ justifyContent: 'flex-end', padding: '15px 0px' }}>
                 <ButtonGroup disableElevation={true} disableRipple={true} variant="contained" className="BtnBorderOther" style={{ marginRight: 24 }}>
                   <Button variant="contained" className="BtnCardMain CardInCardItem" onClick={ this.closeDriver.bind(this) }>Снять заказ с курьера</Button>
