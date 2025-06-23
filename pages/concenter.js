@@ -828,12 +828,17 @@ class Concenter_ extends React.Component {
                   {this.hasAccess(acces?.num_client) && <TableCell>Номер клиента</TableCell>}
                   {this.hasAccess(acces?.address) && <TableCell>Адрес доставки</TableCell>}
                   <TableCell>Время открытия заказа</TableCell>
+                  {this.hasAccess(acces?.start_stol) && <TableCell>Время выхода на стол</TableCell>}
 
                   <TableCell>Ко времени</TableCell>
                   <TableCell>Закрыт на кухне</TableCell>
+                  {this.hasAccess(acces?.cook_time) && <TableCell>Время на готовку</TableCell>}
                   <TableCell>Получен клиентом</TableCell>
                   {this.hasAccess(acces?.delay) && <TableCell>До просрочки</TableCell>}
+                  {this.hasAccess(acces?.dif) && <TableCell>Разница</TableCell>}
+                  {this.hasAccess(acces?.diff2) && <TableCell>Готовки</TableCell>}
                   {this.hasAccess(acces?.time_promise) && <TableCell>Время обещ</TableCell>}
+                  {this.hasAccess(acces?.time_dev_text) && <TableCell>Время по проге/Реал время ДОСТАВКИ</TableCell>}
 
                   <TableCell>Тип</TableCell>
                   <TableCell>Статус</TableCell>
@@ -853,12 +858,17 @@ class Concenter_ extends React.Component {
                     {this.hasAccess(acces?.num_client) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.number}</TableCell>}
                     {this.hasAccess(acces?.address) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.street} {item.home}</TableCell>}
                     <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.date_time_order}</TableCell>
+                    {this.hasAccess(acces?.start_stol) && <TableCell>{item.start_stol}</TableCell>}
 
                     <TableCell style={{ color: 'inherit', fontWeight: 'inherit', backgroundColor: this.hasAccess(item.is_preorder) ? '#bababa' : 'inherit' }}>{item.need_time}</TableCell>
                     <TableCell style={{ color: 'inherit', fontWeight: 'inherit', backgroundColor: this.hasAccess(acces?.late) ? item.cook_color : '' }}>{ item.give_data_time == '00:00:00' ? '' : item.give_data_time}</TableCell>
+                     {this.hasAccess(acces?.cook_time) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit', backgroundColor: this.hasAccess(acces?.cook_time) ? item.cook_color : '' }}>{item.cook_time}</TableCell>}
                     <TableCell style={{ color: 'inherit', fontWeight: 'inherit', backgroundColor: this.hasAccess(acces?.late) ? item.all_color : '' }}>{item.close_order}</TableCell>
                     {this.hasAccess(acces?.delay) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.to_time}</TableCell>}
+                    {this.hasAccess(acces?.dif) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit', backgroundColor: this.hasAccess(acces?.dif) ? item.all_color : '' }}>{item.dif}</TableCell>}
+                    {this.hasAccess(acces?.diff2) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.diff2}</TableCell>}
                     {this.hasAccess(acces?.time_promise) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.unix_time_to_client == '0' || this.hasAccess(item.is_preorder) == 1 ? '' : item.unix_time_to_client}</TableCell>}
+                    {this.hasAccess(acces?.time_dev_text) && <TableCell style={{ color: 'inherit', fontWeight: 'inherit', backgroundColor: this.hasAccess(acces?.time_dev_text) ? item.dev_color : '' }}>{item.time_dev_text}</TableCell>}
 
                     <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.type_order}</TableCell>
                     <TableCell style={{ color: 'inherit', fontWeight: 'inherit' }}>{item.status}</TableCell>
