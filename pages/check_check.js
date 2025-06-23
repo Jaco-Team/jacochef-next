@@ -177,8 +177,8 @@ class CheckCheck_Accordion extends React.Component {
 
     return (
       <Box>
-        <Accordion>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Accordion expanded={true}>
+          <AccordionSummary>
             <Typography sx={{ fontWeight: "bold" }}>Данные по суммам</Typography>
           </AccordionSummary>
           <AccordionDetails>
@@ -760,7 +760,6 @@ class CheckCheck_ extends React.Component {
 
   getOrders = async () => {
     const data = this.check_data();
-    console.log("🚀 === data:", data);
     if (!data) return;
     
     if (Number(this.state.acces?.check) === 1) {
@@ -768,7 +767,6 @@ class CheckCheck_ extends React.Component {
     }
 
     const res = await this.getData('get_orders', data);
-    console.log("🚀 === getOrders res:", res);
 
     if (!res.st) {
 
