@@ -20,6 +20,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import {MyTextInput, TextEditor, MyAutocomplite} from '@/ui/elements';
 
 import queryString from 'query-string';
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 
 class AppWorkTable extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -35,7 +36,7 @@ class AppWorkTable extends React.Component {
   render() {
     return (
       <Table>
-        
+
         <TableBody>
           {this.props.items.map((item, key) => (
             <TableRow key={key}>
@@ -47,7 +48,7 @@ class AppWorkTable extends React.Component {
               </TableCell>
               <TableCell>
                 <a href={item.link} target="_blank" style={{ color: '#c03', cursor: 'pointer', fontWeight: 'bold', textDecoration: 'underline' }}>
-                  {item.name}    
+                  {item.name}
                 </a>
               </TableCell>
             </TableRow>
@@ -72,7 +73,7 @@ class AppWorkTableNews extends React.Component {
   render() {
     return (
       <Table>
-        
+
         <TableBody>
           {this.props.news.map((item, key) => (
             <TableRow key={key}>
@@ -83,7 +84,7 @@ class AppWorkTableNews extends React.Component {
                   </div>
                   <div dangerouslySetInnerHTML={{__html: item.text}} />
                 </div>
-                    
+
               </TableCell>
             </TableRow>
           ))}
@@ -139,45 +140,17 @@ class JobDescriptions_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({
-          is_load: false,
-        });
+        }, 500);
       });
+
+    return res;
   };
 
   openCat(item) {
@@ -275,7 +248,7 @@ class JobDescriptions_ extends React.Component {
     };
 
     let res = await this.getData('get_one', data);
-    
+
     this.setState({
       itemsEdit: res,
       modalDialog: true,
@@ -288,12 +261,12 @@ class JobDescriptions_ extends React.Component {
       let data = {
         id: id,
       };
-  
+
       let res = await this.getData('delete_news', data);
-      
+
       setTimeout( async () => {
         let data = await this.getData('get_all');
-  
+
         this.setState({
           items: data.items,
           news: data.news
@@ -312,7 +285,7 @@ class JobDescriptions_ extends React.Component {
   }
 
   openNews(){
-    this.setState({ 
+    this.setState({
       modalDialogNews: true,
       newText: ''
     });
@@ -398,7 +371,7 @@ class JobDescriptions_ extends React.Component {
                     label="Название"
                   />
                 </Grid>
-        
+
                 <Grid item xs={12} sm={6}>
                   <MyTextInput
                     value={this.state.itemsEdit.item.link}
@@ -408,15 +381,15 @@ class JobDescriptions_ extends React.Component {
                 </Grid>
 
                 <Grid item xs={12} sm={12}>
-                   <MyAutocomplite 
-                    label='Должности' 
-                    multiple={true} 
-                    data={this.state.itemsEdit.apps} 
-                    value={this.state.itemsEdit.item.app_id} 
-                    func={ (event, value) => { 
-                      let this_storages = this.state.itemsEdit; 
+                   <MyAutocomplite
+                    label='Должности'
+                    multiple={true}
+                    data={this.state.itemsEdit.apps}
+                    value={this.state.itemsEdit.item.app_id}
+                    func={ (event, value) => {
+                      let this_storages = this.state.itemsEdit;
                       this_storages.item.app_id = value;
-                      this.setState({ itemsEdit: this_storages }) } } 
+                      this.setState({ itemsEdit: this_storages }) } }
                     />
                 </Grid>
 
@@ -448,7 +421,7 @@ class JobDescriptions_ extends React.Component {
                     label="Название"
                   />
                 </Grid>
-        
+
                 <Grid item xs={12} sm={6}>
                   <MyTextInput
                     value={this.state.itemsNew.item.link}
@@ -458,23 +431,23 @@ class JobDescriptions_ extends React.Component {
                 </Grid>
 
                 <Grid item xs={12} sm={12}>
-                   <MyAutocomplite 
-                    label='Должности' 
-                    multiple={true} 
-                    data={this.state.itemsNew.apps} 
-                    value={this.state.itemsNew.item.app_id} 
-                    func={ (event, value) => { 
-                      let this_storages = this.state.itemsNew; 
+                   <MyAutocomplite
+                    label='Должности'
+                    multiple={true}
+                    data={this.state.itemsNew.apps}
+                    value={this.state.itemsNew.item.app_id}
+                    func={ (event, value) => {
+                      let this_storages = this.state.itemsNew;
                       this_storages.item.app_id = value;
-                      this.setState({ itemsNew: this_storages }) } } 
+                      this.setState({ itemsNew: this_storages }) } }
                     />
                 </Grid>
 
-                
 
-                
 
-                
+
+
+
               </Grid>
             </DialogContent>
             <DialogActions>
@@ -496,13 +469,13 @@ class JobDescriptions_ extends React.Component {
           <DialogContent style={{ paddingTop: 10 }}>
             <Grid container spacing={3}>
               <Grid item xs={12} sm={12}>
-                <TextEditor 
+                <TextEditor
                   value={this.state.newText}
                   func={ (text) => { this.setState({ newText: text }); } }
-                
+
                 />
               </Grid>
-      
+
             </Grid>
           </DialogContent>
           <DialogActions>
@@ -544,8 +517,8 @@ class JobDescriptions_ extends React.Component {
           <Grid item xs={12} sm={6}>
 
             { this.state.items.length > 0 ?
-              <AppWorkTable 
-                items={this.state.items} 
+              <AppWorkTable
+                items={this.state.items}
                 openWork={ parseInt(this.state.kind) >= 3 || this.state.user?.app_type == 'dir' ? () => {} : this.openWork.bind(this)}
                 kind={this.state.kind}
               /> : null
@@ -555,7 +528,7 @@ class JobDescriptions_ extends React.Component {
           <Grid item xs={12} sm={6}>
 
             { this.state.news.length > 0 ?
-              <AppWorkTableNews 
+              <AppWorkTableNews
                 news={this.state.news}
                 deleteNews={ parseInt(this.state.kind) >= 3 || this.state.user?.app_type == 'dir' ? () => {} : this.deleteNews.bind(this)}
                 to_delete={ parseInt(this.state.kind) >= 3 || this.state.user?.app_type == 'dir' ? 0 : 1 }
