@@ -8,6 +8,8 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import TableContainer from '@mui/material/TableContainer';
+import Paper from '@mui/material/Paper';
 
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -30,7 +32,11 @@ class SiteSale2_RepeatOrders_ extends React.Component {
       date_end: formatDate(new Date()),
 
       promo_list: [],
+      total: null,
       promoName: '',
+
+      promo_summary_list: [],
+      total_summary: null,
 
       city_list: [],
       city_id: [],
@@ -148,7 +154,10 @@ class SiteSale2_RepeatOrders_ extends React.Component {
     const res = await this.getData('get_data_repeat_orders', data);
   
     this.setState({
-      promo_list: res.promo_list
+      promo_list: res.promo_list,
+      total: res.total,
+      promo_summary_list: res.promo_summary_list,
+      total_summary: res.total_summary,
     })
   }
 
@@ -177,7 +186,7 @@ class SiteSale2_RepeatOrders_ extends React.Component {
             <h1>{this.state.module_name}</h1>
           </Grid>
           
-          <Grid container direction="row" style={{ paddingTop: 20 }} spacing={3}>
+          <Grid container direction="row" style={{ paddingTop: 20 }} spacing={4}>
 
             <Grid item xs={12} sm={6}>
               <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDateRange.bind(this, 'date_start') } />
@@ -211,29 +220,106 @@ class SiteSale2_RepeatOrders_ extends React.Component {
 
           </Grid>  
           
-          <Grid item xs={12} sm={12} style={{ marginTop: 20 }}>
+          <Grid item xs={12} sm={5.9} style={{ marginTop: 20 }} >
             <Grid item xs={12}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Заказов</TableCell>
-                    <TableCell>Клиентов</TableCell>
-                    <TableCell>Сумма</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {this.state.promo_list.map( (item, key) =>
-                    <TableRow key={key}>
-                      <TableCell>{item.orders}</TableCell>
-                      <TableCell>{new Intl.NumberFormat('ru-RU').format(item.count)}</TableCell>
-                      <TableCell>{new Intl.NumberFormat('ru-RU').format(item.summ)}</TableCell>
+              <TableContainer component={Paper}>
+                <Table size='small'>
+
+                  <TableHead>
+                    <TableRow>
+                      <TableCell colSpan={3} align='center'>Всего заказов</TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                    <TableRow>
+                      <TableCell>Заказов</TableCell>
+                      <TableCell>Клиентов</TableCell>
+                      <TableCell>Сумма</TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+
+                    {this.state.promo_list.map( (item, key) =>
+                      <TableRow key={key}>
+                        <TableCell>{item.orders}</TableCell>
+                        <TableCell>{new Intl.NumberFormat('ru-RU').format(item.count)}</TableCell>
+                        <TableCell>{new Intl.NumberFormat('ru-RU').format(item.summ)} ₽</TableCell>
+                      </TableRow>
+                    )}
+
+                    {this.state.total && (
+                      <TableRow>
+                        <TableCell><strong>Всего</strong></TableCell>
+                        <TableCell>
+                          <strong>
+                            {new Intl.NumberFormat('ru-RU').format(this.state.total?.count)}
+                          </strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>
+                            {new Intl.NumberFormat('ru-RU').format(this.state.total?.summ)} ₽
+                          </strong>
+                        </TableCell>
+                      </TableRow>
+                    )}
+
+                  </TableBody>
+                  
+                </Table>
+              </TableContainer>
             </Grid>  
           </Grid>
+
+          <Grid item xs={12} sm={0.2} />
         
+          <Grid item xs={12} sm={5.9} style={{ marginTop: 20, marginBottom: 20}}>
+            <Grid item xs={12}>
+              <TableContainer component={Paper}>
+                <Table size='small'>
+
+                  <TableHead>
+                    <TableRow>
+                      <TableCell colSpan={3} align='center'>Новые клиенты</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Заказов</TableCell>
+                      <TableCell>Клиентов</TableCell>
+                      <TableCell>Сумма</TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+
+                    {this.state.promo_summary_list.map( (item, key) =>
+                      <TableRow key={key}>
+                        <TableCell>{item.orders}</TableCell>
+                        <TableCell>{new Intl.NumberFormat('ru-RU').format(item.count)}</TableCell>
+                        <TableCell>{new Intl.NumberFormat('ru-RU').format(item.summ)} ₽</TableCell>
+                      </TableRow>
+                    )}
+
+                    {this.state.total_summary && (
+                      <TableRow>
+                        <TableCell><strong>Всего</strong></TableCell>
+                        <TableCell>
+                          <strong>
+                            {new Intl.NumberFormat('ru-RU').format(this.state.total_summary?.count)}
+                          </strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>
+                            {new Intl.NumberFormat('ru-RU').format(this.state.total_summary?.summ)} ₽
+                          </strong>
+                        </TableCell>
+                      </TableRow>
+                    )}
+
+                  </TableBody>
+                  
+                </Table>
+              </TableContainer>
+            </Grid>  
+          </Grid>
+
         </Grid>
       </>
     )
