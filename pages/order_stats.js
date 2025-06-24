@@ -20,21 +20,22 @@ import { MyAutocomplite, MyDatePickerNew, formatDate } from '@/ui/elements';
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 
 class OrderStats_ extends React.Component {
   click = false;
 
   constructor(props) {
     super(props);
-        
+
     this.state = {
       module: 'order_stats',
       module_name: '',
       is_load: false,
-      
+
       points: [],
       point: [],
-      
+
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
       rangeDate: [formatDate(new Date()), formatDate(new Date())],
@@ -62,86 +63,62 @@ class OrderStats_ extends React.Component {
       showdata: [],
     };
   }
-  
+
   async componentDidMount(){
-    
+
     let data = await this.getData('get_all');
-    
+
     console.log( data )
-    
+
     this.setState({
       points: data.points,
       //point: data.points[0].id,
       module_name: data.module_info.name,
     })
-    
+
     document.title = data.module_info.name;
-    
+
     setTimeout( () => {
       this.updateData();
     }, 50 )
   }
-  
+
   getData = (method, data = {}) => {
-    
     this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      console.log( err )
+      is_load: true,
     });
-  }
-   
+
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
+  };
+
   async updateData(){
     let data = {
       point_id: this.state.point,
       date_start: dayjs(this.state.date_start).format('YYYY-MM-DD'),
       date_end: dayjs(this.state.date_end).format('YYYY-MM-DD'),
     };
-    
+
     let res = await this.getData('get_data', data);
-    
+
     console.log( res )
-    
+
     this.setState({
       //show_dop: parseInt(res.user.kind) < 3 ? 1 : 0,
       //drive_stat_full: res.drive_stat_full,
       showdata: res.unic_users
     })
   }
-  
+
   changeDate(data, event){
     this.setState({
       [data]: (event)
@@ -150,7 +127,7 @@ class OrderStats_ extends React.Component {
 
   changePoint(event){
     let data = event.target.value;
-    
+
     this.setState({
       point: data
     })
@@ -191,7 +168,7 @@ class OrderStats_ extends React.Component {
       price: this.state.summ,
       driver_id: this.state.choose_driver_id,
     };
-    
+
     let res = await this.getData('save_give', data);
 
     console.log( res )
@@ -245,7 +222,7 @@ class OrderStats_ extends React.Component {
       driver_id: this.state.getSummDriverId.driver_id,
       comment: this.state.getSummComment
     };
-    
+
     let res = await this.getData('save_get', data);
 
     console.log( res )
@@ -255,7 +232,7 @@ class OrderStats_ extends React.Component {
         modalDialogGetSumm: false,
         getSumm: 0,
         getSummDriverId: null,
-        getSummComment: ''  
+        getSummComment: ''
       })
 
       this.updateData();
@@ -275,7 +252,7 @@ class OrderStats_ extends React.Component {
       date_start  : dayjs(this.state.date_start).format('YYYY-MM-DD'),
       date_end    : dayjs(this.state.date_end).format('YYYY-MM-DD'),
     };
-    
+
     let res = await this.getData('getStatDop', data);
 
     console.log( res )
@@ -283,7 +260,7 @@ class OrderStats_ extends React.Component {
     this.setState({
       modalDialogStatSumm: true,
       statSumm: res,
-      getSummDriverId: driver 
+      getSummDriverId: driver
     })
   }
 
@@ -294,7 +271,7 @@ class OrderStats_ extends React.Component {
       date_start  : dayjs(this.state.date_start).format('YYYY-MM-DD'),
       date_end    : dayjs(this.state.date_end).format('YYYY-MM-DD'),
     };
-    
+
     let res = await this.getData('getStatDopMain', data);
 
     console.log( res )
@@ -303,7 +280,7 @@ class OrderStats_ extends React.Component {
       modalDialogStatSummMain: true,
       statSummMain: res?.stat,
       show_dop: parseInt(res.my.kind) < 3 ? 1 : 0,
-      getSummDriverId: driver 
+      getSummDriverId: driver
     })
   }
 
@@ -319,12 +296,12 @@ class OrderStats_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
+
         <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
-          
+
           <Grid item xs={12} sm={3}>
             <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDate.bind(this, 'date_start') } />
           </Grid>
@@ -344,11 +321,11 @@ class OrderStats_ extends React.Component {
           <Grid item xs={12} sm={6}>
             <Button variant="contained" onClick={this.updateData.bind(this)}>Обновить данные</Button>
           </Grid>
-        
+
           <Grid item xs={12} mb={3}>
             <TableContainer component={Paper}>
               <Table>
-                
+
                 <TableHead>
                   <TableRow>
                     <TableCell>Сотрудник</TableCell>
@@ -364,7 +341,7 @@ class OrderStats_ extends React.Component {
                 </TableHead>
 
                 <TableBody>
-                  
+
                   { this.state.showdata.map( (item, key) =>
                     <TableRow key={key}>
                       <TableCell>{item.user_name}</TableCell>
@@ -379,16 +356,16 @@ class OrderStats_ extends React.Component {
                       <TableCell>{item.order_true_}%</TableCell>
                     </TableRow>
                   ) }
-                
+
                 </TableBody>
-              
+
               </Table>
             </TableContainer>
           </Grid>
 
-          
 
-          
+
+
         </Grid>
       </>
     )
