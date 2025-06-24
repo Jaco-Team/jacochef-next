@@ -21,6 +21,7 @@ import TableRow from '@mui/material/TableRow';
 import { MyTextInput, MyAlert } from '@/ui/elements';
 
 import queryString from 'query-string';
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 
 class SkladStorage_Modal extends React.Component {
 
@@ -43,7 +44,7 @@ class SkladStorage_Modal extends React.Component {
       this.setState({
         item: this.props.item,
       });
-     
+
     }
   }
 
@@ -126,7 +127,7 @@ class SkladStorage_ extends React.Component {
 
       list: null,
       item: null,
-      
+
       mark: null,
       modalDialog: false,
       method: '',
@@ -158,46 +159,18 @@ class SkladStorage_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({
-          is_load: false,
-        });
+        }, 500);
       });
-  }
+
+    return res;
+  };
 
   handleResize() {
     if (window.innerWidth < 601) {
@@ -248,7 +221,7 @@ class SkladStorage_ extends React.Component {
     const mark = this.state.mark;
 
     let res;
-    
+
     if(mark === 'add') {
       res = await this.getData('save_new', data);
     }
@@ -272,7 +245,7 @@ class SkladStorage_ extends React.Component {
 
   changeSort(index, event){
     const list = this.state.list;
-    
+
     list[index].sort = event.target.value;
 
     this.setState({
