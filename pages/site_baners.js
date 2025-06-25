@@ -34,6 +34,7 @@ import { MyAutocomplite, MyDatePickerNew, MySelect, TextEditor, MyTextInput, MyC
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 
 class SiteBaners_Modal extends React.Component {
   dropzoneOptions = {
@@ -194,7 +195,7 @@ class SiteBaners_Modal extends React.Component {
 
           if (this.myDropzone['files'].length && this.isInit === false) {
             this.isInit = true;
-            
+
             this.myDropzone.on('sending', (file, xhr, data) => {
               data.append('name', banner.this_ban.name);
               data.append('id', res.id);
@@ -275,94 +276,94 @@ class SiteBaners_Modal extends React.Component {
 
             if (this.myDropzone['files'].length > 0 && this.isInit === false) {
               this.isInit = true;
-  
+
               this.myDropzone.on('sending', (file, xhr, data) => {
                 data.append('name', banner.this_ban.name);
                 data.append('id', res.id);
                 data.append('type', 'full');
               });
-  
+
               this.myDropzone.on('queuecomplete', (data) => {
                 var check_img = false;
-  
+
                 this.myDropzone['files'].map((item, key) => {
                   if (item['status'] == 'error') {
                     check_img = true;
                   }
                 });
-  
+
                 if (check_img) {
                   this.setState({
                     openAlert: true,
                     err_status: false,
                     err_text: 'Ошибка при загрузке фотографии',
                   });
-  
+
                   return;
-  
+
                 } else {
-  
+
                   setTimeout(() => {
                     this.onClose(true);
                   }, 1000);
-  
+
                 }
-  
+
                 this.isInit = false;
-  
+
               });
             }
-  
+
             this.myDropzone.processQueue();
-  
-          } 
-          
+
+          }
+
           if (this.myDropzone_m['files'].length > 0) {
 
             if (this.myDropzone_m['files'].length > 0 && this.isInit_m === false) {
               this.isInit_m = true;
-  
+
               this.myDropzone_m.on('sending', (file, xhr, data1) => {
                 data1.append('name', banner.this_ban.name);
                 data1.append('id', res.id);
                 data1.append('type', 'mobile');
               });
-  
+
               this.myDropzone_m.on('queuecomplete', (data) => {
                 var check_img = false;
-  
+
                 this.myDropzone_m['files'].map((item, key) => {
                   if (item['status'] == 'error') {
                     check_img = true;
                   }
                 });
-  
+
                 if (check_img) {
                   this.setState({
                     openAlert: true,
                     err_status: false,
                     err_text: 'Ошибка при загрузке фотографии',
                   });
-  
+
                   return;
-  
+
                 } else {
-  
+
                   setTimeout(() => {
                     this.onClose(true);
                   }, 1000);
-  
+
                 }
-  
+
                 this.isInit_m = false;
-  
+
               });
             }
-  
+
             this.myDropzone_m.processQueue();
-  
-          } 
-          
+
+          }
+
         } else {
           this.onClose(true);
         }
@@ -412,89 +413,89 @@ class SiteBaners_Modal extends React.Component {
 
             if (this.myDropzone['files'].length > 0 && this.isInit === false) {
               this.isInit = true;
-  
+
               this.myDropzone.on('sending', (file, xhr, data) => {
                 data.append('name', banner.this_ban.name);
                 data.append('id', res.id);
                 data.append('type', 'full');
               });
-  
+
               this.myDropzone.on('queuecomplete', (data) => {
                 var check_img = false;
-  
+
                 this.myDropzone['files'].map((item, key) => {
                   if (item['status'] == 'error') {
                     check_img = true;
                   }
                 });
-  
+
                 if (check_img) {
                   this.setState({
                     openAlert: true,
                     err_status: false,
                     err_text: 'Ошибка при загрузке фотографии',
                   });
-  
+
                   return;
-  
+
                 } else {
                   setTimeout(() => {
                     this.onClose(true);
                   }, 1000);
                 }
-  
+
                 this.isInit = false;
-  
+
               });
             }
-  
+
             this.myDropzone.processQueue();
-  
-          } 
-          
+
+          }
+
           if (this.myDropzone_m['files'].length > 0) {
             if (this.myDropzone_m['files'].length > 0 && this.isInit_m === false) {
               this.isInit_m = true;
-  
+
               this.myDropzone_m.on('sending', (file, xhr, data1) => {
                 data1.append('name', banner.this_ban.name);
                 data1.append('id', res.id);
                 data1.append('type', 'mobile');
               });
-  
+
               this.myDropzone_m.on('queuecomplete', (data) => {
                 var check_img = false;
-  
+
                 this.myDropzone_m['files'].map((item, key) => {
                   if (item['status'] == 'error') {
                     check_img = true;
                   }
                 });
-  
+
                 if (check_img) {
                   this.setState({
                     openAlert: true,
                     err_status: false,
                     err_text: 'Ошибка при загрузке фотографии',
                   });
-  
+
                   return;
-  
+
                 } else {
                   setTimeout(() => {
                     this.onClose(true);
                   }, 1000);
                 }
-  
+
                 this.isInit_m = false;
-  
+
               });
             }
-  
+
             this.myDropzone_m.processQueue();
-  
-          } 
-          
+
+          }
+
         } else {
           this.onClose(true);
         }
@@ -508,7 +509,7 @@ class SiteBaners_Modal extends React.Component {
   }
 
   onClose(is_reload = false) {
-    
+
     this.setState ({
       banner: null,
 
@@ -633,7 +634,7 @@ class SiteBaners_Modal extends React.Component {
                     func={this.changeItemChecked.bind(this, 'is_active_home')}
                   />
                 </Grid>
-                
+
 
                 <Grid item xs={12} sm={6} >
                   <Typography>Картинка на ПК разрешением 3700x1000 только JPG</Typography>
@@ -735,42 +736,17 @@ class SiteBaners_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
+
+    return res;
   };
 
   handleResize() {
