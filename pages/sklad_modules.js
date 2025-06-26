@@ -29,6 +29,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { MyTextInput, MyAutocomplite, MyAlert, MyCheckBox, MySelect } from '@/ui/elements';
 
 import queryString from 'query-string';
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 
 class SkladModules_Modal_Param extends React.Component {
 
@@ -46,7 +47,7 @@ class SkladModules_Modal_Param extends React.Component {
 
   componentDidUpdate(prevProps) {
     // console.log('componentDidUpdate', this.props);
-    
+
     if (!this.props.item) {
       return;
     }
@@ -62,7 +63,7 @@ class SkladModules_Modal_Param extends React.Component {
   changeItem(data, event) {
     const item = this.state.item;
     const value = event.target.value;
-   
+
     item[data] = value;
 
     this.setState({
@@ -72,7 +73,7 @@ class SkladModules_Modal_Param extends React.Component {
 
   changeAutocomplite(data, event, value) {
     const item = this.state.item;
-   
+
     item[data] = value;
 
     this.setState({
@@ -94,7 +95,7 @@ class SkladModules_Modal_Param extends React.Component {
 
       return;
 
-    } 
+    }
 
     if (!item.param) {
 
@@ -106,33 +107,33 @@ class SkladModules_Modal_Param extends React.Component {
 
       return;
 
-    } 
+    }
 
     if(!item.module_id) {
-      
+
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: 'Необходимо выбрать модуль'
       });
-      
+
       return;
-    } 
+    }
 
     if(!item.type) {
-      
+
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: 'Необходимо выбрать тип'
       });
-      
+
       return;
-    } 
-   
+    }
+
     this.props.save(item);
     this.onClose();
-   
+
   }
 
   onClose() {
@@ -140,7 +141,7 @@ class SkladModules_Modal_Param extends React.Component {
     setTimeout(() => {
       this.setState ({
         item: null,
-  
+
         openAlert: false,
         err_status: false,
         err_text: ''
@@ -232,7 +233,7 @@ class SkladModules_Modal_Param extends React.Component {
                   />
                 </Grid>
 
-               
+
               </Grid>
             </DialogContent>
           )}
@@ -439,7 +440,7 @@ class SkladModules_ extends React.Component {
         type: '',
         module_id: null
       },
-   
+
     };
   }
 
@@ -459,47 +460,18 @@ class SkladModules_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({
-          is_load: false,
-        });
+        }, 500);
       });
-  };
 
+    return res;
+  };
   handleResize() {
     if (window.innerWidth < 601) {
       this.setState({
@@ -557,7 +529,7 @@ class SkladModules_ extends React.Component {
       param.modules = res.modules;
 
       param.types = [{ id: 2, name: "2 значения ( чекбокс - показывать / скрыть )"}, { id: 3, name: "3 значения ( селект - не активный / просмотр / редактировать )"}];
-    
+
       this.setState({
         param,
         mark_param,
@@ -809,7 +781,7 @@ class SkladModules_ extends React.Component {
                             </TableCell>
                           </TableRow>
                           {item.items.map((it, key) => (
-                            it.params.length ? 
+                            it.params.length ?
                               <React.Fragment key={key}>
                                 <TableRow hover>
                                   <TableCell></TableCell>
@@ -836,14 +808,14 @@ class SkladModules_ extends React.Component {
                                       </TableCell>
                                       <TableCell>{param.category_name}</TableCell>
                                       <TableCell sx={{ textAlign: 'center' }} onClick={this.openModal_param.bind(this, 'edit_param', param.id)}>
-                                        <Tooltip title={<Typography color="inherit">Редактирование параметра</Typography>}> 
+                                        <Tooltip title={<Typography color="inherit">Редактирование параметра</Typography>}>
                                           <EditIcon sx={{ paddingLeft: 20, cursor: 'pointer' }}/>
                                         </Tooltip>
                                       </TableCell>
                                     </TableRow>
                                   ))}
                               </React.Fragment>
-                              :  
+                              :
                               <TableRow hover key={key}>
                                 <TableCell></TableCell>
                                 <TableCell onClick={this.openModal.bind(this, 'edit', it.id)} sx={{ paddingLeft: 10, alignItems: 'center', cursor: 'pointer' }}>
