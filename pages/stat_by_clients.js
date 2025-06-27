@@ -25,9 +25,12 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import Typography from '@mui/material/Typography';
+import QueryStatsIcon from '@mui/icons-material/QueryStats';
+
 import { formatDateMin, MyDatePickerNewViews, MyDatePickerNew, formatDate } from '@/ui/elements';
 
-import queryString from 'query-string';
+import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 var am5locales_ru_RU = {
@@ -162,47 +165,23 @@ class StatByClients_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
+      
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then(result => result.data)
+      .finally( () => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
-  };
+
+    return res;
+  }
 
   handleResize() {
     if (window.innerWidth < 601) {
@@ -249,6 +228,19 @@ class StatByClients_ extends React.Component {
       dataDates_days: res.date_list,
     });
   }
+
+   // Тестовый метод для получения данных по дням для Ушедших и Вернувшихся
+  // async test_stat() {
+
+  //   const data = {
+  //     date_start_day: this.state.date_start_day ? dayjs(this.state.date_start_day).format('YYYY-MM-DD') : '',
+  //     date_end_day: this.state.date_end_day ? dayjs(this.state.date_end_day).format('YYYY-MM-DD') : '',
+  //   };
+  //   console.log("🚀 === test_stat data:", data);
+
+  //   const res = await this.getData('stat_test', data);
+  //   console.log("🚀 === test_stat res:", res);
+  // }
 
   changeDateRange(type, data) {
     this.setState({
@@ -788,6 +780,8 @@ class StatByClients_ extends React.Component {
 
               <Grid item xs={12} sm={12}>
                 <Button onClick={this.update_days.bind(this)} variant="contained">
+                {/* для тестов получениt данных по дням для Ушедших и Вернувшихся */}
+                {/* <Button onClick={this.test_stat.bind(this)} variant="contained"> */}
                   Обновить
                 </Button>
               </Grid>
@@ -795,7 +789,7 @@ class StatByClients_ extends React.Component {
               <Grid item xs={12} sm={12}>
                 <TableContainer sx={{ maxHeight: { xs: 'none', sm: 600 } }}>
                   <Table stickyHeader size="small" style={{ borderCollapse: 'collapse' }}>
-                    <TableHead style={{ position: 'sticky', top: 0, zIndex: 7 }}>
+                    <TableHead sx={{ position: 'sticky', top: 0, zIndex: 7 }}>
                       <TableRow>
                         <TableCell sx={{ zIndex: 30, minWidth: 200, left: 0 }}>Точка</TableCell>
                         <TableCell sx={{ zIndex: 30, left: 200 }}></TableCell>
@@ -811,8 +805,8 @@ class StatByClients_ extends React.Component {
                             <React.Fragment key={key}>
 
                               <TableRow>
-                                <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
-                                <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Новые клиенты</TableCell>
+                                <TableCell variant="head" sx={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
+                                <TableCell variant="head" sx={{minWidth: 250, position: 'sticky', left: 200}}>Новые клиенты</TableCell>
                                 {this.state.dataDates_days.map(it =>
                                   item.stat.map((st, k) =>
                                     it.new_date == st.new_date ? (
@@ -824,8 +818,8 @@ class StatByClients_ extends React.Component {
                               </TableRow>
 
                               <TableRow>
-                                <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
-                                <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Количество заказов</TableCell>
+                                <TableCell variant="head" sx={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
+                                <TableCell variant="head" sx={{minWidth: 250, position: 'sticky', left: 200}}>Количество заказов</TableCell>
                                 {this.state.dataDates_days.map(it =>
                                   item.stat.map((st, k) =>
                                     it.new_date == st.new_date ? (
@@ -837,8 +831,8 @@ class StatByClients_ extends React.Component {
                               </TableRow>
 
                               <TableRow>
-                                <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}>{item.name}</TableCell>
-                                <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Средний чек</TableCell>
+                                <TableCell variant="head" sx={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}>{item.name}</TableCell>
+                                <TableCell variant="head" sx={{minWidth: 250, position: 'sticky', left: 200}}>Средний чек</TableCell>
                                 {this.state.dataDates_days.map((it, kk) =>
                                   item.stat.map((st, k) =>
                                     it.new_date == st.new_date ? (
@@ -850,29 +844,29 @@ class StatByClients_ extends React.Component {
                               </TableRow>
 
                               <TableRow>
-                                <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
-                                <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Ушедшие клиенты</TableCell>
+                                <TableCell variant="head" sx={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
+                                <TableCell variant="head" sx={{minWidth: 250, position: 'sticky', left: 200}}>Ушедшие клиенты</TableCell>
                                 {this.state.dataDates_days.map((it, kk) =>
                                   item.stat.map((st, k) =>
                                     it.new_date == st.new_date ? (
-                                      <TableCell key={k} style={{ textAlign: 'center' }}>{st.lost_users.lost_users}</TableCell>
+                                      <TableCell key={k} style={{ textAlign: 'center' }}>{st.lost_users}</TableCell>
                                     ) : null
                                   )
                                 )}
                                 <TableCell style={{ borderLeft: '1px solid #e5e5e5' }}>{item.svod.lost_users}</TableCell>
                               </TableRow>
 
-                              <TableRow sx={{ borderBottom: '10px solid #e5e5e5' }}>
-                                <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0}}></TableCell>
-                                <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Вернувшиеся клиенты</TableCell>
+                              <TableRow sx={{ borderBottom: '10px solid #e5e5e5 !important' }}>
+                                <TableCell variant="head" sx={{minWidth: 200, position: 'sticky', left: 0}}></TableCell>
+                                <TableCell variant="head" sx={{minWidth: 250, position: 'sticky', left: 200}}>Вернувшиеся клиенты</TableCell>
                                 {this.state.dataDates_days.map((it, kk) =>
                                   item.stat.map((st, k) =>
                                     it.new_date == st.new_date ? (
-                                      <TableCell key={k} style={{ textAlign: 'center' }}>{st.lost_users.return_users}</TableCell>
+                                      <TableCell key={k} style={{ textAlign: 'center' }}>{st.return_users}</TableCell>
                                     ) : null
                                   )
                                 )}
-                                <TableCell style={{ borderLeft: '1px solid #e5e5e5', position: 'sticky', left: 0 }}>{item.svod.return_users}</TableCell>
+                                <TableCell sx={{ borderLeft: '1px solid #e5e5e5', position: 'sticky', left: 0 }}>{item.svod.return_users}</TableCell>
                               </TableRow>
                             </React.Fragment>
                           ))}
@@ -881,8 +875,14 @@ class StatByClients_ extends React.Component {
                             <TableRow sx={{ cursor: 'pointer', '& td': { '&:hover': { color: '#c03' } } }}
                               onClick={this.openGraphModal_days.bind(this, 'newUsers', city.name, city.data)}
                             >
-                              <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
-                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Новые клиенты</TableCell>
+                              <TableCell variant="head" sx={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
+                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                  Новые клиенты
+                                </Typography>
+                                <QueryStatsIcon fontSize="small" />
+                              </TableCell>
+
                               {this.state.dataDates_days.map((it, kk) =>
                                 city.data.map((st, k) =>
                                   it.new_date == st.new_date ? (
@@ -895,8 +895,13 @@ class StatByClients_ extends React.Component {
                             <TableRow sx={{ cursor: 'pointer', '& td': { '&:hover': { color: '#c03' } } }}
                               onClick={this.openGraphModal_days.bind(this, 'orders', city.name, city.data)}
                             >
-                              <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
-                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Количество заказов</TableCell>
+                              <TableCell variant="head" sx={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
+                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                  Количество заказов
+                                </Typography>
+                                <QueryStatsIcon fontSize="small" />
+                              </TableCell>
                               {this.state.dataDates_days.map((it, kk) =>
                                 city.data.map((st, k) =>
                                   it.new_date == st.new_date ? (
@@ -907,14 +912,33 @@ class StatByClients_ extends React.Component {
                             </TableRow>
 
                             <TableRow>
-                              <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}>Итого {city.name}</TableCell>
-                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200, cursor: 'pointer', '&:hover': { color: '#c03' } }}
-                                onClick={this.openGraphModal_days.bind(this, 'avgSumm', city.name, city.data)}>Средний чек</TableCell>
+                              <TableCell variant="head" sx={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}>Итого {city.name}</TableCell>
+                              <TableCell 
+                                variant="head" 
+                                sx={{
+                                  minWidth: 250,
+                                  position: 'sticky',
+                                  left: 200,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1,
+                                  '&:hover': {
+                                    color: '#c03',
+                                  }
+                                }}
+                                onClick={this.openGraphModal_days.bind(this, 'avgSumm', city.name, city.data)}
+                              >
+                                <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                  Средний чек
+                                </Typography>
+                                <QueryStatsIcon fontSize="small" />
+                              </TableCell>
                               {this.state.dataDates_days.map((it, kk) =>
                                 city.data.map((st, k) =>
                                   it.new_date == st.new_date ? (
                                     <TableCell onClick={this.openGraphModal_days.bind(this, 'avgSumm', city.name, city.data)}
-                                      style={{minWidth: 250, position: 'sticky', left: 200, textAlign: 'center', cursor: 'pointer', '&:hover': { color: '#c03' } }}
+                                      sx={{minWidth: 250, position: 'sticky', left: 200, textAlign: 'center', cursor: 'pointer', '&:hover': { color: '#c03' } }}
                                       key={k}
                                     >
                                       {st.avg_summ}
@@ -927,8 +951,13 @@ class StatByClients_ extends React.Component {
                             <TableRow sx={{ cursor: 'pointer', '& td': { '&:hover': { color: '#c03' } } }}
                               onClick={this.openGraphModal_days.bind(this, 'lostUsers', city.name, city.data)}
                             >
-                              <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
-                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Ушедшие клиенты</TableCell>
+                              <TableCell variant="head" sx={{ minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
+                              <TableCell variant="head" style={{ minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 8}}>
+                                <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                  Ушедшие клиенты
+                                </Typography>
+                                <QueryStatsIcon fontSize="small" />
+                              </TableCell>
                               {this.state.dataDates_days.map((it, kk) =>
                                 city.data.map((st, k) =>
                                   it.new_date == st.new_date ? (
@@ -938,11 +967,16 @@ class StatByClients_ extends React.Component {
                               )}
                             </TableRow>
 
-                            <TableRow sx={{ borderBottom: '10px solid #e5e5e5', cursor: 'pointer', '& td': { '&:hover': { color: '#c03' } } }}
+                            <TableRow sx={{ borderBottom: '10px solid #e5e5e5 !important', cursor: 'pointer', '& td': { '&:hover': { color: '#c03' } } }}
                               onClick={this.openGraphModal_days.bind(this, 'returnUsers', city.name, city.data)}
                             >
-                              <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0}}></TableCell>
-                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Вернувшиеся клиенты</TableCell>
+                              <TableCell variant="head" sx={{minWidth: 200, position: 'sticky', left: 0}}></TableCell>
+                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                  Вернувшиеся клиенты
+                                </Typography>
+                                <QueryStatsIcon fontSize="small" />
+                              </TableCell>
                               {this.state.dataDates_days.map((it, kk) =>
                                 city.data.map((st, k) =>
                                   it.new_date == st.new_date ? (
@@ -953,17 +987,32 @@ class StatByClients_ extends React.Component {
                             </TableRow>
                           </React.Fragment>
 
-                          <TableCell colSpan={this.state.dataDates_days.length + 3} style={{borderBottom: '10px solid #e5e5e5', height: 100}}></TableCell>
+                          <TableCell colSpan={this.state.dataDates_days.length + 3} style={{borderBottom: '10px solid #e5e5e5 !important', height: 100}}></TableCell>
                         </React.Fragment>
                       ))}
 
                       <React.Fragment>
                         <TableRow>
-                          <TableCell rowSpan={6} variant="head" style={{ minWidth: 200, position: 'sticky', left: 0 }}>Итого в сети</TableCell>
-                          <TableCell variant="head" sx={{cursor: this.state.dataDates_days.length ? 'pointer' : null, '&:hover': {color: this.state.dataDates_days.length ? '#c03' : null},
-                              minWidth: 250, position: 'sticky', left: 200}}
+                          <TableCell rowSpan={6} variant="head" sx={{ minWidth: 200, position: 'sticky', left: 0 }}>Итого в сети</TableCell>
+                          <TableCell 
+                            variant="head" 
+                            sx={{
+                              cursor: this.state.dataDates_days.length ? 'pointer' : null, 
+                              '&:hover': {color: this.state.dataDates_days.length ? '#c03' : null},
+                              minWidth: 250, 
+                              position: 'sticky', 
+                              left: 200,
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 1
+                            }}
                               onClick={this.state.dataDates_days.length ? this.openGraphModal_days.bind(this, 'newUsers', 'в сети', null) : null}
-                          >Новые клиенты</TableCell>
+                          >
+                            <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                              Новые клиенты
+                            </Typography>
+                            <QueryStatsIcon fontSize="small" />
+                          </TableCell>
 
                           {this.state.dataDates_days.map((it, kk) =>
                             this.state.all_data_days.map((st, k) =>
@@ -983,7 +1032,12 @@ class StatByClients_ extends React.Component {
                         <TableRow sx={{cursor: this.state.dataDates_days.length ? 'pointer' : null, '& td': { '&:hover': { color: this.state.dataDates_days.length ? '#c03' : null} }}}
                           onClick={this.state.dataDates_days.length ? this.openGraphModal_days.bind(this, 'orders', 'в сети', null) : null}
                         >
-                          <TableCell variant="head" style={{ minWidth: 250, position: 'sticky', left: 200 }}>Количество заказов</TableCell>
+                          <TableCell variant="head" sx={{ minWidth: 250, position: 'sticky', left: 200,display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                              Количество заказов
+                            </Typography>
+                            <QueryStatsIcon fontSize="small" />
+                          </TableCell>
                           {this.state.dataDates_days.map((it, kk) =>
                             this.state.all_data_days.map((st, k) =>
                               it.new_date == st.new_date ? (
@@ -996,7 +1050,15 @@ class StatByClients_ extends React.Component {
                         <TableRow sx={{cursor: this.state.dataDates_days.length ? 'pointer' : null, '& td': { '&:hover': { color: this.state.dataDates_days.length ? '#c03' : null} }}}
                           onClick={this.state.dataDates_days.length ? this.openGraphModal_days.bind(this, 'avgSumm', 'в сети', null) : null}
                         >
-                          <TableCell variant="head" style={{ minWidth: 250, position: 'sticky', left: 200 }}>Средний чек</TableCell>
+                          <TableCell 
+                            variant="head" 
+                            sx={{ minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 1 }}
+                          >
+                            <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                              Средний чек
+                            </Typography>
+                            <QueryStatsIcon fontSize="small" />
+                          </TableCell>
                           {this.state.dataDates_days.map((it, kk) =>
                             this.state.all_data_days.map((st, k) =>
                               it.new_date == st.new_date ? (
@@ -1009,11 +1071,19 @@ class StatByClients_ extends React.Component {
                         <TableRow sx={{cursor: this.state.dataDates_days.length ? 'pointer' : null, '& td': { '&:hover': { color: this.state.dataDates_days.length ? '#c03' : null} }}}
                           onClick={this.state.dataDates_days.length ? this.openGraphModal_days.bind(this, 'lostUsers', 'в сети', null) : null}
                         >
-                          <TableCell variant="head" style={{ minWidth: 250, position: 'sticky', left: 200 }}>Ушедшие клиенты</TableCell>
+                          <TableCell 
+                            variant="head" 
+                            sx={{ minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 1 }}
+                          >
+                            <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                              Ушедшие клиенты
+                            </Typography>
+                            <QueryStatsIcon fontSize="small" />
+                          </TableCell>
                           {this.state.dataDates_days.map((it, kk) =>
                             this.state.all_data_days.map((st, k) =>
                               it.new_date == st.new_date ? (
-                                <TableCell key={k} style={{ textAlign: 'center' }}>{st.lost_users.lost_users}</TableCell>
+                                <TableCell key={k} style={{ textAlign: 'center' }}>{st.lost_users}</TableCell>
                               ) : null
                             )
                           )}
@@ -1022,11 +1092,16 @@ class StatByClients_ extends React.Component {
                         <TableRow sx={{cursor: this.state.dataDates_days.length ? 'pointer' : null, '& td': { '&:hover': { color: this.state.dataDates_days.length ? '#c03' : null} }}}
                           onClick={this.state.dataDates_days.length ? this.openGraphModal_days.bind(this, 'returnUsers', 'в сети', null) : null}
                         >
-                          <TableCell variant="head" style={{ minWidth: 250, position: 'sticky', left: 200 }}>Вернувшиеся клиенты</TableCell>
+                          <TableCell variant="head" sx={{ minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                              Вернувшиеся клиенты
+                            </Typography>
+                            <QueryStatsIcon fontSize="small" />
+                          </TableCell>
                           {this.state.dataDates_days.map((it, kk) =>
                             this.state.all_data_days.map((st, k) =>
                               it.new_date == st.new_date ? (
-                                <TableCell key={k} style={{ textAlign: 'center' }}>{st.lost_users.return_users}</TableCell>
+                                <TableCell key={k} style={{ textAlign: 'center' }}>{st.return_users}</TableCell>
                               ) : null
                             )
                           )}
@@ -1074,7 +1149,7 @@ class StatByClients_ extends React.Component {
               <Grid item xs={12} sm={12}>
                 <TableContainer sx={{ maxHeight: { xs: 'none', sm: 600 } }}>
                   <Table stickyHeader size="small" style={{ borderCollapse: 'collapse' }}>
-                    <TableHead style={{ position: 'sticky', top: 0, zIndex: 7 }}>
+                    <TableHead sx={{ position: 'sticky', top: 0, zIndex: 7 }}>
                       <TableRow>
                         <TableCell sx={{ zIndex: 30, minWidth: 200, left: 0 }}>Точка</TableCell>
                         <TableCell sx={{ zIndex: 30, left: 200 }}></TableCell>
@@ -1141,7 +1216,7 @@ class StatByClients_ extends React.Component {
                                 <TableCell style={{ borderLeft: '1px solid #e5e5e5' }}>{item.svod.lost_users}</TableCell>
                               </TableRow>
 
-                              <TableRow sx={{ borderBottom: '10px solid #e5e5e5' }}>
+                              <TableRow sx={{ borderBottom: '10px solid #e5e5e5 !important' }}>
                                 <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0}}></TableCell>
                                 <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Вернувшиеся клиенты</TableCell>
                                 {this.state.dataDates.map((it, kk) =>
@@ -1161,7 +1236,12 @@ class StatByClients_ extends React.Component {
                               onClick={this.openGraphModal.bind(this, 'newUsers', city.name, city.data)}
                             >
                               <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
-                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Новые клиенты</TableCell>
+                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 8}}>
+                                <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                  Новые клиенты
+                                </Typography>
+                                <QueryStatsIcon fontSize="small" />
+                              </TableCell>
                               {this.state.dataDates.map((it, kk) =>
                                 city.data.map((st, k) =>
                                   it.new_date == st.new_date ? (
@@ -1175,7 +1255,12 @@ class StatByClients_ extends React.Component {
                               onClick={this.openGraphModal.bind(this, 'orders', city.name, city.data)}
                             >
                               <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
-                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Количество заказов</TableCell>
+                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 8}}>
+                                <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                  Количество заказов
+                                </Typography>
+                                <QueryStatsIcon fontSize="small" />
+                              </TableCell>
                               {this.state.dataDates.map((it, kk) =>
                                 city.data.map((st, k) =>
                                   it.new_date == st.new_date ? (
@@ -1187,13 +1272,21 @@ class StatByClients_ extends React.Component {
 
                             <TableRow>
                               <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}>Итого {city.name}</TableCell>
-                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200, cursor: 'pointer', '&:hover': { color: '#c03' } }}
-                                onClick={this.openGraphModal.bind(this, 'avgSumm', city.name, city.data)}>Средний чек</TableCell>
+                              <TableCell 
+                                variant="head" 
+                                sx={{minWidth: 250, position: 'sticky', left: 200, cursor: 'pointer', '&:hover': { color: '#c03' }, display: 'flex', alignItems: 'center', gap: 1 }}
+                                onClick={this.openGraphModal.bind(this, 'avgSumm', city.name, city.data)}
+                              >
+                                <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                  Средний чек
+                                </Typography>
+                                <QueryStatsIcon fontSize="small" />
+                              </TableCell>
                               {this.state.dataDates.map((it, kk) =>
                                 city.data.map((st, k) =>
                                   it.new_date == st.new_date ? (
                                     <TableCell onClick={this.openGraphModal.bind(this, 'avgSumm', city.name, city.data)}
-                                      style={{minWidth: 250, position: 'sticky', left: 200, textAlign: 'center', cursor: 'pointer', '&:hover': { color: '#c03' } }}
+                                      sx={{minWidth: 250, position: 'sticky', left: 200, textAlign: 'center', cursor: 'pointer', '&:hover': { color: '#c03' } }}
                                       key={k}
                                     >
                                       {st.avg_summ}
@@ -1207,7 +1300,12 @@ class StatByClients_ extends React.Component {
                               onClick={this.openGraphModal.bind(this, 'lostUsers', city.name, city.data)}
                             >
                               <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0, border: 'none'}}></TableCell>
-                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Ушедшие клиенты</TableCell>
+                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 8}}>
+                                <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                  Ушедшие клиенты
+                                </Typography>
+                                <QueryStatsIcon fontSize="small" />
+                              </TableCell>
                               {this.state.dataDates.map((it, kk) =>
                                 city.data.map((st, k) =>
                                   it.new_date == st.new_date ? (
@@ -1217,11 +1315,19 @@ class StatByClients_ extends React.Component {
                               )}
                             </TableRow>
 
-                            <TableRow sx={{ borderBottom: '10px solid #e5e5e5', cursor: 'pointer', '& td': { '&:hover': { color: '#c03' } } }}
+                            <TableRow sx={{ borderBottom: '10px solid #e5e5e5 !important', cursor: 'pointer', '& td': { '&:hover': { color: '#c03' } } }}
                               onClick={this.openGraphModal.bind(this, 'returnUsers', city.name, city.data)}
                             >
                               <TableCell variant="head" style={{minWidth: 200, position: 'sticky', left: 0}}></TableCell>
-                              <TableCell variant="head" style={{minWidth: 250, position: 'sticky', left: 200}}>Вернувшиеся клиенты</TableCell>
+                              <TableCell 
+                                variant="head" 
+                                style={{minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 8}}
+                              >
+                                <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                  Вернувшиеся клиенты
+                                </Typography>
+                                <QueryStatsIcon fontSize="small" />
+                              </TableCell>
                               {this.state.dataDates.map((it, kk) =>
                                 city.data.map((st, k) =>
                                   it.new_date == st.new_date ? (
@@ -1232,17 +1338,32 @@ class StatByClients_ extends React.Component {
                             </TableRow>
                           </React.Fragment>
 
-                          <TableCell colSpan={this.state.dataDates.length + 3} style={{borderBottom: '10px solid #e5e5e5', height: 100}}></TableCell>
+                          <TableCell colSpan={this.state.dataDates.length + 3} style={{borderBottom: '10px solid #e5e5e5 !important', height: 100}}></TableCell>
                         </React.Fragment>
                       ))}
 
                       <React.Fragment>
                         <TableRow>
                           <TableCell rowSpan={6} variant="head" style={{ minWidth: 200, position: 'sticky', left: 0 }}>Итого в сети</TableCell>
-                          <TableCell variant="head" sx={{cursor: this.state.dataDates.length ? 'pointer' : null, '&:hover': {color: this.state.dataDates.length ? '#c03' : null},
-                              minWidth: 250, position: 'sticky', left: 200}}
+                          <TableCell 
+                            variant="head" 
+                            sx={{ 
+                              cursor: this.state.dataDates.length ? 'pointer' : null, 
+                              '&:hover': {color: this.state.dataDates.length ? '#c03' : null},
+                              minWidth: 250, 
+                              position: 'sticky', 
+                              left: 200,
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 1
+                            }}
                               onClick={this.state.dataDates.length ? this.openGraphModal.bind(this, 'newUsers', 'в сети', null) : null}
-                          >Новые клиенты</TableCell>
+                          >
+                            <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                              Новые клиенты
+                            </Typography>
+                            <QueryStatsIcon fontSize="small" />
+                          </TableCell>
 
                           {this.state.dataDates.map((it, kk) =>
                             this.state.all_data.map((st, k) =>
@@ -1262,7 +1383,15 @@ class StatByClients_ extends React.Component {
                         <TableRow sx={{cursor: this.state.dataDates.length ? 'pointer' : null, '& td': { '&:hover': { color: this.state.dataDates.length ? '#c03' : null} }}}
                           onClick={this.state.dataDates.length ? this.openGraphModal.bind(this, 'orders', 'в сети', null) : null}
                         >
-                          <TableCell variant="head" style={{ minWidth: 250, position: 'sticky', left: 200 }}>Количество заказов</TableCell>
+                          <TableCell 
+                            variant="head" 
+                            style={{ minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 8 }}
+                          >
+                            <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                              Количество заказов
+                            </Typography>
+                            <QueryStatsIcon fontSize="small" />
+                          </TableCell>
                           {this.state.dataDates.map((it, kk) =>
                             this.state.all_data.map((st, k) =>
                               it.new_date == st.new_date ? (
@@ -1275,7 +1404,15 @@ class StatByClients_ extends React.Component {
                         <TableRow sx={{cursor: this.state.dataDates.length ? 'pointer' : null, '& td': { '&:hover': { color: this.state.dataDates.length ? '#c03' : null} }}}
                           onClick={this.state.dataDates.length ? this.openGraphModal.bind(this, 'avgSumm', 'в сети', null) : null}
                         >
-                          <TableCell variant="head" style={{ minWidth: 250, position: 'sticky', left: 200 }}>Средний чек</TableCell>
+                          <TableCell 
+                            variant="head" 
+                            style={{ minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 8 }}
+                          >
+                            <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                              Средний чек
+                            </Typography>
+                            <QueryStatsIcon fontSize="small" />
+                          </TableCell>
                           {this.state.dataDates.map((it, kk) =>
                             this.state.all_data.map((st, k) =>
                               it.new_date == st.new_date ? (
@@ -1288,7 +1425,15 @@ class StatByClients_ extends React.Component {
                         <TableRow sx={{cursor: this.state.dataDates.length ? 'pointer' : null, '& td': { '&:hover': { color: this.state.dataDates.length ? '#c03' : null} }}}
                           onClick={this.state.dataDates.length ? this.openGraphModal.bind(this, 'lostUsers', 'в сети', null) : null}
                         >
-                          <TableCell variant="head" style={{ minWidth: 250, position: 'sticky', left: 200 }}>Ушедшие клиенты</TableCell>
+                          <TableCell 
+                            variant="head" 
+                            style={{ minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 8 }}
+                          >
+                            <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                              Ушедшие клиенты
+                            </Typography>
+                            <QueryStatsIcon fontSize="small" />
+                          </TableCell>
                           {this.state.dataDates.map((it, kk) =>
                             this.state.all_data.map((st, k) =>
                               it.new_date == st.new_date ? (
@@ -1301,7 +1446,15 @@ class StatByClients_ extends React.Component {
                         <TableRow sx={{cursor: this.state.dataDates.length ? 'pointer' : null, '& td': { '&:hover': { color: this.state.dataDates.length ? '#c03' : null} }}}
                           onClick={this.state.dataDates.length ? this.openGraphModal.bind(this, 'returnUsers', 'в сети', null) : null}
                         >
-                          <TableCell variant="head" style={{ minWidth: 250, position: 'sticky', left: 200 }}>Вернувшиеся клиенты</TableCell>
+                          <TableCell 
+                            variant="head" 
+                            style={{ minWidth: 250, position: 'sticky', left: 200, display: 'flex', alignItems: 'center', gap: 8 }}
+                          >
+                            <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}>
+                              Вернувшиеся клиенты
+                            </Typography>
+                            <QueryStatsIcon fontSize="small" />
+                          </TableCell>
                           {this.state.dataDates.map((it, kk) =>
                             this.state.all_data.map((st, k) =>
                               it.new_date == st.new_date ? (
