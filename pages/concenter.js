@@ -44,6 +44,7 @@ import dayjs from 'dayjs';
 import dynamic from "next/dynamic";
 import Paper from "@mui/material/Paper";
 import TableContainer from "@mui/material/TableContainer";
+import Checkbox from "@mui/material/Checkbox";
 
 function a11yProps(index) {
   return {
@@ -62,6 +63,7 @@ class Concenter_ extends React.Component {
       is_load: false,
       acces: {},
       err_info: {},
+      sort: false,
 
       modalDialog: false,
       modalDialogDel: false,
@@ -176,6 +178,7 @@ class Concenter_ extends React.Component {
     let data = {
       point_id: this.state.point_id,
       date: dayjs(this.state.date).format('YYYY-MM-DD'),
+      sort: this.state.sort
     };
 
     let res = await this.getData('get_orders', data);
@@ -767,7 +770,19 @@ class Concenter_ extends React.Component {
 
 
           <Grid item xs={12} sm={12}>
-            <Button variant="contained" onClick={this.btnGetOrders.bind(this)}>Обновить</Button>
+            <FormControlLabel
+                control={
+                  <Checkbox
+                      edge="end"
+                      onChange={() => this.setState({sort: !this.state.sort}, () => this.btnGetOrders.bind(this))}
+                      checked={this.state.sort}
+                      sx={{marginRight: '2px'}}
+                  />
+                }
+                sx={{marginRight: '22px'}}
+                label="Сортировать по времени выхода на стол"
+            />
+            <Button variant="contained" onClick={this.btnGetOrders.bind(this)}>Обновить данные</Button>
           </Grid>
 
           <Grid item xs={12} sm={6}>
