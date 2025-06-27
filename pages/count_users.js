@@ -31,6 +31,7 @@ import {MySelect, MyTimePicker, MyDatePickerNew, MyTextInput} from '@/ui/element
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 
 class CountUsers_Modal extends React.Component {
   constructor(props) {
@@ -708,42 +709,17 @@ class CountUsers_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
+        }, 500);
       });
+
+    return res;
   };
 
   async changePoint(event) {
