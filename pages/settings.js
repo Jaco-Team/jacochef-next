@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
-import {api_laravel_local} from '@/src/api_new';
+import {api_laravel, api_laravel_local} from '@/src/api_new';
 import Tab from "@mui/material/Tab";
 import Grid from "@mui/material/Grid";
 import TabContext from "@mui/lab/TabContext";
@@ -294,7 +294,7 @@ const SettingsPage = () => {
     setIsLoad(true);
 
     try {
-      const result = await api_laravel_local('settings', method, data);
+      const result = await api_laravel('settings', method, data);
       return result.data;
     } finally {
       setIsLoad(false);
