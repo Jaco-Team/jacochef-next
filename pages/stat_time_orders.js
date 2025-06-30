@@ -49,6 +49,14 @@ class StatTimeOrders_Table extends React.Component {
   render() {
     const { ItemTab, data, getDataCellOrder, getDataCellCount, getDataCellUser } = this.props;
 
+    // <TableRow>
+    //                 <TableCell sx={{ border: 'none' }}></TableCell>
+    //                 <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>Задержка кухни</TableCell>
+    //                 {data?.hours.map((item, key) => (
+    //                   <TableCell key={key} sx={{ fontWeight: 'bold', border: 'none' }}>{item.wait}</TableCell>
+    //                 ))}
+    //               </TableRow>
+
     return (
       <TabPanel value={ItemTab} style={{ padding: '24px 0' }}>
         <TableContainer sx={{ maxHeight: { xs: 'none', sm: 1000 } }}>
@@ -127,13 +135,7 @@ class StatTimeOrders_Table extends React.Component {
                     <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>{data?.full_time_orders}</TableCell>
                   </TableRow>
 
-                  <TableRow>
-                    <TableCell sx={{ border: 'none' }}></TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', border: 'none' }}>Задержка кухни</TableCell>
-                    {data?.hours.map((item, key) => (
-                      <TableCell key={key} sx={{ fontWeight: 'bold', border: 'none' }}>{item.wait}</TableCell>
-                    ))}
-                  </TableRow>
+                  
                 </>
               ) : null}
             </TableBody>
