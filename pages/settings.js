@@ -16,7 +16,7 @@ import FormControl from "@mui/material/FormControl";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Tabs from "@mui/material/Tabs";
-import {MyAlert} from "@/ui/elements";
+import {MyAlert, MyAutocomplite, MyTextInput} from "@/ui/elements";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Typography from "@mui/material/Typography";
@@ -27,6 +27,8 @@ import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
 import Accordion from "@mui/material/Accordion";
+import CloseIcon from "@mui/icons-material/Close";
+import TableFooter from "@mui/material/TableFooter";
 
 const PromoCodeForm = ({ mockItems, getData, setIsLoad, setErrStatus, setErrText, setOpenAlert }) => {
   const [formData, setFormData] = useState({
@@ -40,6 +42,12 @@ const PromoCodeForm = ({ mockItems, getData, setIsLoad, setErrStatus, setErrText
     validityDays: '',
     description: ''
   });
+
+  const [history, setHistory] = useState([]);
+  const [position, setPosition] = useState({});
+  const [count, setCount] = useState(0);
+  const [price, setPrice] = useState(0);
+
 
   const discountOptions = Array.from({ length: 20 }, (_, i) => (i + 1) * 5);
 
@@ -62,11 +70,12 @@ const PromoCodeForm = ({ mockItems, getData, setIsLoad, setErrStatus, setErrText
   useEffect(() => {
     if (mockItems) {
       getData('get_promo').then((data) => {
+        setHistory(data.history);
         setFormData(
             {
               type: data.promo.type,
               discountValue: parseInt(data.promo.discount),
-              products: JSON.parse(data.promo.products_data),
+              products: JSON.parse(data.promo.products),
               minOrderAmount: data.promo.minOrderAmount,
               maxOrderAmount: data.promo.maxOrderAmount,
               activationLimit: data.promo.activationLimit,
@@ -87,13 +96,29 @@ const PromoCodeForm = ({ mockItems, getData, setIsLoad, setErrStatus, setErrText
         setErrText(data.text);
         setOpenAlert(true);
       } else {
-        getData('get_all')
+        getData('get_promo').then((data) => setHistory(data.history))
+          .finally(() => setIsLoad(false));
       }
     })
       .finally(() => {
         setIsLoad(false);
       });
   };
+
+  const addItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      discountValue: '',
+      products: [...prev.products, { ...position, price, count }]
+    }));
+  }
+
+  const delItemAdd = (item) => {
+    setFormData(prev => ({
+      ...prev,
+      products: [...formData.products.filter((value) => value.id !== item.id)]
+    }));
+  }
 
   return (
       <Box component="form" onSubmit={handleSubmit} sx={{mt: 1}}>
@@ -141,28 +166,58 @@ const PromoCodeForm = ({ mockItems, getData, setIsLoad, setErrStatus, setErrText
           )}
 
           {formData.type === 'product' && (
-              <Grid item xs={12} sm={6}>
-                <Autocomplete
-                    multiple
-                    options={mockItems}
-                    getOptionLabel={(option) => option.name}
-                    value={formData.products}
-                    size="small"
-                    onChange={(_, newValue) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        products: newValue
-                      }));
-                    }}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Выберите товары"
-                            placeholder="Начните вводить название"
-                        />
-                    )}
-                />
-              </Grid>
+              <>
+                <Grid container direction="row" justifyContent="center" style={{paddingTop: 20, paddingLeft: 24}} spacing={3}>
+                  <Grid item xs={12} sm={3}>
+                    <MyAutocomplite data={mockItems} value={position} func={(event, data) => {
+                      setPosition(data)
+                    }} label='Позиция'/>
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <MyTextInput value={count} func={(e) => setCount(e.target.value)} label='Количество'/>
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <MyTextInput value={price} func={(e) => setPrice(e.target.value)} label='Цена за все'/>
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <Button variant="contained" onClick={addItem}>Добавить</Button>
+                  </Grid>
+                </Grid>
+                <Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Позиция</TableCell>
+                          <TableCell>Количество</TableCell>
+                          <TableCell>Цена за все</TableCell>
+                          <TableCell></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {formData.products.map((item, key) =>
+                            <TableRow key={key}>
+                              <TableCell>{item.name}</TableCell>
+                              <TableCell>{item.count}</TableCell>
+                              <TableCell>{item.price}</TableCell>
+                              <TableCell>
+                                <CloseIcon onClick={() => delItemAdd(item)} style={{cursor: 'pointer'}}/>
+                              </TableCell>
+                            </TableRow>
+                        )}
+                      </TableBody>
+                      <TableFooter>
+                        <TableRow>
+                          <TableCell></TableCell>
+                          <TableCell></TableCell>
+                          <TableCell>{formData.products.reduce((sum, item) => sum + parseInt(item.price), 0)}</TableCell>
+                          <TableCell></TableCell>
+                        </TableRow>
+                    </TableFooter>
+                    </Table>
+                  </Grid>
+                </Grid>
+              </>
           )}
 
           <Grid item xs={12} sm={6}>
@@ -255,6 +310,37 @@ const PromoCodeForm = ({ mockItems, getData, setIsLoad, setErrStatus, setErrText
               Сохранить изменения
             </Button>
           </Grid>
+          <Grid item xs={12} sm={12} display='grid'>
+            <Accordion style={{marginTop: '24px', display: history.length ? 'inherit' : 'none'}}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+                <Typography sx={{fontWeight: 'bold'}}>История изменений</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell style={{ width: '10%' }}>#</TableCell>
+                      <TableCell style={{ width: '10%' }}>Сотрудник</TableCell>
+                      <TableCell style={{ width: '10%' }}>Должность</TableCell>
+                      <TableCell style={{ width: '10%' }}>Дата</TableCell>
+                      <TableCell style={{ width: '50%' }}>Описание</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {history.map((item, k) => (
+                        <TableRow key={k} hover>
+                          <TableCell>{k + 1}</TableCell>
+                          <TableCell>{item.user_name}</TableCell>
+                          <TableCell>{item.app_name}</TableCell>
+                          <TableCell>{item.date}</TableCell>
+                          <TableCell>{item.description}</TableCell>
+                        </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </AccordionDetails>
+            </Accordion>
+          </Grid>
 
         </Grid>
       </Box>
@@ -267,13 +353,12 @@ const SettingsPage = () => {
   };
 
   const [isLoad, setIsLoad] = useState(false);
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState('birth_promo');
   const [mockItems, setMockItems] = useState([]);
   const [module, setModule] = useState({});
   const [openAlert, setOpenAlert] = useState(false);
   const [errStatus, setErrStatus] = useState(false);
   const [errText, setErrText] = useState('');
-  const [history, setHistory] = useState([])
   const [tabs, setTabs] = useState(tabsData);
 
   useEffect(() => {
@@ -281,7 +366,6 @@ const SettingsPage = () => {
       document.title = data.module_info.name;
       setModule(data.module_info);
       setMockItems(data.items);
-      setHistory(data.history);
       const tabsCheck = Object.entries(tabsData).filter(([key]) => data.acces[key] === "1");
       setTabs(Object.fromEntries(tabsCheck));
     });
@@ -294,7 +378,7 @@ const SettingsPage = () => {
     setIsLoad(true);
 
     try {
-      const result = await api_laravel('settings', method, data);
+      const result = await api_laravel_local('settings', method, data);
       return result.data;
     } finally {
       setIsLoad(false);
@@ -341,33 +425,6 @@ const SettingsPage = () => {
                 setErrText={setErrText}
                 setOpenAlert={setOpenAlert}
               />
-              <Accordion style={{marginTop: '24px', display: history.length ? 'inherit' : 'none'}}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-                  <Typography sx={{fontWeight: 'bold'}}>История изменений</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>#</TableCell>
-                        <TableCell>Сотрудник</TableCell>
-                        <TableCell>Должность</TableCell>
-                        <TableCell>Дата</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {history.map((item, k) => (
-                          <TableRow key={k} hover>
-                            <TableCell>{k + 1}</TableCell>
-                            <TableCell>{item.user_name}</TableCell>
-                            <TableCell>{item.app_name}</TableCell>
-                            <TableCell>{item.date}</TableCell>
-                          </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </AccordionDetails>
-              </Accordion>
             </TabPanel>
           </TabContext>
         </Grid>
