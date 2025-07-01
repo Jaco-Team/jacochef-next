@@ -68,25 +68,23 @@ const PromoCodeForm = ({ mockItems, getData, setIsLoad, setErrStatus, setErrText
   };
 
   useEffect(() => {
-    if (mockItems) {
-      getData('get_promo').then((data) => {
-        setHistory(data.history);
-        setFormData(
-            {
-              type: data.promo.type,
-              discountValue: parseInt(data.promo.discount),
-              products: JSON.parse(data.promo.products),
-              minOrderAmount: data.promo.minOrderAmount,
-              maxOrderAmount: data.promo.maxOrderAmount,
-              activationLimit: data.promo.activationLimit,
-              daysBeforeIssue: data.promo.daysBeforeIssue,
-              validityDays: data.promo.validityDays,
-              description: data.promo.description
-            }
-        );
-      })
-    }
-  }, [mockItems])
+    getData('get_promo').then((data) => {
+      setHistory(data.history);
+      setFormData(
+          {
+            type: data.promo.type,
+            discountValue: parseInt(data.promo.discount),
+            products: JSON.parse(data.promo.products),
+            minOrderAmount: data.promo.minOrderAmount,
+            maxOrderAmount: data.promo.maxOrderAmount,
+            activationLimit: data.promo.activationLimit,
+            daysBeforeIssue: data.promo.daysBeforeIssue,
+            validityDays: data.promo.validityDays,
+            description: data.promo.description
+          }
+      );
+    })
+  }, [])
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsLoad(true);
@@ -378,7 +376,7 @@ const SettingsPage = () => {
     setIsLoad(true);
 
     try {
-      const result = await api_laravel_local('settings', method, data);
+      const result = await api_laravel('settings', method, data);
       return result.data;
     } finally {
       setIsLoad(false);
