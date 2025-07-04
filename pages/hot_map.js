@@ -84,6 +84,7 @@ export default class HotMap extends React.PureComponent {
       module: 'hot_map',
       module_name: '',
       is_load: false,
+      is_driver: false,
 
       cities: [],
       city_id: '',
@@ -101,7 +102,7 @@ export default class HotMap extends React.PureComponent {
         statTrueAvgSumm: '',
         statAllCount: '',
       },
-   
+
       is_chooseZone: false,
 
       is_new: 0,
@@ -143,14 +144,14 @@ export default class HotMap extends React.PureComponent {
 
   changeCity = (event) => {
     const data = event.target.value;
-    
+
     if (this.myGeoObject && this.myGeoObject.editor) {
       this.myGeoObject.editor.stopDrawing && this.myGeoObject.editor.stopDrawing();
     }
-    
+
     this.myGeoObject = null;
     this.selectedZone = null;
-    
+
     this.setState(
       { city_id: data, is_chooseZone: false, isDrawing: false },
       () => {
@@ -177,16 +178,27 @@ export default class HotMap extends React.PureComponent {
       time_start: this.state.time_start,
       time_end: this.state.time_end,
       is_new: this.state.is_new,
+      is_driver: this.state.is_driver,
       is_pick_order: this.state.is_pick_order,
       is_chooseZone: false,
     };
 
     let res = await this.getData('get_orders', data);
 
-    this.getOrders(res.points, res.all_points);
+    this.getOrders(res.points, res.all_points, res.drivers);
   };
 
-  getOrders = (home, all_points) => {
+  stringToColor(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = ['red', 'blue', 'green', 'violet', 'orange', 'darkBlue', 'pink'];
+  return colors[Math.abs(hash) % colors.length];
+  }
+
+  getOrders = (home, all_points, drivers = {}) => {
+    console.log(drivers);
     var new_data = all_points
       .filter((item) => item && item[0] && item[1])
       .map((item) => [parseFloat(item[0]), parseFloat(item[1])]);
@@ -203,6 +215,34 @@ export default class HotMap extends React.PureComponent {
             searchControlProvider: 'yandex#search',
           }
         );
+
+        Object.entries(drivers).forEach(([key, driver]) => {
+          const color = this.stringToColor(key);
+          driver.map((cor) => {
+            let myGeoObject2 = new ymaps.GeoObject(
+            {
+              geometry: {
+                type: 'Point',
+                coordinates: [cor.coordinates.latitude, cor.coordinates.longitude],
+              },
+              properties: {
+                balloonContentHeader: `Курьер: ${key}</strong>`,
+                balloonContentBody: `
+                <div>
+                <p>Время: ${cor.date_time || 'не указано'}</p>
+                </div>
+                `,
+              }
+            },
+            {
+              preset: 'islands#blackDotIcon',
+              iconColor: color,
+            }
+          );
+
+          this.map.geoObjects.add(myGeoObject2);
+          })
+        })
 
         var gradients = [
             {
@@ -304,6 +344,34 @@ export default class HotMap extends React.PureComponent {
         this.heatmap.setMap(this.map);
       });
 
+      Object.entries(drivers).forEach(([key, driver]) => {
+          const color = this.stringToColor(key);
+          driver.map((cor) => {
+            let myGeoObject2 = new ymaps.GeoObject(
+            {
+              geometry: {
+                type: 'Point',
+                coordinates: [cor.coordinates.latitude, cor.coordinates.longitude],
+              },
+              properties: {
+                balloonContentHeader: `Курьер: ${key}</strong>`,
+                balloonContentBody: `
+                <div>
+                <p>Время: ${cor.date_time || 'не указано'}</p>
+                </div>
+                `,
+              }
+            },
+            {
+              preset: 'islands#blackDotIcon',
+              iconColor: color,
+            }
+          );
+
+          this.map.geoObjects.add(myGeoObject2);
+          })
+        })
+
       home.forEach((item) => {
         let myGeoObject1 = new ymaps.GeoObject(
           {
@@ -350,6 +418,9 @@ export default class HotMap extends React.PureComponent {
     if (this.state.is_chooseZone && this.selectedZone) {
       zoneCoordinates = this.selectedZone.geometry.getCoordinates()[0];
     }
+    if (!zoneCoordinates.length) {
+      return;
+    }
 
     let data = {
       city_id: this.state.city_id,
@@ -387,7 +458,7 @@ export default class HotMap extends React.PureComponent {
   changeData = (type, event) => {
     let data = '';
 
-    if (type === 'is_new' || type === 'is_pick_order') {
+    if (type === 'is_new' || type === 'is_pick_order' || type === 'is_driver') {
       data = event.target.checked ? 1 : 0;
     } else {
       data = event.target.value;
@@ -405,7 +476,7 @@ export default class HotMap extends React.PureComponent {
   };
 
   startDrawing = () => {
-    
+
     if (this.myGeoObject) {
 
       if (!this.state.isDrawing) {
@@ -415,14 +486,14 @@ export default class HotMap extends React.PureComponent {
         this.setState({ isDrawing: true }, () => {
           if (this.myGeoObject.editor && this.myGeoObject.editor.startEditing) {
             this.myGeoObject.editor.startEditing();
-          } 
+          }
         });
 
       }
 
       return;
     }
-  
+
     this.setState({ isDrawing: true }, () => {
       this.myGeoObject = new ymaps.GeoObject(
         {
@@ -448,7 +519,7 @@ export default class HotMap extends React.PureComponent {
 
   stopDrawing = () => {
     if (this.myGeoObject && this.myGeoObject.editor) {
-     
+
       if (this.myGeoObject.editor.stopEditing) {
 
         this.myGeoObject.editor.stopEditing();
@@ -464,12 +535,12 @@ export default class HotMap extends React.PureComponent {
 
   changeColorPolygon = (event) => {
     const clickedPolygon = event.get('target');
-    
+
     if (this.state.is_chooseZone && this.selectedZone && this.selectedZone !== clickedPolygon) {
       this.selectedZone.options.set({ strokeColor: 'rgb(187, 0, 37)' });
       this.selectedZone = null;
     }
-    
+
     if (!this.state.is_chooseZone || this.selectedZone !== clickedPolygon) {
       clickedPolygon.options.set({ strokeColor: 'rgb(255, 255, 0)' });
       this.selectedZone = clickedPolygon;
@@ -574,11 +645,18 @@ export default class HotMap extends React.PureComponent {
           </Grid>
 
           <Grid item xs={12} sm={3}>
+            <div style={{display: 'flex', flexDirection: 'row'}}>
             <MyCheckBox
               value={this.state.is_new === 1}
               func={this.changeData.bind(this, 'is_new')}
               label="Только новые клиенты"
             />
+            <MyCheckBox
+              value={this.state.is_driver === 1}
+              func={this.changeData.bind(this, 'is_driver')}
+              label="Показывать курьеров"
+            />
+            </div>
           </Grid>
 
           <Grid item xs={12} sm={3}>
@@ -623,7 +701,7 @@ export default class HotMap extends React.PureComponent {
             <Button
               variant={this.map ? "contained" : "outlined"}
               onClick={this.state.isDrawing ? this.stopDrawing : this.startDrawing}
-              disabled={!this.map} 
+              disabled={!this.map}
             >
               {this.state.isDrawing ? 'Выключить область редактирования' : 'Включить область редактирования'}
             </Button>
