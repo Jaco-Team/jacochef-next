@@ -1,41 +1,45 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
-import {api_laravel, api_laravel_local} from '@/src/api_new';
-import Tab from "@mui/material/Tab";
-import Grid from "@mui/material/Grid";
-import TabContext from "@mui/lab/TabContext";
-import Box from "@mui/material/Box";
-import TabPanel from "@mui/lab/TabPanel";
-import TextField from "@mui/material/TextField";
-import Autocomplete from "@mui/material/Autocomplete";
-import MenuItem from "@mui/material/MenuItem";
-import InputLabel from "@mui/material/InputLabel";
-import Select from "@mui/material/Select";
-import FormControl from "@mui/material/FormControl";
-import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
-import Tabs from "@mui/material/Tabs";
-import {MyAlert, MyAutocomplite, MyDatePickerNew, MyTextInput} from "@/ui/elements";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import Typography from "@mui/material/Typography";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import Table from "@mui/material/Table";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import TableCell from "@mui/material/TableCell";
-import TableBody from "@mui/material/TableBody";
-import Accordion from "@mui/material/Accordion";
-import CloseIcon from "@mui/icons-material/Close";
-import TableFooter from "@mui/material/TableFooter";
-import DialogTitle from "@mui/material/DialogTitle";
-import IconButton from "@mui/material/IconButton";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import Dialog from "@mui/material/Dialog";
+import Tab from '@mui/material/Tab';
+import Grid from '@mui/material/Grid';
+import TabContext from '@mui/lab/TabContext';
+import Box from '@mui/material/Box';
+import TabPanel from '@mui/lab/TabPanel';
+import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
+import MenuItem from '@mui/material/MenuItem';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import FormControl from '@mui/material/FormControl';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
+import Tabs from '@mui/material/Tabs';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Typography from '@mui/material/Typography';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import Table from '@mui/material/Table';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TableCell from '@mui/material/TableCell';
+import TableBody from '@mui/material/TableBody';
+import Accordion from '@mui/material/Accordion';
+import CloseIcon from '@mui/icons-material/Close';
+import TableFooter from '@mui/material/TableFooter';
+import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Dialog from '@mui/material/Dialog';
+import {
+  MyAlert, MyAutocomplite, MyDatePickerNew, MyTextInput,
+} from '@/ui/elements';
+import { api_laravel, api_laravel_local } from '@/src/api_new';
 
-const PromoCodeForm = ({ mockItems, getData, setIsLoad, setErrStatus, setErrText, setOpenAlert }) => {
+function PromoCodeForm({
+  mockItems, getData, setIsLoad, setErrStatus, setErrText, setOpenAlert,
+}) {
   const [formData, setFormData] = useState({
     type: '',
     discountValue: '',
@@ -45,7 +49,7 @@ const PromoCodeForm = ({ mockItems, getData, setIsLoad, setErrStatus, setErrText
     activationLimit: '',
     daysBeforeIssue: 0,
     validityDays: '',
-    description: ''
+    description: '',
   });
 
   const [history, setHistory] = useState([]);
@@ -58,24 +62,23 @@ const PromoCodeForm = ({ mockItems, getData, setIsLoad, setErrStatus, setErrText
   const openModal = (item) => {
     setStory(item);
     setOpen(true);
-  }
-
+  };
 
   const discountOptions = Array.from({ length: 20 }, (_, i) => (i + 1) * 5);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
     if (name === 'type') {
-      setFormData(prev => ({
-      ...prev,
-      discountValue: '',
-      products: []
-    }));
+      setFormData((prev) => ({
+        ...prev,
+        discountValue: '',
+        products: [],
+      }));
     }
   };
 
@@ -83,20 +86,20 @@ const PromoCodeForm = ({ mockItems, getData, setIsLoad, setErrStatus, setErrText
     getData('get_promo').then((data) => {
       setHistory(data.history);
       setFormData(
-          {
-            type: data.promo.type,
-            discountValue: parseInt(data.promo.discount),
-            products: JSON.parse(data.promo.products),
-            minOrderAmount: data.promo.minOrderAmount,
-            maxOrderAmount: data.promo.maxOrderAmount,
-            activationLimit: data.promo.activationLimit,
-            daysBeforeIssue: data.promo.daysBeforeIssue,
-            validityDays: data.promo.validityDays,
-            description: data.promo.description
-          }
+        {
+          type: data.promo.type,
+          discountValue: parseInt(data.promo.discount, 10),
+          products: JSON.parse(data.promo.products),
+          minOrderAmount: data.promo.minOrderAmount,
+          maxOrderAmount: data.promo.maxOrderAmount,
+          activationLimit: data.promo.activationLimit,
+          daysBeforeIssue: data.promo.daysBeforeIssue,
+          validityDays: data.promo.validityDays,
+          description: data.promo.description,
+        },
       );
-    })
-  }, [])
+    });
+  }, []);
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsLoad(true);
@@ -116,245 +119,252 @@ const PromoCodeForm = ({ mockItems, getData, setIsLoad, setErrStatus, setErrText
   };
 
   const addItem = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       discountValue: '',
-      products: [...prev.products, { ...position, price, count }]
+      products: [...prev.products, { ...position, price, count }],
     }));
-  }
+  };
 
   const delItemAdd = (item) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      products: [...formData.products.filter((value) => value.id !== item.id)]
+      products: [...formData.products.filter((value) => value.id !== item.id)],
     }));
-  }
+  };
 
   return (
-      <Box component="form" onSubmit={handleSubmit} sx={{mt: 1}}>
-        <DialogPromoHistory onClose={() => setOpen(false)} open={open} getData={getData} story={story}/>
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth size="small">
-              <InputLabel id="discount-type-label">Тип</InputLabel>
-              <Select
-                  labelId="discount-type-label"
-                  id="type"
-                  name="type"
-                  value={formData.type}
-                  label="Тип скидки"
-                  onChange={handleChange}
-                  required
-              >
-                <MenuItem value="percentage">Cкидка</MenuItem>
-                <MenuItem value="product">Добавление товара</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+      <DialogPromoHistory onClose={() => setOpen(false)} open={open} getData={getData} story={story} />
+      <Grid container spacing={3}>
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth size="small">
+            <InputLabel id="discount-type-label">Тип</InputLabel>
+            <Select
+              labelId="discount-type-label"
+              id="type"
+              name="type"
+              value={formData.type}
+              label="Тип скидки"
+              onChange={handleChange}
+              required
+            >
+              <MenuItem value="percentage">Cкидка</MenuItem>
+              <MenuItem value="product">Добавление товара</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
 
-          {formData.type && formData.type !== 'product' && (
-              <Grid item xs={12} sm={6}>
-                <Autocomplete
-                    options={discountOptions}
-                    size="small"
-                    getOptionLabel={(option) => `${option}%`}
-                    value={formData.discountValue}
-                    onChange={(_, newValue) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        discountValue: newValue
-                      }));
-                    }}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Размер скидки"
-                            required
-                        />
-                    )}
+        {formData.type && formData.type !== 'product' && (
+          <Grid item xs={12} sm={6}>
+            <Autocomplete
+              options={discountOptions}
+              size="small"
+              getOptionLabel={(option) => `${option}%`}
+              value={formData.discountValue}
+              onChange={(_, newValue) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  discountValue: newValue,
+                }));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Размер скидки"
+                  required
+                />
+              )}
+            />
+          </Grid>
+        )}
+
+        {formData.type === 'product' && (
+          <>
+            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20, paddingLeft: 24 }} spacing={3}>
+              <Grid item xs={12} sm={3}>
+                <MyAutocomplite
+                  data={mockItems}
+                  value={position}
+                  func={(event, data) => {
+                    setPosition(data);
+                  }}
+                  label="Позиция"
                 />
               </Grid>
-          )}
-
-          {formData.type === 'product' && (
-              <>
-                <Grid container direction="row" justifyContent="center" style={{paddingTop: 20, paddingLeft: 24}} spacing={3}>
-                  <Grid item xs={12} sm={3}>
-                    <MyAutocomplite data={mockItems} value={position} func={(event, data) => {
-                      setPosition(data)
-                    }} label='Позиция'/>
-                  </Grid>
-                  <Grid item xs={12} sm={3}>
-                    <MyTextInput value={count} func={(e) => setCount(e.target.value)} label='Количество'/>
-                  </Grid>
-                  <Grid item xs={12} sm={3}>
-                    <MyTextInput value={price} func={(e) => setPrice(e.target.value)} label='Цена за все'/>
-                  </Grid>
-                  <Grid item xs={12} sm={3}>
-                    <Button variant="contained" onClick={addItem}>Добавить</Button>
-                  </Grid>
-                </Grid>
-                <Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
-                  <Grid item xs={12} sm={6}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Позиция</TableCell>
-                          <TableCell>Количество</TableCell>
-                          <TableCell>Цена за все</TableCell>
-                          <TableCell></TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {formData.products.map((item, key) =>
-                            <TableRow key={key}>
-                              <TableCell>{item.name}</TableCell>
-                              <TableCell>{item.count}</TableCell>
-                              <TableCell>{item.price}</TableCell>
-                              <TableCell>
-                                <CloseIcon onClick={() => delItemAdd(item)} style={{cursor: 'pointer'}}/>
-                              </TableCell>
-                            </TableRow>
-                        )}
-                      </TableBody>
-                      <TableFooter>
-                        <TableRow>
-                          <TableCell></TableCell>
-                          <TableCell></TableCell>
-                          <TableCell>{formData.products.reduce((sum, item) => sum + parseInt(item.price), 0)}</TableCell>
-                          <TableCell></TableCell>
-                        </TableRow>
-                    </TableFooter>
-                    </Table>
-                  </Grid>
-                </Grid>
-              </>
-          )}
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-                fullWidth
-                label="Минимальная сумма заказа"
-                name="minOrderAmount"
-                type="number"
-                size="small"
-                value={formData.minOrderAmount}
-                onChange={handleChange}
-                inputProps={{min: 0}}
-                required
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-                fullWidth
-                label="Максимальная сумма заказа"
-                name="maxOrderAmount"
-                type="number"
-                value={formData.maxOrderAmount}
-                onChange={handleChange}
-                inputProps={{min: 0}}
-                size="small"
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-                fullWidth
-                size="small"
-                label="Количество активаций"
-                name="activationLimit"
-                type="number"
-                value={formData.activationLimit}
-                onChange={handleChange}
-                inputProps={{min: 1}}
-                required
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-                fullWidth
-                label="За сколько дней выписан промокод"
-                name="daysBeforeIssue"
-                size="small"
-                type="number"
-                value={formData.daysBeforeIssue}
-                onChange={handleChange}
-                inputProps={{min: 0}}
-                required
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-                fullWidth
-                size="small"
-                label="Сколько дней действует промокод"
-                name="validityDays"
-                type="number"
-                value={formData.validityDays}
-                onChange={handleChange}
-                inputProps={{min: 1}}
-                required
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-                fullWidth
-                label="Описание промокода"
-                name="description"
-                multiline
-                size="small"
-                rows={2}
-                value={formData.description}
-                onChange={handleChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={12} display='grid'>
-            <Button
-                color="success"
-                variant="contained"
-                type="submit"
-                style={{whiteSpace: 'nowrap', justifySelf: 'flex-end'}}
-            >
-              Сохранить изменения
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={12} display='grid'>
-            <Accordion style={{marginTop: '24px', display: history.length ? 'inherit' : 'none'}}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-                <Typography sx={{fontWeight: 'bold'}}>История изменений</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
+              <Grid item xs={12} sm={3}>
+                <MyTextInput value={count} func={(e) => setCount(e.target.value)} label="Количество" />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <MyTextInput value={price} func={(e) => setPrice(e.target.value)} label="Цена за все" />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <Button variant="contained" onClick={addItem}>Добавить</Button>
+              </Grid>
+            </Grid>
+            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+              <Grid item xs={12} sm={6}>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell style={{ width: '20%' }}>#</TableCell>
-                      <TableCell style={{ width: '40%' }}>Дата время</TableCell>
-                      <TableCell style={{ width: '40%' }}>Сотрудник</TableCell>
+                      <TableCell>Позиция</TableCell>
+                      <TableCell>Количество</TableCell>
+                      <TableCell>Цена за все</TableCell>
+                      <TableCell />
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {history.map((item, k) => (
-                        <TableRow key={k} hover style={{ cursor: 'pointer'}} onClick={() => openModal(item)}>
-                          <TableCell>{k + 1}</TableCell>
-                          <TableCell>{item.date}</TableCell>
-                          <TableCell>{item.user_name}</TableCell>
-                        </TableRow>
+                    {formData.products.map((item, key) => (
+                      <TableRow key={key}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.count}</TableCell>
+                        <TableCell>{item.price}</TableCell>
+                        <TableCell>
+                          <CloseIcon onClick={() => delItemAdd(item)} style={{ cursor: 'pointer' }} />
+                        </TableCell>
+                      </TableRow>
                     ))}
                   </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell />
+                      <TableCell />
+                      <TableCell>{formData.products.reduce((sum, item) => sum + parseInt(item.price), 0)}</TableCell>
+                      <TableCell />
+                    </TableRow>
+                  </TableFooter>
                 </Table>
-              </AccordionDetails>
-            </Accordion>
-          </Grid>
+              </Grid>
+            </Grid>
+          </>
+        )}
 
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Минимальная сумма заказа"
+            name="minOrderAmount"
+            type="number"
+            size="small"
+            value={formData.minOrderAmount}
+            onChange={handleChange}
+            inputProps={{ min: 0 }}
+            required
+          />
         </Grid>
-      </Box>
-  );
-};
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Максимальная сумма заказа"
+            name="maxOrderAmount"
+            type="number"
+            value={formData.maxOrderAmount}
+            onChange={handleChange}
+            inputProps={{ min: 0 }}
+            size="small"
+          />
+        </Grid>
 
-const DialogPromoHistory = ({open, onClose, getData, story}) => {
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Количество активаций"
+            name="activationLimit"
+            type="number"
+            value={formData.activationLimit}
+            onChange={handleChange}
+            inputProps={{ min: 1 }}
+            required
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="За сколько дней выписан промокод"
+            name="daysBeforeIssue"
+            size="small"
+            type="number"
+            value={formData.daysBeforeIssue}
+            onChange={handleChange}
+            inputProps={{ min: 0 }}
+            required
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Сколько дней действует промокод"
+            name="validityDays"
+            type="number"
+            value={formData.validityDays}
+            onChange={handleChange}
+            inputProps={{ min: 1 }}
+            required
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Описание промокода"
+            name="description"
+            multiline
+            size="small"
+            rows={2}
+            value={formData.description}
+            onChange={handleChange}
+          />
+        </Grid>
+        <Grid item xs={12} sm={12} display="grid">
+          <Button
+            color="success"
+            variant="contained"
+            type="submit"
+            style={{ whiteSpace: 'nowrap', justifySelf: 'flex-end' }}
+          >
+            Сохранить изменения
+          </Button>
+        </Grid>
+        <Grid item xs={12} sm={12} display="grid">
+          <Accordion style={{ marginTop: '24px', display: history.length ? 'inherit' : 'none' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography sx={{ fontWeight: 'bold' }}>История изменений</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell style={{ width: '20%' }}>#</TableCell>
+                    <TableCell style={{ width: '40%' }}>Дата время</TableCell>
+                    <TableCell style={{ width: '40%' }}>Сотрудник</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {history.map((item, k) => (
+                    <TableRow key={k} hover style={{ cursor: 'pointer' }} onClick={() => openModal(item)}>
+                        <TableCell>{k + 1}</TableCell>
+                        <TableCell>{item.date}</TableCell>
+                        <TableCell>{item.user_name}</TableCell>
+                      </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </AccordionDetails>
+          </Accordion>
+        </Grid>
+
+      </Grid>
+    </Box>
+  );
+}
+
+function DialogPromoHistory({
+  open, onClose, getData, story,
+}) {
   const [formData, setFormData] = useState({
     type: '',
     discountValue: '',
@@ -364,214 +374,211 @@ const DialogPromoHistory = ({open, onClose, getData, story}) => {
     activationLimit: '',
     daysBeforeIssue: 0,
     validityDays: '',
-    description: ''
+    description: '',
   });
   useEffect(() => {
     if (story.type) {
       setFormData(
-          {
-            type: story.type,
-            discountValue: parseInt(story.discount),
-            products: JSON.parse(story.products),
-            minOrderAmount: story.minOrderAmount,
-            maxOrderAmount: story.maxOrderAmount,
-            activationLimit: story.activationLimit,
-            daysBeforeIssue: story.daysBeforeIssue,
-            validityDays: story.validityDays,
-            description: story.description
-          }
+        {
+          type: story.type,
+          discountValue: parseInt(story.discount),
+          products: JSON.parse(story.products),
+          minOrderAmount: story.minOrderAmount,
+          maxOrderAmount: story.maxOrderAmount,
+          activationLimit: story.activationLimit,
+          daysBeforeIssue: story.daysBeforeIssue,
+          validityDays: story.validityDays,
+          description: story.description,
+        },
       );
     }
-  }, [story])
+  }, [story]);
   return (
-      <Dialog
-          open={open}
-          onClose={onClose}
-          fullWidth
-          maxWidth="sm"
-        >
-          <DialogTitle style={{ display: 'flex', alignItems: 'center' }}>
-            Изменения
-            <IconButton onClick={onClose} style={{ marginLeft: 'auto' }}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-        <DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
-          <Box component="form" sx={{mt: 1}}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth size="small">
-                  <InputLabel id="discount-type-label">Тип</InputLabel>
-                  <Select
-                      labelId="discount-type-label"
-                      id="type"
-                      name="type"
-                      value={formData.type}
-                      label="Тип скидки"
-                      disabled
-                      required
-                  >
-                    <MenuItem value="percentage">Cкидка</MenuItem>
-                    <MenuItem value="product">Добавление товара</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {formData.type && formData.type !== 'product' && (
-                  <Grid item xs={12} sm={6}>
-                    <Autocomplete
-                        options={[]}
-                        size="small"
-                        disabled
-                        getOptionLabel={(option) => `${option}%`}
-                        value={formData.discountValue}
-                        onChange={(_, newValue) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            discountValue: newValue
-                          }));
-                        }}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Размер скидки"
-                                required
-                            />
-                        )}
-                    />
-                  </Grid>
-              )}
-
-              {formData.type === 'product' && (
-                  <>
-                    <Grid container style={{paddingTop: 20}} spacing={3}>
-                      <Grid item xs={12} sm={12}>
-                        <Table>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Позиция</TableCell>
-                              <TableCell>Количество</TableCell>
-                              <TableCell>Цена за все</TableCell>
-                              <TableCell></TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {formData.products.map((item, key) =>
-                                <TableRow key={key}>
-                                  <TableCell>{item.name}</TableCell>
-                                  <TableCell>{item.count}</TableCell>
-                                  <TableCell>{item.price}</TableCell>
-                                  <TableCell>
-                                  </TableCell>
-                                </TableRow>
-                            )}
-                          </TableBody>
-                          <TableFooter>
-                            <TableRow>
-                              <TableCell></TableCell>
-                              <TableCell></TableCell>
-                              <TableCell>{formData.products.reduce((sum, item) => sum + parseInt(item.price), 0)}</TableCell>
-                              <TableCell></TableCell>
-                            </TableRow>
-                          </TableFooter>
-                        </Table>
-                      </Grid>
-                    </Grid>
-                  </>
-              )}
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                    fullWidth
-                    label="Минимальная сумма заказа"
-                    name="minOrderAmount"
-                    type="number"
-                    disabled
-                    size="small"
-                    value={formData.minOrderAmount}
-                    inputProps={{min: 0}}
-                    required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                    fullWidth
-                    label="Максимальная сумма заказа"
-                    name="maxOrderAmount"
-                    type="number"
-                    disabled
-                    value={formData.maxOrderAmount}
-                    inputProps={{min: 0}}
-                    size="small"
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                    fullWidth
-                    disabled
-                    size="small"
-                    label="Количество активаций"
-                    name="activationLimit"
-                    type="number"
-                    value={formData.activationLimit}
-                    inputProps={{min: 1}}
-                    required
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                    fullWidth
-                    label="За сколько дней выписан промокод"
-                    name="daysBeforeIssue"
-                    size="small"
-                    disabled
-                    type="number"
-                    value={formData.daysBeforeIssue}
-                    inputProps={{min: 0}}
-                    required
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                    fullWidth
-                    size="small"
-                    label="Сколько дней действует промокод"
-                    name="validityDays"
-                    type="number"
-                    disabled
-                    value={formData.validityDays}
-                    inputProps={{min: 1}}
-                    required
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                    fullWidth
-                    label="Описание промокода"
-                    name="description"
-                    disabled
-                    multiline
-                    size="small"
-                    rows={2}
-                    value={formData.description}
-                />
-              </Grid>
-
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+    >
+      <DialogTitle style={{ display: 'flex', alignItems: 'center' }}>
+        Изменения
+        <IconButton onClick={onClose} style={{ marginLeft: 'auto' }}>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+        <Box component="form" sx={{ mt: 1 }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel id="discount-type-label">Тип</InputLabel>
+                <Select
+                  labelId="discount-type-label"
+                  id="type"
+                  name="type"
+                  value={formData.type}
+                  label="Тип скидки"
+                  disabled
+                  required
+                >
+                  <MenuItem value="percentage">Cкидка</MenuItem>
+                  <MenuItem value="product">Добавление товара</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
-          </Box>
-        </DialogContent>
-          <DialogActions>
-            <Button variant="contained" onClick={onClose}>Закрыть</Button>
-          </DialogActions>
-        </Dialog>
-  );
-};
 
-const SettingsPage = () => {
+            {formData.type && formData.type !== 'product' && (
+              <Grid item xs={12} sm={6}>
+                <Autocomplete
+                  options={[]}
+                  size="small"
+                  disabled
+                  getOptionLabel={(option) => `${option}%`}
+                  value={formData.discountValue}
+                  onChange={(_, newValue) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      discountValue: newValue,
+                    }));
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Размер скидки"
+                      required
+                    />
+                  )}
+                />
+              </Grid>
+            )}
+
+            {formData.type === 'product' && (
+              <Grid container style={{ paddingTop: 20 }} spacing={3}>
+                <Grid item xs={12} sm={12}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Позиция</TableCell>
+                        <TableCell>Количество</TableCell>
+                        <TableCell>Цена за все</TableCell>
+                        <TableCell />
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {formData.products.map((item, key) => (
+                        <TableRow key={key}>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>{item.count}</TableCell>
+                          <TableCell>{item.price}</TableCell>
+                          <TableCell />
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                    <TableFooter>
+                      <TableRow>
+                        <TableCell />
+                        <TableCell />
+                        <TableCell>{formData.products.reduce((sum, item) => sum + parseInt(item.price), 0)}</TableCell>
+                        <TableCell />
+                      </TableRow>
+                    </TableFooter>
+                  </Table>
+                </Grid>
+              </Grid>
+            )}
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Минимальная сумма заказа"
+                name="minOrderAmount"
+                type="number"
+                disabled
+                size="small"
+                value={formData.minOrderAmount}
+                inputProps={{ min: 0 }}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Максимальная сумма заказа"
+                name="maxOrderAmount"
+                type="number"
+                disabled
+                value={formData.maxOrderAmount}
+                inputProps={{ min: 0 }}
+                size="small"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                disabled
+                size="small"
+                label="Количество активаций"
+                name="activationLimit"
+                type="number"
+                value={formData.activationLimit}
+                inputProps={{ min: 1 }}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="За сколько дней выписан промокод"
+                name="daysBeforeIssue"
+                size="small"
+                disabled
+                type="number"
+                value={formData.daysBeforeIssue}
+                inputProps={{ min: 0 }}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Сколько дней действует промокод"
+                name="validityDays"
+                type="number"
+                disabled
+                value={formData.validityDays}
+                inputProps={{ min: 1 }}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Описание промокода"
+                name="description"
+                disabled
+                multiline
+                size="small"
+                rows={2}
+                value={formData.description}
+              />
+            </Grid>
+
+          </Grid>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button variant="contained" onClick={onClose}>Закрыть</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function SettingsPage() {
   const tabsData = {
     birth_promo: 'Промокод на день рождения',
   };
@@ -590,7 +597,7 @@ const SettingsPage = () => {
       document.title = data.module_info.name;
       setModule(data.module_info);
       setMockItems(data.items);
-      const tabsCheck = Object.entries(tabsData).filter(([key]) => data.acces[key] === "1");
+      const tabsCheck = Object.entries(tabsData).filter(([key]) => data.acces[key] === '1');
       setTabs(Object.fromEntries(tabsCheck));
     });
   }, []);
@@ -602,7 +609,7 @@ const SettingsPage = () => {
     setIsLoad(true);
 
     try {
-      const result = await api_laravel('settings', method, data);
+      const result = await api_laravel_local('settings', method, data);
       return result.data;
     } finally {
       setIsLoad(false);
@@ -615,12 +622,12 @@ const SettingsPage = () => {
         <CircularProgress color="inherit" />
       </Backdrop>
       <MyAlert
-          isOpen={openAlert}
-          onClose={() => setOpenAlert(false)}
-          status={errStatus}
-          text={errText}
+        isOpen={openAlert}
+        onClose={() => setOpenAlert(false)}
+        status={errStatus}
+        text={errText}
       />
-      <Grid item xs={12} sm={12} container spacing={3} mb={3} className='container_first_child'>
+      <Grid item xs={12} sm={12} container spacing={3} mb={3} className="container_first_child">
         <Grid item xs={12} sm={12}>
           <h1>{module.name}</h1>
         </Grid>
@@ -655,7 +662,7 @@ const SettingsPage = () => {
       </Grid>
     </>
   );
-};
+}
 
 export default function Settings() {
   return <SettingsPage />;
