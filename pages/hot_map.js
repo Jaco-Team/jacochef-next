@@ -188,17 +188,7 @@ export default class HotMap extends React.PureComponent {
     this.getOrders(res.points, res.all_points, res.drivers);
   };
 
-  stringToColor(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const colors = ['red', 'blue', 'green', 'violet', 'orange', 'darkBlue', 'pink'];
-  return colors[Math.abs(hash) % colors.length];
-  }
-
   getOrders = (home, all_points, drivers = {}) => {
-    console.log(drivers);
     var new_data = all_points
       .filter((item) => item && item[0] && item[1])
       .map((item) => [parseFloat(item[0]), parseFloat(item[1])]);
@@ -216,33 +206,25 @@ export default class HotMap extends React.PureComponent {
           }
         );
 
-        Object.entries(drivers).forEach(([key, driver]) => {
-          const color = this.stringToColor(key);
-          driver.map((cor) => {
-            let myGeoObject2 = new ymaps.GeoObject(
-            {
-              geometry: {
-                type: 'Point',
-                coordinates: [cor.coordinates.latitude, cor.coordinates.longitude],
-              },
-              properties: {
-                balloonContentHeader: `Курьер: ${key}</strong>`,
-                balloonContentBody: `
-                <div>
-                <p>Время: ${cor.date_time || 'не указано'}</p>
-                </div>
-                `,
-              }
-            },
-            {
-              preset: 'islands#blackDotIcon',
-              iconColor: color,
-            }
-          );
-
-          this.map.geoObjects.add(myGeoObject2);
-          })
-        })
+        if (this.state.is_driver) {
+          ymaps.modules.require(['Heatmap'], (Heatmap) => {
+            this.heatmap = new Heatmap(drivers, {
+              gradient: gradients[0],
+              radius: radiuses[1],
+              opacity: opacities[2],
+            });
+            this.heatmap.setMap(this.map);
+          });
+        } else {
+          ymaps.modules.require(['Heatmap'], (Heatmap) => {
+          this.heatmap = new Heatmap(new_data, {
+            gradient: gradients[0],
+            radius: radiuses[1],
+            opacity: opacities[2],
+          });
+          this.heatmap.setMap(this.map);
+        });
+        }
 
         var gradients = [
             {
@@ -299,15 +281,6 @@ export default class HotMap extends React.PureComponent {
 
         this.map.geoObjects.events.add('click', this.changeColorPolygon);
 
-        ymaps.modules.require(['Heatmap'], (Heatmap) => {
-          this.heatmap = new Heatmap(new_data, {
-            gradient: gradients[0],
-            radius: radiuses[1],
-            opacity: opacities[2],
-          });
-          this.heatmap.setMap(this.map);
-        });
-
       });
 
     } else {
@@ -335,42 +308,25 @@ export default class HotMap extends React.PureComponent {
         radiuses = [5, 10, 20, 30],
         opacities = [0.4, 0.6, 0.8, 1];
 
-      ymaps.modules.require(['Heatmap'], (Heatmap) => {
-        this.heatmap = new Heatmap(new_data, {
-          gradient: gradients[0],
-          radius: radiuses[1],
-          opacity: opacities[2],
+      if (this.state.is_driver) {
+        ymaps.modules.require(['Heatmap'], (Heatmap) => {
+          this.heatmap = new Heatmap(drivers, {
+            gradient: gradients[0],
+            radius: radiuses[1],
+            opacity: opacities[2],
+          });
+          this.heatmap.setMap(this.map);
         });
-        this.heatmap.setMap(this.map);
-      });
-
-      Object.entries(drivers).forEach(([key, driver]) => {
-          const color = this.stringToColor(key);
-          driver.map((cor) => {
-            let myGeoObject2 = new ymaps.GeoObject(
-            {
-              geometry: {
-                type: 'Point',
-                coordinates: [cor.coordinates.latitude, cor.coordinates.longitude],
-              },
-              properties: {
-                balloonContentHeader: `Курьер: ${key}</strong>`,
-                balloonContentBody: `
-                <div>
-                <p>Время: ${cor.date_time || 'не указано'}</p>
-                </div>
-                `,
-              }
-            },
-            {
-              preset: 'islands#blackDotIcon',
-              iconColor: color,
-            }
-          );
-
-          this.map.geoObjects.add(myGeoObject2);
-          })
-        })
+      } else {
+        ymaps.modules.require(['Heatmap'], (Heatmap) => {
+          this.heatmap = new Heatmap(new_data, {
+            gradient: gradients[0],
+            radius: radiuses[1],
+            opacity: opacities[2],
+          });
+          this.heatmap.setMap(this.map);
+        });
+      }
 
       home.forEach((item) => {
         let myGeoObject1 = new ymaps.GeoObject(
