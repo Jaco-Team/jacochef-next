@@ -50,9 +50,9 @@ const formatNumber = (num) => new Intl.NumberFormat('ru-RU').format(num);
 function getColor(val1, val2, summColor) {
   const n1 = Number(val1) || 0;
   const n2 = Number(val2) || 0;
+  if (summColor === 'green') return 'green';
   if (n1 !== n2) return 'red';
   if (summColor === 'gray') return 'gray';
-  if (summColor === 'green') return 'green';
   return 'inherit';
 }
 
