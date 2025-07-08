@@ -54,8 +54,8 @@ function FeedbackPage() {
           <TableHead>
             <TableRow>
               <TableCell>#</TableCell>
-              <TableCell>Дата / время</TableCell>
               <TableCell>Название</TableCell>
+              <TableCell>Дата создания</TableCell>
               <TableCell>Создатель</TableCell>
             </TableRow>
           </TableHead>
@@ -63,8 +63,8 @@ function FeedbackPage() {
             {formsActive.map((it, k) => (
               <TableRow style={{ cursor: 'pointer' }} hover key={it.name} onClick={() => router.push(`/feedback_form/${it.id}`)}>
                 <TableCell>{k + 1}</TableCell>
-                <TableCell>{it.date}</TableCell>
                 <TableCell>{it.name}</TableCell>
+                <TableCell>{it.date}</TableCell>
                 <TableCell>{it.user_name}</TableCell>
               </TableRow>
             ))}
@@ -77,18 +77,18 @@ function FeedbackPage() {
           <TableHead>
             <TableRow>
               <TableCell>#</TableCell>
-              <TableCell>Создатель</TableCell>
-              <TableCell>Дата / время</TableCell>
               <TableCell>Название</TableCell>
+              <TableCell>Дата создания</TableCell>
+              <TableCell>Создатель</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {formsNonActive.map((it, k) => (
               <TableRow style={{ cursor: 'pointer' }} hover key={it.name} onClick={() => router.push(`/feedback_form/${it.id}`)}>
                 <TableCell>{k + 1}</TableCell>
-                <TableCell>{it.user_name}</TableCell>
-                <TableCell>{it.date}</TableCell>
                 <TableCell>{it.name}</TableCell>
+                <TableCell>{it.date}</TableCell>
+                <TableCell>{it.user_name}</TableCell>
               </TableRow>
             ))}
           </TableBody>

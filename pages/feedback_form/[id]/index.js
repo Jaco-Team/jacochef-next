@@ -17,14 +17,30 @@ function FeedbackPage() {
   const [title, setTitle] = useState('');
   const [formData, setFormData] = useState([]);
   const [rating, setRating] = useState(1);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [active, setActive] = useState(false);
 
   useEffect(() => {
     getData('get_form', { id }).then((data) => {
       document.title = data.item?.name;
       setTitle(data.item.name);
       setFormData(JSON.parse(data.item.form_data));
+      setActive(data.item.active);
     });
   }, []);
+
+  const changeActive = (e) => {
+    setActive(e.target.checked);
+    getData('set_active', {check: e.target.checked , id});
+  }
+
+  const toggleTag = (tag) => {
+    setSelectedTags(prev =>
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
 
   const getData = async (method, data = {}) => {
     setIsLoad(true);
@@ -115,7 +131,7 @@ function FeedbackPage() {
             <Typography variant="h6">Облако тегов</Typography>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
               {element.data.selectedTags.map((tag) => (
-                <Chip key={tag} label={tag} />
+                <Chip key={tag} label={tag} onClick={() => toggleTag(tag)} color={selectedTags.includes(tag) ? "primary" : "default"} style={{ cursor: "pointer" }} />
               ))}
             </div>
           </div>
@@ -139,7 +155,15 @@ function FeedbackPage() {
         }}
         >
           {formData.map((element) => renderElement(element))}
-          <Button variant="contained" style={{ float: 'right' }}>Отправить</Button>
+          <Button variant="contained" style={{float: 'right'}}>Отправить</Button>
+          <div style={{marginBottom: 10, float: 'right'}}>
+            <FormControlLabel
+              control={<Checkbox checked={active} onChange={changeActive} />}
+              label={'Активность'}
+              id={'active'}
+              size="small"
+            />
+          </div>
         </div>
       </Grid>
     </Grid>
@@ -147,10 +171,10 @@ function FeedbackPage() {
 }
 
 export default function SettingsId() {
-  return <FeedbackPage />;
+  return <FeedbackPage/>;
 }
 
-export async function getServerSideProps({ req, res, query }) {
+export async function getServerSideProps({req, res, query}) {
   res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');

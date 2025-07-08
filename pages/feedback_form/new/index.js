@@ -23,6 +23,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
 import {api_laravel, api_laravel_local} from '@/src/api_new';
 import {MyAlert} from "@/ui/elements";
+import {useRouter} from "next/router";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Dialog from "@mui/material/Dialog";
 
 const FormElementCard = styled(Paper)(({ theme }) => ({
   marginBottom: theme.spacing(3),
@@ -34,6 +39,100 @@ const FormElementCard = styled(Paper)(({ theme }) => ({
     transform: 'translateY(-2px)',
   },
 }));
+
+const PresetModal = ({ open, onClose, onSave }) => {
+  const [newPreset, setNewPreset] = useState({
+    label: '',
+    param: '',
+  });
+
+  const [errors, setErrors] = useState({
+    label: false,
+    param: false,
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setNewPreset(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: false,
+      }));
+    }
+  };
+
+  const handleSubmit = () => {
+    const newErrors = {
+      label: !newPreset.label,
+      param: !newPreset.param,
+    };
+
+    setErrors(newErrors);
+
+    if (!newPreset.label || !newPreset.param) {
+      return;
+    }
+
+    onSave(newPreset);
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setNewPreset({ label: '', param: '' });
+    setErrors({ label: false, param: false });
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Создать новый пресет чекбокса</DialogTitle>
+
+      <DialogContent>
+        <Box sx={{ mt: 2 }}>
+          <TextField
+            fullWidth
+            label="Название чекбокса"
+            size="small"
+            name="label"
+            value={newPreset.label}
+            onChange={handleChange}
+            error={errors.label}
+            helperText={errors.label ? 'Обязательное поле' : ''}
+            sx={{ mb: 3 }}
+          />
+
+          <TextField
+            fullWidth
+            label="Параметр (ключ)"
+            name="param"
+            size="small"
+            value={newPreset.param}
+            onChange={handleChange}
+            error={errors.param}
+            helperText={errors.param ? 'Обязательное поле' : 'Латинские буквы, цифры и подчёркивания'}
+            sx={{ mb: 2 }}
+          />
+        </Box>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={handleClose}>Отмена</Button>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          color="primary"
+        >
+          Сохранить пресет
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 function FormBuilderDrag({
   formTitle,
@@ -165,6 +264,9 @@ function FormBuilder() {
   const [openAlert, setOpenAlert] = useState(false);
   const [errStatus, setErrStatus] = useState(false);
   const [errText, setErrText] = useState('');
+  const [presets, setPresets] = useState([]);
+  const [presetModalOpen, setPresetModalOpen] = useState(false);
+  const router = useRouter();
 
   const saveForm = () => {
     const data = {
@@ -176,6 +278,49 @@ function FormBuilder() {
         setErrStatus(data.st);
         setErrText(data.text);
         setOpenAlert(true);
+      } else {
+        router.push('/feedback_form');
+      }
+    }).finally(() => router.push('/feedback_form'));
+  };
+
+  const handleDragEndCheckbox = (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(editingElement.data.checkboxes);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setEditingElement({
+      ...editingElement,
+      data: {...editingElement.data, checkboxes: items}
+    });
+  };
+
+  const openPresetModal = () => setPresetModalOpen(true);
+  const closePresetModal = () => setPresetModalOpen(false);
+
+  const savePreset = async (preset) => {
+    getData('save_checkbox', preset).then((data) => {
+      getData('get_all_new').then((data) => {
+      setPresets(data.presets);
+    });
+    })
+    closePresetModal();
+  };
+
+  const updateCheckbox = (index, field, value) => {
+  const updated = [...editingElement.data.checkboxes];
+  updated[index][field] = value;
+  setEditingElement({ ...editingElement, data: { ...editingElement.data, checkboxes: updated } });
+};
+
+  const removeCheckbox = (id) => {
+    setEditingElement({
+      ...editingElement,
+      data: {
+        ...editingElement.data,
+        checkboxes: editingElement.data.checkboxes.filter(c => c.id !== id)
       }
     });
   };
@@ -185,6 +330,7 @@ function FormBuilder() {
       setProducts(data.items);
       setAvailableTags(data.tags);
       setCategories(data.categories);
+      setPresets(data.presets);
     });
   }, []);
 
@@ -224,9 +370,8 @@ function FormBuilder() {
         return {
           title: 'Группа чекбоксов',
           checkboxes: [
-            { id: `checkbox-${Date.now()}`, label: 'Чекбокс 1', param: 'param1' },
           ],
-          conditions: [],
+          conditions: {},
         };
       case 'tagCloud':
         return { selectedTags: [], availableTags: [...availableTags] };
@@ -258,6 +403,19 @@ function FormBuilder() {
   const deleteElement = (id) => {
     setFormElements(formElements.filter((el) => el.id !== id));
   };
+
+  function pluralizeStars(count) {
+  const pluralRules = new Intl.PluralRules('ru-RU');
+  const pluralForm = pluralRules.select(count);
+
+  const forms = {
+    one: 'звезда',
+    few: 'звезды',
+    many: 'звезд',
+  };
+
+  return `${count} ${forms[pluralForm]}`;
+}
 
   const addNewTag = () => {
     if (newTagName.trim()) {
@@ -334,41 +492,22 @@ function FormBuilder() {
                 </Typography>
               </div>
             ))}
+            {console.log(element.data)}
             <div style={{ margin: '10px 0', padding: '10px', border: '1px dashed #ccc' }}>
-              <Autocomplete
-                sx={{ mb: 2 }}
-                size="small"
-                multiple
-                options={[1, 2, 3, 4, 5]}
-                getOptionLabel={(option) => `${option} звезд`}
-                value={element.data.conditions.stars}
-                renderInput={(params) => (
-                  <TextField {...params} label="Количество звезд" />
-                )}
-                disabled
-              />
-              <Autocomplete
-                options={products}
-                size="small"
-                multiple
-                sx={{ mb: 2 }}
-                value={element.data.conditions.products}
-                renderInput={(params) => (
-                  <TextField {...params} label="Товары" />
-                )}
-                disabled
-              />
-              <Autocomplete
-                options={categories}
-                size="small"
-                multiple
-                sx={{ mb: 2 }}
-                value={element.data.conditions.categories}
-                renderInput={(params) => (
-                  <TextField {...params} label="Категории" />
-                )}
-                disabled
-              />
+              <Typography variant="caption" style={{ marginRight: '10px' }}>
+                Условия
+              </Typography>
+              <div style={{display: 'flex', flexWrap: 'wrap', gap: '5px'}}>
+                {element.data.conditions.stars ? element.data.conditions.stars.map((tag) => (
+                  <Chip key={tag} label={pluralizeStars(tag)}/>
+                )) : null}
+                {element.data.conditions.products ? element.data.conditions.products.map((tag) => (
+                  <Chip key={tag} label={`${tag}`}/>
+                )) : null}
+                {element.data.conditions.categories ? element.data.conditions.categories.map((tag) => (
+                  <Chip key={tag} label={`${tag}`}/>
+                )) : null}
+              </div>
             </div>
           </div>
         );
@@ -463,6 +602,7 @@ function FormBuilder() {
       case 'checkboxGroup':
         return (
           <Box sx={{ p: 3 }}>
+            <PresetModal open={presetModalOpen} onClose={() => setPresetModalOpen(false)} onSave={savePreset}/>
             <TextField
               fullWidth
               label="Название группы"
@@ -476,148 +616,169 @@ function FormBuilder() {
             />
 
             <Typography variant="h6" sx={{ mb: 2 }}>Чекбоксы в группе</Typography>
-            {editingElement.data.checkboxes.map((checkbox, idx) => (
-              <Box
-                key={checkbox.id}
-                sx={{
-                  mb: 2, p: 2, border: '1px solid #eee', borderRadius: 1,
-                }}
-              >
-                <Box display="flex" justifyContent="flex-end">
-                  <IconButton
-                    size="small"
-                    onClick={() => setEditingElement({
-                      ...editingElement,
-                      data: {
-                        ...editingElement.data,
-                        checkboxes: editingElement.data.checkboxes.filter((check) => check.id !== checkbox.id),
-                      },
-                    })}
-                    sx={{
-                      color: 'text.secondary',
-                      mb: 2,
-                      '&:hover': {
-                        color: 'error.main',
-                      },
-                    }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Текст чекбокса"
-                  value={checkbox.label}
-                  onChange={(e) => {
-                    const updatedCheckboxes = [...editingElement.data.checkboxes];
-                    updatedCheckboxes[idx].label = e.target.value;
-                    setEditingElement({
-                      ...editingElement,
-                      data: { ...editingElement.data, checkboxes: updatedCheckboxes },
-                    });
-                  }}
-                  sx={{ mb: 2 }}
-                />
-                <TextField
-                  fullWidth
-                  label="Параметр"
-                  size="small"
-                  value={checkbox.param}
-                  onChange={(e) => {
-                    const updatedCheckboxes = [...editingElement.data.checkboxes];
-                    updatedCheckboxes[idx].param = e.target.value;
-                    setEditingElement({
-                      ...editingElement,
-                      data: { ...editingElement.data, checkboxes: updatedCheckboxes },
-                    });
-                  }}
-                />
-              </Box>
-            ))}
+            <Autocomplete
+              options={presets}
+              size="small"
+              getOptionLabel={(option) => option.label}
+              renderInput={(params) => (
+                <TextField {...params} label="Добавить чекбокс из пресетов"/>
+              )}
+              onChange={(_, selectedPreset) => {
+                if (selectedPreset) {
+                  const newCheckbox = {
+                    id: `preset-${selectedPreset.id}`,
+                    label: selectedPreset.label,
+                    param: selectedPreset.param,
+                    presetId: selectedPreset.id
+                  };
+                  setEditingElement({
+                    ...editingElement,
+                    data: {
+                      ...editingElement.data,
+                      checkboxes: [...editingElement.data.checkboxes, newCheckbox],
+                    },
+                  });
+                }
+              }}
+              sx={{mb: 3}}
+            />
+
+            <DragDropContext onDragEnd={(result) => handleDragEndCheckbox(result)}>
+              <Droppable droppableId="checkboxes">
+                {(provided) => (
+                  <div {...provided.droppableProps} ref={provided.innerRef}>
+                    {editingElement.data.checkboxes.map((checkbox, idx) => (
+                      <Draggable key={checkbox.id} draggableId={checkbox.id} index={idx}>
+                        {(provided) => (
+                          <Box
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            sx={{
+                              mb: 2, p: 2, border: '1px solid #eee', borderRadius: 1,
+                              display: 'flex', alignItems: 'center',
+                              left: 'auto !important',
+                            }}
+                          >
+                            <div {...provided.dragHandleProps} style={{marginRight: 8}}>
+                              <DragHandleIcon/>
+                            </div>
+
+                            <Box flexGrow={1}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                disabled
+                                label="Текст чекбокса"
+                                value={checkbox.label}
+                                onChange={(e) => updateCheckbox(idx, 'label', e.target.value)}
+                                sx={{mb: 2}}
+                              />
+                              <TextField
+                                fullWidth
+                                label="Параметр"
+                                disabled
+                                size="small"
+                                value={checkbox.param}
+                                onChange={(e) => updateCheckbox(idx, 'param', e.target.value)}
+                              />
+                            </Box>
+
+                            <IconButton
+                              size="small"
+                              onClick={() => removeCheckbox(checkbox.id)}
+                              sx={{color: 'text.secondary', '&:hover': {color: 'error.main'}}}
+                            >
+                              <DeleteIcon fontSize="small"/>
+                            </IconButton>
+                          </Box>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
 
             <Button
               variant="outlined"
               size="small"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                const newCheckbox = {
-                  id: `checkbox-${Date.now()}`,
-                  label: 'Новый чекбокс',
-                  param: `param${editingElement.data.checkboxes.length + 1}`,
-                };
-                setEditingElement({
-                  ...editingElement,
-                  data: {
-                    ...editingElement.data,
-                    checkboxes: [...editingElement.data.checkboxes, newCheckbox],
-                  },
-                });
-              }}
-              sx={{ mt: 2 }}
+              startIcon={<AddIcon/>}
+              onClick={openPresetModal}
+              sx={{mt: 2}}
             >
-              Добавить чекбокс
+              Создать новый пресет
             </Button>
 
             <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Условие</Typography>
-            <Box
-              sx={{
-                mb: 2, p: 2, border: '1px solid #eee', borderRadius: 1,
-              }}
-            >
+            <Box sx={{mb: 2, p: 2, border: '1px solid #eee', borderRadius: 1}}>
               <Autocomplete
+                key={`stars-${JSON.stringify(editingElement.data.conditions)}`}
                 size="small"
                 options={[1, 2, 3, 4, 5]}
                 multiple
                 getOptionLabel={(option) => `${option} звезд`}
-                value={editingElement.data.conditions.stars}
+                value={editingElement.data.conditions.stars || []}
                 onChange={(_, value) => {
-                  const updatedConditions = { ...editingElement.data.conditions };
-                  updatedConditions.stars = value;
                   setEditingElement({
                     ...editingElement,
-                    data: { ...editingElement.data, conditions: updatedConditions },
+                    data: {
+                      ...editingElement.data,
+                      conditions: {
+                        stars: value || [],
+                        products: [],
+                        categories: [],
+                      },
+                    },
                   });
                 }}
-                renderInput={(params) => (
-                  <TextField {...params} label="Количество звезд" />
-                )}
-                sx={{ mb: 2 }}
+                renderInput={(params) => <TextField {...params} label="Количество звезд"/>}
+                sx={{mb: 2}}
               />
+
               <Autocomplete
+                key={`products-${JSON.stringify(editingElement.data.conditions)}`}
                 size="small"
                 options={products}
                 multiple
-                value={editingElement.data.conditions.products}
+                value={editingElement.data.conditions.products || []}
                 onChange={(_, value) => {
-                  const updatedConditions = { ...editingElement.data.conditions };
-                  updatedConditions.products = value;
                   setEditingElement({
                     ...editingElement,
-                    data: { ...editingElement.data, conditions: updatedConditions },
+                    data: {
+                      ...editingElement.data,
+                      conditions: {
+                        products: value || [],
+                        stars: [],
+                        categories: [],
+                      },
+                    },
                   });
                 }}
-                renderInput={(params) => (
-                  <TextField {...params} label="Товары" />
-                )}
-                sx={{ mb: 2 }}
+                renderInput={(params) => <TextField {...params} label="Товары"/>}
+                sx={{mb: 2}}
               />
+
               <Autocomplete
-                options={categories}
+                key={`categories-${JSON.stringify(editingElement.data.conditions)}`}
                 size="small"
+                options={categories}
                 multiple
-                value={editingElement.data.conditions.categories}
+                value={editingElement.data.conditions.categories || []}
                 onChange={(_, value) => {
-                  const updatedConditions = { ...editingElement.data.conditions };
-                  updatedConditions.categories = value;
                   setEditingElement({
                     ...editingElement,
-                    data: { ...editingElement.data, conditions: updatedConditions },
+                    data: {
+                      ...editingElement.data,
+                      conditions: {
+                        categories: value || [],
+                        products: [],
+                        stars: [],
+                      },
+                    },
                   });
                 }}
-                renderInput={(params) => (
-                  <TextField {...params} label="Категории" />
-                )}
+                renderInput={(params) => <TextField {...params} label="Категории"/>}
               />
             </Box>
           </Box>
