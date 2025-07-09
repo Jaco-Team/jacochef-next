@@ -35,6 +35,7 @@ import queryString from 'query-string';
 
 import dayjs from 'dayjs';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
+import TextField from "@mui/material/TextField";
 
 class SiteBaners_Modal extends React.Component {
   dropzoneOptions = {
@@ -634,6 +635,25 @@ class SiteBaners_Modal extends React.Component {
                     func={this.changeItemChecked.bind(this, 'is_active_home')}
                   />
                 </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyTextInput
+                    label="Заголовок SEO"
+                    value={ this.state.banner ? this.state.banner.this_ban.seo_title : '' }
+                    func={this.changeItem.bind(this, 'seo_title')}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Описание SEO"
+                    value={ this.state.banner ? this.state.banner.this_ban.seo_desc : '' }
+                    onChange={this.changeItem.bind(this, 'seo_desc')}
+                    multiline
+                    rows={2}
+                    maxRows={10}
+                    variant="outlined"
+                    fullWidth
+                  />
+                </Grid>
 
 
                 <Grid item xs={12} sm={6} >
@@ -816,7 +836,7 @@ class SiteBaners_ extends React.Component {
 
       banner.items.forEach((item) => {
         banner.this_ban.items = banner.this_ban.items.map((it) => {
-          if (it.item_id === item.id) {
+          if (it === item.id) {
             it = { id: it.item_id, name: item.name };
           }
           return it;
