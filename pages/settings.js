@@ -36,6 +36,7 @@ import {
   MyAlert, MyAutocomplite, MyDatePickerNew, MyTextInput,
 } from '@/ui/elements';
 import { api_laravel, api_laravel_local } from '@/src/api_new';
+import dayjs from "dayjs";
 
 function PromoCodeForm({
   mockItems, getData, setIsLoad, setErrStatus, setErrText, setOpenAlert,
@@ -57,6 +58,7 @@ function PromoCodeForm({
   const [count, setCount] = useState(0);
   const [price, setPrice] = useState(0);
   const [open, setOpen] = useState(false);
+  const [openDate, setOpenDate] = useState(false);
   const [story, setStory] = useState({});
 
   const openModal = (item) => {
@@ -100,10 +102,9 @@ function PromoCodeForm({
       );
     });
   }, []);
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (date) => {
     setIsLoad(true);
-    getData('save_promo', formData).then((data) => {
+    getData('save_promo', {...formData, date_start: dayjs(date).format('YYYY-MM-DD')}).then((data) => {
       if (!data.st) {
         setErrStatus(data.st);
         setErrText(data.text);
@@ -134,8 +135,9 @@ function PromoCodeForm({
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+    <Box component="form" sx={{ mt: 1 }}>
       <DialogPromoHistory onClose={() => setOpen(false)} open={open} getData={getData} story={story} />
+      <DateModal open={openDate} onClose={() => setOpenDate(false)} onSave={handleSubmit} />
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth size="small">
@@ -323,6 +325,7 @@ function PromoCodeForm({
           <Button
             color="success"
             variant="contained"
+            onClick={(e) => {e.preventDefault(); setOpenDate(true)}}
             type="submit"
             style={{ whiteSpace: 'nowrap', justifySelf: 'flex-end' }}
           >
@@ -409,6 +412,9 @@ function DialogPromoHistory({
       <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
         <Box component="form" sx={{ mt: 1 }}>
           <Grid container spacing={3}>
+            <Grid item xs={12} sm={12}>
+              <b>Дата начала изменения: {story.date_start}</b>
+            </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth size="small">
                 <InputLabel id="discount-type-label">Тип</InputLabel>
@@ -578,6 +584,51 @@ function DialogPromoHistory({
   );
 }
 
+const DateModal = ({ open, onClose, onSave }) => {
+  const [newDate, setNewDate] = useState(null);
+
+  const handleChange = (data, val) => {
+    setNewDate(data);
+  };
+
+  const handleSubmit = () => {
+    onSave(newDate);
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setNewDate(null);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Создать дату с которой будут применяться изменения</DialogTitle>
+
+      <DialogContent>
+        <Box sx={{ mt: 2 }}>
+          <MyDatePickerNew
+            label="Дата изменений"
+            value={newDate}
+            func={handleChange}
+          />
+        </Box>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={handleClose}>Отмена</Button>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          color="primary"
+        >
+          Создать
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 function SettingsPage() {
   const tabsData = {
     birth_promo: 'Промокод на день рождения',
@@ -609,7 +660,7 @@ function SettingsPage() {
     setIsLoad(true);
 
     try {
-      const result = await api_laravel_local('settings', method, data);
+      const result = await api_laravel('settings', method, data);
       return result.data;
     } finally {
       setIsLoad(false);
