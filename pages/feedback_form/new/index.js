@@ -266,6 +266,7 @@ function FormBuilder() {
   const [errText, setErrText] = useState('');
   const [presets, setPresets] = useState([]);
   const [presetModalOpen, setPresetModalOpen] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState(null);
   const router = useRouter();
 
   const saveForm = () => {
@@ -576,10 +577,32 @@ function FormBuilder() {
       case 'checkbox':
         return (
           <Box sx={{ p: 3 }}>
+            <PresetModal open={presetModalOpen} onClose={() => setPresetModalOpen(false)} onSave={savePreset}/>
+            <Autocomplete
+              options={presets}
+              size="small"
+              getOptionLabel={(option) => option.label}
+              value={selectedPreset}
+              renderInput={(params) => (
+                <TextField {...params} label="Добавить из пресетов"/>
+              )}
+              onChange={(_, selectedPreset) => {
+                if (selectedPreset) {
+                  setEditingElement({
+                    ...editingElement,
+                    data: { ...editingElement.data, label: selectedPreset.label, param: selectedPreset.param},
+                  })
+
+                  setSelectedPreset(null);
+                }
+              }}
+              sx={{mb: 3}}
+            />
             <TextField
               fullWidth
               label="Текст чекбокса"
               size="small"
+              disabled
               value={editingElement.data.label}
               onChange={(e) => setEditingElement({
                 ...editingElement,
@@ -587,16 +610,15 @@ function FormBuilder() {
               })}
               sx={{ mb: 2 }}
             />
-            <TextField
-              fullWidth
+            <Button
+              variant="outlined"
               size="small"
-              label="Параметр"
-              value={editingElement.data.param}
-              onChange={(e) => setEditingElement({
-                ...editingElement,
-                data: { ...editingElement.data, param: e.target.value },
-              })}
-            />
+              startIcon={<AddIcon/>}
+              onClick={openPresetModal}
+              sx={{mt: 2}}
+            >
+              Создать новый пресет
+            </Button>
           </Box>
         );
       case 'checkboxGroup':
@@ -620,6 +642,7 @@ function FormBuilder() {
               options={presets}
               size="small"
               getOptionLabel={(option) => option.label}
+              value={selectedPreset}
               renderInput={(params) => (
                 <TextField {...params} label="Добавить чекбокс из пресетов"/>
               )}
@@ -638,6 +661,7 @@ function FormBuilder() {
                       checkboxes: [...editingElement.data.checkboxes, newCheckbox],
                     },
                   });
+                  setSelectedPreset(null);
                 }
               }}
               sx={{mb: 3}}
@@ -667,19 +691,11 @@ function FormBuilder() {
                               <TextField
                                 fullWidth
                                 size="small"
+                                sx={{mb: 0}}
                                 disabled
                                 label="Текст чекбокса"
                                 value={checkbox.label}
                                 onChange={(e) => updateCheckbox(idx, 'label', e.target.value)}
-                                sx={{mb: 2}}
-                              />
-                              <TextField
-                                fullWidth
-                                label="Параметр"
-                                disabled
-                                size="small"
-                                value={checkbox.param}
-                                onChange={(e) => updateCheckbox(idx, 'param', e.target.value)}
                               />
                             </Box>
 

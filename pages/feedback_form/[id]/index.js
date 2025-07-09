@@ -149,6 +149,15 @@ function FeedbackPage() {
       <Grid item xs={12} sm={12}>
         <h1>{title}</h1>
       </Grid>
+      <Grid item xs={12} sm={12}>
+        <FormControlLabel
+          sx={{pt: 0}}
+          control={<Checkbox checked={active} onChange={changeActive}/>}
+          label={'Активность'}
+          id={'active'}
+          size="small"
+        />
+      </Grid>
       <Grid item xs={12} sm={12} display="flex" flexDirection="column" alignItems="center">
         <div style={{
           width: 500, boxShadow: '0 2px 12px 0 rgba(0, 0, 0, .10)', padding: 20, borderRadius: 10,
@@ -156,14 +165,6 @@ function FeedbackPage() {
         >
           {formData.map((element) => renderElement(element))}
           <Button variant="contained" style={{float: 'right'}}>Отправить</Button>
-          <div style={{marginBottom: 10, float: 'right'}}>
-            <FormControlLabel
-              control={<Checkbox checked={active} onChange={changeActive} />}
-              label={'Активность'}
-              id={'active'}
-              size="small"
-            />
-          </div>
         </div>
       </Grid>
     </Grid>
