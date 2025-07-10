@@ -242,7 +242,13 @@ class SiteSale2_edit_ extends React.Component {
       
       conditionItems: [],
       
-      testDate: []
+      testDate: [],
+
+      for_new: false,
+      once_number: false,
+      for_registred: false,
+
+      created: ''
     };
   }
   
@@ -324,7 +330,13 @@ class SiteSale2_edit_ extends React.Component {
         
         promo_id: res.promo.id,
         
-        testDate: limDate
+        testDate: limDate,
+
+        for_new: parseInt(res.promo.only_first_order) == 1 ? true : false,
+        once_number: parseInt(res.promo.once_number) == 1 ? true : false,
+        for_registred: parseInt(res.promo.for_registred) == 1 ? true : false,
+
+        created: res.created
       })
     }, 300 )
     
@@ -412,7 +424,11 @@ class SiteSale2_edit_ extends React.Component {
         promo_items_sale: JSON.stringify(this.state.itemsAddPrice),
         promo_conditions_items: JSON.stringify(conditionItems),
         
-        date_between: dateList
+        date_between: dateList,
+
+        for_new: this.state.for_new ? 1 : 0,
+        once_number: this.state.once_number ? 1 : 0,
+        for_registred: this.state.for_registred ? 1 : 0
       };
       
       let res = await this.getData('save_edit_promo', data);
@@ -526,6 +542,25 @@ class SiteSale2_edit_ extends React.Component {
       [ type ]: event.target.checked
     })
     
+    if( type == 'once_number' || type == 'for_new' || type == 'for_registred' ){
+      if( type == 'once_number' && event.target.checked === true ){
+        this.setState({
+          for_new: false
+        })
+      }
+      if( type == 'for_new' && event.target.checked === true ){
+        this.setState({
+          once_number: false,
+          for_registred: false
+        })
+      }
+      if( type == 'for_registred' && event.target.checked === true ){
+        this.setState({
+          for_new: false
+        })
+      }
+    }
+
     setTimeout( () => {
       this.generateTextDescFalse();    
       this.generateTextDescTrue();  
@@ -565,8 +600,20 @@ class SiteSale2_edit_ extends React.Component {
     
     if(parseInt(promo_action) == 1){//скидка
       var promo_type_sale = this.state.type_sale,
-        count_promo = this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale) )['name'],//размер скидки
+        //count_promo = this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale) )['name'],//размер скидки
         promo_type = this.state.sale_type; //1 - рубли 2 %
+
+      let count_promo = 0;
+
+      console.log( 'this.state.promo_sale_list', this.state.promo_sale_list )
+
+      if( parseInt( this.state.sale_type ) == 2 ){
+        let check = this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale) );
+
+        count_promo = check ? check['name'] : parseInt(this.state.promo_sale);//размер скидки
+      }else{
+        count_promo = parseInt(this.state.promo_sale);
+      }
 
       if(parseInt(promo_type_sale) == 1){//товары
         var promo_items = this.state.saleItem,
@@ -611,7 +658,7 @@ class SiteSale2_edit_ extends React.Component {
         }
       } )
       
-      itemText = itemText.substring(0, item.length - 2);
+      itemText = itemText.substring(0, itemText.length - 2);
 
       textTrue = this.state.itemsAdd.length == 1 ? 'позицию '+itemText : 'позиции '+itemText;
     }	
@@ -619,13 +666,13 @@ class SiteSale2_edit_ extends React.Component {
     if(parseInt(promo_action) == 3){//товар за цену
       var itemText = '';
 
-      this.state.promo_items_sale.map( (item, key) => {
+      this.state.itemsAddPrice.map( (item, key) => {
         itemText += item['name']+' по '+item['price']+'руб., ';
       } )
       
       itemText = itemText.substring(0, itemText.length - 2);
 
-      textTrue = this.state.promo_items_sale.length-1 == 1 ? 'позицию '+itemText : 'позиции '+itemText;
+      textTrue = this.state.itemsAddPrice.length-1 == 1 ? 'позицию '+itemText : 'позиции '+itemText;
     }
     
     let textSMS = 'Промокод --promo_name--, действует до '+formatDateName(this.state.date_end)+'. Заказывай на jacofood.ru!'
@@ -666,8 +713,24 @@ class SiteSale2_edit_ extends React.Component {
     let dateStart = formatDateDot(this.state.date_start);
     let dateEnd = formatDateDot(this.state.date_end);
     
+    let for_new = this.state.for_new;
+    let once_number = this.state.once_number;
+    let for_registred = this.state.for_registred;
+
     let textFalse = 'Промокод действует c '+dateStart+' до '+dateEnd+' с '+this.state.time_start+' до '+this.state.time_end+dop_text;
     
+    if( for_new === true ){
+      textFalse += ". Только на первый заказ.";
+    }
+
+    if( for_registred === true ){
+      textFalse += ". Только для зарегистрированных.";
+    }
+
+    if( once_number === true ){
+      textFalse += " Можно применить 1 раз.";
+    }
+
     this.setState({
       promo_desc_false: textFalse
     })
@@ -752,7 +815,17 @@ class SiteSale2_edit_ extends React.Component {
             <h1>{this.state.module_name}</h1>
           </Grid>
           
-          <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+          <Grid container direction="row" justifyContent="start" style={{ paddingTop: 20 }} spacing={3}>
+            
+            <Grid item xs={12}>
+              <Typography>Был создан: {this.state.created}</Typography>
+            </Grid>
+            
+            
+            
+          </Grid>
+
+          <Grid container direction="row" justifyContent="start" style={{ paddingTop: 20 }} spacing={3}>
             
             <Grid item xs={12} sm={3}>
               <Typography>Промокод: {this.state.promo_name}</Typography>
@@ -760,6 +833,20 @@ class SiteSale2_edit_ extends React.Component {
             
             <Grid item xs={12} sm={3}>
               <MyTextInput value={this.state.count_action} func={ this.changeData.bind(this, 'count_action') } label='Количество активаций' />
+            </Grid>
+            
+          </Grid>
+
+          <Grid container direction="column" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+            
+            <Grid item xs={12} sm={3}>
+              <MyCheckBox value={this.state.for_new} func={ this.changeDataCheck.bind(this, 'for_new') } label='Для новых клиентов ( на первый заказ )' />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <MyCheckBox value={this.state.once_number} func={ this.changeDataCheck.bind(this, 'once_number') } label='1 раз на номер телефона' />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <MyCheckBox value={this.state.for_registred} func={ this.changeDataCheck.bind(this, 'for_registred') } label='Только для зарегистрированных клиентов' />
             </Grid>
             
           </Grid>
@@ -872,6 +959,10 @@ class SiteSale2_edit_ extends React.Component {
           
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
             
+            <Grid item xs={12} sm={12}>
+              <MyCheckBox value={this.state.auto_text} func={ this.changeDataCheck.bind(this, 'auto_text') } label='Авто-текст' />
+            </Grid>
+
             <Grid item xs={12} sm={12}>
               <MyTextInput value={this.state.promo_desc_true} func={ this.changeData.bind(this, 'promo_desc_true') } label='Описание промокода после активации (Промокод дает: )' />
             </Grid>

@@ -379,7 +379,7 @@ class SiteBaners_Modal extends React.Component {
 
   async saveEdit() {
     if (!this.click) {
-      this.click = true;
+      //this.click = true;
 
       let banner = this.state.banner;
 
@@ -836,8 +836,8 @@ class SiteBaners_ extends React.Component {
 
       banner.items.forEach((item) => {
         banner.this_ban.items = banner.this_ban.items.map((it) => {
-          if (it === item.id) {
-            it = { id: it.item_id, name: item.name };
+          if ( parseInt(it) === parseInt(item.id)) {
+            it = { id: item.id, name: item.name, item_id: item.id };
           }
           return it;
         });

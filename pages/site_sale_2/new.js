@@ -168,10 +168,12 @@ class SiteSale2_new_ extends React.Component {
         {id: 1, name: 'На товары'},
         {id: 2, name: 'На категории'},
         {id: 3, name: 'На все меню (кроме допов и закусок)'},
+        //{id: 4, name: 'Самый дешевый товар (кроме допов и закусок)'},
         {id: 7, name: 'На все меню'},
       ],
       promo_conditions_list: [
         {id: 1, name: 'В корзине есть определенные товар(ы)'},
+        //{id: 3, name: 'В корзине есть определенные категория'},
         {id: 2, name: 'В корзине набрана определенная сумма'},
       ],
       promo_sale_list: [],
@@ -214,6 +216,7 @@ class SiteSale2_new_ extends React.Component {
         
       for_new: false,
       once_number: false,
+      for_registred: false,
 
       auto_text: true,
       where_promo: 1,
@@ -271,6 +274,7 @@ class SiteSale2_new_ extends React.Component {
       priceItem: null,
       
       conditionItems: [],
+      conditionCat: [],
       
       testDate: [],
       createdPromo: [],
@@ -377,14 +381,6 @@ class SiteSale2_new_ extends React.Component {
 
       let { for_new, promo_prizw_vk, cert_text, promo_desc_true, promo_desc_false, textSMS } = this.state;
 
-      // if (for_new) {
-      //   promo_prizw_vk += "\nТолько на первый заказ.";
-      //   cert_text += ". Только на первый заказ.";
-      //   promo_desc_true += ". Только на первый заказ.";
-      //   promo_desc_false += ". Только на первый заказ.";
-      //   textSMS += ". Только на первый заказ.";
-      // }
-      
       let data = {
         spamNameSMS: this.state.spamNameSMS,
         promo_vk_prize: promo_prizw_vk,
@@ -440,7 +436,8 @@ class SiteSale2_new_ extends React.Component {
         
         date_between: dateList,
         for_new: for_new ? 1 : 0,
-        once_number: this.state.once_number ? 1 : 0
+        once_number: this.state.once_number ? 1 : 0,
+        for_registred: this.state.for_registred ? 1 : 0
       };
       
       let res = await this.getData('save_new_promo', data);
@@ -606,6 +603,25 @@ class SiteSale2_new_ extends React.Component {
       [ type ]: event.target.checked
     })
     
+    if( type == 'once_number' || type == 'for_new' || type == 'for_registred' ){
+      if( type == 'once_number' && event.target.checked === true ){
+        this.setState({
+          for_new: false
+        })
+      }
+      if( type == 'for_new' && event.target.checked === true ){
+        this.setState({
+          once_number: false,
+          for_registred: false
+        })
+      }
+      if( type == 'for_registred' && event.target.checked === true ){
+        this.setState({
+          for_new: false
+        })
+      }
+    }
+
     setTimeout( () => {
       this.generateTextDescFalse();    
       this.generateTextDescTrue();  
@@ -737,7 +753,9 @@ class SiteSale2_new_ extends React.Component {
     }
     
     var dop_text = '';
-    let for_new = this.state.for_new
+    let for_new = this.state.for_new;
+    let once_number = this.state.once_number;
+    let for_registred = this.state.for_registred;
     let text = '';
     
     if( this.state.testDate.length > 0 ){
@@ -787,6 +805,14 @@ class SiteSale2_new_ extends React.Component {
     
     if( for_new === true ){
       textFalse += ". Только на первый заказ.";
+    }
+
+    if( for_registred === true ){
+      textFalse += ". Только для зарегистрированных.";
+    }
+
+    if( once_number === true ){
+      textFalse += " Можно применить 1 раз.";
     }
 
     this.setState({
@@ -977,11 +1003,16 @@ class SiteSale2_new_ extends React.Component {
               <MyCheckBox value={this.state.generate_new} func={ this.changeDataCheck.bind(this, 'generate_new') } label='Сгенерировать' />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
-              <MyCheckBox value={this.state.for_new} func={ this.changeDataCheck.bind(this, 'for_new') } label='Для новых клиентов ( на первый заказ )' />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <MyCheckBox value={this.state.once_number} func={ this.changeDataCheck.bind(this, 'once_number') } label='1 раз на номер телефона' />
+            <Grid item xs={12}>
+              <Grid item xs={12} sm={3}>
+                <MyCheckBox value={this.state.for_new} func={ this.changeDataCheck.bind(this, 'for_new') } label='Для новых клиентов ( на первый заказ )' />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <MyCheckBox value={this.state.once_number} func={ this.changeDataCheck.bind(this, 'once_number') } label='1 раз на номер телефона' />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <MyCheckBox value={this.state.for_registred} func={ this.changeDataCheck.bind(this, 'for_registred') } label='Только для зарегистрированных клиентов' />
+              </Grid>
             </Grid>
             
             <Grid item xs={12} sm={3}>
@@ -1158,13 +1189,20 @@ class SiteSale2_new_ extends React.Component {
               <MySelect data={this.state.promo_conditions_list} value={this.state.promo_conditions} func={ this.changeData.bind(this, 'promo_conditions') } label='Условие' />
             </Grid>
             
-            { parseInt(this.state.promo_conditions) !== 1 ? null :
+            { parseInt(this.state.promo_conditions) == 1 &&
               <Grid item xs={12} sm={8}>
                 <MyAutocomplite data={this.state.items} value={this.state.conditionItems} func={ (event, data) => { this.changeDataData('conditionItems', data) } } multiple={true} label='Товары' />
               </Grid>
             }
+
+            { parseInt(this.state.promo_conditions) == 3 &&
+              <Grid item xs={12} sm={9}>
+                <MyAutocomplite data={this.state.cats} value={this.state.conditionCat} func={ (event, data) => { this.changeDataData('conditionCat', data) } } multiple={true} label='Категории' />
+              </Grid>
+              
+            }
             
-            { parseInt(this.state.promo_conditions) !== 2 ? null :
+            { parseInt(this.state.promo_conditions) == 2 &&
               <>
                 <Grid item xs={12} sm={4}>
                   <MyTextInput value={this.state.price_start} func={ this.changeData.bind(this, 'price_start') } label='Сумма от' />
