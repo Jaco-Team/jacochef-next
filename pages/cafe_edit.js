@@ -83,13 +83,13 @@ class CafeEdit_Modal_Kkt_Info_Add extends React.Component {
     this.state = {
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
-     
+
       new_fn: '',
 
       openAlert: false,
       err_status: true,
       err_text: '',
-   
+
     };
   }
 
@@ -161,7 +161,7 @@ class CafeEdit_Modal_Kkt_Info_Add extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-      
+
         <Dialog
           open={open}
           onClose={this.onClose.bind(this)}
@@ -381,7 +381,7 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
     let { rn_kkt, fn, kassa, dop_kassa, base, is_active, date_license } = this.state;
 
     if(!fn || parseInt(fn?.id) === 0) {
-        
+
       this.setState({
         openAlert: true,
         err_status: false,
@@ -452,7 +452,7 @@ class CafeEdit_Modal_Kkt_Info extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-      
+
         <CafeEdit_Modal_Kkt_Info_Add
           open={this.state.addDialog}
           onClose={() => this.setState({ addDialog: false })}
@@ -801,6 +801,14 @@ class CafeEdit_Modal_History extends React.Component {
                 </Grid>
                 <Grid item xs={12} sm={4}>
                   <MyTextInput
+                    label="Почта управляющего"
+                    value={this.state.itemView ? this.state.itemView.mail?.color ? this.state.itemView.mail.key : this.state.itemView.mail : ''}
+                    disabled={true}
+                    className={this.state.itemView ? this.state.itemView.mail?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <MyTextInput
                     label="Телефон менеджера"
                     value={this.state.itemView ? this.state.itemView.phone_man?.color ? this.state.itemView.phone_man.key : this.state.itemView.phone_man : ''}
                     disabled={true}
@@ -1037,7 +1045,7 @@ class CafeEdit_Modal_History extends React.Component {
                     disabled={true}
                     className={this.state.itemView ? this.state.itemView.fn?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
                   />
-                </Grid> 
+                </Grid>
                 <Grid item xs={12} sm={6}>
                   <MyTextInput
                     label="Дата регистрации"
@@ -1072,7 +1080,7 @@ class CafeEdit_Modal_History extends React.Component {
                 </Grid>
               </>
             : null}
-          
+
           </Grid>
         </DialogContent>
         <DialogActions>
@@ -1100,23 +1108,23 @@ class CafeEdit_Modal_Close extends React.Component {
 
   open_confirm() {
     if(!this.props.is_сlosed_technic && !this.props.is_сlosed_overload){
-      
+
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: 'Необходимо указать причину закрытия кафе',
-      })  
+      })
 
       return;
     }
 
     if(this.props.is_сlosed_technic && !this.props.chooseReason){
-      
+
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: 'Необходимо выбрать/указать причину технического закрытия кафе',
-      })  
+      })
 
       return;
     }
@@ -1127,7 +1135,7 @@ class CafeEdit_Modal_Close extends React.Component {
   }
 
   save() {
-    
+
     this.setState ({
       confirmDialog: false
     });
@@ -1149,7 +1157,7 @@ class CafeEdit_Modal_Close extends React.Component {
 
     this.props.onClose();
   }
- 
+
   render() {
     const { open, fullScreen, is_сlosed_overload, changeItemChecked, is_сlosed_technic, show_comment, reason_list, changeReason, chooseReason } = this.props;
 
@@ -1173,7 +1181,7 @@ class CafeEdit_Modal_Close extends React.Component {
           </DialogActions>
         </Dialog>
 
-        <Dialog 
+        <Dialog
           open={open}
           onClose={this.onClose.bind(this)}
           fullScreen={fullScreen}
@@ -1188,34 +1196,34 @@ class CafeEdit_Modal_Close extends React.Component {
             </DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3}>
-       
+
               <Grid item xs={12} sm={12}>
-                <MyCheckBox 
-                  label='Закрыто из-за большого количества заказов' 
-                  value={parseInt(is_сlosed_overload) == 1 ? true : false} 
-                  func={changeItemChecked.bind(this, 'is_сlosed_overload')} 
+                <MyCheckBox
+                  label='Закрыто из-за большого количества заказов'
+                  value={parseInt(is_сlosed_overload) == 1 ? true : false}
+                  func={changeItemChecked.bind(this, 'is_сlosed_overload')}
                 />
               </Grid>
 
               <Grid item xs={12} sm={12}>
-                <MyCheckBox 
-                  label='Закрыто по техническим причинам'          
-                  value={parseInt(is_сlosed_technic) == 1 ? true : false}  
-                  func={changeItemChecked.bind(this, 'is_сlosed_technic')} 
+                <MyCheckBox
+                  label='Закрыто по техническим причинам'
+                  value={parseInt(is_сlosed_technic) == 1 ? true : false}
+                  func={changeItemChecked.bind(this, 'is_сlosed_technic')}
                 />
               </Grid>
 
               {!show_comment ? null :
                 <Grid item xs={12} sm={12} >
-                  <MyAutocomplite2 
-                    id="cafe_upr_edit" 
-                    data={reason_list} 
-                    value={chooseReason} 
-                    func={changeReason.bind(this)} 
+                  <MyAutocomplite2
+                    id="cafe_upr_edit"
+                    data={reason_list}
+                    value={chooseReason}
+                    func={changeReason.bind(this)}
                     onBlur={changeReason.bind(this)}
-                    multiple={false} 
-                    label='Причина'  
-                    freeSolo={true} 
+                    multiple={false}
+                    label='Причина'
+                    freeSolo={true}
                   />
                 </Grid>
               }
@@ -1247,7 +1255,7 @@ class CafeEdit_Modal_Edit extends React.Component {
       [data]: event ? event : ''
     });
   }
- 
+
   save(){
     const date_edit = dayjs(this.state.date_edit).format('YYYY-MM-DD');
 
@@ -1271,7 +1279,7 @@ class CafeEdit_Modal_Edit extends React.Component {
     const { open, fullScreen } = this.props;
 
     return (
-      <Dialog 
+      <Dialog
         open={open}
         onClose={this.onClose.bind(this)}
         fullScreen={fullScreen}
@@ -1313,7 +1321,7 @@ class CafeEdit_Modal_Zone extends React.Component {
 
   componentDidUpdate(prevProps) {
     //console.log('componentDidUpdate', this.props);
-    
+
     if (!this.props.zone) {
       return;
     }
@@ -1332,7 +1340,7 @@ class CafeEdit_Modal_Zone extends React.Component {
       [data]: value
     });
   }
- 
+
   save(){
     let zone = this.props.zone;
     const is_active = this.state.is_active;
@@ -1372,7 +1380,7 @@ class CafeEdit_Modal_Zone extends React.Component {
           </DialogActions>
         </Dialog>
 
-        <Dialog 
+        <Dialog
           open={open}
           onClose={this.onClose.bind(this)}
           fullScreen={fullScreen}
@@ -1390,10 +1398,10 @@ class CafeEdit_Modal_Zone extends React.Component {
               <span>Если снять активность с выбранной зоны доставки, то прекратиться оформление новых доставок в данную зону</span>
             </div>
 
-            <MyCheckBox 
-              label={zone?.zone_name ?? ''} 
-              value={parseInt(this.state.is_active) == 1 ? true : false} 
-              func={this.changeItemChecked.bind(this, 'is_active')} 
+            <MyCheckBox
+              label={zone?.zone_name ?? ''}
+              value={parseInt(this.state.is_active) == 1 ? true : false}
+              func={this.changeItemChecked.bind(this, 'is_active')}
             />
           </DialogContent>
           <DialogActions>
@@ -1448,24 +1456,24 @@ class CafeEdit_Modal_New extends React.Component {
     const item = this.state.item;
 
     if(!item.city_id) {
-      
+
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: 'Необходимо выбрать город',
       })
-      
+
       return;
     }
 
     if(!item.addr) {
-      
+
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: 'Необходимо указать адрес',
       })
-      
+
       return;
     }
 
@@ -1530,7 +1538,7 @@ class CafeEdit_Modal_New extends React.Component {
                   func={this.changeItem.bind(this, 'addr')}
                 />
               </Grid>
-              
+
             </Grid>
           </DialogContent>
           <DialogActions>
@@ -1619,7 +1627,7 @@ class CafeEdit_ extends React.Component {
       tabs_data: [],
 
       upr_list: [],
-    
+
       confirmDialog: false,
       nextTab: null,
 
@@ -1646,7 +1654,7 @@ class CafeEdit_ extends React.Component {
     });
 
     document.title = data.module_info.name;
-    
+
     setTimeout(() => {
       this.getTabIndex();
     }, 100);
@@ -1717,7 +1725,7 @@ class CafeEdit_ extends React.Component {
     this.setState({ is_load: true });
 
     const index_zone = this.state.index_zone;
-    
+
     if(value === index_zone) {
       const zone = this.state.zone;
       const other_zones = this.state.other_zones;
@@ -1735,7 +1743,7 @@ class CafeEdit_ extends React.Component {
     } else {
       this.map = null;
     }
-    
+
     this.setState({
       activeTab: value,
     });
@@ -1745,16 +1753,16 @@ class CafeEdit_ extends React.Component {
 
   deepEqual(obj1, obj2) {
     if (obj1 === obj2) return true;
-  
+
     if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
       return false;
     }
-  
+
     let keys1 = Object.keys(obj1).filter(key => key !== 'cafe_handle_close');
     let keys2 = Object.keys(obj2).filter(key => key !== 'cafe_handle_close');
-  
+
     if (keys1.length !== keys2.length) return false;
-  
+
     for (let key of keys1) {
       if (!keys2.includes(key) || !this.deepEqual(this.normalizeValue(obj1[key]), this.normalizeValue(obj2[key]))) {
         // console.log(`Difference found in key: ${key}`);
@@ -1763,10 +1771,10 @@ class CafeEdit_ extends React.Component {
         return false;
       }
     }
-  
+
     return true;
   }
-  
+
   normalizeValue(value) {
     if (typeof value === 'string') {
       return value.trim().toLowerCase();
@@ -1776,7 +1784,7 @@ class CafeEdit_ extends React.Component {
     }
     return value;
   }
-  
+
   async confirmTabChange() {
 
     this.setState({ is_load: true });
@@ -1827,7 +1835,7 @@ class CafeEdit_ extends React.Component {
         if(key === 'pay_point') {
           tabs_data.push({key, 'name': "Зарплата"});
         }
-        
+
         if(key === 'settings_point') {
           tabs_data.push({key, 'name': "Настройки точки"});
         }
@@ -1843,7 +1851,7 @@ class CafeEdit_ extends React.Component {
         if(key === 'kkt_info') {
           tabs_data.push({key, 'name': "Информация о кассах"});
         }
-        
+
       }
     }
 
@@ -1918,17 +1926,17 @@ class CafeEdit_ extends React.Component {
 
     const kkt_info_active = res.kkt_info_active.map(item => {
       const newItem = { ...item };
-    
+
       if (item.date_end) {
         const diffEnd = dayjs(item.date_end).diff(today, 'day');
         newItem.days_left_end = diffEnd <= 0 ? '!' : diffEnd;
       }
-    
+
       if (item.date_license) {
         const diffLic = dayjs(item.date_license).diff(today, 'day');
         newItem.days_left_license = diffLic <= 0 ? '!' : diffLic;
       }
-    
+
       return newItem;
     });
 
@@ -1936,7 +1944,7 @@ class CafeEdit_ extends React.Component {
       upr_list: res.upr_list,
       cities: res.cities,
       point_info: res.point_info,
-      point_info_copy: JSON.parse(JSON.stringify(res.point_info)), 
+      point_info_copy: JSON.parse(JSON.stringify(res.point_info)),
       other_zones: res.other_zones,
       zone: res.zone,
       reason_list: res.reason_list,
@@ -1997,8 +2005,8 @@ class CafeEdit_ extends React.Component {
         chooseReason: null
       })
 
-    } 
-    
+    }
+
     if(data === 'is_сlosed_overload'){
 
       this.setState({
@@ -2007,7 +2015,7 @@ class CafeEdit_ extends React.Component {
         is_сlosed_overload: value,
         chooseReason: null
       })
-      
+
     }
 
     point_info[data] = value;
@@ -2030,13 +2038,13 @@ class CafeEdit_ extends React.Component {
 
     this.setState({
       modalDialog_close: true,
-    })  
+    })
   }
 
   close_modal_cafe(){
-    
-    this.setState({ 
-      modalDialog_close: false 
+
+    this.setState({
+      modalDialog_close: false
     });
 
     const chooseReason = this.state.chooseReason;
@@ -2049,7 +2057,7 @@ class CafeEdit_ extends React.Component {
 
       this.setState({
         point_info
-      })  
+      })
     }
 
     this.setState({
@@ -2057,7 +2065,7 @@ class CafeEdit_ extends React.Component {
       is_сlosed_technic: 0,
       chooseReason: null,
       show_comment: false
-    }) 
+    })
 
   }
 
@@ -2067,7 +2075,7 @@ class CafeEdit_ extends React.Component {
     const is_сlosed_overload = this.state.is_сlosed_overload ? 1 : 0;
     const is_сlosed_technic = this.state.is_сlosed_technic ? 1 : 0;
     const point_info = this.state.point_info;
-   
+
     const data = {
       point_id,
       is_сlosed_overload,
@@ -2075,7 +2083,7 @@ class CafeEdit_ extends React.Component {
       comment: chooseReason,
       point_info
     }
-    
+
     const res = await this.getData('stop_cafe', data);
 
     if (!res.st) {
@@ -2099,7 +2107,7 @@ class CafeEdit_ extends React.Component {
       }, 300);
 
     }
-    
+
   }
 
   open_new_point() {
@@ -2172,7 +2180,7 @@ class CafeEdit_ extends React.Component {
 
       return;
 
-    } 
+    }
 
     if (!data.addr) {
 
@@ -2184,7 +2192,7 @@ class CafeEdit_ extends React.Component {
 
       return;
 
-    } 
+    }
 
     if (!data.raion) {
 
@@ -2196,7 +2204,7 @@ class CafeEdit_ extends React.Component {
 
       return;
 
-    } 
+    }
 
     if (!data.organization) {
 
@@ -2208,7 +2216,7 @@ class CafeEdit_ extends React.Component {
 
       return;
 
-    } 
+    }
 
     if (!data.inn) {
 
@@ -2220,7 +2228,7 @@ class CafeEdit_ extends React.Component {
 
       return;
 
-    } 
+    }
 
     if (!data.ogrn) {
 
@@ -2232,7 +2240,7 @@ class CafeEdit_ extends React.Component {
 
       return;
 
-    } 
+    }
 
     if (!data.kpp || parseInt(data.kpp) === 0) {
 
@@ -2244,7 +2252,7 @@ class CafeEdit_ extends React.Component {
 
       return;
 
-    } 
+    }
 
     if (!data.full_addr) {
 
@@ -2256,7 +2264,7 @@ class CafeEdit_ extends React.Component {
 
       return;
 
-    } 
+    }
 
     const res = await this.getData('save_edit_point_info', data);
 
@@ -2393,7 +2401,7 @@ class CafeEdit_ extends React.Component {
     };
 
     const res = await this.getData('stop_zone', data);
-   
+
     if (res.st) {
       this.setState({
         openAlert: true,
@@ -2433,7 +2441,7 @@ class CafeEdit_ extends React.Component {
           points_zone.push({xy: JSON.parse(item['zone']), active: item.is_active});
 
           let myGeoObject2 = [];
-          
+
           for (var poly = 0; poly < points_zone.length; poly++) {
             myGeoObject2[poly] = new ymaps.Polygon(
               [points_zone[poly].xy],
@@ -2493,7 +2501,7 @@ class CafeEdit_ extends React.Component {
         points_zone.push({xy: JSON.parse(item['zone']), active: item.is_active});
 
           let myGeoObject2 = [];
-          
+
           for (var poly = 0; poly < points_zone.length; poly++) {
             myGeoObject2[poly] = new ymaps.Polygon(
               [points_zone[poly].xy],
@@ -2594,7 +2602,7 @@ class CafeEdit_ extends React.Component {
     }
 
     if(parseInt(index) !== 0) {
-      
+
       let itemView_old = JSON.parse(JSON.stringify(item[index - 1]));
 
       if(type_modal === 'info') {
@@ -2608,7 +2616,7 @@ class CafeEdit_ extends React.Component {
         itemView_old.cook_common_stol = parseInt(itemView_old.cook_common_stol) ? 'Да' : 'Нет';
         itemView_old.cafe_handle_close = parseInt(itemView_old.cafe_handle_close) === 1 ? 'Работает' : 'На стопе';
       }
-      
+
       for (let key in itemView) {
         if(itemView[key] !== itemView_old[key]) {
 
@@ -2626,20 +2634,20 @@ class CafeEdit_ extends React.Component {
 
           if(key === 'city_id') {
             itemView.city_id = this.state.cities.find((item) => item.id === itemView.city_id)?.name ?? '';
-          } 
+          }
 
           if(key === 'manager_id') {
             itemView.manager_id = itemView.manager_name ?? '';
-          } 
+          }
 
         }
 
       }
-      
+
     } else {
 
       itemView.city_id = this.state.cities.find((item) => item.id === itemView.city_id)?.name ?? '';
-      
+
       itemView.manager_id = itemView.manager_name ?? '';
     }
 
@@ -2651,7 +2659,7 @@ class CafeEdit_ extends React.Component {
       } else {
         date_edit = itemView?.date_start ?? null;
       }
-    } 
+    }
 
     this.setState({
       modalDialogView: true,
@@ -2677,7 +2685,7 @@ class CafeEdit_ extends React.Component {
     if (index > 0) {
       itemView_old = { ...kkt_list[index - 1] };
       itemView_old.is_active = parseInt(itemView_old.is_active) ? 'Да' : 'Нет';
-  
+
       Object.keys(itemView).forEach((key) => {
         if (itemView[key] !== itemView_old[key]) {
           itemView[key] = { key: itemView[key], color: "true" };
@@ -2747,7 +2755,7 @@ class CafeEdit_ extends React.Component {
       modalDialog_kkt: true,
       kkt_update: kkt
     });
-   
+
   }
 
   async openModalKktInfo_add(kkt) {
@@ -2757,7 +2765,7 @@ class CafeEdit_ extends React.Component {
       modalDialog_kkt_add: true,
       kkt_update: kkt
     });
-   
+
   }
 
   async add_new_fn(new_fn, start, end) {
@@ -2799,7 +2807,7 @@ class CafeEdit_ extends React.Component {
         err_text: res.text,
       });
     }
-  
+
   }
 
   async save_kkt(data) {
@@ -2958,10 +2966,10 @@ class CafeEdit_ extends React.Component {
 
           <Grid item xs={12} sm={12} style={{ paddingBottom: 24 }}>
             <Paper>
-              <Tabs 
-                value={this.state.activeTab} 
-                onChange={ this.changeTab.bind(this)} 
-                variant='scrollable' 
+              <Tabs
+                value={this.state.activeTab}
+                onChange={ this.changeTab.bind(this)}
+                variant='scrollable'
                 scrollButtons={false}
               >
                 {this.state.tabs_data?.map((item, index) => {
@@ -2972,9 +2980,9 @@ class CafeEdit_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-            <TabPanel 
-              value={this.state.activeTab} 
-              index={this.state.index_info} 
+            <TabPanel
+              value={this.state.activeTab}
+              index={this.state.index_info}
               id='clients'
             >
               <Grid container spacing={3}>
@@ -3080,6 +3088,14 @@ class CafeEdit_ extends React.Component {
 
                     <Grid item xs={12} sm={4}>
                       <MyTextInput
+                        label="Почта управляющего"
+                        value={this.state.point_info?.mail ?? ''}
+                        func={this.changeData.bind(this, 'mail')}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={4}>
+                      <MyTextInput
                         label="Телефон менеджера"
                         value={this.state.point_info?.phone_man ?? ''}
                         func={this.changeData.bind(this, 'phone_man')}
@@ -3089,10 +3105,10 @@ class CafeEdit_ extends React.Component {
                 : null}
 
                 <Grid item xs={12} sm={12} display='grid'>
-                  <Button 
-                    onClick={this.save_edit_point_info.bind(this)} 
-                    color="success" 
-                    variant="contained" 
+                  <Button
+                    onClick={this.save_edit_point_info.bind(this)}
+                    color="success"
+                    variant="contained"
                     style={{ whiteSpace: 'nowrap', justifySelf: 'flex-end' }}
                   >
                     Сохранить изменения
@@ -3116,9 +3132,9 @@ class CafeEdit_ extends React.Component {
                           </TableHead>
                           <TableBody>
                             {this.state.point_info_hist.map((it, k) =>
-                              <TableRow 
-                                hover 
-                                key={k} 
+                              <TableRow
+                                hover
+                                key={k}
                                 style={{ cursor: 'pointer'}}
                                 onClick={this.open_hist_view.bind(this, k, 'info')}
                               >
@@ -3133,15 +3149,15 @@ class CafeEdit_ extends React.Component {
                     </Accordion>
                   </Grid>
                 }
-               
+
               </Grid>
             </TabPanel>
           </Grid>
 
           <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-            <TabPanel 
-              value={this.state.activeTab} 
-              index={this.state.index_rate} 
+            <TabPanel
+              value={this.state.activeTab}
+              index={this.state.index_rate}
               id='clients'
             >
               <Grid container spacing={3}>
@@ -3171,10 +3187,10 @@ class CafeEdit_ extends React.Component {
                 </Grid>
 
                 <Grid item xs={12} sm={12} display='grid'>
-                  <Button 
-                    onClick={this.open_edit_point.bind(this, 'rate')} 
-                    color="success" 
-                    variant="contained" 
+                  <Button
+                    onClick={this.open_edit_point.bind(this, 'rate')}
+                    color="success"
+                    variant="contained"
                     style={{ whiteSpace: 'nowrap', justifySelf: 'flex-end' }}
                   >
                     Выбрать дату применения
@@ -3198,11 +3214,11 @@ class CafeEdit_ extends React.Component {
                           </TableHead>
                           <TableBody>
                             {this.state.point_rate_hist.map((it, k) =>
-                              <TableRow 
-                                hover 
-                                key={k} 
+                              <TableRow
+                                hover
+                                key={k}
                                 style={{ cursor: 'pointer'}}
-                                onClick={this.open_hist_view.bind(this, k,'rate')} 
+                                onClick={this.open_hist_view.bind(this, k,'rate')}
                               >
                                 <TableCell>{k+1}</TableCell>
                                 <TableCell>{it.date_time_update}</TableCell>
@@ -3215,15 +3231,15 @@ class CafeEdit_ extends React.Component {
                     </Accordion>
                   </Grid>
                 }
-               
+
               </Grid>
             </TabPanel>
           </Grid>
 
           <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-            <TabPanel 
-              value={this.state.activeTab} 
-              index={this.state.index_pay} 
+            <TabPanel
+              value={this.state.activeTab}
+              index={this.state.index_pay}
               id='clients'
             >
               <Grid container spacing={3}>
@@ -3252,10 +3268,10 @@ class CafeEdit_ extends React.Component {
                 </Grid>
 
                 <Grid item xs={12} sm={12} display='grid'>
-                  <Button 
-                    onClick={this.open_edit_point.bind(this, 'pay')}  
-                    color="success" 
-                    variant="contained" 
+                  <Button
+                    onClick={this.open_edit_point.bind(this, 'pay')}
+                    color="success"
+                    variant="contained"
                     style={{ whiteSpace: 'nowrap', justifySelf: 'flex-end' }}
                   >
                     Выбрать дату применения
@@ -3279,11 +3295,11 @@ class CafeEdit_ extends React.Component {
                           </TableHead>
                           <TableBody>
                             {this.state.point_pay_hist.map((it, k) =>
-                              <TableRow 
-                                hover 
-                                key={k} 
+                              <TableRow
+                                hover
+                                key={k}
                                 style={{ cursor: 'pointer'}}
-                                onClick={this.open_hist_view.bind(this, k,'pay')} 
+                                onClick={this.open_hist_view.bind(this, k,'pay')}
                               >
                                 <TableCell>{k+1}</TableCell>
                                 <TableCell>{it.date_time_update}</TableCell>
@@ -3296,56 +3312,56 @@ class CafeEdit_ extends React.Component {
                     </Accordion>
                   </Grid>
                 }
-               
+
               </Grid>
             </TabPanel>
           </Grid>
 
           <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-            <TabPanel 
-              value={this.state.activeTab} 
-              index={this.state.index_sett} 
+            <TabPanel
+              value={this.state.activeTab}
+              index={this.state.index_sett}
               id='clients'
             >
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={12}>
-                  <MyCheckBox 
-                    label='Если в заказе только пицца, она выйдет на сборку после начала ее приготовления (напитки, допы и закуски не учитываются)' 
-                    value={parseInt(this.state.point_info?.priority_pizza ?? 0) == 1 ? true : false} 
-                    func={this.changeItemChecked.bind(this, 'priority_pizza')} 
+                  <MyCheckBox
+                    label='Если в заказе только пицца, она выйдет на сборку после начала ее приготовления (напитки, допы и закуски не учитываются)'
+                    value={parseInt(this.state.point_info?.priority_pizza ?? 0) == 1 ? true : false}
+                    func={this.changeItemChecked.bind(this, 'priority_pizza')}
                   />
                 </Grid>
 
                 <Grid item xs={12} sm={12}>
-                  <MyCheckBox 
-                    label='Если заказ приготовить зарнее - он выйдет в приоритете на сборку, кроме предов (напитки, допы и закуски не учитываются)' 
-                    value={parseInt(this.state.point_info?.priority_order ?? 0) == 1 ? true : false} 
-                    func={this.changeItemChecked.bind(this, 'priority_order')} 
+                  <MyCheckBox
+                    label='Если заказ приготовить зарнее - он выйдет в приоритете на сборку, кроме предов (напитки, допы и закуски не учитываются)'
+                    value={parseInt(this.state.point_info?.priority_order ?? 0) == 1 ? true : false}
+                    func={this.changeItemChecked.bind(this, 'priority_order')}
                   />
                 </Grid>
 
                 <Grid item xs={12} sm={12}>
-                  <MyCheckBox 
-                    label='Пицца у повара будет отображаться, если более 50% роллов в заказе начнут готовить' 
-                    value={parseInt(this.state.point_info?.rolls_pizza_dif ?? 0) == 1 ? true : false} 
-                    func={this.changeItemChecked.bind(this, 'rolls_pizza_dif')} 
+                  <MyCheckBox
+                    label='Пицца у повара будет отображаться, если более 50% роллов в заказе начнут готовить'
+                    value={parseInt(this.state.point_info?.rolls_pizza_dif ?? 0) == 1 ? true : false}
+                    func={this.changeItemChecked.bind(this, 'rolls_pizza_dif')}
                   />
                 </Grid>
 
 
                 <Grid item xs={12} sm={12}>
-                  <MyCheckBox 
-                    label='Общий стол' 
-                    value={parseInt(this.state.point_info?.cook_common_stol ?? 0) == 1 ? true : false} 
-                    func={this.changeItemChecked.bind(this, 'cook_common_stol')} 
+                  <MyCheckBox
+                    label='Общий стол'
+                    value={parseInt(this.state.point_info?.cook_common_stol ?? 0) == 1 ? true : false}
+                    func={this.changeItemChecked.bind(this, 'cook_common_stol')}
                   />
                 </Grid>
 
                 <Grid item xs={12} sm={12}>
-                  <Button 
-                    onClick={this.changeActivePoint.bind(this)}  
+                  <Button
+                    onClick={this.changeActivePoint.bind(this)}
                     color={parseInt(this.state.point_info?.cafe_handle_close ?? 0) == 1 ? 'success' : 'primary'}
-                    variant="contained" 
+                    variant="contained"
                     style={{ whiteSpace: 'nowrap'}}
                   >
                     {parseInt(this.state.point_info?.cafe_handle_close ?? 0) == 1 ? 'Поставить на стоп' : 'Снять со стопа' }
@@ -3371,10 +3387,10 @@ class CafeEdit_ extends React.Component {
                 </Grid>
 
                 <Grid item xs={12} sm={12} display='grid'>
-                  <Button 
-                    onClick={this.save_edit_point_sett.bind(this)}  
-                    color="success" 
-                    variant="contained" 
+                  <Button
+                    onClick={this.save_edit_point_sett.bind(this)}
+                    color="success"
+                    variant="contained"
                     style={{ whiteSpace: 'nowrap', justifySelf: 'flex-end' }}
                   >
                     Сохранить изменения
@@ -3398,9 +3414,9 @@ class CafeEdit_ extends React.Component {
                           </TableHead>
                           <TableBody>
                             {this.state.point_sett_hist.map((it, k) =>
-                              <TableRow 
-                                hover 
-                                key={k} 
+                              <TableRow
+                                hover
+                                key={k}
                                 style={{ cursor: 'pointer'}}
                                 onClick={this.open_hist_view.bind(this, k, 'sett')}
                               >
@@ -3416,15 +3432,15 @@ class CafeEdit_ extends React.Component {
                   </Grid>
                 }
 
-               
+
               </Grid>
             </TabPanel>
           </Grid>
 
           <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-            <TabPanel 
-              value={this.state.activeTab} 
-              index={this.state.index_zone} 
+            <TabPanel
+              value={this.state.activeTab}
+              index={this.state.index_zone}
               id='clients'
             >
               <Grid item xs={12} sm={12} mb={3}>
@@ -3448,9 +3464,9 @@ class CafeEdit_ extends React.Component {
                         </TableHead>
                         <TableBody>
                           {this.state.point_zone_hist.map((it, k) =>
-                            <TableRow 
-                              hover 
-                              key={k} 
+                            <TableRow
+                              hover
+                              key={k}
                               style={{ cursor: 'pointer'}}
                               onClick={this.open_hist_view_zone.bind(this, k, 'zone')}
                             >
@@ -3469,9 +3485,9 @@ class CafeEdit_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-            <TabPanel 
-              value={this.state.activeTab} 
-              index={this.state.index_driver} 
+            <TabPanel
+              value={this.state.activeTab}
+              index={this.state.index_driver}
               id='clients'
             >
               <Grid container spacing={3}>
@@ -3484,26 +3500,33 @@ class CafeEdit_ extends React.Component {
                 </Grid>
 
                 <Grid item xs={12} sm={4}>
-                  <MyTextInput 
-                    value={this.state.point_info?.summ_driver ?? ''} 
+                  <MyTextInput
+                    value={this.state.point_info?.summ_driver ?? ''}
                     func={this.changeData.bind(this, 'summ_driver')}
-                    label='Максимальная сумма нала для курьера' 
+                    label='Максимальная сумма нала для курьера'
                   />
-                </Grid> 
+                </Grid>
 
                 <Grid item xs={12} sm={4}>
-                  <MyTextInput 
-                    value={this.state.point_info?.summ_driver_min ?? ''} 
+                  <MyTextInput
+                    value={this.state.point_info?.summ_driver_min ?? ''}
                     func={this.changeData.bind(this, 'summ_driver_min')}
-                    label='Максимальная сумма нала для курьера стажера' 
+                    label='Максимальная сумма нала для курьера стажера'
                   />
-                </Grid> 
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <MyCheckBox
+                    label='Необходима геолокация для завершения заказа'
+                    value={parseInt(this.state.point_info?.driver_need_gps) === 1 ? true : false}
+                    func={this.changeData.bind(this, 'driver_need_gps')}
+                  />
+                </Grid>
 
-                <Grid item xs={12} sm={12} display='grid'>
-                  <Button 
-                    onClick={this.save_edit_point_sett_driver.bind(this)}  
-                    color="success" 
-                    variant="contained" 
+                <Grid item xs={12} sm={6} display='grid'>
+                  <Button
+                    onClick={this.save_edit_point_sett_driver.bind(this)}
+                    color="success"
+                    variant="contained"
                     style={{ whiteSpace: 'nowrap', justifySelf: 'flex-end' }}
                   >
                     Сохранить изменения
@@ -3527,11 +3550,11 @@ class CafeEdit_ extends React.Component {
                           </TableHead>
                           <TableBody>
                             {this.state.point_sett_driver_hist.map((it, k) =>
-                              <TableRow 
-                                hover 
-                                key={k} 
+                              <TableRow
+                                hover
+                                key={k}
                                 style={{ cursor: 'pointer'}}
-                                onClick={this.open_hist_view.bind(this, k,'driver')} 
+                                onClick={this.open_hist_view.bind(this, k,'driver')}
                               >
                                 <TableCell>{k+1}</TableCell>
                                 <TableCell>{it.date_time_update}</TableCell>
@@ -3544,24 +3567,24 @@ class CafeEdit_ extends React.Component {
                     </Accordion>
                   </Grid>
                 }
-               
+
               </Grid>
             </TabPanel>
           </Grid>
 
           <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-            <TabPanel 
-              value={this.state.activeTab} 
-              index={this.state.index_kkt} 
+            <TabPanel
+              value={this.state.activeTab}
+              index={this.state.index_kkt}
               id='clients'
             >
               <Grid container spacing={3}>
 
                 {parseInt(this.state.acces?.add_kkt) ?
                   <Grid item xs={12} sm={2}>
-                    <Button 
-                      variant="contained" 
-                      style={{ whiteSpace: 'nowrap' }} 
+                    <Button
+                      variant="contained"
+                      style={{ whiteSpace: 'nowrap' }}
                       onClick={this.openModalKktInfo.bind(this, 'add_kkt', {})}
                     >
                       Добавить кассу
@@ -3670,9 +3693,9 @@ class CafeEdit_ extends React.Component {
 
                             {parseInt(this.state.acces?.add_fn) ?
                               <TableCell>
-                                <Button 
-                                  variant="contained" 
-                                  style={{ whiteSpace: 'nowrap' }} 
+                                <Button
+                                  variant="contained"
+                                  style={{ whiteSpace: 'nowrap' }}
                                   onClick={this.openModalKktInfo_add.bind(this, item)}
                                 >
                                   Новый ФН
@@ -3748,11 +3771,11 @@ class CafeEdit_ extends React.Component {
                           </TableHead>
                           <TableBody>
                             {this.state.kkt_info_hist.map((it, k) =>
-                              <TableRow 
-                                hover 
-                                key={k} 
+                              <TableRow
+                                hover
+                                key={k}
                                 style={{ cursor: 'pointer'}}
-                                onClick={this.open_hist_kkt.bind(this, it.id, it.kkt_id, 'kkt')} 
+                                onClick={this.open_hist_kkt.bind(this, it.id, it.kkt_id, 'kkt')}
                               >
                                 <TableCell>{k+1}</TableCell>
                                 <TableCell>{it.kassa}</TableCell>
@@ -3766,7 +3789,7 @@ class CafeEdit_ extends React.Component {
                     </Accordion>
                   </Grid>
                 }
-               
+
               </Grid>
             </TabPanel>
           </Grid>
