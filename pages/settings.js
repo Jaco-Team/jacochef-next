@@ -342,14 +342,16 @@ function PromoCodeForm({
                 <TableHead>
                   <TableRow>
                     <TableCell style={{ width: '20%' }}>#</TableCell>
-                    <TableCell style={{ width: '40%' }}>Дата время</TableCell>
-                    <TableCell style={{ width: '40%' }}>Сотрудник</TableCell>
+                    <TableCell style={{ width: '30%' }}>Дата начала изменения</TableCell>
+                    <TableCell style={{ width: '30%' }}>Дата создания</TableCell>
+                    <TableCell style={{ width: '30%' }}>Сотрудник</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {history.map((item, k) => (
                     <TableRow key={k} hover style={{ cursor: 'pointer' }} onClick={() => openModal(item)}>
                         <TableCell>{k + 1}</TableCell>
+                      <TableCell>{item.date_start}</TableCell>
                         <TableCell>{item.date}</TableCell>
                         <TableCell>{item.user_name}</TableCell>
                       </TableRow>
