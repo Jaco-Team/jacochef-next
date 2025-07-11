@@ -17,8 +17,9 @@ import Cookies from 'js-cookie';
 
 import { EyeShow, EyeHide } from '@/ui/icons';
 import { MyAlert} from '@/ui/elements';
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 
-export default function Auth(){
+export default function Auth() {
 
   const [isLoad, setIsLoad] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -63,9 +64,9 @@ export default function Auth(){
       pwd: password
     };
 
-    let res = await api('auth', 'auth', data);
-
-    console.log(res)
+    //let res = await api('auth', 'auth', data);
+    let res = await api_laravel('auth', 'auth', data);
+    res = res.data;
 
     if (res.st === false) {
 
@@ -76,7 +77,6 @@ export default function Auth(){
       }, 500)
 
     } else {
-
       localStorage.setItem('token', res.token);
       Cookies.set('token', res.token, { expires: 60 });
 

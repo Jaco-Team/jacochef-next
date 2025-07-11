@@ -37,6 +37,7 @@ import {
 } from '@/ui/elements';
 import { api_laravel, api_laravel_local } from '@/src/api_new';
 import dayjs from "dayjs";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 function PromoCodeForm({
   mockItems, getData, setIsLoad, setErrStatus, setErrText, setOpenAlert,
@@ -59,12 +60,32 @@ function PromoCodeForm({
   const [price, setPrice] = useState(0);
   const [open, setOpen] = useState(false);
   const [openDate, setOpenDate] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
   const [story, setStory] = useState({});
 
   const openModal = (item) => {
     setStory(item);
     setOpen(true);
   };
+
+  const openModalDelete = (item) => {
+    setStory(item);
+    setOpenDelete(true);
+  };
+
+  const onDeleteDate = (date) => {
+    setIsLoad(true);
+    getData('delete_date', {date_start: date}).then((data) => {
+      if (!data.st) {
+        setErrStatus(data.st);
+        setErrText(data.text);
+        setOpenAlert(true);
+      } else {
+        getData('get_promo').then((data) => setHistory(data.history))
+          .finally(() => setIsLoad(false));
+      }
+    }).finally(() => setIsLoad(false))
+  }
 
   const discountOptions = Array.from({ length: 20 }, (_, i) => (i + 1) * 5);
 
@@ -125,6 +146,9 @@ function PromoCodeForm({
       discountValue: '',
       products: [...prev.products, { ...position, price, count }],
     }));
+    setCount(0);
+    setPrice(0);
+    setPosition('');
   };
 
   const delItemAdd = (item) => {
@@ -137,6 +161,7 @@ function PromoCodeForm({
   return (
     <Box component="form" sx={{ mt: 1 }}>
       <DialogPromoHistory onClose={() => setOpen(false)} open={open} getData={getData} story={story} />
+      <ModalDelete onClose={() => setOpenDelete(false)} open={openDelete} onDelete={onDeleteDate} date={story} />
       <DateModal open={openDate} onClose={() => setOpenDate(false)} onSave={handleSubmit} />
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6}>
@@ -344,16 +369,22 @@ function PromoCodeForm({
                     <TableCell style={{ width: '20%' }}>#</TableCell>
                     <TableCell style={{ width: '30%' }}>Дата начала изменения</TableCell>
                     <TableCell style={{ width: '30%' }}>Дата создания</TableCell>
-                    <TableCell style={{ width: '30%' }}>Сотрудник</TableCell>
+                    <TableCell style={{ width: '15%' }}>Сотрудник</TableCell>
+                    <TableCell style={{ width: '5%' }}></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {history.map((item, k) => (
-                    <TableRow key={k} hover style={{ cursor: 'pointer' }} onClick={() => openModal(item)}>
+                    <TableRow key={k}>
                         <TableCell>{k + 1}</TableCell>
-                      <TableCell>{item.date_start}</TableCell>
+                      <TableCell hover style={{ cursor: 'pointer' }} onClick={() => openModal(item)}>{item.date_start}</TableCell>
                         <TableCell>{item.date}</TableCell>
                         <TableCell>{item.user_name}</TableCell>
+                      <TableCell>
+                        <IconButton onClick={() => openModalDelete(item)}>
+                          <DeleteIcon style={{color: "red"}}/>
+                        </IconButton>
+                      </TableCell>
                       </TableRow>
                   ))}
                 </TableBody>
@@ -415,7 +446,7 @@ function DialogPromoHistory({
         <Box component="form" sx={{ mt: 1 }}>
           <Grid container spacing={3}>
             <Grid item xs={12} sm={12}>
-              <b>Дата начала изменения: {story.date_start}</b>
+              <b>Дата начала изменения: {story?.date_start}</b>
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth size="small">
@@ -625,6 +656,34 @@ const DateModal = ({ open, onClose, onSave }) => {
           color="primary"
         >
           Создать
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+const ModalDelete = ({ open, onClose, onDelete, date }) => {
+
+  const handleSubmit = () => {
+    onDelete(date.date_start);
+    handleClose();
+  };
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Вы точно хотите удалить изменения?</DialogTitle>
+      <DialogActions>
+        <Button onClick={handleClose}>Нет</Button>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          color="primary"
+        >
+          Да
         </Button>
       </DialogActions>
     </Dialog>
