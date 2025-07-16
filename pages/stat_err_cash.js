@@ -692,6 +692,7 @@ class StatErrCash_ extends React.Component {
     const data = {
       point_id: this.state.point,
       err_id: mark === 'errOrder' ? item.err_id : item.id,
+      row_id: item.row_id ?? 0,
       mark,
     };
 
