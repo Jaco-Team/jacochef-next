@@ -57,9 +57,15 @@ export default function Header() {
   }
 
   useEffect( () => {
-    if( (!localStorage.getItem( 'token' ) || localStorage.getItem( 'token' ).length == 0) && window.location.href == '/auth'){
-      window.location.href = '/auth';
+    if( (!localStorage.getItem( 'token' ) || localStorage.getItem( 'token' ).length == 0)){
+      if( window.location.pathname == '/auth' || window.location.pathname == '/registration' ){
+        
+      }else{
+        // если не авторизованы и в каком-то модуле
+        window.location.href = '/auth';
+      }
     }else{
+      // если авторизованы
       loadMenu()
     }
   }, []);
