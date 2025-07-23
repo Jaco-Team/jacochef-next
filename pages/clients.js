@@ -10,7 +10,7 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
 import {api_laravel, api_laravel_local} from '@/src/api_new';
-import {MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput, TextEditor22} from "@/ui/elements";
+import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput, TextEditor22} from "@/ui/elements";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableContainer from "@mui/material/TableContainer";
 import dayjs from "dayjs";
@@ -24,8 +24,12 @@ import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Dialog from "@mui/material/Dialog";
+import TableFooter from "@mui/material/TableFooter";
+import TablePagination from "@mui/material/TablePagination";
+import {Checkbox, Chip, FormControlLabel, Rating, TextField} from "@mui/material";
+import Box from "@mui/material/Box";
 
-const DialogUser = ({open , onClose, user}) => {
+const DialogUser = ({open, onClose, user, openOrder}) => {
 	return (
 		<Dialog
 			open={open}
@@ -93,7 +97,7 @@ const DialogUser = ({open , onClose, user}) => {
 								<Table>
 									<TableBody>
 										{user?.orders ? user?.orders.map((item, key) =>
-											<TableRow key={key} hover style={{cursor: 'pointer'}}>
+											<TableRow key={key} hover style={{cursor: 'pointer'}} onClick={() => openOrder(item.point_id, item.order_id)}>
 												<TableCell>{item.point}</TableCell>
 												<TableCell>{item.new_type_order}</TableCell>
 												<TableCell>{item.date_time}</TableCell>
@@ -114,6 +118,412 @@ const DialogUser = ({open , onClose, user}) => {
 	);
 }
 
+const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_forms, getData, openOrder}) => {
+	const [formData, setFormData] = useState([]);
+	const [values, setValues] = useState([]);
+	const saveFeedback = () => {
+		const feedbacks = [];
+		order_items.map((value, index) => {
+			feedbacks.push({...values[index], item: {...value}});
+		});
+		getData('save_feedbacks', {feedbacks, order_id: order.order_id, point_id: order.point_id}).then((data) => {
+			openOrder(order.point_id, order.order_id)
+		})
+	}
+
+	useEffect(() => {
+		setValues([]);
+	}, [open])
+
+	const renderElementFeed = (element, item) => {
+		switch (element.type) {
+			case 'rating':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">Рейтинг</Typography>
+						<Rating
+							value={element.data?.value}
+							size="large"
+							sx={{pointerEvents: 'none', opacity: 0.5, span: {fontSize: '2rem !important'}}}
+						/>
+					</div>
+				);
+			case 'input':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">{element.data.title}</Typography>
+						<TextField
+							fullWidth
+							sx={{pointerEvents: 'none', opacity: 0.75}}
+							placeholder={element.data.placeholder}
+							size="small"
+						/>
+					</div>
+				);
+			case 'textarea':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">{element.data.title}</Typography>
+						<TextField
+							fullWidth
+							multiline
+							size="small"
+							rows={4}
+							sx={{pointerEvents: 'none', opacity: 0.75}}
+							value={element.data?.value}
+							placeholder={element.data.placeholder}
+						/>
+					</div>
+				);
+			case 'heading':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h4">{element.data.text}</Typography>
+					</div>
+				);
+			case 'checkbox':
+				return (
+					<div style={{marginBottom: 10}}>
+						<FormControlLabel
+							control={<Checkbox checked={element.data?.value}/>}
+							label={element.data.label}
+							sx={{pointerEvents: 'none', opacity: 0.75}}
+							id={element.data.param}
+							size="small"
+						/>
+					</div>
+				);
+			case 'checkboxGroup':
+				return (
+					<div style={{
+						marginBottom: 10,
+						display: element.data.conditions.stars.find((value) => value === 1) || element.data.conditions.products.find((value) => value === item.name) || element.data.conditions.categories.find((value) => value === item.cat_name) ? 'initial' : 'none'
+					}}>
+						<Typography variant="h6">{element.data.title}</Typography>
+						{element.data.checkboxes.map((checkbox) => (
+							<div key={checkbox.id} style={{display: 'flex', alignItems: 'center'}}>
+								<FormControlLabel
+									control={<Checkbox checked={checkbox.value} value={checkbox.value} sx={{pointerEvents: 'none', opacity: 0.75}}/>}
+									label={checkbox.label}
+								/>
+							</div>
+						))}
+					</div>
+				);
+			case 'tagCloud':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">Облако тегов</Typography>
+						<div style={{display: 'flex', flexWrap: 'wrap', gap: '5px'}}>
+							{element.data.selectedTags.map((tag) => (
+								<Chip sx={{pointerEvents: 'none', opacity: 0.85}} key={tag} label={tag} color={element.data?.value.includes(tag) ? "primary" : "default"} style={{cursor: "pointer"}}/>
+							))}
+						</div>
+					</div>
+				);
+			default:
+				return null;
+		}
+	};
+
+	const renderElement = (element, key, item) => {
+		const handleChanges = (e, type, id) => {
+			const valuesCopy = JSON.parse(JSON.stringify(values));
+
+			if (!valuesCopy[key]) {
+				valuesCopy[key] = {};
+			}
+			if (type === 'checkbox' || type === 'checkboxGroup') {
+				valuesCopy[key][id] = {
+					value: e.target.checked,
+					type
+				};
+			} else if (type === 'tagCloud') {
+				let arr = valuesCopy[key][type]?.value ? [...valuesCopy[key][type]?.value] : [];
+				const existEl = arr.find((el) => el === e);
+				if (existEl) {
+					arr = arr.filter((el) => el !== e);
+				} else {
+					arr.push(e);
+				}
+				valuesCopy[key][type] = {
+					value: arr,
+					type
+				};
+				console.log(valuesCopy);
+			} else {
+				valuesCopy[key][type] = {
+					value: e.target.value,
+					type
+				};
+			}
+
+			setValues(valuesCopy);
+		};
+
+		switch (element.type) {
+			case 'rating':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">Рейтинг</Typography>
+						<Rating
+							id={element.id}
+							value={values[key]?.[element.type]?.value}
+							onChange={(e) => handleChanges(e, element.type, element.id)}
+							size="large"
+							sx={{span: {fontSize: '2rem !important'}}}
+						/>
+					</div>
+				);
+			case 'input':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">{element.data.title}</Typography>
+						<TextField
+							fullWidth
+							id={element.id}
+							value={values[key]?.[element.type]?.value}
+							onChange={(e) => handleChanges(e, element.type, element.id)}
+							placeholder={element.data.placeholder}
+							size="small"
+						/>
+					</div>
+				);
+			case 'textarea':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">{element.data.title}</Typography>
+						<TextField
+							fullWidth
+							id={element.id}
+							value={values[key]?.[element.type]?.value}
+							onChange={(e) => handleChanges(e, element.type, element.id)}
+							multiline
+							size="small"
+							rows={4}
+							placeholder={element.data.placeholder}
+						/>
+					</div>
+				);
+			case 'heading':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h4">{element.data.text}</Typography>
+					</div>
+				);
+			case 'checkbox':
+				return (
+					<div style={{marginBottom: 10}}>
+						<FormControlLabel
+							control={
+								<Checkbox id={element.data.param} value={values[key]?.[element.type]?.value} onChange={(e) => handleChanges(e, element.type, element.data.param)}/>}
+							label={element.data.label}
+							id={element.data.param}
+							size="small"
+						/>
+					</div>
+				);
+			case 'checkboxGroup':
+				return (
+					<div style={{
+						marginBottom: 10,
+						display: element.data.conditions.stars.find((value) => value === parseInt(values[key]?.['rating']?.value)) || element.data.conditions.products.find((value) => value === item.name) || element.data.conditions.categories.find((value) => value === item.cat_name) ? 'initial' : 'none'
+					}}>
+						<Typography variant="h6">{element.data.title}</Typography>
+						{element.data.checkboxes.map((checkbox) => (
+							<div key={checkbox.id} style={{display: 'flex', alignItems: 'center'}}>
+								<FormControlLabel
+									value={values[key]?.[element.type]?.value}
+									control={<Checkbox onChange={(e) => handleChanges(e, element.type, checkbox.param)}/>}
+									label={checkbox.label}
+								/>
+							</div>
+						))}
+					</div>
+				);
+			case 'tagCloud':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">Облако тегов</Typography>
+						<div style={{display: 'flex', flexWrap: 'wrap', gap: '5px'}}>
+							{element.data.selectedTags.map((tag) => (
+								<Chip key={tag} label={tag} value={values[key]?.[element.type]?.value} onClick={(e) => handleChanges(tag, element.type, element.id)} color={values[key]?.[element.type]?.value.includes(tag) ? "primary" : "default"} style={{cursor: "pointer"}}/>
+							))}
+						</div>
+					</div>
+				);
+			default:
+				return null;
+		}
+	};
+	return (
+		<Dialog
+			open={open}
+			onClose={onClose}
+			aria-labelledby="alert-dialog-title"
+			aria-describedby="alert-dialog-description"
+			fullWidth={true}
+			maxWidth={'md'}
+			fullScreen={false}
+		>
+			<DialogTitle className="button">
+				<Typography style={{
+					fontWeight: 'bold',
+					alignSelf: 'center'
+				}}>Заказ #{order?.order_id}</Typography>
+				<IconButton onClick={onClose} style={{cursor: 'pointer'}}>
+					<CloseIcon/>
+				</IconButton>
+			</DialogTitle>
+
+			<DialogContent>
+
+				<Grid container spacing={0}>
+					<Grid item xs={12}>
+						<span>{order?.type_order}: {order?.type_order_addr_new}</span>
+					</Grid>
+
+					{parseInt(order?.type_order_) == 1 ?
+						parseInt(order?.fake_dom) == 0 ?
+							<Grid item xs={12}>
+								<b style={{color: 'red', fontWeight: 900}}>Домофон не работает</b>
+							</Grid>
+							:
+							<Grid item xs={12}>
+								<b style={{color: 'green', fontWeight: 900}}>Домофон работает</b>
+							</Grid>
+						:
+						null
+					}
+					<Grid item xs={12}>
+						<span>{order?.time_order_name}: {order?.time_order}</span>
+					</Grid>
+
+					{order?.number?.length > 1 ?
+						<Grid item xs={12}>
+							<b>Телефон: </b>
+							<span>{order?.number}</span>
+						</Grid>
+						:
+						null
+					}
+
+					{order?.delete_reason?.length > 0 ?
+						<Grid item xs={12}><span style={{color: 'red'}}>Удален: {order?.date_time_delete}</span></Grid> : null}
+					{order?.delete_reason?.length > 0 ?
+						<Grid item xs={12}><span style={{color: 'red'}}>{order?.delete_reason}</span></Grid> : null}
+
+					{parseInt(order?.is_preorder) == 1 ? null :
+						<Grid item xs={12}><span>{'Обещали: ' + order?.time_to_client + ' / '}{order?.text_time}{order?.time}</span></Grid>
+					}
+
+					{order?.promo_name == null || order?.promo_name?.length == 0 ? null :
+						<>
+							<Grid item xs={12}>
+								<b>Промокод: </b>
+								<span>{order?.promo_name}</span>
+							</Grid>
+							<Grid item xs={12}>
+								<span className="noSpace">{order?.promo_text}</span>
+							</Grid>
+						</>
+					}
+
+					{order?.comment == null || order?.comment.length == 0 ? null :
+						<Grid item xs={12}>
+							<b>Комментарий: </b>
+							<span>{order?.comment}</span>
+						</Grid>
+					}
+
+					{order?.sdacha == null || parseInt(order?.sdacha) == 0 ? null :
+						<Grid item xs={12}>
+							<b>Сдача: </b>
+							<span>{order?.sdacha}</span>
+						</Grid>
+					}
+
+					<Grid item xs={12}>
+						<b>Сумма заказа: </b>
+						<span>{order?.sum_order} р</span>
+					</Grid>
+
+					{order?.check_pos_drive == null || !order?.check_pos_drive ? null :
+						<Grid item xs={12}>
+							<b>Довоз оформлен: </b>
+							<span>{order?.check_pos_drive?.comment}</span>
+						</Grid>
+					}
+
+					<Grid item xs={12}>
+						<Table size={'small'} style={{marginTop: 15}}>
+							<TableBody>
+								{order_items ? order_items.map((item, key) =>
+									<TableRow key={key}>
+										<TableCell>{item.name}</TableCell>
+										<TableCell>{item.count}</TableCell>
+										<TableCell>{item.price} р</TableCell>
+										<TableCell><Box sx={{
+											p: 1,
+											bgcolor: item.form_feed?.length ? 'grey.100' : '',
+											borderRadius: 1,
+											border: '1px solid',
+											borderColor: 'grey.300',
+										}}
+										>
+											{item.form_feed?.length ? Object.entries(item.form_feed).map((data) => data.map((element) => renderElementFeed(element, item))) : Object.entries(item.form_data).map((data) => data.map((element) => renderElement(element, key, item)))}
+										</Box></TableCell>
+									</TableRow>
+								) : null}
+							</TableBody>
+							<TableFooter>
+								<TableRow>
+									<TableCell style={{fontWeight: 'bold', color: '#000'}}>Сумма заказа</TableCell>
+									<TableCell></TableCell>
+									<TableCell style={{
+										fontWeight: 'bold',
+										color: '#000'
+									}}>{order?.sum_order} р</TableCell>
+									<TableCell><Button variant="contained" onClick={saveFeedback}>Сохранить отзывы</Button></TableCell>
+								</TableRow>
+							</TableFooter>
+						</Table>
+					</Grid>
+
+					{!err_order ? null :
+						<Grid item xs={12} mt={3}>
+							<Accordion>
+								<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+									<Typography style={{fontWeight: 'bold'}}>Ошибка</Typography>
+								</AccordionSummary>
+								<AccordionDetails>
+									<Table>
+										<TableHead>
+											<TableRow>
+												<TableCell style={{width: '20%'}}>Дата создания</TableCell>
+												<TableCell style={{width: '30%'}}>Проблема</TableCell>
+												<TableCell style={{width: '30%'}}>Решение</TableCell>
+											</TableRow>
+										</TableHead>
+										<TableBody>
+											<TableRow hover>
+												<TableCell>{err_order?.date_time_desc}</TableCell>
+												<TableCell>{err_order?.order_desc}</TableCell>
+												<TableCell>{err_order?.text_win}</TableCell>
+											</TableRow>
+										</TableBody>
+									</Table>
+								</AccordionDetails>
+							</Accordion>
+						</Grid>
+					}
+
+				</Grid>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
 function ClientPage() {
 	const [isLoad, setIsLoad] = useState(false);
 	const [module, setModule] = useState({});
@@ -122,12 +532,22 @@ function ClientPage() {
 	const [users, setUsers] = useState([]);
 	const [user, setUser] = useState([]);
 	const [url, setUrl] = useState('');
+	const [page, setPage] = useState(1);
+	const [rowsPerPage, setRowPerPage] = useState(10);
+	const [openAlert, setOpenAlert] = useState(false);
 	const [openModalUser, setOpenModalUser] = useState(false);
-	const typeParam = [{id: 'all' , name: 'Найти всех'}, {id: 'new' , name: 'Только новые'}, {id: 'current' , name: 'Только текущих'}]
-  const [formData, setFormData] = useState({
-    date_start_true: null,
-    date_end_true: null,
-    date_start_false: null,
+	const [openModalOrder, setOpenModalOrder] = useState(false);
+	const [errStatus, setErrStatus] = useState(false);
+	const [errText, setErrText] = useState('');
+	const [order, setOrder] = useState({});
+	const typeParam = [{id: 'all', name: 'Найти всех'}, {id: 'new', name: 'Только новые'}, {
+		id: 'current',
+		name: 'Только текущих'
+	}]
+	const [formData, setFormData] = useState({
+		date_start_true: null,
+		date_end_true: null,
+		date_start_false: null,
 		date_end_false: null,
 		is_show_claim: false,
 		count_orders_min: 0,
@@ -135,12 +555,12 @@ function ClientPage() {
 		is_show_claim_last: false,
 		min_summ: 0,
 		max_summ: 0,
-		param: {id: 'all' , name: 'Найти всех'},
+		param: {id: 'all', name: 'Найти всех'},
 		is_show_marketing: false,
 		point: [],
 		preset: '',
 		item: []
-  });
+	});
 
 	const router = useRouter();
 
@@ -151,28 +571,35 @@ function ClientPage() {
 		})
 	}
 
+	const openOrder = (point_id, order_id) => {
+		getData('get_order', {point_id, order_id}).then((data) => {
+			setOrder(data);
+			setOpenModalOrder(true);
+		})
+	}
+
 	const handleChange = (e, name) => {
 		let value = null;
-    if (name === 'date_start_true' || name === 'date_end_true' || name === 'date_start_false' || name === 'date_end_false' || name === 'point' || name === 'item' || name === 'param') {
+		if (name === 'date_start_true' || name === 'date_end_true' || name === 'date_start_false' || name === 'date_end_false' || name === 'point' || name === 'item' || name === 'param') {
 			value = e;
 		} else if (name === 'is_show_claim' || name === 'is_show_claim_last' || name === 'is_show_marketing') {
 			value = e.target.checked;
 		} else {
 			value = e.target.value;
 		}
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+		setFormData((prev) => ({
+			...prev,
+			[name]: value,
+		}));
+	};
 
 	useEffect(() => {
 		if (formData.param.id === 'new') {
 			setFormData((prev) => ({
-      ...prev,
-      date_start_false: null,
-			date_end_false: null,
-    }));
+				...prev,
+				date_start_false: null,
+				date_end_false: null,
+			}));
 		}
 	}, [formData.param])
 
@@ -181,18 +608,22 @@ function ClientPage() {
 			if (data.users) {
 				setUsers(data.users);
 				setUrl(data.url);
+			} else {
+				setErrStatus(data.st);
+				setErrText(data.text);
+				setOpenAlert(true);
 			}
 		})
 	}
 
 	const onDownload = (e) => {
 		e.preventDefault();
-    const link = document.createElement('a');
-    link.href = url;
+		const link = document.createElement('a');
+		link.href = url;
 		link.target = '_blank';
-  	link.rel = 'noopener noreferrer';
-    link.click();
-  };
+		link.rel = 'noopener noreferrer';
+		link.click();
+	};
 
 	useEffect(() => {
 		getData('get_all').then((data) => {
@@ -218,54 +649,61 @@ function ClientPage() {
 			<Backdrop style={{zIndex: 99}} open={isLoad}>
 				<CircularProgress color="inherit"/>
 			</Backdrop>
-			<DialogUser open={openModalUser} onClose={() => setOpenModalUser(false)} user={user}/>
-      <Grid item container spacing={3} justifyContent="center" sx={{
-        flexDirection: {
-          sm: 'row',
-          xs: 'column-reverse'
-        }
-      }}
-            style={{marginTop: '64px', marginBottom: '24px'}}
-      >
+			<MyAlert
+				isOpen={openAlert}
+				onClose={() => setOpenAlert(false)}
+				status={errStatus}
+				text={errText}
+			/>
+			<DialogUser open={openModalUser} onClose={() => setOpenModalUser(false)} user={user} openOrder={openOrder}/>
+			<ModalOrder getData={getData} openOrder={openOrder} open={openModalOrder} onClose={() => setOpenModalOrder(false)} order={order.order} order_items={order.order_items} err_order={order.err_order} feedback_forms={order.feedback_forms}/>
+			<Grid item container spacing={3} justifyContent="center" sx={{
+				flexDirection: {
+					sm: 'row',
+					xs: 'column-reverse'
+				}
+			}}
+						style={{marginTop: '64px', marginBottom: '24px'}}
+			>
 
 				<Grid item xs={12} mb={3}>
-          <h1>{module.name}</h1>
-        </Grid>
+					<h1>{module.name}</h1>
+				</Grid>
 
 				<Grid container spacing={2} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={9}>
-					<Button
-						variant="contained"
-						style={{marginLeft: '20px', whiteSpace: 'nowrap'}}
-						onClick={() => {
-							setFormData((prev) => ({
-								...prev,
-								date_start_true: dayjs().subtract(91, 'day'),
-								date_end_true: dayjs().subtract(1, 'day'),
-								date_start_false: dayjs().subtract(6, 'month'),
-								date_end_false: dayjs().subtract(92, 'day'),
-								count_orders_min: 1
-							}));
-						}}>
-						Не делал заказ 90 дней
-					</Button>
-					<Button
-						variant="contained"
-						style={{whiteSpace: 'nowrap', marginLeft: '8px'}}
-						onClick={() => {
-							setFormData((prev) => ({
-								...prev,
-								date_start_true: dayjs().subtract(8, 'day'),
-								date_end_true: dayjs().subtract(1, 'day'),
-							}));
-						}}
-					>
-						Новые за неделю
-					</Button>
+					<Grid item xs={12} sm={9}>
+						<Button
+							variant="contained"
+							style={{marginLeft: '20px', whiteSpace: 'nowrap'}}
+							onClick={() => {
+								setFormData((prev) => ({
+									...prev,
+									date_start_true: dayjs().subtract(91, 'day'),
+									date_end_true: dayjs().subtract(1, 'day'),
+									date_start_false: dayjs().subtract(6, 'month'),
+									date_end_false: dayjs().subtract(92, 'day'),
+									count_orders_min: 1
+								}));
+							}}>
+							Не делал заказ 90 дней
+						</Button>
+						<Button
+							variant="contained"
+							style={{whiteSpace: 'nowrap', marginLeft: '8px'}}
+							onClick={() => {
+								setFormData((prev) => ({
+									...prev,
+									date_start_true: dayjs().subtract(8, 'day'),
+									date_end_true: dayjs().subtract(1, 'day'),
+								}));
+							}}
+						>
+							Новые за неделю
+						</Button>
+					</Grid>
 				</Grid>
-			</Grid>
 
-        <Grid item xs={12} sm={3} sx={{order: {sm: 0, xs: 1}}}>
+				<Grid item xs={12} sm={3} sx={{order: {sm: 0, xs: 1}}}>
 					<MyDatePickerNew
 						label="Делал заказ от"
 						value={formData.date_start_true}
@@ -415,34 +853,59 @@ function ClientPage() {
 					/>
 				</Grid>
 				{!users.length ? null : (
-          <Grid container justifyContent="center">
-            <Grid item xs={12} sm={9}>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>#</TableCell>
-                      <TableCell>Имя</TableCell>
-                      <TableCell>Телефон</TableCell>
-                      <TableCell>Последний комментарий</TableCell>
-                    </TableRow>
-                  </TableHead>
+					<>
+						<Grid container justifyContent="center">
+							<Grid item xs={12} sm={9}>
+								<TableContainer>
+									<Table>
+										<TableHead>
+											<TableRow>
+												<TableCell>#</TableCell>
+												<TableCell>Имя</TableCell>
+												<TableCell>Телефон</TableCell>
+												<TableCell>Последний комментарий</TableCell>
+											</TableRow>
+										</TableHead>
 
-                  <TableBody>
-                    {users.map((item, i) => (
-                      <TableRow key={i} style={{ cursor: 'pointer' }} onClick={() => openUser(item.login)}>
-                        <TableCell>{i + 1}</TableCell>
-												<TableCell>{item.name} {item.number_new_active ? (<span style={{color: 'red', fontWeight: 'bold'}}> Новый!</span>) : ''}</TableCell>
-                        <TableCell>{item.login}</TableCell>
-                        <TableCell dangerouslySetInnerHTML={{__html: item?.last_comment}}></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Grid>
-          </Grid>
-        )}
+										<TableBody>
+											{users.slice((page - 1) * rowsPerPage, page * rowsPerPage).map((item, i) => (
+												<TableRow
+													key={i}
+													style={{cursor: 'pointer'}}
+													onClick={() => openUser(item.login)}
+												>
+													<TableCell>{(page - 1) * rowsPerPage + i + 1}</TableCell>
+													<TableCell>
+														{item.name}
+														{item.number_new_active ? (
+															<span style={{color: 'red', fontWeight: 'bold'}}> Новый!</span>
+														) : ''}
+													</TableCell>
+													<TableCell>{item.login}</TableCell>
+													<TableCell dangerouslySetInnerHTML={{__html: item?.last_comment}}></TableCell>
+												</TableRow>
+											))}
+										</TableBody>
+									</Table>
+								</TableContainer>
+								<TablePagination
+									rowsPerPageOptions={[10, 50, 100]}
+									labelDisplayedRows={({from, to, count}) => `${from}-${to} из ${count}`}
+									labelRowsPerPage="Записей на странице:"
+									component="div"
+									count={users.length}
+									rowsPerPage={rowsPerPage}
+									page={page}
+									onPageChange={(event, newPage) => setPage(newPage)}
+									onRowsPerPageChange={(event) => {
+										setRowPerPage(parseInt(event.target.value, 10));
+										setPage(0);
+									}}
+								/>
+							</Grid>
+						</Grid>
+					</>
+				)}
 			</Grid>
 			<Grid container spacing={3} justifyContent="center" mb={3}>
 				<Grid item xs={12} sm={1}>
