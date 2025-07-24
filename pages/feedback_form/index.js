@@ -9,7 +9,7 @@ import { useRouter } from 'next/router';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
-import { api_laravel, api_laravel_local } from '@/src/api_new';
+import { api_laravel } from '@/src/api_new';
 
 function FeedbackPage() {
   const [isLoad, setIsLoad] = useState(false);

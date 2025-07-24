@@ -23,7 +23,7 @@ import { MySelect, MyDatePickerNew, formatDate } from '@/ui/elements';
 
 import dayjs from 'dayjs';
 
-import { api_laravel, api_laravel_local } from '@/src/api_new';
+import { api_laravel } from '@/src/api_new';
 
 class StatTimeOrders_Table extends React.Component {
   shouldComponentUpdate(nextProps) {

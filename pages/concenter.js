@@ -38,7 +38,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { MySelect, MyDatePickerNew, MyTextInput, formatDate } from '@/ui/elements';
 import Typography from '@mui/material/Typography';
 
-import { api, api_laravel, api_laravel_local } from '@/src/api_new';
+import { api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 import dynamic from "next/dynamic";

@@ -27,7 +27,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import {MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyDatePickerNew, MyAlert} from '@/ui/elements';
 
 import Dropzone from 'dropzone';
-import { api_laravel, api_laravel_local } from '@/src/api_new';
+import { api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";

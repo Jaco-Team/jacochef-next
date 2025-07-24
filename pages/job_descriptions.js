@@ -20,7 +20,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import {MyTextInput, TextEditor, MyAutocomplite} from '@/ui/elements';
 
 import queryString from 'query-string';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 
 class AppWorkTable extends React.Component {
   shouldComponentUpdate(nextProps) {

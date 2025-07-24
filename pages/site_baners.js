@@ -34,7 +34,7 @@ import { MyAutocomplite, MyDatePickerNew, MySelect, TextEditor, MyTextInput, MyC
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 import TextField from "@mui/material/TextField";
 
 class SiteBaners_Modal extends React.Component {

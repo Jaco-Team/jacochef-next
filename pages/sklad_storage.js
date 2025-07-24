@@ -21,7 +21,7 @@ import TableRow from '@mui/material/TableRow';
 import { MyTextInput, MyAlert } from '@/ui/elements';
 
 import queryString from 'query-string';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 
 class SkladStorage_Modal extends React.Component {
 

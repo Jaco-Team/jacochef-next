@@ -28,7 +28,7 @@ import { MySelect, MyAutocomplite } from '@/ui/elements';
 import Typography from '@mui/material/Typography';
 
 import queryString from 'query-string';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 
 class ModalCategoryItems extends React.Component {
   constructor(props) {

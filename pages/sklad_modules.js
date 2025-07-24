@@ -29,7 +29,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { MyTextInput, MyAutocomplite, MyAlert, MyCheckBox, MySelect } from '@/ui/elements';
 
 import queryString from 'query-string';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 
 class SkladModules_Modal_Param extends React.Component {
 

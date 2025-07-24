@@ -15,7 +15,7 @@ import HelpIcon from '@mui/icons-material/Help';
 
 import {MySelect, MyDatePickerNew, MyTimePicker, MyCheckBox } from '@/ui/elements';
 
-import { api_laravel, api_laravel_local } from '@/src/api_new';
+import { api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 

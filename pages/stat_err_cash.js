@@ -35,7 +35,7 @@ import ModalImage from "react-modal-image";
 import { MySelect, MyDatePickerNew, MyAlert, MyTextInput, formatDate } from '@/ui/elements';
 
 import dayjs from 'dayjs';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 import Tooltip from "@mui/material/Tooltip";
 import EditIcon from "@mui/icons-material/Edit";
 //import VisibilityIcon from "@mui/icons-material/Visibility";

@@ -16,7 +16,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import {MyCheckBox, MyDatePickerNew, formatDate, MyAutocomplite, MyAlert} from '@/ui/elements';
 
-import { api_laravel, api_laravel_local } from '@/src/api_new';
+import { api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 var am5locales_ru_RU = {

@@ -32,7 +32,7 @@ import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from '@/ui/elements
 import Typography from '@mui/material/Typography';
 
 import queryString from 'query-string';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 
 class VendorModule_ extends React.Component {
   constructor(props) {
