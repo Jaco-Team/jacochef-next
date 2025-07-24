@@ -43,7 +43,7 @@ import Tooltip from '@mui/material/Tooltip';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import Collapse from '@mui/material/Collapse';
 
-import { MySelect, MyAlert, MyTextInput, TextEditor22, MyAutocomplite, formatDate, MyDatePickerNew } from '@/ui/elements';
+import { MySelect, MyAlert, MyTextInput, TextEditor22, MyAutocomplite, formatDate, MyDatePickerNew, MyCheckBox } from '@/ui/elements';
 
 import { ExlIcon } from '@/ui/icons';
 
@@ -1076,6 +1076,13 @@ class SiteClients_ extends React.Component {
       err_orders: [],
       comments: [],
 
+      created: [],
+      all_created: [
+        {id: 1, name: 'Клиент'},
+        {id: 2, name: 'Контакт-центр'},
+        {id: 3, name: 'Кафе'},
+      ],
+
       days: [],
       months: [
         {'id': 1, 'name': "января"},
@@ -1113,6 +1120,8 @@ class SiteClients_ extends React.Component {
       select_toggle: 'city',
       points: [],
       point_id: [],
+
+      promo_dr: false
     };
   }
 
@@ -1298,7 +1307,7 @@ class SiteClients_ extends React.Component {
   }
 
   get_data_request() {
-    let { number, city_id, date_start, date_end, order, items, addr, promo, select_toggle, point_id } = this.state;
+    let { number, city_id, date_start, date_end, order, items, addr, promo, select_toggle, point_id, promo_dr, created } = this.state;
   
     if (select_toggle === 'city' && !city_id.length) {
 
@@ -1364,7 +1373,9 @@ class SiteClients_ extends React.Component {
       addr,
       promo,
       point_id,
-      type: select_toggle
+      type: select_toggle,
+      promo_dr: promo_dr == true ? 1 : 0,
+      created
     };
   }
 
@@ -1768,6 +1779,12 @@ class SiteClients_ extends React.Component {
     }
   };
 
+  changeDataCheck(type, event){
+    this.setState({
+      [ type ]: event.target.checked
+    })
+  }
+
   render() {
     return (
       <>
@@ -2042,7 +2059,7 @@ class SiteClients_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={2}>
                   <MyTextInput
                     type='text'
                     className="input_promo"
@@ -2063,6 +2080,10 @@ class SiteClients_ extends React.Component {
                       )
                     }}
                   />
+                </Grid>
+
+                <Grid item xs={12} sm={2}>
+                  <MyCheckBox value={this.state.promo_dr} func={ this.changeDataCheck.bind(this, 'promo_dr') } label='Промик на ДР' />
                 </Grid>
 
                 <Grid item xs={12}>
@@ -2087,7 +2108,17 @@ class SiteClients_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={8}>
+                <Grid item xs={12} sm={3}>
+                  <MyAutocomplite
+                    label="Кто оформил"
+                    multiple={true}
+                    data={this.state.all_created}
+                    value={this.state.created}
+                    func={this.changeAutocomplite.bind(this, 'created')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={5}>
                   <MyAutocomplite
                     label="Товары в заказе"
                     multiple={true}
@@ -2096,6 +2127,8 @@ class SiteClients_ extends React.Component {
                     func={this.changeAutocomplite.bind(this, 'items')}
                   />
                 </Grid>
+
+                
 
                 <Grid item xs={12} sm={2}>
                   <Button onClick={this.getOrders.bind(this)} variant="contained">
