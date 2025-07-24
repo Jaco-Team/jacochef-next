@@ -489,12 +489,12 @@ class SiteUserManager_ extends React.Component {
       };
       let res = await this.getData('saveEditUser', data);
 
-      if (res.st === false) {
+      if (res?.st === false) {
         // alert(res.text);
         this.setState({
           openAlert: true,
           err_status: false,
-          err_text: res.text,
+          err_text: res?.text ?? 'Unknown response',
         });
       } else {
         if (this.myDropzone['files'].length == 0) {
@@ -583,11 +583,11 @@ class SiteUserManager_ extends React.Component {
       let is_graph_ = false;
 
       // хак для нормальной работы атокомплита должность
-      let editUser_user = this.state.editUser;
-      editUser_user.user.app_id = this.state.chose_app !== null ? this.state.chose_app.id : 0;
+      const {user} = this.state.editUser;
+      user.app_id = this.state.chose_app !== null ? this.state.chose_app.id : 0;
 
       this.state.app_list.map((item, key) => {
-        if (parseInt(editUser_user.user.app_id) == parseInt(item.id)) {
+        if (parseInt(user.app_id) == parseInt(item.id)) {
           if (parseInt(item.is_graph) == 1) {
             is_graph_ = true;
           }
@@ -665,12 +665,12 @@ class SiteUserManager_ extends React.Component {
         });
       }
 
-      if (editUser_user.user.birthday) {
-        editUser_user.user.birthday = dayjs(editUser_user.user.birthday).format('YYYY-MM-DD');
+      if (user.birthday) {
+        user.birthday = dayjs(user.birthday).format('YYYY-MM-DD');
       }
 
       let data = {
-        user: editUser_user,
+        user: {user},
         graphType: is_graph === true ? 1 : 0,
       };
 
