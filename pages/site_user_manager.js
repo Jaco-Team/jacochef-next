@@ -203,6 +203,7 @@ class SiteUserManager_ extends React.Component {
 
     let res = api_laravel(this.state.module, method, data)
       .then((result) => result.data)
+      .catch((e) => console.log(`Ошибка: data=${JSON.stringify(data)} \n`, e))
       .finally(() => {
         setTimeout(() => {
           this.setState({
@@ -389,12 +390,12 @@ class SiteUserManager_ extends React.Component {
       });
 
       let is_graph = false;
-      var editUser_user = this.state.editUser;
+      const {user} = this.state.editUser;
 
-      editUser_user.user.app_id = this.state.chose_app !== null ? this.state.chose_app.id : 0;
+      user.app_id = this.state.chose_app !== null ? this.state.chose_app.id : 0;
 
       this.state.app_list.map((item, key) => {
-        if (parseInt(editUser_user.user.app_id) == parseInt(item.id)) {
+        if (parseInt(user.app_id) == parseInt(item.id)) {
           if (parseInt(item.is_graph) == 1 && parseInt(graphType) == 0) {
             is_graph = true;
           }
@@ -414,7 +415,7 @@ class SiteUserManager_ extends React.Component {
       }
 
       //todo
-      if (parseInt(editUser_user.user.app_id) == 0 && this.state.textDel.length == 0) {
+      if (parseInt(user.app_id) == 0 && this.state.textDel.length == 0) {
         this.setState({
           delModal: true,
         });
@@ -477,14 +478,14 @@ class SiteUserManager_ extends React.Component {
         });
       }
 
-      if (editUser_user.user.birthday) {
-        editUser_user.user.birthday = dayjs(editUser_user.user.birthday).format('YYYY-MM-DD');
+      if (user.birthday) {
+        user.birthday = dayjs(user.birthday).format('YYYY-MM-DD');
       }
 
       let data = {
-        user: editUser_user,
+        user: {user},
         textDel: this.state.textDel,
-        graphType: graphType,
+        graphType: graphType
       };
       let res = await this.getData('saveEditUser', data);
 
