@@ -18,7 +18,7 @@ import Paper from '@mui/material/Paper';
 
 import { MyTextInput, MySelect, MyAutocomplite, MyCheckBox, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
 
-import { api_laravel, api_laravel_local } from '@/src/api_new';
+import { api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 

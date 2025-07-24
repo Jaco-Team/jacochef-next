@@ -35,7 +35,7 @@ import Dialog from '@mui/material/Dialog';
 import {
   MyAlert, MyAutocomplite, MyDatePickerNew, MyTextInput,
 } from '@/ui/elements';
-import { api_laravel, api_laravel_local } from '@/src/api_new';
+import { api_laravel } from '@/src/api_new';
 import dayjs from "dayjs";
 import DeleteIcon from "@mui/icons-material/Delete";
 

@@ -42,7 +42,7 @@ import Tooltip from '@mui/material/Tooltip';
 
 import {MyAutocomplite, MyTextInput, MySelect, MyCheckBox, MyAlert, formatDate, MyDatePickerNew, MyAutocomplite2} from '@/ui/elements';
 
-import { api, api_laravel, api_laravel_local } from '@/src/api_new';
+import { api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 
 function TabPanel(props) {

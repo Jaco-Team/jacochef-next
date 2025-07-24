@@ -21,7 +21,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
-import {api_laravel, api_laravel_local} from '@/src/api_new';
+import {api_laravel} from '@/src/api_new';
 import {MyAlert} from "@/ui/elements";
 import {useRouter} from "next/router";
 import DialogTitle from "@mui/material/DialogTitle";

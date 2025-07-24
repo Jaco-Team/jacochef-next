@@ -11,7 +11,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { MySelect } from '@/ui/elements';
 
 import queryString from 'query-string';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 
 class DriveMapStatAll_ extends React.Component {
   map = null;
