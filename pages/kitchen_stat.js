@@ -24,6 +24,7 @@ import { MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from '@/ui/eleme
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+import StatTableAccordeon from '@/components/kitchen_stat/StatTableAccordeon';
 
 class KitchenStat_ extends React.Component {
   constructor(props) {
@@ -477,6 +478,24 @@ class KitchenStat_ extends React.Component {
                           ))}
                         </TableBody>
                       </Table>
+                    </AccordionDetails>
+                  </Accordion>
+                </Grid>
+              )}
+
+              {/* аккордион Проданные позиции по типу оформления */}
+              {!this.state.data.stat_items_checkout ? null : (
+                <Grid item xs={12} sm={6} mb={3}>
+                  <Accordion>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography sx={{ fontWeight: "bold" }}>Проданные позиции по типу оформления</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Grid container spacing={3}>
+                        <Grid item><StatTableAccordeon data={this.state.data.stat_items_checkout.cash} title={'Касса'} /></Grid>
+                        <Grid item><StatTableAccordeon data={this.state.data.stat_items_checkout.callcenter} title={'КЦ'} /></Grid>
+                        <Grid item><StatTableAccordeon data={this.state.data.stat_items_checkout.client} title={'Клиент'} /></Grid>
+                      </Grid>
                     </AccordionDetails>
                   </Accordion>
                 </Grid>
