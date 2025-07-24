@@ -203,7 +203,10 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 						{element.data.checkboxes.map((checkbox) => (
 							<div key={checkbox.id} style={{display: 'flex', alignItems: 'center'}}>
 								<FormControlLabel
-									control={<Checkbox checked={checkbox.value} value={checkbox.value} sx={{pointerEvents: 'none', opacity: 0.75}}/>}
+									control={<Checkbox checked={checkbox.value} value={checkbox.value} sx={{
+										pointerEvents: 'none',
+										opacity: 0.75
+									}}/>}
 									label={checkbox.label}
 								/>
 							</div>
@@ -216,7 +219,10 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 						<Typography variant="h6">Облако тегов</Typography>
 						<div style={{display: 'flex', flexWrap: 'wrap', gap: '5px'}}>
 							{element.data.selectedTags.map((tag) => (
-								<Chip sx={{pointerEvents: 'none', opacity: 0.85}} key={tag} label={tag} color={element.data?.value.includes(tag) ? "primary" : "default"} style={{cursor: "pointer"}}/>
+								<Chip sx={{
+									pointerEvents: 'none',
+									opacity: 0.85
+								}} key={tag} label={tag} color={element.data?.value.includes(tag) ? "primary" : "default"} style={{cursor: "pointer"}}/>
 							))}
 						</div>
 					</div>
@@ -461,11 +467,12 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 								{order_items ? order_items.map((item, key) =>
 									<TableRow key={key}>
 										<TableCell>{item.name}</TableCell>
-										<TableCell>{item.count}</TableCell>
+										<TableCell>{item.count} шт</TableCell>
 										<TableCell>{item.price} р</TableCell>
 										<TableCell><Box sx={{
 											p: 1,
 											bgcolor: item.form_feed?.length ? 'grey.100' : '',
+											display: item.form_feed?.length || item.form_data.length ? '' : 'none',
 											borderRadius: 1,
 											border: '1px solid',
 											borderColor: 'grey.300',
@@ -484,7 +491,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 										fontWeight: 'bold',
 										color: '#000'
 									}}>{order?.sum_order} р</TableCell>
-									<TableCell><Button variant="contained" onClick={saveFeedback}>Сохранить отзывы</Button></TableCell>
+									<TableCell sx={{display: order_items?.every(item => item.form_feed?.length || item.form_data.length) ? '' : 'none'}}><Button variant="contained" onClick={saveFeedback}>Сохранить отзывы</Button></TableCell>
 								</TableRow>
 							</TableFooter>
 						</Table>
@@ -604,7 +611,13 @@ function ClientPage() {
 	}, [formData.param])
 
 	const getUsers = () => {
-		getData('get_users', formData).then((data) => {
+		getData('get_users', {
+			...formData,
+			date_start_true: dayjs(formData.date_start_true).format('YYYY-MM-DD'),
+			date_end_true: dayjs(formData.date_end_true).format('YYYY-MM-DD'),
+			date_start_false: dayjs(formData.date_start_false).format('YYYY-MM-DD'),
+			date_end_false: dayjs(formData.date_end_false).format('YYYY-MM-DD')
+		}).then((data) => {
 			if (data.users) {
 				setUsers(data.users);
 				setUrl(data.url);
@@ -637,7 +650,7 @@ function ClientPage() {
 		setIsLoad(true);
 
 		try {
-			const result = await api_laravel('clients', method, data);
+			const result = await api_laravel_local('clients', method, data);
 			return result.data;
 		} finally {
 			setIsLoad(false);
