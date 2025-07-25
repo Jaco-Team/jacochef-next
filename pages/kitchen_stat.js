@@ -492,9 +492,9 @@ class KitchenStat_ extends React.Component {
                     </AccordionSummary>
                     <AccordionDetails>
                       <Grid container spacing={3}>
-                        <Grid item><StatTableAccordeon data={this.state.data.stat_items_checkout.cash} title={'Касса'} /></Grid>
-                        <Grid item><StatTableAccordeon data={this.state.data.stat_items_checkout.callcenter} title={'КЦ'} /></Grid>
-                        <Grid item><StatTableAccordeon data={this.state.data.stat_items_checkout.client} title={'Клиент'} /></Grid>
+                        <Grid item xs={12}><StatTableAccordeon data={this.state.data.stat_items_checkout.cash} title={'Касса'} /></Grid>
+                        <Grid item xs={12}><StatTableAccordeon data={this.state.data.stat_items_checkout.callcenter} title={'КЦ'} /></Grid>
+                        <Grid item xs={12}><StatTableAccordeon data={this.state.data.stat_items_checkout.client} title={'Клиент'} /></Grid>
                       </Grid>
                     </AccordionDetails>
                   </Accordion>
