@@ -600,7 +600,7 @@ class KitchenStat_ extends React.Component {
 
               {/* аккордион Проданные позиции по категориям */}
               {!this.state.data.stat_cat.length ? null : (
-                <Grid item xs={12} sm={6} mb={3}>
+                <Grid item xs={12} sm={6} mt={3}>
                   <Accordion>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography sx={{ fontWeight: 'bold' }}>
@@ -638,7 +638,7 @@ class KitchenStat_ extends React.Component {
 
               {/* аккордион Проданные позиции по типу оформления */}
               {!this.state.data.stat_items_checkout ? null : (
-                <Grid item xs={12} sm={6} mb={3}>
+                <Grid item xs={12} sm={6} mt={3}>
                   <Accordion>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography sx={{ fontWeight: 'bold' }}>
@@ -675,7 +675,7 @@ class KitchenStat_ extends React.Component {
 
               {/* аккордион Использованные промокоды */}
               {!this.state.data.promo_stat.length ? null : (
-                <Grid item xs={12} sm={6} mb={3}>
+                <Grid item xs={12} sm={6} mt={3}>
                   <Accordion>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography sx={{ fontWeight: 'bold' }}>
