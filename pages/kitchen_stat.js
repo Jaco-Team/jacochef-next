@@ -166,7 +166,7 @@ class KitchenStat_ extends React.Component {
           text={this.state.err_text}
         />
 
-        <Grid container spacing={3} mb={3} className="container_first_child">
+        <Grid container spacing={3} mb={3} pb={4} className="container_first_child">
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
