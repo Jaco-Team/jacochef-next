@@ -24,7 +24,11 @@ import { MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from '@/ui/eleme
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+
 import StatTableAccordeon from '@/components/kitchen_stat/StatTableAccordeon';
+import ExcelIcon from '@/components/shared/ExcelIcon';
+import DownloadButton from '@/components/shared/DownloadButton';
+import { Stack } from '@mui/material';
 
 class KitchenStat_ extends React.Component {
   constructor(props) {
@@ -136,11 +140,15 @@ class KitchenStat_ extends React.Component {
     }, []).sort((a, b) => a.h - b.h);
 
     const statAllItemsCount = res.stat_all_items.reduce((count, item) => count + Number(item.count), 0);
+    const statItemsCheckoutCount = [...res.stat_items_checkout.cash, ...res.stat_items_checkout.callcenter, ...res.stat_items_checkout.client]
+    .reduce((total, item) => total + Number(item.count), 0);
+    
 
     this.setState({
       data: res,
       arrayOrdersByH,
       statAllItemsCount,
+      statItemsCheckoutCount,
     });
   }
 
@@ -158,7 +166,7 @@ class KitchenStat_ extends React.Component {
           text={this.state.err_text}
         />
 
-        <Grid container spacing={3} mb={3} className='container_first_child'>
+        <Grid container spacing={3} mb={3} className="container_first_child">
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
@@ -204,11 +212,12 @@ class KitchenStat_ extends React.Component {
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell colSpan={`${this.state.arrayOrdersByH.length}` + 2}>
+                          <TableCell
+                            colSpan={`${this.state.arrayOrdersByH.length}` + 2}
+                          >
                             <h2>Оформленные заказы по часам</h2>
                           </TableCell>
                         </TableRow>
-                        
                         <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
                           <TableCell sx={{ minWidth: 100 }}>Тип</TableCell>
                           {this.state.arrayOrdersByH.map((item, key) => (
@@ -380,11 +389,22 @@ class KitchenStat_ extends React.Component {
 
               {/* аккордион Проданные позиции (разбивка сетов, без допов) */}
               {!this.state.data.stat_all_items.length ? null : (
-                <Grid item xs={12} sm={6} mt={3} mb={3}>
+                <Grid item xs={12} sm={6} mt={3}>
                   <Accordion>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Grid sx={{ display: 'flex', flexDirection: { sm: 'row', xs: 'column' } }}>
-                        <Typography sx={{ fontWeight: 'bold', marginRight: { sm: 3, xs: 0 }, marginBottom: { sm: 0, xs: 3 } }}>
+                      <Grid
+                        sx={{
+                          display: 'flex',
+                          flexDirection: { sm: 'row', xs: 'column' },
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontWeight: 'bold',
+                            marginRight: { sm: 3, xs: 0 },
+                            marginBottom: { sm: 0, xs: 3 },
+                          }}
+                        >
                           Проданные позиции (разбивка сетов, без допов)
                         </Typography>
                         <Typography sx={{ fontWeight: 'bold' }}>
@@ -396,8 +416,12 @@ class KitchenStat_ extends React.Component {
                       <Table>
                         <TableHead>
                           <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                            <TableCell style={{ width: '70%' }}>Название</TableCell>
-                            <TableCell style={{ width: '30%' }}>Кол-во</TableCell>
+                            <TableCell style={{ width: '70%' }}>
+                              Название
+                            </TableCell>
+                            <TableCell style={{ width: '30%' }}>
+                              Кол-во
+                            </TableCell>
                           </TableRow>
                         </TableHead>
 
@@ -408,9 +432,14 @@ class KitchenStat_ extends React.Component {
                               <TableCell>{item.count}</TableCell>
                             </TableRow>
                           ))}
-                          <TableRow hover sx={{ '& td': { fontWeight: 'bold' } }}>
+                          <TableRow
+                            hover
+                            sx={{ '& td': { fontWeight: 'bold' } }}
+                          >
                             <TableCell>Всего</TableCell>
-                            <TableCell>{this.state.statAllItemsCount}</TableCell>
+                            <TableCell>
+                              {this.state.statAllItemsCount}
+                            </TableCell>
                           </TableRow>
                         </TableBody>
                       </Table>
@@ -421,7 +450,7 @@ class KitchenStat_ extends React.Component {
 
               {/* аккордион Проданные позиции (все) */}
               {!this.state.data.all_items_all.length ? null : (
-                <Grid item xs={12} sm={6} sx={{ marginTop: { xs: 0, sm: 3 } }} mb={3}>
+                <Grid item xs={12} sm={6} mt={3}>
                   <Accordion>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography sx={{ fontWeight: 'bold' }}>
@@ -432,8 +461,12 @@ class KitchenStat_ extends React.Component {
                       <Table>
                         <TableHead>
                           <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                            <TableCell style={{ width: '70%' }}>Название</TableCell>
-                            <TableCell style={{ width: '30%' }}>Кол-во</TableCell>
+                            <TableCell style={{ width: '70%' }}>
+                              Название
+                            </TableCell>
+                            <TableCell style={{ width: '30%' }}>
+                              Кол-во
+                            </TableCell>
                           </TableRow>
                         </TableHead>
 
@@ -446,6 +479,120 @@ class KitchenStat_ extends React.Component {
                           ))}
                         </TableBody>
                       </Table>
+                    </AccordionDetails>
+                  </Accordion>
+                </Grid>
+              )}
+
+              {/* аккордион Проданные позиции (разбивка сетов, без допов) по типу оформления */}
+              {!this.state.data.stat_items_checkout ? null : (
+                <Grid item xs={12} sm={6} mt={3}>
+                  <Accordion>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Grid sx={{ display: 'flex', flexDirection: {xs: 'column', sm: 'row'}, gap: '1em', alignItems: {sm: 'center', xs: 'left'} }}>
+                        <Typography
+                          sx={{
+                            fontWeight: 'bold',
+                            flexGrow: 1,
+                            width: { sm: 'auto', xs: '100%' },
+                          }}
+                        >
+                          Проданные позиции (разбивка сетов, без допов) по типу
+                          оформления
+                        </Typography>
+                        <Typography sx={{ fontWeight: 'bold' }}>
+                          Всего: {this.state.statItemsCheckoutCount}
+                        </Typography>
+                      </Grid>
+                        {this.state.data.stat_items_checkout && (
+                          <DownloadButton
+                            url={this.state.data.stat_items_checkout.excel_link}
+                            sx={{marginRight: '1em'}}
+                          >
+                            <ExcelIcon />
+                            {/* <DownloadIcon/> */}
+                          </DownloadButton>
+                        )}
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Grid container spacing={3}>
+                        <Grid item xs={12}>
+                          <StatTableAccordeon
+                            data={this.state.data.stat_items_checkout.cash}
+                            title={'Касса'}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <StatTableAccordeon
+                            data={
+                              this.state.data.stat_items_checkout.callcenter
+                            }
+                            title={'Колл-центр'}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <StatTableAccordeon
+                            data={this.state.data.stat_items_checkout.client}
+                            title={'Клиент'}
+                          />
+                        </Grid>
+                      </Grid>
+                    </AccordionDetails>
+                  </Accordion>
+                </Grid>
+              )}
+
+              {/* аккордион Проданные позиции (все) по типу оформления */}
+              {!this.state.data.stat_items_checkout_all ? null : (
+                <Grid item xs={12} sm={6} mt={3}>
+                  <Accordion>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        flexGrow={1}
+                      >
+                        <Typography sx={{ fontWeight: 'bold' }}>
+                          Проданные позиции (все) по типу оформления
+                        </Typography>
+                        {this.state.data.stat_items_checkout_all && (
+                          <DownloadButton
+                            url={
+                              this.state.data.stat_items_checkout_all.excel_link
+                            }
+                            ml="auto"
+                          >
+                            <ExcelIcon />
+                          </DownloadButton>
+                        )}
+                      </Stack>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Grid container spacing={3}>
+                        <Grid item xs={12}>
+                          <StatTableAccordeon
+                            data={this.state.data.stat_items_checkout_all.cash}
+                            title={'Касса'}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <StatTableAccordeon
+                            data={
+                              this.state.data.stat_items_checkout_all.callcenter
+                            }
+                            title={'Колл-центр'}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <StatTableAccordeon
+                            data={
+                              this.state.data.stat_items_checkout_all.client
+                            }
+                            title={'Клиент'}
+                          />
+                        </Grid>
+                      </Grid>
                     </AccordionDetails>
                   </Accordion>
                 </Grid>
@@ -464,15 +611,21 @@ class KitchenStat_ extends React.Component {
                       <Table>
                         <TableHead>
                           <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                            <TableCell style={{ width: '70%' }}>Позиция</TableCell>
-                            <TableCell style={{ width: '30%' }}>Кол-во</TableCell>
+                            <TableCell style={{ width: '70%' }}>
+                              Позиция
+                            </TableCell>
+                            <TableCell style={{ width: '30%' }}>
+                              Кол-во
+                            </TableCell>
                           </TableRow>
                         </TableHead>
 
                         <TableBody>
                           {this.state.data.stat_cat.map((item, key) => (
                             <TableRow key={key} hover>
-                              <TableCell>{item?.name ?? item.cat_name}</TableCell>
+                              <TableCell>
+                                {item?.name ?? item.cat_name}
+                              </TableCell>
                               <TableCell>{item.count}</TableCell>
                             </TableRow>
                           ))}
@@ -488,13 +641,32 @@ class KitchenStat_ extends React.Component {
                 <Grid item xs={12} sm={6} mb={3}>
                   <Accordion>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography sx={{ fontWeight: "bold" }}>Проданные позиции по типу оформления</Typography>
+                      <Typography sx={{ fontWeight: 'bold' }}>
+                        Проданные позиции по типу оформления
+                      </Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                       <Grid container spacing={3}>
-                        <Grid item xs={12}><StatTableAccordeon data={this.state.data.stat_items_checkout.cash} title={'Касса'} /></Grid>
-                        <Grid item xs={12}><StatTableAccordeon data={this.state.data.stat_items_checkout.callcenter} title={'КЦ'} /></Grid>
-                        <Grid item xs={12}><StatTableAccordeon data={this.state.data.stat_items_checkout.client} title={'Клиент'} /></Grid>
+                        <Grid item xs={12}>
+                          <StatTableAccordeon
+                            data={this.state.data.stat_items_checkout.cash}
+                            title={'Касса'}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <StatTableAccordeon
+                            data={
+                              this.state.data.stat_items_checkout.callcenter
+                            }
+                            title={'КЦ'}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <StatTableAccordeon
+                            data={this.state.data.stat_items_checkout.client}
+                            title={'Клиент'}
+                          />
+                        </Grid>
                       </Grid>
                     </AccordionDetails>
                   </Accordion>
@@ -514,8 +686,12 @@ class KitchenStat_ extends React.Component {
                       <Table>
                         <TableHead>
                           <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                            <TableCell style={{ width: '70%' }}>Промокод</TableCell>
-                            <TableCell style={{ width: '30%' }}>Кол-во</TableCell>
+                            <TableCell style={{ width: '70%' }}>
+                              Промокод
+                            </TableCell>
+                            <TableCell style={{ width: '30%' }}>
+                              Кол-во
+                            </TableCell>
                           </TableRow>
                         </TableHead>
 
