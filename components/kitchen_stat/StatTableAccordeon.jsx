@@ -19,7 +19,7 @@ export default function StatTableAccordeon(props) {
     data,
     title = "No title",
     excel_link = data?.excel_link,
-    tabletitles: tableTitles = { left: "Позиция", right: "Количество" },
+    tableTitles = { left: "Позиция", right: "Количество" },
     columnWidths = { left: "70%", right: "30%" },
   } = props;
 
