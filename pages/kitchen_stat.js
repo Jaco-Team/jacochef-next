@@ -636,43 +636,6 @@ class KitchenStat_ extends React.Component {
                 </Grid>
               )}
 
-              {/* аккордион Проданные позиции по типу оформления */}
-              {!this.state.data.stat_items_checkout ? null : (
-                <Grid item xs={12} sm={6} mt={3}>
-                  <Accordion>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography sx={{ fontWeight: 'bold' }}>
-                        Проданные позиции по типу оформления
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                          <StatTableAccordeon
-                            data={this.state.data.stat_items_checkout.cash}
-                            title={'Касса'}
-                          />
-                        </Grid>
-                        <Grid item xs={12}>
-                          <StatTableAccordeon
-                            data={
-                              this.state.data.stat_items_checkout.callcenter
-                            }
-                            title={'КЦ'}
-                          />
-                        </Grid>
-                        <Grid item xs={12}>
-                          <StatTableAccordeon
-                            data={this.state.data.stat_items_checkout.client}
-                            title={'Клиент'}
-                          />
-                        </Grid>
-                      </Grid>
-                    </AccordionDetails>
-                  </Accordion>
-                </Grid>
-              )}
-
               {/* аккордион Использованные промокоды */}
               {!this.state.data.promo_stat.length ? null : (
                 <Grid item xs={12} sm={6} mt={3}>
