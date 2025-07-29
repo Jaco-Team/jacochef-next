@@ -12,7 +12,7 @@ const defaultCallBack = async () => console.log("Please pass a valid callback to
 const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
   const mapRef = useRef(null);
   const objectManagerRef = useRef(null);
-  const module = "drive_map_stat_all";
+  const module = "concenter";
   // const [moduleName, setModuleName] = useState('');
   const [loading, setLoading] = useState(false);
   const [drivers, setDrivers] = useState([]);
@@ -158,12 +158,16 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
 
   const getData = (method, data = {}) => {
     setLoading(true);
-    const res = api_laravel(module, method, data)
-      .then((result) => result.data)
-      .finally(() => {
-        setLoading(false);
-      });
-    return res;
+    try {
+      const res = api_laravel(module, method, data)
+        .then((result) => result?.data)
+        .finally(() => {
+          setLoading(false);
+        });
+      return res;
+    } catch (err) {
+      console.error(`API error ${module}/${method}: `, err);
+    }
   };
 
   const updateData = async (point_id) => {
@@ -171,7 +175,7 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
       point_id,
     };
 
-    const res = await getData("get_orders", data);
+    const res = await getData("get_map_orders", data);
     setDrivers(res.drivers);
     setOrders(res.orders);
     setHome(res.home);
