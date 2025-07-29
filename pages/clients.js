@@ -467,8 +467,8 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 								{order_items ? order_items.map((item, key) =>
 									<TableRow key={key}>
 										<TableCell>{item.name}</TableCell>
-										<TableCell>{item.count} шт</TableCell>
-										<TableCell>{item.price} р</TableCell>
+										<TableCell>{item.count ? `${item.count} шт` : ''}</TableCell>
+										<TableCell>{item.price ? `${item.price} р` : ''}</TableCell>
 										<TableCell><Box sx={{
 											p: 1,
 											bgcolor: item.form_feed?.length ? 'grey.100' : '',
@@ -490,8 +490,8 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 									<TableCell style={{
 										fontWeight: 'bold',
 										color: '#000'
-									}}>{order?.sum_order} р</TableCell>
-									<TableCell sx={{display: order_items?.every(item => item.form_feed?.length || item.form_data.length) ? '' : 'none'}}><Button variant="contained" onClick={saveFeedback}>Сохранить отзывы</Button></TableCell>
+									}}>{`${order?.sum_order}`} р</TableCell>
+									<TableCell sx={{display: order_items?.some(item => item.form_feed?.length || item.form_data.length) ? '' : 'none'}}><Button variant="contained" onClick={saveFeedback}>Сохранить отзывы</Button></TableCell>
 								</TableRow>
 							</TableFooter>
 						</Table>
