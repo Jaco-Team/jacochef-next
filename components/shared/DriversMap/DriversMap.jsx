@@ -19,6 +19,20 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
   const [orders, setOrders] = useState([]);
   const [home, setHome] = useState([]);
 
+  const getStatusText = (status = 0) => {
+    status = status > 6 ? 0 : status;
+    const statuses = {
+      0: "не оформлен",
+      1: "в очереди",
+      2: "готовится",
+      3: "готов на кухне",
+      4: "собран",
+      5: "в пути",
+      6: "у клиента",
+    };
+    return statuses[status];
+  };
+
   const renderPlacemarks = () => {
     // important: rebind ymaps, it should be initialized fully
     const ymaps = window["ymaps"];
@@ -64,8 +78,14 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
       // console.log("ObjectManager created");
       objectManagerRef.current.events.add("click", async function (e) {
         const objectId = e.get("objectId");
+        const object = objectManagerRef.current.objects.getById(objectId); // get the full feature object
+
+        // Skip drivers
+        if (object?.properties?.isDriver) {
+          return;
+        }
+
         if (objectId && typeof onShowOrder === "function") {
-          // console.info(`showing order ${objectId} from map`);
           await onShowOrder(objectId);
         }
       });
@@ -112,13 +132,13 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
           iconColor: order.point_color || order.color,
         },
         properties: {
-          iconCaption: order.point_text || "",
           //iconCaption: parseInt(item.status_order) == 6 ? item.close_time_ : parseInt(item.is_pred) == 1 ? item.need_time : parseInt(item.is_my) == 1 ? item.time_start_mini : '',
           iconCaption: order.point_text || "",
 
           // 👇 Custom HTML hint
           hintContent: `
             <b>ID: ${order.id}</b><br />
+            <b>${getStatusText(+order.status_order)}</b><br />
             Сумма: ${order.sum_order} руб.<br />
             Курьер: ${order.driver_name || "—"}<br />
             ${order.addr || ""}
@@ -143,7 +163,11 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
             iconColor: driver.color,
           },
           properties: {
+            isDriver: true,
             iconContent: key,
+            hintContent: `
+              ${driver.driver_name}
+            `,
           },
           geometry: {
             type: "Point",

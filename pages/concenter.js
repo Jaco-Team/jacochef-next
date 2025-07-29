@@ -127,7 +127,7 @@ class Concenter_ extends React.Component {
     });
 
     let res = api_laravel(this.state.module, method, data)
-      .then((result) => result.data)
+      .then((result) => result?.data)
       .finally(() => {
         setTimeout(() => {
           this.setState({
