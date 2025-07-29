@@ -214,7 +214,7 @@ class Concenter_ extends React.Component {
 
     let res = await this.getData('get_order_new', data);
 
-    console.log( res )
+    // console.log( res )
 
     this.setState({
       modalDialog: true,
@@ -787,7 +787,7 @@ class Concenter_ extends React.Component {
             <Button variant="contained" onClick={this.btnGetOrders.bind(this)}>Обновить данные</Button>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} lg={6}>
             {err_info.all_green ? (
             <TableContainer component={Paper}>
               <Table>
@@ -828,13 +828,13 @@ class Concenter_ extends React.Component {
           </Grid>
 
           {this.hasAccess(acces?.show_map) && this.state.orders.length > 0 &&
-          <Grid item xs={6}>
+          <Grid item xs={12} lg={6}>
             <Accordion>
               <AccordionSummary>
                 <Typography>Курьеры на карте</Typography>
               </AccordionSummary>
               <AccordionDetails> 
-                <DriversMap pointId={this.state.point_id} />
+                <DriversMap pointId={this.state.point_id} onShowOrder={async (id) => await this.showOrder(id)} />
               </AccordionDetails>
             </Accordion>
           </Grid>
