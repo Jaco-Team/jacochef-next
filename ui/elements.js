@@ -720,6 +720,7 @@ export class TextEditor22 extends React.PureComponent {
         init={{
           height: 500,
           menubar: this.props?.menubar,
+          language: 'ru',
           plugins: [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
             'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
@@ -740,11 +741,12 @@ export class TextEditor11 extends React.PureComponent {
   render(){
     return (
       <Editor
-        apiKey='q3skq93mjg9kb2pusut1jjvqd15b8wncykg7tj0ke02dbipj'
+        apiKey = {'q3skq93mjg9kb2pusut1jjvqd15b8wncykg7tj0ke02dbipj'}
         value={this.props.value}
         onEditorChange={this.props.func}
         init={{
           height: 500,
+          language: 'ru',
           //menubar: false,
           plugins: [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
