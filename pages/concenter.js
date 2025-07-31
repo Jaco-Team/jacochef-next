@@ -45,6 +45,7 @@ import dynamic from "next/dynamic";
 import Paper from "@mui/material/Paper";
 import TableContainer from "@mui/material/TableContainer";
 import Checkbox from "@mui/material/Checkbox";
+import DriversMap from '@/components/shared/DriversMap/DriversMap';
 
 function a11yProps(index) {
   return {
@@ -68,6 +69,7 @@ class Concenter_ extends React.Component {
       modalDialog: false,
       modalDialogDel: false,
       modalDialogDriver: false,
+      modalDialogDelDriver: false,
       confirmDialog: false,
 
       cities: [],
@@ -101,7 +103,7 @@ class Concenter_ extends React.Component {
   async componentDidMount(){
     let data = await this.getData('get_all');
 
-    let need_points = data.points.filter( (item, key) => parseInt(item.city_id) == parseInt(data.cities[0].id) );
+    let need_points = data.points.filter( (item) => parseInt(item.city_id) == parseInt(data.cities[0].id) );
 
     this.setState({
       module_name: data.module_info.name,
@@ -125,7 +127,7 @@ class Concenter_ extends React.Component {
     });
 
     let res = api_laravel(this.state.module, method, data)
-      .then((result) => result.data)
+      .then((result) => result?.data)
       .finally(() => {
         setTimeout(() => {
           this.setState({
@@ -183,7 +185,7 @@ class Concenter_ extends React.Component {
 
     let res = await this.getData('get_orders', data);
 
-    console.log( res )
+    // console.log( res )
 
     this.setState({
       orders: res.orders,
@@ -212,7 +214,7 @@ class Concenter_ extends React.Component {
 
     let res = await this.getData('get_order_new', data);
 
-    console.log( res )
+    // console.log( res )
 
     this.setState({
       modalDialog: true,
@@ -570,7 +572,7 @@ class Concenter_ extends React.Component {
                   </AccordionDetails>
                 </Accordion>
                 }
-                {(this.hasAccess(acces?.list_driver) && this.state.showOrder.order.type_order_ === 1 && this.state.showOrder.driver_stat.length) &&
+                {(this.hasAccess(acces?.list_driver) && this.state.showOrder.order.type_order_ === 1 && this.state.showOrder.driver_stat.length > 0) &&
                     <Accordion style={{width: '100%'}}>
                       <AccordionSummary
                           expandIcon={<ExpandMoreIcon/>}
@@ -785,7 +787,7 @@ class Concenter_ extends React.Component {
             <Button variant="contained" onClick={this.btnGetOrders.bind(this)}>Обновить данные</Button>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} lg={6}>
             {err_info.all_green ? (
             <TableContainer component={Paper}>
               <Table>
@@ -824,6 +826,19 @@ class Concenter_ extends React.Component {
               </Table>
             </TableContainer>) : null}
           </Grid>
+
+          {this.hasAccess(acces?.show_map) && this.state.orders.length > 0 &&
+          <Grid item xs={12} lg={6}>
+            <Accordion>
+              <AccordionSummary>
+                <Typography>Курьеры на карте</Typography>
+              </AccordionSummary>
+              <AccordionDetails> 
+                <DriversMap pointId={this.state.point_id} onShowOrder={async (id) => await this.showOrder(id)} />
+              </AccordionDetails>
+            </Accordion>
+          </Grid>
+          }
 
           <Grid item xs={12}>
             <Tabs value={this.state.indexTab}>
