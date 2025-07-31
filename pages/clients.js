@@ -197,7 +197,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 				return (
 					<div style={{
 						marginBottom: 10,
-						display: element.data.conditions.stars.find((value) => value === 1) || element.data.conditions.products.find((value) => value === item.name) || element.data.conditions.categories.find((value) => value === item.cat_name) ? 'initial' : 'none'
+						display: element.data.conditions.stars.find((value) => value === parseInt(item.form_feed.find((el) => el.type === 'rating')?.data?.value)) || element.data.conditions.products.find((value) => value === item.name) || element.data.conditions.categories.find((value) => value === item.cat_name) ? 'initial' : 'none'
 					}}>
 						<Typography variant="h6">{element.data.title}</Typography>
 						{element.data.checkboxes.map((checkbox) => (
@@ -256,7 +256,6 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 					value: arr,
 					type
 				};
-				console.log(valuesCopy);
 			} else {
 				valuesCopy[key][type] = {
 					value: e.target.value,
@@ -491,7 +490,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 										fontWeight: 'bold',
 										color: '#000'
 									}}>{`${order?.sum_order}`} р</TableCell>
-									<TableCell sx={{display: order_items?.some(item => item.form_feed?.length || item.form_data.length) ? '' : 'none'}}><Button variant="contained" onClick={saveFeedback}>Сохранить отзывы</Button></TableCell>
+									<TableCell><Button variant="contained" onClick={saveFeedback}  sx={{display: order_items?.some(item => item.form_data.length) ? '' : 'none'}}>Сохранить отзывы</Button></TableCell>
 								</TableRow>
 							</TableFooter>
 						</Table>

@@ -2,13 +2,14 @@ import React, {useEffect, useState} from 'react';
 import Grid from '@mui/material/Grid';
 import {useRouter} from 'next/router';
 import {
+	CardContent, CardHeader,
 	Checkbox, Chip, FormControlLabel, Rating, TextField, Typography,
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
 import {api_laravel, api_laravel_local} from '@/src/api_new';
-import {formatDate, MyAutocomplite, MyDatePicker, MyDatePickerNew} from "@/ui/elements";
+import {formatDate, MyAlert, MyAutocomplite, MyDatePicker, MyDatePickerNew} from "@/ui/elements";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
@@ -27,6 +28,13 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import dayjs from "dayjs";
 import TableContainer from "@mui/material/TableContainer";
+import TabContext from "@mui/lab/TabContext";
+import TabPanel from "@mui/lab/TabPanel";
+import Paper from "@mui/material/Paper";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Divider from "@mui/material/Divider";
+import Card from "@mui/material/Card";
 
 const ModalOrder = ({open, onClose, getData, pointId, orderId}) => {
 	const [order, setOrder] = useState({});
@@ -286,18 +294,26 @@ function FeedbackPage() {
 	const [rating, setRating] = useState(1);
 	const [selectedTags, setSelectedTags] = useState([]);
 	const [active, setActive] = useState(false);
+	const [value, setValue] = useState('view_form');
 	const [points, setPoints] = useState([]);
 	const [items, setItems] = useState([]);
 	const [point, setPoint] = useState([]);
 	const [item, setItem] = useState([]);
+	const [rows, setRows] = useState([]);
+	const [leaderLow, setLeaderLow] = useState([]);
+	const [leaderUp, setLeaderUp] = useState([]);
 	const [dateStart, setDateStart] = useState(null);
 	const [dateEnd, setDateEnd] = useState(null);
 	const [feedbacks, setFeedbacks] = useState([]);
 	const [openOrder, setOpenOrder] = useState(false);
 	const [pointId, setPointId] = useState(null);
 	const [orderId, setOrderId] = useState(null);
+	const [openAlert, setOpenAlert] = useState(false);
+	const [errStatus, setErrStatus] = useState(false);
+	const [errText, setErrText] = useState('');
 	const tabsData = {
-		view_feed: 'Просмотр отчета',
+		view_form: 'Просомотр формы',
+		view_feed: 'Отчеты',
 	};
 	const [access, setAccess] = useState({});
 
@@ -307,7 +323,7 @@ function FeedbackPage() {
 			setTitle(data.item.name);
 			setFormData(JSON.parse(data.item.form_data));
 			setActive(data.item.active);
-			const tabsCheck = Object.entries(tabsData).filter(([key]) => data.acces?.[key] === '1');
+			const tabsCheck = Object.entries(tabsData).filter(([key]) => data.acces?.[key] === '1' || key === 'view_form');
 			setAccess(Object.fromEntries(tabsCheck));
 			setPoints(data.points);
 			setItems(data.items);
@@ -333,7 +349,16 @@ function FeedbackPage() {
 			item,
 			form_id: id
 		}).then((data) => {
-			setFeedbacks(data.feedback);
+			if (!data.st) {
+				setErrStatus(data.st);
+				setErrText(data.text);
+				setOpenAlert(true);
+			} else {
+				setFeedbacks(data.feedback);
+				setRows(data.rows);
+				setLeaderLow(data.leaderLow);
+				setLeaderUp(data.leaderUp);
+			}
 		});
 	}
 
@@ -366,6 +391,10 @@ function FeedbackPage() {
 			default:
 				return 'Отображается всегда';
 		}
+	};
+
+	const handleChange = (event, newValue) => {
+		setValue(newValue);
 	};
 	const renderElement = (element) => {
 		switch (element.type) {
@@ -482,106 +511,325 @@ function FeedbackPage() {
 			<Backdrop style={{zIndex: 99}} open={isLoad}>
 				<CircularProgress color="inherit"/>
 			</Backdrop>
+			<MyAlert
+        isOpen={openAlert}
+        onClose={() => setOpenAlert(false)}
+        status={errStatus}
+        text={errText}
+      />
 			{openOrder ? (
 				<ModalOrder open={openOrder} onClose={() => setOpenOrder(false)} getData={getData} orderId={orderId} pointId={pointId}/>) : null}
 			<Grid item xs={12} sm={12}>
 				<h1>{title}</h1>
 			</Grid>
-			{access.view_feed ? (
-				<>
-					<Grid item xs={12} sm={3}>
-						<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
-							setPoint(data)
-						}}/>
-					</Grid>
-					<Grid item xs={12} sm={3}>
-						<MyAutocomplite label="Позиции" data={items} multiple={true} value={item} func={(event, data) => {
-							setItem(data)
-						}}/>
-					</Grid>
-					<Grid item xs={12} sm={3}>
-						<MyDatePickerNew
-							label="Дата начала"
-							value={dateStart}
-							func={(e) => setDateStart(formatDate(e))}
-						/>
-					</Grid>
-					<Grid item xs={12} sm={3}>
-						<MyDatePickerNew
-							label="Дата окончания"
-							value={dateEnd}
-							func={(e) => setDateEnd(formatDate(e))}
-						/>
-					</Grid>
-					<Grid item xs={12} sm={12}>
-						<Button
-							variant="contained"
-							color="primary"
-							onClick={getFeedbacks}
+			<Grid item xs={12} sm={12} style={{paddingBottom: 24}}>
+				<Paper>
+					<TabContext value={value}>
+						<Tabs
+							value={value}
+							onChange={handleChange}
+							variant="scrollable"
+							scrollButtons={false}
 						>
-							Показать отчет
-						</Button>
-					</Grid>
-					{feedbacks.length ? (
-						<Grid item xs={12} sm={12}>
-							<Accordion>
-								<AccordionSummary expandIcon={<ExpandMoreIcon/>} aria-controls="panel1a-content">
-									<Typography style={{whiteSpace: 'nowrap', fontWeight: 'bold '}}> Отзывы ({feedbacks.length}) </Typography>
-								</AccordionSummary>
-								<AccordionDetails>
-									<Accordion>
-										<TableContainer>
-											<Table>
-												<TableHead>
-													<TableRow>
-														<TableCell>#</TableCell>
-														<TableCell>Номер заказа</TableCell>
-														<TableCell>Точка</TableCell>
-														<TableCell>Отзывов по товару</TableCell>
-														<TableCell>Отзывов по категории</TableCell>
-														<TableCell>Отзывов по типу заказа</TableCell>
-														<TableCell>Дата отзыва</TableCell>
-													</TableRow>
-												</TableHead>
-												<TableBody>
-													{feedbacks.map((it, k) => (
-														<TableRow style={{cursor: 'pointer'}} hover key={it.order_id} onClick={() => openOrderModal(it.point_id, it.order_id)}>
-															<TableCell>{k + 1}</TableCell>
-															<TableCell>{it.order_id}</TableCell>
-															<TableCell>{it.point_name}</TableCell>
-															<TableCell>{it.count_things}</TableCell>
-															<TableCell>{it.count_cat}</TableCell>
-															<TableCell>{it.count_order}</TableCell>
-															<TableCell>{it.date}</TableCell>
-														</TableRow>
-													))}
-												</TableBody>
-											</Table>
-										</TableContainer>
-									</Accordion>
-								</AccordionDetails>
-							</Accordion>
-						</Grid>
-					) : null}
-				</>
-			) : null}
-			<Grid item xs={12} sm={12}>
-				<FormControlLabel
-					sx={{pt: 0}}
-					control={<Checkbox checked={active} onChange={changeActive}/>}
-					label={'Активность'}
-					id={'active'}
-					size="small"
-				/>
+							{Object.entries(access).map(([key, value]) => <Tab label={value} value={key}/>)}
+						</Tabs>
+					</TabContext>
+				</Paper>
 			</Grid>
-			<Grid item xs={12} sm={12} display="flex" flexDirection="column" alignItems="center">
-				<div style={{
-					width: 500, boxShadow: '0 2px 12px 0 rgba(0, 0, 0, .10)', padding: 20, borderRadius: 10,
-				}}
-				>
-					{formData.map((element) => renderElement(element))}
-					<Button variant="contained" style={{float: 'right'}}>Отправить</Button>
-				</div>
+			<Grid xs={12} sm={12} style={{paddingTop: 0}}>
+				<TabContext value={value}>
+					<TabPanel value="view_feed">
+						<Grid container spacing={2} style={{marginBottom: 16}}>
+							<Grid item xs={12} sm={3}>
+								<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
+									setPoint(data)
+								}}/>
+							</Grid>
+							<Grid item xs={12} sm={3}>
+								<MyAutocomplite label="Позиции" data={items} multiple={true} value={item} func={(event, data) => {
+									setItem(data)
+								}}/>
+							</Grid>
+							<Grid item xs={12} sm={3}>
+								<MyDatePickerNew
+									label="Дата начала"
+									value={dateStart}
+									func={(e) => setDateStart(formatDate(e))}
+								/>
+							</Grid>
+							<Grid item xs={12} sm={3}>
+								<MyDatePickerNew
+									label="Дата окончания"
+									value={dateEnd}
+									func={(e) => setDateEnd(formatDate(e))}
+								/>
+							</Grid>
+							<Grid item xs={12} sm={12}>
+								<Button
+									variant="contained"
+									color="primary"
+									onClick={getFeedbacks}
+								>
+									Показать отчет
+								</Button>
+							</Grid>
+						</Grid>
+						{rows.length ? (
+							<Grid item xs={12} sm={12}>
+								<Grid container spacing={3} sx={{marginBottom: '12px'}}>
+									{rows.map((item, index) => (
+										<Grid item xs={12} sm={6} md={4} key={item.order_id}>
+											<Card
+												sx={{
+													cursor: 'pointer',
+													'&:hover': {
+														boxShadow: 3,
+														transform: 'translateY(-2px)'
+													},
+													transition: 'all 0.2s ease-in-out'
+												}}
+												onClick={() => openOrderModal(item.point_id, item.order_id)}
+											>
+												<CardContent>
+													<Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+														<Typography variant="h6" component="div">
+															#{index + 1} {item.name}
+														</Typography>
+														<Chip
+															label={`Рейтинг: ${item.rating}`}
+															color={item.rating >= 4 ? 'success' : item.rating >= 3 ? 'warning' : 'error'}
+														/>
+													</Box>
+
+													<Divider sx={{my: 1}}/>
+
+													<Grid container spacing={2}>
+														<Grid item xs={6}>
+															<Typography variant="body2" color="text.secondary">
+																Всего отзывов:
+															</Typography>
+															<Typography variant="body1">
+																{item.total_count}
+															</Typography>
+														</Grid>
+														<Grid item xs={6}>
+															<Typography variant="body2" color="text.secondary">
+																Высоких оценок:
+															</Typography>
+															<Typography variant="body1" color="success">
+																{item.positive_percentage}%
+															</Typography>
+														</Grid>
+														<Grid item xs={6}>
+															<Typography variant="body2" color="text.secondary">
+																Низких оценок:
+															</Typography>
+															<Typography variant="body1" color="error">
+																{item.negative_percentage}%
+															</Typography>
+														</Grid>
+													</Grid>
+
+													<Divider sx={{my: 2}}/>
+													<Box mt={2}>
+														<Typography variant="subtitle2" gutterBottom>
+															Основные достоинства:
+														</Typography>
+														<Box display="flex" flexWrap="wrap" gap={1}>
+															{item.r_up.split(',').map((advantage, i) => (
+																<Chip
+																	key={i}
+																	label={advantage.trim()}
+																	size="small"
+																	color="success"
+																	variant="outlined"
+																/>
+															))}
+														</Box>
+													</Box>
+													<Box>
+														<Typography variant="subtitle2" gutterBottom>
+															Основные проблемы:
+														</Typography>
+														<Box display="flex" flexWrap="wrap" gap={1}>
+															{item.r_low.split(',').map((problem, i) => (
+																<Chip
+																	key={i}
+																	label={problem.trim()}
+																	size="small"
+																	color="error"
+																	variant="outlined"
+																/>
+															))}
+														</Box>
+													</Box>
+												</CardContent>
+											</Card>
+										</Grid>
+									))}
+								</Grid>
+							</Grid>
+						) : null}
+						{leaderLow.length ? (
+							<Grid item xs={12} style={{marginBottom: '24px'}}>
+								<Card elevation={3}>
+									<CardHeader
+										title="Лидеры проблем"
+										subheader={`За период ${dayjs(dateStart).format('DD.MM.YYYY')} - ${dayjs(dateEnd).format('DD.MM.YYYY')}`}
+										titleTypographyProps={{variant: 'h6', fontWeight: 'bold'}}
+									/>
+									<Divider/>
+									<TableContainer>
+										<Table>
+											<TableHead>
+												<TableRow>
+													<TableCell><b>Товар</b></TableCell>
+													<TableCell align="center"><b>Основная проблема</b></TableCell>
+													<TableCell align="center"><b>Кол-во жалоб</b></TableCell>
+													<TableCell align="center"><b>Всего отзывов</b></TableCell>
+													<TableCell align="center"><b>Доля проблем</b></TableCell>
+												</TableRow>
+											</TableHead>
+											<TableBody>
+												{leaderLow.map((row, index) => (
+													<TableRow key={index}>
+														<TableCell><b>{row.name}</b></TableCell>
+														<TableCell align="center">{row.label}</TableCell>
+														<TableCell align="center">{row.occurrences}</TableCell>
+														<TableCell align="center">{row.total_parameters_count}</TableCell>
+														<TableCell align="center">
+															<Box display="flex" alignItems="center" justifyContent="center">
+																{row.percentage}%
+																<Box
+																	width="8px"
+																	height="8px"
+																	bgcolor={parseFloat(row.percentage) > 35 ? '#f44336' : parseFloat(row.percentage) > 25 ? '#ff9800' : '#4caf50'}
+																	borderRadius="50%"
+																	ml={1}
+																/>
+															</Box>
+														</TableCell>
+													</TableRow>
+												))}
+											</TableBody>
+										</Table>
+									</TableContainer>
+								</Card>
+							</Grid>
+						) : null}
+						{leaderUp.length ? (
+							<Grid item xs={12} style={{marginBottom: '24px'}}>
+								<Card elevation={3}>
+									<CardHeader
+										title="Топ положительных оценок"
+										subheader={`За период ${dayjs(dateStart).format('DD.MM.YYYY')} - ${dayjs(dateEnd).format('DD.MM.YYYY')}`}
+										titleTypographyProps={{variant: 'h6', fontWeight: 'bold'}}
+									/>
+									<Divider/>
+									<TableContainer>
+										<Table>
+											<TableHead>
+												<TableRow>
+													<TableCell><b>Товар</b></TableCell>
+													<TableCell align="center"><b>Параметр</b></TableCell>
+													<TableCell align="center"><b>Кол-во оценок</b></TableCell>
+													<TableCell align="center"><b>Всего отзывов</b></TableCell>
+													<TableCell align="center"><b>Доля положительных</b></TableCell>
+												</TableRow>
+											</TableHead>
+											<TableBody>
+												{leaderUp.map((row, index) => (
+													<TableRow key={index}>
+														<TableCell><b>{row.name}</b></TableCell>
+														<TableCell align="center">{row.label}</TableCell>
+														<TableCell align="center">{row.occurrences}</TableCell>
+														<TableCell align="center">{row.total_parameters_count}</TableCell>
+														<TableCell align="center">
+															<Box display="flex" alignItems="center" justifyContent="center">
+																{row.percentage}%
+																<Box
+																	width="8px"
+																	height="8px"
+																	bgcolor={parseFloat(row.percentage) > 35 ? '#5a8b33' : parseFloat(row.percentage) > 25 ? '#6fe821' : '#29ff33'}
+																	borderRadius="50%"
+																	ml={1}
+																/>
+															</Box>
+														</TableCell>
+													</TableRow>
+												))}
+											</TableBody>
+										</Table>
+									</TableContainer>
+								</Card>
+							</Grid>
+						) : null}
+						{feedbacks.length ? (
+							<Grid item xs={12} sm={12}>
+								<Accordion>
+									<AccordionSummary expandIcon={<ExpandMoreIcon/>} aria-controls="panel1a-content">
+										<Typography style={{
+											whiteSpace: 'nowrap',
+											fontWeight: 'bold '
+										}}> Отзывы ({feedbacks.length}) </Typography>
+									</AccordionSummary>
+									<AccordionDetails>
+										<Accordion>
+											<TableContainer>
+												<Table>
+													<TableHead>
+														<TableRow>
+															<TableCell>#</TableCell>
+															<TableCell>Номер заказа</TableCell>
+															<TableCell>Точка</TableCell>
+															<TableCell>Отзывов по товару</TableCell>
+															<TableCell>Отзывов по категории</TableCell>
+															<TableCell>Отзывов по типу заказа</TableCell>
+															<TableCell>Дата отзыва</TableCell>
+														</TableRow>
+													</TableHead>
+													<TableBody>
+														{feedbacks.map((it, k) => (
+															<TableRow style={{cursor: 'pointer'}} hover key={it.order_id} onClick={() => openOrderModal(it.point_id, it.order_id)}>
+																<TableCell>{k + 1}</TableCell>
+																<TableCell>{it.order_id}</TableCell>
+																<TableCell>{it.point_name}</TableCell>
+																<TableCell>{it.count_things}</TableCell>
+																<TableCell>{it.count_cat}</TableCell>
+																<TableCell>{it.count_order}</TableCell>
+																<TableCell>{it.date}</TableCell>
+															</TableRow>
+														))}
+													</TableBody>
+												</Table>
+											</TableContainer>
+										</Accordion>
+									</AccordionDetails>
+								</Accordion>
+							</Grid>
+						) : null}
+					</TabPanel>
+					<TabPanel value="view_form">
+						<Grid item xs={12} sm={12}>
+							<FormControlLabel
+								sx={{pt: 0}}
+								control={<Checkbox checked={active} onChange={changeActive}/>}
+								label={'Активность'}
+								id={'active'}
+								size="small"
+							/>
+						</Grid>
+						<Grid item xs={12} sm={12} display="flex" flexDirection="column" alignItems="center">
+							<div style={{
+								width: 500, boxShadow: '0 2px 12px 0 rgba(0, 0, 0, .10)', padding: 20, borderRadius: 10,
+							}}
+							>
+								{formData.map((element) => renderElement(element))}
+								<Button variant="contained" style={{float: 'right'}}>Отправить</Button>
+							</div>
+						</Grid>
+					</TabPanel>
+				</TabContext>
 			</Grid>
 		</Grid>
 	);
