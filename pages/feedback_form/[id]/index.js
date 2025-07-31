@@ -259,7 +259,8 @@ const ModalOrder = ({open, onClose, getData, pointId, orderId}) => {
 											borderColor: 'grey.300',
 										}}
 										>
-											{Object.entries(item.form_feed).map((data) => data.map((element) => renderElementFeed(element, item)))}
+											{Object.entries(item.form_feed).map((data) => data.map((element) => (
+												<div key={element.id}>{renderElementFeed(element, item)}</div>)))}
 										</Box></TableCell>
 									</TableRow>
 								) : null}
@@ -284,10 +285,71 @@ const ModalOrder = ({open, onClose, getData, pointId, orderId}) => {
 	);
 }
 
+const ModalItem = ({open, onClose, params}) => {
+	return (
+		<Dialog
+			open={open}
+			onClose={onClose}
+			aria-labelledby="alert-dialog-title"
+			aria-describedby="alert-dialog-description"
+			fullWidth={true}
+			maxWidth={'md'}
+			fullScreen={false}
+		>
+			<DialogTitle className="button">
+				<Typography style={{
+					fontWeight: 'bold',
+					alignSelf: 'center'
+				}}></Typography>
+				<IconButton onClick={onClose} style={{cursor: 'pointer'}}>
+					<CloseIcon/>
+				</IconButton>
+			</DialogTitle>
+
+			<DialogContent>
+				{params.length ? (
+					<Grid item xs={12} style={{marginBottom: '24px'}}>
+						<Card elevation={3}>
+							<CardHeader
+								title="Список параметров"
+								titleTypographyProps={{variant: 'h6', fontWeight: 'bold'}}
+							/>
+							<Divider/>
+							<TableContainer>
+								<Table>
+									<TableHead>
+										<TableRow>
+											<TableCell><b>#</b></TableCell>
+											<TableCell align="left"><b>Параметр</b></TableCell>
+											<TableCell align="center"><b>Кол-во</b></TableCell>
+											<TableCell align="center"><b>Процент использований</b></TableCell>
+										</TableRow>
+									</TableHead>
+									<TableBody>
+										{params.map((row, index) => (
+											<TableRow key={index}>
+												<TableCell><b>{index + 1}</b></TableCell>
+												<TableCell align="left">{row.label}</TableCell>
+												<TableCell align="center">{row.total_count}</TableCell>
+												<TableCell align="center">{row.percentage} %</TableCell>
+											</TableRow>
+										))}
+									</TableBody>
+								</Table>
+							</TableContainer>
+						</Card>
+					</Grid>
+				) : null}
+			</DialogContent>
+		</Dialog>
+	);
+}
+
 function FeedbackPage() {
 	const router = useRouter();
 	const {id} = router.query;
-
+	const [openModalItem, setOpenModalItem] = useState(false);
+	const [params, setParams] = useState([]);
 	const [isLoad, setIsLoad] = useState(false);
 	const [title, setTitle] = useState('');
 	const [formData, setFormData] = useState([]);
@@ -329,6 +391,13 @@ function FeedbackPage() {
 			setItems(data.items);
 		});
 	}, []);
+
+	const openItem = (item_id) => {
+		getData('get_item_params', {item_id}).then((data) => {
+			setParams(data.params);
+			setOpenModalItem(true);
+		})
+	}
 
 	const openOrderModal = (pointId, orderId) => {
 		setPointId(pointId);
@@ -414,7 +483,7 @@ function FeedbackPage() {
 						<Typography variant="body2" color="textSecondary" sx={{mb: 2}}>
 							{getConditionText(element.data.condition)}
 						</Typography>
-						{element.data.elements.map((el) => renderElement(el))}
+						{element.data.elements.map((el) => (<div key={el.id}>{renderElement(el)}</div>))}
 					</div>
 				);
 			case 'rating':
@@ -512,13 +581,15 @@ function FeedbackPage() {
 				<CircularProgress color="inherit"/>
 			</Backdrop>
 			<MyAlert
-        isOpen={openAlert}
-        onClose={() => setOpenAlert(false)}
-        status={errStatus}
-        text={errText}
-      />
+				isOpen={openAlert}
+				onClose={() => setOpenAlert(false)}
+				status={errStatus}
+				text={errText}
+			/>
 			{openOrder ? (
 				<ModalOrder open={openOrder} onClose={() => setOpenOrder(false)} getData={getData} orderId={orderId} pointId={pointId}/>) : null}
+			{openModalItem ? (
+				<ModalItem open={openModalItem} onClose={() => setOpenModalItem(false)} params={params}/>) : null}
 			<Grid item xs={12} sm={12}>
 				<h1>{title}</h1>
 			</Grid>
@@ -588,7 +659,7 @@ function FeedbackPage() {
 													},
 													transition: 'all 0.2s ease-in-out'
 												}}
-												onClick={() => openOrderModal(item.point_id, item.order_id)}
+												onClick={() => openItem(item.item_id)}
 											>
 												<CardContent>
 													<Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -824,7 +895,7 @@ function FeedbackPage() {
 								width: 500, boxShadow: '0 2px 12px 0 rgba(0, 0, 0, .10)', padding: 20, borderRadius: 10,
 							}}
 							>
-								{formData.map((element) => renderElement(element))}
+								{formData.map((element) => (<div key={element.id}>{renderElement(element)}</div>))}
 								<Button variant="contained" style={{float: 'right'}}>Отправить</Button>
 							</div>
 						</Grid>

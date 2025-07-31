@@ -477,7 +477,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 											borderColor: 'grey.300',
 										}}
 										>
-											{item.form_feed?.length ? Object.entries(item.form_feed).map((data) => data.map((element) => renderElementFeed(element, item))) : Object.entries(item.form_data).map((data) => data.map((element) => renderElement(element, key, item)))}
+											{item.form_feed?.length ? Object.entries(item.form_feed).map((data) => data.map((element) => (<div key={element.id}>{renderElementFeed(element, item)}</div>))) : Object.entries(item.form_data).map((data) => data.map((element) => (<div key={element.id}>{renderElement(element, key, item)}</div>)))}
 										</Box></TableCell>
 									</TableRow>
 								) : null}

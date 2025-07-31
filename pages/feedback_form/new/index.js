@@ -532,7 +532,7 @@ function FormBuilder() {
 						<Typography variant="body2" color="textSecondary" sx={{mb: 2}}>
 							{getConditionText(element.data.condition)}
 						</Typography>
-						{element.data.elements.map((el) => renderElement(el))}
+						{element.data.elements.map((el) => (<div key={el.id}>{renderElement(el)}</div>))}
 					</div>
 				);
 			case 'rating':
