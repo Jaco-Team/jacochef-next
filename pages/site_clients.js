@@ -1124,6 +1124,8 @@ class SiteClients_ extends React.Component {
 
       traffic_stats: [],
       traffic_sources: [],
+      orders_by_source: [],
+      orders_by_utm: [],
 
       select_toggle: 'city',
       points: [],
@@ -1786,21 +1788,19 @@ class SiteClients_ extends React.Component {
 
     const res = await this.getData('get_traffic', data);
 
-    if (res.stats.length || res.sources.length) {
-
+    if (res.st) {
       this.setState({
         traffic_stats: res.stats,
-        traffic_sources: res.sources
+        traffic_sources: res.sources,
+        orders_by_source: res.orders_by_source,
+        orders_by_utm: res.orders_by_utm,
       });
-      
     } else {
-
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: 'За период нет статистики',
       });
-
     }
 
   }
@@ -2543,7 +2543,7 @@ class SiteClients_ extends React.Component {
                 </Grid>
 
                 {/* Визиты статистика */}
-                {this.state.traffic_stats.length > 0 && (
+                {this.state.traffic_stats?.length > 0 && (
                   <Grid item xs={12} sm={6} mt={3} mb={5}>
                     <Typography variant="h4">Визиты все</Typography>
                     <TableContainer sx={{ maxHeight: { xs: 'none', sm: 570 }, marginTop: '1em' }} component={Paper}>
@@ -2577,10 +2577,10 @@ class SiteClients_ extends React.Component {
                 {/* Визиты статистика */}
 
                 {/* Визиты по источнику */}
-                {this.state.traffic_sources.length > 0 && (
+                {this.state.traffic_sources?.length > 0 && (
                   <Grid item xs={12} sm={6} mt={3} mb={5}>
                     <Typography variant="h4">Источники трафика</Typography>
-                    <TableContainer sx={{ maxHeight: { xs: 'none', sm: 570 }, marginTop: '1em' }} component={Paper}>
+                    <TableContainer sx={{ maxHeight: { xs: 'none', sm: '70dvh' }, marginTop: '1em' }} component={Paper}>
                       <Table stickyHeader>
                         <TableHead>
                           <TableRow>
@@ -2610,6 +2610,74 @@ class SiteClients_ extends React.Component {
                   </Grid>
                 )}
                 {/* Визиты по источнику */}
+
+                {/* Заказы по источнику */}
+                {this.state.orders_by_source?.length > 0 && (
+                  <Grid item xs={12} sm={6} mt={3} mb={5}>
+                    <Typography variant="h4">Источники заказов</Typography>
+                    <TableContainer sx={{ maxHeight: { xs: 'none', sm: '70dvh' }, marginTop: '1em' }} component={Paper}>
+                      <Table stickyHeader>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>#</TableCell>
+                            <TableCell>Источник (source)</TableCell>
+                            <TableCell>Канал (medium)</TableCell>
+                            <TableCell>Заказов</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {this.state.orders_by_source.map( (item, key) =>
+                            <TableRow 
+                              hover
+                              key={key} 
+                            >
+                              <TableCell>{key + 1}</TableCell>
+                              <TableCell>{item.source}</TableCell>
+                              <TableCell>{item.medium}</TableCell>
+                              <TableCell>{item.orders}</TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                )}
+                {/* Заказы по источнику */}
+
+                {/* Заказы по utm */}
+                {this.state.orders_by_utm?.length > 0 && (
+                  <Grid item xs={12} sm={6} mt={3} mb={5}>
+                    <Typography variant="h4">Заказы по UTM</Typography>
+                    <TableContainer sx={{ maxHeight: { xs: 'none', sm: '70dvh' }, marginTop: '1em' }} component={Paper}>
+                      <Table stickyHeader>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>#</TableCell>
+                            <TableCell>Источник (source)</TableCell>
+                            <TableCell>Канал (medium)</TableCell>
+                            <TableCell>Кампания (campaign)</TableCell>
+                            <TableCell>Заказов</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {this.state.orders_by_utm.map( (item, key) =>
+                            <TableRow 
+                              hover
+                              key={key} 
+                            >
+                              <TableCell>{key + 1}</TableCell>
+                              <TableCell>{item.utm_source}</TableCell>
+                              <TableCell>{item.utm_medium}</TableCell>
+                              <TableCell>{item.utm_campaign}</TableCell>
+                              <TableCell>{item.orders}</TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                )}
+                {/* Заказы по utm */}
 
               </Grid>
             </TabPanel>
