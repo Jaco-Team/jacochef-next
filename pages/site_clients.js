@@ -49,6 +49,10 @@ import { ExlIcon } from '@/ui/icons';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
+import SiteClientsOrdersByUtmTable from '@/components/site_clients/SiteClientsOrdersByUtmTable';
+import SiteClientsOrdersBySourceTable from '@/components/site_clients/SiteClientsOrdersBySourceTable';
+import SiteClientsTrafficBySourceTable from '@/components/site_clients/SiteClientsTrafficBySourceTable';
+import SiteClientsTrafficSummaryTable from '@/components/site_clients/SiteClientsTrafficSummaryTable';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -2546,32 +2550,7 @@ class SiteClients_ extends React.Component {
                 {this.state.traffic_stats?.length > 0 && (
                   <Grid item xs={12} sm={6} mt={3} mb={5}>
                     <Typography variant="h4">Визиты все</Typography>
-                    <TableContainer sx={{ maxHeight: { xs: 'none', sm: 570 }, marginTop: '1em' }} component={Paper}>
-                      <Table>
-                        <TableBody>
-                          <TableRow hover>
-                            <TableCell>Всего визитов</TableCell>
-                            <TableCell>{this.state.traffic_stats[0]?.visits}</TableCell>
-                          </TableRow>
-                          <TableRow hover>
-                            <TableCell>Уникальных посетителей</TableCell>
-                            <TableCell>{this.state.traffic_stats[0]?.unique_visitors}</TableCell>
-                          </TableRow>
-                          <TableRow hover>
-                            <TableCell>Новых визитов</TableCell>
-                            <TableCell>{this.state.traffic_stats[0]?.new_visits}</TableCell>
-                          </TableRow>
-                          <TableRow hover>
-                            <TableCell>Повторных визитов</TableCell>
-                            <TableCell>{this.state.traffic_stats[0]?.returning_visits}</TableCell>
-                          </TableRow>
-                          <TableRow hover>
-                            <TableCell>Среднее визитов на посетителя</TableCell>
-                            <TableCell>{this.state.traffic_stats[0]?.avg_sessions_per_visitor}</TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                    <SiteClientsTrafficSummaryTable data={this.state.traffic_stats[0]} />
                   </Grid>
                 )}
                 {/* Визиты статистика */}
@@ -2580,33 +2559,7 @@ class SiteClients_ extends React.Component {
                 {this.state.traffic_sources?.length > 0 && (
                   <Grid item xs={12} sm={6} mt={3} mb={5}>
                     <Typography variant="h4">Источники трафика</Typography>
-                    <TableContainer sx={{ maxHeight: { xs: 'none', sm: '70dvh' }, marginTop: '1em' }} component={Paper}>
-                      <Table stickyHeader>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>#</TableCell>
-                            <TableCell>Источник (source)</TableCell>
-                            <TableCell>Канал (medium)</TableCell>
-                            <TableCell>Визиты</TableCell>
-                            <TableCell>% доля</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {this.state.traffic_sources.map( (item, key) =>
-                            <TableRow 
-                              hover
-                              key={key} 
-                            >
-                              <TableCell>{key + 1}</TableCell>
-                              <TableCell>{item.source}</TableCell>
-                              <TableCell>{item.medium}</TableCell>
-                              <TableCell>{item.visits}</TableCell>
-                              <TableCell>{item.share_pct}%</TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                    <SiteClientsTrafficBySourceTable rows={this.state.traffic_sources} />
                   </Grid>
                 )}
                 {/* Визиты по источнику */}
@@ -2615,31 +2568,7 @@ class SiteClients_ extends React.Component {
                 {this.state.orders_by_source?.length > 0 && (
                   <Grid item xs={12} sm={6} mt={3} mb={5}>
                     <Typography variant="h4">Источники заказов</Typography>
-                    <TableContainer sx={{ maxHeight: { xs: 'none', sm: '70dvh' }, marginTop: '1em' }} component={Paper}>
-                      <Table stickyHeader>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>#</TableCell>
-                            <TableCell>Источник (source)</TableCell>
-                            <TableCell>Канал (medium)</TableCell>
-                            <TableCell>Заказов</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {this.state.orders_by_source.map( (item, key) =>
-                            <TableRow 
-                              hover
-                              key={key} 
-                            >
-                              <TableCell>{key + 1}</TableCell>
-                              <TableCell>{item.source}</TableCell>
-                              <TableCell>{item.medium}</TableCell>
-                              <TableCell>{item.orders}</TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                    <SiteClientsOrdersBySourceTable rows={this.state.orders_by_source} />
                   </Grid>
                 )}
                 {/* Заказы по источнику */}
@@ -2648,33 +2577,7 @@ class SiteClients_ extends React.Component {
                 {this.state.orders_by_utm?.length > 0 && (
                   <Grid item xs={12} sm={6} mt={3} mb={5}>
                     <Typography variant="h4">Заказы по UTM</Typography>
-                    <TableContainer sx={{ maxHeight: { xs: 'none', sm: '70dvh' }, marginTop: '1em' }} component={Paper}>
-                      <Table stickyHeader>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>#</TableCell>
-                            <TableCell>Источник (source)</TableCell>
-                            <TableCell>Канал (medium)</TableCell>
-                            <TableCell>Кампания (campaign)</TableCell>
-                            <TableCell>Заказов</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {this.state.orders_by_utm.map( (item, key) =>
-                            <TableRow 
-                              hover
-                              key={key} 
-                            >
-                              <TableCell>{key + 1}</TableCell>
-                              <TableCell>{item.utm_source}</TableCell>
-                              <TableCell>{item.utm_medium}</TableCell>
-                              <TableCell>{item.utm_campaign}</TableCell>
-                              <TableCell>{item.orders}</TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                    <SiteClientsOrdersByUtmTable rows={this.state.orders_by_utm}/>
                   </Grid>
                 )}
                 {/* Заказы по utm */}
