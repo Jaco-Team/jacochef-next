@@ -1058,6 +1058,7 @@ class SiteClients_ extends React.Component {
       cities: [],
       city_id: [],
       city_id_addr: [],
+      city_id_traffic: [],
 
       all_items: [],
       items: [],
@@ -1067,6 +1068,9 @@ class SiteClients_ extends React.Component {
 
       date_start_addr: formatDate(new Date()),
       date_end_addr: formatDate(new Date()),
+
+      date_start_traffic: formatDate(new Date()),
+      date_end_traffic: formatDate(new Date()),
 
       modalDialog: false,
       client_login: '',
@@ -1111,11 +1115,15 @@ class SiteClients_ extends React.Component {
       index_clients: -1,
       index_orders: -1,
       index_address: -1,
+      index_traffic: -1,
       tabs_data: [],
 
       address_list: '',
       orders_list: [],
       orders_list_addr: [],
+
+      traffic_stats: [],
+      traffic_sources: [],
 
       select_toggle: 'city',
       points: [],
@@ -1207,6 +1215,10 @@ class SiteClients_ extends React.Component {
           tabs_data.push({key, 'name': "Заказы по адресам"});
         }
         
+        if(key === 'source_traffic') {
+          tabs_data.push({key, 'name': "Аналитика по оформленным заказам"});
+        }
+        
       }
     }
 
@@ -1228,6 +1240,12 @@ class SiteClients_ extends React.Component {
       if(item.key === 'search_address') {
         this.setState({
           index_address: index
+        });
+      }
+
+      if(item.key === 'source_traffic') {
+        this.setState({
+          index_traffic: index
         });
       }
 
@@ -1733,6 +1751,54 @@ class SiteClients_ extends React.Component {
         err_status: false,
         err_text: 'Заказы с заданными параметрами не найдены',
         search_orders: []
+      });
+
+    }
+
+  }
+
+  async getDataTraffic() {
+    const city_id = this.state.city_id_traffic.map(c => c.id);
+    const date_start = dayjs(this.state.date_start_traffic)?.format('YYYY-MM-DD') || '';
+    const date_end = dayjs(this.state.date_end_traffic)?.format('YYYY-MM-DD') || '';
+    if (!city_id?.length) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать город'
+      });
+      return;
+    } 
+    if (!date_start || !date_end) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать обе даты'
+      });
+      return;
+    } 
+
+    const data = {
+      city_id,
+      date_start,
+      date_end,
+    }
+
+    const res = await this.getData('get_traffic', data);
+
+    if (res.stats.length || res.sources.length) {
+
+      this.setState({
+        traffic_stats: res.stats,
+        traffic_sources: res.sources
+      });
+      
+    } else {
+
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'За период нет статистики',
       });
 
     }
@@ -2432,6 +2498,123 @@ class SiteClients_ extends React.Component {
             </TabPanel>
           </Grid>
           {/* Заказы по адресам */}
+
+          {/* Аналитика по заказам */}
+          <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+            <TabPanel 
+              value={this.state.activeTab} 
+              index={this.state.index_traffic} 
+              id='traffic'
+            >
+              <Grid container spacing={3}>
+
+                <Grid item xs={12} sm={4}>
+                  <MyAutocomplite
+                    label="Город"
+                    multiple={true}
+                    data={this.state.cities}
+                    value={this.state.city_id_traffic}
+                    func={this.changeAutocomplite.bind(this, 'city_id_traffic')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={3}>
+                  <MyDatePickerNew
+                    label="Дата от"
+                    customActions={true}
+                    value={dayjs(this.state.date_start_traffic)}
+                    func={this.changeDateRange.bind(this, 'date_start_traffic')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={3}>
+                  <MyDatePickerNew
+                    label="Дата до"
+                    customActions={true}
+                    value={dayjs(this.state.date_end_traffic)}
+                    func={this.changeDateRange.bind(this, 'date_end_traffic')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={2}>
+                  <Button onClick={this.getDataTraffic.bind(this)} variant="contained">
+                    Показать
+                  </Button>
+                </Grid>
+
+                {/* Визиты статистика */}
+                {this.state.traffic_stats.length > 0 && (
+                  <Grid item xs={12} sm={6} mt={3} mb={5}>
+                    <Typography variant="h4">Визиты все</Typography>
+                    <TableContainer sx={{ maxHeight: { xs: 'none', sm: 570 }, marginTop: '1em' }} component={Paper}>
+                      <Table>
+                        <TableBody>
+                          <TableRow hover>
+                            <TableCell>Всего визитов</TableCell>
+                            <TableCell>{this.state.traffic_stats[0]?.visits}</TableCell>
+                          </TableRow>
+                          <TableRow hover>
+                            <TableCell>Уникальных посетителей</TableCell>
+                            <TableCell>{this.state.traffic_stats[0]?.unique_visitors}</TableCell>
+                          </TableRow>
+                          <TableRow hover>
+                            <TableCell>Новых визитов</TableCell>
+                            <TableCell>{this.state.traffic_stats[0]?.new_visits}</TableCell>
+                          </TableRow>
+                          <TableRow hover>
+                            <TableCell>Повторных визитов</TableCell>
+                            <TableCell>{this.state.traffic_stats[0]?.returning_visits}</TableCell>
+                          </TableRow>
+                          <TableRow hover>
+                            <TableCell>Среднее визитов на посетителя</TableCell>
+                            <TableCell>{this.state.traffic_stats[0]?.avg_sessions_per_visitor}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                )}
+                {/* Визиты статистика */}
+
+                {/* Визиты по источнику */}
+                {this.state.traffic_sources.length > 0 && (
+                  <Grid item xs={12} sm={6} mt={3} mb={5}>
+                    <Typography variant="h4">Источники трафика</Typography>
+                    <TableContainer sx={{ maxHeight: { xs: 'none', sm: 570 }, marginTop: '1em' }} component={Paper}>
+                      <Table stickyHeader>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>#</TableCell>
+                            <TableCell>Источник (source)</TableCell>
+                            <TableCell>Канал (medium)</TableCell>
+                            <TableCell>Визиты</TableCell>
+                            <TableCell>% доля</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {this.state.traffic_sources.map( (item, key) =>
+                            <TableRow 
+                              hover
+                              key={key} 
+                            >
+                              <TableCell>{key + 1}</TableCell>
+                              <TableCell>{item.source}</TableCell>
+                              <TableCell>{item.medium}</TableCell>
+                              <TableCell>{item.visits}</TableCell>
+                              <TableCell>{item.share_pct}%</TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                )}
+                {/* Визиты по источнику */}
+
+              </Grid>
+            </TabPanel>
+          </Grid>
+          {/* Аналитика по заказам */}
              
         </Grid>
       </>
