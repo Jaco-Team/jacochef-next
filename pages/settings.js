@@ -1335,7 +1335,10 @@ function SettingsPage() {
 												</TableHead>
 												<TableBody>
 													{activeAder.map((row, index) => (
-														<TableRow key={index} onClick={() => {
+														<TableRow
+															key={index}
+															sx={{ cursor: 'pointer' }}
+															onClick={() => {
 															setItemId(row.id);
 															setOpenUpdateAder(true)
 														}}>
@@ -1373,7 +1376,13 @@ function SettingsPage() {
 												</TableHead>
 												<TableBody>
 													{disableAder.map((row, index) => (
-														<TableRow key={index}>
+														<TableRow
+															key={index}
+															sx={{ cursor: 'pointer' }}
+															onClick={() => {
+															setItemId(row.id);
+															setOpenUpdateAder(true)
+														}}>
 															<TableCell>{index + 1}</TableCell>
 															<TableCell align="left">{row.name}</TableCell>
 															<TableCell align="center">{row.date_start}</TableCell>
