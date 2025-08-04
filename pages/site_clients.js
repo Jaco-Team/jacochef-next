@@ -49,6 +49,10 @@ import { ExlIcon } from '@/ui/icons';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
+import SiteClientsOrdersByUtmTable from '@/components/site_clients/SiteClientsOrdersByUtmTable';
+import SiteClientsOrdersBySourceTable from '@/components/site_clients/SiteClientsOrdersBySourceTable';
+import SiteClientsTrafficBySourceTable from '@/components/site_clients/SiteClientsTrafficBySourceTable';
+import SiteClientsTrafficSummaryTable from '@/components/site_clients/SiteClientsTrafficSummaryTable';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -1058,6 +1062,7 @@ class SiteClients_ extends React.Component {
       cities: [],
       city_id: [],
       city_id_addr: [],
+      city_id_traffic: [],
 
       all_items: [],
       items: [],
@@ -1067,6 +1072,9 @@ class SiteClients_ extends React.Component {
 
       date_start_addr: formatDate(new Date()),
       date_end_addr: formatDate(new Date()),
+
+      date_start_traffic: formatDate(new Date()),
+      date_end_traffic: formatDate(new Date()),
 
       modalDialog: false,
       client_login: '',
@@ -1111,11 +1119,17 @@ class SiteClients_ extends React.Component {
       index_clients: -1,
       index_orders: -1,
       index_address: -1,
+      index_traffic: -1,
       tabs_data: [],
 
       address_list: '',
       orders_list: [],
       orders_list_addr: [],
+
+      traffic_stats: [],
+      traffic_sources: [],
+      orders_by_source: [],
+      orders_by_utm: [],
 
       select_toggle: 'city',
       points: [],
@@ -1207,6 +1221,10 @@ class SiteClients_ extends React.Component {
           tabs_data.push({key, 'name': "Заказы по адресам"});
         }
         
+        if(key === 'source_traffic') {
+          tabs_data.push({key, 'name': "Аналитика по оформленным заказам"});
+        }
+        
       }
     }
 
@@ -1228,6 +1246,12 @@ class SiteClients_ extends React.Component {
       if(item.key === 'search_address') {
         this.setState({
           index_address: index
+        });
+      }
+
+      if(item.key === 'source_traffic') {
+        this.setState({
+          index_traffic: index
         });
       }
 
@@ -1735,6 +1759,52 @@ class SiteClients_ extends React.Component {
         search_orders: []
       });
 
+    }
+
+  }
+
+  async getDataTraffic() {
+    const city_id = this.state.city_id_traffic.map(c => c.id);
+    const date_start = dayjs(this.state.date_start_traffic)?.format('YYYY-MM-DD') || '';
+    const date_end = dayjs(this.state.date_end_traffic)?.format('YYYY-MM-DD') || '';
+    if (!city_id?.length) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо выбрать город'
+      });
+      return;
+    } 
+    if (!date_start || !date_end) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'Необходимо указать обе даты'
+      });
+      return;
+    } 
+
+    const data = {
+      city_id,
+      date_start,
+      date_end,
+    }
+
+    const res = await this.getData('get_traffic', data);
+
+    if (res.st) {
+      this.setState({
+        traffic_stats: res.stats,
+        traffic_sources: res.sources,
+        orders_by_source: res.orders_by_source,
+        orders_by_utm: res.orders_by_utm,
+      });
+    } else {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: 'За период нет статистики',
+      });
     }
 
   }
@@ -2432,6 +2502,90 @@ class SiteClients_ extends React.Component {
             </TabPanel>
           </Grid>
           {/* Заказы по адресам */}
+
+          {/* Аналитика по заказам */}
+          <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+            <TabPanel 
+              value={this.state.activeTab} 
+              index={this.state.index_traffic} 
+              id='traffic'
+            >
+              <Grid container spacing={3}>
+
+                <Grid item xs={12} sm={4}>
+                  <MyAutocomplite
+                    label="Город"
+                    multiple={true}
+                    data={this.state.cities}
+                    value={this.state.city_id_traffic}
+                    func={this.changeAutocomplite.bind(this, 'city_id_traffic')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={3}>
+                  <MyDatePickerNew
+                    label="Дата от"
+                    customActions={true}
+                    value={dayjs(this.state.date_start_traffic)}
+                    func={this.changeDateRange.bind(this, 'date_start_traffic')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={3}>
+                  <MyDatePickerNew
+                    label="Дата до"
+                    customActions={true}
+                    value={dayjs(this.state.date_end_traffic)}
+                    func={this.changeDateRange.bind(this, 'date_end_traffic')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={2}>
+                  <Button onClick={this.getDataTraffic.bind(this)} variant="contained">
+                    Показать
+                  </Button>
+                </Grid>
+
+                {/* Визиты статистика */}
+                {this.state.traffic_stats?.length > 0 && (
+                  <Grid item xs={12} sm={6} mt={3} mb={5}>
+                    <Typography variant="h4">Визиты все</Typography>
+                    <SiteClientsTrafficSummaryTable data={this.state.traffic_stats[0]} />
+                  </Grid>
+                )}
+                {/* Визиты статистика */}
+
+                {/* Визиты по источнику */}
+                {this.state.traffic_sources?.length > 0 && (
+                  <Grid item xs={12} sm={6} mt={3} mb={5}>
+                    <Typography variant="h4">Источники трафика</Typography>
+                    <SiteClientsTrafficBySourceTable rows={this.state.traffic_sources} />
+                  </Grid>
+                )}
+                {/* Визиты по источнику */}
+
+                {/* Заказы по источнику */}
+                {this.state.orders_by_source?.length > 0 && (
+                  <Grid item xs={12} sm={6} mt={3} mb={5}>
+                    <Typography variant="h4">Источники заказов</Typography>
+                    <SiteClientsOrdersBySourceTable rows={this.state.orders_by_source} />
+                  </Grid>
+                )}
+                {/* Заказы по источнику */}
+
+                {/* Заказы по utm */}
+                {this.state.orders_by_utm?.length > 0 && (
+                  <Grid item xs={12} sm={6} mt={3} mb={5}>
+                    <Typography variant="h4">Заказы по UTM</Typography>
+                    <SiteClientsOrdersByUtmTable rows={this.state.orders_by_utm}/>
+                  </Grid>
+                )}
+                {/* Заказы по utm */}
+
+              </Grid>
+            </TabPanel>
+          </Grid>
+          {/* Аналитика по заказам */}
              
         </Grid>
       </>
