@@ -1214,8 +1214,14 @@ function SettingsPage() {
 
 	const getAders = () => {
 		getData('get_aders', {dateStart, dateEnd, points: point}).then((data) => {
-				setActiveAder(data.activeOrders);
-				setDisableAder(data.inactiveOrders);
+				if (!data.st) {
+					setErrStatus(data.st);
+					setErrText(data.text);
+					setOpenAlert(true);
+				} else {
+					setActiveAder(data.activeOrders);
+					setDisableAder(data.inactiveOrders);
+				}
 			}
 		)
 	}
