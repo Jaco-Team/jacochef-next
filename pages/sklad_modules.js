@@ -820,19 +820,23 @@ class SkladModules_ extends React.Component {
 																<React.Fragment key={key}>
 																	<TableRow
 																		hover
-																		onClick={() => this.setState(prev => ({
-																			expandedItems: {
-																				...prev.expandedItems,
-																				[it.id]: !prev.expandedItems[it.id]
+																		onClick={(e) => {
+																			if (!e.currentTarget.querySelector('li')?.contains(e.target)) {
+																				this.setState(prev => ({
+																					expandedItems: {
+																						...prev.expandedItems,
+																						[it.id]: !prev.expandedItems[it.id]
+																					}
+																				}))
 																			}
-																		}))}
+																		}}
 																		sx={{
 																			cursor: 'pointer',
 																			'&:hover': {backgroundColor: 'action.hover'},
 																		}}
 																	>
 																		<TableCell></TableCell>
-																		<TableCell sx={{paddingLeft: 10, alignItems: 'center'}}>
+																		<TableCell onClick={this.openModal.bind(this, 'edit', it.id)} sx={{paddingLeft: 10, alignItems: 'center'}}>
 																			<li>{it.name}</li>
 																		</TableCell>
 																		<TableCell>
@@ -923,12 +927,19 @@ class SkladModules_ extends React.Component {
 																</React.Fragment>
 																:
 																<React.Fragment key={key}>
-																	<TableRow hover onClick={() => this.setState(prev => ({
-																		expandedItems: {
-																			...prev.expandedItems,
-																			[it.id]: !prev.expandedItems[it.id]
-																		}
-																	}))}>
+																	<TableRow
+																		hover
+																		onClick={(e) => {
+																			if (!e.currentTarget.querySelector('li')?.contains(e.target)) {
+																				this.setState(prev => ({
+																					expandedItems: {
+																						...prev.expandedItems,
+																						[it.id]: !prev.expandedItems[it.id]
+																					}
+																				}))
+																			}
+																		}}
+																	>
 																		<TableCell></TableCell>
 																		<TableCell onClick={this.openModal.bind(this, 'edit', it.id)} sx={{
 																			paddingLeft: 10,
