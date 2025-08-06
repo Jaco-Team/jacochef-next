@@ -17,7 +17,7 @@ const bannerNew = {
 export const useBannerModalStore = create((set, get) => ({
   banner: null,
   bannerName: "",
-  promos: [],
+  promos: "",
   desktopDropzone: null,
   mobileDropzone: null,
   isInitD: false,
@@ -25,12 +25,13 @@ export const useBannerModalStore = create((set, get) => ({
   isLoading: false,
 
   setBanner: (banner) => {
-    if (!banner?.this_ban?.items) return;
-    banner.this_ban.items = banner.this_ban.items.map((element) =>
-      typeof element === 'number' ? banner.items.find((item) => item.id === element) : element
-    );
+    if (!banner?.this_ban) return;
+    banner.this_ban.items =
+      banner.this_ban.items?.map((element) =>
+        typeof element === "number" ? banner.items?.find((item) => item.id === element) : element
+      ) || [];
+    get().setBannerName(banner.this_ban.name);
     set({ banner });
-    get().setPromos(banner.promos);
   },
   setBannerName: (bannerName) => set({ bannerName }),
   setPromos: (promos) => {
@@ -61,6 +62,7 @@ export const useBannerModalStore = create((set, get) => ({
 
   changeAutoComplete: (field, event, newValue) => {
     const { banner } = get();
+    console.dir(banner);
     if (!banner) return;
     const updatedThisBan = {
       ...banner.this_ban,
@@ -68,36 +70,40 @@ export const useBannerModalStore = create((set, get) => ({
       ...(field === "items" && { promo_id: null }),
       ...(field === "promo_id" && { items: [] }),
     };
-
     const updatedBanner = {
       ...banner,
       this_ban: updatedThisBan,
     };
-    console.log(`current banner.this_ban[${field}] = ${JSON.stringify(banner.this_ban[field])}`);
-    console.info(
-      `changeAutocomplete called with: field=${field}, event=${event}, final value = ${JSON.stringify(
-        newValue
-      )}`
-    );
     get().setBanner(updatedBanner);
   },
 
   changeThisBanField: (field, event, value) => {
     // console.info(`changeThisBanField called with: ${field}, ${event}, ${value}`);
-    const banner = get().banner;
-    if (!banner) return;
+    const oldBanner = get().banner;
+    if (!oldBanner) return;
     const resValue = value || event?.target?.value || "";
-    // console.log(`setting this_ban.${field} to ${resValue}`)
-    banner.this_ban[field] = resValue;
-    get().setBanner(banner);
+    const newBanner = {
+      ...oldBanner,
+      this_ban: {
+        ...oldBanner.this_ban,
+        [field]: resValue,
+      },
+    };
+
+    get().setBanner(newBanner);
   },
 
   changeThisBanFieldBool: (field, event, value) => {
-    const banner = get().banner;
-    if (!banner) return;
+    const oldBanner = get().banner;
+    if (!oldBanner) return;
     const resValue = !!value || !!event.target.checked ? 1 : 0;
-    // console.log(`changeThisBanFieldBool value=${value} event.target.checked=${event.target.checked} => banner.this_ban[${field}] = ${resValue}`)
-    banner.this_ban[field] = resValue;
-    get().setBanner(banner);
+    const newBanner = {
+      ...oldBanner,
+      this_ban: {
+        ...oldBanner.this_ban,
+        [field]: resValue,
+      },
+    };
+    get().setBanner(newBanner);
   },
 }));

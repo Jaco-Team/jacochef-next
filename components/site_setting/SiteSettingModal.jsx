@@ -16,7 +16,7 @@ export function SiteSettingModal({
   children,
   customActions = null,
   fullScreen,
-  title,
+  title = '',
   closeModal,
   ...restProps
 }) {

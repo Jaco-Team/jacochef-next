@@ -1,33 +1,37 @@
 import { useState } from "react";
 import { useBannerModalStore } from "./useBannerModalStore";
+import dayjs from "dayjs";
 
-export default function useSaveBanner(showAlert) {
+export default function useSaveBanner(showAlert, getData) {
   const [click, setClick] = useState(false);
-  const desktopDropzone = useBannerModalStore(state => state.desktopDropzone);
-  const mobileDropzone = useBannerModalStore(state => state.mobileDropzone);
-  const isInitD = useBannerModalStore(state => state.isInitD);
-  const isInitM = useBannerModalStore(state => state.isInitM);
-  const setIsInitD = useBannerModalStore(state => state.setIsInitD);
-  const setIsInitM = useBannerModalStore(state => state.setIsInitM);
+  const desktopDropzone = useBannerModalStore((state) => state.desktopDropzone);
+  const mobileDropzone = useBannerModalStore((state) => state.mobileDropzone);
+  const isInitD = useBannerModalStore((state) => state.isInitD);
+  const isInitM = useBannerModalStore((state) => state.isInitM);
+  const setIsInitD = useBannerModalStore((state) => state.setIsInitD);
+  const setIsInitM = useBannerModalStore((state) => state.setIsInitM);
 
-  const saveNew = async (banner) => {
+  const saveNew = async () => {
+    const banner = useBannerModalStore.getState().banner;
+    if (!banner) {
+      showAlert("No banner provided", "error");
+      return;
+    }
     if (!click) {
       setClick(true);
 
-      banner.this_ban.items = banner.this_ban.items.reduce((saveItems, item) => {
-        item = { item_id: item.id };
-
-        saveItems = [...saveItems, ...[item]];
-
-        return saveItems;
-      }, []);
+      banner.this_ban.items = banner?.this_ban?.items?.reduce(
+        (saveItems, item) => [...saveItems, { item_id: item.id }],
+        []
+      );
 
       banner.this_ban.date_start = dayjs(banner.this_ban.date_start).format("YYYY-MM-DD");
       banner.this_ban.date_end = dayjs(banner.this_ban.date_end).format("YYYY-MM-DD");
 
       const data = banner.this_ban;
+      console.log(data);
 
-      const res = await getData("save_new", data);
+      const res = await getData("save_new_banner", data);
 
       if (!res?.st) {
         showAlert(res.text, res.st);
@@ -98,7 +102,10 @@ export default function useSaveBanner(showAlert) {
 
           desktopDropzone?.current?.processQueue();
           mobileDropzone?.current?.processQueue();
-        } else if (desktopDropzone?.current?.files.length || mobileDropzone?.current?.files.length) {
+        } else if (
+          desktopDropzone?.current?.files.length ||
+          mobileDropzone?.current?.files.length
+        ) {
           if (myDropzone["files"].length > 0) {
             if (myDropzone["files"].length > 0 && isInitD === false) {
               setIsInitD(true);
@@ -177,28 +184,34 @@ export default function useSaveBanner(showAlert) {
     }
   };
 
-  const saveEdit = async (banner) => {
+  const saveEdit = async () => {
+    const banner = useBannerModalStore.getState().banner;
+    if (!banner) {
+      showAlert("No edited banner provided", "error");
+      return;
+    }
     if (!click) {
       setClick(true);
-      banner.this_ban.items = banner.this_ban.items.reduce((saveItems, item) => {
-        item = { item_id: item.id };
 
-        saveItems = [...saveItems, ...[item]];
-
-        return saveItems;
-      }, []);
+      banner.this_ban.items = banner?.this_ban?.items?.reduce(
+        (saveItems, item) => [...saveItems, { item_id: item.id }],
+        []
+      );
 
       banner.this_ban.date_start = dayjs(banner.this_ban.date_start).format("YYYY-MM-DD");
       banner.this_ban.date_end = dayjs(banner.this_ban.date_end).format("YYYY-MM-DD");
 
       const data = banner.this_ban;
 
-      const res = await getData("save_edit", data);
+      const res = await getData("save_edit_banner", data);
 
       if (!res.st) {
         showAlert(res.text, "error");
       } else {
-        if (desktopDropzone?.current?.files.length > 0 || mobileDropzone?.current?.files.length > 0) {
+        if (
+          desktopDropzone?.current?.files.length > 0 ||
+          mobileDropzone?.current?.files.length > 0
+        ) {
           if (myDropzone["files"].length > 0) {
             if (myDropzone["files"].length > 0 && isInitD === false) {
               setIsInitD(true);
@@ -219,13 +232,13 @@ export default function useSaveBanner(showAlert) {
                 });
 
                 if (check_img) {
-                  showAlert("Ошибка при загрузке фотографии")
+                  showAlert("Ошибка при загрузке фотографии");
                   return;
-                } 
-                  setTimeout(() => {
-                    setClose(true);
-                  }, 1000);
-                  setIsInitD(false);
+                }
+                setTimeout(() => {
+                  setClose(true);
+                }, 1000);
+                setIsInitD(false);
               });
             }
 
@@ -282,5 +295,5 @@ export default function useSaveBanner(showAlert) {
     }
   };
 
-  return {saveNew, saveEdit};
+  return { saveNew, saveEdit };
 }

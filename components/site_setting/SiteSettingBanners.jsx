@@ -31,6 +31,7 @@ export function SiteSettingBanners(props) {
   // Page state
   const cityId = useSiteSettingStore((state) => state.city_id);
   const createModal = useSiteSettingStore((state) => state.createModal);
+  const setModalTitle = useSiteSettingStore((state) => state.setModalTitle);
   const showAlert = useSiteSettingStore((state) => state.showAlert);
   // banners list state
   const getData = useBannersStore((state) => state.getData);
@@ -43,7 +44,11 @@ export function SiteSettingBanners(props) {
   const setModuleName = useBannersStore((state) => state.setModuleName);
   const setSort = useBannersStore((state) => state.setSort);
 
-  const {saveNew, saveEdit} = useSaveBanner(showAlert)
+  const banner = useBannerModalStore((state) => state.banner);
+  const bannerName = useBannerModalStore((state) => state.bannerName);
+  const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle)
+
+  const { saveNew, saveEdit } = useSaveBanner(showAlert, getData);
 
   const updateItemSort = async (item, event) => {
     console.log(`${item.sort} === ${event.target.value}`);
@@ -95,21 +100,30 @@ export function SiteSettingBanners(props) {
   };
 
   const openModal = async (action, title, id = 0) => {
-    createModal( () => 
-      (<BannerModal
-        getData={getData}
-        showAlert={showAlert}
-        cityId={cityId}
-        action={action}
-        id={id}
-      />),
-      title, () => ( 
-        <Button variant="contained" onClick={action === 'bannerNew' ? saveNew : saveEdit}>
+    setModalPrefix(title);
+    createModal(
+      () => (
+        <BannerModal
+          getData={getData}
+          showAlert={showAlert}
+          cityId={cityId}
+          action={action}
+          id={id}
+        />
+      ),
+      modalPrefix,
+      () => (
+        <Button
+          variant="contained"
+          onClick={async () => (action === "bannerNew" ? await saveNew() : await saveEdit())}
+        >
           Сохранить
         </Button>
       )
     );
   };
+  // update banner name in modal title
+  useEffect(() => setModalTitle(`${modalPrefix}${bannerName ? `: ${bannerName}` : ""}`), [modalPrefix, bannerName]);
 
   useEffect(() => {
     const preloadData = async () => {
@@ -193,7 +207,7 @@ export function SiteSettingBanners(props) {
                       >
                         <TableCell>{key + 1}</TableCell>
                         <TableCell
-                          onClick={() => openModal("bannerEdit", "Редактирование банера", item.id)}
+                          onClick={() => openModal("bannerEdit", "Редактирование баннера", item.id)}
                           style={{ fontWeight: 700, cursor: "pointer" }}
                         >
                           {item.name}

@@ -34,7 +34,8 @@ export function BannerModal({ getData, showAlert, id, action }) {
     state.setIsLoading,
   ]);
   const setBanner = useBannerModalStore((state) => state.setBanner);
-  const setPromos = useBannerModalStore((state) => state.setBanner);
+  const setBannerName = useBannerModalStore((state) => state.setBannerName);
+  const setPromos = useBannerModalStore((state) => state.setPromos);
 
   const changeDateRange = useBannerModalStore((state) => state.changeDateRange);
   const changeThisBanField = useBannerModalStore((state) => state.changeThisBanField);
@@ -56,8 +57,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
     const data = {
       city_id: banner?.this_ban?.city_id,
     };
-    const promos = await getData("get_active_promo", data);
-    setPromos(promos.promos);
+    const promosResponse = await getData("get_active_promo", data);
+    console.dir(promosResponse);
+    setPromos(promosResponse.promos);
   };
 
   const updateBannerData = async () => {
@@ -67,15 +69,17 @@ export function BannerModal({ getData, showAlert, id, action }) {
         try {
           const bannerTemplate = await getData("get_all_for_new");
           bannerTemplate.this_ban = getNewBanner();
-          console.log(JSON.stringify(bannerTemplate))
           setBanner(bannerTemplate);
-          await fetchPromos();
+          setTimeout(async () => {
+            await fetchPromos(); // fetch after banner is set
+          }, 0);
           break;
         } catch (e) {
           showAlert(e.message);
         } finally {
           setIsLoading(false);
         }
+        break;
       }
       case "bannerEdit": {
         try {
@@ -84,12 +88,15 @@ export function BannerModal({ getData, showAlert, id, action }) {
           };
           const bannerData = await getData("get_one_banner", data);
           setBanner(bannerData);
+          setBannerName(bannerData.this_ban?.name)
+          setPromos(bannerData.promos);
           break;
         } catch (e) {
           showAlert(e.message);
         } finally {
           setIsLoading(false);
         }
+        break;
       }
       default: {
         showAlert("action not valid");
@@ -372,7 +379,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <TextEditor
               value={banner?.this_ban?.text || ""}
-              func={(e) => changeThisBanField("text", e)}
+              func={(content) => changeThisBanField("text", null, content)}
               language="ru"
             />
           </Grid>
