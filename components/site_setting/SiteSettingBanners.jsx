@@ -31,6 +31,7 @@ export function SiteSettingBanners(props) {
   // Page state
   const cityId = useSiteSettingStore((state) => state.city_id);
   const createModal = useSiteSettingStore((state) => state.createModal);
+  const closeModal = useSiteSettingStore((state) => state.closeModal);
   const setModalTitle = useSiteSettingStore((state) => state.setModalTitle);
   const showAlert = useSiteSettingStore((state) => state.showAlert);
   // banners list state
@@ -48,7 +49,7 @@ export function SiteSettingBanners(props) {
   const bannerName = useBannerModalStore((state) => state.bannerName);
   const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle)
 
-  const { saveNew, saveEdit } = useSaveBanner(showAlert, getData);
+  const { saveNew, saveEdit } = useSaveBanner(showAlert, getData, closeModal);
 
   const updateItemSort = async (item, event) => {
     console.log(`${item.sort} === ${event.target.value}`);

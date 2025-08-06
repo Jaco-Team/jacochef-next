@@ -58,7 +58,6 @@ export function BannerModal({ getData, showAlert, id, action }) {
       city_id: banner?.this_ban?.city_id,
     };
     const promosResponse = await getData("get_active_promo", data);
-    console.dir(promosResponse);
     setPromos(promosResponse.promos);
   };
 

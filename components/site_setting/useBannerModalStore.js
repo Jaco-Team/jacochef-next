@@ -1,6 +1,7 @@
 import { create } from "zustand";
 // import { devtools } from 'zustand/middleware';
 import { formatDate } from "@/ui/elements";
+import dayjs from "dayjs";
 
 const bannerNew = {
   name: "",
@@ -20,8 +21,6 @@ export const useBannerModalStore = create((set, get) => ({
   promos: "",
   desktopDropzone: null,
   mobileDropzone: null,
-  isInitD: false,
-  isInitM: false,
   isLoading: false,
 
   setBanner: (banner) => {
@@ -37,8 +36,6 @@ export const useBannerModalStore = create((set, get) => ({
   setPromos: (promos) => {
     set({ promos });
   },
-  setIsInitD: (setIsInitD) => set({ setIsInitD }),
-  setIsInitM: (setIsInitM) => set({ setIsInitM }),
   setDesktopDropzone: (desktopDropzone) => {
     if (!get().desktopDropzone) {
       set({ desktopDropzone });
@@ -52,6 +49,17 @@ export const useBannerModalStore = create((set, get) => ({
   setIsLoading: (isLoading) => set({ isLoading }),
 
   getNewBanner: () => JSON.parse(JSON.stringify(bannerNew)),
+
+  getBannerDTO: () => {
+    const bannerDTO = JSON.parse(JSON.stringify(get().banner));
+    bannerDTO.this_ban.items = bannerDTO?.this_ban?.items?.reduce(
+      (saveItems, item) => [...saveItems, { item_id: item.id }],
+      []
+    );
+    bannerDTO.this_ban.date_start = dayjs(bannerDTO.this_ban.date_start).format("YYYY-MM-DD");
+    bannerDTO.this_ban.date_end = dayjs(bannerDTO.this_ban.date_end).format("YYYY-MM-DD");
+    return bannerDTO;
+  },
 
   changeDateRange: (field, event) => {
     const { banner } = get();

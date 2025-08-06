@@ -57,14 +57,10 @@ class SiteSetting_ extends React.Component {
     setOpenAlert(false);
   };
 
-  createModal;
-
   render() {
     const {
       is_load,
       openAlert,
-      err_status,
-      err_text,
       module_name,
       cities,
       city_id,
@@ -87,8 +83,8 @@ class SiteSetting_ extends React.Component {
         <MyAlert
           isOpen={openAlert}
           onClose={this.handleAlertClose}
-          status={err_status}
-          text={err_text}
+          status={useSiteSettingStore.getState().err_status}
+          text={useSiteSettingStore.getState().err_text}
         />
         <SiteSettingModal
           open={modalDialog}

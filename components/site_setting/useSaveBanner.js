@@ -1,58 +1,109 @@
 import { useState } from "react";
 import { useBannerModalStore } from "./useBannerModalStore";
-import dayjs from "dayjs";
 
-export default function useSaveBanner(showAlert, getData) {
+export default function useSaveBanner(showAlert, getData, onClose) {
   const [click, setClick] = useState(false);
-  const desktopDropzone = useBannerModalStore((state) => state.desktopDropzone);
-  const mobileDropzone = useBannerModalStore((state) => state.mobileDropzone);
-  const isInitD = useBannerModalStore((state) => state.isInitD);
-  const isInitM = useBannerModalStore((state) => state.isInitM);
-  const setIsInitD = useBannerModalStore((state) => state.setIsInitD);
-  const setIsInitM = useBannerModalStore((state) => state.setIsInitM);
+  const [isInitD, setIsInitD] = useState(false);
+  const [isInitM, setIsInitM] = useState(false);
 
   const saveNew = async () => {
-    const banner = useBannerModalStore.getState().banner;
+    const { desktopDropzone, mobileDropzone } = useBannerModalStore.getState();
+    const banner = useBannerModalStore.getState().getBannerDTO();
     if (!banner) {
       showAlert("No banner provided", "error");
       return;
     }
+    if (!desktopDropzone || !mobileDropzone) {
+      showAlert("Dropzones refs are ampty", "error");
+      return;
+    }
+
     if (!click) {
       setClick(true);
-
-      banner.this_ban.items = banner?.this_ban?.items?.reduce(
-        (saveItems, item) => [...saveItems, { item_id: item.id }],
-        []
-      );
-
-      banner.this_ban.date_start = dayjs(banner.this_ban.date_start).format("YYYY-MM-DD");
-      banner.this_ban.date_end = dayjs(banner.this_ban.date_end).format("YYYY-MM-DD");
-
       const data = banner.this_ban;
-      console.log(data);
-
       const res = await getData("save_new_banner", data);
-
       if (!res?.st) {
-        showAlert(res.text, res.st);
-      } else {
-        if (desktopDropzone?.current?.files.length && mobileDropzone?.current?.files.length) {
-          let save_img = false;
-          let save_img_m = false;
+        showAlert(res.text, "error");
+        return;
+      }
+      if (desktopDropzone?.files.length && mobileDropzone?.files.length) {
+        let save_img = false;
+        let save_img_m = false;
 
-          if (myDropzone["files"].length && isInitD === false) {
+        if (desktopDropzone?.files?.length && isInitD === false) {
+          setIsInitD(true);
+
+          desktopDropzone?.on("sending", (file, xhr, data) => {
+            data.append("name", banner.this_ban.name);
+            data.append("id", res.id);
+            data.append("type", "full");
+          });
+
+          desktopDropzone?.on("queuecomplete", () => {
+            let check_img = false;
+
+            desktopDropzone?.files?.map((item) => {
+              if (item["status"] == "error") {
+                check_img = true;
+              }
+            });
+
+            if (check_img) {
+              showAlert("Ошибка при загрузке фотографии");
+              return;
+            }
+            save_img = true;
+            setIsInitD(false);
+          });
+        }
+
+        if (mobileDropzone?.files?.length && isInitM === false) {
+          setIsInitM(true);
+
+          mobileDropzone?.on("sending", (file, xhr, data1) => {
+            data1.append("name", banner.this_ban.name);
+            data1.append("id", res.id);
+            data1.append("type", "mobile");
+          });
+
+          mobileDropzone?.on("queuecomplete", (data) => {
+            let check_img = false;
+
+            mobileDropzone?.files?.map((item, key) => {
+              if (item["status"] == "error") {
+                check_img = true;
+              }
+            });
+
+            if (check_img) {
+              showAlert("Ошибка при загрузке фотографии", "error");
+              return;
+            }
+            save_img_m = true;
+            setIsInitM(false);
+          });
+        }
+
+        setTimeout(() => {
+          if (save_img && save_img_m) {
+            onClose();
+          }
+        }, 3000);
+        desktopDropzone?.processQueue();
+        mobileDropzone?.processQueue();
+      } else if (desktopDropzone?.files.length || mobileDropzone?.files.length) {
+        if (desktopDropzone?.files?.length > 0) {
+          if (desktopDropzone?.files?.length > 0 && isInitD === false) {
             setIsInitD(true);
-
-            desktopDropzone?.current?.on("sending", (file, xhr, data) => {
+            desktopDropzone?.on("sending", (file, xhr, data) => {
               data.append("name", banner.this_ban.name);
               data.append("id", res.id);
               data.append("type", "full");
             });
 
-            desktopDropzone?.current?.on("queuecomplete", (data) => {
-              var check_img = false;
-
-              myDropzone["files"].map((item, key) => {
+            desktopDropzone?.on("queuecomplete", () => {
+              let check_img = false;
+              desktopDropzone?.files?.map((item) => {
                 if (item["status"] == "error") {
                   check_img = true;
                 }
@@ -62,236 +113,143 @@ export default function useSaveBanner(showAlert, getData) {
                 showAlert("Ошибка при загрузке фотографии");
                 return;
               }
-              save_img = true;
+              setTimeout(() => {
+                onClose();
+              }, 3000);
               setIsInitD(false);
             });
           }
+          desktopDropzone?.processQueue();
+        }
 
-          if (myDropzone_m["files"].length && isInitM === false) {
+        if (mobileDropzone?.files?.length > 0) {
+          if (isInitM === false) {
             setIsInitM(true);
-
-            mobileDropzone?.current?.on("sending", (file, xhr, data1) => {
-              data1.append("name", banner.this_ban.name);
-              data1.append("id", res.id);
-              data1.append("type", "mobile");
+            mobileDropzone?.on("sending", (file, xhr, data) => {
+              data.append("name", banner.this_ban.name);
+              data.append("id", res.id);
+              data.append("type", "mobile");
             });
 
-            mobileDropzone?.current?.on("queuecomplete", (data) => {
-              var check_img = false;
+            mobileDropzone?.on("queuecomplete", (data) => {
+              let check_img = false;
 
-              myDropzone_m["files"].map((item, key) => {
+              mobileDropzone?.files?.map((item, key) => {
                 if (item["status"] == "error") {
                   check_img = true;
                 }
               });
 
               if (check_img) {
-                showAlert("Ошибка при загрузке фотографии");
+                showAlert("Ошибка при загрузке фотографии", "error");
                 return;
               }
-              save_img_m = true;
+              setTimeout(() => {
+                onClose();
+              }, 3000);
               setIsInitM(false);
             });
           }
-
-          setTimeout(() => {
-            if (save_img && save_img_m) {
-              onClose(true);
-            }
-          }, 3000);
-
-          desktopDropzone?.current?.processQueue();
-          mobileDropzone?.current?.processQueue();
-        } else if (
-          desktopDropzone?.current?.files.length ||
-          mobileDropzone?.current?.files.length
-        ) {
-          if (myDropzone["files"].length > 0) {
-            if (myDropzone["files"].length > 0 && isInitD === false) {
-              setIsInitD(true);
-
-              desktopDropzone?.current?.on("sending", (file, xhr, data) => {
-                data.append("name", banner.this_ban.name);
-                data.append("id", res.id);
-                data.append("type", "full");
-              });
-
-              desktopDropzone?.current?.on("queuecomplete", () => {
-                let check_img = false;
-
-                myDropzone["files"].map((item) => {
-                  if (item["status"] == "error") {
-                    check_img = true;
-                  }
-                });
-
-                if (check_img) {
-                  showAlert("Ошибка при загрузке фотографии");
-                  return;
-                }
-                setTimeout(() => {
-                  onClose(true);
-                }, 1000);
-                setIsInitD(false);
-              });
-            }
-
-            desktopDropzone?.current?.processQueue();
-          }
-
-          if (myDropzone_m["files"].length > 0) {
-            if (myDropzone_m["files"].length > 0 && isInitM === false) {
-              setIsInitM(true);
-
-              mobileDropzone?.current?.on("sending", (file, xhr, data1) => {
-                data1.append("name", banner.this_ban.name);
-                data1.append("id", res.id);
-                data1.append("type", "mobile");
-              });
-
-              mobileDropzone?.current?.on("queuecomplete", (data) => {
-                var check_img = false;
-
-                myDropzone_m["files"].map((item, key) => {
-                  if (item["status"] == "error") {
-                    check_img = true;
-                  }
-                });
-
-                if (check_img) {
-                  showAlert("Ошибка при загрузке фотографии", "error");
-                  return;
-                }
-
-                setTimeout(() => {
-                  onClose(true);
-                }, 1000);
-
-                setIsInitM(false);
-              });
-            }
-
-            mobileDropzone?.current?.processQueue();
-          }
-        } else {
-          onClose(true);
+          mobileDropzone?.processQueue();
         }
+      } else {
+        setTimeout(() => {
+          onClose();
+        }, 300);
       }
-
       setTimeout(() => {
         setClick(false);
-      }, 300);
+      }, 1000);
     }
   };
 
   const saveEdit = async () => {
-    const banner = useBannerModalStore.getState().banner;
+    const { desktopDropzone, mobileDropzone } = useBannerModalStore.getState();
+    const banner = useBannerModalStore.getState().getBannerDTO();
     if (!banner) {
-      showAlert("No edited banner provided", "error");
+      showAlert("No banner provided", "error");
       return;
     }
+    if (!desktopDropzone || !mobileDropzone) {
+      showAlert("Dropzones refs are ampty", "error");
+      return;
+    }
+
     if (!click) {
       setClick(true);
-
-      banner.this_ban.items = banner?.this_ban?.items?.reduce(
-        (saveItems, item) => [...saveItems, { item_id: item.id }],
-        []
-      );
-
-      banner.this_ban.date_start = dayjs(banner.this_ban.date_start).format("YYYY-MM-DD");
-      banner.this_ban.date_end = dayjs(banner.this_ban.date_end).format("YYYY-MM-DD");
-
       const data = banner.this_ban;
-
       const res = await getData("save_edit_banner", data);
-
       if (!res.st) {
         showAlert(res.text, "error");
-      } else {
-        if (
-          desktopDropzone?.current?.files.length > 0 ||
-          mobileDropzone?.current?.files.length > 0
-        ) {
-          if (myDropzone["files"].length > 0) {
-            if (myDropzone["files"].length > 0 && isInitD === false) {
-              setIsInitD(true);
+        return;
+      }
+      if (desktopDropzone?.files.length > 0 || mobileDropzone?.files.length > 0) {
+        if (desktopDropzone?.files?.length > 0) {
+          if (isInitD === false) {
+            setIsInitD(true);
+            desktopDropzone?.on("sending", (file, xhr, data) => {
+              data.append("name", banner.this_ban.name);
+              data.append("id", res.id);
+              data.append("type", "full");
+            });
 
-              desktopDropzone?.current?.on("sending", (file, xhr, data) => {
-                data.append("name", banner.this_ban.name);
-                data.append("id", res.id);
-                data.append("type", "full");
-              });
-
-              desktopDropzone?.current?.on("queuecomplete", (data) => {
-                var check_img = false;
-
-                myDropzone["files"].map((item, key) => {
-                  if (item["status"] == "error") {
-                    check_img = true;
-                  }
-                });
-
-                if (check_img) {
-                  showAlert("Ошибка при загрузке фотографии");
-                  return;
+            desktopDropzone?.on("queuecomplete", (data) => {
+              let check_img = false;
+              desktopDropzone?.files?.map((item, key) => {
+                if (item["status"] == "error") {
+                  check_img = true;
                 }
-                setTimeout(() => {
-                  setClose(true);
-                }, 1000);
-                setIsInitD(false);
               });
-            }
-
-            desktopDropzone?.current?.processQueue();
+              if (check_img) {
+                showAlert("Ошибка при загрузке фотографии");
+              }
+              setTimeout(() => {
+                onClose();
+              }, 1000);
+              setIsInitD(false);
+            });
           }
-
-          if (myDropzone_m["files"].length > 0) {
-            if (myDropzone_m["files"].length > 0 && isInitM === false) {
-              setIsInitM(true);
-
-              mobileDropzone?.current?.current?.on("sending", (file, xhr, data1) => {
-                data1.append("name", banner.this_ban.name);
-                data1.append("id", res.id);
-                data1.append("type", "mobile");
-              });
-
-              mobileDropzone?.current?.on("queuecomplete", (data) => {
-                var check_img = false;
-
-                myDropzone_m["files"].map((item, key) => {
-                  if (item["status"] == "error") {
-                    check_img = true;
-                  }
-                });
-
-                if (check_img) {
-                  setState({
-                    openAlert: true,
-                    err_status: false,
-                    err_text: "Ошибка при загрузке фотографии",
-                  });
-
-                  return;
-                } else {
-                  setTimeout(() => {
-                    onClose(true);
-                  }, 1000);
-                }
-
-                setIsInitM(false);
-              });
-            }
-
-            mobileDropzone?.current?.processQueue();
-          }
-        } else {
-          onClose(true);
+          desktopDropzone?.processQueue();
         }
+
+        if (mobileDropzone?.files?.length > 0) {
+          if (isInitM === false) {
+            setIsInitM(true);
+            mobileDropzone?.on("sending", (file, xhr, data) => {
+              data.append("name", banner.this_ban.name);
+              data.append("id", res.id);
+              data.append("type", "mobile");
+            });
+
+            mobileDropzone?.on("queuecomplete", (data) => {
+              let check_img = false;
+
+              mobileDropzone?.files?.map((item, key) => {
+                if (item["status"] == "error") {
+                  check_img = true;
+                }
+              });
+
+              if (check_img) {
+                showAlert("Ошибка при загрузке фотографии");
+              } else {
+                setTimeout(() => {
+                  onClose();
+                }, 1000);
+              }
+              setIsInitM(false);
+            });
+          }
+          mobileDropzone?.processQueue();
+        }
+      } else {
+        showAlert("No files to upload");
+        onClose();
       }
 
       setTimeout(() => {
         setClick(false);
-      }, 300);
+      }, 1000);
     }
   };
 
