@@ -4,121 +4,102 @@ import Grid from "@mui/material/Grid";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-
 import { MyAlert, MySelect } from "@/ui/elements";
 
-import { api_laravel } from "@/src/api_new";
 import { SiteSettingSocial } from "@/components/site_setting/SiteSettingSocial";
+import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingStore";
+import { SiteSettingBanners } from "@/components/site_setting/SiteSettingBanners";
+import { SiteSettingModal } from "@/components/site_setting/SiteSettingModal";
 
 class SiteSetting_ extends React.Component {
   constructor(props) {
     super(props);
-
-    this.state = {
-      module: "site_setting",
-      module_name: "",
-      is_load: false,
-
-      cities: [],
-      city_id: 0,
-
-      fullScreen: false,
-
-      data: null,
-      modalDialog: false,
-      method: "",
-
-      openAlert: false,
-      error: {status: true, text: ''}
-    };
+    // No local state, everything comes from the store
+    this.store = useSiteSettingStore;
+    this.state = this.store.getState();
   }
 
-  async componentDidMount() {
-    const data = await this.getData("get_all");
-
-    this.setState({
-      data,
-      cities: data.cities,
-      module_name: data.module_info.name,
+  componentDidMount() {
+    // Subscribe to store updates
+    this.unsubscribe = this.store.subscribe((state) => {
+      this.setState(state);
     });
 
+    // Initial data load
+    this.loadData();
+  }
+
+  componentWillUnmount() {
+    this.unsubscribe && this.unsubscribe();
+  }
+
+  loadData = async () => {
+    const { getData, setCities, setModuleName, setData } = this.store.getState();
+    const data = await getData("get_all");
+    setData(data);
+    setCities(data.cities);
+    setModuleName(data.module_info.name);
     document.title = data.module_info.name;
-  }
-
-  getData = (method, data = {}) => {
-    this.setState({
-      is_load: true,
-    });
-
-    const res = api_laravel(this.state.module, method, data)
-      .then((result) => result.data)
-      .finally(() => {
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 500);
-      });
-
-    return res;
   };
 
-  changeCity(event) {
-    let data = event.target.value;
-    this.setState({
-      city_id: data,
-      dataInfo: null,
-    });
-  }
+  handleChangeCity = (event) => {
+    const { changeCity } = this.store.getState();
+    changeCity(event.target.value);
+  };
 
-  handleResize() {
-    if (window.innerWidth < 601) {
-      this.setState({
-        fullScreen: true,
-      });
-    } else {
-      this.setState({
-        fullScreen: false,
-      });
-    }
-  }
+  handleResize = () => {
+    const { handleResize } = this.store.getState();
+    handleResize();
+  };
 
-  showAlert(error) {
-    this.setState({ openAlert: true, err_status: error.status, err_text: error.text });
-  }
+  handleAlertClose = () => {
+    const { setOpenAlert } = this.store.getState();
+    setOpenAlert(false);
+  };
+
+  createModal;
 
   render() {
+    const {
+      is_load,
+      openAlert,
+      err_status,
+      err_text,
+      module_name,
+      cities,
+      city_id,
+      modalDialog,
+      modalContent,
+      modalTitle,
+      fullScreen,
+      closeModal,
+      customModalActions
+    } = this.state;
     return (
       <>
         <Backdrop
-          open={this.state.is_load}
+          open={is_load}
           style={{ zIndex: 99 }}
         >
           <CircularProgress color="inherit" />
         </Backdrop>
 
         <MyAlert
-          isOpen={this.state.openAlert}
-          onClose={() => this.setState({ openAlert: false })}
-          status={this.state.err_status}
-          text={this.state.err_text}
+          isOpen={openAlert}
+          onClose={this.handleAlertClose}
+          status={err_status}
+          text={err_text}
         />
- {/* <SiteSettingModal
-        open={modal}
-        onClose={setModal(false)}
-        mark={this.state.mark}
-        item={this.state.item}
-        method={this.state.method}
-        itemName={this.state.pageName}
-        fullScreen={this.state.fullScreen}
-        save={this.save.bind(this)}
-      /> */}
-
+        <SiteSettingModal
+          open={modalDialog}
+          title={modalTitle}
+          fullScreen={fullScreen}
+          fullWidth={true}
+          closeModal={closeModal}
+          customActions = {typeof customModalActions === 'function' ? customModalActions() : customModalActions}
+        >
+          {typeof modalContent === 'function' ? modalContent() : modalContent}
+        </SiteSettingModal>
         <Grid
           container
           spacing={3}
@@ -129,7 +110,7 @@ class SiteSetting_ extends React.Component {
             xs={12}
             sm={12}
           >
-            <h1>{this.state.module_name}</h1>
+            <h1>{module_name}</h1>
           </Grid>
 
           <Grid
@@ -138,9 +119,9 @@ class SiteSetting_ extends React.Component {
             sm={12}
           >
             <MySelect
-              data={this.state.cities}
-              value={this.state.city_id}
-              func={this.changeCity.bind(this)}
+              data={cities}
+              value={city_id}
+              func={this.handleChangeCity}
               label="Город"
               is_none={false}
             />
@@ -151,44 +132,15 @@ class SiteSetting_ extends React.Component {
             xs={12}
             sm={12}
           >
-            <SiteSettingSocial
-              cityId={this.state.city_id}
-              parentModule={this.state.module}
-            />
+            <SiteSettingSocial />
           </Grid>
 
           <Grid
             item
             xs={12}
             sm={12}
-            mb={5}
           >
-            {!this.state.pages ? null : (
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                    <TableCell>#</TableCell>
-                    <TableCell>Название</TableCell>
-                    <TableCell>Адрес</TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {this.state.pages.map((item, key) => (
-                    <TableRow key={key}>
-                      <TableCell>{key + 1}</TableCell>
-                      <TableCell
-                        onClick={this.openModal.bind(this, "edit", item.id)}
-                        style={{ color: "#c03", fontWeight: 700, cursor: "pointer" }}
-                      >
-                        {item.name}
-                      </TableCell>
-                      <TableCell>{item.link}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+            <SiteSettingBanners />
           </Grid>
         </Grid>
       </>

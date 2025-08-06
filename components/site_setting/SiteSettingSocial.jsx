@@ -1,28 +1,20 @@
 import { MyTextInput } from "@/ui/elements";
-import { Backdrop, Button, CircularProgress, Grid } from "@mui/material";
+import { Backdrop, Button, CircularProgress, Grid, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { SiteSettingModal } from "./SiteSettingModal";
 import { api_laravel } from "@/src/api_new";
+import { useSiteSettingStore } from "./useSiteSettingStore";
 
-export function SiteSettingSocial(props) {
-  const { parentModule, cityId = 0 } = props;
-  const submodule = "socialnetwork";
+export function SiteSettingSocial() {
+  const submodule = "social";
   const [moduleName, setModuleName] = useState("");
   const [dataInfo, setDataInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const getData = async (method, data = {}) => {
-    setIsLoading(true);
-    const res = api_laravel(parentModule, method, data)
-      .then((result) => result.data)
-      .finally(() => {
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 500);
-      });
+  const parentModule = useSiteSettingStore((state) => state.module);
+  const cityId = useSiteSettingStore((state) => state.city_id);
 
-    return res;
-  };
+  const getData = useSiteSettingStore((state) => state.getData);
 
   const updateData = async () => {
     if (cityId === 0) return;
@@ -30,10 +22,16 @@ export function SiteSettingSocial(props) {
       city_id: cityId,
       submodule,
     };
-
-    const res = await getData("get_social_data", data);
-    setDataInfo(res.links);
-    setModuleName(res.submodule.name);
+    try{
+      setIsLoading(true);
+      const res = await getData("get_social_data", data);
+      setDataInfo(res.links);
+      setModuleName(res.submodule.name);
+    } catch (e) {
+      console.log(`Error getting socialnetworks data: ${e.message}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const saveData = async () => {
@@ -80,7 +78,7 @@ export function SiteSettingSocial(props) {
           xs={12}
           sm={12}
         >
-          <h2>{moduleName}</h2>
+          <Typography variant="h5">{moduleName}</Typography>
         </Grid>
 
         {!!dataInfo && (
