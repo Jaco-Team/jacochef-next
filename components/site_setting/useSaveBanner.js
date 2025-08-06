@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useBannerModalStore } from "./useBannerModalStore";
+import { buildBannerDTO } from "./bannerUtils";
 
 export default function useSaveBanner(showAlert, getData, onClose) {
   const [click, setClick] = useState(false);
@@ -8,13 +9,13 @@ export default function useSaveBanner(showAlert, getData, onClose) {
 
   const saveNew = async () => {
     const { desktopDropzone, mobileDropzone } = useBannerModalStore.getState();
-    const banner = useBannerModalStore.getState().getBannerDTO();
+    const banner = buildBannerDTO(useBannerModalStore.getState().banner);
     if (!banner) {
-      showAlert("No banner provided", "error");
+      showAlert("No banner data provided", "error");
       return;
     }
     if (!desktopDropzone || !mobileDropzone) {
-      showAlert("Dropzones refs are ampty", "error");
+      showAlert("Dropzones are not ready", "error");
       return;
     }
 
@@ -30,7 +31,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
         let save_img = false;
         let save_img_m = false;
 
-        if (desktopDropzone?.files?.length && isInitD === false) {
+        if (desktopDropzone?.getAcceptedFiles()?.length && isInitD === false) {
           setIsInitD(true);
 
           desktopDropzone?.on("sending", (file, xhr, data) => {
@@ -42,7 +43,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
           desktopDropzone?.on("queuecomplete", () => {
             let check_img = false;
 
-            desktopDropzone?.files?.map((item) => {
+            desktopDropzone?.getAcceptedFiles()?.map((item) => {
               if (item["status"] == "error") {
                 check_img = true;
               }
@@ -57,7 +58,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
           });
         }
 
-        if (mobileDropzone?.files?.length && isInitM === false) {
+        if (mobileDropzone?.getAcceptedFiles()?.length && isInitM === false) {
           setIsInitM(true);
 
           mobileDropzone?.on("sending", (file, xhr, data1) => {
@@ -69,7 +70,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
           mobileDropzone?.on("queuecomplete", (data) => {
             let check_img = false;
 
-            mobileDropzone?.files?.map((item, key) => {
+            mobileDropzone?.getAcceptedFiles()?.map((item, key) => {
               if (item["status"] == "error") {
                 check_img = true;
               }
@@ -92,8 +93,8 @@ export default function useSaveBanner(showAlert, getData, onClose) {
         desktopDropzone?.processQueue();
         mobileDropzone?.processQueue();
       } else if (desktopDropzone?.files.length || mobileDropzone?.files.length) {
-        if (desktopDropzone?.files?.length > 0) {
-          if (desktopDropzone?.files?.length > 0 && isInitD === false) {
+        if (desktopDropzone?.getAcceptedFiles()?.length > 0) {
+          if (desktopDropzone?.getAcceptedFiles()?.length > 0 && isInitD === false) {
             setIsInitD(true);
             desktopDropzone?.on("sending", (file, xhr, data) => {
               data.append("name", banner.this_ban.name);
@@ -103,7 +104,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
 
             desktopDropzone?.on("queuecomplete", () => {
               let check_img = false;
-              desktopDropzone?.files?.map((item) => {
+              desktopDropzone?.getAcceptedFiles()?.map((item) => {
                 if (item["status"] == "error") {
                   check_img = true;
                 }
@@ -122,7 +123,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
           desktopDropzone?.processQueue();
         }
 
-        if (mobileDropzone?.files?.length > 0) {
+        if (mobileDropzone?.getAcceptedFiles()?.length > 0) {
           if (isInitM === false) {
             setIsInitM(true);
             mobileDropzone?.on("sending", (file, xhr, data) => {
@@ -134,7 +135,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
             mobileDropzone?.on("queuecomplete", (data) => {
               let check_img = false;
 
-              mobileDropzone?.files?.map((item, key) => {
+              mobileDropzone?.getAcceptedFiles()?.map((item, key) => {
                 if (item["status"] == "error") {
                   check_img = true;
                 }
@@ -165,7 +166,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
 
   const saveEdit = async () => {
     const { desktopDropzone, mobileDropzone } = useBannerModalStore.getState();
-    const banner = useBannerModalStore.getState().getBannerDTO();
+    const banner = buildBannerDTO(useBannerModalStore.getState().banner);
     if (!banner) {
       showAlert("No banner provided", "error");
       return;
@@ -183,8 +184,8 @@ export default function useSaveBanner(showAlert, getData, onClose) {
         showAlert(res.text, "error");
         return;
       }
-      if (desktopDropzone?.files.length > 0 || mobileDropzone?.files.length > 0) {
-        if (desktopDropzone?.files?.length > 0) {
+      if (desktopDropzone?.getAcceptedFiles()?.length > 0 || mobileDropzone?.getAcceptedFiles()?.length > 0) {
+        if (desktopDropzone?.getAcceptedFiles()?.length > 0) {
           if (isInitD === false) {
             setIsInitD(true);
             desktopDropzone?.on("sending", (file, xhr, data) => {
@@ -195,7 +196,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
 
             desktopDropzone?.on("queuecomplete", (data) => {
               let check_img = false;
-              desktopDropzone?.files?.map((item, key) => {
+              desktopDropzone?.getAcceptedFiles()?.map((item, key) => {
                 if (item["status"] == "error") {
                   check_img = true;
                 }
@@ -209,10 +210,10 @@ export default function useSaveBanner(showAlert, getData, onClose) {
               setIsInitD(false);
             });
           }
-          desktopDropzone?.processQueue();
+          desktopDropzone.processQueue();
         }
 
-        if (mobileDropzone?.files?.length > 0) {
+        if (mobileDropzone?.getAcceptedFiles()?.length > 0) {
           if (isInitM === false) {
             setIsInitM(true);
             mobileDropzone?.on("sending", (file, xhr, data) => {
@@ -224,7 +225,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
             mobileDropzone?.on("queuecomplete", (data) => {
               let check_img = false;
 
-              mobileDropzone?.files?.map((item, key) => {
+              mobileDropzone?.getAcceptedFiles()?.map((item, key) => {
                 if (item["status"] == "error") {
                   check_img = true;
                 }
@@ -240,7 +241,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
               setIsInitM(false);
             });
           }
-          mobileDropzone?.processQueue();
+          mobileDropzone.processQueue();
         }
       } else {
         showAlert("No files to upload");

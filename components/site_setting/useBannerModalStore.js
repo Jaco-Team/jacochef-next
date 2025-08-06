@@ -50,17 +50,6 @@ export const useBannerModalStore = create((set, get) => ({
 
   getNewBanner: () => JSON.parse(JSON.stringify(bannerNew)),
 
-  getBannerDTO: () => {
-    const bannerDTO = JSON.parse(JSON.stringify(get().banner));
-    bannerDTO.this_ban.items = bannerDTO?.this_ban?.items?.reduce(
-      (saveItems, item) => [...saveItems, { item_id: item.id }],
-      []
-    );
-    bannerDTO.this_ban.date_start = dayjs(bannerDTO.this_ban.date_start).format("YYYY-MM-DD");
-    bannerDTO.this_ban.date_end = dayjs(bannerDTO.this_ban.date_end).format("YYYY-MM-DD");
-    return bannerDTO;
-  },
-
   changeDateRange: (field, event) => {
     const { banner } = get();
     if (!banner?.this_ban) return;
