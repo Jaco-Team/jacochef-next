@@ -17,13 +17,13 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useBannersStore } from "./useBannersStore";
-import { useSiteSettingStore } from "./useSiteSettingStore";
+import { useSiteSettingStore } from "../useSiteSettingStore";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useBannerModalStore } from "./useBannerModalStore";
 import { BannerModal } from "./BannerModal";
-import useSaveBanner from "./hooks/useSaveBanner";
+import useSaveBanner from "../hooks/useSaveBanner";
 
 export function SiteSettingBanners(props) {
   const {} = props;
@@ -47,7 +47,7 @@ export function SiteSettingBanners(props) {
 
   const banner = useBannerModalStore((state) => state.banner);
   const bannerName = useBannerModalStore((state) => state.bannerName);
-  const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle)
+  const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle);
 
   const { saveNew, saveEdit } = useSaveBanner(showAlert, getData, closeModal);
 
@@ -85,7 +85,7 @@ export function SiteSettingBanners(props) {
     }
   };
 
-  const fetchCoreData = async () => {
+  const fetchCoreData = useCallback(async () => {
     const data = {
       submodule,
       city_id: cityId,
@@ -98,7 +98,7 @@ export function SiteSettingBanners(props) {
     } catch (e) {
       showAlert(`Fetch error: ${e.message}`);
     }
-  };
+  }, [cityId]);
 
   const openModal = async (action, title, id = 0) => {
     setModalPrefix(title);
@@ -124,14 +124,14 @@ export function SiteSettingBanners(props) {
     );
   };
   // update banner name in modal title
-  useEffect(() => setModalTitle(`${modalPrefix}${bannerName ? `: ${bannerName}` : ""}`), [modalPrefix, bannerName]);
+  useEffect(
+    () => setModalTitle(`${modalPrefix}${bannerName ? `: ${bannerName}` : ""}`),
+    [modalPrefix, bannerName]
+  );
 
   useEffect(() => {
-    const preloadData = async () => {
-      await fetchCoreData();
-    };
-    preloadData();
-  }, [cityId]);
+    fetchCoreData();
+  }, [fetchCoreData]);
 
   return (
     <Grid

@@ -6,7 +6,7 @@ import { MyAlert, MySelect } from "@/ui/elements";
 
 import { SiteSettingSocial } from "@/components/site_setting/SiteSettingSocial";
 import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingStore";
-import { SiteSettingBanners } from "@/components/site_setting/SiteSettingBanners";
+import { SiteSettingBanners } from "@/components/site_setting/banners/SiteSettingBanners";
 import { SiteSettingModal } from "@/components/site_setting/SiteSettingModal";
 
 const subMap = {

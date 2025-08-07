@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useBannerModalStore } from "../useBannerModalStore";
-import { buildBannerDTO } from "../bannerUtils";
+import { useBannerModalStore } from "../banners/useBannerModalStore";
+import { buildBannerDTO } from "../banners/bannerUtils";
 
 export default function useSaveBanner(showAlert, getData, onClose) {
   const [click, setClick] = useState(false);

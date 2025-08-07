@@ -3,7 +3,7 @@ import { create } from "zustand";
 
 const defaultSubmodules = [
   { key: "social", title: "Социальные сети" },
-  { key: "banners", title: "Модуль управления банерами" },
+  { key: "banners", title: "Модуль управления баннерами" },
   { key: "seo", title: "Тексты на сайте (SEO)" },
   { key: "category", title: "Категории сайта" },
 ];
@@ -81,9 +81,10 @@ export const useSiteSettingStore = create((set, get) => ({
     set({ is_load: true });
     try {
       const result = await api_laravel(get().module, method, data);
+      if (!result?.data) throw new Error("Api call failed");
       return result.data;
-    } catch (error) {
-      throw error;
+    } catch (e) {
+      console.log(e);
     } finally {
       set({ is_load: false });
     }
