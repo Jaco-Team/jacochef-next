@@ -23,7 +23,7 @@ import { useSiteSettingStore } from "./useSiteSettingStore";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useBannerModalStore } from "./useBannerModalStore";
 import { BannerModal } from "./BannerModal";
-import useSaveBanner from "./useSaveBanner";
+import useSaveBanner from "./hooks/useSaveBanner";
 
 export function SiteSettingBanners(props) {
   const {} = props;

@@ -61,13 +61,6 @@ export function SiteSettingSocial() {
 
   return (
     <>
-      <Backdrop
-        style={{ zIndex: 99 }}
-        open={isLoading}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
-
       {isLoading && (
         <Grid
           container

@@ -8,7 +8,7 @@ export const useSiteSettingStore = create((set, get) => ({
   is_load: false,
 
   cities: [],
-  city_id: 0,
+  city_id: -1,
 
   data: null,
   // for modal wrapper
@@ -67,7 +67,7 @@ export const useSiteSettingStore = create((set, get) => ({
     }
   },
 
-  showAlert: (text = 'No text', status = true) => {
+  showAlert: (text = 'No text', status = false) => { // status false is 'error' by default
     set({ openAlert: true, err_status: status, err_text: text });
     setTimeout(() => {
       set({ openAlert: false });

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useBannerModalStore } from "./useBannerModalStore";
-import { buildBannerDTO } from "./bannerUtils";
+import { useBannerModalStore } from "../useBannerModalStore";
+import { buildBannerDTO } from "../bannerUtils";
 
 export default function useSaveBanner(showAlert, getData, onClose) {
   const [click, setClick] = useState(false);
@@ -24,7 +24,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
       const data = banner.this_ban;
       const res = await getData("save_new_banner", data);
       if (!res?.st) {
-        showAlert(res.text, "error");
+        showAlert(res.text);
         return;
       }
       if (desktopDropzone?.files.length && mobileDropzone?.files.length) {
@@ -168,11 +168,11 @@ export default function useSaveBanner(showAlert, getData, onClose) {
     const { desktopDropzone, mobileDropzone } = useBannerModalStore.getState();
     const banner = buildBannerDTO(useBannerModalStore.getState().banner);
     if (!banner) {
-      showAlert("No banner provided", "error");
+      showAlert("No banner provided");
       return;
     }
     if (!desktopDropzone || !mobileDropzone) {
-      showAlert("Dropzones refs are ampty", "error");
+      showAlert("Dropzones refs are ampty");
       return;
     }
 
@@ -181,7 +181,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
       const data = banner.this_ban;
       const res = await getData("save_edit_banner", data);
       if (!res.st) {
-        showAlert(res.text, "error");
+        showAlert(res.text);
         return;
       }
       if (desktopDropzone?.getAcceptedFiles()?.length > 0 || mobileDropzone?.getAcceptedFiles()?.length > 0) {

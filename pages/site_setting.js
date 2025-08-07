@@ -52,18 +52,14 @@ class SiteSetting_ extends React.Component {
     handleResize();
   };
 
-  handleAlertClose = () => {
-    const { setOpenAlert } = this.store.getState();
-    setOpenAlert(false);
-  };
-
   render() {
     const {
       is_load,
-      openAlert,
       module_name,
       cities,
       city_id,
+      openAlert,
+      setOpenAlert,
       modalDialog,
       modalContent,
       modalTitle,
@@ -82,7 +78,7 @@ class SiteSetting_ extends React.Component {
 
         <MyAlert
           isOpen={openAlert}
-          onClose={this.handleAlertClose}
+          onClose={() => setOpenAlert(false)}
           status={useSiteSettingStore.getState().err_status}
           text={useSiteSettingStore.getState().err_text}
         />

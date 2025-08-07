@@ -115,14 +115,14 @@ export function BannerModal({ getData, showAlert, id, action }) {
     if (!dropZonesReady || isLoading) return;
     if (desktopDropzoneContainerRef.current && mobileDropzoneContainerRef.current) {
       if (Dropzone.instances?.length) {
-        showAlert("Dropzones are ready");
+        // showAlert("Dropzones are ready", true);
         return;
       }
       const dz1 = new Dropzone(desktopDropzoneContainerRef.current, dropzoneOptions);
       setDesktopDropzone(dz1);
       const dz2 = new Dropzone(mobileDropzoneContainerRef.current, dropzoneOptions);
       setMobileDropzone(dz2);
-      showAlert("Dropzones created");
+      // showAlert("Dropzones created", true);
     }
   }, [dropZonesReady]);
 
