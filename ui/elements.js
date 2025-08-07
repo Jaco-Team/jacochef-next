@@ -116,7 +116,7 @@ export class MyAutocomplite extends React.PureComponent {
           // multiple={true}
           disabled={ this.props.disabled || this.props.disabled === true ? true : false }
           id={ this.props.id ?? null }
-          options={this.props.data}
+          options={this.props.data ?? []}
           getOptionLabel={(option) => option?.name || ''}
           value={this.props.value}
           onChange={this.props.func}
@@ -154,7 +154,7 @@ export class MyAutocomplite2 extends React.PureComponent {
             disableCloseOnSelect={true}
             onBlur={this.props.onBlur ? this.props.onBlur : null}
             id={ this.props.id ?? null }
-            options={this.props.data}
+            options={this.props.data ?? []}
             getOptionLabel={(option) => option.name}
             value={this.props.value}
             onChange={this.props.func}
