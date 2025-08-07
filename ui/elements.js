@@ -47,9 +47,9 @@ export function formatDate(date) {
       day = '' + d.getDate(),
       year = d.getFullYear();
 
-  if (month.length < 2) 
+  if (month.length < 2)
       month = '0' + month;
-  if (day.length < 2) 
+  if (day.length < 2)
       day = '0' + day;
 
   return [year, month, day].join('-');*/
@@ -67,20 +67,20 @@ export function formatDateMax(date) {
       month = '' + (d.getMonth() + 1),
       day = '' + d.getDate(),
       year = d.getFullYear(),
-      
+
       hour = d.getHours(),
       min = d.getMinutes();
 
   console.log( d, date, hour, min )
 
-  if (month.length < 2) 
+  if (month.length < 2)
       month = '0' + month;
-  if (day.length < 2) 
+  if (day.length < 2)
       day = '0' + day;
 
-  if (hour.length < 2) 
+  if (hour.length < 2)
     hour = '0' + hour;
-  if (min.length < 2) 
+  if (min.length < 2)
     min = '0' + min;
 
   return ([year, month, day].join('-')) + ' ' + ([hour, min].join(':'));
@@ -91,9 +91,9 @@ export function formatDateMin(date) {
       month = '' + (d.getMonth() + 1),
       year = d.getFullYear();
 
-  if (month.length < 2) 
+  if (month.length < 2)
       month = '0' + month;
-  
+
 
   return [year, month].join('-');
 }
@@ -101,11 +101,11 @@ export function formatDateMin(date) {
 export class MyAutocomplite extends React.PureComponent {
   constructor(props) {
     super(props);
-        
+
     this.state = {
     };
   }
-  
+
   render(){
     return (
       <Stack spacing={3}>
@@ -117,6 +117,7 @@ export class MyAutocomplite extends React.PureComponent {
           disabled={ this.props.disabled || this.props.disabled === true ? true : false }
           id={ this.props.id ?? null }
           options={this.props.data}
+          disableClearable={this.props.disableClearable}
           getOptionLabel={(option) => option.name || ''}
           value={this.props.value}
           onChange={this.props.func}
@@ -139,11 +140,11 @@ export class MyAutocomplite extends React.PureComponent {
 export class MyAutocomplite2 extends React.PureComponent {
   constructor(props) {
     super(props);
-        
+
     this.state = {
     };
   }
-  
+
   render(){
     if( this.props.id && this.props.id == 'promoName' ){
       return (
@@ -184,9 +185,9 @@ export class MyAutocomplite2 extends React.PureComponent {
             //disableCloseOnSelect={true}
             onBlur={this.props.onBlur ? this.props.onBlur : null}
             id={ this.props.id ?? null }
-            
+
             options={this.props.data.map((option) => option.name)}
-  
+
             value={this.props.value}
             onChange={this.props.func}
             filterSelectedOptions
@@ -202,7 +203,7 @@ export class MyAutocomplite2 extends React.PureComponent {
           />
         </Stack>
       )
-    }  
+    }
 
     //isOptionEqualToValue
 
@@ -215,7 +216,7 @@ export class MyAutocomplite2 extends React.PureComponent {
             //disableCloseOnSelect={true}
             onBlur={this.props.onBlur ? this.props.onBlur : null}
             id={ this.props.id ?? null }
-            
+
             options={this.props.data.map((option) => option.name)}
 
             value={this.props.value}
@@ -226,7 +227,7 @@ export class MyAutocomplite2 extends React.PureComponent {
 
             filterOptions={(options, params) => {
               const filtered = filter(options, params);
-      
+
               //console.log( 'params', params )
               //console.log( 'filtered', filtered )
 
@@ -238,7 +239,7 @@ export class MyAutocomplite2 extends React.PureComponent {
                   inputValue
                 );
               }*/
-      
+
               //console.log( 'new filtered', filtered )
 
               return filtered;
@@ -265,7 +266,7 @@ export class MyAutocomplite2 extends React.PureComponent {
           //disableCloseOnSelect={true}
           onBlur={this.props.onBlur ? this.props.onBlur : null}
           id={ this.props.id ?? null }
-          
+
           options={this.props.data.map((option) => option.name)}
 
           value={this.props.value}
@@ -276,7 +277,7 @@ export class MyAutocomplite2 extends React.PureComponent {
 
           filterOptions={(options, params) => {
             const filtered = filter(options, params);
-    
+
             //console.log( 'params', params )
             //console.log( 'filtered', filtered )
 
@@ -288,7 +289,7 @@ export class MyAutocomplite2 extends React.PureComponent {
                 inputValue
               );
             }
-    
+
             //console.log( 'new filtered', filtered )
 
             return filtered;
@@ -310,11 +311,11 @@ export class MyAutocomplite2 extends React.PureComponent {
 export class MySelect extends React.PureComponent {
   constructor(props) {
     super(props);
-        
+
     this.state = {
     };
   }
-  
+
   render(){
     return (
       <FormControl fullWidth variant="outlined" size="small">
@@ -327,10 +328,10 @@ export class MySelect extends React.PureComponent {
           multiple={ this.props.multiple && this.props.multiple === true ? true : false }
           //style={{ zIndex: 9999 }}
         >
-          {this.props.is_none === false ? null : 
+          {this.props.is_none === false ? null :
             <MenuItem value=""><em>None</em></MenuItem>
           }
-          
+
           { this.props.data.map( (item, key) =>
             <MenuItem key={key} value={item.id} style={{ color: item?.color ? item.color : null, zIndex: 9999 }}>{item.name}</MenuItem>
           ) }
@@ -343,12 +344,12 @@ export class MySelect extends React.PureComponent {
 export class MyTextInput extends React.PureComponent {
   constructor(props) {
     super(props);
-   
+
     this.state = {
       type: 'text'
     };
   }
-  
+
   render(){
     return (
       <TextField
@@ -358,8 +359,8 @@ export class MyTextInput extends React.PureComponent {
         onChange={this.props.func}
         onBlur={this.props.onBlur ? this.props.onBlur : null}
         disabled={ this.props.disabled || this.props.disabled === true ? true : false }
-        variant="outlined" 
-        size={'small'} 
+        variant="outlined"
+        size={'small'}
         color='primary'
         multiline={this.props.multiline ? this.props.multiline : false}
         maxRows={this.props.maxRows ? this.props.maxRows : 1}
@@ -382,12 +383,12 @@ const inputProps = {
 export class MyTimePicker extends React.PureComponent {
   constructor(props) {
     super(props);
-        
+
     this.state = {
       thisVal: ''
     };
   }
-  
+
   onChange(event){
     this.setState({
       thisVal: event.target.value
@@ -428,21 +429,21 @@ export class MyTimePicker extends React.PureComponent {
 export class MyDatePicker extends React.PureComponent {
   constructor(props) {
     super(props);
-        
+
     this.state = {
     };
   }
-  
+
   render(){
     return (
       <>
         <Typography>{this.props.label}</Typography>
         <DatePicker
           format="YYYY-MM-DD"
-          
+
           multiple
           sort
-          
+
           //mask="____/__/__"
           //multiple={ this.props.multiple && this.props.multiple === true ? true : false }
           //disableCloseOnSelect={true}
@@ -460,11 +461,11 @@ export class MyDatePicker extends React.PureComponent {
 export class MyDatePickerNew extends React.PureComponent {
   constructor(props) {
     super(props);
-        
+
     this.state = {
     };
   }
-  
+
   render(){
     return (
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
@@ -497,11 +498,11 @@ export class MyDatePickerNew extends React.PureComponent {
 export class MyDateTimePickerNew extends React.PureComponent {
   constructor(props) {
     super(props);
-        
+
     this.state = {
     };
   }
-  
+
   render(){
     return (
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
@@ -531,11 +532,11 @@ export class MyDateTimePickerNew extends React.PureComponent {
 export class MyDatePickerNewViews extends React.PureComponent {
   constructor(props) {
     super(props);
-        
+
     this.state = {
     };
   }
-  
+
   render(){
     return (
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
@@ -562,7 +563,7 @@ export class MyDatePickerNewViews extends React.PureComponent {
 export class MyDatePickerGraph extends React.PureComponent {
   constructor(props) {
     super(props);
-        
+
     let data = this.props.year;
     data = data.split('-')
 
@@ -573,7 +574,7 @@ export class MyDatePickerGraph extends React.PureComponent {
       arr: []
     };
   }
-  
+
   renderWeekPickerDay = (date, selectedDates, pickersDayProps) => {
     pickersDayProps['selected'] = false;
     pickersDayProps['aria-selected'] = false;
@@ -584,12 +585,12 @@ export class MyDatePickerGraph extends React.PureComponent {
     if( res ){
       return <PickersDay {...pickersDayProps} style={{ backgroundColor: 'yellow', color: 'red' }} onClick={ this.chooseDay.bind(this, date) } />;
     }
-    
+
     return <PickersDay {...pickersDayProps} onClick={ this.chooseDay.bind(this, date) }  />;
   };
 
   chooseDay(newValue, event){
-    
+
     let arr = this.state.arr;
 
     let res = arr.find( (item) => formatDate(item.date) == formatDate(newValue) );
@@ -623,7 +624,7 @@ export class MyDatePickerGraph extends React.PureComponent {
           maxDate={formatDate(this.state.maxDate)}
           displayStaticWrapperAs="desktop"
           label="Week picker"
-          
+
           //renderDay={this.props.renderWeekPickerDay}
           //renderInput={(params) => <TextField {...params} />}
           //inputFormat="yyyy-MM-dd"
@@ -631,7 +632,7 @@ export class MyDatePickerGraph extends React.PureComponent {
 
           slotProps={{ textField: { size: "small", multiple: true } }}
           value={this.state.activeValue}
-          
+
           slots={{ day: (props) => this.props.renderWeekPickerDay(props)}}
 
         />
@@ -643,11 +644,11 @@ export class MyDatePickerGraph extends React.PureComponent {
 export class MyCheckBox extends React.PureComponent {
   constructor(props) {
     super(props);
-        
+
     this.state = {
     };
   }
-  
+
   render(){
     return (
       <FormGroup row style={ this.props.style ? this.props.style : {} }>
@@ -767,21 +768,21 @@ export class TextEditor11 extends React.PureComponent {
 export class MyAlert extends React.Component {
   render(){
     return (
-      <Snackbar 
-        open={this.props.isOpen} 
+      <Snackbar
+        open={this.props.isOpen}
         autoHideDuration={30000}
-        anchorOrigin={{  
+        anchorOrigin={{
           vertical: 'top',
-          horizontal: 'center', 
+          horizontal: 'center',
         }}
         onClose={this.props.onClose}
       >
-        <Alert 
-          onClose={this.props.onClose} 
-          severity={ this.props.status ? "success" : "error" } 
+        <Alert
+          onClose={this.props.onClose}
+          severity={ this.props.status ? "success" : "error" }
           sx={{ width: '100%' }}
         >
-          { this.props.status ? this.props.text ? this.props.text : 'Данные успешно сохранены!' : this.props.text } 
+          { this.props.status ? this.props.text ? this.props.text : 'Данные успешно сохранены!' : this.props.text }
         </Alert>
       </Snackbar>
     )
