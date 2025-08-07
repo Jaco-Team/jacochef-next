@@ -1,9 +1,7 @@
-import React from "react";
-import Grid from "@mui/material/Grid";
+import React, { useEffect } from "react";
+import PropTypes from "prop-types";
 
-import Backdrop from "@mui/material/Backdrop";
-import CircularProgress from "@mui/material/CircularProgress";
-
+import { Grid, Backdrop, Box, CircularProgress } from "@mui/material";
 import { MyAlert, MySelect } from "@/ui/elements";
 
 import { SiteSettingSocial } from "@/components/site_setting/SiteSettingSocial";
@@ -11,30 +9,38 @@ import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingSto
 import { SiteSettingBanners } from "@/components/site_setting/SiteSettingBanners";
 import { SiteSettingModal } from "@/components/site_setting/SiteSettingModal";
 
-class SiteSetting_ extends React.Component {
-  constructor(props) {
-    super(props);
-    // No local state, everything comes from the store
-    this.store = useSiteSettingStore;
-    this.state = this.store.getState();
-  }
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
 
-  componentDidMount() {
-    // Subscribe to store updates
-    this.unsubscribe = this.store.subscribe((state) => {
-      this.setState(state);
-    });
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
-    // Initial data load
-    this.loadData();
-  }
+TabPanel.propTypes = {
+  children: PropTypes.node,
+  index: PropTypes.number.isRequired,
+  value: PropTypes.number.isRequired,
+};
 
-  componentWillUnmount() {
-    this.unsubscribe && this.unsubscribe();
-  }
+function a11yProps(index) {
+  return {
+    id: `simple-tab-${index}`,
+    "aria-controls": `simple-tabpanel-${index}`,
+  };
+}
 
-  loadData = async () => {
-    const { getData, setCities, setModuleName, setData } = this.store.getState();
+export default function SiteSetting() {
+  const loadData = async () => {
+    const { getData, setCities, setModuleName, setData } = useSiteSettingStore.getState();
     const data = await getData("get_all");
     setData(data);
     setCities(data.cities);
@@ -42,106 +48,117 @@ class SiteSetting_ extends React.Component {
     document.title = data.module_info.name;
   };
 
-  handleChangeCity = (event) => {
-    const { changeCity } = this.store.getState();
+  const handleChangeCity = (event) => {
+    const { changeCity } = useSiteSettingStore.getState();
     changeCity(event.target.value);
   };
 
-  handleResize = () => {
-    const { handleResize } = this.store.getState();
-    handleResize();
-  };
+  const { setOpenAlert, handleResize, closeModal } = useSiteSettingStore.getState();
+  const {
+    err_status,
+    err_text,
+    is_load,
+    module_name,
+    cities,
+    city_id,
+    modalDialog,
+    modalContent,
+    modalTitle,
+    customModalActions,
+    openAlert,
+    fullScreen,
+  } = useSiteSettingStore((s) => ({
+    err_status: s.err_status,
+    err_text: s.err_text,
+    is_load: s.is_load,
+    module_name: s.module_name,
+    cities: s.cities,
+    city_id: s.city_id,
+    modalDialog: s.modalDialog,
+    modalContent: s.modalContent,
+    modalTitle: s.modalTitle,
+    customModalActions: s.customModalActions,
+    openAlert: s.openAlert,
+    fullScreen: s.fullScreen,
+  }));
 
-  render() {
-    const {
-      is_load,
-      module_name,
-      cities,
-      city_id,
-      openAlert,
-      setOpenAlert,
-      modalDialog,
-      modalContent,
-      modalTitle,
-      fullScreen,
-      closeModal,
-      customModalActions
-    } = this.state;
-    return (
-      <>
-        <Backdrop
-          open={is_load}
-          style={{ zIndex: 99 }}
-        >
-          <CircularProgress color="inherit" />
-        </Backdrop>
+  useEffect(() => {
+    const preload = async () => await loadData();
+    preload();
+  }, []);
 
-        <MyAlert
-          isOpen={openAlert}
-          onClose={() => setOpenAlert(false)}
-          status={useSiteSettingStore.getState().err_status}
-          text={useSiteSettingStore.getState().err_text}
-        />
-        <SiteSettingModal
-          open={modalDialog}
-          title={modalTitle}
-          fullScreen={fullScreen}
-          fullWidth={true}
-          closeModal={closeModal}
-          customActions = {typeof customModalActions === 'function' ? customModalActions() : customModalActions}
-        >
-          {typeof modalContent === 'function' ? modalContent() : modalContent}
-        </SiteSettingModal>
+  return (
+    <>
+      <Backdrop
+        open={is_load}
+        style={{ zIndex: 99 }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
+      <MyAlert
+        isOpen={openAlert}
+        onClose={() => setOpenAlert(false)}
+        status={err_status}
+        text={err_text}
+      />
+      <SiteSettingModal
+        open={modalDialog}
+        title={modalTitle}
+        fullScreen={fullScreen}
+        fullWidth={true}
+        closeModal={closeModal}
+        customActions={
+          typeof customModalActions === "function" ? customModalActions() : customModalActions
+        }
+      >
+        {typeof modalContent === "function" ? modalContent() : modalContent}
+      </SiteSettingModal>
+      <Grid
+        container
+        spacing={3}
+        className="container_first_child"
+      >
         <Grid
-          container
-          spacing={3}
-          className="container_first_child"
+          item
+          xs={12}
+          sm={12}
         >
-          <Grid
-            item
-            xs={12}
-            sm={12}
-          >
-            <h1>{module_name}</h1>
-          </Grid>
-
-          <Grid
-            item
-            xs={12}
-            sm={12}
-          >
-            <MySelect
-              data={cities}
-              value={city_id || '-1'}
-              func={this.handleChangeCity}
-              label="Город"
-              is_none={false}
-            />
-          </Grid>
-
-          <Grid
-            item
-            xs={12}
-            sm={12}
-          >
-            <SiteSettingSocial />
-          </Grid>
-
-          <Grid
-            item
-            xs={12}
-            sm={12}
-          >
-            <SiteSettingBanners />
-          </Grid>
+          <h1>{module_name}</h1>
         </Grid>
-      </>
-    );
-  }
-}
 
-export default function SiteSetting() {
-  return <SiteSetting_ />;
+        <Grid
+          item
+          xs={12}
+          sm={12}
+        >
+          <MySelect
+            data={cities}
+            value={city_id || "-1"}
+            func={handleChangeCity}
+            label="Город"
+            is_none={false}
+          />
+        </Grid>
+
+        <Grid
+          item
+          xs={12}
+          sm={12}
+        >
+          <SiteSettingSocial />
+        </Grid>
+
+        <Grid
+          item
+          xs={12}
+          sm={12}
+        >
+          <SiteSettingBanners />
+        </Grid>
+      </Grid>
+    </>
+  );
 }
 
 export async function getServerSideProps({ res }) {

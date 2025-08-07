@@ -74,7 +74,7 @@ export function SiteSettingSocial() {
           </Grid>
         </Grid>
       )}
-      {!isLoading && (
+      {!isLoading && cityId !== -1 && (
         <Grid
           container
           spacing={3}
