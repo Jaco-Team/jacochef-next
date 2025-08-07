@@ -116,7 +116,7 @@ class SiteSetting_ extends React.Component {
           >
             <MySelect
               data={cities}
-              value={city_id}
+              value={city_id || '-1'}
               func={this.handleChangeCity}
               label="Город"
               is_none={false}

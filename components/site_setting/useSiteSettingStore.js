@@ -67,7 +67,7 @@ export const useSiteSettingStore = create((set, get) => ({
     }
   },
 
-  showAlert: (text = 'No text', status = 'error') => {
+  showAlert: (text = 'No text', status = true) => {
     set({ openAlert: true, err_status: status, err_text: text });
     setTimeout(() => {
       set({ openAlert: false });

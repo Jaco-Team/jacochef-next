@@ -22,7 +22,7 @@ export function SiteSettingSocial() {
       city_id: cityId,
       submodule,
     };
-    try{
+    try {
       setIsLoading(true);
       const res = await getData("get_social_data", data);
       setDataInfo(res.links);
@@ -68,101 +68,116 @@ export function SiteSettingSocial() {
         <CircularProgress color="inherit" />
       </Backdrop>
 
-      <Grid
-        container
-        spacing={3}
-        className="container_first_child"
-      >
+      {isLoading && (
         <Grid
-          item
-          xs={12}
-          sm={12}
+          container
+          spacing={3}
         >
-          <Typography variant="h5">{moduleName}</Typography>
+          <Grid
+            item
+            style={{ display: "flex", justifyContent: "center", padding: "1em" }}
+          >
+            <CircularProgress color="inherit" />
+          </Grid>
         </Grid>
-
-        {!!dataInfo && (
+      )}
+      {!isLoading && (
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             item
             xs={12}
+            sm={12}
           >
+            <Typography variant="h5">{moduleName}</Typography>
+          </Grid>
+
+          {!!dataInfo && (
             <Grid
-              container
-              spacing={3}
+              item
+              xs={12}
             >
               <Grid
-                item
-                xs={12}
-                sm={6}
+                container
+                spacing={3}
               >
-                <MyTextInput
-                  label="Вконтакте"
-                  value={dataInfo?.vk || ""}
-                  func={(e) => changeData("vk", e)}
-                />
-              </Grid>
-              <Grid
-                item
-                xs={12}
-                sm={6}
-              >
-                <MyTextInput
-                  label="Инстаграм"
-                  value={dataInfo?.inst || ""}
-                  func={(e) => changeData("inst", e)}
-                />
-              </Grid>
-
-              <Grid
-                item
-                xs={12}
-                sm={6}
-              >
-                <MyTextInput
-                  label="Одноклассники"
-                  value={dataInfo?.ok || ""}
-                  func={(e) => changeData("ok", e)}
-                />
-              </Grid>
-              <Grid
-                item
-                xs={12}
-                sm={6}
-              >
-                <MyTextInput
-                  label="Телеграм"
-                  value={dataInfo?.tg || ""}
-                  func={(e) => changeData("tg", e)}
-                />
-              </Grid>
-              <Grid
-                item
-                xs={12}
-                sm={6}
-              >
-                <MyTextInput
-                  label="Facebook"
-                  value={dataInfo?.fb || ""}
-                  func={(e) => changeData("fb", e)}
-                />
-              </Grid>
-
-              <Grid
-                item
-                xs={12}
-                sm={6}
-              >
-                <Button
-                  variant="contained"
-                  onClick={saveData}
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
                 >
-                  Обновить данные
-                </Button>
+                  <MyTextInput
+                    label="Вконтакте"
+                    value={dataInfo?.vk || ""}
+                    func={(e) => changeData("vk", e)}
+                  />
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                >
+                  <MyTextInput
+                    label="Инстаграм"
+                    value={dataInfo?.inst || ""}
+                    func={(e) => changeData("inst", e)}
+                  />
+                </Grid>
+
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                >
+                  <MyTextInput
+                    label="Одноклассники"
+                    value={dataInfo?.ok || ""}
+                    func={(e) => changeData("ok", e)}
+                  />
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                >
+                  <MyTextInput
+                    label="Телеграм"
+                    value={dataInfo?.tg || ""}
+                    func={(e) => changeData("tg", e)}
+                  />
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                >
+                  <MyTextInput
+                    label="Facebook"
+                    value={dataInfo?.fb || ""}
+                    func={(e) => changeData("fb", e)}
+                  />
+                </Grid>
+
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                >
+                  <Button
+                    variant="contained"
+                    onClick={saveData}
+                  >
+                    Обновить данные
+                  </Button>
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
-        )}
-      </Grid>
+          )}
+        </Grid>
+      )}
     </>
   );
 }

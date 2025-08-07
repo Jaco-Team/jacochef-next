@@ -22,6 +22,7 @@ const dropzoneOptions = {
   parallelUploads: 10,
   acceptedFiles: "image/jpeg",
   addRemoveLinks: true,
+  dictDefaultMessage: "Перетащите файлы сюда для загрузки",
   url: "https://jacochef.ru/src/img/site_banners/upload_img_new.php",
 };
 
@@ -49,8 +50,6 @@ export function BannerModal({ getData, showAlert, id, action }) {
   const mobileDropzoneContainerRef = useRef(null);
   const setDesktopDropzone = useBannerModalStore((state) => state.setDesktopDropzone);
   const setMobileDropzone = useBannerModalStore((state) => state.setMobileDropzone);
-  const desktopDropzone = useBannerModalStore((state) => state.setDesktopDropzone);
-  const mobileDropzone = useBannerModalStore((state) => state.setMobileDropzone);
 
   const fetchPromos = async () => {
     if (!banner) return;
@@ -87,7 +86,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           };
           const bannerData = await getData("get_one_banner", data);
           setBanner(bannerData);
-          setBannerName(bannerData.this_ban?.name)
+          setBannerName(bannerData.this_ban?.name);
           setPromos(bannerData.promos);
           break;
         } catch (e) {
@@ -114,18 +113,17 @@ export function BannerModal({ getData, showAlert, id, action }) {
 
   useEffect(() => {
     if (!dropZonesReady || isLoading) return;
-    if (desktopDropzone?.current || mobileDropzone?.current) return;
     if (desktopDropzoneContainerRef.current && mobileDropzoneContainerRef.current) {
+      if (Dropzone.instances?.length) {
+        showAlert("Dropzones are ready");
+        return;
+      }
       const dz1 = new Dropzone(desktopDropzoneContainerRef.current, dropzoneOptions);
       setDesktopDropzone(dz1);
       const dz2 = new Dropzone(mobileDropzoneContainerRef.current, dropzoneOptions);
       setMobileDropzone(dz2);
-      showAlert("Dropzones are ready");
+      showAlert("Dropzones created");
     }
-    return () => {
-      desktopDropzone?.current?.destroy();
-      mobileDropzone?.current?.destroy();
-    };
   }, [dropZonesReady]);
 
   useEffect(() => {
