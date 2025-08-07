@@ -1,13 +1,12 @@
 import { api_laravel } from "@/src/api_new";
-import { modalClasses } from "@mui/material";
 import { create } from "zustand";
 
-const defaultSubmodules = {
-  social: { component: "SiteSettingSocial", title: "" },
-  banners: { component: "SiteSettingBanners", title: "" },
-  seo: { component: "SiteSettingSocial", title: "" },
-  category: { component: "SiteSettingSocial", title: "" },
-};
+const defaultSubmodules = [
+  { key: "social", title: "Социальные сети" },
+  { key: "banners", title: "Модуль управления банерами" },
+  { key: "seo", title: "Тексты на сайте (SEO)" },
+  { key: "category", title: "Категории сайта" },
+];
 
 export const useSiteSettingStore = create((set, get) => ({
   // core
@@ -22,24 +21,17 @@ export const useSiteSettingStore = create((set, get) => ({
 
   // subModules
   subModules: defaultSubmodules,
-  // setSubmodules: (subModules) =>
-  //   set({
-  //     subModules:
-  //       subModules && Object.keys(subModules)?.length
-  //         ? subModules
-  //         : {},
-  //   }),
-  getSubmodule: (key) => get().subModules[key] || null,
-  setSubmoduleTitle: (key, title) =>
-    set((state) => ({
-      subModules: {
-        ...state.subModules,
-        [key]: {
-          ...state.subModules[key],
-          title,
-        },
-      },
-    })),
+  setSubModules: (subModules) =>
+    set({
+      subModules: Array.isArray(subModules) && subModules.length ? subModules : [],
+    }),
+  getSubModule: (key) => get().subModules.find((s) => s.key === key) || null,
+  setSubModuleTitle: (key, newTitle) =>
+    set((state) => {
+      state.subModules = state.subModules.map((s) =>
+        s.key === key ? { ...s, title: newTitle } : s
+      );
+    }),
 
   // change city
   cities: [],
@@ -83,7 +75,7 @@ export const useSiteSettingStore = create((set, get) => ({
 
   // tabs
   activeTab: 0,
-  setActiveTab: (activeTab) => set({ activeTab }),
+  setActiveTab: (event, activeTab) => set({ activeTab }),
 
   getData: async (method, data = {}) => {
     set({ is_load: true });

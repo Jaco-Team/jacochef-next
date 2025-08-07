@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
 import { Grid, Backdrop, Box, CircularProgress, Tabs, Tab } from "@mui/material";
@@ -8,6 +8,13 @@ import { SiteSettingSocial } from "@/components/site_setting/SiteSettingSocial";
 import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingStore";
 import { SiteSettingBanners } from "@/components/site_setting/SiteSettingBanners";
 import { SiteSettingModal } from "@/components/site_setting/SiteSettingModal";
+
+const subMap = {
+  social: SiteSettingSocial,
+  banners: SiteSettingBanners,
+  seo: SiteSettingSocial,
+  category: SiteSettingSocial,
+};
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -39,17 +46,18 @@ function a11yProps(index) {
 }
 
 export default function SiteSetting() {
-  const loadData = async () => {
-    const { getData, setCities, setModuleName, setData } = useSiteSettingStore.getState();
-    const data = await getData("get_all");
-    setData(data);
-    setCities(data.cities);
-    setModuleName(data.module_info.name);
-    document.title = data.module_info.name;
-  };
-
-  const { setOpenAlert, closeModal, changeTab, setCityId, setActiveTab } = useSiteSettingStore.getState();
   const {
+    getData,
+    setCities,
+    setModuleName,
+    setData,
+    setOpenAlert,
+    closeModal,
+    setCityId,
+    setActiveTab,
+  } = useSiteSettingStore.getState();
+  const {
+    subModules,
     activeTab,
     err_status,
     err_text,
@@ -64,6 +72,7 @@ export default function SiteSetting() {
     openAlert,
     fullScreen,
   } = useSiteSettingStore((s) => ({
+    subModules: s.subModules,
     activeTab: s.activeTab,
     err_status: s.err_status,
     err_text: s.err_text,
@@ -79,6 +88,16 @@ export default function SiteSetting() {
     fullScreen: s.fullScreen,
   }));
 
+  const [subList, setSubList] = useState([]);
+
+  const loadData = async () => {
+    const data = await getData("get_all");
+    setData(data);
+    setCities(data.cities);
+    setModuleName(data.module_info.name);
+    setSubList(subModules.filter((sub) => +data.access[sub.key] === 1));
+    document.title = data.module_info.name;
+  };
   useEffect(() => {
     const preload = async () => await loadData();
     preload();
@@ -111,10 +130,10 @@ export default function SiteSetting() {
       >
         {typeof modalContent === "function" ? modalContent() : modalContent}
       </SiteSettingModal>
+
       <Grid
         container
         spacing={3}
-        className="container_first_child"
       >
         <Grid
           item
@@ -145,30 +164,17 @@ export default function SiteSetting() {
         >
           <Tabs
             value={activeTab}
-            onChange={changeTab}
+            onChange={setActiveTab}
             centered
             variant="fullWidth"
           >
-            <Tab
-              label="О клиенте"
-              {...a11yProps(0)}
-            />
-            <Tab
-              label="Заказы"
-              {...a11yProps(1)}
-            />
-            <Tab
-              label="Оформленные ошибки"
-              {...a11yProps(2)}
-            />
-            <Tab
-              label="Обращения"
-              {...a11yProps(3)}
-            />
-            <Tab
-              label="Авторизации"
-              {...a11yProps(4)}
-            />
+            {subList.map((subm, i) => (
+              <Tab
+                key={subm.key}
+                label={subm.title}
+                {...a11yProps(i)}
+              />
+            ))}
           </Tabs>
         </Grid>
         <Grid
@@ -176,16 +182,27 @@ export default function SiteSetting() {
           xs={12}
           sm={12}
         >
-          <SiteSettingSocial />
+          {subList.map((subm, i) => {
+            const MyComponent = subMap[subm.key];
+            return (
+            <TabPanel
+              value={activeTab}
+              index={i}
+              id={subm.key}
+              key={subm.key}
+            >
+              <MyComponent />
+            </TabPanel>
+          )})}
         </Grid>
 
-        <Grid
+        {/* <Grid
           item
           xs={12}
           sm={12}
         >
           <SiteSettingBanners />
-        </Grid>
+        </Grid> */}
       </Grid>
     </>
   );
@@ -201,25 +218,7 @@ export async function getServerSideProps({ res }) {
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
-  // main api endpoint
-const module = 'site_setting';
-
-  const getData = async (method, data = {}) => {
-    try {
-      const result = await api_laravel(module, method, data);
-      return result.data;
-    } catch (e) {
-      console.error(e); // server side
-    } 
-  }
-
-  const data = await getData("get_all");
-
   return {
-    props: {
-      data,
-      getData
-    },
+    props: {},
   };
-
 }

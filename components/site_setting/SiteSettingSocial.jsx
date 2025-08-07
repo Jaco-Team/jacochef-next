@@ -1,37 +1,30 @@
 import { MyTextInput } from "@/ui/elements";
-import { Backdrop, Button, CircularProgress, Grid, Typography } from "@mui/material";
+import { Button, CircularProgress, Grid, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { SiteSettingModal } from "./SiteSettingModal";
-import { api_laravel } from "@/src/api_new";
 import { useSiteSettingStore } from "./useSiteSettingStore";
 
 export function SiteSettingSocial() {
   const submodule = "social";
   const [moduleName, setModuleName] = useState("");
   const [dataInfo, setDataInfo] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const parentModule = useSiteSettingStore((state) => state.module);
   const cityId = useSiteSettingStore((state) => state.city_id);
 
   const getData = useSiteSettingStore((state) => state.getData);
 
   const updateData = async () => {
-    if (cityId === 0) return;
+    if (cityId < 0) return;
     const data = {
       city_id: cityId,
       submodule,
     };
     try {
-      setIsLoading(true);
       const res = await getData("get_social_data", data);
       setDataInfo(res.links);
       setModuleName(res.submodule.name);
     } catch (e) {
       console.log(`Error getting socialnetworks data: ${e.message}`);
-    } finally {
-      setIsLoading(false);
-    }
+    } 
   };
 
   const saveData = async () => {
@@ -61,7 +54,7 @@ export function SiteSettingSocial() {
 
   return (
     <>
-      {isLoading && (
+      {cityId === -1 && (
         <Grid
           container
           spacing={3}
@@ -70,15 +63,14 @@ export function SiteSettingSocial() {
             item
             style={{ display: "flex", justifyContent: "center", padding: "1em" }}
           >
-            <CircularProgress color="inherit" />
+            <Typography>Выберите город</Typography>
           </Grid>
         </Grid>
       )}
-      {!isLoading && cityId !== -1 && (
+      {cityId >= 0 && (
         <Grid
           container
           spacing={3}
-          className="container_first_child"
         >
           <Grid
             item

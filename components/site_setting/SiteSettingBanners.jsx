@@ -137,7 +137,6 @@ export function SiteSettingBanners(props) {
     <Grid
       container
       spacing={3}
-      className="container_first_child"
       style={{ position: "relative" }}
     >
       <Backdrop
