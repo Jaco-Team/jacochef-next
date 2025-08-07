@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 
-import { Grid, Backdrop, Box, CircularProgress } from "@mui/material";
+import { Grid, Backdrop, Box, CircularProgress, Tabs, Tab } from "@mui/material";
 import { MyAlert, MySelect } from "@/ui/elements";
 
 import { SiteSettingSocial } from "@/components/site_setting/SiteSettingSocial";
@@ -48,13 +48,9 @@ export default function SiteSetting() {
     document.title = data.module_info.name;
   };
 
-  const handleChangeCity = (event) => {
-    const { changeCity } = useSiteSettingStore.getState();
-    changeCity(event.target.value);
-  };
-
-  const { setOpenAlert, handleResize, closeModal } = useSiteSettingStore.getState();
+  const { setOpenAlert, closeModal, changeTab, setCityId, setActiveTab } = useSiteSettingStore.getState();
   const {
+    activeTab,
     err_status,
     err_text,
     is_load,
@@ -68,6 +64,7 @@ export default function SiteSetting() {
     openAlert,
     fullScreen,
   } = useSiteSettingStore((s) => ({
+    activeTab: s.activeTab,
     err_status: s.err_status,
     err_text: s.err_text,
     is_load: s.is_load,
@@ -135,12 +132,45 @@ export default function SiteSetting() {
           <MySelect
             data={cities}
             value={city_id || "-1"}
-            func={handleChangeCity}
+            func={(e) => setCityId(e.target?.value)}
             label="Город"
             is_none={false}
           />
         </Grid>
 
+        <Grid
+          item
+          xs={12}
+          sm={12}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={changeTab}
+            centered
+            variant="fullWidth"
+          >
+            <Tab
+              label="О клиенте"
+              {...a11yProps(0)}
+            />
+            <Tab
+              label="Заказы"
+              {...a11yProps(1)}
+            />
+            <Tab
+              label="Оформленные ошибки"
+              {...a11yProps(2)}
+            />
+            <Tab
+              label="Обращения"
+              {...a11yProps(3)}
+            />
+            <Tab
+              label="Авторизации"
+              {...a11yProps(4)}
+            />
+          </Tabs>
+        </Grid>
         <Grid
           item
           xs={12}
@@ -171,7 +201,25 @@ export async function getServerSideProps({ res }) {
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
+  // main api endpoint
+const module = 'site_setting';
+
+  const getData = async (method, data = {}) => {
+    try {
+      const result = await api_laravel(module, method, data);
+      return result.data;
+    } catch (e) {
+      console.error(e); // server side
+    } 
+  }
+
+  const data = await getData("get_all");
+
   return {
-    props: {},
+    props: {
+      data,
+      getData
+    },
   };
+
 }
