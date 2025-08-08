@@ -30,7 +30,6 @@ export function SiteSettingPages() {
   const { getData, setModuleName, setPages, setItem, setItemName, setCategories } =
     usePagesStore.getState();
   const pages = usePagesStore((s) => s.pages);
-  const item = usePagesStore((s) => s.item);
   const itemName = usePagesStore((s) => s.itemName);
   const moduleName = usePagesStore((s) => s.moduleName);
   const isLoading = usePagesStore((s) => s.isLoading);
@@ -60,11 +59,8 @@ export function SiteSettingPages() {
     createModal(
       () => (
         <PageTextModal
-          showAlert={showAlert}
           cities={cities}
-          pages={pages}
           action={action}
-          itemName={itemName}
         />
       ),
       modalPrefix,
@@ -86,7 +82,7 @@ export function SiteSettingPages() {
     fetchCoreData();
   }, [fetchCoreData]);
 
-  // update banner name in modal title
+  // update page name in modal title
   useEffect(
     () => setModalTitle(`${modalPrefix}${itemName ? `: ${itemName}` : ""}`),
     [modalPrefix, itemName]

@@ -9,12 +9,13 @@ import { SiteSettingBanners } from "@/components/site_setting/banners/SiteSettin
 import { SiteSettingModal } from "@/components/site_setting/SiteSettingModal";
 import { SiteSettingPages } from "@/components/site_setting/seo/SiteSettingPages";
 import { SiteSettingSocial } from "@/components/site_setting/social/SiteSettingSocial";
+import { SiteSettingCategory } from "@/components/site_setting/category/SiteSettingCategory";
 
 const subMap = {
   social: SiteSettingSocial,
   banners: SiteSettingBanners,
   seo: SiteSettingPages,
-  category: SiteSettingSocial,
+  category: SiteSettingCategory,
 };
 
 function TabPanel(props) {
@@ -151,7 +152,7 @@ export default function SiteSetting() {
         >
           <MySelect
             data={cities}
-            value={city_id || "-1"}
+            value={city_id || -1}
             func={(e) => setCityId(e.target?.value)}
             label="Город"
             is_none={false}

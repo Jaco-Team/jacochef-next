@@ -2,7 +2,7 @@ import { MyAutocomplite, MySelect, MyTextInput, TextEditor } from "@/ui/elements
 import { usePagesStore } from "./usePagesStore";
 import { Grid, Typography } from "@mui/material";
 
-export function PageTextModal({ itemName, cities, showAlert, ...restProps }) {
+export function PageTextModal({ cities }) {
   const { categories, changeItemProp, changeItemText, changeAutoComplete } =
     usePagesStore.getState();
   const currentItem = usePagesStore((s) => s.item);
