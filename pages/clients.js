@@ -538,7 +538,7 @@ function ClientPage() {
 	const [users, setUsers] = useState([]);
 	const [user, setUser] = useState([]);
 	const [url, setUrl] = useState('');
-	const [page, setPage] = useState(1);
+	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowPerPage] = useState(10);
 	const [openAlert, setOpenAlert] = useState(false);
 	const [openModalUser, setOpenModalUser] = useState(false);
@@ -880,7 +880,7 @@ function ClientPage() {
 										</TableHead>
 
 										<TableBody>
-											{users.slice((page - 1) * rowsPerPage, page * rowsPerPage).map((item, i) => (
+											{users.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((item, i) => (
 												<TableRow
 													key={i}
 													style={{cursor: 'pointer'}}

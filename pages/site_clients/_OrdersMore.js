@@ -448,7 +448,7 @@ export default function OrdersMore() {
 	const [orders, setOrders] = useState([]);
 	const [acces, setAcces] = useState({});
 	const [url, setUrl] = useState('');
-	const [page, setPage] = useState(1);
+	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowPerPage] = useState(10);
 	const [openAlert, setOpenAlert] = useState(false);
 	const [openModalOrder, setOpenModalOrder] = useState(false);
@@ -569,7 +569,7 @@ export default function OrdersMore() {
 		setIsLoad(true);
 
 		try {
-			const result = await api_laravel('site_clients', method, data);
+			const result = await api_laravel_local('site_clients', method, data);
 			return result.data;
 		} finally {
 			setIsLoad(false);
@@ -821,7 +821,7 @@ export default function OrdersMore() {
 				{!orders.length ? null : (
 					<>
 						<Grid container justifyContent="center">
-							<Grid item xs={12} sm={9}>
+							<Grid item xs={12} sm={12}>
 								<TableContainer>
 									<Table>
 										<TableHead>
@@ -848,7 +848,7 @@ export default function OrdersMore() {
 
 										<TableBody>
 
-											{orders.slice((page - 1) * rowsPerPage, page * rowsPerPage).map((item, key) =>
+											{orders.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((item, key) =>
 												<TableRow
 													hover
 													key={key}

@@ -285,7 +285,7 @@ export default function Clients() {
 	const [user, setUser] = useState([]);
 	const [url, setUrl] = useState('');
 	const [urlCsv, setUrlCsv] = useState('');
-	const [page, setPage] = useState(1);
+	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowPerPage] = useState(10);
 	const [openAlert, setOpenAlert] = useState(false);
 	const [openModalUser, setOpenModalUser] = useState(false);
@@ -405,7 +405,7 @@ export default function Clients() {
 		setIsLoad(true);
 
 		try {
-			const result = await api_laravel('site_clients', method, data);
+			const result = await api_laravel_local('site_clients', method, data);
 			return result.data;
 		} finally {
 			setIsLoad(false);
@@ -645,7 +645,7 @@ export default function Clients() {
 										</TableHead>
 
 										<TableBody>
-											{users.slice((page - 1) * rowsPerPage, page * rowsPerPage).map((item, i) => (
+											{users.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((item, i) => (
 												<TableRow
 													key={i}
 													style={{cursor: 'pointer'}}
