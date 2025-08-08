@@ -405,7 +405,7 @@ export default function Clients() {
 		setIsLoad(true);
 
 		try {
-			const result = await api_laravel_local('site_clients', method, data);
+			const result = await api_laravel('site_clients', method, data);
 			return result.data;
 		} finally {
 			setIsLoad(false);
