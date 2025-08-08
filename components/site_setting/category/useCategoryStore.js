@@ -48,7 +48,9 @@ export const useCategoryStore = create((set, get) => ({
 
   changeSort: (id, event) => {
     const value = event?.target?.value;
-    const newCategories = get().categories.map(cat => cat.id===id? {...cat,sort:value}:cat);
-    set({categories: newCategories});
-  }
+    const newCategories = get().categories.map((cat) =>
+      cat.id === id ? { ...cat, sort: value } : cat
+    ).sort((a, b) => +a.sort - +b.sort);
+    set({ categories: newCategories });
+  },
 }));

@@ -17,11 +17,11 @@ import { useCategoryStore } from "./useCategoryStore";
 import { useSiteSettingStore } from "../useSiteSettingStore";
 import { MyTextInput } from "@/ui/elements";
 import { CategoryModal } from "./CategoryModal";
+import { useDebounce } from "../hooks/useDebounce";
 
 export function SiteSettingCategory() {
   const submodule = "category";
   // Settings state
-  const cities = useSiteSettingStore((state) => state.cities);
   const createModal = useSiteSettingStore((state) => state.createModal);
   const closeModal = useSiteSettingStore((state) => state.closeModal);
   const setModalTitle = useSiteSettingStore((state) => state.setModalTitle);
@@ -60,7 +60,8 @@ export function SiteSettingCategory() {
     fetchCoreData
   );
 
-  const saveSort = useCallback(async (id, event) => {
+  const saveSort = useDebounce(async (id, event) => {
+    const targetCategory = useCategoryStore.getState().categories.find((cat) => cat.id === id);
     const data = {
       id,
       sort: event.target.value,
@@ -70,9 +71,9 @@ export function SiteSettingCategory() {
       showAlert(`Save error: ${res.text}`, false);
       return;
     }
-    showAlert(`Сортировка изменена`, true);
+    showAlert(`Сортировка изменена: ${targetCategory.name} ${event.target.value}`, true);
     await fetchCoreData();
-  }, []);
+  }, 1000);
 
   const openModal = async (action, title, id = null) => {
     setModalPrefix(title);
@@ -157,16 +158,16 @@ export function SiteSettingCategory() {
                 <TableHead>
                   <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                     <TableCell>#</TableCell>
-                    <TableCell sx={{ minWidth: "300px" }}>Название</TableCell>
+                    <TableCell sx={{ minWidth: "200px" }}>Название</TableCell>
                     <TableCell>Сортировка</TableCell>
-                    <TableCell sx={{ minWidth: "500px" }}>Сроки хранения</TableCell>
+                    <TableCell sx={{ minWidth: "200px" }}>Сроки хранения</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {rootCategories.map((item, index) => {
                     const subcategories = getSubCategories(item.id);
                     return subcategories.length > 0 ? (
-                      <Fragment key={item.id}>
+                      <Fragment key={`parent-${item.id}-f`}>
                         <TableRow
                           hover
                           sx={{ "& th": { border: "none" } }}
@@ -182,28 +183,29 @@ export function SiteSettingCategory() {
                           </TableCell>
                           <TableCell>
                             <MyTextInput
+                              type="number"
                               label=""
                               value={item.sort}
                               func={(e) => changeSort(item.id, e)}
                               onBlur={(e) => saveSort(item.id, e)}
                             />
                           </TableCell>
-                          <TableCell sx={{ minWidth: "500px" }}>{item.shelf_life}</TableCell>
+                          <TableCell sx={{ minWidth: "200px" }}>{item.shelf_life}</TableCell>
                         </TableRow>
                         {subcategories.map((subcat, key) => (
                           <TableRow
                             hover
-                            key={subcat.id}
+                            key={`sub-${subcat.id}`}
                           >
-                            <TableCell></TableCell>
+                            <TableCell>{`${index + 1}.${key + 1}`}</TableCell>
                             <TableCell
                               onClick={() =>
                                 openModal("editCategory", "Редактирование категории", subcat.id)
                               }
                               sx={{
-                                paddingLeft: 10,
+                                paddingLeft: '2em',
                                 alignItems: "center",
-                                minWidth: "300px",
+                                minWidth: "200px",
                                 cursor: "pointer",
                               }}
                             >
@@ -211,20 +213,21 @@ export function SiteSettingCategory() {
                             </TableCell>
                             <TableCell>
                               <MyTextInput
+                                type="number"
                                 label=""
                                 value={subcat.sort}
                                 func={(e) => changeSort(subcat.id, e)}
                                 onBlur={(e) => saveSort(subcat.id, e)}
                               />
                             </TableCell>
-                            <TableCell sx={{ minWidth: "500px" }}>{subcat.shelf_life}</TableCell>
+                            <TableCell sx={{ minWidth: "200px" }}>{subcat.shelf_life}</TableCell>
                           </TableRow>
                         ))}
                       </Fragment>
                     ) : (
                       <TableRow
                         hover
-                        key={item.id}
+                        key={`parent-${item.id}`}
                         sx={{ "& th": { border: "none" } }}
                       >
                         <TableCell>{index + 1}</TableCell>
@@ -238,13 +241,14 @@ export function SiteSettingCategory() {
                         </TableCell>
                         <TableCell>
                           <MyTextInput
+                            type="number"
                             label=""
                             value={item.sort}
                             func={(e) => changeSort(item.id, e)}
                             onBlur={(e) => saveSort(item.id, e)}
                           />
                         </TableCell>
-                        <TableCell sx={{ minWidth: "500px" }}>{item.shelf_life}</TableCell>
+                        <TableCell sx={{ minWidth: "200px" }}>{item.shelf_life}</TableCell>
                       </TableRow>
                     );
                   })}
