@@ -1,15 +1,15 @@
 import { MyTextInput } from "@/ui/elements";
-import { Button, CircularProgress, Grid, Typography } from "@mui/material";
+import { Button, Grid, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { useSiteSettingStore } from "./useSiteSettingStore";
+import { useSiteSettingStore } from "../useSiteSettingStore";
 
 export function SiteSettingSocial() {
   const submodule = "social";
+
   const [moduleName, setModuleName] = useState("");
   const [dataInfo, setDataInfo] = useState(null);
 
   const cityId = useSiteSettingStore((state) => state.city_id);
-
   const getData = useSiteSettingStore((state) => state.getData);
 
   const updateData = async () => {

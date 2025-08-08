@@ -111,7 +111,7 @@ export class MyAutocomplite extends React.PureComponent {
       <Stack spacing={3}>
         <Autocomplete
           size="small"
-          disableCloseOnSelect={true}
+          disableCloseOnSelect={this.props.disableCloseOnSelect ?? true}
           // freeSolo
           // multiple={true}
           disabled={ this.props.disabled || this.props.disabled === true ? true : false }

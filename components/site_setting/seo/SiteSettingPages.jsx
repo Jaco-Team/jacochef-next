@@ -1,51 +1,70 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSiteSettingStore } from "../useSiteSettingStore";
 import { usePagesStore } from "./usePagesStore";
 import useSavePage from "../hooks/useSavePage";
-import { Button } from "@mui/material";
-import PageTextModal from "./PageTextModal";
+import {
+  Backdrop,
+  Button,
+  CircularProgress,
+  Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
+import { PageTextModal } from "./PageTextModal";
 
-export default function SiteSettingPages() {
+export function SiteSettingPages() {
   const submodule = "seo";
   // Settings state
   const cityId = useSiteSettingStore((state) => state.city_id);
+  const cities = useSiteSettingStore((state) => state.cities);
   const createModal = useSiteSettingStore((state) => state.createModal);
   const closeModal = useSiteSettingStore((state) => state.closeModal);
   const setModalTitle = useSiteSettingStore((state) => state.setModalTitle);
   const showAlert = useSiteSettingStore((state) => state.showAlert);
   // Page text state
-  const { getData, setModuleName, setPages } = usePagesStore.getState();
-  const [item, itemName, moduleName] = usePagesStore((s) => [s.item, s.itemName, s.moduleName]);
+  const { getData, setModuleName, setPages, setItem, setItemName, setCategories } =
+    usePagesStore.getState();
+  const pages = usePagesStore((s) => s.pages);
+  const item = usePagesStore((s) => s.item);
+  const itemName = usePagesStore((s) => s.itemName);
+  const moduleName = usePagesStore((s) => s.moduleName);
+  const isLoading = usePagesStore((s) => s.isLoading);
 
-  
-  const { saveNew, saveEdit } = useSavePage(closeModal, showAlert, getData);
   const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle);
-  
+
   const fetchCoreData = useCallback(async () => {
     const data = {
       submodule,
       city_id: cityId,
     };
     try {
-      const res = await getData("get_page_text_data", data);
-      setModuleName(res.submodule.name);
-      setPages(res.pages);
+      const response = await getData("get_page_text_data", data);
+      setModuleName(response.submodule.name);
+      setPages(response.pages);
+      setCategories(response.categories);
     } catch (e) {
       showAlert(`Fetch error: ${e}`, false);
     }
   }, [cityId]);
 
-  const openModal = async (action, title, id = 0) => {
+  const { saveNew, saveEdit, setPageItem } = useSavePage(closeModal, showAlert, getData, fetchCoreData);
+
+  const openModal = async (action, title, id = null) => {
     setModalPrefix(title);
+    setPageItem(id);
     createModal(
       () => (
         <PageTextModal
-          getData={getData}
           showAlert={showAlert}
-          cityId={cityId}
+          cities={cities}
+          pages={pages}
           action={action}
-          item={this.state.item}
-          itemName={this.state.itemName}
+          itemName={itemName}
         />
       ),
       modalPrefix,
@@ -56,7 +75,10 @@ export default function SiteSettingPages() {
         >
           {action === "newPage" ? "Добавить" : "Сохранить"}
         </Button>
-      )
+      ),
+      () => {
+        setItem(null), setItemName("");
+      }
     );
   };
 
@@ -71,103 +93,88 @@ export default function SiteSettingPages() {
   );
 
   return (
-    <>
-      <PageTextModal
-        open={this.state.modalDialog}
-        onClose={() => this.setState({ modalDialog: false, itemName: "" })}
-        method={this.state.method}
-        mark={this.state.mark}
-        item={this.state.item}
-        itemName={this.state.itemName}
-        save={this.save.bind(this)}
-        fullScreen={this.state.fullScreen}
-      />
-
-      <Grid
-        container
-        spacing={3}
-        style={{ position: "relative" }}
+    <Grid
+      container
+      spacing={3}
+      style={{ position: "relative" }}
+    >
+      <Backdrop
+        style={{ zIndex: 99, position: "absolute", inset: 0 }}
+        open={isLoading}
       >
-        <Backdrop
-          style={{ zIndex: 99, position: "absolute", inset: 0 }}
-          open={isLoading}
-        >
-          <CircularProgress color="inherit" />
-        </Backdrop>
-        <Grid
-          item
-          xs={12}
-          sm={12}
-        >
-          <h1>{module_name}</h1>
-        </Grid>
-
-        <Grid
-          item
-          xs={12}
-          sm={3}
-        >
-          <Button
-            onClick={() => openModal("newPage", "Новая страница")}
-            variant="contained"
+        <CircularProgress
+          color="inherit"
+          style={{ top: "1em" }}
+        />
+      </Backdrop>
+      {!!moduleName && (
+        <>
+          <Grid
+            item
+            xs={12}
+            sx={{
+              display: "flex",
+              flexDirection: {
+                xs: "column", // mobile = stacked
+                sm: "row", // tablet+ = horizontal
+              },
+              gap: "1em",
+              alignItems: "flex-start", // or 'center' based on your taste
+              justifyContent: "space-between", // optional
+            }}
           >
-            Добавить
-          </Button>
-        </Grid>
-      </Grid>
+            <Typography variant="h5">{moduleName}</Typography>
 
-      <Grid
-        container
-        mt={3}
-        spacing={3}
-        mb={5}
-      >
-        <Grid
-          item
-          xs={12}
-          sm={12}
-        >
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell style={{ width: "2%" }}>#</TableCell>
-                  <TableCell style={{ width: "10%" }}>Название</TableCell>
-                  <TableCell style={{ width: "8%" }}>Город</TableCell>
-                  <TableCell style={{ width: "20%" }}>Заголовок (title)</TableCell>
-                  <TableCell style={{ width: "45%" }}>Описание (description)</TableCell>
-                  <TableCell style={{ width: "15%" }}>Последнее обновление</TableCell>
-                </TableRow>
-              </TableHead>
+            <Button
+              onClick={() => openModal("newPage", "Новая страница")}
+              variant="contained"
+            >
+              Добавить новую страницу
+            </Button>
+          </Grid>
 
-              <TableBody>
-                {this.state.pages.map((item, key) => (
-                  <TableRow
-                    key={key}
-                    hover
-                    style={{ cursor: "pointer" }}
-                    onClick={this.openModal.bind(
-                      this,
-                      "editPage",
-                      "Редактирование страницы",
-                      item.id
-                    )}
-                  >
-                    <TableCell>{key + 1}</TableCell>
-                    <TableCell style={{ color: "#ff1744", fontWeight: 700 }}>
-                      {item.page_name}
-                    </TableCell>
-                    <TableCell>{item.city_name}</TableCell>
-                    <TableCell>{item.title}</TableCell>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell>{item.date_time_update}</TableCell>
+          <Grid
+            item
+            xs={12}
+            sm={12}
+          >
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell style={{ width: "2%" }}>#</TableCell>
+                    <TableCell style={{ width: "10%" }}>Название</TableCell>
+                    <TableCell style={{ width: "8%" }}>Город</TableCell>
+                    <TableCell style={{ width: "20%" }}>Заголовок (title)</TableCell>
+                    <TableCell style={{ width: "45%" }}>Описание (description)</TableCell>
+                    <TableCell style={{ width: "15%" }}>Последнее обновление</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Grid>
-      </Grid>
-    </>
+                </TableHead>
+
+                <TableBody>
+                  {pages.map((page, key) => (
+                    <TableRow
+                      key={page.id}
+                      hover
+                      style={{ cursor: "pointer" }}
+                      onClick={() => openModal("editPage", "Редактирование страницы", page.id)}
+                    >
+                      <TableCell>{key + 1}</TableCell>
+                      <TableCell style={{ color: "#ff1744", fontWeight: 700 }}>
+                        {page.page_name}
+                      </TableCell>
+                      <TableCell>{page.city_name}</TableCell>
+                      <TableCell>{page.title}</TableCell>
+                      <TableCell>{page.description}</TableCell>
+                      <TableCell>{page.date_time_update}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
+        </>
+      )}
+    </Grid>
   );
 }

@@ -4,15 +4,16 @@ import PropTypes from "prop-types";
 import { Grid, Backdrop, Box, CircularProgress, Tabs, Tab } from "@mui/material";
 import { MyAlert, MySelect } from "@/ui/elements";
 
-import { SiteSettingSocial } from "@/components/site_setting/SiteSettingSocial";
 import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingStore";
 import { SiteSettingBanners } from "@/components/site_setting/banners/SiteSettingBanners";
 import { SiteSettingModal } from "@/components/site_setting/SiteSettingModal";
+import { SiteSettingPages } from "@/components/site_setting/seo/SiteSettingPages";
+import { SiteSettingSocial } from "@/components/site_setting/social/SiteSettingSocial";
 
 const subMap = {
   social: SiteSettingSocial,
   banners: SiteSettingBanners,
-  seo: SiteSettingSocial,
+  seo: SiteSettingPages,
   category: SiteSettingSocial,
 };
 
@@ -195,14 +196,6 @@ export default function SiteSetting() {
             </TabPanel>
           )})}
         </Grid>
-
-        {/* <Grid
-          item
-          xs={12}
-          sm={12}
-        >
-          <SiteSettingBanners />
-        </Grid> */}
       </Grid>
     </>
   );

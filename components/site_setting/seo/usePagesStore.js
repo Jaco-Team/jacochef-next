@@ -1,23 +1,17 @@
 import { create } from "zustand";
 import { useSiteSettingStore } from "../useSiteSettingStore";
 import { api_laravel } from "@/src/api_new";
+import { translit } from "./pageTextUtils";
 
-const newPage = {
-  page_name: "",
-  city_id: -1,
-  page_h: "",
-  title: "",
-  description: "",
-  link: "",
-  content: "",
-  category_id: { id: 0, name: "Без категории" },
-};
+let timer = null;
+const debounceDelay = 300;
 
 export const usePagesStore = create((set, get) => ({
   moduleName: "",
   isLoading: false,
   error: {},
   pages: [],
+  categories: [],
   filteredPages: [],
 
   item: null,
@@ -27,12 +21,21 @@ export const usePagesStore = create((set, get) => ({
   setIsLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error }),
   setPages: (pages) => set({ pages, filteredPages: pages }),
+  setCategories: (categories) => set({ categories }),
+  // if search will come up
   filterPages: (query) => {
-    const q = query.toLowerCase();
-    const filtered = get().pages.filter((p) =>
-      [p.title, p.description, p.content].some((val) => val.toLowerCase().includes(q))
-    );
-    set({ filteredPages: filtered });
+    clearTimeout(timer);
+    if (!query?.length < 3) {
+      set({ filteredPages: get().pages });
+      return;
+    }
+    timer = setTimeout(() => {
+      const q = query.toLowerCase();
+      const filtered = get().pages.filter((p) =>
+        [p.title, p.description, p.content].some((val) => val.toLowerCase().includes(q))
+      );
+      set({ filteredPages: filtered });
+    }, debounceDelay);
   },
   setItem: (item) => set({ item }),
   setItemName: (itemName) => set({ itemName }),
@@ -45,11 +48,37 @@ export const usePagesStore = create((set, get) => ({
       // inject submodule type
       data.submodule = "seo";
       const result = await api_laravel(parentModule, method, data);
-      setTimeout(() => set({ isLoading: false }), 500);
       return result.data;
-    } catch (error) {
+    } catch (e) {
+      throw e;
+    } finally {
       set({ isLoading: false });
-      throw error;
+    }
+  },
+
+  changeItemText: (key, value) => {
+    set((state) => ({ item: { ...state.item, [key]: value } }));
+  },
+
+  changeAutoComplete: (key, _, value) => {
+    console.log(`Autocomplete ${key} = ${value}`);
+    set((state) => ({ item: { ...state.item, [key]: value.id } }));
+  },
+
+  makeAlias: () => {
+    const { page_name } = get().item;
+    const alias = translit(page_name);
+    console.log(`Made alias '${alias}' from title '${page_name}'`);
+    set((state) => ({ item: { ...state.item, link: alias } }));
+  },
+
+  changeItemProp: (key, event) => {
+    const value = event?.target?.value;
+    const item = get().item;
+    if (!item) return;
+    set((state) => ({ item: { ...state.item, [key]: value } }));
+    if (key === "page_name" && item.isNew) {
+      get().makeAlias();
     }
   },
 }));

@@ -45,18 +45,23 @@ export const useSiteSettingStore = create((set, get) => ({
   modalContent: null,
   modalTitle: "",
   customModalActions: null,
+  onCloseModalHook: () => null,
   setModalTitle: (modalTitle) => set({ modalTitle }),
   setModalActions: (customModalActions) => set({ customModalActions }),
-  createModal: (content, title, customActions = null) => {
+  createModal: (content, title, customActions = null, onCloseHook = () => null) => {
     set({
       modalDialog: true,
       modalContent: content,
       modalTitle: title,
       customModalActions: customActions,
+      onCloseModalHook: onCloseHook
     });
     set({ fullScreen: window.innerWidth < 601 });
   },
-  closeModal: () => set({ modalDialog: false, modalContent: null, customModalActions: null }),
+  closeModal: () => {
+    get().onCloseModalHook();
+    set({ modalDialog: false, modalContent: null, customModalActions: null });
+  },
 
   // alert wrapper
   openAlert: false,
