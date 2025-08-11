@@ -1,269 +1,99 @@
-import { useState } from "react";
 import { useBannerModalStore } from "../banners/useBannerModalStore";
 import { buildBannerDTO } from "../banners/bannerUtils";
 
 export default function useSaveBanner(showAlert, getData, onClose) {
-  const [click, setClick] = useState(false);
-  const [isInitD, setIsInitD] = useState(false);
-  const [isInitM, setIsInitM] = useState(false);
-
-  const saveNew = async () => {
-    const { desktopDropzone, mobileDropzone } = useBannerModalStore.getState();
-    const banner = buildBannerDTO(useBannerModalStore.getState().banner);
-    if (!banner) {
-      showAlert("No banner data provided", "error");
-      return;
+  const uploadFile = (dropzone, type, bannerId, bannerName) => {
+    if (!dropzone.current || !dropzone.current?.getAcceptedFiles().length) {
+      console.log(dropzone.current);
+      return Promise.resolve(true);
     }
-    if (!desktopDropzone || !mobileDropzone) {
-      showAlert("Dropzones are not ready", "error");
-      return;
-    }
+    console.log("All files:", dropzone.current?.files);
+    console.log("Accepted files:", dropzone.current?.getAcceptedFiles());
+    console.log("Queued files:", dropzone.current?.getQueuedFiles());
 
-    const desktopFiles = desktopDropzone.getAcceptedFiles();
-    const mobileFiles = mobileDropzone.getAcceptedFiles();
+    return new Promise((resolve) => {
+      dropzone.current?.off();
 
-    if (!click) {
-      setClick(true);
-      const data = banner.this_ban;
-      try {
-        const res = await getData("save_new_banner", data);
-        if (!res?.st) {
-          showAlert(res.text);
-          return;
+      dropzone.current?.on("sending", (file, xhr, formData) => {
+        formData.append("name", bannerName);
+        formData.append("id", bannerId);
+        formData.append("type", type);
+      });
+
+      dropzone.current?.on("error", (file, message) => {
+        showAlert(`Failed to upload ${type} image: ${message}`, "error");
+        dropzone.current?.removeFile(file);
+        resolve(false);
+      });
+
+      dropzone.current?.on("complete", (file) => {
+        dropzone.current?.removeFile(file);
+        if (file.status === "success") {
+          resolve(true);
+        } else {
+          resolve(false);
         }
-      } catch (error) {
-        showAlert(`Error saving banner: ${error.message}`, "error");
-      }
-      
-      if (desktopFiles?.length && mobileFiles?.length) {
-        let save_img = false;
-        let save_img_m = false;
+      });
 
-        if (desktopFiles?.length && isInitD === false) {
-          setIsInitD(true);
-
-          desktopDropzone.on("sending", (file, xhr, data) => {
-            data.append("name", banner.this_ban.name);
-            data.append("id", res.id);
-            data.append("type", "full");
-          });
-
-          desktopDropzone.on("queuecomplete", () => {
-            let check_img = false;
-
-            desktopFiles?.map((item) => {
-              if (item["status"] == "error") {
-                check_img = true;
-              }
-            });
-
-            if (check_img) {
-              showAlert("Ошибка при загрузке фотографии");
-              return;
-            }
-            save_img = true;
-            setIsInitD(false);
-          });
-        }
-
-        if (mobileFiles?.length && isInitM === false) {
-          setIsInitM(true);
-
-          mobileDropzone.on("sending", (file, xhr, data) => {
-            data.append("name", banner.this_ban.name);
-            data.append("id", res.id);
-            data.append("type", "mobile");
-          });
-
-          mobileDropzone.on("queuecomplete", (data) => {
-            let check_img = false;
-
-            mobileFiles?.map((item, key) => {
-              if (item["status"] == "error") {
-                check_img = true;
-              }
-            });
-
-            if (check_img) {
-              showAlert("Ошибка при загрузке фотографии", "error");
-              return;
-            }
-            save_img_m = true;
-            setIsInitM(false);
-          });
-        }
-
-        setTimeout(() => {
-          if (save_img && save_img_m) {
-            onClose();
-          }
-        }, 3000);
-        desktopDropzone.processQueue();
-        mobileDropzone.processQueue();
-      } else if (desktopFiles?.length || mobileFiles?.length) {
-        if (desktopFiles?.length > 0) {
-          if (desktopFiles?.length > 0 && isInitD === false) {
-            setIsInitD(true);
-            desktopDropzone.on("sending", (file, xhr, data) => {
-              data.append("name", banner.this_ban.name);
-              data.append("id", res.id);
-              data.append("type", "full");
-            });
-
-            desktopDropzone.on("queuecomplete", () => {
-              let check_img = false;
-              desktopFiles?.map((item) => {
-                if (item["status"] == "error") {
-                  check_img = true;
-                }
-              });
-
-              if (check_img) {
-                showAlert("Ошибка при загрузке фотографии");
-                return;
-              }
-              setTimeout(() => {
-                onClose();
-              }, 3000);
-              setIsInitD(false);
-            });
-          }
-          desktopDropzone.processQueue();
-        }
-
-        if (mobileFiles?.length > 0) {
-          if (isInitM === false) {
-            setIsInitM(true);
-            mobileDropzone.on("sending", (file, xhr, data) => {
-              data.append("name", banner.this_ban.name);
-              data.append("id", res.id);
-              data.append("type", "mobile");
-            });
-
-            mobileDropzone.on("queuecomplete", (data) => {
-              let check_img = false;
-
-              mobileFiles?.map((item, key) => {
-                if (item["status"] == "error") {
-                  check_img = true;
-                }
-              });
-
-              if (check_img) {
-                showAlert("Ошибка при загрузке фотографии", "error");
-                return;
-              }
-              setTimeout(() => {
-                onClose();
-              }, 3000);
-              setIsInitM(false);
-            });
-          }
-          mobileDropzone.processQueue();
-        }
-      } else {
-        setTimeout(() => {
-          onClose();
-        }, 300);
-      }
-      setTimeout(() => {
-        setClick(false);
-      }, 1000);
-    }
+      dropzone.current?.enable();
+      dropzone.current?.processQueue();
+    });
   };
 
-  const saveEdit = async () => {
-    const { desktopDropzone, mobileDropzone } = useBannerModalStore.getState();
-    const banner = buildBannerDTO(useBannerModalStore.getState().banner);
-    if (!banner) {
-      showAlert("No banner provided");
-      return;
-    }
-    if (!desktopDropzone || !mobileDropzone) {
-      showAlert("Dropzones refs are ampty");
+  const saveBanner = async (isNew = true) => {
+    const { desktopDropzone, mobileDropzone, banner } = useBannerModalStore.getState();
+    const bannerDTO = buildBannerDTO(banner);
+
+    if (!bannerDTO?.this_ban) {
+      showAlert("Please fill in required banner data", "error");
       return;
     }
 
-    if (!click) {
-      setClick(true);
-      const data = banner.this_ban;
-      const res = await getData("save_edit_banner", data);
-      if (!res.st) {
-        showAlert(res.text);
+    try {
+      const method = isNew ? "save_new_banner" : "save_edit_banner";
+      const res = await getData(method, bannerDTO.this_ban);
+
+      if (!res?.st) {
+        showAlert(res.text || "Failed to save banner", "error");
         return;
       }
-      if (
-        desktopFiles?.length > 0 ||
-        mobileFiles?.length > 0
-      ) {
-        if (desktopFiles?.length > 0) {
-          if (isInitD === false) {
-            setIsInitD(true);
-            desktopDropzone.on("sending", (file, xhr, data) => {
-              data.append("name", banner.this_ban.name);
-              data.append("id", res.id);
-              data.append("type", "full");
-            });
 
-            desktopDropzone.on("queuecomplete", (data) => {
-              let check_img = false;
-              desktopFiles?.map((item, key) => {
-                if (item["status"] == "error") {
-                  check_img = true;
-                }
-              });
-              if (check_img) {
-                showAlert("Ошибка при загрузке фотографии");
-              }
-              setTimeout(() => {
-                onClose();
-              }, 1000);
-              setIsInitD(false);
-            });
-          }
-          desktopDropzone.processQueue();
-        }
+      const bannerId = res.id;
+      const uploads = [];
 
-        if (mobileFiles?.length > 0) {
-          if (isInitM === false) {
-            setIsInitM(true);
-            mobileDropzone.on("sending", (file, xhr, data) => {
-              data.append("name", banner.this_ban.name);
-              data.append("id", res.id);
-              data.append("type", "mobile");
-            });
+      const desktopFiles = desktopDropzone.current?.getAcceptedFiles();
+      const mobileFiles = mobileDropzone.current?.getAcceptedFiles();
 
-            mobileDropzone.on("queuecomplete", (data) => {
-              let check_img = false;
-
-              mobileFiles?.map((item) => {
-                if (item["status"] == "error") {
-                  check_img = true;
-                }
-              });
-
-              if (check_img) {
-                showAlert("Ошибка при загрузке фотографии");
-              } else {
-                setTimeout(() => {
-                  onClose();
-                }, 1000);
-              }
-              setIsInitM(false);
-            });
-          }
-          mobileDropzone.processQueue();
-        }
-      } else {
-        showAlert("No files to upload");
-        onClose();
+      if (desktopFiles?.length) {
+        uploads.push(uploadFile(desktopDropzone, "full", bannerId, bannerDTO.this_ban.name));
       }
 
-      setTimeout(() => {
-        setClick(false);
-      }, 1000);
+      if (mobileFiles?.length) {
+        uploads.push(uploadFile(mobileDropzone, "mobile", bannerId, bannerDTO.this_ban.name));
+      }
+
+      if (uploads.length) {
+        const results = await Promise.all(uploads);
+        if (results.includes(false)) {
+          showAlert("Some images failed to upload", "error");
+          return;
+        }
+      }
+
+      showAlert(
+        `Banner ${isNew ? "created" : "updated"} successfully${
+          uploads.length ? " with images" : ""
+        }`,
+        "success"
+      );
+      onClose();
+    } catch (error) {
+      showAlert(error.message, "error");
     }
   };
 
-  return { saveNew, saveEdit };
+  return {
+    saveNew: () => saveBanner(true),
+    saveEdit: () => saveBanner(false),
+  };
 }

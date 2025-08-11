@@ -45,7 +45,6 @@ export function SiteSettingBanners(props) {
   const setModuleName = useBannersStore((state) => state.setModuleName);
   const setSort = useBannersStore((state) => state.setSort);
 
-  const banner = useBannerModalStore((state) => state.banner);
   const bannerName = useBannerModalStore((state) => state.bannerName);
   const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle);
 
@@ -165,7 +164,7 @@ export function SiteSettingBanners(props) {
             <Typography variant="h5">{moduleName}</Typography>
 
             <Button
-              onClick={() => openModal("bannerNew", "Новый баннер")}
+              onClick={async () => await openModal("bannerNew", "Новый баннер")}
               variant="contained"
             >
               Добавить баннер
@@ -207,7 +206,7 @@ export function SiteSettingBanners(props) {
                       >
                         <TableCell>{key + 1}</TableCell>
                         <TableCell
-                          onClick={() => openModal("bannerEdit", "Редактирование баннера", item.id)}
+                          onClick={async () => await openModal("bannerEdit", "Редактирование баннера", item.id)}
                           style={{ fontWeight: 700, cursor: "pointer" }}
                         >
                           {item.name}
@@ -275,9 +274,7 @@ export function SiteSettingBanners(props) {
                           >
                             <TableCell>{key + 1}</TableCell>
                             <TableCell
-                              onClick={() =>
-                                openModal("bannerEdit", "Редактирование баннера", item.id)
-                              }
+                              onClick={async () => await openModal("bannerEdit", "Редактирование баннера", item.id)}
                               style={{ fontWeight: 700, cursor: "pointer" }}
                             >
                               {item.name}

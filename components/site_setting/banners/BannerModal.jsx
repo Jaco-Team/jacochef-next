@@ -48,6 +48,8 @@ export function BannerModal({ getData, showAlert, id, action }) {
   const [dropZonesReady, setDropZonesReady] = useState(false);
   const desktopDropzoneContainerRef = useRef(null);
   const mobileDropzoneContainerRef = useRef(null);
+  const dDropzone = useRef(null);
+  const mDropzone = useRef(null);
   const setDesktopDropzone = useBannerModalStore((state) => state.setDesktopDropzone);
   const setMobileDropzone = useBannerModalStore((state) => state.setMobileDropzone);
 
@@ -106,30 +108,39 @@ export function BannerModal({ getData, showAlert, id, action }) {
   useEffect(() => {
     const preloadData = async () => {
       await updateBannerData();
+      console.log("Data preloaded, setting dropzones");
       setDropZonesReady(true);
     };
     preloadData();
+    return () => {
+      setDropZonesReady(false);
+    };
   }, []);
 
   useEffect(() => {
-    if (!dropZonesReady || isLoading) return;
-    if (!desktopDropzoneContainerRef.current && !mobileDropzoneContainerRef.current) return;
-    if (Dropzone.instances?.length) return;
-
-    const dz1 = new Dropzone(desktopDropzoneContainerRef.current, dropzoneOptions);
-    setDesktopDropzone(dz1);
-    const dz2 = new Dropzone(mobileDropzoneContainerRef.current, dropzoneOptions);
-    setMobileDropzone(dz2);
+    if (!dropZonesReady) return;
+    if (!desktopDropzoneContainerRef.current || !mobileDropzoneContainerRef.current) return;
+    // if (Dropzone.instances?.length) {
+    //   return;
+    //   // console.log("found Dropzone instances, cleaning");
+    //   // Dropzone.instances?.forEach((dz) => dz.destroy());
+    //   // Dropzone.instances = [];
+    // }
+    console.log("creating new dropzones");
+    dDropzone.current = new Dropzone(desktopDropzoneContainerRef.current, dropzoneOptions);
+    setDesktopDropzone(dDropzone);
+    mDropzone.current = new Dropzone(mobileDropzoneContainerRef.current, dropzoneOptions);
+    setMobileDropzone(mDropzone);
     // showAlert("Dropzones created", true);
 
     return () => {
-      dz1.destroy();
-      dz2.destroy();
+      dDropzone.current?.destroy();
+      mDropzone.current?.destroy();
       setDesktopDropzone(null);
       setMobileDropzone(null);
-      setDropZonesReady(false);
+      console.log("Dropzones destroyed");
     };
-  }, [dropZonesReady, isLoading]);
+  }, [dropZonesReady]);
 
   useEffect(() => {
     if (!banner) {
@@ -156,7 +167,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
         </Grid>
       )}
 
-      {!isLoading && (
+      {!isLoading && dropZonesReady && (
         <>
           <Grid
             item
