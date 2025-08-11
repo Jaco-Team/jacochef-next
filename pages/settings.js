@@ -45,9 +45,7 @@ import Card from "@mui/material/Card";
 import Divider from "@mui/material/Divider";
 import TableContainer from "@mui/material/TableContainer";
 
-function PromoCodeForm({
-												 mockItems, getData, setIsLoad, setErrStatus, setErrText, setOpenAlert,
-											 }) {
+function PromoCodeForm({ mockItems, getData, setIsLoad, setErrStatus, setErrText, setOpenAlert, }) {
 	const [formData, setFormData] = useState({
 		type: '',
 		discountValue: '',
@@ -1213,17 +1211,23 @@ function SettingsPage() {
 	};
 
 	const getAders = () => {
-		getData('get_aders', {dateStart, dateEnd, points: point}).then((data) => {
-				if (!data.st) {
-					setErrStatus(data.st);
-					setErrText(data.text);
-					setOpenAlert(true);
-				} else {
-					setActiveAder(data.activeOrders);
-					setDisableAder(data.inactiveOrders);
-				}
+
+		const data = {
+			dateStart: dayjs(dateStart).format('YYYY-MM-DD'),
+			dateEnd: dayjs(dateEnd).format('YYYY-MM-DD'),
+			points: point
+		};
+
+		getData('get_aders', data).then((data) => {
+			if (!data.st) {
+				setErrStatus(data.st);
+				setErrText(data.text);
+				setOpenAlert(true);
+			} else {
+				setActiveAder(data.activeOrders);
+				setDisableAder(data.inactiveOrders);
 			}
-		)
+		})
 	}
 	const getData = async (method, data = {}) => {
 		setIsLoad(true);
