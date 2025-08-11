@@ -19,31 +19,39 @@ export default function useSaveBanner(showAlert, getData, onClose) {
       return;
     }
 
+    const desktopFiles = desktopDropzone.getAcceptedFiles();
+    const mobileFiles = mobileDropzone.getAcceptedFiles();
+
     if (!click) {
       setClick(true);
       const data = banner.this_ban;
-      const res = await getData("save_new_banner", data);
-      if (!res?.st) {
-        showAlert(res.text);
-        return;
+      try {
+        const res = await getData("save_new_banner", data);
+        if (!res?.st) {
+          showAlert(res.text);
+          return;
+        }
+      } catch (error) {
+        showAlert(`Error saving banner: ${error.message}`, "error");
       }
-      if (desktopDropzone?.files.length && mobileDropzone?.files.length) {
+      
+      if (desktopFiles?.length && mobileFiles?.length) {
         let save_img = false;
         let save_img_m = false;
 
-        if (desktopDropzone?.getAcceptedFiles()?.length && isInitD === false) {
+        if (desktopFiles?.length && isInitD === false) {
           setIsInitD(true);
 
-          desktopDropzone?.on("sending", (file, xhr, data) => {
+          desktopDropzone.on("sending", (file, xhr, data) => {
             data.append("name", banner.this_ban.name);
             data.append("id", res.id);
             data.append("type", "full");
           });
 
-          desktopDropzone?.on("queuecomplete", () => {
+          desktopDropzone.on("queuecomplete", () => {
             let check_img = false;
 
-            desktopDropzone?.getAcceptedFiles()?.map((item) => {
+            desktopFiles?.map((item) => {
               if (item["status"] == "error") {
                 check_img = true;
               }
@@ -58,19 +66,19 @@ export default function useSaveBanner(showAlert, getData, onClose) {
           });
         }
 
-        if (mobileDropzone?.getAcceptedFiles()?.length && isInitM === false) {
+        if (mobileFiles?.length && isInitM === false) {
           setIsInitM(true);
 
-          mobileDropzone?.on("sending", (file, xhr, data1) => {
-            data1.append("name", banner.this_ban.name);
-            data1.append("id", res.id);
-            data1.append("type", "mobile");
+          mobileDropzone.on("sending", (file, xhr, data) => {
+            data.append("name", banner.this_ban.name);
+            data.append("id", res.id);
+            data.append("type", "mobile");
           });
 
-          mobileDropzone?.on("queuecomplete", (data) => {
+          mobileDropzone.on("queuecomplete", (data) => {
             let check_img = false;
 
-            mobileDropzone?.getAcceptedFiles()?.map((item, key) => {
+            mobileFiles?.map((item, key) => {
               if (item["status"] == "error") {
                 check_img = true;
               }
@@ -90,21 +98,21 @@ export default function useSaveBanner(showAlert, getData, onClose) {
             onClose();
           }
         }, 3000);
-        desktopDropzone?.processQueue();
-        mobileDropzone?.processQueue();
-      } else if (desktopDropzone?.files.length || mobileDropzone?.files.length) {
-        if (desktopDropzone?.getAcceptedFiles()?.length > 0) {
-          if (desktopDropzone?.getAcceptedFiles()?.length > 0 && isInitD === false) {
+        desktopDropzone.processQueue();
+        mobileDropzone.processQueue();
+      } else if (desktopFiles?.length || mobileFiles?.length) {
+        if (desktopFiles?.length > 0) {
+          if (desktopFiles?.length > 0 && isInitD === false) {
             setIsInitD(true);
-            desktopDropzone?.on("sending", (file, xhr, data) => {
+            desktopDropzone.on("sending", (file, xhr, data) => {
               data.append("name", banner.this_ban.name);
               data.append("id", res.id);
               data.append("type", "full");
             });
 
-            desktopDropzone?.on("queuecomplete", () => {
+            desktopDropzone.on("queuecomplete", () => {
               let check_img = false;
-              desktopDropzone?.getAcceptedFiles()?.map((item) => {
+              desktopFiles?.map((item) => {
                 if (item["status"] == "error") {
                   check_img = true;
                 }
@@ -120,22 +128,22 @@ export default function useSaveBanner(showAlert, getData, onClose) {
               setIsInitD(false);
             });
           }
-          desktopDropzone?.processQueue();
+          desktopDropzone.processQueue();
         }
 
-        if (mobileDropzone?.getAcceptedFiles()?.length > 0) {
+        if (mobileFiles?.length > 0) {
           if (isInitM === false) {
             setIsInitM(true);
-            mobileDropzone?.on("sending", (file, xhr, data) => {
+            mobileDropzone.on("sending", (file, xhr, data) => {
               data.append("name", banner.this_ban.name);
               data.append("id", res.id);
               data.append("type", "mobile");
             });
 
-            mobileDropzone?.on("queuecomplete", (data) => {
+            mobileDropzone.on("queuecomplete", (data) => {
               let check_img = false;
 
-              mobileDropzone?.getAcceptedFiles()?.map((item, key) => {
+              mobileFiles?.map((item, key) => {
                 if (item["status"] == "error") {
                   check_img = true;
                 }
@@ -151,7 +159,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
               setIsInitM(false);
             });
           }
-          mobileDropzone?.processQueue();
+          mobileDropzone.processQueue();
         }
       } else {
         setTimeout(() => {
@@ -184,19 +192,22 @@ export default function useSaveBanner(showAlert, getData, onClose) {
         showAlert(res.text);
         return;
       }
-      if (desktopDropzone?.getAcceptedFiles()?.length > 0 || mobileDropzone?.getAcceptedFiles()?.length > 0) {
-        if (desktopDropzone?.getAcceptedFiles()?.length > 0) {
+      if (
+        desktopFiles?.length > 0 ||
+        mobileFiles?.length > 0
+      ) {
+        if (desktopFiles?.length > 0) {
           if (isInitD === false) {
             setIsInitD(true);
-            desktopDropzone?.on("sending", (file, xhr, data) => {
+            desktopDropzone.on("sending", (file, xhr, data) => {
               data.append("name", banner.this_ban.name);
               data.append("id", res.id);
               data.append("type", "full");
             });
 
-            desktopDropzone?.on("queuecomplete", (data) => {
+            desktopDropzone.on("queuecomplete", (data) => {
               let check_img = false;
-              desktopDropzone?.getAcceptedFiles()?.map((item, key) => {
+              desktopFiles?.map((item, key) => {
                 if (item["status"] == "error") {
                   check_img = true;
                 }
@@ -213,19 +224,19 @@ export default function useSaveBanner(showAlert, getData, onClose) {
           desktopDropzone.processQueue();
         }
 
-        if (mobileDropzone?.getAcceptedFiles()?.length > 0) {
+        if (mobileFiles?.length > 0) {
           if (isInitM === false) {
             setIsInitM(true);
-            mobileDropzone?.on("sending", (file, xhr, data) => {
+            mobileDropzone.on("sending", (file, xhr, data) => {
               data.append("name", banner.this_ban.name);
               data.append("id", res.id);
               data.append("type", "mobile");
             });
 
-            mobileDropzone?.on("queuecomplete", (data) => {
+            mobileDropzone.on("queuecomplete", (data) => {
               let check_img = false;
 
-              mobileDropzone?.getAcceptedFiles()?.map((item, key) => {
+              mobileFiles?.map((item) => {
                 if (item["status"] == "error") {
                   check_img = true;
                 }

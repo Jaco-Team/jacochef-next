@@ -203,7 +203,7 @@ export function SiteSettingCategory() {
                                 openModal("editCategory", "Редактирование категории", subcat.id)
                               }
                               sx={{
-                                paddingLeft: '2em',
+                                paddingLeft: "2em",
                                 alignItems: "center",
                                 minWidth: "200px",
                                 cursor: "pointer",

@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 
 import { useCategoryStore } from "../category/useCategoryStore";
+import { getCategoryDTO } from "../category/categoryUtils";
 
 export default function useSaveCategory(onClose, showAlert, getData, onAfterSave) {
   const { setItem, setItemName } = useCategoryStore.getState();
@@ -21,7 +22,7 @@ export default function useSaveCategory(onClose, showAlert, getData, onAfterSave
     const data = getCategoryDTO(item);
     const res = await getData("save_new_category", data);
     if (res.st) {
-      showAlert(res.text, res.st);
+      showAlert("Категория успешно добавлена", res.st);
       onClose();
       setItem(null);
       setItemName(null);
@@ -29,17 +30,17 @@ export default function useSaveCategory(onClose, showAlert, getData, onAfterSave
         await onAfterSave();
       }, 300);
     } else {
-      showAlert(res.text, false);
+      showAlert("Ошибка при добавлении категории", false);
     }
   }, [checkForm]);
 
   const saveEdit = useCallback(async () => {
     const { item } = useCategoryStore.getState();
     if (!checkForm()) return;
-    const data = getPageDTO(item);
+    const data = getCategoryDTO(item);
     const res = await getData("save_edit_category", data);
     if (res.st) {
-      showAlert(res.text, res.st);
+      showAlert("Категория успешно сохранена", res.st);
       onClose();
       setItem(null);
       setItemName(null);
@@ -47,7 +48,7 @@ export default function useSaveCategory(onClose, showAlert, getData, onAfterSave
         await onAfterSave();
       }, 300);
     } else {
-      showAlert(res.text, false);
+      showAlert("Ошибка при сохранении категории", false);
     }
   }, [checkForm]);
 
@@ -56,7 +57,7 @@ export default function useSaveCategory(onClose, showAlert, getData, onAfterSave
     if (id) {
       const selectedCategory = categories?.find((p) => p.id === id) || null;
       if (!selectedCategory) {
-        showAlert(`Category id ${id} not found`);
+        showAlert(`Категория id ${id} не найдена`);
         return;
       }
       setItem(selectedCategory);

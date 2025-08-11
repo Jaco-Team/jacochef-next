@@ -72,6 +72,7 @@ export default function SiteSetting() {
     modalTitle,
     customModalActions,
     openAlert,
+    showAlert,
     fullScreen,
   } = useSiteSettingStore((s) => ({
     subModules: s.subModules,
@@ -87,18 +88,23 @@ export default function SiteSetting() {
     modalTitle: s.modalTitle,
     customModalActions: s.customModalActions,
     openAlert: s.openAlert,
+    showAlert: s.showAlert,
     fullScreen: s.fullScreen,
   }));
 
   const [subList, setSubList] = useState([]);
 
   const loadData = async () => {
-    const data = await getData("get_all");
-    setData(data);
-    setCities(data.cities);
-    setModuleName(data.module_info.name);
-    setSubList(subModules.filter((sub) => +data.access[sub.key] === 1));
-    document.title = data.module_info.name;
+    try{
+      const data = await getData("get_all");
+      setData(data);
+      setCities(data?.cities);
+      setModuleName(data.module_info.name);
+      setSubList(subModules.filter((sub) => +data.access[sub.key] === 1));
+      document.title = data.module_info.name;
+    } catch (error) {
+      showAlert(`Error loading data: ${error.message}`);
+    }
   };
   useEffect(() => {
     const preload = async () => await loadData();
@@ -136,6 +142,7 @@ export default function SiteSetting() {
       <Grid
         container
         spacing={3}
+        className='container_first_child'
       >
         <Grid
           item

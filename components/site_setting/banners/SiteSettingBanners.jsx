@@ -52,7 +52,7 @@ export function SiteSettingBanners(props) {
   const { saveNew, saveEdit } = useSaveBanner(showAlert, getData, closeModal);
 
   const updateItemSort = async (item, event) => {
-    console.log(`${item.sort} === ${event.target.value}`);
+    // console.log(`${item.sort} === ${event.target.value}`);
     if (item.sort === event.target.value) {
       return;
     }

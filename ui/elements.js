@@ -331,7 +331,7 @@ export class MySelect extends React.PureComponent {
             <MenuItem value=""><em>None</em></MenuItem>
           }
           
-          { this.props.data.map( (item, key) =>
+          { this.props.data?.map( (item, key) =>
             <MenuItem key={key} value={item.id} style={{ color: item?.color ? item.color : null, zIndex: 9999 }}>{item.name}</MenuItem>
           ) }
         </Select>
