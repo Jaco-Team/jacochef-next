@@ -1,124 +1,35 @@
-import React, {useEffect, useState} from 'react';
-import Grid from '@mui/material/Grid';
-import Table from '@mui/material/Table';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TableCell from '@mui/material/TableCell';
-import TableBody from '@mui/material/TableBody';
-import {useRouter} from 'next/router';
-import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
-import Backdrop from '@mui/material/Backdrop';
-import {api_laravel, api_laravel_local} from '@/src/api_new';
-import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput, TextEditor22} from "@/ui/elements";
+import React, {useEffect, useState} from "react";
+import dayjs from "dayjs";
+import {api_laravel, api_laravel_local} from "@/src/api_new";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/ui/elements";
+import {ModalOrder} from "@/pages/site_clients/_Clients";
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableContainer from "@mui/material/TableContainer";
-import dayjs from "dayjs";
-import DialogTitle from "@mui/material/DialogTitle";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import TableBody from "@mui/material/TableBody";
+import TablePagination from "@mui/material/TablePagination";
 import Typography from "@mui/material/Typography";
+import {Checkbox, Chip, FormControlLabel, Rating, TextField} from "@mui/material";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import DialogContent from "@mui/material/DialogContent";
+import Box from "@mui/material/Box";
+import TableFooter from "@mui/material/TableFooter";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
-import Dialog from "@mui/material/Dialog";
-import TableFooter from "@mui/material/TableFooter";
-import TablePagination from "@mui/material/TablePagination";
-import {Checkbox, Chip, FormControlLabel, Rating, TextField} from "@mui/material";
-import Box from "@mui/material/Box";
 
-const DialogUser = ({open, onClose, user, openOrder}) => {
-	return (
-		<Dialog
-			open={open}
-			onClose={onClose}
-			fullWidth={true}
-			fullScreen={false}
-			maxWidth={'lg'}
-			aria-labelledby="alert-dialog-title"
-			aria-describedby="alert-dialog-description"
-		>
-
-			<DialogTitle className="button">
-				<Typography style={{fontWeight: 'bold', alignSelf: 'center'}}>Информация о клиенте</Typography>
-				<IconButton onClick={onClose} style={{cursor: 'pointer'}}>
-					<CloseIcon/>
-				</IconButton>
-			</DialogTitle>
-
-			<DialogContent style={{paddingTop: 10}}>
-
-				<Grid container spacing={3}>
-
-					<Grid item xs={12} sm={4}>
-
-						<Grid container>
-							<Grid item xs={12} sm={12}>
-								<span>Телефон: </span>
-								<span>{user?.info?.login}</span>
-							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
-								<span>Имя: </span>
-								<span>{user?.info?.name}</span>
-							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
-								<span>Регистрация: </span>
-								<span>{user?.info?.date_reg}</span>
-							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
-								<span>День рождения: </span>
-								<span>{user?.info?.date_bir}</span>
-							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
-								<span>Заказов: </span>
-								<span>{user?.info?.all_count_order} / {user?.info?.summ} р.</span>
-							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
-								<span>Доставок: </span>
-								<span>{user?.info?.count_dev} / {user?.info?.summ_dev} р.</span>
-							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
-								<span>Самовывозов: </span>
-								<span>{user?.info?.count_pic} / {user?.info?.summ_pic} р.</span>
-							</Grid>
-						</Grid>
-					</Grid>
-
-					<Grid item xs={12} sm={8}>
-						<Accordion style={{width: '100%'}}>
-							<AccordionSummary
-								expandIcon={<ExpandMoreIcon/>}
-							>
-								<Typography>Заказы</Typography>
-							</AccordionSummary>
-							<AccordionDetails style={{maxHeight: 300, overflow: 'scroll'}}>
-								<Table>
-									<TableBody>
-										{user?.orders ? user?.orders.map((item, key) =>
-											<TableRow key={key} hover style={{cursor: 'pointer'}} onClick={() => openOrder(item.point_id, item.order_id)}>
-												<TableCell>{item.point}</TableCell>
-												<TableCell>{item.new_type_order}</TableCell>
-												<TableCell>{item.date_time}</TableCell>
-												<TableCell>#{item.order_id}</TableCell>
-												<TableCell>{item.summ}р.</TableCell>
-											</TableRow>
-										) : null}
-									</TableBody>
-								</Table>
-							</AccordionDetails>
-						</Accordion>
-					</Grid>
-
-				</Grid>
-
-			</DialogContent>
-		</Dialog>
-	);
-}
-
-const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_forms, getData, openOrder}) => {
+const ModalOrderWithFeedback = ({open, onClose, order, order_items, err_order, feedback_forms, getData, openOrder}) => {
 	const [formData, setFormData] = useState([]);
 	const [values, setValues] = useState([]);
 	const saveFeedback = () => {
@@ -529,19 +440,17 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 		</Dialog>
 	);
 }
-
-function ClientPage() {
+export default function OrdersMore() {
 	const [isLoad, setIsLoad] = useState(false);
 	const [module, setModule] = useState({});
 	const [points, setPoints] = useState([]);
 	const [items, setItems] = useState([]);
-	const [users, setUsers] = useState([]);
-	const [user, setUser] = useState([]);
+	const [orders, setOrders] = useState([]);
+	const [acces, setAcces] = useState({});
 	const [url, setUrl] = useState('');
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowPerPage] = useState(10);
 	const [openAlert, setOpenAlert] = useState(false);
-	const [openModalUser, setOpenModalUser] = useState(false);
 	const [openModalOrder, setOpenModalOrder] = useState(false);
 	const [errStatus, setErrStatus] = useState(false);
 	const [errText, setErrText] = useState('');
@@ -561,21 +470,14 @@ function ClientPage() {
 		is_show_claim_last: false,
 		min_summ: 0,
 		max_summ: 0,
+		promo: '',
+		no_promo: false,
 		param: {id: 'all', name: 'Найти всех'},
 		is_show_marketing: false,
 		point: [],
 		preset: '',
 		item: []
 	});
-
-	const router = useRouter();
-
-	const openUser = (number) => {
-		getData('get_one', {number}).then((data) => {
-			setUser(data);
-			setOpenModalUser(true);
-		})
-	}
 
 	const openOrder = (point_id, order_id) => {
 		getData('get_order', {point_id, order_id}).then((data) => {
@@ -588,7 +490,7 @@ function ClientPage() {
 		let value = null;
 		if (name === 'date_start_true' || name === 'date_end_true' || name === 'date_start_false' || name === 'date_end_false' || name === 'point' || name === 'item' || name === 'param') {
 			value = e;
-		} else if (name === 'is_show_claim' || name === 'is_show_claim_last' || name === 'is_show_marketing') {
+		} else if (name === 'is_show_claim' || name === 'is_show_claim_last' || name === 'is_show_marketing' || name === 'no_promo') {
 			value = e.target.checked;
 		} else {
 			value = e.target.value;
@@ -600,6 +502,23 @@ function ClientPage() {
 	};
 
 	useEffect(() => {
+		if (formData.no_promo) {
+			setFormData((prev) => ({
+				...prev,
+				promo: '',
+			}));
+		}
+
+		if (formData.promo) {
+			setFormData((prev) => ({
+				...prev,
+				no_promo: 0,
+			}));
+		}
+
+	}, [formData.promo, formData.no_promo])
+
+	useEffect(() => {
 		if (formData.param.id === 'new') {
 			setFormData((prev) => ({
 				...prev,
@@ -607,18 +526,19 @@ function ClientPage() {
 				date_end_false: null,
 			}));
 		}
+
 	}, [formData.param])
 
 	const getUsers = () => {
-		getData('get_users', {
+		getData('get_orders_more', {
 			...formData,
 			date_start_true: dayjs(formData.date_start_true).format('YYYY-MM-DD'),
 			date_end_true: dayjs(formData.date_end_true).format('YYYY-MM-DD'),
 			date_start_false: dayjs(formData.date_start_false).format('YYYY-MM-DD'),
 			date_end_false: dayjs(formData.date_end_false).format('YYYY-MM-DD')
 		}).then((data) => {
-			if (data.users) {
-				setUsers(data.users);
+			if (data.orders) {
+				setOrders(data.orders);
 				setUrl(data.url);
 			} else {
 				setErrStatus(data.st);
@@ -639,17 +559,17 @@ function ClientPage() {
 
 	useEffect(() => {
 		getData('get_all').then((data) => {
-			document.title = data.module_info.name;
 			setModule(data.module_info);
 			setPoints(data.points);
 			setItems(data.items);
+			setAcces(data.acces);
 		});
 	}, []);
 	const getData = async (method, data = {}) => {
 		setIsLoad(true);
 
 		try {
-			const result = await api_laravel_local('clients', method, data);
+			const result = await api_laravel('site_clients', method, data);
 			return result.data;
 		} finally {
 			setIsLoad(false);
@@ -667,8 +587,28 @@ function ClientPage() {
 				status={errStatus}
 				text={errText}
 			/>
-			<DialogUser open={openModalUser} onClose={() => setOpenModalUser(false)} user={user} openOrder={openOrder}/>
-			<ModalOrder getData={getData} openOrder={openOrder} open={openModalOrder} onClose={() => setOpenModalOrder(false)} order={order.order} order_items={order.order_items} err_order={order.err_order} feedback_forms={order.feedback_forms}/>
+			{parseInt(acces.send_feedback) === 1 ?
+				(<ModalOrderWithFeedback
+					getData={getData}
+					openOrder={openOrder}
+					open={openModalOrder}
+					onClose={() => setOpenModalOrder(false)}
+					order={order.order}
+					order_items={order.order_items}
+					err_order={order.err_order}
+					feedback_forms={order.feedback_forms}/>
+				) :
+				(<ModalOrder
+					getData={getData}
+					openOrder={openOrder}
+					open={openModalOrder}
+					onClose={() => setOpenModalOrder(false)}
+					order={order.order}
+					order_items={order.order_items}
+					err_order={order.err_order}
+					feedback_forms={order.feedback_forms}/>
+				)}
+
 			<Grid item container spacing={3} justifyContent="center" sx={{
 				flexDirection: {
 					sm: 'row',
@@ -678,11 +618,7 @@ function ClientPage() {
 						style={{marginTop: '64px', marginBottom: '24px'}}
 			>
 
-				<Grid item xs={12} mb={3}>
-					<h1>{module.name}</h1>
-				</Grid>
-
-				<Grid container spacing={2} justifyContent="center" mb={3}>
+				<Grid container spacing={2} justifyContent="center" mb={3} mt={0}>
 					<Grid item xs={12} sm={9}>
 						<Button
 							variant="contained"
@@ -743,7 +679,7 @@ function ClientPage() {
 						<Button
 							variant="contained"
 							style={{marginLeft: 10, backgroundColor: '#ffcc00'}}
-							disabled={!users.length}
+							disabled={!orders.length}
 							onClick={onDownload}
 						>
 							<DownloadIcon/>
@@ -859,44 +795,117 @@ function ClientPage() {
 				<Grid item xs={12} sm={3}>
 					<MyAutocomplite
 						label="Пользователи"
+						disableClearable={true}
 						data={typeParam}
 						value={formData.param}
 						func={(event, value) => handleChange(value, 'param')}
 					/>
 				</Grid>
-				{!users.length ? null : (
+			</Grid>
+			<Grid container spacing={2} justifyContent="center" mt={2}>
+				<Grid item xs={12} sm={3}>
+					<MyTextInput
+						label="Промокод"
+						value={formData.promo}
+						func={(e) => handleChange(e, 'promo')}
+					/>
+				</Grid>
+
+				<Grid item xs={12} sm={6}>
+					<MyCheckBox
+						label="Заказ без промокода"
+						value={formData.no_promo}
+						func={(e) => handleChange(e, 'no_promo')}
+					/>
+				</Grid>
+				{!orders.length ? null : (
 					<>
 						<Grid container justifyContent="center">
-							<Grid item xs={12} sm={9}>
+							<Grid item xs={12} sm={12}>
 								<TableContainer>
 									<Table>
 										<TableHead>
 											<TableRow>
 												<TableCell>#</TableCell>
-												<TableCell>Имя</TableCell>
-												<TableCell>Телефон</TableCell>
-												<TableCell>Последний комментарий</TableCell>
+												<TableCell>Заказ</TableCell>
+												<TableCell>Точка</TableCell>
+												<TableCell>Источник трафика</TableCell>
+												<TableCell>Оформил</TableCell>
+												<TableCell>Номер клиента</TableCell>
+												<TableCell>Адрес доставки</TableCell>
+												<TableCell>Время открытия заказа</TableCell>
+												<TableCell>Ко времени</TableCell>
+												<TableCell>Закрыт на кухне</TableCell>
+												<TableCell>Получен клиентом</TableCell>
+												<TableCell>Время обещ</TableCell>
+												<TableCell>Тип</TableCell>
+												<TableCell>Статус</TableCell>
+												<TableCell>Сумма</TableCell>
+												<TableCell>Оплата</TableCell>
+												<TableCell>Водитель</TableCell>
 											</TableRow>
 										</TableHead>
 
 										<TableBody>
-											{users.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((item, i) => (
+
+											{orders.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((item, key) =>
 												<TableRow
-													key={i}
-													style={{cursor: 'pointer'}}
-													onClick={() => openUser(item.login)}
+													hover
+													key={key}
+													style={parseInt(item.is_delete) == 1 ? {
+														backgroundColor: 'red',
+														color: '#fff',
+														fontWeight: 'bold'
+													} : {}}
+													sx={{cursor: 'pointer'}}
+													onClick={() => openOrder(item.point_id, item.id)}
 												>
-													<TableCell>{(page - 1) * rowsPerPage + i + 1}</TableCell>
-													<TableCell>
-														{item.name}
-														{item.number_new_active ? (
-															<span style={{color: 'red', fontWeight: 'bold'}}> Новый!</span>
-														) : ''}
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{key + 1}</TableCell>
+													<TableCell
+														style={parseInt(item.dist) >= 0 ? {
+															backgroundColor: 'yellow',
+															color: '#000',
+															cursor: 'pointer',
+															fontWeight: 'inherit'
+														} : {color: 'inherit', cursor: 'pointer', fontWeight: 'inherit'}}
+													>
+														{item.id}
 													</TableCell>
-													<TableCell>{item.login}</TableCell>
-													<TableCell dangerouslySetInnerHTML={{__html: item?.last_comment}}></TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.point_addr}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.source}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.type_user}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.number}</TableCell>
+													<TableCell style={{
+														color: 'inherit',
+														fontWeight: 'inherit'
+													}}>{item.street} {item.home}</TableCell>
+													<TableCell style={{
+														color: 'inherit',
+														fontWeight: 'inherit'
+													}}>{item.date_time_order}</TableCell>
+													<TableCell
+														style={{
+															color: 'inherit',
+															fontWeight: 'inherit',
+															backgroundColor: parseInt(item.is_preorder) == 1 ? '#bababa' : 'inherit'
+														}}
+													>
+														{item.need_time}
+													</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>
+														{item.give_data_time == '00:00:00' ? '' : item.give_data_time}
+													</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.close_order}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>
+														{item.unix_time_to_client == '0' || parseInt(item.is_preorder) == 1 ? '' : item.unix_time_to_client}
+													</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.type_order}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.status}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.order_price}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.type_pay}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.driver}</TableCell>
 												</TableRow>
-											))}
+											)}
 										</TableBody>
 									</Table>
 								</TableContainer>
@@ -905,7 +914,7 @@ function ClientPage() {
 									labelDisplayedRows={({from, to, count}) => `${from}-${to} из ${count}`}
 									labelRowsPerPage="Записей на странице:"
 									component="div"
-									count={users.length}
+									count={orders.length}
 									rowsPerPage={rowsPerPage}
 									page={page}
 									onPageChange={(event, newPage) => setPage(newPage)}
@@ -927,20 +936,4 @@ function ClientPage() {
 			</Grid>
 		</>
 	);
-}
-
-export default function FeedBack() {
-	return <ClientPage/>;
-}
-
-export async function getServerSideProps({req, res, query}) {
-	res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-	res.setHeader('Access-Control-Allow-Origin', '*');
-	res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-	res.setHeader('Access-Control-Allow-Credentials', 'true');
-	res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
-
-	return {
-		props: {},
-	};
 }

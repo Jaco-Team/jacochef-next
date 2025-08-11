@@ -1,19 +1,21 @@
-import React, {useEffect, useState} from 'react';
-import Grid from '@mui/material/Grid';
-import Table from '@mui/material/Table';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TableCell from '@mui/material/TableCell';
-import TableBody from '@mui/material/TableBody';
-import {useRouter} from 'next/router';
-import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
-import Backdrop from '@mui/material/Backdrop';
-import {api_laravel, api_laravel_local} from '@/src/api_new';
-import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput, TextEditor22} from "@/ui/elements";
+import React, {useEffect, useState} from "react";
+import {useRouter} from "next/router";
+import dayjs from "dayjs";
+import {api_laravel, api_laravel_local} from "@/src/api_new";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/ui/elements";
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableContainer from "@mui/material/TableContainer";
-import dayjs from "dayjs";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import TableBody from "@mui/material/TableBody";
+import TablePagination from "@mui/material/TablePagination";
+import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
@@ -23,11 +25,8 @@ import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
-import Dialog from "@mui/material/Dialog";
 import TableFooter from "@mui/material/TableFooter";
-import TablePagination from "@mui/material/TablePagination";
-import {Checkbox, Chip, FormControlLabel, Rating, TextField} from "@mui/material";
-import Box from "@mui/material/Box";
+
 
 const DialogUser = ({open, onClose, user, openOrder}) => {
 	return (
@@ -118,249 +117,7 @@ const DialogUser = ({open, onClose, user, openOrder}) => {
 	);
 }
 
-const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_forms, getData, openOrder}) => {
-	const [formData, setFormData] = useState([]);
-	const [values, setValues] = useState([]);
-	const saveFeedback = () => {
-		const feedbacks = [];
-		order_items.map((value, index) => {
-			feedbacks.push({...values[index], item: {...value}});
-		});
-		getData('save_feedbacks', {feedbacks, order_id: order.order_id, point_id: order.point_id}).then((data) => {
-			openOrder(order.point_id, order.order_id)
-		})
-	}
-
-	useEffect(() => {
-		setValues([]);
-	}, [open])
-
-	const renderElementFeed = (element, item) => {
-		switch (element.type) {
-			case 'rating':
-				return (
-					<div style={{marginBottom: 10}}>
-						<Typography variant="h6">Рейтинг</Typography>
-						<Rating
-							value={element.data?.value}
-							size="large"
-							sx={{pointerEvents: 'none', opacity: 0.5, span: {fontSize: '2rem !important'}}}
-						/>
-					</div>
-				);
-			case 'input':
-				return (
-					<div style={{marginBottom: 10}}>
-						<Typography variant="h6">{element.data.title}</Typography>
-						<TextField
-							fullWidth
-							sx={{pointerEvents: 'none', opacity: 0.75}}
-							placeholder={element.data.placeholder}
-							size="small"
-						/>
-					</div>
-				);
-			case 'textarea':
-				return (
-					<div style={{marginBottom: 10}}>
-						<Typography variant="h6">{element.data.title}</Typography>
-						<TextField
-							fullWidth
-							multiline
-							size="small"
-							rows={4}
-							sx={{pointerEvents: 'none', opacity: 0.75}}
-							value={element.data?.value}
-							placeholder={element.data.placeholder}
-						/>
-					</div>
-				);
-			case 'heading':
-				return (
-					<div style={{marginBottom: 10}}>
-						<Typography variant="h4">{element.data.text}</Typography>
-					</div>
-				);
-			case 'checkbox':
-				return (
-					<div style={{marginBottom: 10}}>
-						<FormControlLabel
-							control={<Checkbox checked={element.data?.value}/>}
-							label={element.data.label}
-							sx={{pointerEvents: 'none', opacity: 0.75}}
-							id={element.data.param}
-							size="small"
-						/>
-					</div>
-				);
-			case 'checkboxGroup':
-				return (
-					<div style={{
-						marginBottom: 10,
-						display: element.data.conditions.stars.find((value) => value === parseInt(item.form_feed.find((el) => el.type === 'rating')?.data?.value)) || element.data.conditions.products.find((value) => value === item.name) || element.data.conditions.categories.find((value) => value === item.cat_name) ? 'initial' : 'none'
-					}}>
-						<Typography variant="h6">{element.data.title}</Typography>
-						{element.data.checkboxes.map((checkbox) => (
-							<div key={checkbox.id} style={{display: 'flex', alignItems: 'center'}}>
-								<FormControlLabel
-									control={<Checkbox checked={checkbox.value} value={checkbox.value} sx={{
-										pointerEvents: 'none',
-										opacity: 0.75
-									}}/>}
-									label={checkbox.label}
-								/>
-							</div>
-						))}
-					</div>
-				);
-			case 'tagCloud':
-				return (
-					<div style={{marginBottom: 10}}>
-						<Typography variant="h6">Облако тегов</Typography>
-						<div style={{display: 'flex', flexWrap: 'wrap', gap: '5px'}}>
-							{element.data.selectedTags.map((tag) => (
-								<Chip sx={{
-									pointerEvents: 'none',
-									opacity: 0.85
-								}} key={tag} label={tag} color={element.data?.value.includes(tag) ? "primary" : "default"} style={{cursor: "pointer"}}/>
-							))}
-						</div>
-					</div>
-				);
-			default:
-				return null;
-		}
-	};
-
-	const renderElement = (element, key, item) => {
-		const handleChanges = (e, type, id) => {
-			const valuesCopy = JSON.parse(JSON.stringify(values));
-
-			if (!valuesCopy[key]) {
-				valuesCopy[key] = {};
-			}
-			if (type === 'checkbox' || type === 'checkboxGroup') {
-				valuesCopy[key][id] = {
-					value: e.target.checked,
-					type
-				};
-			} else if (type === 'tagCloud') {
-				let arr = valuesCopy[key][type]?.value ? [...valuesCopy[key][type]?.value] : [];
-				const existEl = arr.find((el) => el === e);
-				if (existEl) {
-					arr = arr.filter((el) => el !== e);
-				} else {
-					arr.push(e);
-				}
-				valuesCopy[key][type] = {
-					value: arr,
-					type
-				};
-			} else {
-				valuesCopy[key][type] = {
-					value: e.target.value,
-					type
-				};
-			}
-
-			setValues(valuesCopy);
-		};
-
-		switch (element.type) {
-			case 'rating':
-				return (
-					<div style={{marginBottom: 10}}>
-						<Typography variant="h6">Рейтинг</Typography>
-						<Rating
-							id={element.id}
-							value={values[key]?.[element.type]?.value}
-							onChange={(e) => handleChanges(e, element.type, element.id)}
-							size="large"
-							sx={{span: {fontSize: '2rem !important'}}}
-						/>
-					</div>
-				);
-			case 'input':
-				return (
-					<div style={{marginBottom: 10}}>
-						<Typography variant="h6">{element.data.title}</Typography>
-						<TextField
-							fullWidth
-							id={element.id}
-							value={values[key]?.[element.type]?.value}
-							onChange={(e) => handleChanges(e, element.type, element.id)}
-							placeholder={element.data.placeholder}
-							size="small"
-						/>
-					</div>
-				);
-			case 'textarea':
-				return (
-					<div style={{marginBottom: 10}}>
-						<Typography variant="h6">{element.data.title}</Typography>
-						<TextField
-							fullWidth
-							id={element.id}
-							value={values[key]?.[element.type]?.value}
-							onChange={(e) => handleChanges(e, element.type, element.id)}
-							multiline
-							size="small"
-							rows={4}
-							placeholder={element.data.placeholder}
-						/>
-					</div>
-				);
-			case 'heading':
-				return (
-					<div style={{marginBottom: 10}}>
-						<Typography variant="h4">{element.data.text}</Typography>
-					</div>
-				);
-			case 'checkbox':
-				return (
-					<div style={{marginBottom: 10}}>
-						<FormControlLabel
-							control={
-								<Checkbox id={element.data.param} value={values[key]?.[element.type]?.value} onChange={(e) => handleChanges(e, element.type, element.data.param)}/>}
-							label={element.data.label}
-							id={element.data.param}
-							size="small"
-						/>
-					</div>
-				);
-			case 'checkboxGroup':
-				return (
-					<div style={{
-						marginBottom: 10,
-						display: element.data.conditions.stars.find((value) => value === parseInt(values[key]?.['rating']?.value)) || element.data.conditions.products.find((value) => value === item.name) || element.data.conditions.categories.find((value) => value === item.cat_name) ? 'initial' : 'none'
-					}}>
-						<Typography variant="h6">{element.data.title}</Typography>
-						{element.data.checkboxes.map((checkbox) => (
-							<div key={checkbox.id} style={{display: 'flex', alignItems: 'center'}}>
-								<FormControlLabel
-									value={values[key]?.[element.type]?.value}
-									control={<Checkbox onChange={(e) => handleChanges(e, element.type, checkbox.param)}/>}
-									label={checkbox.label}
-								/>
-							</div>
-						))}
-					</div>
-				);
-			case 'tagCloud':
-				return (
-					<div style={{marginBottom: 10}}>
-						<Typography variant="h6">Облако тегов</Typography>
-						<div style={{display: 'flex', flexWrap: 'wrap', gap: '5px'}}>
-							{element.data.selectedTags.map((tag) => (
-								<Chip key={tag} label={tag} value={values[key]?.[element.type]?.value} onClick={(e) => handleChanges(tag, element.type, element.id)} color={values[key]?.[element.type]?.value.includes(tag) ? "primary" : "default"} style={{cursor: "pointer"}}/>
-							))}
-						</div>
-					</div>
-				);
-			default:
-				return null;
-		}
-	};
+export const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_forms, getData, openOrder}) => {
 	return (
 		<Dialog
 			open={open}
@@ -468,17 +225,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 										<TableCell>{item.name}</TableCell>
 										<TableCell>{item.count ? `${item.count} шт` : ''}</TableCell>
 										<TableCell>{item.price ? `${item.price} р` : ''}</TableCell>
-										<TableCell><Box sx={{
-											p: 1,
-											bgcolor: item.form_feed?.length ? 'grey.100' : '',
-											display: item.form_feed?.length || item.form_data.length ? '' : 'none',
-											borderRadius: 1,
-											border: '1px solid',
-											borderColor: 'grey.300',
-										}}
-										>
-											{item.form_feed?.length ? Object.entries(item.form_feed).map((data) => data.map((element) => (<div key={element.id}>{renderElementFeed(element, item)}</div>))) : Object.entries(item.form_data).map((data) => data.map((element) => (<div key={element.id}>{renderElement(element, key, item)}</div>)))}
-										</Box></TableCell>
+										<TableCell></TableCell>
 									</TableRow>
 								) : null}
 							</TableBody>
@@ -490,7 +237,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 										fontWeight: 'bold',
 										color: '#000'
 									}}>{`${order?.sum_order}`} р</TableCell>
-									<TableCell><Button variant="contained" onClick={saveFeedback}  sx={{display: order_items?.some(item => item.form_data.length) ? '' : 'none'}}>Сохранить отзывы</Button></TableCell>
+									<TableCell></TableCell>
 								</TableRow>
 							</TableFooter>
 						</Table>
@@ -529,8 +276,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 		</Dialog>
 	);
 }
-
-function ClientPage() {
+export default function Clients() {
 	const [isLoad, setIsLoad] = useState(false);
 	const [module, setModule] = useState({});
 	const [points, setPoints] = useState([]);
@@ -538,6 +284,7 @@ function ClientPage() {
 	const [users, setUsers] = useState([]);
 	const [user, setUser] = useState([]);
 	const [url, setUrl] = useState('');
+	const [urlCsv, setUrlCsv] = useState('');
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowPerPage] = useState(10);
 	const [openAlert, setOpenAlert] = useState(false);
@@ -620,6 +367,7 @@ function ClientPage() {
 			if (data.users) {
 				setUsers(data.users);
 				setUrl(data.url);
+				setUrlCsv(data.urlCsv);
 			} else {
 				setErrStatus(data.st);
 				setErrText(data.text);
@@ -637,9 +385,17 @@ function ClientPage() {
 		link.click();
 	};
 
+	const onDownloadCsv = (e) => {
+		e.preventDefault();
+		const link = document.createElement('a');
+		link.href = urlCsv;
+		link.target = '_blank';
+		link.rel = 'noopener noreferrer';
+		link.click();
+	};
+
 	useEffect(() => {
 		getData('get_all').then((data) => {
-			document.title = data.module_info.name;
 			setModule(data.module_info);
 			setPoints(data.points);
 			setItems(data.items);
@@ -649,7 +405,7 @@ function ClientPage() {
 		setIsLoad(true);
 
 		try {
-			const result = await api_laravel_local('clients', method, data);
+			const result = await api_laravel('site_clients', method, data);
 			return result.data;
 		} finally {
 			setIsLoad(false);
@@ -678,11 +434,7 @@ function ClientPage() {
 						style={{marginTop: '64px', marginBottom: '24px'}}
 			>
 
-				<Grid item xs={12} mb={3}>
-					<h1>{module.name}</h1>
-				</Grid>
-
-				<Grid container spacing={2} justifyContent="center" mb={3}>
+				<Grid container spacing={2} justifyContent="center" mb={3} mt={0}>
 					<Grid item xs={12} sm={9}>
 						<Button
 							variant="contained"
@@ -747,6 +499,18 @@ function ClientPage() {
 							onClick={onDownload}
 						>
 							<DownloadIcon/>
+							Excel
+						</Button>
+					</Grid>
+					<Grid>
+						<Button
+							variant="contained"
+							style={{marginLeft: 10, backgroundColor: 'rgba(215,184,111,0.55)'}}
+							disabled={!users.length}
+							onClick={onDownloadCsv}
+						>
+							<DownloadIcon/>
+							CSV
 						</Button>
 					</Grid>
 
@@ -859,6 +623,7 @@ function ClientPage() {
 				<Grid item xs={12} sm={3}>
 					<MyAutocomplite
 						label="Пользователи"
+						disableClearable={true}
 						data={typeParam}
 						value={formData.param}
 						func={(event, value) => handleChange(value, 'param')}
@@ -927,20 +692,4 @@ function ClientPage() {
 			</Grid>
 		</>
 	);
-}
-
-export default function FeedBack() {
-	return <ClientPage/>;
-}
-
-export async function getServerSideProps({req, res, query}) {
-	res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-	res.setHeader('Access-Control-Allow-Origin', '*');
-	res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-	res.setHeader('Access-Control-Allow-Credentials', 'true');
-	res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
-
-	return {
-		props: {},
-	};
 }
