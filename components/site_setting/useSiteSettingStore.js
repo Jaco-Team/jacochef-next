@@ -1,4 +1,4 @@
-import { api_laravel } from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 import { create } from "zustand";
 
 const defaultSubmodules = [
@@ -85,7 +85,7 @@ export const useSiteSettingStore = create((set, get) => ({
   getData: async (method, data = {}) => {
     set({ is_load: true });
     try {
-      const result = await api_laravel(get().module, method, data);
+      const result = await api_laravel_local(get().module, method, data);
       if (!result?.data) throw new Error("Api call failed");
       return result.data;
     } catch (e) {

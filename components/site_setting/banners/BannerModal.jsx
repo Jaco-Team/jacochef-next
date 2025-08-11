@@ -318,7 +318,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
               value={banner?.this_ban?.seo_desc || ""}
               onChange={(e) => changeThisBanField("seo_desc", e)}
               multiline
-              rows={2}
+              //rows={2}
               maxRows={10}
               variant="outlined"
               fullWidth

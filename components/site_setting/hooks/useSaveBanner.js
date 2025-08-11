@@ -65,6 +65,8 @@ export default function useSaveBanner(showAlert, getData, onClose) {
       const desktopFiles = desktopDropzone.current?.getAcceptedFiles();
       const mobileFiles = mobileDropzone.current?.getAcceptedFiles();
 
+      console.log(desktopFiles, mobileFiles, bannerId, bannerDTO );
+
       if (!desktopFiles?.length && !mobileFiles?.length) {
         showAlert("NO UPLOADS");
         return;

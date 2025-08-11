@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { useSiteSettingStore } from "../useSiteSettingStore";
-import { api_laravel } from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 import { sort } from "mathjs";
 
 export const useCategoryStore = create((set, get) => ({
@@ -25,7 +25,7 @@ export const useCategoryStore = create((set, get) => ({
       const parentModule = useSiteSettingStore.getState().module;
       // inject submodule type
       data.submodule = "category";
-      const result = await api_laravel(parentModule, method, data);
+      const result = await api_laravel_local(parentModule, method, data);
       return result.data;
     } catch (e) {
       throw e;

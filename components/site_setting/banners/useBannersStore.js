@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { useSiteSettingStore } from "../useSiteSettingStore";
-import { api_laravel } from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 export const useBannersStore = create((set, get) => ({
   moduleName: "",
@@ -35,7 +35,7 @@ export const useBannersStore = create((set, get) => ({
       const parentModule = useSiteSettingStore.getState().module;
       // inject submodule type
       data.submodule = "banners";
-      const result = await api_laravel(parentModule, method, data);
+      const result = await api_laravel_local(parentModule, method, data);
       setTimeout(() => set({ isLoading: false }), 500);
       return result.data;
     } catch (error) {

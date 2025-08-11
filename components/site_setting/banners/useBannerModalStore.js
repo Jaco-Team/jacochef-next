@@ -36,14 +36,14 @@ export const useBannerModalStore = create((set, get) => ({
     set({ promos });
   },
   setDesktopDropzone: (desktopDropzone) => {
-    if (!get().desktopDropzone) {
+    //if (!get().desktopDropzone) {
       set({ desktopDropzone });
-    }
+    //}
   },
   setMobileDropzone: (mobileDropzone) => {
-    if (!get().mobileDropzone) {
+    //if (!get().mobileDropzone) {
       set({ mobileDropzone });
-    }
+    //}
   },
   setIsLoading: (isLoading) => set({ isLoading }),
 
