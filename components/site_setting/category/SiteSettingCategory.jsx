@@ -130,12 +130,12 @@ export function SiteSettingCategory() {
             sx={{
               display: "flex",
               flexDirection: {
-                xs: "column", // mobile = stacked
-                sm: "row", // tablet+ = horizontal
+                xs: "column", 
+                sm: "row", 
               },
               gap: "1em",
-              alignItems: "flex-start", // or 'center' based on your taste
-              justifyContent: "space-between", // optional
+              alignItems: "flex-start", 
+              justifyContent: "space-between", 
             }}
           >
             <Typography variant="h5">{moduleName}</Typography>

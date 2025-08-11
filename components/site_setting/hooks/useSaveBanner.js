@@ -36,6 +36,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
       });
 
       dropzone.current?.enable();
+
       dropzone.current?.processQueue();
     });
   };
@@ -63,6 +64,11 @@ export default function useSaveBanner(showAlert, getData, onClose) {
 
       const desktopFiles = desktopDropzone.current?.getAcceptedFiles();
       const mobileFiles = mobileDropzone.current?.getAcceptedFiles();
+
+      if (!desktopFiles?.length && !mobileFiles?.length) {
+        showAlert("NO UPLOADS");
+        return;
+      }
 
       if (desktopFiles?.length) {
         uploads.push(uploadFile(desktopDropzone, "full", bannerId, bannerDTO.this_ban.name));
