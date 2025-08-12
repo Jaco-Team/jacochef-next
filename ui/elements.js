@@ -111,14 +111,14 @@ export class MyAutocomplite extends React.PureComponent {
       <Stack spacing={3}>
         <Autocomplete
           size="small"
-          disableCloseOnSelect={true}
+          disableCloseOnSelect={this.props.disableCloseOnSelect ?? true}
           // freeSolo
           // multiple={true}
           disabled={ this.props.disabled || this.props.disabled === true ? true : false }
           id={ this.props.id ?? null }
-          options={this.props.data}
+          options={this.props.data ?? []}
+          getOptionLabel={(option) => option?.name || ''}
           disableClearable={this.props.disableClearable}
-          getOptionLabel={(option) => option.name || ''}
           value={this.props.value}
           onChange={this.props.func}
           filterSelectedOptions
@@ -155,7 +155,7 @@ export class MyAutocomplite2 extends React.PureComponent {
             disableCloseOnSelect={true}
             onBlur={this.props.onBlur ? this.props.onBlur : null}
             id={ this.props.id ?? null }
-            options={this.props.data}
+            options={this.props.data ?? []}
             getOptionLabel={(option) => option.name}
             value={this.props.value}
             onChange={this.props.func}
@@ -331,8 +331,8 @@ export class MySelect extends React.PureComponent {
           {this.props.is_none === false ? null :
             <MenuItem value=""><em>None</em></MenuItem>
           }
-
-          { this.props.data.map( (item, key) =>
+          
+          { this.props.data?.map( (item, key) =>
             <MenuItem key={key} value={item.id} style={{ color: item?.color ? item.color : null, zIndex: 9999 }}>{item.name}</MenuItem>
           ) }
         </Select>
@@ -476,7 +476,7 @@ export class MyDatePickerNew extends React.PureComponent {
           format={ this.props.format ?? "YYYY-MM-DD" }
           minDate={ this.props.minDate ? this.props.minDate : null }
           label={this.props.label}
-          value={(this.props.value)}
+          value={this.props.value ? dayjs(this.props.value) : null}
           disabled={ this.props.disabled || this.props.disabled === true ? true : false }
           onChange={this.props.func}
           onBlur={this.props.onBlur ? this.props.onBlur : null}
@@ -693,6 +693,7 @@ export function TextEditor(props){
       init={{
         height: 500,
         //menubar: false,
+        language: 'ru',
         plugins: [
           'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
           'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
