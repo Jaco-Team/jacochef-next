@@ -8,12 +8,12 @@ export default function useSaveBanner(showAlert, getData, onClose) {
     }
 
     return new Promise((resolve) => {
-      dropzone.current?.off();
 
       dropzone.current?.on("sending", (file, xhr, formData) => {
         formData.append("name", bannerName);
         formData.append("id", bannerId);
         formData.append("type", type);
+        formData.append("login", localStorage.getItem("token"));
       });
 
       dropzone.current?.on("error", (file, message) => {
@@ -22,13 +22,13 @@ export default function useSaveBanner(showAlert, getData, onClose) {
         resolve(false);
       });
 
+      dropzone.current?.on("success", (file, response) => {
+        console.log(response.data)
+        resolve(response?.data);
+      });
+
       dropzone.current?.on("complete", (file) => {
         dropzone.current?.removeFile(file);
-        if (file.status === "success") {
-          resolve(true);
-        } else {
-          resolve(false);
-        }
       });
 
       dropzone.current?.enable();
@@ -56,6 +56,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
 
       const bannerId = res.id;
       const uploads = [];
+      const fileNames = [];
 
       const desktopFiles = desktopDropzone.current?.getAcceptedFiles();
       const mobileFiles = mobileDropzone.current?.getAcceptedFiles();
@@ -70,19 +71,20 @@ export default function useSaveBanner(showAlert, getData, onClose) {
 
       if (uploads.length) {
         const results = await Promise.all(uploads);
-        if (results.includes(false)) {
+        if (results.some(res => !res?.st)) {
           showAlert("Some images failed to upload");
           return;
         }
+        fileNames.push(...results.map(d => d.url));
       }
 
       showAlert(
         `Banner ${isNew ? "created" : "updated"} successfully${
-          uploads.length ? " with images" : ""
+          uploads.length ? ` with ${uploads.length} image${uploads.length > 1 ? "s" : ""}` : ""
         }`,
-        "success"
+        true
       );
-      setTimeout(() => onClose(), 500);
+      setTimeout(() => onClose(), 1000);
     } catch (error) {
       showAlert(`Ошибка: ${error.message}`);
     }
