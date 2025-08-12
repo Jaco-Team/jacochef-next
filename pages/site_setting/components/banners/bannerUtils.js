@@ -21,5 +21,6 @@ export const dropzoneOptions = {
   acceptedFiles: "image/jpeg",
   addRemoveLinks: true,
   dictDefaultMessage: "Перетащите файлы сюда для загрузки",
-  url: "https://jacochef.ru/src/img/site_banners/upload_img_new.php",
+  url: 'http://127.0.0.1:8000/api/site_setting/upload_banner',
+  // url: 'https://apichef.jacochef.ru/api/site_setting/upload_banner',
 };
