@@ -18,7 +18,7 @@ export const dropzoneOptions = {
   maxFiles: 1,
   timeout: 0,
   parallelUploads: 10,
-  acceptedFiles: "image/jpeg",
+  acceptedFiles: "image/jpeg, image/png",
   addRemoveLinks: true,
   dictDefaultMessage: "Перетащите файлы сюда для загрузки",
   url: 'http://127.0.0.1:8000/api/site_setting/upload_banner',

@@ -23,8 +23,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
       });
 
       dropzone.current?.on("success", (file, response) => {
-        console.log(response.data)
-        resolve(response?.data);
+        resolve(response.data);
       });
 
       dropzone.current?.on("complete", (file) => {
@@ -56,7 +55,6 @@ export default function useSaveBanner(showAlert, getData, onClose) {
 
       const bannerId = res.id;
       const uploads = [];
-      const fileNames = [];
 
       const desktopFiles = desktopDropzone.current?.getAcceptedFiles();
       const mobileFiles = mobileDropzone.current?.getAcceptedFiles();
@@ -75,12 +73,11 @@ export default function useSaveBanner(showAlert, getData, onClose) {
           showAlert("Some images failed to upload");
           return;
         }
-        fileNames.push(...results.map(d => d.url));
       }
 
       showAlert(
-        `Banner ${isNew ? "created" : "updated"} successfully${
-          uploads.length ? ` with ${uploads.length} image${uploads.length > 1 ? "s" : ""}` : ""
+        `Баннер ${isNew ? "создан" : "обновлён"} успешно${
+          uploads.length ? ` с ${uploads.length} изображени${uploads.length > 1 ? "ями" : "ем"}` : ""
         }`,
         true
       );
