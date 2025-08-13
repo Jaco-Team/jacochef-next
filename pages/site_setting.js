@@ -4,12 +4,12 @@ import PropTypes from "prop-types";
 import { Grid, Backdrop, Box, CircularProgress, Tabs, Tab } from "@mui/material";
 import { MyAlert } from "@/ui/elements";
 
-import { useSiteSettingStore } from "@/pages/site_setting/components/useSiteSettingStore";
-import { SiteSettingBanners } from "@/pages/site_setting/components/banners/SiteSettingBanners";
-import { SiteSettingModal } from "@/pages/site_setting/components/SiteSettingModal";
-import { SiteSettingPages } from "@/pages/site_setting/components/seo/SiteSettingPages";
-import { SiteSettingSocial } from "@/pages/site_setting/components/social/SiteSettingSocial";
-import { SiteSettingCategory } from "@/pages/site_setting/components/category/SiteSettingCategory";
+import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingStore";
+import { SiteSettingBanners } from "@/components/site_setting/banners/SiteSettingBanners";
+import { SiteSettingModal } from "@/components/site_setting/SiteSettingModal";
+import { SiteSettingPages } from "@/components/site_setting/seo/SiteSettingPages";
+import { SiteSettingSocial } from "@/components/site_setting/social/SiteSettingSocial";
+import { SiteSettingCategory } from "@/components/site_setting/category/SiteSettingCategory";
 
 const subMap = {
   social: SiteSettingSocial,

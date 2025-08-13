@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback } from "react";
 import { getPageDTO, newPageTemplate } from "../seo/pageTextUtils";
 import { usePagesStore } from "../seo/usePagesStore";

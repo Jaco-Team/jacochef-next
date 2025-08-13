@@ -1,3 +1,5 @@
+"use client";
+
 import { useBannerModalStore } from "../banners/useBannerModalStore";
 import { buildBannerDTO } from "../banners/bannerUtils";
 

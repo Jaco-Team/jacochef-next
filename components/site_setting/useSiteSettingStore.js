@@ -1,3 +1,5 @@
+"use client";
+
 import { api_laravel } from "@/src/api_new";
 import { create } from "zustand";
 
