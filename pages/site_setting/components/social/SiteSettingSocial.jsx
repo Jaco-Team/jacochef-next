@@ -1,5 +1,7 @@
+"use client";
+
 import { MySelect, MyTextInput } from "@/ui/elements";
-import { Backdrop, Button, CircularProgress, Grid, Typography } from "@mui/material";
+import { Button, Grid, Typography } from "@mui/material";
 import { useCallback, useEffect } from "react";
 import { useSiteSettingStore } from "../useSiteSettingStore";
 import { useSocialStore } from "./useSocialStore";
@@ -7,8 +9,7 @@ import { useSocialStore } from "./useSocialStore";
 export function SiteSettingSocial() {
   const submodule = "social";
 
-  const [isLoading, moduleName, dataInfo] = useSocialStore((state) => [
-    state.isLoading,
+  const [moduleName, dataInfo] = useSocialStore((state) => [
     state.moduleName,
     state.dataInfo,
   ]);
@@ -65,14 +66,7 @@ export function SiteSettingSocial() {
     <Grid
       container
       spacing={3}
-      style={{ position: "relative" }}
     >
-      <Backdrop
-        style={{ zIndex: 99, position: "absolute", inset: 0 }}
-        open={isLoading}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
 
       <Grid
         item

@@ -1,7 +1,7 @@
+"use client";
+
 import {
-  Backdrop,
   Button,
-  CircularProgress,
   Grid,
   Table,
   TableBody,
@@ -29,10 +29,9 @@ export function SiteSettingCategory() {
   // Category store
   const { getData, setModuleName, setItem, setItemName, setCategories, changeSort } =
     useCategoryStore.getState();
-  const [itemName, moduleName, isLoading] = useCategoryStore((s) => [
+  const [itemName, moduleName] = useCategoryStore((s) => [
     s.itemName,
     s.moduleName,
-    s.isLoading,
   ]);
   const categories = useCategoryStore((state) => state.categories);
   const rootCategories = categories.filter((c) => c.parent_id === 0);
@@ -116,14 +115,7 @@ export function SiteSettingCategory() {
     <Grid
       container
       spacing={3}
-      style={{ position: "relative" }}
     >
-      <Backdrop
-        open={isLoading}
-        style={{ zIndex: 99, position: "absolute", inset: 0 }}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
       <Grid
         item
         xs={12}

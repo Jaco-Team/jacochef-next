@@ -30,17 +30,18 @@ export const useBannersStore = create((set, get) => ({
 
   // fetching data
   getData: async (method, data = {}) => {
-    set({ isLoading: true });
+    const { setIsLoad } = useSiteSettingStore.getState();
+    setIsLoad(true);
     try {
       const parentModule = useSiteSettingStore.getState().module;
       // inject submodule type
       data.submodule = "banners";
       const result = await api_laravel(parentModule, method, data);
-      setTimeout(() => set({ isLoading: false }), 500);
       return result.data;
     } catch (error) {
-      set({ isLoading: false });
       throw error;
+    } finally {
+      setIsLoad(false);
     }
-  }
+  },
 }));

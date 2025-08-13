@@ -1,3 +1,5 @@
+"use client";
+
 import { MyAutocomplite, MySelect, MyTextInput, TextEditor } from "@/ui/elements";
 import { usePagesStore } from "./usePagesStore";
 import { Grid, Typography } from "@mui/material";

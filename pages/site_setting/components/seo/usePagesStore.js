@@ -42,7 +42,8 @@ export const usePagesStore = create((set, get) => ({
 
   // fetching data
   getData: async (method, data = {}) => {
-    set({ isLoading: true });
+    const { setIsLoad } = useSiteSettingStore.getState();
+    setIsLoad(true);
     try {
       const parentModule = useSiteSettingStore.getState().module;
       // inject submodule type
@@ -52,7 +53,7 @@ export const usePagesStore = create((set, get) => ({
     } catch (e) {
       throw e;
     } finally {
-      set({ isLoading: false });
+      setIsLoad(false);
     }
   },
 

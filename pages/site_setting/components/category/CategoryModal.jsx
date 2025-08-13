@@ -1,3 +1,5 @@
+"use client";
+
 import { Grid } from "@mui/material";
 import { useCategoryStore } from "./useCategoryStore";
 import { MyAutocomplite, MyTextInput } from "@/ui/elements";

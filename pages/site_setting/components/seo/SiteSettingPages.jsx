@@ -1,11 +1,11 @@
+"use client";
+
 import { useCallback, useEffect, useState } from "react";
 import { useSiteSettingStore } from "../useSiteSettingStore";
 import { usePagesStore } from "./usePagesStore";
 import useSavePage from "../hooks/useSavePage";
 import {
-  Backdrop,
   Button,
-  CircularProgress,
   Grid,
   Table,
   TableBody,
@@ -36,7 +36,6 @@ export function SiteSettingPages() {
   const pages = usePagesStore((s) => s.pages);
   const itemName = usePagesStore((s) => s.itemName);
   const moduleName = usePagesStore((s) => s.moduleName);
-  const isLoading = usePagesStore((s) => s.isLoading);
 
   const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle);
 
@@ -101,30 +100,19 @@ export function SiteSettingPages() {
     <Grid
       container
       spacing={3}
-      style={{ position: "relative" }}
     >
-      <Backdrop
-        style={{ zIndex: 99, position: "absolute", inset: 0 }}
-        open={isLoading}
-      >
-        <CircularProgress
-          color="inherit"
-          style={{ top: "1em" }}
-        />
-      </Backdrop>
-
       <Grid
         item
         xs={12}
         sx={{
           display: "flex",
           flexDirection: {
-            xs: "column", // mobile = stacked
-            sm: "row", // tablet+ = horizontal
+            xs: "column",
+            sm: "row",
           },
           gap: "1em",
-          alignItems: "flex-start", // or 'center' based on your taste
-          justifyContent: "space-between", // optional
+          alignItems: "flex-start",
+          justifyContent: "space-between",
         }}
       >
         <Typography variant="h5">{moduleName}</Typography>

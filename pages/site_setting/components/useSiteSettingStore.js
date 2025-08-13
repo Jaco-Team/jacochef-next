@@ -3,7 +3,7 @@ import { create } from "zustand";
 
 const defaultSubmodules = [
   { key: "social", title: "Социальные сети" },
-  { key: "banners", title: "Модуль управления баннерами" },
+  { key: "banners", title: "Баннеры и Акции" },
   { key: "seo", title: "Тексты на сайте (SEO)" },
   { key: "category", title: "Категории сайта" },
 ];

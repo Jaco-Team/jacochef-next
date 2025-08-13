@@ -5,9 +5,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Backdrop,
   Button,
-  CircularProgress,
   Grid,
   Table,
   TableBody,
@@ -29,33 +27,27 @@ export function SiteSettingBanners(props) {
   const {} = props;
   const submodule = "banners";
   // Page state
-  const [cityId, cities, setCityId] = useSiteSettingStore((state) => [
+  const [cityId, cities] = useSiteSettingStore((state) => [
     state.city_id,
     state.cities,
-    state.setCityId,
   ]);
-  const createModal = useSiteSettingStore((state) => state.createModal);
-  const closeModal = useSiteSettingStore((state) => state.closeModal);
-  const setModalTitle = useSiteSettingStore((state) => state.setModalTitle);
-  const showAlert = useSiteSettingStore((state) => state.showAlert);
+  const { createModal, setCityId, closeModal, setModalTitle, showAlert } = useSiteSettingStore.getState();
+
   // banners list state
-  const getData = useBannersStore((state) => state.getData);
-  const isLoading = useBannersStore((state) => state.isLoading);
+  const { getData, setActiveBanners, setNonActiveBanners, setModuleName } =
+    useBannersStore.getState();
   const active = useBannersStore((state) => state.active);
   const non_active = useBannersStore((state) => state.non_active);
-  const setActiveBanners = useBannersStore((state) => state.setActiveBanners);
-  const setNonActiveBanners = useBannersStore((state) => state.setNonActiveBanners);
   const moduleName = useBannersStore((state) => state.moduleName);
-  const setModuleName = useBannersStore((state) => state.setModuleName);
   const setSort = useBannersStore((state) => state.setSort);
 
   const bannerName = useBannerModalStore((state) => state.bannerName);
+
   const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle);
 
   const { saveNew, saveEdit } = useSaveBanner(showAlert, getData, closeModal);
 
   const updateItemSort = async (item, event) => {
-    // console.log(`${item.sort} === ${event.target.value}`);
     if (item.sort === event.target.value) {
       return;
     }
@@ -140,14 +132,7 @@ export function SiteSettingBanners(props) {
     <Grid
       container
       spacing={3}
-      style={{ position: "relative" }}
     >
-      <Backdrop
-        style={{ zIndex: 99, position: "absolute", inset: 0 }}
-        open={isLoading}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
       <Grid
         item
         xs={12}

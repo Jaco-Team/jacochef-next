@@ -13,17 +13,18 @@ export const useSocialStore = create((set) => ({
 
   // fetching data
   getData: async (method, data = {}) => {
-    set({ isLoading: true });
+    const { setIsLoad } = useSiteSettingStore.getState();
+    setIsLoad(true);
     try {
       const parentModule = useSiteSettingStore.getState().module;
       // inject submodule type
-      data.submodule = "seo";
+      data.submodule = "social";
       const result = await api_laravel(parentModule, method, data);
       return result.data;
     } catch (e) {
       throw e;
     } finally {
-      set({ isLoading: false });
+      setIsLoad(false);
     }
   },
 }));

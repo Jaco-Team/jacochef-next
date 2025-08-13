@@ -19,7 +19,8 @@ export const useCategoryStore = create((set, get) => ({
 
   // fetching data
   getData: async (method, data = {}) => {
-    set({ isLoading: true });
+    const { setIsLoad } = useSiteSettingStore.getState();
+    setIsLoad(true);
     try {
       const parentModule = useSiteSettingStore.getState().module;
       // inject submodule type
@@ -29,7 +30,7 @@ export const useCategoryStore = create((set, get) => ({
     } catch (e) {
       throw e;
     } finally {
-      set({ isLoading: false });
+      setIsLoad(false);
     }
   },
 
@@ -47,9 +48,9 @@ export const useCategoryStore = create((set, get) => ({
 
   changeSort: (id, event) => {
     const value = event?.target?.value;
-    const newCategories = get().categories.map((cat) =>
-      cat.id === id ? { ...cat, sort: value } : cat
-    ).sort((a, b) => +a.sort - +b.sort);
+    const newCategories = get()
+      .categories.map((cat) => (cat.id === id ? { ...cat, sort: value } : cat))
+      .sort((a, b) => +a.sort - +b.sort);
     set({ categories: newCategories });
   },
 }));
