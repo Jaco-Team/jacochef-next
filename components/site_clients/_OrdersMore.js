@@ -671,7 +671,7 @@ export default function OrdersMore() {
 
 					<Grid>
 						<Button variant="contained" style={{whiteSpace: 'nowrap'}} onClick={getUsers}>
-							Получить список клиентов
+							Получить список заказов
 						</Button>
 					</Grid>
 
@@ -679,7 +679,7 @@ export default function OrdersMore() {
 						<Button
 							variant="contained"
 							style={{marginLeft: 10, backgroundColor: '#ffcc00'}}
-							disabled={!orders.length}
+							disabled={!orders.length || !url}
 							onClick={onDownload}
 						>
 							<DownloadIcon/>
