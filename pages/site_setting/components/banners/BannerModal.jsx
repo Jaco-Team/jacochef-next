@@ -1,3 +1,5 @@
+import React from "react";
+
 import {
   MyAutocomplite,
   MyCheckBox,
@@ -13,7 +15,7 @@ import Dropzone from "dropzone";
 import dayjs from "dayjs";
 import { dropzoneOptions } from "./bannerUtils";
 
-export function BannerModal({ getData, showAlert, id, action }) {
+export default function BannerModal({ getData, showAlert, id, action }) {
   const banner = useBannerModalStore((state) => state.banner);
   const promos = useBannerModalStore((state) => state.promos);
   const [isLoading, setIsLoading] = useBannerModalStore((state) => [

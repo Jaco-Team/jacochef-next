@@ -1,3 +1,5 @@
+import React from "react";
+
 import { MyCheckBox, MySelect, MyTextInput } from "@/ui/elements";
 import {
   Accordion,
@@ -21,7 +23,7 @@ import { useBannerModalStore } from "./useBannerModalStore";
 import { BannerModal } from "./BannerModal";
 import useSaveBanner from "../hooks/useSaveBanner";
 
-export function SiteSettingBanners(props) {
+export default function SiteSettingBanners(props) {
   const {} = props;
   const submodule = "banners";
   // Page state
