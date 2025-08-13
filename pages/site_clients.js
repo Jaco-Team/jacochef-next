@@ -1,8 +1,7 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
-import CloseIcon from '@mui/icons-material/Close';
 import Typography from '@mui/material/Typography';
 
 import ClearIcon from '@mui/icons-material/Clear';
@@ -15,12 +14,6 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import TableFooter from '@mui/material/TableFooter';
-
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
 
 import Paper from '@mui/material/Paper';
 import PropTypes from 'prop-types';
@@ -28,9 +21,6 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import Backdrop from '@mui/material/Backdrop';
@@ -44,10 +34,8 @@ import TextareaAutosize from '@mui/material/TextareaAutosize';
 import Collapse from '@mui/material/Collapse';
 
 import {
-	MySelect,
 	MyAlert,
 	MyTextInput,
-	TextEditor22,
 	MyAutocomplite,
 	formatDate,
 	MyDatePickerNew,
@@ -56,22 +44,18 @@ import {
 
 import {ExlIcon} from '@/ui/icons';
 
-import {api_laravel_local, api_laravel} from '@/src/api_new';
+import {api_laravel} from '@/src/api_new';
 import dayjs from 'dayjs';
 import SiteClientsOrdersByUtmTable from '@/components/site_clients/SiteClientsOrdersByUtmTable';
 import SiteClientsOrdersBySourceTable from '@/components/site_clients/SiteClientsOrdersBySourceTable';
 import SiteClientsTrafficBySourceTable from '@/components/site_clients/SiteClientsTrafficBySourceTable';
 import SiteClientsTrafficSummaryTable from '@/components/site_clients/SiteClientsTrafficSummaryTable';
-import {useRouter} from "next/router";
-import DownloadIcon from "@mui/icons-material/Download";
-import TablePagination from "@mui/material/TablePagination";
-import {Checkbox, Chip, FormControlLabel, Rating, TextField} from "@mui/material";
 
-import SiteClients_Modal_Comment_Action from "@/pages/site_clients/_SiteClientsModalCommentAction";
-import SiteClients_Modal_Client_Order from "@/pages/site_clients/_SiteClientsModalClientOrder";
-import SiteClients_Modal_Client from "@/pages/site_clients/_SiteClientsModalClient";
-import Clients, {ModalOrder} from "@/pages/site_clients/_Clients";
-import OrdersMore from "@/pages/site_clients/_OrdersMore";
+import SiteClients_Modal_Comment_Action from "@/components/site_clients/_SiteClientsModalCommentAction";
+import SiteClients_Modal_Client_Order from "@/components/site_clients/_SiteClientsModalClientOrder";
+import SiteClients_Modal_Client from "@/components/site_clients/_SiteClientsModalClient";
+import Clients from "@/components/site_clients/_Clients";
+import OrdersMore from "@/components/site_clients/_OrdersMore";
 
 function TabPanel(props) {
 	const {children, value, index, ...other} = props;

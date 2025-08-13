@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from "react";
-import {useRouter} from "next/router";
 import dayjs from "dayjs";
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/ui/elements";
+import {ModalOrder} from "@/components/site_clients/_Clients";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -15,109 +15,263 @@ import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
 import TablePagination from "@mui/material/TablePagination";
+import Typography from "@mui/material/Typography";
+import {Checkbox, Chip, FormControlLabel, Rating, TextField} from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
-import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import DialogContent from "@mui/material/DialogContent";
+import Box from "@mui/material/Box";
+import TableFooter from "@mui/material/TableFooter";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
-import TableFooter from "@mui/material/TableFooter";
 
+const ModalOrderWithFeedback = ({open, onClose, order, order_items, err_order, feedback_forms, getData, openOrder}) => {
+	const [formData, setFormData] = useState([]);
+	const [values, setValues] = useState([]);
+	const saveFeedback = () => {
+		const feedbacks = [];
+		order_items.map((value, index) => {
+			feedbacks.push({...values[index], item: {...value}});
+		});
+		getData('save_feedbacks', {feedbacks, order_id: order.order_id, point_id: order.point_id}).then((data) => {
+			openOrder(order.point_id, order.order_id)
+		})
+	}
 
-const DialogUser = ({open, onClose, user, openOrder}) => {
-	return (
-		<Dialog
-			open={open}
-			onClose={onClose}
-			fullWidth={true}
-			fullScreen={false}
-			maxWidth={'lg'}
-			aria-labelledby="alert-dialog-title"
-			aria-describedby="alert-dialog-description"
-		>
+	useEffect(() => {
+		setValues([]);
+	}, [open])
 
-			<DialogTitle className="button">
-				<Typography style={{fontWeight: 'bold', alignSelf: 'center'}}>Информация о клиенте</Typography>
-				<IconButton onClick={onClose} style={{cursor: 'pointer'}}>
-					<CloseIcon/>
-				</IconButton>
-			</DialogTitle>
+	const renderElementFeed = (element, item) => {
+		switch (element.type) {
+			case 'rating':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">Рейтинг</Typography>
+						<Rating
+							value={element.data?.value}
+							size="large"
+							sx={{pointerEvents: 'none', opacity: 0.5, span: {fontSize: '2rem !important'}}}
+						/>
+					</div>
+				);
+			case 'input':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">{element.data.title}</Typography>
+						<TextField
+							fullWidth
+							sx={{pointerEvents: 'none', opacity: 0.75}}
+							placeholder={element.data.placeholder}
+							size="small"
+						/>
+					</div>
+				);
+			case 'textarea':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">{element.data.title}</Typography>
+						<TextField
+							fullWidth
+							multiline
+							size="small"
+							rows={4}
+							sx={{pointerEvents: 'none', opacity: 0.75}}
+							value={element.data?.value}
+							placeholder={element.data.placeholder}
+						/>
+					</div>
+				);
+			case 'heading':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h4">{element.data.text}</Typography>
+					</div>
+				);
+			case 'checkbox':
+				return (
+					<div style={{marginBottom: 10}}>
+						<FormControlLabel
+							control={<Checkbox checked={element.data?.value}/>}
+							label={element.data.label}
+							sx={{pointerEvents: 'none', opacity: 0.75}}
+							id={element.data.param}
+							size="small"
+						/>
+					</div>
+				);
+			case 'checkboxGroup':
+				return (
+					<div style={{
+						marginBottom: 10,
+						display: element.data.conditions.stars.find((value) => value === parseInt(item.form_feed.find((el) => el.type === 'rating')?.data?.value)) || element.data.conditions.products.find((value) => value === item.name) || element.data.conditions.categories.find((value) => value === item.cat_name) ? 'initial' : 'none'
+					}}>
+						<Typography variant="h6">{element.data.title}</Typography>
+						{element.data.checkboxes.map((checkbox) => (
+							<div key={checkbox.id} style={{display: 'flex', alignItems: 'center'}}>
+								<FormControlLabel
+									control={<Checkbox checked={checkbox.value} value={checkbox.value} sx={{
+										pointerEvents: 'none',
+										opacity: 0.75
+									}}/>}
+									label={checkbox.label}
+								/>
+							</div>
+						))}
+					</div>
+				);
+			case 'tagCloud':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">Облако тегов</Typography>
+						<div style={{display: 'flex', flexWrap: 'wrap', gap: '5px'}}>
+							{element.data.selectedTags.map((tag) => (
+								<Chip sx={{
+									pointerEvents: 'none',
+									opacity: 0.85
+								}} key={tag} label={tag} color={element.data?.value.includes(tag) ? "primary" : "default"} style={{cursor: "pointer"}}/>
+							))}
+						</div>
+					</div>
+				);
+			default:
+				return null;
+		}
+	};
 
-			<DialogContent style={{paddingTop: 10}}>
+	const renderElement = (element, key, item) => {
+		const handleChanges = (e, type, id) => {
+			const valuesCopy = JSON.parse(JSON.stringify(values));
 
-				<Grid container spacing={3}>
+			if (!valuesCopy[key]) {
+				valuesCopy[key] = {};
+			}
+			if (type === 'checkbox' || type === 'checkboxGroup') {
+				valuesCopy[key][id] = {
+					value: e.target.checked,
+					type
+				};
+			} else if (type === 'tagCloud') {
+				let arr = valuesCopy[key][type]?.value ? [...valuesCopy[key][type]?.value] : [];
+				const existEl = arr.find((el) => el === e);
+				if (existEl) {
+					arr = arr.filter((el) => el !== e);
+				} else {
+					arr.push(e);
+				}
+				valuesCopy[key][type] = {
+					value: arr,
+					type
+				};
+			} else {
+				valuesCopy[key][type] = {
+					value: e.target.value,
+					type
+				};
+			}
 
-					<Grid item xs={12} sm={4}>
+			setValues(valuesCopy);
+		};
 
-						<Grid container>
-							<Grid item xs={12} sm={12}>
-								<span>Телефон: </span>
-								<span>{user?.info?.login}</span>
-							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
-								<span>Имя: </span>
-								<span>{user?.info?.name}</span>
-							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
-								<span>Регистрация: </span>
-								<span>{user?.info?.date_reg}</span>
-							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
-								<span>День рождения: </span>
-								<span>{user?.info?.date_bir}</span>
-							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
-								<span>Заказов: </span>
-								<span>{user?.info?.all_count_order} / {user?.info?.summ} р.</span>
-							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
-								<span>Доставок: </span>
-								<span>{user?.info?.count_dev} / {user?.info?.summ_dev} р.</span>
-							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
-								<span>Самовывозов: </span>
-								<span>{user?.info?.count_pic} / {user?.info?.summ_pic} р.</span>
-							</Grid>
-						</Grid>
-					</Grid>
-
-					<Grid item xs={12} sm={8}>
-						<Accordion style={{width: '100%'}}>
-							<AccordionSummary
-								expandIcon={<ExpandMoreIcon/>}
-							>
-								<Typography>Заказы</Typography>
-							</AccordionSummary>
-							<AccordionDetails style={{maxHeight: 300, overflow: 'scroll'}}>
-								<Table>
-									<TableBody>
-										{user?.orders ? user?.orders.map((item, key) =>
-											<TableRow key={key} hover style={{cursor: 'pointer'}} onClick={() => openOrder(item.point_id, item.order_id)}>
-												<TableCell>{item.point}</TableCell>
-												<TableCell>{item.new_type_order}</TableCell>
-												<TableCell>{item.date_time}</TableCell>
-												<TableCell>#{item.order_id}</TableCell>
-												<TableCell>{item.summ}р.</TableCell>
-											</TableRow>
-										) : null}
-									</TableBody>
-								</Table>
-							</AccordionDetails>
-						</Accordion>
-					</Grid>
-
-				</Grid>
-
-			</DialogContent>
-		</Dialog>
-	);
-}
-
-export const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_forms, getData, openOrder}) => {
+		switch (element.type) {
+			case 'rating':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">Рейтинг</Typography>
+						<Rating
+							id={element.id}
+							value={values[key]?.[element.type]?.value}
+							onChange={(e) => handleChanges(e, element.type, element.id)}
+							size="large"
+							sx={{span: {fontSize: '2rem !important'}}}
+						/>
+					</div>
+				);
+			case 'input':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">{element.data.title}</Typography>
+						<TextField
+							fullWidth
+							id={element.id}
+							value={values[key]?.[element.type]?.value}
+							onChange={(e) => handleChanges(e, element.type, element.id)}
+							placeholder={element.data.placeholder}
+							size="small"
+						/>
+					</div>
+				);
+			case 'textarea':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">{element.data.title}</Typography>
+						<TextField
+							fullWidth
+							id={element.id}
+							value={values[key]?.[element.type]?.value}
+							onChange={(e) => handleChanges(e, element.type, element.id)}
+							multiline
+							size="small"
+							rows={4}
+							placeholder={element.data.placeholder}
+						/>
+					</div>
+				);
+			case 'heading':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h4">{element.data.text}</Typography>
+					</div>
+				);
+			case 'checkbox':
+				return (
+					<div style={{marginBottom: 10}}>
+						<FormControlLabel
+							control={
+								<Checkbox id={element.data.param} value={values[key]?.[element.type]?.value} onChange={(e) => handleChanges(e, element.type, element.data.param)}/>}
+							label={element.data.label}
+							id={element.data.param}
+							size="small"
+						/>
+					</div>
+				);
+			case 'checkboxGroup':
+				return (
+					<div style={{
+						marginBottom: 10,
+						display: element.data.conditions.stars.find((value) => value === parseInt(values[key]?.['rating']?.value)) || element.data.conditions.products.find((value) => value === item.name) || element.data.conditions.categories.find((value) => value === item.cat_name) ? 'initial' : 'none'
+					}}>
+						<Typography variant="h6">{element.data.title}</Typography>
+						{element.data.checkboxes.map((checkbox) => (
+							<div key={checkbox.id} style={{display: 'flex', alignItems: 'center'}}>
+								<FormControlLabel
+									value={values[key]?.[element.type]?.value}
+									control={<Checkbox onChange={(e) => handleChanges(e, element.type, checkbox.param)}/>}
+									label={checkbox.label}
+								/>
+							</div>
+						))}
+					</div>
+				);
+			case 'tagCloud':
+				return (
+					<div style={{marginBottom: 10}}>
+						<Typography variant="h6">Облако тегов</Typography>
+						<div style={{display: 'flex', flexWrap: 'wrap', gap: '5px'}}>
+							{element.data.selectedTags.map((tag) => (
+								<Chip key={tag} label={tag} value={values[key]?.[element.type]?.value} onClick={(e) => handleChanges(tag, element.type, element.id)} color={values[key]?.[element.type]?.value.includes(tag) ? "primary" : "default"} style={{cursor: "pointer"}}/>
+							))}
+						</div>
+					</div>
+				);
+			default:
+				return null;
+		}
+	};
 	return (
 		<Dialog
 			open={open}
@@ -225,7 +379,17 @@ export const ModalOrder = ({open, onClose, order, order_items, err_order, feedba
 										<TableCell>{item.name}</TableCell>
 										<TableCell>{item.count ? `${item.count} шт` : ''}</TableCell>
 										<TableCell>{item.price ? `${item.price} р` : ''}</TableCell>
-										<TableCell></TableCell>
+										<TableCell><Box sx={{
+											p: 1,
+											bgcolor: item.form_feed?.length ? 'grey.100' : '',
+											display: item.form_feed?.length || item.form_data.length ? '' : 'none',
+											borderRadius: 1,
+											border: '1px solid',
+											borderColor: 'grey.300',
+										}}
+										>
+											{item.form_feed?.length ? Object.entries(item.form_feed).map((data) => data.map((element) => (<div key={element.id}>{renderElementFeed(element, item)}</div>))) : Object.entries(item.form_data).map((data) => data.map((element) => (<div key={element.id}>{renderElement(element, key, item)}</div>)))}
+										</Box></TableCell>
 									</TableRow>
 								) : null}
 							</TableBody>
@@ -237,7 +401,7 @@ export const ModalOrder = ({open, onClose, order, order_items, err_order, feedba
 										fontWeight: 'bold',
 										color: '#000'
 									}}>{`${order?.sum_order}`} р</TableCell>
-									<TableCell></TableCell>
+									<TableCell><Button variant="contained" onClick={saveFeedback}  sx={{display: order_items?.some(item => item.form_data.length) ? '' : 'none'}}>Сохранить отзывы</Button></TableCell>
 								</TableRow>
 							</TableFooter>
 						</Table>
@@ -276,19 +440,17 @@ export const ModalOrder = ({open, onClose, order, order_items, err_order, feedba
 		</Dialog>
 	);
 }
-export default function Clients() {
+export default function OrdersMore() {
 	const [isLoad, setIsLoad] = useState(false);
 	const [module, setModule] = useState({});
 	const [points, setPoints] = useState([]);
 	const [items, setItems] = useState([]);
-	const [users, setUsers] = useState([]);
-	const [user, setUser] = useState([]);
+	const [orders, setOrders] = useState([]);
+	const [acces, setAcces] = useState({});
 	const [url, setUrl] = useState('');
-	const [urlCsv, setUrlCsv] = useState('');
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowPerPage] = useState(10);
 	const [openAlert, setOpenAlert] = useState(false);
-	const [openModalUser, setOpenModalUser] = useState(false);
 	const [openModalOrder, setOpenModalOrder] = useState(false);
 	const [errStatus, setErrStatus] = useState(false);
 	const [errText, setErrText] = useState('');
@@ -308,21 +470,14 @@ export default function Clients() {
 		is_show_claim_last: false,
 		min_summ: 0,
 		max_summ: 0,
+		promo: '',
+		no_promo: false,
 		param: {id: 'all', name: 'Найти всех'},
 		is_show_marketing: false,
 		point: [],
 		preset: '',
 		item: []
 	});
-
-	const router = useRouter();
-
-	const openUser = (number) => {
-		getData('get_one', {number}).then((data) => {
-			setUser(data);
-			setOpenModalUser(true);
-		})
-	}
 
 	const openOrder = (point_id, order_id) => {
 		getData('get_order', {point_id, order_id}).then((data) => {
@@ -335,7 +490,7 @@ export default function Clients() {
 		let value = null;
 		if (name === 'date_start_true' || name === 'date_end_true' || name === 'date_start_false' || name === 'date_end_false' || name === 'point' || name === 'item' || name === 'param') {
 			value = e;
-		} else if (name === 'is_show_claim' || name === 'is_show_claim_last' || name === 'is_show_marketing') {
+		} else if (name === 'is_show_claim' || name === 'is_show_claim_last' || name === 'is_show_marketing' || name === 'no_promo') {
 			value = e.target.checked;
 		} else {
 			value = e.target.value;
@@ -347,6 +502,23 @@ export default function Clients() {
 	};
 
 	useEffect(() => {
+		if (formData.no_promo) {
+			setFormData((prev) => ({
+				...prev,
+				promo: '',
+			}));
+		}
+
+		if (formData.promo) {
+			setFormData((prev) => ({
+				...prev,
+				no_promo: 0,
+			}));
+		}
+
+	}, [formData.promo, formData.no_promo])
+
+	useEffect(() => {
 		if (formData.param.id === 'new') {
 			setFormData((prev) => ({
 				...prev,
@@ -354,20 +526,20 @@ export default function Clients() {
 				date_end_false: null,
 			}));
 		}
+
 	}, [formData.param])
 
 	const getUsers = () => {
-		getData('get_users', {
+		getData('get_orders_more', {
 			...formData,
 			date_start_true: dayjs(formData.date_start_true).format('YYYY-MM-DD'),
 			date_end_true: dayjs(formData.date_end_true).format('YYYY-MM-DD'),
 			date_start_false: dayjs(formData.date_start_false).format('YYYY-MM-DD'),
 			date_end_false: dayjs(formData.date_end_false).format('YYYY-MM-DD')
 		}).then((data) => {
-			if (data.users) {
-				setUsers(data.users);
+			if (data.orders) {
+				setOrders(data.orders);
 				setUrl(data.url);
-				setUrlCsv(data.urlCsv);
 			} else {
 				setErrStatus(data.st);
 				setErrText(data.text);
@@ -385,20 +557,12 @@ export default function Clients() {
 		link.click();
 	};
 
-	const onDownloadCsv = (e) => {
-		e.preventDefault();
-		const link = document.createElement('a');
-		link.href = urlCsv;
-		link.target = '_blank';
-		link.rel = 'noopener noreferrer';
-		link.click();
-	};
-
 	useEffect(() => {
 		getData('get_all').then((data) => {
 			setModule(data.module_info);
 			setPoints(data.points);
 			setItems(data.items);
+			setAcces(data.acces);
 		});
 	}, []);
 	const getData = async (method, data = {}) => {
@@ -423,8 +587,28 @@ export default function Clients() {
 				status={errStatus}
 				text={errText}
 			/>
-			<DialogUser open={openModalUser} onClose={() => setOpenModalUser(false)} user={user} openOrder={openOrder}/>
-			<ModalOrder getData={getData} openOrder={openOrder} open={openModalOrder} onClose={() => setOpenModalOrder(false)} order={order.order} order_items={order.order_items} err_order={order.err_order} feedback_forms={order.feedback_forms}/>
+			{parseInt(acces.send_feedback) === 1 ?
+				(<ModalOrderWithFeedback
+					getData={getData}
+					openOrder={openOrder}
+					open={openModalOrder}
+					onClose={() => setOpenModalOrder(false)}
+					order={order.order}
+					order_items={order.order_items}
+					err_order={order.err_order}
+					feedback_forms={order.feedback_forms}/>
+				) :
+				(<ModalOrder
+					getData={getData}
+					openOrder={openOrder}
+					open={openModalOrder}
+					onClose={() => setOpenModalOrder(false)}
+					order={order.order}
+					order_items={order.order_items}
+					err_order={order.err_order}
+					feedback_forms={order.feedback_forms}/>
+				)}
+
 			<Grid item container spacing={3} justifyContent="center" sx={{
 				flexDirection: {
 					sm: 'row',
@@ -495,22 +679,10 @@ export default function Clients() {
 						<Button
 							variant="contained"
 							style={{marginLeft: 10, backgroundColor: '#ffcc00'}}
-							disabled={!users.length}
+							disabled={!orders.length}
 							onClick={onDownload}
 						>
 							<DownloadIcon/>
-							Excel
-						</Button>
-					</Grid>
-					<Grid>
-						<Button
-							variant="contained"
-							style={{marginLeft: 10, backgroundColor: 'rgba(215,184,111,0.55)'}}
-							disabled={!users.length}
-							onClick={onDownloadCsv}
-						>
-							<DownloadIcon/>
-							CSV
 						</Button>
 					</Grid>
 
@@ -629,39 +801,111 @@ export default function Clients() {
 						func={(event, value) => handleChange(value, 'param')}
 					/>
 				</Grid>
-				{!users.length ? null : (
+			</Grid>
+			<Grid container spacing={2} justifyContent="center" mt={2}>
+				<Grid item xs={12} sm={3}>
+					<MyTextInput
+						label="Промокод"
+						value={formData.promo}
+						func={(e) => handleChange(e, 'promo')}
+					/>
+				</Grid>
+
+				<Grid item xs={12} sm={6}>
+					<MyCheckBox
+						label="Заказ без промокода"
+						value={formData.no_promo}
+						func={(e) => handleChange(e, 'no_promo')}
+					/>
+				</Grid>
+				{!orders.length ? null : (
 					<>
 						<Grid container justifyContent="center">
-							<Grid item xs={12} sm={9}>
+							<Grid item xs={12} sm={12}>
 								<TableContainer>
 									<Table>
 										<TableHead>
 											<TableRow>
 												<TableCell>#</TableCell>
-												<TableCell>Имя</TableCell>
-												<TableCell>Телефон</TableCell>
-												<TableCell>Последний комментарий</TableCell>
+												<TableCell>Заказ</TableCell>
+												<TableCell>Точка</TableCell>
+												<TableCell>Источник трафика</TableCell>
+												<TableCell>Оформил</TableCell>
+												<TableCell>Номер клиента</TableCell>
+												<TableCell>Адрес доставки</TableCell>
+												<TableCell>Время открытия заказа</TableCell>
+												<TableCell>Ко времени</TableCell>
+												<TableCell>Закрыт на кухне</TableCell>
+												<TableCell>Получен клиентом</TableCell>
+												<TableCell>Время обещ</TableCell>
+												<TableCell>Тип</TableCell>
+												<TableCell>Статус</TableCell>
+												<TableCell>Сумма</TableCell>
+												<TableCell>Оплата</TableCell>
+												<TableCell>Водитель</TableCell>
 											</TableRow>
 										</TableHead>
 
 										<TableBody>
-											{users.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((item, i) => (
+
+											{orders.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((item, key) =>
 												<TableRow
-													key={i}
-													style={{cursor: 'pointer'}}
-													onClick={() => openUser(item.login)}
+													hover
+													key={key}
+													style={parseInt(item.is_delete) == 1 ? {
+														backgroundColor: 'red',
+														color: '#fff',
+														fontWeight: 'bold'
+													} : {}}
+													sx={{cursor: 'pointer'}}
+													onClick={() => openOrder(item.point_id, item.id)}
 												>
-													<TableCell>{(page - 1) * rowsPerPage + i + 1}</TableCell>
-													<TableCell>
-														{item.name}
-														{item.number_new_active ? (
-															<span style={{color: 'red', fontWeight: 'bold'}}> Новый!</span>
-														) : ''}
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{key + 1}</TableCell>
+													<TableCell
+														style={parseInt(item.dist) >= 0 ? {
+															backgroundColor: 'yellow',
+															color: '#000',
+															cursor: 'pointer',
+															fontWeight: 'inherit'
+														} : {color: 'inherit', cursor: 'pointer', fontWeight: 'inherit'}}
+													>
+														{item.id}
 													</TableCell>
-													<TableCell>{item.login}</TableCell>
-													<TableCell dangerouslySetInnerHTML={{__html: item?.last_comment}}></TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.point_addr}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.source}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.type_user}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.number}</TableCell>
+													<TableCell style={{
+														color: 'inherit',
+														fontWeight: 'inherit'
+													}}>{item.street} {item.home}</TableCell>
+													<TableCell style={{
+														color: 'inherit',
+														fontWeight: 'inherit'
+													}}>{item.date_time_order}</TableCell>
+													<TableCell
+														style={{
+															color: 'inherit',
+															fontWeight: 'inherit',
+															backgroundColor: parseInt(item.is_preorder) == 1 ? '#bababa' : 'inherit'
+														}}
+													>
+														{item.need_time}
+													</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>
+														{item.give_data_time == '00:00:00' ? '' : item.give_data_time}
+													</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.close_order}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>
+														{item.unix_time_to_client == '0' || parseInt(item.is_preorder) == 1 ? '' : item.unix_time_to_client}
+													</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.type_order}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.status}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.order_price}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.type_pay}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.driver}</TableCell>
 												</TableRow>
-											))}
+											)}
 										</TableBody>
 									</Table>
 								</TableContainer>
@@ -670,7 +914,7 @@ export default function Clients() {
 									labelDisplayedRows={({from, to, count}) => `${from}-${to} из ${count}`}
 									labelRowsPerPage="Записей на странице:"
 									component="div"
-									count={users.length}
+									count={orders.length}
 									rowsPerPage={rowsPerPage}
 									page={page}
 									onPageChange={(event, newPage) => setPage(newPage)}
