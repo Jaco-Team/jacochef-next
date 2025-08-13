@@ -1,5 +1,3 @@
-"use client";
-
 import { MyCheckBox, MySelect, MyTextInput } from "@/ui/elements";
 import {
   Accordion,
