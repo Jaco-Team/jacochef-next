@@ -407,7 +407,7 @@ export default function Clients() {
       return true;
     }
     try {
-      const response = await getData("get_clients_files", {
+      const data = await getData("get_clients_files", {
         ...formData,
         date_start_true: dayjs(formData.date_start_true).format("YYYY-MM-DD"),
         date_end_true: dayjs(formData.date_end_true).format("YYYY-MM-DD"),
