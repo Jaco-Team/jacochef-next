@@ -402,9 +402,30 @@ export default function Clients() {
 		})
 	}
 
-	const onDownload = (e) => {
+	const getFileLinks = async () => {
+    if (url && urlCsv) {
+      return true;
+    }
+    try {
+      const response = await getData("get_clients_files", {
+        ...formData,
+        date_start_true: dayjs(formData.date_start_true).format("YYYY-MM-DD"),
+        date_end_true: dayjs(formData.date_end_true).format("YYYY-MM-DD"),
+        date_start_false: dayjs(formData.date_start_false).format("YYYY-MM-DD"),
+        date_end_false: dayjs(formData.date_end_false).format("YYYY-MM-DD"),
+      });
+      if (!data?.url || !data.urlCsv) throw new Error("Ссылка для скачивания недоступна");
+      setUrl(data.url);
+      setUrlCsv(data.urlCsv);
+    } catch (error) {
+      console.error("Error getting files", error);
+    }
+  };
+
+	const onDownload = async (e) => {
 		e.preventDefault();
-		if(!url) return alert ('Ссылка для скачивания недоступна');
+		await getFileLinks();
+		if(!url) return;
 		const link = document.createElement('a');
 		link.href = url;
 		link.target = '_blank';
@@ -412,9 +433,10 @@ export default function Clients() {
 		link.click();
 	};
 
-	const onDownloadCsv = (e) => {
+	const onDownloadCsv = async (e) => {
 		e.preventDefault();
-		if(!urlCsv) return alert ('Ссылка для скачивания недоступна');
+		await getFileLinks();
+		if(!urlCsv) return;
 		const link = document.createElement('a');
 		link.href = urlCsv;
 		link.target = '_blank';
@@ -535,8 +557,8 @@ export default function Clients() {
 					<Grid>
 						<Button
 							variant="contained"
-							style={{marginLeft: 10, backgroundColor: '#ffcc00'}}
-							disabled={!users.length || !url}
+							style={{marginLeft: 10, backgroundColor: !!url ? '#3cb623ff' : '#ffcc00'}}
+							disabled={!users.length}
 							onClick={onDownload}
 						>
 							<DownloadIcon/>
@@ -546,8 +568,8 @@ export default function Clients() {
 					<Grid>
 						<Button
 							variant="contained"
-							style={{marginLeft: 10, backgroundColor: 'rgba(215,184,111,0.55)'}}
-							disabled={!users.length || !urlCsv}
+							style={{marginLeft: 10, backgroundColor: !!urlCsv ? '#3cb62388' : 'rgba(215,184,111,0.55)'}}
+							disabled={!users.length}
 							onClick={onDownloadCsv}
 						>
 							<DownloadIcon/>
