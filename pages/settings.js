@@ -34,7 +34,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Dialog from '@mui/material/Dialog';
 import {
 	formatDate,
-	MyAlert, MyAutocomplite, MyDatePickerNew, MyTextInput,
+	MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput,
 } from '@/ui/elements';
 import {api_laravel, api_laravel_local} from '@/src/api_new';
 import dayjs from "dayjs";
@@ -674,8 +674,8 @@ const DateModal = ({open, onClose, onSave}) => {
 
 const ModalAder = ({open, onClose, getData, setIsLoad, setErrStatus, setErrText, setOpenAlert}) => {
 	const [formData, setFormData] = useState({
-		date_start: null,
-		date_end: null,
+		date_start: dayjs(new Date()).format('YYYY-MM-DD'),
+		date_end: dayjs(new Date()).add(7, 'day').format('YYYY-MM-DD'),
 		where_active: 0,
 		city_ids: [],
 		point_ids: [],
@@ -729,8 +729,24 @@ const ModalAder = ({open, onClose, getData, setIsLoad, setErrStatus, setErrText,
 						TransitionProps={{direction: 'up'}}>
 			<DialogTitle>Добавление новой рекламы</DialogTitle>
 			<DialogContent>
+
 				<Grid container spacing={2} style={{marginBottom: 16, marginTop: 4}}>
 					<Grid item xs={12} sm={12}><Typography> Общее</Typography></Grid>
+					<Grid item xs={12} sm={3}>
+						<MyTextInput label="Название" value={formData.name} func={(e) => setFormData((prev) => ({
+							...prev,
+							name: e.target.value
+						}))}/>
+					</Grid>
+					<Grid item xs={12} sm={6}>
+						<MyTextInput label="Описание" multiline={true} maxRows={5} value={formData.description} func={(e) => setFormData((prev) => ({
+							...prev,
+							description: e.target.value
+						}))}/>
+					</Grid>
+				</Grid>
+
+				<Grid container spacing={2} style={{marginBottom: 16, marginTop: 4}}>
 					<Grid item xs={12} sm={3}>
 						<MyDatePickerNew
 							label="Дата начала"
@@ -765,7 +781,7 @@ const ModalAder = ({open, onClose, getData, setIsLoad, setErrStatus, setErrText,
 							onChange={(_, value) => {
 								setFormData((prev) => ({...prev, where_active: value}))
 							}}
-							renderInput={(params) => <TextField {...params} label="Товары"/>}
+							renderInput={(params) => <TextField {...params} label="Где работает"/>}
 							sx={{mb: 2}}
 						/>
 					</Grid>
@@ -785,42 +801,25 @@ const ModalAder = ({open, onClose, getData, setIsLoad, setErrStatus, setErrText,
 							/>
 						</Grid>
 					)}
-					<Grid item xs={12} sm={3}>
-						<MyTextInput label="Название" value={formData.name} func={(e) => setFormData((prev) => ({
-							...prev,
-							name: e.target.value
-						}))}/>
-					</Grid>
-					<Grid item xs={12} sm={3}>
-						<MyTextInput label="Описание" multiline={true} maxRows={5} value={formData.description} func={(e) => setFormData((prev) => ({
-							...prev,
-							description: e.target.value
-						}))}/>
-					</Grid>
 				</Grid>
+				
 				<Grid container spacing={2} style={{marginBottom: 16, marginTop: 4}}>
 					<Grid item xs={12} sm={12}><Typography>Условие</Typography></Grid>
 					<Grid item xs={12} sm={3}>
-						<Autocomplete
-							size="small"
-							options={[0, 1]}
-							getOptionLabel={(option) => {
-								switch (option) {
-									case 0:
-										return 'На все заказы';
-									case 1:
-										return 'На первый заказ';
-									default:
-										return option;
-								}
+						<MyCheckBox
+							label="На первый заказ клиента"
+							value={!!formData.order_type}
+							func={(_, value) => {
+								setFormData((prev) => ({...prev, order_type: +value}))
 							}}
-							value={formData.order_type}
-							onChange={(_, value) => {
-								setFormData((prev) => ({...prev, order_type: value}))
-							}}
-							renderInput={(params) => <TextField {...params} label="Заказы"/>}
-							sx={{mb: 2}}
 						/>
+					
+					</Grid>
+					<Grid item xs={12} sm={3}>
+						<MyTextInput label="Сумма заказа от" value={formData.sum_order} type="number" func={(e) => setFormData((prev) => ({
+							...prev,
+							sum_order: e.target.value
+						}))}/>
 					</Grid>
 					<Grid item xs={12} sm={3}>
 						<Autocomplete
@@ -835,12 +834,9 @@ const ModalAder = ({open, onClose, getData, setIsLoad, setErrStatus, setErrText,
 							sx={{mb: 2}}
 						/>
 					</Grid>
-					<Grid item xs={12} sm={3}>
-						<MyTextInput label="Сумма заказа от" value={formData.sum_order} type="number" func={(e) => setFormData((prev) => ({
-							...prev,
-							sum_order: e.target.value
-						}))}/>
-					</Grid>
+					
+				</Grid>
+				<Grid container spacing={2} style={{marginBottom: 16}}>
 					<Grid item xs={12} sm={3}>
 						<Autocomplete
 							size="small"
@@ -863,21 +859,23 @@ const ModalAder = ({open, onClose, getData, setIsLoad, setErrStatus, setErrText,
 							sx={{mb: 2}}
 						/>
 					</Grid>
-					{!formData.in_order ? (
-						<Grid item xs={12} sm={3}>
-							<MyAutocomplite label="Блюда" data={items} multiple={true} value={formData.items_ids} func={(event, data) => {
-								setFormData((prev) => ({...prev, items_ids: data}))
-							}}
-							/>
-						</Grid>
-					) : (
-						<Grid item xs={12} sm={3}>
-							<MyAutocomplite label="Категории" data={categories} multiple={true} value={formData.category_ids} func={(event, data) => {
-								setFormData((prev) => ({...prev, category_ids: data}))
-							}}
-							/>
-						</Grid>
-					)}
+						{formData.in_order === 0 && (
+							<Grid item xs={12} sm={3}>
+								<MyAutocomplite label="Блюда" data={items} multiple={true} value={formData.items_ids} func={(event, data) => {
+									setFormData((prev) => ({...prev, items_ids: data}))
+								}}
+								/>
+							</Grid>
+						)}
+						{formData.in_order === 1 && (
+							<Grid item xs={12} sm={3}>
+								<MyAutocomplite label="Категории" data={categories} multiple={true} value={formData.category_ids} func={(event, data) => {
+									setFormData((prev) => ({...prev, category_ids: data}))
+								}}
+								/>
+							</Grid>
+						)}
+
 				</Grid>
 				<Grid container spacing={2} style={{marginBottom: 16, marginTop: 4}}>
 					<Grid item xs={12} sm={12}><Typography>Добавляемая позиция</Typography></Grid>
@@ -973,6 +971,21 @@ const ModalUpdateAder = ({open, onClose, getData, id, setIsLoad, setErrStatus, s
 				<Grid container spacing={2} style={{marginBottom: 16, marginTop: 4}}>
 					<Grid item xs={12} sm={12}><Typography> Общее</Typography></Grid>
 					<Grid item xs={12} sm={3}>
+						<MyTextInput label="Название" value={formData.name} func={(e) => setFormData((prev) => ({
+							...prev,
+							name: e.target.value
+						}))}/>
+					</Grid>
+					<Grid item xs={12} sm={6}>
+						<MyTextInput label="Описание" multiline={true} maxRows={5} value={formData.description} func={(e) => setFormData((prev) => ({
+							...prev,
+							description: e.target.value
+						}))}/>
+					</Grid>
+				</Grid>
+
+				<Grid container spacing={2} style={{marginBottom: 16, marginTop: 4}}>
+					<Grid item xs={12} sm={3}>
 						<MyDatePickerNew
 							label="Дата начала"
 							value={formData.date_start}
@@ -1006,13 +1019,13 @@ const ModalUpdateAder = ({open, onClose, getData, id, setIsLoad, setErrStatus, s
 							onChange={(_, value) => {
 								setFormData((prev) => ({...prev, where_active: value}))
 							}}
-							renderInput={(params) => <TextField {...params} label="Товары"/>}
+							renderInput={(params) => <TextField {...params} label="Где работает"/>}
 							sx={{mb: 2}}
 						/>
 					</Grid>
 					{formData.where_active === 2 && (
 						<Grid item xs={12} sm={3}>
-							<MyAutocomplite label="Точки" data={points} multiple={true} value={formData.point_ids} func={(event, data) => {
+							<MyAutocomplite label="Точки" data={points} multiple={true} value={formData.point_ids} func={(_, data) => {
 								setFormData((prev) => ({...prev, point_ids: data}))
 							}}
 							/>
@@ -1020,48 +1033,30 @@ const ModalUpdateAder = ({open, onClose, getData, id, setIsLoad, setErrStatus, s
 					)}
 					{formData.where_active === 1 && (
 						<Grid item xs={12} sm={3}>
-							<MyAutocomplite label="Город" data={cities} multiple={true} value={formData.city_ids} func={(event, data) => {
+							<MyAutocomplite label="Город" data={cities} multiple={true} value={formData.city_ids} func={(_, data) => {
 								setFormData((prev) => ({...prev, city_ids: data}))
 							}}
 							/>
 						</Grid>
 					)}
-					<Grid item xs={12} sm={3}>
-						<MyTextInput label="Название" value={formData.name} func={(e) => setFormData((prev) => ({
-							...prev,
-							name: e.target.value
-						}))}/>
-					</Grid>
-					<Grid item xs={12} sm={3}>
-						<MyTextInput label="Описание" multiline={true} maxRows={5} value={formData.description} func={(e) => setFormData((prev) => ({
-							...prev,
-							description: e.target.value
-						}))}/>
-					</Grid>
 				</Grid>
+
 				<Grid container spacing={2} style={{marginBottom: 16, marginTop: 4}}>
 					<Grid item xs={12} sm={12}><Typography>Условие</Typography></Grid>
 					<Grid item xs={12} sm={3}>
-						<Autocomplete
-							size="small"
-							options={[0, 1]}
-							getOptionLabel={(option) => {
-								switch (option) {
-									case 0:
-										return 'На все заказы';
-									case 1:
-										return 'На первый заказ';
-									default:
-										return option;
-								}
+						<MyCheckBox
+							label="На первый заказ клиента"
+							value={!!formData.order_type}
+							func={(_, value) => {
+								setFormData((prev) => ({...prev, order_type: +value}))
 							}}
-							value={formData.order_type}
-							onChange={(_, value) => {
-								setFormData((prev) => ({...prev, order_type: value}))
-							}}
-							renderInput={(params) => <TextField {...params} label="Заказы"/>}
-							sx={{mb: 2}}
 						/>
+					</Grid>
+					<Grid item xs={12} sm={3}>
+						<MyTextInput label="Сумма заказа от" value={formData.sum_order} type="number" func={(e) => setFormData((prev) => ({
+							...prev,
+							sum_order: e.target.value
+						}))}/>
 					</Grid>
 					<Grid item xs={12} sm={3}>
 						<Autocomplete
@@ -1076,12 +1071,8 @@ const ModalUpdateAder = ({open, onClose, getData, id, setIsLoad, setErrStatus, s
 							sx={{mb: 2}}
 						/>
 					</Grid>
-					<Grid item xs={12} sm={3}>
-						<MyTextInput label="Сумма заказа от" value={formData.sum_order} type="number" func={(e) => setFormData((prev) => ({
-							...prev,
-							sum_order: e.target.value
-						}))}/>
-					</Grid>
+</Grid>
+				<Grid container spacing={2} style={{marginBottom: 16}}>
 					<Grid item xs={12} sm={3}>
 						<Autocomplete
 							size="small"
@@ -1104,21 +1095,22 @@ const ModalUpdateAder = ({open, onClose, getData, id, setIsLoad, setErrStatus, s
 							sx={{mb: 2}}
 						/>
 					</Grid>
-					{!formData.in_order ? (
-						<Grid item xs={12} sm={3}>
-							<MyAutocomplite label="Блюда" data={items} multiple={true} value={formData.items_ids} func={(event, data) => {
-								setFormData((prev) => ({...prev, items_ids: data}))
-							}}
-							/>
-						</Grid>
-					) : (
-						<Grid item xs={12} sm={3}>
-							<MyAutocomplite label="Категории" data={categories} multiple={true} value={formData.category_ids} func={(event, data) => {
-								setFormData((prev) => ({...prev, category_ids: data}))
-							}}
-							/>
-						</Grid>
-					)}
+						{formData.in_order === 0 && (
+							<Grid item xs={12} sm={3}>
+								<MyAutocomplite label="Блюда" data={items} multiple={true} value={formData.items_ids} func={(event, data) => {
+									setFormData((prev) => ({...prev, items_ids: data}))
+								}}
+								/>
+							</Grid>
+						)}
+						{formData.in_order === 1 && (
+							<Grid item xs={12} sm={3}>
+								<MyAutocomplite label="Категории" data={categories} multiple={true} value={formData.category_ids} func={(event, data) => {
+									setFormData((prev) => ({...prev, category_ids: data}))
+								}}
+								/>
+							</Grid>
+						)}
 				</Grid>
 				<Grid container spacing={2} style={{marginBottom: 16, marginTop: 4}}>
 					<Grid item xs={12} sm={12}><Typography>Добавляемая позиция</Typography></Grid>
