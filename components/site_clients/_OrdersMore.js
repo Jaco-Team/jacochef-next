@@ -4,7 +4,7 @@ import {api_laravel, api_laravel_local} from "@/src/api_new";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/ui/elements";
-import {ModalOrder} from "@/pages/site_clients/_Clients";
+import {ModalOrder} from "@/components/site_clients/_Clients";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -548,8 +548,29 @@ export default function OrdersMore() {
 		})
 	}
 
-	const onDownload = (e) => {
+	const getFileLinks = async () => {
+		if (url) {
+			return true;
+		}
+		try {
+			const data = await getData("get_orders_more_files", {
+				...formData,
+				date_start_true: dayjs(formData.date_start_true).format("YYYY-MM-DD"),
+				date_end_true: dayjs(formData.date_end_true).format("YYYY-MM-DD"),
+				date_start_false: dayjs(formData.date_start_false).format("YYYY-MM-DD"),
+				date_end_false: dayjs(formData.date_end_false).format("YYYY-MM-DD"),
+			});
+			if (!data?.url) throw new Error("Ссылка для скачивания недоступна");
+			setUrl(data.url);
+		} catch (error) {
+			console.error("Error getting file url", error);
+		}
+	};
+
+	const onDownload = async (e) => {
 		e.preventDefault();
+		await getFileLinks();
+		if(!url) return;
 		const link = document.createElement('a');
 		link.href = url;
 		link.target = '_blank';
@@ -671,14 +692,14 @@ export default function OrdersMore() {
 
 					<Grid>
 						<Button variant="contained" style={{whiteSpace: 'nowrap'}} onClick={getUsers}>
-							Получить список клиентов
+							Получить список заказов
 						</Button>
 					</Grid>
 
 					<Grid>
 						<Button
 							variant="contained"
-							style={{marginLeft: 10, backgroundColor: '#ffcc00'}}
+							style={{marginLeft: 10, backgroundColor: !!url ? '#3cb623ff' : '#ffcc00'}}
 							disabled={!orders.length}
 							onClick={onDownload}
 						>

@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from "react";
-import {useRouter} from "next/router";
 import dayjs from "dayjs";
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/ui/elements";
@@ -276,6 +275,7 @@ export const ModalOrder = ({open, onClose, order, order_items, err_order, feedba
 		</Dialog>
 	);
 }
+
 export default function Clients() {
 	const [isLoad, setIsLoad] = useState(false);
 	const [module, setModule] = useState({});
@@ -308,6 +308,8 @@ export default function Clients() {
 		is_show_claim_last: false,
 		min_summ: 0,
 		max_summ: 0,
+		promo: '',
+		no_promo: false,
 		param: {id: 'all', name: 'Найти всех'},
 		is_show_marketing: false,
 		point: [],
@@ -315,7 +317,7 @@ export default function Clients() {
 		item: []
 	});
 
-	const router = useRouter();
+	// const router = useRouter();
 
 	const openUser = (number) => {
 		getData('get_one', {number}).then((data) => {
@@ -332,29 +334,53 @@ export default function Clients() {
 	}
 
 	const handleChange = (e, name) => {
-		let value = null;
-		if (name === 'date_start_true' || name === 'date_end_true' || name === 'date_start_false' || name === 'date_end_false' || name === 'point' || name === 'item' || name === 'param') {
+		let value;
+		const directValueFields = [
+			'date_start_true',
+			'date_end_true',
+			'date_start_false',
+			'date_end_false',
+			'point',
+			'item',
+			'param',
+		];
+		const checkedFields = [
+			'is_show_claim',
+			'is_show_claim_last',
+			'is_show_marketing',
+			'no_promo',
+		];
+
+		if (directValueFields.includes(name)) {
 			value = e;
-		} else if (name === 'is_show_claim' || name === 'is_show_claim_last' || name === 'is_show_marketing') {
+		} else if (checkedFields.includes(name)) {
 			value = e.target.checked;
 		} else {
-			value = e.target.value;
+			value = e.target.value; 
 		}
-		setFormData((prev) => ({
-			...prev,
-			[name]: value,
-		}));
-	};
+		setFormData((prev) => {
+			if (name === 'promo') {
+				return {
+					...prev,
+					promo: value,
+					no_promo: value ? 0 : prev.no_promo, // clear checkbox if promo set
+				};
+			}
 
-	useEffect(() => {
-		if (formData.param.id === 'new') {
-			setFormData((prev) => ({
+			if (name === 'no_promo') {
+				return {
+					...prev,
+					no_promo: value,
+					promo: value ? '' : prev.promo, // clear promo if checkbox set
+				};
+			}
+
+			return {
 				...prev,
-				date_start_false: null,
-				date_end_false: null,
-			}));
-		}
-	}, [formData.param])
+				[name]: value,
+			};
+		});
+	};
 
 	const getUsers = () => {
 		getData('get_users', {
@@ -376,8 +402,30 @@ export default function Clients() {
 		})
 	}
 
-	const onDownload = (e) => {
+	const getFileLinks = async () => {
+    if (url && urlCsv) {
+      return true;
+    }
+    try {
+      const data = await getData("get_clients_files", {
+        ...formData,
+        date_start_true: dayjs(formData.date_start_true).format("YYYY-MM-DD"),
+        date_end_true: dayjs(formData.date_end_true).format("YYYY-MM-DD"),
+        date_start_false: dayjs(formData.date_start_false).format("YYYY-MM-DD"),
+        date_end_false: dayjs(formData.date_end_false).format("YYYY-MM-DD"),
+      });
+      if (!data?.url || !data.urlCsv) throw new Error("Ссылка для скачивания недоступна");
+      setUrl(data.url);
+      setUrlCsv(data.urlCsv);
+    } catch (error) {
+      console.error("Error getting files", error);
+    }
+  };
+
+	const onDownload = async (e) => {
 		e.preventDefault();
+		await getFileLinks();
+		if(!url) return;
 		const link = document.createElement('a');
 		link.href = url;
 		link.target = '_blank';
@@ -385,13 +433,28 @@ export default function Clients() {
 		link.click();
 	};
 
-	const onDownloadCsv = (e) => {
+	const onDownloadCsv = async (e) => {
 		e.preventDefault();
+		await getFileLinks();
+		if(!urlCsv) return;
 		const link = document.createElement('a');
 		link.href = urlCsv;
 		link.target = '_blank';
 		link.rel = 'noopener noreferrer';
 		link.click();
+	};
+
+	const getData = async (method, data = {}) => {
+		setIsLoad(true);
+		try {
+			const result = await api_laravel('site_clients', method, data);
+			return result.data;
+		} catch (error) {
+			console.error('Error fetching data:', error);
+			return null;
+		} finally {
+			setIsLoad(false);
+		}
 	};
 
 	useEffect(() => {
@@ -401,16 +464,16 @@ export default function Clients() {
 			setItems(data.items);
 		});
 	}, []);
-	const getData = async (method, data = {}) => {
-		setIsLoad(true);
 
-		try {
-			const result = await api_laravel('site_clients', method, data);
-			return result.data;
-		} finally {
-			setIsLoad(false);
+	useEffect(() => {
+		if (formData.param.id === 'new') {
+			setFormData((prev) => ({
+				...prev,
+				date_start_false: null,
+				date_end_false: null,
+			}));
 		}
-	};
+	}, [formData.param]);
 
 	return (
 		<>
@@ -494,7 +557,7 @@ export default function Clients() {
 					<Grid>
 						<Button
 							variant="contained"
-							style={{marginLeft: 10, backgroundColor: '#ffcc00'}}
+							style={{marginLeft: 10, backgroundColor: !!url ? '#3cb623ff' : '#ffcc00'}}
 							disabled={!users.length}
 							onClick={onDownload}
 						>
@@ -505,7 +568,7 @@ export default function Clients() {
 					<Grid>
 						<Button
 							variant="contained"
-							style={{marginLeft: 10, backgroundColor: 'rgba(215,184,111,0.55)'}}
+							style={{marginLeft: 10, backgroundColor: !!urlCsv ? '#3cb62388' : 'rgba(215,184,111,0.55)'}}
 							disabled={!users.length}
 							onClick={onDownloadCsv}
 						>
@@ -629,61 +692,76 @@ export default function Clients() {
 						func={(event, value) => handleChange(value, 'param')}
 					/>
 				</Grid>
-				{!users.length ? null : (
-					<>
-						<Grid container justifyContent="center">
-							<Grid item xs={12} sm={9}>
-								<TableContainer>
-									<Table>
-										<TableHead>
-											<TableRow>
-												<TableCell>#</TableCell>
-												<TableCell>Имя</TableCell>
-												<TableCell>Телефон</TableCell>
-												<TableCell>Последний комментарий</TableCell>
-											</TableRow>
-										</TableHead>
-
-										<TableBody>
-											{users.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((item, i) => (
-												<TableRow
-													key={i}
-													style={{cursor: 'pointer'}}
-													onClick={() => openUser(item.login)}
-												>
-													<TableCell>{(page - 1) * rowsPerPage + i + 1}</TableCell>
-													<TableCell>
-														{item.name}
-														{item.number_new_active ? (
-															<span style={{color: 'red', fontWeight: 'bold'}}> Новый!</span>
-														) : ''}
-													</TableCell>
-													<TableCell>{item.login}</TableCell>
-													<TableCell dangerouslySetInnerHTML={{__html: item?.last_comment}}></TableCell>
-												</TableRow>
-											))}
-										</TableBody>
-									</Table>
-								</TableContainer>
-								<TablePagination
-									rowsPerPageOptions={[10, 50, 100]}
-									labelDisplayedRows={({from, to, count}) => `${from}-${to} из ${count}`}
-									labelRowsPerPage="Записей на странице:"
-									component="div"
-									count={users.length}
-									rowsPerPage={rowsPerPage}
-									page={page}
-									onPageChange={(event, newPage) => setPage(newPage)}
-									onRowsPerPageChange={(event) => {
-										setRowPerPage(parseInt(event.target.value, 10));
-										setPage(0);
-									}}
-								/>
-							</Grid>
-						</Grid>
-					</>
-				)}
 			</Grid>
+			<Grid container spacing={3} justifyContent="center">
+				<Grid item xs={7} sm={3}>
+					<MyTextInput
+						label="Промокод"
+						value={formData.promo}
+						func={(e) => handleChange(e, 'promo')}
+					/>
+				</Grid>
+
+				<Grid item xs={5} sm={6}>
+					<MyCheckBox
+						label="Заказ без промокода"
+						value={formData.no_promo}
+						func={(e) => handleChange(e, 'no_promo')}
+					/>
+				</Grid>
+			</Grid>
+				{!users.length ? null : (
+					<Grid container justifyContent="center" mt={3}>
+						<Grid item xs={12}>
+							<TableContainer>
+								<Table>
+									<TableHead>
+										<TableRow>
+											<TableCell>#</TableCell>
+											<TableCell>Имя</TableCell>
+											<TableCell>Телефон</TableCell>
+											<TableCell>Последний комментарий</TableCell>
+										</TableRow>
+									</TableHead>
+
+									<TableBody>
+										{users.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((item, i) => (
+											<TableRow
+												key={i}
+												style={{cursor: 'pointer'}}
+												onClick={() => openUser(item.login)}
+											>
+												<TableCell>{(page * rowsPerPage + i + 1)}</TableCell>
+												<TableCell>
+													{item.name}
+													{item.number_new_active ? (
+														<span style={{color: 'red', fontWeight: 'bold'}}> Новый!</span>
+													) : ''}
+												</TableCell>
+												<TableCell>{item.login}</TableCell>
+												<TableCell dangerouslySetInnerHTML={{__html: item?.last_comment}}></TableCell>
+											</TableRow>
+										))}
+									</TableBody>
+								</Table>
+							</TableContainer>
+							<TablePagination
+								rowsPerPageOptions={[10, 50, 100]}
+								labelDisplayedRows={({from, to, count}) => `${from}-${to} из ${count}`}
+								labelRowsPerPage="Записей на странице:"
+								component="div"
+								count={users.length}
+								rowsPerPage={rowsPerPage}
+								page={page}
+								onPageChange={(_, newPage) => setPage(newPage)}
+								onRowsPerPageChange={(event) => {
+									setRowPerPage(parseInt(event.target.value, 10));
+									setPage(0);
+								}}
+							/>
+						</Grid>
+					</Grid>
+				)}
 			<Grid container spacing={3} justifyContent="center" mb={3}>
 				<Grid item xs={12} sm={1}>
 				</Grid>
