@@ -273,7 +273,7 @@ function IndicatorsPage() {
 										centered
 										variant='fullWidth'
 									>
-										<Tab label="Коэффициенты (Клиенты)" value="times"/>
+										<Tab label="Среднее время до закрытия" value="times"/>
 									</Tabs>
 								</Paper>
 							</Grid>
