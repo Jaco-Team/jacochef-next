@@ -32,8 +32,8 @@ import DialogContent from "@mui/material/DialogContent";
 import TextField from "@mui/material/TextField";
 import DialogActions from "@mui/material/DialogActions";
 import {CustomColorPicker} from "@/pages/stat_sale";
-import {PerformanceTable} from "@/pages/feedback_form/new/PerfomanceTable";
-import {ModalSettings} from "@/pages/feedback_form/new/ModalSettings";
+import {PerformanceTable} from "@/components/other/PerfomanceTable";
+import {ModalSettings} from "@/components/other/ModalSettings";
 
 function IndicatorsPage() {
 	const [isLoad, setIsLoad] = useState(false);
