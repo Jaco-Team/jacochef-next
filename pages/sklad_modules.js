@@ -1,417 +1,23 @@
 import React from 'react';
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
-
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
-import CloseIcon from '@mui/icons-material/Close';
-import IconButton from '@mui/material/IconButton';
-import EditIcon from '@mui/icons-material/Edit';
-
-import Tooltip from '@mui/material/Tooltip';
-
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-
-import TableContainer from '@mui/material/TableContainer';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import {MyTextInput, MyAutocomplite, MyAlert, MyCheckBox, MySelect} from '@/ui/elements';
+import {MyTextInput, MyAlert} from '@/ui/elements';
 
-import queryString from 'query-string';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
+// import {api_laravel_local as api_laravel} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import AccordionSummary from "@mui/material/AccordionSummary";
+import EditIcon from "@mui/icons-material/Edit";
 import Box from "@mui/material/Box";
-
-class SkladModules_Modal_Param extends React.Component {
-
-	constructor(props) {
-		super(props);
-
-		this.state = {
-			item: null,
-
-			openAlert: false,
-			err_status: false,
-			err_text: ''
-		};
-	}
-
-	componentDidUpdate(prevProps) {
-		// console.log('componentDidUpdate', this.props);
-
-		if (!this.props.item) {
-			return;
-		}
-
-		if (this.props.item !== prevProps.item) {
-
-			this.setState({
-				item: this.props.item
-			});
-		}
-	}
-
-	changeItem(data, event) {
-		const item = this.state.item;
-		const value = event.target.value;
-
-		item[data] = value;
-
-		this.setState({
-			item
-		});
-	}
-
-	changeAutocomplite(data, event, value) {
-		const item = this.state.item;
-
-		item[data] = value;
-
-		this.setState({
-			item,
-		});
-	}
-
-	save() {
-
-		let item = this.state.item;
-
-		if (!item.name) {
-
-			this.setState({
-				openAlert: true,
-				err_status: false,
-				err_text: 'Необходимо указать название'
-			});
-
-			return;
-
-		}
-
-		if (!item.param) {
-
-			this.setState({
-				openAlert: true,
-				err_status: false,
-				err_text: 'Необходимо указать параметр'
-			});
-
-			return;
-
-		}
-
-		if (!item.module_id) {
-
-			this.setState({
-				openAlert: true,
-				err_status: false,
-				err_text: 'Необходимо выбрать модуль'
-			});
-
-			return;
-		}
-
-		if (!item.type) {
-
-			this.setState({
-				openAlert: true,
-				err_status: false,
-				err_text: 'Необходимо выбрать тип'
-			});
-
-			return;
-		}
-
-		this.props.save(item);
-		this.onClose();
-
-	}
-
-	onClose() {
-
-		setTimeout(() => {
-			this.setState({
-				item: null,
-
-				openAlert: false,
-				err_status: false,
-				err_text: ''
-			});
-		}, 100);
-
-		this.props.onClose();
-	}
-
-	render() {
-		const {open, fullScreen, method, param_name} = this.props;
-
-		return (
-			<>
-				<MyAlert
-					isOpen={this.state.openAlert}
-					onClose={() => this.setState({openAlert: false})}
-					status={this.state.err_status}
-					text={this.state.err_text}
-				/>
-
-				<Dialog
-					open={open}
-					onClose={this.onClose.bind(this)}
-					fullScreen={fullScreen}
-					fullWidth={true}
-					maxWidth={'md'}
-				>
-					<DialogTitle className="button">
-						{method}
-						{param_name ? `: ${param_name}` : null}
-						<IconButton onClick={this.onClose.bind(this)} style={{
-							cursor: 'pointer',
-							position: 'absolute',
-							top: 0,
-							right: 0,
-							padding: 20
-						}}>
-							<CloseIcon/>
-						</IconButton>
-					</DialogTitle>
-
-					{!this.state.item ? null : (
-						<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
-							<Grid container spacing={3}>
-								<Grid item xs={12} sm={6}>
-									<MyTextInput
-										label="Название"
-										value={this.state.item.name}
-										func={this.changeItem.bind(this, 'name')}
-									/>
-								</Grid>
-
-								<Grid item xs={12} sm={6}>
-									<MyTextInput
-										label="Параметр"
-										value={this.state.item.param}
-										func={this.changeItem.bind(this, 'param')}
-									/>
-								</Grid>
-
-								<Grid item xs={12} sm={12}>
-									<MyAutocomplite
-										label="Модуль"
-										multiple={false}
-										data={this.state.item.modules}
-										value={this.state.item.module_id}
-										func={this.changeAutocomplite.bind(this, 'module_id')}
-									/>
-								</Grid>
-
-								<Grid item xs={12} sm={12}>
-									<MySelect
-										is_none={false}
-										label="Тип"
-										data={this.state.item.types}
-										value={this.state.item.type}
-										func={this.changeItem.bind(this, 'type')}
-									/>
-								</Grid>
-
-								<Grid item xs={12} sm={6}>
-									<MyTextInput
-										label="Категория параметра"
-										value={this.state.item.category}
-										func={this.changeItem.bind(this, 'category')}
-									/>
-								</Grid>
-
-								<Grid item xs={12} sm={6}>
-									<MyTextInput
-										label="Название категории параметра"
-										value={this.state.item.category_name}
-										func={this.changeItem.bind(this, 'category_name')}
-									/>
-								</Grid>
-
-
-							</Grid>
-						</DialogContent>
-					)}
-
-					<DialogActions>
-						<Button variant="contained" onClick={this.save.bind(this)}>
-							Сохранить
-						</Button>
-					</DialogActions>
-
-				</Dialog>
-			</>
-		);
-	}
-}
-
-class SkladModules_Modal extends React.Component {
-	constructor(props) {
-		super(props);
-
-		this.state = {
-			item: null,
-			listCat: null,
-			itemCat: null,
-		};
-	}
-
-	componentDidUpdate(prevProps) {
-		//console.log(this.props);
-
-		if (!this.props.item) {
-			return;
-		}
-
-		if (this.props.item !== prevProps.item) {
-
-			const itemCat = this.props.listCat.find(item => parseInt(item.id) === parseInt(this.props.item.parent_id));
-
-			this.setState({
-				itemCat,
-				item: this.props.item,
-				listCat: this.props.listCat,
-			});
-		}
-	}
-
-	changeItem(data, event) {
-		const item = this.state.item;
-
-		item[data] = event.target.value;
-
-		this.setState({
-			item,
-		});
-	}
-
-	changeItemChecked(data, event) {
-		const item = this.state.item;
-
-		item[data] = event.target.checked === true ? 1 : 0;
-
-		this.setState({
-			item,
-		});
-	}
-
-	changeItemCat(data, event, value) {
-		const item = this.state.item;
-
-		item[data] = value ? value.id : '';
-
-		this.setState({
-			item,
-			itemCat: value,
-		});
-	}
-
-	save() {
-		const item = this.state.item;
-
-		this.props.save(item);
-
-		this.onClose();
-	}
-
-	onClose() {
-		this.setState({
-			item: null,
-			listCat: null,
-			itemCat: null,
-		});
-
-		this.props.onClose();
-	}
-
-	render() {
-		return (
-			<Dialog
-				open={this.props.open}
-				onClose={this.onClose.bind(this)}
-				fullScreen={this.props.fullScreen}
-				fullWidth={true}
-				maxWidth="md"
-			>
-				<DialogTitle className="button">
-					{this.props.method}
-					{this.props.itemName ? `: ${this.props.itemName}` : null}
-				</DialogTitle>
-
-				<IconButton onClick={this.onClose.bind(this)} style={{
-					cursor: 'pointer',
-					position: 'absolute',
-					top: 0,
-					right: 0,
-					padding: 20
-				}}>
-					<CloseIcon/>
-				</IconButton>
-
-				<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
-					<Grid container spacing={3}>
-						<Grid item xs={12} sm={12}>
-							<MyTextInput
-								label="Название"
-								value={this.state.item ? this.state.item.name : ''}
-								func={this.changeItem.bind(this, 'name')}
-							/>
-						</Grid>
-
-						<Grid item xs={12} sm={12}>
-							<MyTextInput
-								label="Адрес модуля (URL)"
-								value={this.state.item ? this.state.item.link ?? '' : ''}
-								func={this.changeItem.bind(this, 'link')}
-							/>
-						</Grid>
-
-						<Grid item xs={12} sm={12}>
-							<MyAutocomplite
-								label="Категория"
-								multiple={false}
-								data={this.state.listCat ? this.state.listCat : []}
-								value={this.state.itemCat ? this.state.itemCat : ''}
-								func={this.changeItemCat.bind(this, 'parent_id')}
-							/>
-						</Grid>
-
-						{this.props.mark === 'edit' ? (
-							<Grid item xs={12} sm={12}>
-								<MyCheckBox
-									label="Активность"
-									value={this.state.item ? parseInt(this.state.item.is_show) == 1 ? true : false : false}
-									func={this.changeItemChecked.bind(this, 'is_show')}
-								/>
-							</Grid>
-						) : null}
-					</Grid>
-				</DialogContent>
-				<DialogActions>
-					<Button variant="contained" onClick={this.save.bind(this)}>
-						Сохранить
-					</Button>
-				</DialogActions>
-			</Dialog>
-		);
-	}
-}
+import { Backdrop, Button, CircularProgress, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
+import JModal from '@/components/sklad_modules/JModal';
+import JParamModal from '@/components/sklad_modules/JParamModal';
+
+const defaultParamTypes = [
+	{id: 2, name: "2 значения ( чекбокс - показывать / скрыть )"}, 
+	{id: 3, name: "3 значения ( селект - не активный / просмотр / редактировать )"}
+];
 
 class SkladModules_ extends React.Component {
 	constructor(props) {
@@ -454,6 +60,7 @@ class SkladModules_ extends React.Component {
 			param_new: {
 				name: '',
 				category: '',
+				categories: [],
 				category_name: '',
 				param: '',
 				type: '',
@@ -480,8 +87,12 @@ class SkladModules_ extends React.Component {
 			is_load: true,
 		});
 
-		let res = api_laravel(this.state.module, method, data)
-			.then((result) => result.data)
+		let result = api_laravel(this.state.module, method, data)
+			.then((response) => response?.data)
+			.catch( (e) => {
+				console.error("Error fetching data:", e);
+				return null;
+			})
 			.finally(() => {
 				setTimeout(() => {
 					this.setState({
@@ -490,7 +101,7 @@ class SkladModules_ extends React.Component {
 				}, 500);
 			});
 
-		return res;
+		return result;
 	};
 
 	handleResize() {
@@ -510,13 +121,14 @@ class SkladModules_ extends React.Component {
 
 		if (mark === 'add') {
 			const res = await this.getData('get_all_for_new');
+			if (!res) return;
 
 			this.setState({
 				mark,
 				item: JSON.parse(JSON.stringify(this.state.itemNew)),
 				listCat: res.main_cat,
 				modalDialog: true,
-				method: 'Новая модуль',
+				method: 'Новый модуль',
 			});
 		}
 
@@ -526,11 +138,12 @@ class SkladModules_ extends React.Component {
 			};
 
 			const res = await this.getData('get_one', data);
+			if (!res) return;
 
 			this.setState({
 				mark,
 				item: res.item[0],
-				itemName: res.item[0].name,
+				itemName: res.item[0]?.name,
 				listCat: res.main_cat,
 				modalDialog: true,
 				method: 'Редактирование модуля',
@@ -548,11 +161,8 @@ class SkladModules_ extends React.Component {
 			let param = JSON.parse(JSON.stringify(this.state.param_new));
 
 			param.modules = res.modules;
-
-			param.types = [{id: 2, name: "2 значения ( чекбокс - показывать / скрыть )"}, {
-				id: 3,
-				name: "3 значения ( селект - не активный / просмотр / редактировать )"
-			}];
+			param.types = defaultParamTypes;
+			param.type = defaultParamTypes[0]?.id;
 
 			this.setState({
 				param,
@@ -569,12 +179,9 @@ class SkladModules_ extends React.Component {
 
 			const res = await this.getData('get_one_param', data);
 
-			res.param.types = [{id: 2, name: "2 значения ( чекбокс - показывать / скрыть )"}, {
-				id: 3,
-				name: "3 значения ( селект - не активный / просмотр / редактировать )"
-			}];
-
+			res.param.types = defaultParamTypes;
 			res.param.module_id = res.param.modules.find(module => parseInt(module.id) === parseInt(res.param.module_id)) ?? 0;
+			// res.param.category = res.param.categories?.find(category => category.id === res.param.category) ?? 0;
 
 			this.setState({
 				mark_param,
@@ -584,39 +191,31 @@ class SkladModules_ extends React.Component {
 				method: 'Редактирование параметра',
 			});
 		}
-
 	}
 
 	async save_param(param) {
 
 		const mark_param = this.state.mark_param;
-
 		let res;
-
-		if (mark_param === 'add_param') {
-			const data = {
+		const data = {
 				name: param.name,
+				category_new: param.categoryItem?.id === 0,
 				category: param.category,
 				category_name: param.category_name,
 				param: param.param,
 				type: param.type,
-				module_id: param.module_id.id
+				module_id: param.module_id.id,
+				access: param.access,
+				view: param.view,
+				edit: param.edit
 			};
 
+		if (mark_param === 'add_param') {
 			res = await this.getData('save_new_param', data);
 		}
 
 		if (mark_param === 'edit_param') {
-			const data = {
-				id: param.id,
-				name: param.name,
-				category: param.category,
-				category_name: param.category_name,
-				param: param.param,
-				type: param.type,
-				module_id: param.module_id.id
-			};
-
+			data.id = param.id;
 			res = await this.getData('save_edit_param', data);
 		}
 
@@ -631,6 +230,7 @@ class SkladModules_ extends React.Component {
 				this.update();
 			}, 300);
 		}
+		return res;
 	}
 
 	async save(item) {
@@ -736,7 +336,7 @@ class SkladModules_ extends React.Component {
 					text={this.state.err_text}
 				/>
 
-				<SkladModules_Modal_Param
+				<JParamModal
 					open={this.state.modalDialog_param}
 					onClose={() => this.setState({modalDialog_param: false, param: null, param_name: '', method: ''})}
 					item={this.state.param}
@@ -744,9 +344,10 @@ class SkladModules_ extends React.Component {
 					save={this.save_param.bind(this)}
 					method={this.state.method}
 					param_name={this.state.param_name}
+					getData={this.getData}
 				/>
 
-				<SkladModules_Modal
+				<JModal
 					open={this.state.modalDialog}
 					onClose={() => this.setState({modalDialog: false, itemName: '', method: ''})}
 					mark={this.state.mark}
@@ -791,7 +392,7 @@ class SkladModules_ extends React.Component {
 										</TableHead>
 										<TableBody>
 											{this.state.list.map((item, index) =>
-												item.items.length ? (
+												item.items?.length ? (
 													<React.Fragment key={index}>
 														<TableRow hover sx={{'& th': {border: 'none'}}}>
 															<TableCell>{index + 1}</TableCell>
@@ -816,7 +417,7 @@ class SkladModules_ extends React.Component {
 															<TableCell></TableCell>
 														</TableRow>
 														{item.items.map((it, key) => (
-															it.params.length ?
+															it.params?.length ?
 																<React.Fragment key={key}>
 																	<TableRow
 																		hover
@@ -1060,7 +661,7 @@ class SkladModules_ extends React.Component {
 										</TableHead>
 										<TableBody>
 											{this.state.list.map((item, index) =>
-												item.items.length ? (
+												item.items?.length ? (
 													<React.Fragment key={index}>
 														<TableRow hover sx={{'& th': {border: 'none'}}}>
 															<TableCell>{index + 1}</TableCell>
@@ -1084,7 +685,7 @@ class SkladModules_ extends React.Component {
 															</TableCell>
 														</TableRow>
 														{item.items.map((it, key) => (
-															it.params.length ?
+															it.params?.length ?
 																<React.Fragment key={key}>
 																	<TableRow hover>
 																		<TableCell></TableCell>
@@ -1187,7 +788,7 @@ export default function SkladModules() {
 	return <SkladModules_/>;
 }
 
-export async function getServerSideProps({req, res, query}) {
+export async function getServerSideProps({res}) {
 	res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
 	res.setHeader('Access-Control-Allow-Origin', '*');
 	res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
