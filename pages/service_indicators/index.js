@@ -110,7 +110,7 @@ function IndicatorsPage() {
 		setIsLoad(true);
 
 		try {
-			const result = await api_laravel_local('service_indicators', method, data);
+			const result = await api_laravel('service_indicators', method, data);
 			return result.data;
 		} finally {
 			setIsLoad(false);
