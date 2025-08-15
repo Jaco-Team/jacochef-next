@@ -164,3 +164,5 @@ export const ModalSettings = ({
 		</Dialog>
 	);
 };
+
+export default ModalSettings;
