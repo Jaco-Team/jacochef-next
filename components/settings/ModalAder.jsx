@@ -45,7 +45,20 @@ export default function ModalAder({
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
 
+  const showAlert = (text, status = false) => {
+    setErrStatus(status);
+    setErrText(text);
+    setOpenAlert(true);
+  };
+
   const saveNewAder = () => {
+    if (!formData.items_ids && !formData.category_ids) {
+      showAlert(
+        `Необходимо выбрать хотя бы ${formData.in_order === 0 ? "одно блюдо" : "одну категорию"}`,
+        false
+      );
+      return;
+    }
     const formatData = {
       ...formData,
       date_start: dayjs(formData.date_start).format("YYYY-MM-DD"),
@@ -58,9 +71,7 @@ export default function ModalAder({
     };
     getData("save_ader", { formatData }).then((data) => {
       if (!data.st) {
-        setErrStatus(data.st);
-        setErrText(data.text);
-        setOpenAlert(true);
+        showAlert(data.text, data.st);
       } else {
         onClose();
       }
@@ -176,7 +187,7 @@ export default function ModalAder({
                   case 1:
                     return "В городе";
                   case 2:
-                    return "На точке";
+                    return "В кафе";
                   default:
                     return option;
                 }
@@ -201,7 +212,7 @@ export default function ModalAder({
               sm={3}
             >
               <MyAutocomplite
-                label="Точки"
+                label="Кафе"
                 data={points}
                 multiple={true}
                 value={formData.point_ids}

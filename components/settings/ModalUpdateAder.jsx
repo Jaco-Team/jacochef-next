@@ -1,11 +1,22 @@
 "use client";
 
 import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/elements";
-import { Autocomplete, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Slide, TextField, Typography } from "@mui/material";
+import {
+  Autocomplete,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Slide,
+  TextField,
+  Typography,
+} from "@mui/material";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 
-export default function ModalUpdateAder ({
+export default function ModalUpdateAder({
   open,
   onClose,
   getData,
@@ -35,7 +46,20 @@ export default function ModalUpdateAder ({
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
 
+  const showAlert = (text, status = false) => {
+    setErrStatus(status);
+    setErrText(text);
+    setOpenAlert(true);
+  };
+
   const updateNewAder = () => {
+    if (!formData.items_ids && !formData.category_ids) {
+      showAlert(
+        `Необходимо выбрать хотя бы ${formData.in_order === 0 ? "одно блюдо" : "одну категорию"}`,
+        false
+      );
+      return;
+    }
     const formatData = {
       ...formData,
       date_start: dayjs(formData.date_start).format("YYYY-MM-DD"),
@@ -48,9 +72,7 @@ export default function ModalUpdateAder ({
     };
     getData("update_ader", { formatData, id }).then((data) => {
       if (!data.st) {
-        setErrStatus(data.st);
-        setErrText(data.text);
-        setOpenAlert(true);
+        showAlert(data.text, data.st);
       } else {
         onClose();
       }
@@ -185,7 +207,7 @@ export default function ModalUpdateAder ({
                   case 1:
                     return "В городе";
                   case 2:
-                    return "На точке";
+                    return "В кафе";
                   default:
                     return option;
                 }
@@ -210,7 +232,7 @@ export default function ModalUpdateAder ({
               sm={3}
             >
               <MyAutocomplite
-                label="Точки"
+                label="Кафе"
                 data={points}
                 multiple={true}
                 value={formData.point_ids}
@@ -416,4 +438,4 @@ export default function ModalUpdateAder ({
       </DialogActions>
     </Dialog>
   );
-};
+}
