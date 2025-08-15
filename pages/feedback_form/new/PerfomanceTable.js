@@ -211,3 +211,5 @@ export const PerformanceTable = ({dataTable}) => {
 		</TableContainer>
 	);
 };
+
+export default PerformanceTable;
