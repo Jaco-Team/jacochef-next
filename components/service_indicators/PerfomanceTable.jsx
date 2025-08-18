@@ -1,3 +1,4 @@
+"use client";
 import dayjs from "dayjs";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
@@ -6,13 +7,10 @@ import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import React from "react";
-import Tooltip from "@mui/material/Tooltip";
-import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import TableBody from "@mui/material/TableBody";
 
-export const PerformanceTable = ({dataTable}) => {
+const PerformanceTable = ({dataTable}) => {
 	dayjs.locale('ru');
 	const {columns, rows} = dataTable;
 	const [month, year] = columns.months[0].split('-');

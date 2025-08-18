@@ -19,9 +19,8 @@ import TableContainer from "@mui/material/TableContainer";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import 'dayjs/locale/ru';
-import {CustomColorPicker} from "@/pages/stat_sale";
-import {PerformanceTable} from "@/components/other/PerfomanceTable";
-import {ModalSettings} from "@/components/other/ModalSettings";
+import ModalSettings from "@/components/service_indicators/ModalSettings";
+import PerformanceTable from "@/components/service_indicators/PerfomanceTable";
 
 function IndicatorsPage() {
 	const [isLoad, setIsLoad] = useState(false);
@@ -89,10 +88,10 @@ function IndicatorsPage() {
 	}
 
 	useEffect(() => {
-		if (value === 'settings') {
+		if (activeTab === 'settings') {
 			getSettings();
 		}
-	}, [value]);
+	}, [activeTab]);
 	const getData = async (method, data = {}) => {
 		setIsLoad(true);
 
