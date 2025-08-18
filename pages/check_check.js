@@ -1392,69 +1392,77 @@ class CheckCheck_ extends React.Component {
           </DialogTitle>
           <DialogContent>
             <List>
-              <ListItemButton
-                onClick={() => this.upload_data_1C('export')}
-                sx={{
-                  mb: 3,
-                  border: '1px solid',
-                  borderColor: 'primary.main',
-                  borderRadius: 1,
-                  bgcolor: 'background.paper',
-                  '&:hover': { bgcolor: 'primary.lighter' }
-                }}
-              >
-                <ListItemText
-                  primary={text_primary}
-                  primaryTypographyProps={{ fontWeight: 'medium', color: 'primary.main' }}
-                />
-              </ListItemButton>
-              <ListItemButton
-                onClick={() => this.upload_data_1C('clear')}
-                sx={{
-                  mb: 3,
-                  border: '1px solid',
-                  borderColor: 'primary.main',
-                  borderRadius: 1,
-                  bgcolor: 'background.paper',
-                  '&:hover': { bgcolor: 'primary.lighter' }
-                }}
-              >
-                <ListItemText
-                  primary="Очистить данные по выбранным параметрам в 1С и после выгрузить данные в 1С"
-                  primaryTypographyProps={{ fontWeight: 'medium', color: 'primary.main' }}
-                />
-              </ListItemButton>
-              <ListItemButton
-                onClick={() => this.upload_data_1C('clear_export')}
-                sx={{
-                  mb: 3,
-                  border: '1px solid',
-                  borderColor: 'primary.main',
-                  borderRadius: 1,
-                  bgcolor: 'background.paper',
-                  '&:hover': { bgcolor: 'primary.lighter' }
-                }}
-              >
-                <ListItemText
-                  primary="Очистить ВСЕ данные по выбранной точке в 1С и после выгрузить данные в 1С"
-                  primaryTypographyProps={{ fontWeight: 'medium', color: 'primary.main' }}
-                />
-              </ListItemButton>
-              <ListItemButton
-                onClick={() => this.upload_data_1C('all_clear')}
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'primary.main',
-                  borderRadius: 1,
-                  bgcolor: 'background.paper',
-                  '&:hover': { bgcolor: 'primary.lighter' }
-                }}
-              >
-                <ListItemText
-                  primary="Очистить ВСЕ данные по выбранной точке в 1С"
-                  primaryTypographyProps={{ fontWeight: 'medium', color: 'primary.main' }}
-                />
-              </ListItemButton>
+              {Number(acces?.upload) === 1 &&
+                <ListItemButton
+                  onClick={() => this.upload_data_1C('export')}
+                  sx={{
+                    mb: 3,
+                    border: '1px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: 1,
+                    bgcolor: 'background.paper',
+                    '&:hover': { bgcolor: 'primary.lighter' }
+                  }}
+                >
+                  <ListItemText
+                    primary={text_primary}
+                    primaryTypographyProps={{ fontWeight: 'medium', color: 'primary.main' }}
+                  />
+                </ListItemButton>
+              }
+              {Number(acces?.clear) === 1 &&
+                <ListItemButton
+                  onClick={() => this.upload_data_1C('clear')}
+                  sx={{
+                    mb: 3,
+                    border: '1px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: 1,
+                    bgcolor: 'background.paper',
+                    '&:hover': { bgcolor: 'primary.lighter' }
+                  }}
+                >
+                  <ListItemText
+                    primary="Очистить данные по выбранным параметрам в 1С и после выгрузить данные в 1С"
+                    primaryTypographyProps={{ fontWeight: 'medium', color: 'primary.main' }}
+                  />
+                </ListItemButton>
+              }
+              {Number(acces?.clear_export) === 1 &&
+                <ListItemButton
+                  onClick={() => this.upload_data_1C('clear_export')}
+                  sx={{
+                    mb: 3,
+                    border: '1px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: 1,
+                    bgcolor: 'background.paper',
+                    '&:hover': { bgcolor: 'primary.lighter' }
+                  }}
+                >
+                  <ListItemText
+                    primary="Очистить ВСЕ данные по выбранной точке в 1С и после выгрузить данные в 1С"
+                    primaryTypographyProps={{ fontWeight: 'medium', color: 'primary.main' }}
+                  />
+                </ListItemButton>
+              }
+              {Number(acces?.all_clear) === 1 &&
+                <ListItemButton
+                  onClick={() => this.upload_data_1C('all_clear')}
+                  sx={{
+                    border: '1px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: 1,
+                    bgcolor: 'background.paper',
+                    '&:hover': { bgcolor: 'primary.lighter' }
+                  }}
+                >
+                  <ListItemText
+                    primary="Очистить ВСЕ данные по выбранной точке в 1С"
+                    primaryTypographyProps={{ fontWeight: 'medium', color: 'primary.main' }}
+                  />
+                </ListItemButton>
+              }
             </List>
           </DialogContent>
           <DialogActions>

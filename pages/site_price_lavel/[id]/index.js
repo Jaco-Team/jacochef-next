@@ -92,7 +92,11 @@ class SitePriceLevelEdit_input_item extends React.Component {
       return;
     }
 
-    const value = event.target.value.replace(/^0+/, '');
+    let value = event.target.value.replace(/^0+(?=\d)/, '');
+
+    if (value === '') {
+      value = '0';
+    }
 
     this.setState({
       item: value
@@ -112,6 +116,12 @@ class SitePriceLevelEdit_input_item extends React.Component {
       this.click = true;
 
       let value = this.state.item;
+
+      if (value === '' || value === null) {
+        value = '0';
+        this.setState({ item: value });
+      }
+
       this.props.changeInput(this.props.key_cat, this.props.key_item, this.props.item_id, value);
 
       if (document.activeElement !== document.body) {
@@ -309,6 +319,7 @@ class SitePriceLevelEdit_ extends React.Component {
       };
   
       const res = await this.getData('save_new', data);
+
       if (!res.st) {
         this.setState({
           openAlert: true,
@@ -336,6 +347,7 @@ class SitePriceLevelEdit_ extends React.Component {
     };
   
     const res = await this.getData('save_edit', data);
+    
     this.setState({
       openAlert: true,
       err_status: res.st,
@@ -374,7 +386,6 @@ class SitePriceLevelEdit_ extends React.Component {
     }
 
     const res = await this.getData('get_one', data);
-    console.log("🚀 === res:", res);
 
     let city;
 
