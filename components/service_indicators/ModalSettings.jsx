@@ -1,4 +1,5 @@
-import React, {useEffect, useState} from "react";
+"use client";
+import React, {memo, useEffect, useState} from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
@@ -7,22 +8,26 @@ import CloseIcon from "@mui/icons-material/Close";
 import DialogContent from "@mui/material/DialogContent";
 import Grid from "@mui/material/Grid";
 import TextField from "@mui/material/TextField";
-import {CustomColorPicker} from "@/pages/stat_sale";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
+import {CustomColorPicker} from "@/pages/stat_sale";
 
-export const ModalSettings = ({
-																								open,
-																								fullScreen,
-																								type_modal,
-																								name_row,
-																								value: propValue = 0,
-																								color_edit = '#2ECC71',
-																								openAlert,
-																								save,
-																								delete: deleteProp,
-																								onClose
-																							}) => {
+const ModalSettings = (props) => {
+	const
+		{
+			open,
+			fullScreen,
+			type_modal,
+			name_row,
+			value:
+			propValue = 0,
+			color_edit = '#2ECC71',
+			openAlert,
+			save,
+			delete:
+			deleteProp,
+			onClose
+		} = props;
 	const [color, setColor] = useState('#2ECC71');
 	const [value, setValue] = useState(0);
 
@@ -164,3 +169,5 @@ export const ModalSettings = ({
 		</Dialog>
 	);
 };
+
+export default memo(ModalSettings);

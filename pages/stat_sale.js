@@ -40,7 +40,7 @@ import { MyAlert, MyTextInput, MyAutocomplite, MyDatePickerNewViews, formatDateM
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
-dayjs.locale('ru'); 
+dayjs.locale('ru');
 
 var am5locales_ru_RU = {
   Jan: 'Янв',
@@ -116,9 +116,9 @@ function hexToRgb(hex) {
   if (cleanHex.length === 3) {
     cleanHex = cleanHex.split('').map(c => c + c).join('');
   }
-  
+
   let r, g, b, a = 255;
-  
+
   if (cleanHex.length === 6) {
     r = parseInt(cleanHex.substring(0, 2), 16);
     g = parseInt(cleanHex.substring(2, 4), 16);
@@ -131,7 +131,7 @@ function hexToRgb(hex) {
   } else {
     return null;
   }
-  
+
   return { r, g, b, a };
 }
 
@@ -202,12 +202,12 @@ function hsvaToHex(hsva) {
 
 // ---------- Кастомный колорпикер для выбора цвета в модалке Коэффициенты ----------
 
-class CustomColorPicker extends React.Component {
+export class CustomColorPicker extends React.Component {
   constructor(props) {
     super(props);
 
     let initialHsva = { h: 0, s: 1, v: 1, a: 1 };
-    
+
     if (props.initialColor) {
       if (typeof props.initialColor === 'string') {
         initialHsva = hexToHsva(props.initialColor);
@@ -250,7 +250,7 @@ class CustomColorPicker extends React.Component {
 
   componentDidMount() {
     this.drawColorWheel();
-  
+
     window.addEventListener('touchmove', this.handleAlphaMove, { passive: false });
     window.addEventListener('touchend', this.handleAlphaUp);
     window.addEventListener('touchmove', this.handleWheelMove, { passive: false });
@@ -276,7 +276,7 @@ class CustomColorPicker extends React.Component {
     const ctx = canvas.getContext('2d');
     const size = this.wheelSize;
     const radius = size / 2;
-    
+
     ctx.clearRect(0, 0, size, size);
 
     const imageData = ctx.createImageData(size, size);
@@ -320,7 +320,7 @@ class CustomColorPicker extends React.Component {
     this.setState({ draggingWheel: true });
     this.updateWheel(e);
   };
-  
+
   updateWheel = (e) => {
     if (e.cancelable) {
       e.preventDefault();
@@ -336,7 +336,7 @@ class CustomColorPicker extends React.Component {
     const dy = y - radius;
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist > radius) return;
-  
+
     let angle = Math.atan2(dy, dx);
     angle = (angle < 0) ? angle + 2 * Math.PI : angle;
     const h = angle / (2 * Math.PI);
@@ -345,17 +345,17 @@ class CustomColorPicker extends React.Component {
     const newHsva = { h, s, v, a };
 
     const finalHex = hsvaToHex(newHsva);
-  
+
     this.setState({ hsva: newHsva, hexInput: finalHex });
     this.props.hsvaConvertHex(newHsva);
   };
-  
+
   // Обработчик движения мыши:
   handleWheelMove = (e) => {
     if (!this.state.draggingWheel) return;
     this.updateWheel(e);
   };
-  
+
   // Обработчик отпускания кнопки мыши:
   handleWheelUp = () => {
     if (this.state.draggingWheel) {
@@ -410,7 +410,7 @@ class CustomColorPicker extends React.Component {
     if (x < 0) x = 0;
     if (x > rect.width) x = rect.width;
     const alpha = x / rect.width;
-  
+
     const { h, s, v } = this.state.hsva;
 
     const finalHex = hsvaToHex({ h, s, v, a: alpha });
@@ -503,34 +503,34 @@ class CustomColorPicker extends React.Component {
 
     this.setState({ hexInput: inputValue });
   };
-  
+
   handleHexInputBlur = () => {
     let { hexInput, hsva } = this.state;
-  
+
     hexInput = hexInput.trim();
-  
+
     if (!hexInput) {
       this.setState({ hexInput: hsvaToHex(hsva) });
       return;
     }
-  
+
     if (!hexInput.startsWith('#')) {
       hexInput = '#' + hexInput;
     }
-  
+
     const hexRegex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
 
     if (!hexRegex.test(hexInput)) {
       this.setState({ hexInput: hsvaToHex(hsva) });
       return;
     }
-  
+
     const newHsva = hexToHsva(hexInput);
-  
+
     const finalHex = hsvaToHex(newHsva);
-  
+
     this.setState({ hsva: newHsva, hexInput: finalHex });
-  
+
     if (this.props.hsvaConvertHex) {
       this.props.hsvaConvertHex(newHsva);
     }
@@ -567,8 +567,8 @@ class CustomColorPicker extends React.Component {
             height={this.wheelSize}
             onMouseDown={this.handleWheelClick}
             onTouchStart={this.handleWheelClick}
-            style={{ 
-              cursor: 'pointer', 
+            style={{
+              cursor: 'pointer',
               borderRadius: '50%',
               display: 'block',
             }}
@@ -693,7 +693,7 @@ class StatSale_Modal_Graph extends React.Component {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        
+
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container direction="column" spacing={2}>
             <Grid item xs={12}>
@@ -728,26 +728,26 @@ class StatSale_Tab_Sett_Modal_Input extends React.Component {
 
   changeItem(event) {
     let value = event.target.value;
-  
+
     if (value === '') {
       value = '0';
     } else {
       value = value.replace(/^0+(?=\d)/, '');
     }
-  
+
     if (this.props.item_type === 'rating') {
       this.setState({ item: value });
       return;
     }
-  
+
     let numericValue = Number(value);
-  
+
     if (['percent', 'clients', 'active'].includes(this.props.item_type)) {
       numericValue = Math.min(Math.max(numericValue, 0), 100);
     } else {
       numericValue = Math.max(numericValue, 0);
     }
-  
+
     this.setState({ item: numericValue.toString() });
   }
 
@@ -795,31 +795,31 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.type_modal === 'edit' && (this.props.value !== prevProps.value || this.props.color_edit !== prevProps.color_edit)) {
-      this.setState({ 
-        value: this.props.value, 
-        color: this.props.color_edit 
+      this.setState({
+        value: this.props.value,
+        color: this.props.color_edit
       });
     }
   }
-  
+
 
   changeItem = (event) => {
     let value = event.target.value;
-  
+
     if (value === '') {
       value = '0';
     } else {
       value = value.replace(/^0+(?=\d)/, '');
     }
-  
+
     let numericValue = Math.max(Number(value), 0);
     value = numericValue.toString();
-  
+
     this.setState({ value });
   };
 
   hsvaConvertHex({ h, s, v, a = 1 }) {
-    
+
     const f = (n, k = (n + h * 6) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
     const r = Math.round(f(5) * 255);
     const g = Math.round(f(3) * 255);
@@ -834,7 +834,7 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
 
     this.setState({ color: `#${toHex(r)}${toHex(g)}${toHex(b)}${alphaHex}` });
   }
-  
+
   save() {
     const { value, color } = this.state;
 
@@ -843,7 +843,7 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
 
       return;
     }
-    
+
     const result = {
       value,
       color,
@@ -862,8 +862,8 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
 
   onClose() {
 
-    this.setState({ 
-      color: '#2ECC71', 
+    this.setState({
+      color: '#2ECC71',
       value: 0,
     });
 
@@ -893,7 +893,7 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
         </DialogTitle>
 
         <DialogContent>
-          
+
           <Grid container spacing={10}>
 
             <Grid item xs={12} sm={6} mt={3}>
@@ -933,7 +933,7 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
           </Grid>
 
         </DialogContent>
-     
+
         <DialogActions sx={{ display: 'flex', justifyContent: type_modal === 'edit' ? 'space-between' : 'flex-end' }}>
 
           {type_modal === 'edit' && (
@@ -992,9 +992,9 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
   componentDidUpdate(prevProps) {
     if (this.props.rows && this.props.rows !== prevProps.rows && this.props.type_modal === 'edit') {
 
-      this.setState({ 
-        rows: this.props.rows, 
-        color: this.props.color_edit 
+      this.setState({
+        rows: this.props.rows,
+        color: this.props.color_edit
       });
 
     }
@@ -1019,7 +1019,7 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
   }
 
   hsvaConvertHex({ h, s, v, a = 1 }) {
-    
+
     const f = (n, k = (n + h * 6) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
     const r = Math.round(f(5) * 255);
     const g = Math.round(f(3) * 255);
@@ -1044,10 +1044,10 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
 
     this.save();
   }
-  
+
   save() {
     const { rows, color } = this.state;
-    
+
     const result = rows.reduce((acc, row) => {
       if (row.type) acc[row.type] = row.value || 0;
       return acc;
@@ -1066,9 +1066,9 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
 
   onClose() {
 
-    this.setState({ 
-      color: '#2ECC71', 
-      rows: this.initializeRows() 
+    this.setState({
+      color: '#2ECC71',
+      rows: this.initializeRows()
     });
 
     this.props.onClose();
@@ -1112,7 +1112,7 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
         </DialogTitle>
 
         <DialogContent>
-          
+
           <Grid container spacing={10}>
 
             <Grid item xs={12} sm={8} mt={3}>
@@ -1121,9 +1121,9 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
                   <TableBody>
                     {rows.map((item, key) =>
                       <TableRow hover key={key}>
-                        <TableCell 
-                          style={{ 
-                            ...cellStyle_name, 
+                        <TableCell
+                          style={{
+                            ...cellStyle_name,
                             backgroundColor: item.backgroundColor_name,
                             fontWeight: item.fontWeight_name,
                             color: item.color_name
@@ -1131,8 +1131,8 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
                         >
                           {item?.name ?? "\u00A0"}
                         </TableCell>
-                        <TableCell 
-                          style={{ 
+                        <TableCell
+                          style={{
                             ...cellStyle,
                             backgroundColor: parseInt(item.id) === 1 ? color : '#fff',
                             textAlign: 'center',
@@ -1148,7 +1148,7 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
                               id={item.id}
                               rows={rows}
                             />
-                          : 
+                          :
                             textFieldIds.includes(parseInt(item.id)) ?
                             <TextField
                               value={item.value}
@@ -1157,7 +1157,7 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
                               InputProps={{ disableUnderline: true }}
                               sx={{ margin: 0, padding: 0 }}
                             />
-                          : 
+                          :
                             " "
                           }
                         </TableCell>
@@ -1187,7 +1187,7 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
           <Button variant="contained" color="success" onClick={this.check.bind(this)}>
             Сохранить
           </Button>
-          
+
         </DialogActions>
       </Dialog>
     );
@@ -1292,9 +1292,9 @@ class StatSale_Tab_Sett extends React.Component {
             this.setState({ color_edit: found.backgroundColor });
           }
 
-          acc.push({ 
-            ...row, 
-            value: found.value ?? 0 
+          acc.push({
+            ...row,
+            value: found.value ?? 0
           });
 
         } else {
@@ -1330,21 +1330,21 @@ class StatSale_Tab_Sett extends React.Component {
     if (this.state.type_modal === 'edit') {
       data.id = this.state.item_id_edit;
     }
-  
+
     data.type = this.state.type_modal;
     data.item_type = this.state.item_type;
-  
+
     if (data.item_type === 'orders') {
       const numericValue = Number(data.value);
       if (numericValue > 0 && numericValue < 1) {
         data.value = Math.round(numericValue * 100);
       }
     }
-  
+
     const res = await this.props.getData('save_sett_rate_clients', data);
-  
+
     this.props.openAlert(res.st, res.text);
-  
+
     if (res.st) {
       setTimeout(() => this.props.getDataSet(), 100);
     }
@@ -1370,16 +1370,16 @@ class StatSale_Tab_Sett extends React.Component {
 
   get_data_rows() {
     if (!Array.isArray(this.props.rows) || this.props.rows.length === 0) return;
-    
+
     const updatedRows = this.state.rows.map(row => {
       const typeKey = row.type?.trim().toLowerCase();
-    
+
       return {
         ...row,
         data: this.props.rows.map(item => {
           let value = item[typeKey] || '';
           let value_percent = '';
-    
+
           if (typeKey === 'percent') {
             if (item.max_percent !== undefined && item.min_percent !== undefined) {
               value_percent = `${item.max_percent} - ${item.min_percent}`;
@@ -1387,7 +1387,7 @@ class StatSale_Tab_Sett extends React.Component {
               value_percent = `${item.percent} - 0`;
             }
           }
-    
+
           return {
             id: item.id,
             value,
@@ -1398,16 +1398,16 @@ class StatSale_Tab_Sett extends React.Component {
         })
       };
     });
-    
+
     this.setState({ rows: updatedRows });
   }
 
   get_data_rows_clietns() {
     if (!Array.isArray(this.props.rows_clietns) || this.props.rows_clietns.length === 0) return;
-  
+
     const updatedRows = this.state.rows_clietns.map(row => {
       const typeKey = row.type?.trim().toLowerCase();
-  
+
       return {
         ...row,
         data: this.props.rows_clietns
@@ -1431,24 +1431,24 @@ class StatSale_Tab_Sett extends React.Component {
           })
       };
     });
-  
+
     this.setState({ rows_clietns: updatedRows });
   }
 
   changeItem = (index, event) => {
     let value = event.target.value;
-  
+
     if (value === '') {
       value = '0';
     } else {
       value = value.replace(/^0+(?=\d)/, '');
     }
-  
+
     let numericValue = Math.max(Number(value), 0);
-  
+
     let points = [...this.state.points];
     points[index].count = numericValue.toString();
-  
+
     this.setState({ points });
   };
 
@@ -1469,7 +1469,7 @@ class StatSale_Tab_Sett extends React.Component {
     if (res.st) {
       setTimeout(() => this.props.getDataSet(), 100);
     }
-  
+
   };
 
   delete_sett_rate = async () => {
@@ -1560,19 +1560,19 @@ class StatSale_Tab_Sett extends React.Component {
         />
 
         <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-          <TabPanel 
-            value={activeTab} 
-            index={2} 
+          <TabPanel
+            value={activeTab}
+            index={2}
             id='clients'
           >
             <Grid container spacing={3}>
 
               <Grid item xs={12} sm={12}>
                 <Paper>
-                  <Tabs 
-                    value={active_tab} 
-                    onChange={this.changeTab} 
-                    centered 
+                  <Tabs
+                    value={active_tab}
+                    onChange={this.changeTab}
+                    centered
                     variant='fullWidth'
                   >
                     <Tab label="Коэффициенты (Продажи)" {...a11yProps(0)} />
@@ -1584,9 +1584,9 @@ class StatSale_Tab_Sett extends React.Component {
 
               {/* Коэффициенты (Продажи) */}
               <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-                <TabPanel 
-                  value={active_tab} 
-                  index={0} 
+                <TabPanel
+                  value={active_tab}
+                  index={0}
                   id='clients'
                 >
                   <Grid container spacing={3}>
@@ -1596,12 +1596,12 @@ class StatSale_Tab_Sett extends React.Component {
                           <TableBody>
                             {rows.map((item, key) => (
                               <TableRow key={key}>
-                                <TableCell 
-                                  style={{ 
-                                    ...cellStyles.name, 
-                                    backgroundColor: item.backgroundColor_name || '#fff', 
-                                    fontWeight: item.fontWeight_name, 
-                                    color: item.color_name 
+                                <TableCell
+                                  style={{
+                                    ...cellStyles.name,
+                                    backgroundColor: item.backgroundColor_name || '#fff',
+                                    fontWeight: item.fontWeight_name,
+                                    color: item.color_name
                                   }}
                                 >
                                   {item?.name ?? '\u00A0'}
@@ -1632,8 +1632,8 @@ class StatSale_Tab_Sett extends React.Component {
                                   );
 
                                   return item.id === 1 ? (
-                                    <Tooltip 
-                                      key={k} 
+                                    <Tooltip
+                                      key={k}
                                       title={<Typography color="inherit">Редактировать данные в столбце</Typography>}
                                     >
                                       {cell}
@@ -1643,9 +1643,9 @@ class StatSale_Tab_Sett extends React.Component {
                                 })}
 
                                 {key === 0 && (
-                                  <TableCell 
-                                    rowSpan={19} 
-                                    onClick={() => this.openModalRate('new', null)} 
+                                  <TableCell
+                                    rowSpan={19}
+                                    onClick={() => this.openModalRate('new', null)}
                                     style={{ border: 'none' }}
                                   >
                                     <Button variant='contained'>+</Button>
@@ -1664,9 +1664,9 @@ class StatSale_Tab_Sett extends React.Component {
 
               {/* Коэффициенты (Клиенты) */}
               <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-                <TabPanel 
-                  value={active_tab} 
-                  index={1} 
+                <TabPanel
+                  value={active_tab}
+                  index={1}
                   id='clients'
                 >
                   <Grid container spacing={3}>
@@ -1676,11 +1676,11 @@ class StatSale_Tab_Sett extends React.Component {
                           <TableBody>
                             {rows_clietns.map((item, key) => (
                               <TableRow key={key}>
-                                <TableCell 
-                                  style={{ 
-                                    ...cellStyles.name, 
-                                    backgroundColor: item.backgroundColor_name || '#fff', 
-                                    fontWeight: item.fontWeight_name, 
+                                <TableCell
+                                  style={{
+                                    ...cellStyles.name,
+                                    backgroundColor: item.backgroundColor_name || '#fff',
+                                    fontWeight: item.fontWeight_name,
                                     color: item.color_name,
                                     border: item?.name ? '1px solid #ccc' : 'none',
                                   }}
@@ -1688,8 +1688,8 @@ class StatSale_Tab_Sett extends React.Component {
                                   {item?.name ?? '\u00A0'}
                                 </TableCell>
                                 {item?.data.map((it, k) => (
-                                  <Tooltip 
-                                    key={k} 
+                                  <Tooltip
+                                    key={k}
                                     title={<Typography color="inherit">Редактировать данные в ячейке</Typography>}
                                   >
                                     <TableCell
@@ -1709,8 +1709,8 @@ class StatSale_Tab_Sett extends React.Component {
                                 ))}
 
                                 {item?.name && (
-                                  <TableCell 
-                                    onClick={() => this.openModalRate_clients('new', item.name, item.type, null, 0, null)} 
+                                  <TableCell
+                                    onClick={() => this.openModalRate_clients('new', item.name, item.type, null, 0, null)}
                                     style={{ border: 'none' }}
                                   >
                                     <Button variant='contained'>+</Button>
@@ -1731,9 +1731,9 @@ class StatSale_Tab_Sett extends React.Component {
 
               {/* Жители (Клиенты) */}
               <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-                <TabPanel 
-                  value={active_tab} 
-                  index={2} 
+                <TabPanel
+                  value={active_tab}
+                  index={2}
                   id='clients'
                 >
                   <Grid container spacing={3}>
@@ -1757,24 +1757,24 @@ class StatSale_Tab_Sett extends React.Component {
                                     <MyTextInput
                                       type='number'
                                       value={item.count}
-                                      func={(e) => this.changeItem(key, e)} 
+                                      func={(e) => this.changeItem(key, e)}
                                       onBlur={(e) => this.changeItem(key, e)}
                                     />
                                   </TableCell>
                                 </TableRow>
                               )}
-                          
+
                             </TableBody>
                           </Table>
                         </TableContainer>
                     </Grid>
 
                     <Grid item xs={12} sm={12} mb={5} display='grid'>
-                      <Button 
-                        variant="contained" 
-                        color='success' 
+                      <Button
+                        variant="contained"
+                        color='success'
                         style={{ whiteSpace: 'nowrap', justifySelf: 'flex-end' }}
-                        onClick={this.save_sett_points} 
+                        onClick={this.save_sett_points}
                       >
                         Сохранить
                       </Button>
@@ -1784,7 +1784,7 @@ class StatSale_Tab_Sett extends React.Component {
                 </TabPanel>
               </Grid>
               {/* Жители (Клиенты) */}
-            
+
             </Grid>
           </TabPanel>
         </Grid>
@@ -1842,23 +1842,23 @@ class StatSale_Tab_Clients extends React.Component {
 
   get_data_clients = async () => {
     const { point, date_start, date_end } = this.state;
-  
+
     if (!point.length) {
       this.props.openAlert(false, 'Необходимо выбрать точку');
       return;
     }
-  
+
     const data = {
       date_start,
       date_end,
       point,
     };
-  
+
     const res = await this.props.getData('get_data_clients', data);
-  
+
     if (res.st) {
       const rates = this.props.rates;
-  
+
       const processedData = res.data_list.map(table =>
         table.map(item => {
           const people    = parseInt(item.people, 10);
@@ -1866,12 +1866,12 @@ class StatSale_Tab_Clients extends React.Component {
           const registred = parseInt(item.registred, 10);
           const orders    = parseInt(item.orders, 10);
           const summ      = parseInt(item.summ, 10);
-  
-          const percentClientsRaw       = calcPercent(active, people);         
-          const percentActiveAccountsRaw = calcPercent(registred, active);         
-          const ordersAvgRaw            = calcAvg(orders, active);               
-          const averageCheckRaw         = calcAverageCheck(summ, orders);         
-  
+
+          const percentClientsRaw       = calcPercent(active, people);
+          const percentActiveAccountsRaw = calcPercent(registred, active);
+          const ordersAvgRaw            = calcAvg(orders, active);
+          const averageCheckRaw         = calcAverageCheck(summ, orders);
+
           const matchingClients = rates.find(rate =>
             rate.type === 'clients' &&
             percentClientsRaw <= rate.max_value &&
@@ -1895,7 +1895,7 @@ class StatSale_Tab_Clients extends React.Component {
             averageCheckRaw <= rate.max_value &&
             averageCheckRaw >= rate.min_value
           );
-  
+
           return {
             ...item,
             peopleFormatted: formatNumber(people),
@@ -1914,7 +1914,7 @@ class StatSale_Tab_Clients extends React.Component {
           };
         })
       );
-  
+
       this.setState({
         data_clients_list: processedData,
       });
@@ -1959,7 +1959,7 @@ class StatSale_Tab_Clients extends React.Component {
       fontWeight: 'bold',
       height: '50px',
       display: 'flex',
-      alignItems: 'center',  
+      alignItems: 'center',
       paddingTop: '10px'
     };
 
@@ -1976,7 +1976,7 @@ class StatSale_Tab_Clients extends React.Component {
     };
 
     const cellDataStyles = {
-      fontWeight: 'bold', 
+      fontWeight: 'bold',
       fontSize: '26px !important'
     };
 
@@ -1985,7 +1985,7 @@ class StatSale_Tab_Clients extends React.Component {
     };
 
     const emptyCellStyleBorder = {
-      borderLeft: '1px solid #b7b7b7', 
+      borderLeft: '1px solid #b7b7b7',
       borderRight: '1px solid #b7b7b7'
     };
 
@@ -2013,9 +2013,9 @@ class StatSale_Tab_Clients extends React.Component {
 
     return (
       <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-        <TabPanel 
-          value={activeTab} 
-          index={1} 
+        <TabPanel
+          value={activeTab}
+          index={1}
           id='clients'
         >
           <Grid container spacing={3}>
@@ -2058,17 +2058,17 @@ class StatSale_Tab_Clients extends React.Component {
             <Grid item xs={12} sm={12} mt={3} mb={5} sx={{ position: 'relative', overflow: 'hidden' }}>
               <TableContainer sx={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', overflowY: 'hidden', paddingBottom: 5 }}>
                 {data_clients_list.map((table, index) => (
-           
-                  <Table 
-                    key={index} 
-                    size="small" 
-                    sx={{ marginRight: 5, '& .MuiTableCell-root': { ...borderStyle, textAlign: 'center'}, maxWidth: '70%' }} 
+
+                  <Table
+                    key={index}
+                    size="small"
+                    sx={{ marginRight: 5, '& .MuiTableCell-root': { ...borderStyle, textAlign: 'center'}, maxWidth: '70%' }}
                   >
                     <TableHead>
 
                       <TableRow>
 
-                        {index === 0 && 
+                        {index === 0 &&
                           <>
                             <TableCell sx={cellStylesAbsolute}>Месяц / Год</TableCell>
                             <TableCell sx={cellStylesDop}>{emptyCellContent}</TableCell>
@@ -2084,7 +2084,7 @@ class StatSale_Tab_Clients extends React.Component {
                       <TableRow >
 
                        {index === 0 && customCell}
-                     
+
                         <TableCell colSpan={3} sx={{ ...rowStyles, cursor: 'pointer', backgroundColor: '#B22222' }} onClick={() => openGraphModal('stat_clients', data_clients_list)}>
                           <Tooltip title="Открыть график по Клиентам">
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
@@ -2131,7 +2131,7 @@ class StatSale_Tab_Clients extends React.Component {
                       </TableRow>
 
                       <TableRow>
-                        
+
                         {index === 0 && customCell}
 
                         <TableCell sx={commonCellStyles}>Ж/А</TableCell>
@@ -2165,7 +2165,7 @@ class StatSale_Tab_Clients extends React.Component {
                         <React.Fragment key={key}>
                           <TableRow >
 
-                            {index === 0 && 
+                            {index === 0 &&
                               <>
                                 <TableCell sx={{ ...cellStylesAbsoluteName, borderBottom: 'none !important' }}>{item.name}</TableCell>
                                 <TableCell rowSpan={2} sx={cellStylesDop}>{emptyCellContent}</TableCell>
@@ -2191,12 +2191,12 @@ class StatSale_Tab_Clients extends React.Component {
                           </TableRow>
 
                           <TableRow>
-     
-                            {index === 0 && 
-                              <TableCell 
-                                sx={{ 
-                                  ...cellStylesAbsolute, 
-                                  borderTop: 'none !important', 
+
+                            {index === 0 &&
+                              <TableCell
+                                sx={{
+                                  ...cellStylesAbsolute,
+                                  borderTop: 'none !important',
                                   borderBottom: key === table.length - 1 ? '1px solid #ccc' : 'none !important',
                                   height: key === table.length - 1 ? 'none !important' : '50px',
                                 }}
@@ -2290,7 +2290,7 @@ const DataTable = ({ tableData, openGraphModal }) => {
 
   const [month, year] = columns.months[0].split('-');
   const firstMonthKey = `${year}-${month}`;
-    
+
   return (
     <TableContainer component={Paper} sx={{ overflowX: 'auto', overflowY: 'hidden', p: 0, m: 0, pb: 5 }}>
       <Table stickyHeader size="small" sx={{ borderCollapse: 'separate', borderSpacing: 0, '& .MuiTableCell-root': { textAlign: 'center', whiteSpace: 'nowrap', border: thinBorder } }}>
@@ -2396,7 +2396,7 @@ const DataTable = ({ tableData, openGraphModal }) => {
 
               </TableRow>
 
-              {rowIndex === 0  && 
+              {rowIndex === 0  &&
                 <TableRow>
                   <TableCell colSpan={totalColSpan} sx={{ border: 'none', p: 0, m: 0 }}>
                     {'\u00A0'}
@@ -2415,7 +2415,7 @@ const DataTable = ({ tableData, openGraphModal }) => {
             </React.Fragment>
           ))}
         </TableBody>
-     
+
       </Table>
     </TableContainer>
   );
@@ -2455,9 +2455,9 @@ class StatSale_Tab_Sale extends React.Component {
 
     if (!point.length) {
       this.props.openAlert(false, 'Необходимо выбрать точку');
-      
+
       return;
-    } 
+    }
 
     const data = {
       date_start,
@@ -2468,7 +2468,7 @@ class StatSale_Tab_Sale extends React.Component {
     const res = await this.props.getData('get_data_sale', data);
 
     if(res.st) {
-      
+
       this.setState({
         data_sale_list: res.data_sale_list,
       });
@@ -2476,7 +2476,7 @@ class StatSale_Tab_Sale extends React.Component {
     } else {
       this.props.openAlert(res.st, res.text);
     }
-  
+
   };
 
   render() {
@@ -2486,9 +2486,9 @@ class StatSale_Tab_Sale extends React.Component {
 
     return (
       <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
-        <TabPanel 
-          value={activeTab} 
-          index={0} 
+        <TabPanel
+          value={activeTab}
+          index={0}
           id='clients'
         >
           <Grid container spacing={3}>
@@ -2532,7 +2532,7 @@ class StatSale_Tab_Sale extends React.Component {
                 <DataTable tableData={data_sale_list} openGraphModal={openGraphModal} />
               </Grid>
             ) : null}
-          
+
           </Grid>
         </TabPanel>
       </Grid>
@@ -2671,25 +2671,25 @@ class StatSale_ extends React.Component {
   get_graph_data_clients = (data, key) => {
     const flatData = data.flat();
     const grouped = {};
-  
+
     flatData.forEach(item => {
       const seriesName = item.name;
-  
+
       if (!grouped[seriesName]) {
         grouped[seriesName] = [];
       }
-  
+
       const timestamp = dayjs(item.month, "YYYY-MM").valueOf();
-  
+
       let value = item[key];
-  
+
       if (typeof value === "string") {
         value = parseFloat(value.replace(/\s/g, '').replace(',', '.'));
       }
-  
+
       grouped[seriesName].push({ date: timestamp, value });
     });
-  
+
     return Object.keys(grouped).map(name => {
       const seriesData = grouped[name].sort((a, b) => a.date - b.date);
       return { parameter: name, data: seriesData };
@@ -2889,10 +2889,10 @@ class StatSale_ extends React.Component {
 
           <Grid item xs={12} sm={12} style={{ paddingBottom: 24 }}>
             <Paper>
-              <Tabs 
-                value={this.state.activeTab} 
+              <Tabs
+                value={this.state.activeTab}
                 onChange={this.changeTab}
-                variant={this.state.fullScreen ? 'scrollable' : 'fullWidth'} 
+                variant={this.state.fullScreen ? 'scrollable' : 'fullWidth'}
                 scrollButtons={false}
               >
                 <Tab label="Продажи" {...a11yProps(0)} sx={{ minWidth: "fit-content", flex: 1 }}/>
@@ -2943,13 +2943,13 @@ class StatSale_ extends React.Component {
             />
           }
           {/* Настройки */}
-             
+
         </Grid>
       </>
     );
   }
 }
- 
+
 export default function StatSale() {
   return <StatSale_ />;
 }
