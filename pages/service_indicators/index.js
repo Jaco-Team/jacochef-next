@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Grid from '@mui/material/Grid';
 import Table from '@mui/material/Table';
-import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import TableBody from '@mui/material/TableBody';
@@ -18,19 +17,8 @@ import TabPanel from "@mui/lab/TabPanel";
 import {formatDate, MyAutocomplite, MyDatePickerNewViews} from "@/ui/elements";
 import TableContainer from "@mui/material/TableContainer";
 import Typography from "@mui/material/Typography";
-import dayjs from "dayjs";
 import Tooltip from "@mui/material/Tooltip";
-import Box from "@mui/material/Box";
-import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import 'dayjs/locale/ru';
-import PropTypes from "prop-types";
-import DialogTitle from "@mui/material/DialogTitle";
-import IconButton from "@mui/material/IconButton";
-import CloseIcon from "@mui/icons-material/Close";
-import Dialog from '@mui/material/Dialog';
-import DialogContent from "@mui/material/DialogContent";
-import TextField from "@mui/material/TextField";
-import DialogActions from "@mui/material/DialogActions";
 import {CustomColorPicker} from "@/pages/stat_sale";
 import {PerformanceTable} from "@/components/other/PerfomanceTable";
 import {ModalSettings} from "@/components/other/ModalSettings";
@@ -38,8 +26,8 @@ import {ModalSettings} from "@/components/other/ModalSettings";
 function IndicatorsPage() {
 	const [isLoad, setIsLoad] = useState(false);
 	const [module, setModule] = useState({});
-	const [value, setValue] = useState('main');
-	const [activeTab, setActiveTab] = useState('');
+	const [value, setValue] = useState('average_time');
+	const [activeTab, setActiveTab] = useState('table');
 	const [point, setPoint] = useState([]);
 	const [points, setPoints] = useState([]);
 	const [dateStart, setDateStart] = useState(null);
@@ -72,8 +60,7 @@ function IndicatorsPage() {
 	};
 	const router = useRouter();
 	const tabsData = {
-		main: 'Главная',
-		settings: 'Настройки'
+		average_time: 'Время приготовленя',
 	};
 
 	useEffect(() => {
@@ -224,48 +211,9 @@ function IndicatorsPage() {
 			</Grid>
 			<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
 				<TabContext value={value}>
-					<TabPanel value="main">
+					<TabPanel value="average_time">
 						<Grid container spacing={3}>
-
-							<Grid item xs={12} sm={6}>
-								<MyDatePickerNewViews
-									label="Дата от"
-									views={['month', 'year']}
-									value={dateStart}
-									func={(e) => setDateStart(formatDate(e))}
-								/>
-							</Grid>
-
-							<Grid item xs={12} sm={6} style={{paddingLeft: 12}}>
-								<MyDatePickerNewViews
-									label="Дата до"
-									views={['month', 'year']}
-									value={dateEnd}
-									func={(e) => setDateEnd(formatDate(e))}
-								/>
-							</Grid>
-
-							<Grid item xs={12} sm={10}>
-								<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
-									setPoint(data)
-								}}/>
-							</Grid>
-
-							<Grid item xs={12} sm={2}>
-								<Button variant="contained" onClick={getTableData}>
-									Показать
-								</Button>
-							</Grid>
-
-							<Grid item xs={12} sm={12}>
-								{tableData.rows && <PerformanceTable dataTable={tableData}/>}
-							</Grid>
-
-						</Grid>
-					</TabPanel>
-					<TabPanel value="settings">
-						<Grid container spacing={3}>
-							<Grid item xs={12} sm={12}>
+							<Grid item xs={12} sm={12} style={{paddingBottom: 10, paddingTop: 0}}>
 								<Paper>
 									<Tabs
 										value={activeTab}
@@ -273,13 +221,14 @@ function IndicatorsPage() {
 										centered
 										variant='fullWidth'
 									>
-										<Tab label="Среднее время до закрытия" value="times"/>
+										<Tab label="Таблица" value="table"/>
+										<Tab label="Настройки" value="settings"/>
 									</Tabs>
 								</Paper>
 							</Grid>
 
-							<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
-								{activeTab === 'times' && (
+							<Grid item xs={12} sm={12} style={{paddingBottom: 10}}>
+								{activeTab === 'settings' && (
 									<Grid container spacing={3}>
 										<Grid item xs={12} sm={12} mt={3} mb={5}>
 											<TableContainer style={{
@@ -334,6 +283,45 @@ function IndicatorsPage() {
 												</Table>
 											</TableContainer>
 										</Grid>
+									</Grid>
+								)}
+								{activeTab === 'table' && (
+									<Grid container spacing={3}>
+
+										<Grid item xs={12} sm={6}>
+											<MyDatePickerNewViews
+												label="Дата от"
+												views={['month', 'year']}
+												value={dateStart}
+												func={(e) => setDateStart(formatDate(e))}
+											/>
+										</Grid>
+
+										<Grid item xs={12} sm={6} style={{paddingLeft: 12}}>
+											<MyDatePickerNewViews
+												label="Дата до"
+												views={['month', 'year']}
+												value={dateEnd}
+												func={(e) => setDateEnd(formatDate(e))}
+											/>
+										</Grid>
+
+										<Grid item xs={12} sm={6}>
+											<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
+												setPoint(data)
+											}}/>
+										</Grid>
+
+										<Grid item xs={12} sm={6}>
+											<Button variant="contained" onClick={getTableData}>
+												Показать
+											</Button>
+										</Grid>
+
+										<Grid item xs={12} sm={12}>
+											{tableData.rows && <PerformanceTable dataTable={tableData}/>}
+										</Grid>
+
 									</Grid>
 								)}
 							</Grid>

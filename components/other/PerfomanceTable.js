@@ -27,27 +27,31 @@ export const PerformanceTable = ({dataTable}) => {
 		return (
 			<TableCell key={formattedMonth} colSpan={3} sx={{
 				backgroundColor: "#dcdcdc",
-				minWidth: 4 * 80,
+				minWidth: 3 * dataCellWidth,
 				top: 0,
 				zIndex: 1000,
 				borderTop: thickBorder,
 				borderRight: thickBorder,
-				borderBottom: thickBorder
+				borderBottom: thickBorder,
+				padding: '6px'
 			}}>
 				{dayjs(isoDate).format('MMMM YYYY').replace(/^./, (match) => match.toUpperCase())}
 			</TableCell>
 		);
 	};
 
-	const paramColWidth = 150;
+	const paramColWidth = 120;
 	const typeColWidth = 5;
+	const dataCellWidth = 70;
 	const cellStylesHeader = {
 		position: 'sticky',
 		top: 40,
 		zIndex: 1000,
-		minWidth: '120px',
+		minWidth: dataCellWidth,
 		borderRight: thickBorder,
-		borderBottom: thickBorder
+		borderBottom: thickBorder,
+		padding: '6px',
+		fontSize: '0.8rem'
 	};
 	const getPreviousPeriodHeader = (formatted) => {
 		const parts = formatted.split('-');
@@ -71,10 +75,16 @@ export const PerformanceTable = ({dataTable}) => {
 			<Table stickyHeader size="small" sx={{
 				borderCollapse: 'separate',
 				borderSpacing: 0,
-				'& .MuiTableCell-root': {textAlign: 'center', whiteSpace: 'nowrap', border: thinBorder}
+				'& .MuiTableCell-root': {
+					textAlign: 'center',
+					whiteSpace: 'nowrap',
+					border: thinBorder,
+					padding: '6px',
+					fontSize: '0.8rem'
+				}
 			}}>
 				<TableHead>
-					<TableRow sx={{backgroundColor: 'white', height: 40}}>
+					<TableRow sx={{backgroundColor: 'white', height: 32}}>
 						<TableCell sx={{
 							position: 'sticky',
 							left: 0,
@@ -83,26 +93,23 @@ export const PerformanceTable = ({dataTable}) => {
 							zIndex: 1300,
 							minWidth: paramColWidth + typeColWidth,
 							borderRight: thickBorder,
+							padding: '6px',
+							fontSize: '0.8rem',
 							textAlign: 'left !important'
 						}} colSpan={2} rowSpan={2}>
 							Месяц / год
 						</TableCell>
 						{columns.months.map((formattedMonth) => renderMonthHeader(formattedMonth))}
 					</TableRow>
-					<TableRow sx={{backgroundColor: 'white', height: 40}}>
+					<TableRow sx={{backgroundColor: 'white', height: 32}}>
 						{columns.months.map((formattedMonth) => (
 							<React.Fragment key={formattedMonth}>
 								<TableCell sx={cellStylesHeader}>время</TableCell>
 								<TableCell sx={cellStylesHeader}>баллы</TableCell>
-								<TableCell sx={{...cellStylesHeader, cursor: 'pointer'}}>
-									<Tooltip title="Открыть график Эффективности">
-										<Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1}}>
-											<Typography variant="body2" sx={{whiteSpace: 'nowrap', fontWeight: 500}}>
-												{getPreviousPeriodHeader(formattedMonth)}
-											</Typography>
-											<QueryStatsIcon fontSize="small"/>
-										</Box>
-									</Tooltip>
+								<TableCell sx={{...cellStylesHeader}}>
+									<Typography variant="body2" sx={{whiteSpace: 'nowrap', fontWeight: 500}}>
+										{getPreviousPeriodHeader(formattedMonth)}
+									</Typography>
 								</TableCell>
 							</React.Fragment>
 						))}
@@ -125,6 +132,7 @@ export const PerformanceTable = ({dataTable}) => {
 									minWidth: paramColWidth,
 									borderRight: 'none !important',
 									fontWeight: "bold",
+									padding: '6px',
 									textAlign: 'left !important'
 								}}>
 									{row.parameter}
@@ -132,12 +140,13 @@ export const PerformanceTable = ({dataTable}) => {
 
 								<TableCell component="th" scope="row" rowSpan={2} sx={{
 									position: 'sticky',
-									left: paramColWidth + 33.5,
+									left: paramColWidth + (paramColWidth + typeColWidth -15.7),
 									backgroundColor: 'white',
 									zIndex: 1100,
 									minWidth: typeColWidth,
 									borderLeft: 'none !important',
-									borderRight: thickBorder
+									borderRight: thickBorder,
+									padding: '6px',
 								}}>
 									{row.parameterLabel}
 								</TableCell>
@@ -151,21 +160,24 @@ export const PerformanceTable = ({dataTable}) => {
 											<TableCell rowSpan={2} sx={{
 												minWidth: '80px',
 												backgroundColor: cellData.color,
-												fontWeight: 'bold'
+												fontWeight: 'bold',
+												padding: '6px'
 											}}>
 												{cellData.time_str}
 											</TableCell>
 											<TableCell rowSpan={2} sx={{
 												minWidth: '80px',
 												backgroundColor: cellData.color_rolls ?? null,
-												fontWeight: 'bold'
+												fontWeight: 'bold',
+												padding: '6px'
 											}}>
 												{cellData.ball}
 											</TableCell>
 											<TableCell rowSpan={2} sx={{
 												minWidth: '80px',
 												backgroundColor: cellData.color_rolls ?? null,
-												fontWeight: 'bold'
+												fontWeight: 'bold',
+												padding: '6px'
 											}}>
 												{cellData.time_diff_str}
 											</TableCell>
@@ -196,7 +208,7 @@ export const PerformanceTable = ({dataTable}) => {
 								</TableRow>
 							}
 
-							{rowIndex < rows.length - 1 && !rows[rowIndex].data[firstMonthKey]?.point_id && rows[rowIndex + 1].data[firstMonthKey]?.point_id &&
+							{row.cityLast &&
 								<TableRow>
 									<TableCell colSpan={totalColSpan} sx={{border: 'none', p: 0, m: 0}}>
 										{'\u00A0'}
