@@ -14,7 +14,7 @@ import TableRow from "@mui/material/TableRow";
 import { MyAlert } from "@/ui/elements";
 
 import { api_laravel } from "@/src/api_new";
-import AllergensModal from "./components/AllergensModal";
+import AllergensModal from "@/components/allergens/AllergensModal";
 
 class Allergens_ extends React.Component {
   constructor(props) {
