@@ -17,7 +17,7 @@ import { useCategoryStore } from "./useCategoryStore";
 import { useSiteSettingStore } from "../useSiteSettingStore";
 import { MyTextInput } from "@/ui/elements";
 import { CategoryModal } from "./CategoryModal";
-import { useDebounce } from "../hooks/useDebounce";
+import { useDebounce } from "@/src/hooks/useDebounce";
 
 export function SiteSettingCategory() {
   const submodule = "category";
