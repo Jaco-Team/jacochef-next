@@ -1,51 +1,46 @@
-// pages/api/proxy/[...path].js  (или src/pages/...)
+
+// pages/api/proxy/[...path].js
 export const config = { api: { bodyParser: false } };
 
-const BACKEND = process.env.BACKEND_HTTP || 'http://apitmp2.jacochef.ru:8000'; // HTTP!
+const BACKEND = process.env.BACKEND_HTTP || 'http://apitmp2.jacochef.ru:8000';
 
 export default async function handler(req, res) {
   try {
     const parts = [].concat(req.query.path || []);
-    const url = new URL(req.url || '/', 'http://localhost'); // достаём ?query
-    const target = `${BACKEND}/${parts.join('/')}${url.search}`;
+    const search = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    const target = `${BACKEND}/${parts.join('/')}${search}`;
 
-    const body = await readBody(req);
+    // читаем тело
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const body = Buffer.concat(chunks);
 
-    // переносим заголовки, исключая «hop-by-hop»
+    // прокидываем только нужные заголовки
     const headers = {};
+    const allow = ['content-type', 'authorization', 'x-requested-with'];
     for (const [k, v] of Object.entries(req.headers)) {
-      if (!v) continue;
       const key = k.toLowerCase();
-      if (['host', 'content-length', 'connection', 'accept-encoding'].includes(key)) continue;
-      headers[k] = Array.isArray(v) ? v.join(', ') : String(v);
+      if (!allow.includes(key)) continue;              // режем cookies, sec-*, accept-encoding и пр.
+      headers[key] = Array.isArray(v) ? v.join(', ') : String(v);
     }
 
-    const resp = await fetch(target, {
+    const upstream = await fetch(target, {
       method: req.method,
       headers,
       body: (req.method === 'GET' || req.method === 'HEAD') ? undefined : body,
     });
 
-    // пробрасываем статус и заголовки
-    res.status(resp.status);
-    resp.headers.forEach((val, key) => {
-      if (key.toLowerCase() === 'content-encoding') return;
+    res.status(upstream.status);
+    upstream.headers.forEach((val, key) => {
+      const k = key.toLowerCase();
+      if (k === 'transfer-encoding' || k === 'content-encoding') return;
       res.setHeader(key, val);
     });
 
-    const buf = Buffer.from(await resp.arrayBuffer());
+    const buf = Buffer.from(await upstream.arrayBuffer());
     res.end(buf);
   } catch (e) {
-    res.status(502).json({ error: 'Proxy error', detail: e?.message || String(e) });
+    console.error('Proxy error:', e);
+    res.status(502).json({ error: 'proxy_failed', message: String(e) });
   }
-}
-
-function readBody(req) {
-  if (req.method === 'GET' || req.method === 'HEAD') return Promise.resolve(Buffer.alloc(0));
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    req.on('data', c => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
-    req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', reject);
-  });
 }
