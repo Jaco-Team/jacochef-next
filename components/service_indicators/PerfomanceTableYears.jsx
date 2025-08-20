@@ -6,18 +6,19 @@ import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import React from "react";
+import React, {useEffect, useRef, useState} from "react";
 import Typography from "@mui/material/Typography";
 import TableBody from "@mui/material/TableBody";
 
-const PerformanceTable = ({dataTable}) => {
+const PerformanceTableYears = ({dataTable}) => {
 	dayjs.locale('ru');
 	const {columns, rows} = dataTable;
-	const [month, year] = columns.months[0].split('-');
-	const firstMonthKey = `${year}-${month}`;
+	const [year] = columns.years[0];
+	const firstMonthKey = `${year}`;
 
 	const thinBorder = "1px solid #ccc";
 	const thickBorder = "2px solid #000 !important";
+
 
 	const renderMonthHeader = (formattedMonth) => {
 		const parts = formattedMonth.split('-');
@@ -33,7 +34,7 @@ const PerformanceTable = ({dataTable}) => {
 				borderBottom: thickBorder,
 				padding: '6px'
 			}}>
-				{dayjs(isoDate).format('MMMM YYYY').replace(/^./, (match) => match.toUpperCase())}
+				{dayjs(isoDate).format('YYYY').replace(/^./, (match) => match.toUpperCase())}
 			</TableCell>
 		);
 	};
@@ -51,25 +52,12 @@ const PerformanceTable = ({dataTable}) => {
 		padding: '6px',
 		fontSize: '0.8rem'
 	};
-	const getPreviousPeriodHeader = (formatted) => {
-		const parts = formatted.split('-');
-		if (parts.length < 2) return formatted;
-		const year = parts[1];
-		const currentLastTwo = year.slice(-2);
-		const previousLastTwo = (parseInt(year, 10) - 1).toString().slice(-2);
-		return `${currentLastTwo}/${previousLastTwo}`;
-	};
 
-	const totalColSpan = 2 + columns.months.length * 4;
-
-	const toRawMonth = (formatted) => {
-		const [month, year] = formatted.split('-');
-		return `${year}-${month}`;
-	};
+	const totalColSpan = 2 + columns.years.length * 4;
 
 
 	return (
-		<TableContainer component={Paper} sx={{overflowX: 'auto', overflowY: 'hidden', p: 0, m: 0, pb: 5}}>
+		<TableContainer component={Paper} sx={{overflowX: 'auto', overflowY: 'hidden', p: 0, m: 0, pb: 5, position: 'relative', zIndex: 0}}>
 			<Table stickyHeader size="small" sx={{
 				borderCollapse: 'separate',
 				borderSpacing: 0,
@@ -97,16 +85,16 @@ const PerformanceTable = ({dataTable}) => {
 						}} colSpan={2} rowSpan={2}>
 							Месяц / год
 						</TableCell>
-						{columns.months.map((formattedMonth) => renderMonthHeader(formattedMonth))}
+						{columns.years.map((formattedMonth) => renderMonthHeader(formattedMonth))}
 					</TableRow>
 					<TableRow sx={{backgroundColor: 'white', height: 32}}>
-						{columns.months.map((formattedMonth) => (
+						{columns.years.map((formattedMonth) => (
 							<React.Fragment key={formattedMonth}>
 								<TableCell sx={cellStylesHeader}>время</TableCell>
 								<TableCell sx={{...cellStylesHeader, minWidth: '20px !important'}}></TableCell>
 								<TableCell sx={{...cellStylesHeader}}>
 									<Typography variant="body2" sx={{whiteSpace: 'nowrap', fontWeight: 500}}>
-										{getPreviousPeriodHeader(formattedMonth)}
+										{`${formattedMonth.slice(-2)}/${(formattedMonth.slice(-2) - 1)}`}
 									</Typography>
 								</TableCell>
 							</React.Fragment>
@@ -138,10 +126,12 @@ const PerformanceTable = ({dataTable}) => {
 
 								<TableCell component="th" scope="row" rowSpan={2} sx={{
 									position: 'sticky',
-									left: paramColWidth + (paramColWidth + typeColWidth -15.7),
+									left: paramColWidth,
 									backgroundColor: 'white',
-									zIndex: 1100,
+									zIndex: 1101,
 									minWidth: typeColWidth,
+									backdropFilter: 'blur(1px)',
+									isolation: 'isolate',
 									borderLeft: 'none !important',
 									borderRight: thickBorder,
 									padding: '6px',
@@ -149,9 +139,8 @@ const PerformanceTable = ({dataTable}) => {
 									{row.parameterLabel}
 								</TableCell>
 
-								{columns.months.map((formattedMonth) => {
-									const rawMonth = toRawMonth(formattedMonth);
-									const cellData = row.data[rawMonth] || {};
+								{columns.years.map((formattedMonth) => {
+									const cellData = row.data[formattedMonth] || {};
 
 									return (
 										<React.Fragment key={`${formattedMonth}-rolls`}>
@@ -188,9 +177,8 @@ const PerformanceTable = ({dataTable}) => {
 							</TableRow>
 
 							<TableRow>
-								{columns.months.map((formattedMonth) => {
-									const rawMonth = toRawMonth(formattedMonth);
-									const cellData = row.data[rawMonth] || {};
+								{columns.years.map((formattedMonth) => {
+									const cellData = row.data[formattedMonth] || {};
 									return (
 										<React.Fragment key={`${formattedMonth}-pizza`}>
 										</React.Fragment>
@@ -222,4 +210,4 @@ const PerformanceTable = ({dataTable}) => {
 	);
 };
 
-export default PerformanceTable;
+export default PerformanceTableYears;
