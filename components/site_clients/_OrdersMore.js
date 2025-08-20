@@ -4,7 +4,7 @@ import {api_laravel, api_laravel_local} from "@/src/api_new";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/ui/elements";
-import {ModalOrder} from "@/pages/site_clients/_Clients";
+import {ModalOrder} from "@/components/site_clients/_Clients";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -450,6 +450,7 @@ export default function OrdersMore() {
 	const [url, setUrl] = useState('');
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowPerPage] = useState(10);
+	const [total, setTotal] = useState(0)
 	const [openAlert, setOpenAlert] = useState(false);
 	const [openModalOrder, setOpenModalOrder] = useState(false);
 	const [errStatus, setErrStatus] = useState(false);
@@ -484,6 +485,23 @@ export default function OrdersMore() {
 			setOrder(data);
 			setOpenModalOrder(true);
 		})
+	}
+
+	const showAlert = (status, message) => {
+		setErrStatus(status);
+		setErrText(message);
+		setOpenAlert(true);
+	}
+
+	const fixFormDates = (formData) => {
+		if (!formData) return {};
+		return {
+			...formData,
+			date_start_true: dayjs(formData.date_start_true).format('YYYY-MM-DD'),
+			date_end_true: dayjs(formData.date_end_true).format('YYYY-MM-DD'),
+			date_start_false: dayjs(formData.date_start_false).format('YYYY-MM-DD'),
+			date_end_false: dayjs(formData.date_end_false).format('YYYY-MM-DD'),
+		} || {}
 	}
 
 	const handleChange = (e, name) => {
@@ -529,27 +547,45 @@ export default function OrdersMore() {
 
 	}, [formData.param])
 
-	const getUsers = () => {
+	const getOrders = (customPage = null, customPerPage = null) => {
+		const currentPage = customPage && typeof customPage === 'number' ? customPage : page;
+		const currentPerPage = customPerPage && typeof customPerPage === 'number' ? customPerPage : rowsPerPage;
+
 		getData('get_orders_more', {
-			...formData,
-			date_start_true: dayjs(formData.date_start_true).format('YYYY-MM-DD'),
-			date_end_true: dayjs(formData.date_end_true).format('YYYY-MM-DD'),
-			date_start_false: dayjs(formData.date_start_false).format('YYYY-MM-DD'),
-			date_end_false: dayjs(formData.date_end_false).format('YYYY-MM-DD')
+			...fixFormDates(formData),
+			page: currentPage + 1,
+			perPage: currentPerPage,
 		}).then((data) => {
 			if (data.orders) {
 				setOrders(data.orders);
+				setTotal(data.total);
 				setUrl(data.url);
 			} else {
-				setErrStatus(data.st);
-				setErrText(data.text);
-				setOpenAlert(true);
+				showAlert(data.st, data.text);
 			}
 		})
 	}
 
-	const onDownload = (e) => {
+	const getFileLinks = async () => {
+		if (url) {
+			return {url};
+		}
+		try {
+			const data = await getData("get_orders_more_files", {
+				...fixFormDates(formData),
+			});
+			if (!data?.url) throw new Error("Ссылка для скачивания недоступна");
+			setUrl(data.url);
+			return {url: data.url};
+		} catch (error) {
+			console.error("Error getting file url", error);
+		}
+	};
+
+	const onDownload = async (e) => {
 		e.preventDefault();
+		const {url} = await getFileLinks();
+		if(!url) return;
 		const link = document.createElement('a');
 		link.href = url;
 		link.target = '_blank';
@@ -670,15 +706,15 @@ export default function OrdersMore() {
 				<Grid item xs={12} sm={3} sx={{order: {sm: 2, xs: 2}}} display="flex" flexDirection="row">
 
 					<Grid>
-						<Button variant="contained" style={{whiteSpace: 'nowrap'}} onClick={getUsers}>
-							Получить список клиентов
+						<Button variant="contained" style={{whiteSpace: 'nowrap'}} onClick={getOrders}>
+							Получить список заказов
 						</Button>
 					</Grid>
 
 					<Grid>
 						<Button
 							variant="contained"
-							style={{marginLeft: 10, backgroundColor: '#ffcc00'}}
+							style={{marginLeft: 10, backgroundColor: !!url ? '#3cb623ff' : '#ffcc00'}}
 							disabled={!orders.length}
 							onClick={onDownload}
 						>
@@ -848,7 +884,7 @@ export default function OrdersMore() {
 
 										<TableBody>
 
-											{orders.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((item, key) =>
+											{orders.map((item, key) =>
 												<TableRow
 													hover
 													key={key}
@@ -860,7 +896,7 @@ export default function OrdersMore() {
 													sx={{cursor: 'pointer'}}
 													onClick={() => openOrder(item.point_id, item.id)}
 												>
-													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{key + 1}</TableCell>
+													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{page * rowsPerPage + key + 1}</TableCell>
 													<TableCell
 														style={parseInt(item.dist) >= 0 ? {
 															backgroundColor: 'yellow',
@@ -914,13 +950,18 @@ export default function OrdersMore() {
 									labelDisplayedRows={({from, to, count}) => `${from}-${to} из ${count}`}
 									labelRowsPerPage="Записей на странице:"
 									component="div"
-									count={orders.length}
+									count={total}
 									rowsPerPage={rowsPerPage}
 									page={page}
-									onPageChange={(event, newPage) => setPage(newPage)}
+									onPageChange={(_, newPage) => {
+										setPage(newPage);
+										getOrders(newPage);
+									}}
 									onRowsPerPageChange={(event) => {
-										setRowPerPage(parseInt(event.target.value, 10));
+										const newPerPage = parseInt(event.target.value, 10);
+										setRowPerPage(newPerPage);
 										setPage(0);
+										getOrders(0, newPerPage);
 									}}
 								/>
 							</Grid>
