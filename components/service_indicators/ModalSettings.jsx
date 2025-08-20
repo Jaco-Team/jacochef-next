@@ -11,6 +11,8 @@ import TextField from "@mui/material/TextField";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import {CustomColorPicker} from "@/pages/stat_sale";
+import {formatDate, MyDatePickerNewViews} from "@/ui/elements";
+import dayjs from "dayjs";
 
 const ModalSettings = (props) => {
 	const
@@ -18,18 +20,20 @@ const ModalSettings = (props) => {
 			open,
 			fullScreen,
 			type_modal,
+			itemIdEdit,
 			name_row,
 			value:
-			propValue = 0,
+				propValue = 0,
 			color_edit = '#2ECC71',
 			openAlert,
 			save,
 			delete:
-			deleteProp,
+				deleteProp,
 			onClose
 		} = props;
 	const [color, setColor] = useState('#2ECC71');
 	const [value, setValue] = useState(0);
+	const [date, setDate] = useState(null);
 
 	// Обновляем состояние при изменении props
 	useEffect(() => {
@@ -73,9 +77,16 @@ const ModalSettings = (props) => {
 			return;
 		}
 
+		if (!date || date === 'Invalid Date') {
+			openAlert(false, 'Укажите дату');
+			return;
+		}
+
 		save({
+			itemIdEdit,
 			value,
-			color
+			color,
+			date_start: date,
 		});
 
 		handleClose();
@@ -103,8 +114,8 @@ const ModalSettings = (props) => {
 			<DialogTitle className="button">
 				<Typography style={{fontWeight: 'bold'}}>
 					{type_modal === 'edit'
-						? `Редактировать данные в таблице Коэффициенты (Клиенты) в строке ${name_row}`
-						: `Добавить данные в таблицу Коэффициенты (Клиенты) в строку ${name_row}`}
+						? `Редактировать данные в таблице в строке ${name_row}`
+						: `Добавить данные в таблицу строку ${name_row}`}
 				</Typography>
 				<IconButton onClick={handleClose} style={{cursor: 'pointer'}}>
 					<CloseIcon/>
@@ -113,7 +124,7 @@ const ModalSettings = (props) => {
 
 			<DialogContent>
 				<Grid container spacing={10}>
-					<Grid item xs={12} sm={6} mt={3}>
+					<Grid item xs={12} sm={3} mt={3}>
 						<TextField
 							type="number"
 							value={value}
@@ -140,6 +151,14 @@ const ModalSettings = (props) => {
 									backgroundClip: "padding-box",
 								},
 							}}
+						/>
+					</Grid>
+					<Grid item xs={12} sm={3} mt={3}>
+						<MyDatePickerNewViews
+							label="Дата старта"
+							value={date}
+							minDate={dayjs(new Date()).add(1, 'day')}
+							func={(e) => setDate(formatDate(e))}
 						/>
 					</Grid>
 

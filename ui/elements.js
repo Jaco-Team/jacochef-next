@@ -123,20 +123,24 @@ export class MyAutocomplite extends React.PureComponent {
           onChange={this.props.func}
           filterSelectedOptions
           multiple={ this.props.multiple && this.props.multiple === true ? true : false }
-          isOptionEqualToValue={(option, value) => parseInt(option?.id) === parseInt(value?.id) }
-          renderInput={(params) => (
+          isOptionEqualToValue={this.props.isOptionEqualToValue || ((option, value) => parseInt(option?.id) === parseInt(value?.id)) }
+          renderInput={this.props.renderInput || ((params) => (
             <TextField
               {...params}
               label={this.props.label}
               placeholder={this.props.placeholder}
             />
+          ))}
+          renderOption={(props, option) => (
+            <li {...props} key={option.id}>
+              {option.name}
+            </li>
           )}
         />
       </Stack>
     )
   }
 }
-
 export class MyAutocomplite2 extends React.PureComponent {
   constructor(props) {
     super(props);

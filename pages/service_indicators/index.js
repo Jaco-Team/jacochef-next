@@ -14,31 +14,54 @@ import TabContext from "@mui/lab/TabContext";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import TabPanel from "@mui/lab/TabPanel";
-import {formatDate, MyAutocomplite, MyDatePickerNewViews} from "@/ui/elements";
+import {formatDate, MyAlert, MyAutocomplite, MyDatePickerNewViews} from "@/ui/elements";
 import TableContainer from "@mui/material/TableContainer";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import 'dayjs/locale/ru';
 import ModalSettings from "@/components/service_indicators/ModalSettings";
 import PerformanceTable from "@/components/service_indicators/PerfomanceTable";
+import PerformanceTableYears from "@/components/service_indicators/PerfomanceTableYears";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import TableHead from "@mui/material/TableHead";
+import dayjs from "dayjs";
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import ModalDelete from "@/components/service_indicators/ModalDelete";
+import DeleteIcon from "@mui/icons-material/Delete";
+import IconButton from "@mui/material/IconButton";
 
 function IndicatorsPage() {
 	const [isLoad, setIsLoad] = useState(false);
 	const [module, setModule] = useState({});
 	const [value, setValue] = useState('average_time');
-	const [activeTab, setActiveTab] = useState('table');
+	const [activeTab, setActiveTab] = useState('table_month');
 	const [point, setPoint] = useState([]);
 	const [points, setPoints] = useState([]);
 	const [dateStart, setDateStart] = useState(null);
 	const [dateEnd, setDateEnd] = useState(null);
 	const [tableData, setTableData] = useState([]);
+	const [tableDataYear, setTableDataYear] = useState([]);
 	const [openModal, setOpenModal] = useState(false);
 	const [typeModal, setTypeModal] = useState(null);
 	const [colorEdit, setColorEdit] = useState(null);
 	const [valueEdit, setValueEdit] = useState(null);
 	const [nameRow, setNameRow] = useState('');
 	const [itemType, setItemType] = useState('');
+	const [statFutureTimes, setStatFutureTimes] = useState([]);
+	const [openAlert, setOpenAlert] = useState(false);
 	const [itemIdEdit, setItemIdEdit] = useState('');
+	const [errStatus, setErrStatus] = useState(false);
+	const [errText, setErrText] = useState('');
+	const [openModalDelete, setOpenModalDelete] = useState(false);
+	const [itemId, setItemId] = useState(0);
+	dayjs.extend(utc);
+	dayjs.extend(timezone);
+	dayjs.locale('ru');
+	dayjs.tz.setDefault('Europe/Samara');
 	const [rowClients, setRowClients] = useState([
 		{
 			id: 1,
@@ -83,6 +106,7 @@ function IndicatorsPage() {
 					};
 				}
 			});
+			setStatFutureTimes(data.stat_future_times);
 			setRowClients(rowCl)
 		})
 	}
@@ -90,6 +114,12 @@ function IndicatorsPage() {
 	useEffect(() => {
 		if (activeTab === 'settings') {
 			getSettings();
+		}
+
+		if (activeTab === 'table_month' || activeTab === 'table_year') {
+			setDateStart(null);
+			setDateEnd(null);
+			setPoint([]);
 		}
 	}, [activeTab]);
 	const getData = async (method, data = {}) => {
@@ -111,6 +141,17 @@ function IndicatorsPage() {
 		};
 		getData('get_data', res).then((data) => {
 			setTableData(data.result);
+		});
+	}
+
+	const getTableDataYear = () => {
+		const res = {
+			date_start: dateStart,
+			date_end: dateEnd,
+			point: point
+		};
+		getData('get_data_year', res).then((data) => {
+			setTableDataYear(data.result);
 		});
 	}
 
@@ -139,6 +180,7 @@ function IndicatorsPage() {
 
 		data.type = typeModal;
 		data.item_type = itemType;
+		data.date_start = dayjs(data.date_start).local().format('YYYY-MM-DD');
 
 		if (data.item_type === 'orders') {
 			const numericValue = Number(data.value);
@@ -159,7 +201,7 @@ function IndicatorsPage() {
 			id: itemIdEdit,
 		}
 
-		const res = await getData('delete_sett_rate_clients', data);
+		const res = await getData('delete_sett', data);
 	}
 
 	const openModalRate_clients = (type_modal, name_row, item_type, id, value_edit, color_edit) => {
@@ -172,25 +214,62 @@ function IndicatorsPage() {
 		setOpenModal(true);
 	}
 
+	const deleteFuture = async () => {
+		const data = {
+			id: itemId,
+		}
+
+		const res = await getData('delete_fut', data);
+		if (res) {
+			getSettings();
+		}
+	}
+
+	const openModalDeleteFut = (id) => {
+		setItemId(id);
+		setOpenModalDelete(true);
+	}
+
 
 	return (
 		<Grid item xs={12} sm={12} container spacing={3} mb={3} className="container_first_child">
 			<Backdrop style={{zIndex: 99}} open={isLoad}>
 				<CircularProgress color="inherit"/>
 			</Backdrop>
-			<ModalSettings
-				open={openModal}
-				onClose={() => setOpenModal(false)}
-				fullScreen={false}
-				save={save_sett_rate_clients}
-				value={valueEdit}
-				type_modal={typeModal}
-				color_edit={colorEdit}
-				openAlert={() => {
-				}}
-				name_row={nameRow}
-				delete={delete_sett_rate_clients}
+			<MyAlert
+				isOpen={openAlert}
+				onClose={() => setOpenAlert(false)}
+				status={errStatus}
+				text={errText}
 			/>
+			{openModal && (
+				<ModalSettings
+					open={openModal}
+					onClose={() => setOpenModal(false)}
+					fullScreen={false}
+					save={save_sett_rate_clients}
+					value={valueEdit}
+					type_modal={typeModal}
+					color_edit={colorEdit}
+					itemIdEdit={itemIdEdit}
+					openAlert={(status, text) => {
+						setOpenAlert(true);
+						setErrStatus(status);
+						setErrText(text);
+					}}
+					name_row={nameRow}
+					delete={delete_sett_rate_clients}
+				/>
+			)}
+
+			{openModalDelete && (
+				<ModalDelete
+					open={openModalDelete}
+					onClose={() => setOpenModalDelete(false)}
+					id={itemId}
+					onDelete={deleteFuture}
+				/>
+			)}
 			<Grid item xs={12} sm={6}>
 				<h1>{module.name}</h1>
 			</Grid>
@@ -220,7 +299,8 @@ function IndicatorsPage() {
 										centered
 										variant='fullWidth'
 									>
-										<Tab label="Таблица" value="table"/>
+										<Tab label="Таблица по месяцам" value="table_month"/>
+										<Tab label="Таблица по годам" value="table_year"/>
 										<Tab label="Настройки" value="settings"/>
 									</Tabs>
 								</Paper>
@@ -282,46 +362,150 @@ function IndicatorsPage() {
 												</Table>
 											</TableContainer>
 										</Grid>
+										{!statFutureTimes.length ? null : (
+											<Grid item xs={12} sm={12}>
+												<Accordion>
+													<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+														<Typography>История изменений</Typography>
+													</AccordionSummary>
+													<AccordionDetails>
+														<TableContainer>
+															<Table>
+																<TableHead>
+																	<TableRow>
+																		<TableCell style={{width: '10%'}}>#</TableCell>
+																		<TableCell style={{width: '20%'}}>Тип</TableCell>
+																		<TableCell style={{width: '20%'}}>Дата</TableCell>
+																		<TableCell style={{width: '50%'}}></TableCell>
+																		<TableCell></TableCell>
+																	</TableRow>
+																</TableHead>
+
+																<TableBody>
+																	{statFutureTimes.map((it, k) => (
+																		<TableRow key={k}>
+																			<TableCell>{k + 1}</TableCell>
+																			<TableCell>{it.type}</TableCell>
+																			<TableCell>{it.date_start}</TableCell>
+																			<TableCell>{it.update_list.map((item) => {
+																				if (item.type === 'times') {
+																					return {
+																						id: item.id,
+																						value: item.value,
+																						value_range: `${item.max_value} - ${item.min_value}`,
+																						backgroundColor: item.value_color,
+																					};
+																				}
+																			}).map((value, ind) => {
+																				return (
+																					<TableCell
+																						style={{
+																							...cellStyles.default,
+																							backgroundColor: value?.backgroundColor || '#fff',
+																							textAlign: 'center',
+																							fontWeight: '900',
+																							border: value?.value === it.value ? '4px dashed blue' : '1px solid #ccc'
+																						}}
+																					>
+																						{value?.value_range ?? 0}
+																					</TableCell>
+																				)
+																			})}</TableCell>
+																			<TableCell>
+																				<IconButton
+																					onClick={() => openModalDeleteFut(it.id)}
+																				>
+																					<DeleteIcon/>
+																				</IconButton>
+																			</TableCell>
+																		</TableRow>
+																	))}
+																</TableBody>
+															</Table>
+														</TableContainer>
+													</AccordionDetails>
+												</Accordion>
+											</Grid>
+										)}
 									</Grid>
 								)}
-								{activeTab === 'table' && (
-									<Grid container spacing={3}>
+								{activeTab === 'table_month' && (
+									<>
+										<Grid container spacing={3} xs={12} sm={6}>
 
-										<Grid item xs={12} sm={6}>
-											<MyDatePickerNewViews
-												label="Дата от"
-												views={['month', 'year']}
-												value={dateStart}
-												func={(e) => setDateStart(formatDate(e))}
-											/>
+											<Grid item xs={12} sm={6}>
+												<MyDatePickerNewViews
+													label="Дата от"
+													views={['month', 'year']}
+													value={dateStart}
+													func={(e) => setDateStart(formatDate(e))}
+												/>
+											</Grid>
+
+											<Grid item xs={12} sm={6} style={{paddingLeft: 12}}>
+												<MyDatePickerNewViews
+													label="Дата до"
+													views={['month', 'year']}
+													value={dateEnd}
+													func={(e) => setDateEnd(formatDate(e))}
+												/>
+											</Grid>
+
+											<Grid item xs={12} sm={6}>
+												<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
+													setPoint(data)
+												}}/>
+											</Grid>
+
+											<Grid item xs={12} sm={6}>
+												<Button variant="contained" onClick={getTableData}>
+													Показать
+												</Button>
+											</Grid>
 										</Grid>
-
-										<Grid item xs={12} sm={6} style={{paddingLeft: 12}}>
-											<MyDatePickerNewViews
-												label="Дата до"
-												views={['month', 'year']}
-												value={dateEnd}
-												func={(e) => setDateEnd(formatDate(e))}
-											/>
-										</Grid>
-
-										<Grid item xs={12} sm={6}>
-											<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
-												setPoint(data)
-											}}/>
-										</Grid>
-
-										<Grid item xs={12} sm={6}>
-											<Button variant="contained" onClick={getTableData}>
-												Показать
-											</Button>
-										</Grid>
-
-										<Grid item xs={12} sm={12}>
+										<Grid item xs={12} sm={12} paddingTop={4}>
 											{tableData.rows && <PerformanceTable dataTable={tableData}/>}
 										</Grid>
+									</>
+								)}
+								{activeTab === 'table_year' && (
+									<>
+										<Grid container spacing={3} xs={12} sm={6}>
 
-									</Grid>
+											<Grid item xs={12} sm={6}>
+												<MyDatePickerNewViews
+													label="Дата от"
+													views={['year']}
+													value={dateStart}
+													func={(e) => setDateStart(formatDate(e))}
+												/>
+											</Grid>
+
+											<Grid item xs={12} sm={6} style={{paddingLeft: 12}}>
+												<MyDatePickerNewViews
+													label="Дата до"
+													views={['year']}
+													value={dateEnd}
+													func={(e) => setDateEnd(formatDate(e))}
+												/>
+											</Grid>
+
+											<Grid item xs={12} sm={6}>
+												<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
+													setPoint(data)
+												}}/>
+											</Grid>
+
+											<Grid item xs={12} sm={6}>
+												<Button variant="contained" onClick={getTableDataYear}>
+													Показать
+												</Button>
+											</Grid>
+										</Grid>
+										<Grid item xs={12} sm={12} paddingTop={4}>
+											{tableDataYear.rows && <PerformanceTableYears dataTable={tableDataYear}/>}
+										</Grid>
+									</>
 								)}
 							</Grid>
 						</Grid>
