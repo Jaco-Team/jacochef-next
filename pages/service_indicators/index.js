@@ -30,6 +30,9 @@ import TableHead from "@mui/material/TableHead";
 import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import ModalDelete from "@/components/service_indicators/ModalDelete";
+import DeleteIcon from "@mui/icons-material/Delete";
+import IconButton from "@mui/material/IconButton";
 
 function IndicatorsPage() {
 	const [isLoad, setIsLoad] = useState(false);
@@ -49,11 +52,12 @@ function IndicatorsPage() {
 	const [nameRow, setNameRow] = useState('');
 	const [itemType, setItemType] = useState('');
 	const [statFutureTimes, setStatFutureTimes] = useState([]);
-	const [statPrevTimes, setStatPrevTimes] = useState([]);
 	const [openAlert, setOpenAlert] = useState(false);
 	const [itemIdEdit, setItemIdEdit] = useState('');
 	const [errStatus, setErrStatus] = useState(false);
 	const [errText, setErrText] = useState('');
+	const [openModalDelete, setOpenModalDelete] = useState(false);
+	const [itemId, setItemId] = useState(0);
 	dayjs.extend(utc);
 	dayjs.extend(timezone);
 	dayjs.locale('ru');
@@ -103,7 +107,6 @@ function IndicatorsPage() {
 				}
 			});
 			setStatFutureTimes(data.stat_future_times);
-			setStatPrevTimes(data.stat_prev_times);
 			setRowClients(rowCl)
 		})
 	}
@@ -211,6 +214,22 @@ function IndicatorsPage() {
 		setOpenModal(true);
 	}
 
+	const deleteFuture = async () => {
+		const data = {
+			id: itemId,
+		}
+
+		const res = await getData('delete_fut', data);
+		if (res) {
+			getSettings();
+		}
+	}
+
+	const openModalDeleteFut = (id) => {
+		setItemId(id);
+		setOpenModalDelete(true);
+	}
+
 
 	return (
 		<Grid item xs={12} sm={12} container spacing={3} mb={3} className="container_first_child">
@@ -223,23 +242,34 @@ function IndicatorsPage() {
 				status={errStatus}
 				text={errText}
 			/>
-			<ModalSettings
-				open={openModal}
-				onClose={() => setOpenModal(false)}
-				fullScreen={false}
-				save={save_sett_rate_clients}
-				value={valueEdit}
-				type_modal={typeModal}
-				color_edit={colorEdit}
-				itemIdEdit={itemIdEdit}
-				openAlert={(status, text) => {
-					setOpenAlert(true);
-					setErrStatus(status);
-					setErrText(text);
-				}}
-				name_row={nameRow}
-				delete={delete_sett_rate_clients}
-			/>
+			{openModal && (
+				<ModalSettings
+					open={openModal}
+					onClose={() => setOpenModal(false)}
+					fullScreen={false}
+					save={save_sett_rate_clients}
+					value={valueEdit}
+					type_modal={typeModal}
+					color_edit={colorEdit}
+					itemIdEdit={itemIdEdit}
+					openAlert={(status, text) => {
+						setOpenAlert(true);
+						setErrStatus(status);
+						setErrText(text);
+					}}
+					name_row={nameRow}
+					delete={delete_sett_rate_clients}
+				/>
+			)}
+
+			{openModalDelete && (
+				<ModalDelete
+					open={openModalDelete}
+					onClose={() => setOpenModalDelete(false)}
+					id={itemId}
+					onDelete={deleteFuture}
+				/>
+			)}
 			<Grid item xs={12} sm={6}>
 				<h1>{module.name}</h1>
 			</Grid>
@@ -336,7 +366,7 @@ function IndicatorsPage() {
 											<Grid item xs={12} sm={12}>
 												<Accordion>
 													<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-														<Typography>История изменений после {dayjs(new Date()).local().add(2, 'day').format('YYYY-MM-DD')}</Typography>
+														<Typography>История изменений</Typography>
 													</AccordionSummary>
 													<AccordionDetails>
 														<TableContainer>
@@ -347,6 +377,7 @@ function IndicatorsPage() {
 																		<TableCell style={{width: '20%'}}>Тип</TableCell>
 																		<TableCell style={{width: '20%'}}>Дата</TableCell>
 																		<TableCell style={{width: '50%'}}></TableCell>
+																		<TableCell></TableCell>
 																	</TableRow>
 																</TableHead>
 
@@ -373,72 +404,20 @@ function IndicatorsPage() {
 																							backgroundColor: value?.backgroundColor || '#fff',
 																							textAlign: 'center',
 																							fontWeight: '900',
-																							cursor: 'pointer',
-																							border: value?.value === it.value ? '4px dashed blue': '1px solid #ccc'
+																							border: value?.value === it.value ? '4px dashed blue' : '1px solid #ccc'
 																						}}
 																					>
 																						{value?.value_range ?? 0}
 																					</TableCell>
 																				)
 																			})}</TableCell>
-																		</TableRow>
-																	))}
-																</TableBody>
-															</Table>
-														</TableContainer>
-													</AccordionDetails>
-												</Accordion>
-											</Grid>
-										)}
-										{!statPrevTimes.length ? null : (
-											<Grid item xs={12} sm={12}>
-												<Accordion>
-													<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-														<Typography>История изменений по {dayjs(new Date()).local().add(2, 'day').format('YYYY-MM-DD')}</Typography>
-													</AccordionSummary>
-													<AccordionDetails>
-														<TableContainer>
-															<Table>
-																<TableHead>
-																	<TableRow>
-																		<TableCell style={{width: '10%'}}>#</TableCell>
-																		<TableCell style={{width: '20%'}}>Тип</TableCell>
-																		<TableCell style={{width: '20%'}}>Дата</TableCell>
-																		<TableCell style={{width: '50%'}}></TableCell>
-																	</TableRow>
-																</TableHead>
-
-																<TableBody>
-																	{statPrevTimes.map((it, k) => (
-																		<TableRow key={k}>
-																			<TableCell>{k + 1}</TableCell>
-																			<TableCell>{it.type}</TableCell>
-																			<TableCell>{it.date_start}</TableCell>
-																			<TableCell>{it.update_list.map((item) => {
-																				if (item.type === 'times') {
-																					return {
-																						id: item.id,
-																						value: item.value,
-																						value_range: `${item.max_value} - ${item.min_value}`,
-																						backgroundColor: item.value_color,
-																					};
-																				}
-																			}).map((value, ind) => {
-																				return (
-																					<TableCell
-																						style={{
-																							...cellStyles.default,
-																							backgroundColor: value?.backgroundColor || '#fff',
-																							textAlign: 'center',
-																							fontWeight: '900',
-																							cursor: 'pointer',
-																							border: value?.value === it.value ? '4px dashed blue': '1px solid #ccc'
-																						}}
-																					>
-																						{value?.value_range ?? 0}
-																					</TableCell>
-																				)
-																			})}</TableCell>
+																			<TableCell>
+																				<IconButton
+																					onClick={() => openModalDeleteFut(it.id)}
+																				>
+																					<DeleteIcon/>
+																				</IconButton>
+																			</TableCell>
 																		</TableRow>
 																	))}
 																</TableBody>

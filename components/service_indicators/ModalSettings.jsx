@@ -157,7 +157,7 @@ const ModalSettings = (props) => {
 						<MyDatePickerNewViews
 							label="Дата старта"
 							value={date}
-							minDate={dayjs(new Date()).add(2, 'day')}
+							minDate={dayjs(new Date()).add(1, 'day')}
 							func={(e) => setDate(formatDate(e))}
 						/>
 					</Grid>
