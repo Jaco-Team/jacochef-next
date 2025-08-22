@@ -219,11 +219,11 @@ class SkladModules_ extends React.Component {
 			res = await this.getData('save_edit_param', data);
 		}
 
-		if (!res.st) {
+		if (!res?.st) {
 			this.setState({
 				openAlert: true,
-				err_status: res.st,
-				err_text: res.text,
+				err_status: res?.st || false,
+				err_text: res?.text || 'Server Error',
 			});
 		} else {
 			setTimeout(() => {
