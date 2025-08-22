@@ -2418,9 +2418,7 @@ class SiteItems_ extends React.Component {
 			module_name: data.module_info.name,
 			cats: data.cats,
 			acces: result,
-			// ??
-			user_app: 'technologist',
-			// user_app: 'marketing',
+			user_app: data.user_app,
 			timeUpdate: new Date(),
 		});
 
@@ -2462,9 +2460,7 @@ class SiteItems_ extends React.Component {
 
 		this.setState({
 			cats: data.cats,
-			// ??
-			// user_app: 'technologist',
-			user_app: 'marketing',
+			user_app: data.user_app,
 			timeUpdate: new Date(),
 		});
 	}
