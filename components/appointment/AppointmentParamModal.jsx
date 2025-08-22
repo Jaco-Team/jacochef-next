@@ -1,0 +1,201 @@
+"use client";
+
+import { MyCheckBox } from "@/ui/elements";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { memo } from "react";
+import { useAppointmentModalStore } from "@/components/appointment/store/useAppointmentModalStore";
+
+const AppointmentParamModal = (props) => {
+  const params = useAppointmentModalStore((s) => s.params);
+  const paramMethod = useAppointmentModalStore((s) => s.paramMethod);
+  const type = useAppointmentModalStore((s) => s.type);
+  const paramModal = useAppointmentModalStore((s) => s.paramModal);
+  const { changeParamFlag } = useAppointmentModalStore.getState();
+
+  const onClose = () => {
+    setTimeout(() => {
+      props.onClose();
+    }, 100);
+  };
+
+  const renderFeatureCheckBoxes = (feature, categoryIndex, featureIndex) => {
+    const fields = {
+      access: "Доступ",
+      view: "Просмотр",
+      edit: "Редактирование",
+    };
+    return (
+      <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" } }}>
+        {Object.keys(fields).map((field, i) => {
+          if (feature[field] !== undefined) {
+            return (
+              <MyCheckBox
+                key={`${categoryIndex}-${featureIndex}-${i}`}
+                value={!!+feature[field]}
+                func={(e) => changeParamFlag(field, featureIndex, categoryIndex, e)}
+                label={fields[field]}
+              />
+            );
+          }
+          return null;
+        })}
+      </Box>
+    );
+  };
+
+  const { fullScreen } = props;
+
+  return (
+    <Dialog
+      open={paramModal}
+      onClose={onClose}
+      fullWidth={true}
+      maxWidth={"lg"}
+      fullScreen={fullScreen}
+    >
+      <DialogTitle>
+        {paramMethod}
+        <IconButton
+          onClick={onClose}
+          style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+        <Grid
+          item
+          xs={12}
+        >
+          {params?.table?.length > 0 && (
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                  <TableCell style={{ width: "30%" }}>Категория</TableCell>
+                  <TableCell style={{ width: "30%" }}>Параметр</TableCell>
+                  <TableCell style={{ width: "40%" }}>Права</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {type === "one"
+                  ? params.table.map((f, f_key) => (
+                      <TableRow
+                        hover
+                        key={`t_${f_key}`}
+                      >
+                        <TableCell>{f.category_name}</TableCell>
+                        <TableCell>{f.name}</TableCell>
+                        <TableCell>{renderFeatureCheckBoxes(f, -1, f.index)}</TableCell>
+                      </TableRow>
+                    ))
+                  : params.table?.map((f) =>
+                      f?.features?.map((cat_f, cat_f_key) => (
+                        <TableRow
+                          hover
+                          key={`ct_${cat_f_key}`}
+                        >
+                          <TableCell>{cat_f.category_name}</TableCell>
+                          <TableCell>{cat_f.name}</TableCell>
+                          <TableCell>{renderFeatureCheckBoxes(cat_f, cat_f_key, f.index)}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+              </TableBody>
+            </Table>
+          )}
+          {params?.accordion?.length > 0 && type === "one"
+            ? params.accordion?.map((f, f_key) => (
+                <Accordion key={`af_${f_key}`}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>{f.category_name}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                          <TableCell style={{ width: "30%" }}>Категория</TableCell>
+                          <TableCell style={{ width: "30%" }}>Параметр</TableCell>
+                          <TableCell style={{ width: "40%" }}>Права</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        <TableRow
+                          hover
+                        >
+                          <TableCell>{f.category_name}</TableCell>
+                          <TableCell>{f.name}</TableCell>
+                          <TableCell>{renderFeatureCheckBoxes(f, -1, f.index)}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </AccordionDetails>
+                </Accordion>
+              ))
+            : params?.accordion?.map((f, f_key) => (
+                <Accordion key={`ac_${f_key}`}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>{f.category_name}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                          <TableCell style={{ width: "30%" }}>Категория</TableCell>
+                          <TableCell style={{ width: "30%" }}>Параметр</TableCell>
+                          <TableCell style={{ width: "40%" }}>Права</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {f?.features?.map((cat_f, cat_f_key) => (
+                          <TableRow
+                            hover
+                            key={`acf_${cat_f_key}`}
+                          >
+                            <TableCell>{cat_f.category_name}</TableCell>
+                            <TableCell>{cat_f.name}</TableCell>
+                            <TableCell>
+                              {renderFeatureCheckBoxes(cat_f, cat_f.index, f.index)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button
+          color="primary"
+          onClick={onClose}
+        >
+          Закрыть
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+export default memo(AppointmentParamModal);

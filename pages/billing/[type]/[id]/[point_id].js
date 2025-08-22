@@ -2929,12 +2929,20 @@ class Billing_Edit_ extends React.Component {
         items_color.push(item);
       }
 
-      const nds = item.nds.split(' %')[0];
+      console.log('nds 0', item?.nds)
 
-      if(nds === 'без НДС') {
-        it.nds = -1
-      } else {
-        it.nds = nds;
+      if(!item?.nds){
+        it.nds = -1;
+      }else{
+        const nds = item?.nds?.split(' %')[0];
+
+        console.log('nds', nds)
+
+        if(nds === 'без НДС') {
+          it.nds = -1
+        } else {
+          it.nds = nds;
+        }
       }
 
       newItems.push(it);
