@@ -91,7 +91,7 @@ class Write_off_journal_View extends React.Component {
             <Table stickyHeader aria-label="sticky table">
               <TableHead>
                 <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                  <TableCell style={{ width: '10%' }}>#</TableCell> 
+                  <TableCell style={{ width: '10%' }}>#</TableCell>
                   <TableCell style={{ width: '20%' }}>Тип</TableCell>
                   <TableCell style={{ width: '40%' }}>Наименование</TableCell>
                   <TableCell style={{ width: '20%' }}>Количество</TableCell>
@@ -267,9 +267,19 @@ class Write_off_journal_modal extends React.Component {
     }
   }
 
+  changePoint(data, event) {
+    this.setState({
+      [data]: event.target.value,
+    });
+  }
+
   changeItem(data, event) {
 
     let value = event.target.value;
+
+    if (value === '') {
+      value = null;
+    }
 
     if(value < 0 && data === 'count') {
 
@@ -365,7 +375,7 @@ class Write_off_journal_modal extends React.Component {
   delete() {
     const point = this.state.point;
 
-    this.props.deleteItem(this.props.itemEdit?.woj?.id, point); 
+    this.props.deleteItem(this.props.itemEdit?.woj?.id, point);
     this.setState({ confirmDialog: false })
   }
 
@@ -387,8 +397,7 @@ class Write_off_journal_modal extends React.Component {
     const id = this.props.itemEdit?.woj?.id ?? 0;
 
     const comment = this.state.comment;
-
-    const point = this.state.point;
+    const point = this.props.method === 'Новое списание' ? this.state.points.find((value) => value.id === this.state.point) : this.state.point;
 
     this.props.save(writeOffItems, comment, point, id);
 
@@ -459,11 +468,11 @@ class Write_off_journal_modal extends React.Component {
                   <MySelect
                     is_none={false}
                     data={this.state.points}
-                    value={this.state.point.id}
-                    func={this.changeItem.bind(this, 'point')}
+                    value={this.state.point}
+                    func={this.changePoint.bind(this, 'point')}
                     label="Точка"
                   />
-                 :  
+                 :
                   <MyTextInput
                     label="Точка"
                     value={this.state.point.name}
@@ -521,7 +530,7 @@ class Write_off_journal_modal extends React.Component {
               <Table stickyHeader aria-label="sticky table">
                 <TableHead>
                   <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                    <TableCell style={{ width: '10%' }}>#</TableCell> 
+                    <TableCell style={{ width: '10%' }}>#</TableCell>
                     <TableCell style={{ width: '20%' }}>Тип</TableCell>
                     <TableCell style={{ width: '40%' }}>Наименование</TableCell>
                     <TableCell style={{ width: '20%' }}>Количество</TableCell>
@@ -536,7 +545,7 @@ class Write_off_journal_modal extends React.Component {
                       <TableCell>{it.type_name}</TableCell>
                       <TableCell>{it.name}</TableCell>
                       <TableCell>{it.value + ' ' + it.ei_name}</TableCell>
-                      <TableCell onClick={this.deleteItem.bind(this, key)}> 
+                      <TableCell onClick={this.deleteItem.bind(this, key)}>
                         <IconButton style={{ cursor: 'pointer' }}>
                           <CloseIcon />
                         </IconButton>
@@ -557,7 +566,7 @@ class Write_off_journal_modal extends React.Component {
             </TableContainer>
           </DialogContent>
           <DialogActions>
-            {method !== 'Новое списание' ?
+            {method !== 'Новое списание' && this.props.acces?.delete_write_off ?
               <Button onClick={() => this.setState({ confirmDialog: true })} variant="contained" style={{ backgroundColor: 'rgba(53,59,72,1.000)' }}>
                 Удалить
               </Button>
@@ -666,7 +675,7 @@ class Write_off_journal_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'write_off_journal',
+      module: 'write_off_journal_2',
       module_name: '',
       is_load: false,
 
@@ -692,6 +701,7 @@ class Write_off_journal_ extends React.Component {
       all_sum_pos: 0,
 
       fullScreen: false,
+      acces: {},
 
       modalDialogView: false,
       itemView: null,
@@ -713,13 +723,16 @@ class Write_off_journal_ extends React.Component {
     const data = await this.getData('get_all');
 
     // для тестов
-    const points = [{base: "jaco_rolls_0", id: "0", id_2: "1_0", manager_id: "0", name: "Тольятти, Тестовая", name2: "Тольятти, Тестовая"}]
+    //const points = [{base: "jaco_rolls_0", id: "0", id_2: "1_0", manager_id: "0", name: "Тольятти, Тестовая", name2: "Тольятти, Тестовая"}]
+    const result = Object.keys(data.acces).reduce((acc, key) => {
+      acc[key] = parseInt(data.acces[key], 10);
+      return acc;
+    }, {});
 
     this.setState({
-      // points: data.points,
-      // point: data.points[0].id,
-      points,
-      point: points[0].id,
+      points: data.points,
+      point: data.points[0].id,
+      acces: result,
       module_name: data.module_info.name,
     });
 
@@ -727,7 +740,7 @@ class Write_off_journal_ extends React.Component {
 
     // для тестов
     setTimeout(async () => {
-      this.getPointData(points[0]);
+      this.getPointData(data.points[0]);
     }, 100);
 
     // setTimeout(async () => {
@@ -741,7 +754,7 @@ class Write_off_journal_ extends React.Component {
       is_load: true,
     });
 
-    let res = api_laravel_local(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {
@@ -812,7 +825,7 @@ class Write_off_journal_ extends React.Component {
       all_sum_pos,
       all_users
     });
-    
+
   }
 
   changePoint(data, event) {
@@ -868,12 +881,12 @@ class Write_off_journal_ extends React.Component {
     let change = null;
 
     if(open_item) {
-      // Для редактирования и удаления давать 2 недели с даты создания 
+      // Для редактирования и удаления давать 2 недели с даты создания
       if (parseInt(open_item?.status) === 2) {
         change = 'del';
       } else if (!(moment(open_item?.date).diff(moment(), 'days') > -15)) {
         change = 'day';
-      } 
+      }
     }
 
     if (change === 'del' || change === 'day') {
@@ -883,7 +896,7 @@ class Write_off_journal_ extends React.Component {
         err_status: false,
         err_text: change === 'del' ? 'Удален' : 'Изменения недоступны - с даты создания прошло болеее 2-х недель',
       });
-      
+
       return;
 
     }
@@ -929,8 +942,8 @@ class Write_off_journal_ extends React.Component {
     const method = this.state.method;
 
     const data = {
-      items, 
-      comment, 
+      items,
+      comment,
       point,
       j_id
     }
@@ -951,7 +964,7 @@ class Write_off_journal_ extends React.Component {
         err_text: res.text,
         modalDialog: false
       });
-      
+
       setTimeout(async () => {
         this.getPointData();
       }, 300);
@@ -1018,11 +1031,11 @@ class Write_off_journal_ extends React.Component {
         if(it.type === 'pos') {
           it.type_name = 'Сайт';
         }
-  
+
         if(it.type === 'rec' || it.type === 'pf') {
           it.type_name = 'Заготовка';
         }
-  
+
         if(it.type === 'set' || it.type === 'item') {
           it.type_name = 'Товар';
         }
@@ -1033,7 +1046,7 @@ class Write_off_journal_ extends React.Component {
 
       return item;
     });
-   
+
     this.setState({
       modalDialogHist: true,
       itemHist: res.hist,
@@ -1049,9 +1062,9 @@ class Write_off_journal_ extends React.Component {
     let itemView = JSON.parse(JSON.stringify(item[index]));
 
     if(parseInt(index) !== 0) {
-      
+
       let itemView_old = JSON.parse(JSON.stringify(item[index - 1]));
-      
+
       for (let key in itemView) {
 
         if(itemView[key] !== itemView_old[key] && key !== 'items' && key !== 'status') {
@@ -1070,11 +1083,11 @@ class Write_off_journal_ extends React.Component {
               return it;
             }
           }));
-     
+
         }
       }
-    } 
-    
+    }
+
     this.setState({
       modalDialogViewHist: true,
       itemViewHist: itemView
@@ -1109,6 +1122,7 @@ class Write_off_journal_ extends React.Component {
           itemEdit={this.state.itemEdit}
           points={this.state.points}
           point={this.state.point}
+          acces={this.state.acces}
           method={this.state.method}
           fullScreen={this.state.fullScreen}
           save={this.saveItem.bind(this)}
@@ -1136,11 +1150,13 @@ class Write_off_journal_ extends React.Component {
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
-            <Button onClick={this.openNewItem.bind(this, 'Новое списание')} variant="contained">
-              Новое списание
-            </Button>
-          </Grid>
+          {this.state.acces?.create_write_off && (
+            <Grid item xs={12} sm={3}>
+              <Button onClick={this.openNewItem.bind(this, 'Новое списание')} variant="contained">
+                Новое списание
+              </Button>
+            </Grid>
+          )}
 
           <Grid item xs={12} sm={9} />
 
@@ -1297,7 +1313,9 @@ class Write_off_journal_ extends React.Component {
                     <TableCell style={{ width: '17%' }}>Время</TableCell>
                     <TableCell style={{ width: '15%' }}>Себестоимость</TableCell>
                     <TableCell style={{ width: '17%' }}>Создатель</TableCell>
-                    <TableCell style={{ width: '15%' }}>Редактирование</TableCell>
+                    {this.state.acces?.edit_write_off ? (
+                      <TableCell style={{width: '15%'}}>Редактирование</TableCell>
+                    ) : null}
                     <TableCell style={{ width: '14%' }}>История изменений</TableCell>
                   </TableRow>
                 </TableHead>
@@ -1310,10 +1328,12 @@ class Write_off_journal_ extends React.Component {
                       <TableCell>{item.time}</TableCell>
                       <TableCell>{' '}{new Intl.NumberFormat('ru-RU').format(item?.price ?? '')} ₽</TableCell>
                       <TableCell>{item.user_name}</TableCell>
-                      <TableCell style={{ cursor: 'pointer' }} onClick={this.openItem.bind(this, item?.id, 'Редактрование списания')}>
-                        <EditIcon />
-                      </TableCell>
-                      <TableCell 
+                      {this.state.acces?.edit_write_off ? (
+                        <TableCell style={{cursor: 'pointer'}} onClick={this.openItem.bind(this, item?.id, 'Редактрование списания')}>
+                          <EditIcon/>
+                        </TableCell>
+                      ) : null}
+                      <TableCell
                           onClick={this.openHistoryItem.bind(this, item.id, 'История изменений')}
                           style={{cursor: 'pointer'}}
                         >

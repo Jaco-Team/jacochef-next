@@ -498,7 +498,7 @@ class ReceptModule_Modal extends React.Component {
   changeItemData(key, event, value) {
 
     if(value) {
-      
+
       let list = this.state.list;
 
       const find_item = list.find(item => parseInt(item.item_id.id) === parseInt(value.id));
@@ -569,12 +569,12 @@ class ReceptModule_Modal extends React.Component {
     if(type === 'pr_2') {
       list[key].res = roundTo((parseFloat(list[key].netto) * (100 - parseFloat(list[key].pr_2))) / 100, 3);
     }
-      
+
     if(type === 'brutto' || type === 'pr_1') {
       let all_w_netto = list.reduce((sum, item) => sum + parseFloat(item.netto), 0);
 
       all_w_netto = roundTo(all_w_netto, 3);
-      
+
       this.setState({ all_w_netto });
     }
 
@@ -627,8 +627,6 @@ class ReceptModule_Modal extends React.Component {
       data.id = this.props.rec.id;
       this.props.saveEdit(data);
     }
-
-    this.onClose();
   }
 
   onClose() {
@@ -687,6 +685,7 @@ class ReceptModule_Modal extends React.Component {
                 <MyTextInput
                   label="Наименование"
                   value={this.state.name}
+                  disabled={(this.props.method !== 'Новый рецепт' && this.props.method !== 'Новый полуфабрикат') && !this.props.acces?.name}
                   func={this.changeItem.bind(this, 'name')}
                 />
               </Grid>
@@ -694,6 +693,7 @@ class ReceptModule_Modal extends React.Component {
                 <MyTextInput
                   label="Срок годности"
                   value={this.state.shelf_life}
+                  disabled={(this.props.method !== 'Новый рецепт' && this.props.method !== 'Новый полуфабрикат') && !this.props.acces?.shelf_life}
                   func={this.changeItem.bind(this, 'shelf_life')}
                 />
               </Grid>
@@ -703,6 +703,7 @@ class ReceptModule_Modal extends React.Component {
                   data={this.state.rec_users}
                   value={this.state.two_user}
                   func={this.changeItem.bind(this, 'two_user')}
+                  disabled={(this.props.method !== 'Новый рецепт' && this.props.method !== 'Новый полуфабрикат') && !this.props.acces?.two_user}
                   label="Количество сотрудников"
                 />
               </Grid>
@@ -710,6 +711,7 @@ class ReceptModule_Modal extends React.Component {
                 <MyCheckBox
                   label="Ревизия"
                   value={parseInt(this.state.show_in_rev) == 1 ? true : false}
+                  disabled={(this.props.method !== 'Новый рецепт' && this.props.method !== 'Новый полуфабрикат') && !this.props.acces?.show_in_rev}
                   func={this.changeItemChecked.bind(this, 'show_in_rev')}
                 />
               </Grid>
@@ -717,6 +719,7 @@ class ReceptModule_Modal extends React.Component {
                 <MyDatePickerNew
                   label="Действует с"
                   value={this.state.date_start}
+                  disabled={(this.props.method !== 'Новый рецепт' && this.props.method !== 'Новый полуфабрикат') && !this.props.acces?.date_start}
                   func={this.changeDateRange.bind(this, 'date_start')}
                 />
               </Grid>
@@ -724,6 +727,7 @@ class ReceptModule_Modal extends React.Component {
                 <MyDatePickerNew
                   label="по"
                   value={this.state.date_end}
+                  disabled={(this.props.method !== 'Новый рецепт' && this.props.method !== 'Новый полуфабрикат') && !this.props.acces?.date_end}
                   func={this.changeDateRange.bind(this, 'date_end')}
                 />
               </Grid>
@@ -731,6 +735,7 @@ class ReceptModule_Modal extends React.Component {
                 <MyTextInput
                   label="Время приготовления 1 кг ММ:SS (15:20)"
                   value={this.state.time}
+                  disabled={(this.props.method !== 'Новый рецепт' && this.props.method !== 'Новый полуфабрикат') && !this.props.acces?.time}
                   func={this.changeItem.bind(this, 'time')}
                 />
               </Grid>
@@ -738,6 +743,7 @@ class ReceptModule_Modal extends React.Component {
                 <MyTextInput
                   label="Дополнительное время (уборка рабочего места)"
                   value={this.state.dop_time}
+                  disabled={(this.props.method !== 'Новый рецепт' && this.props.method !== 'Новый полуфабрикат') && !this.props.acces?.dop_time}
                   func={this.changeItem.bind(this, 'dop_time')}
                 />
               </Grid>
@@ -746,6 +752,7 @@ class ReceptModule_Modal extends React.Component {
                   label="Должность в кафе (кто будет готовить)"
                   multiple={true}
                   data={apps}
+                  disabled={(this.props.method !== 'Новый рецепт' && this.props.method !== 'Новый полуфабрикат') && !this.props.acces?.rec_apps}
                   value={this.state.rec_apps}
                   func={this.changeComplite.bind(this, 'rec_apps')}
                 />
@@ -756,6 +763,7 @@ class ReceptModule_Modal extends React.Component {
                   multiple={true}
                   data={storages}
                   value={this.state.storages}
+                  disabled={(this.props.method !== 'Новый рецепт' && this.props.method !== 'Новый полуфабрикат') && !this.props.acces?.storages}
                   func={this.changeComplite.bind(this, 'storages')}
                 />
               </Grid>
@@ -946,7 +954,7 @@ class ReceptModule_Table extends React.Component {
                           <TableCell style={{ cursor: 'pointer' }} onClick={openItemEdit.bind(this, item.id, `Редактирование: ${item.name}`, type)}>
                             <EditIcon />
                           </TableCell>
-                          <TableCell 
+                          <TableCell
                             onClick={openHistoryItem.bind(this, item.id, 'История изменений', type)}
                             style={{cursor: 'pointer'}}
                           >
@@ -986,6 +994,7 @@ class ReceptModule_ extends React.Component {
       all_pf_list: [],
       rec: null,
       item: [],
+      acces: {},
 
       openAlert: false,
       err_status: false,
@@ -1006,10 +1015,16 @@ class ReceptModule_ extends React.Component {
   async componentDidMount() {
     const data = await this.getData('get_all');
 
+    const result = Object.keys(data.acces).reduce((acc, key) => {
+      acc[key] = parseInt(data.acces[key], 10);
+      return acc;
+    }, {});
+
     this.setState({
       module_name: data.module_info.name,
       rec_list: data.rec,
       pf_list: data.pf,
+      acces: result
     });
 
     document.title = data.module_info.name;
@@ -1020,7 +1035,7 @@ class ReceptModule_ extends React.Component {
       is_load: true,
     });
 
-    let res = api_laravel_local(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {
@@ -1071,15 +1086,15 @@ class ReceptModule_ extends React.Component {
     } else {
 
       const res = await this.getData('get_one_pf', data);
-  
+
       res.items_list.map(pf => {
         const value = res.all_items_list.find((item) => parseInt(item.id) === parseInt(pf.item_id));
         pf.item_id = { id: value.id, name: value.name }
         return pf;
       })
-  
+
       res.pf.rec_users = [{ id: 0, name: 'Один сотрудник'}, { id: 1, name: 'Два сотрудника'}];
-  
+
       this.setState({
         modalDialog: true,
         method,
@@ -1101,15 +1116,15 @@ class ReceptModule_ extends React.Component {
     if(type === 'rec') {
 
       const res = await this.getData('get_one_rec', data);
-  
+
       res.pf_list.map(pf => {
         const value = res.all_pf_list.find((item) => parseInt(item.id) === parseInt(pf.item_id));
         pf.item_id = { id: value.id, name: value.name }
         return pf;
       })
-  
+
       res.rec.rec_users = [{ id: 0, name: 'Один сотрудник'}, { id: 1, name: 'Два сотрудника'}];
-  
+
       this.setState({
         modalDialog: true,
         method,
@@ -1124,15 +1139,15 @@ class ReceptModule_ extends React.Component {
     } else {
 
       const res = await this.getData('get_one_pf', data);
-  
+
       res.items_list.map(pf => {
         const value = res.all_items_list.find((item) => parseInt(item.id) === parseInt(pf.item_id));
         pf.item_id = { id: value.id, name: value.name }
         return pf;
       })
-  
+
       res.pf.rec_users = [{ id: 0, name: 'Один сотрудник'}, { id: 1, name: 'Два сотрудника'}];
-  
+
       this.setState({
         modalDialog: true,
         method,
@@ -1171,7 +1186,7 @@ class ReceptModule_ extends React.Component {
           return hist;
         });
       }
-  
+
       this.setState({
         modalDialogHist: true,
         item: res.hist,
@@ -1189,12 +1204,12 @@ class ReceptModule_ extends React.Component {
         res = await this.getData('get_one_rec', data);
 
         res.rec.pf_list = res.pf_list;
-  
+
         res.rec.storages = res.rec.storages.map(storage => {
           storage = storage.name;
           return storage;
         }).join(', ')
-  
+
         res.rec.rec_apps = res.rec.rec_apps.map(app => {
           app = app.name;
           return app;
@@ -1211,12 +1226,12 @@ class ReceptModule_ extends React.Component {
         res = await this.getData('get_one_pf', data);
 
         res.pf.pf_list = res.items_list;
-  
+
         res.pf.storages = res.pf.storages.map(storage => {
           storage = storage.name;
           return storage;
         }).join(', ')
-  
+
         res.pf.rec_apps = res.pf.rec_apps.map(app => {
           app = app.name;
           return app;
@@ -1243,12 +1258,12 @@ class ReceptModule_ extends React.Component {
     itemView.show_in_rev = parseInt(itemView.show_in_rev) ? 'Да' : 'Нет';
 
     if(parseInt(index) !== 0) {
-      
+
       let itemView_old = JSON.parse(JSON.stringify(item[index - 1]));
 
       itemView_old.two_user = parseInt(itemView_old.two_user) ? 'Два сотрудника' : 'Один сотрудник';
       itemView_old.show_in_rev = parseInt(itemView_old.show_in_rev) ? 'Да' : 'Нет';
-      
+
       for (let key in itemView) {
 
         if(itemView[key] !== itemView_old[key] && key !== 'pf_list') {
@@ -1270,7 +1285,7 @@ class ReceptModule_ extends React.Component {
                 pf[key] = { key: pf[key], color: 'true' }
               }
             }
-            
+
             return newList = [...newList,...[pf]]
           }, []).concat(itemView_old.pf_list.filter((it) => {
             if(!itemView.pf_list.find((item) => parseInt(item.item_id) === parseInt(it.item_id))) {
@@ -1282,8 +1297,8 @@ class ReceptModule_ extends React.Component {
           }));
         }
       }
-    } 
-    
+    }
+
     this.setState({
       modalDialogView: true,
       itemView
@@ -1294,7 +1309,7 @@ class ReceptModule_ extends React.Component {
   async saveNew(rec) {
 
     const method = this.state.method;
-    
+
     const data = {
       rec
     }
@@ -1307,8 +1322,8 @@ class ReceptModule_ extends React.Component {
       res = await this.getData('save_new_pf', data);
     }
 
-    if (res.st) {
-
+    if (res.st === true) {
+      console.log('aaaaa');
       this.setState({
         openAlert: true,
         err_status: res.st,
@@ -1316,7 +1331,7 @@ class ReceptModule_ extends React.Component {
         modalDialog: false,
         rec: null,
       });
-      
+
       setTimeout(async () => {
         this.update();
       }, 300);
@@ -1327,6 +1342,7 @@ class ReceptModule_ extends React.Component {
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
+        modalDialog: true,
       });
 
     }
@@ -1357,7 +1373,7 @@ class ReceptModule_ extends React.Component {
         modalDialog: false,
         rec: null,
       });
-      
+
       setTimeout(async () => {
         this.update();
       }, 300);
@@ -1436,6 +1452,7 @@ class ReceptModule_ extends React.Component {
           storages={this.state.storages}
           apps={this.state.apps}
           rec={this.state.rec}
+          acces={this.state.acces}
           saveNew={this.saveNew.bind(this)}
           saveEdit={this.saveEdit.bind(this)}
           fullScreen={this.state.fullScreen}
