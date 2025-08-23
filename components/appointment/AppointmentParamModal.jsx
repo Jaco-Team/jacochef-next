@@ -117,7 +117,9 @@ const AppointmentParamModal = (props) => {
                         >
                           <TableCell>{cat_f.category_name}</TableCell>
                           <TableCell>{cat_f.name}</TableCell>
-                          <TableCell>{renderFeatureCheckBoxes(cat_f, cat_f_key, f.index)}</TableCell>
+                          <TableCell>
+                            {renderFeatureCheckBoxes(cat_f, f.index, cat_f_key)}
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
@@ -140,9 +142,7 @@ const AppointmentParamModal = (props) => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        <TableRow
-                          hover
-                        >
+                        <TableRow hover>
                           <TableCell>{f.category_name}</TableCell>
                           <TableCell>{f.name}</TableCell>
                           <TableCell>{renderFeatureCheckBoxes(f, -1, f.index)}</TableCell>
@@ -175,7 +175,7 @@ const AppointmentParamModal = (props) => {
                             <TableCell>{cat_f.category_name}</TableCell>
                             <TableCell>{cat_f.name}</TableCell>
                             <TableCell>
-                              {renderFeatureCheckBoxes(cat_f, cat_f.index, f.index)}
+                              {renderFeatureCheckBoxes(cat_f, f.index, cat_f_key)}
                             </TableCell>
                           </TableRow>
                         ))}
