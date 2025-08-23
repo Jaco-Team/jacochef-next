@@ -39,7 +39,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { MyDatePickerNew, MyTextInput, MyAlert } from '@/ui/elements';
 
-import { api_laravel, api_laravel_local } from '@/src/api_new';
+// import {api_laravel_local as api_laravel} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
