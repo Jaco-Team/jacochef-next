@@ -43,7 +43,8 @@ import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined
 
 import {MySelect, MyDatePickerNew, MyAlert, MyAutocomplite, formatDateReverse, MyTextInput} from '@/ui/elements';
 
-import { api_laravel_local, api_laravel } from '@/src/api_new';
+// import {api_laravel_local as api_laravel} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 
 import dayjs from 'dayjs';
 
@@ -1206,7 +1207,7 @@ class CheckCheck_ extends React.Component {
     const data = this.check_data();
     if (!data) return;
     
-    if (Number(this.state.acces?.check) === 1) {
+    if (Number(this.state.acces?.check_access) === 1) {
       data.acces = 'check';
     }
 
@@ -1402,7 +1403,7 @@ class CheckCheck_ extends React.Component {
           </DialogTitle>
           <DialogContent>
             <List>
-              {Number(acces?.upload) === 1 &&
+              {Number(acces?.upload_access) === 1 &&
                 <ListItemButton
                   onClick={() => this.upload_data_1C('export')}
                   sx={{
@@ -1420,7 +1421,7 @@ class CheckCheck_ extends React.Component {
                   />
                 </ListItemButton>
               }
-              {Number(acces?.clear) === 1 &&
+              {Number(acces?.clear_access) === 1 &&
                 <ListItemButton
                   onClick={() => this.upload_data_1C('clear')}
                   sx={{
@@ -1438,7 +1439,7 @@ class CheckCheck_ extends React.Component {
                   />
                 </ListItemButton>
               }
-              {Number(acces?.clear_export) === 1 &&
+              {Number(acces?.clear_export_access) === 1 &&
                 <ListItemButton
                   onClick={() => this.upload_data_1C('clear_export')}
                   sx={{
@@ -1456,7 +1457,7 @@ class CheckCheck_ extends React.Component {
                   />
                 </ListItemButton>
               }
-              {Number(acces?.all_clear) === 1 &&
+              {Number(acces?.all_clear_access) === 1 &&
                 <ListItemButton
                   onClick={() => this.upload_data_1C('all_clear')}
                   sx={{
@@ -1576,7 +1577,7 @@ class CheckCheck_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={3}>
-            {Number(acces?.check) === 1 ? (
+            {Number(acces?.check_access) === 1 ? (
               <Button
                 onClick={this.set_orders}
                 sx={{ whiteSpace: 'nowrap' }}
@@ -1586,7 +1587,7 @@ class CheckCheck_ extends React.Component {
               >
                 Расставить номера заказов / суммы
               </Button>
-            ) : Number(acces?.upload) === 1 ? (
+            ) : Number(acces?.upload_access) === 1 ? (
               <Button
                 onClick={this.check_data_for_1C}
                 variant={canAct ? "contained" : "outlined"}
@@ -1599,7 +1600,7 @@ class CheckCheck_ extends React.Component {
             ) : null}
           </Grid>
 
-          {Number(acces?.check) === 1 && Number(acces?.upload) === 1 && (
+          {Number(acces?.check_access) === 1 && Number(acces?.upload_access) === 1 && (
             <Grid item xs={12} sm={3} container justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
               <Button
                 onClick={this.check_data_for_1C}
@@ -1613,7 +1614,7 @@ class CheckCheck_ extends React.Component {
             </Grid>
           )}
 
-          {complete_data?.length > 0 && Number(acces?.check) === 1 &&
+          {complete_data?.length > 0 && Number(acces?.check_access) === 1 &&
             <Grid item xs={12} sm={12} mb={summ_ofd ? 0 : 5}>
               <Accordion
                 style={{ width: '100%' }}
@@ -1667,7 +1668,7 @@ class CheckCheck_ extends React.Component {
             </Grid>
           }
 
-          {unfisc_online_orders?.length > 0 && Number(acces?.check) === 1 &&
+          {unfisc_online_orders?.length > 0 && Number(acces?.check_access) === 1 &&
             <Grid item xs={12} sm={12}>
               <CheckCheck_Accordion_online
                 orders={unfisc_online_orders}
@@ -1681,7 +1682,7 @@ class CheckCheck_ extends React.Component {
                 summ_ofd={summ_ofd}
                 summ_chef={summ_chef}
                 save_comment={this.save_comment}
-                acces_comment={acces.comment}
+                acces_comment={acces.comment_access}
               />
             </Grid>
           }

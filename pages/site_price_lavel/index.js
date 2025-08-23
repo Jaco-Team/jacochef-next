@@ -33,7 +33,8 @@ import { ExlIcon } from '@/ui/icons';
 
 import { MySelect, MyAlert, formatDate, MyTextInput, MyDatePickerNew } from '@/ui/elements';
 
-import { api_laravel_local, api_laravel } from '@/src/api_new';
+// import {api_laravel_local as api_laravel} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -792,7 +793,7 @@ class SitePriceLevel_Tab_Level extends React.Component {
                 />
               </Grid>
 
-              {parseInt(acces?.add_level) ? (
+              {parseInt(acces?.add_level_access) ? (
                 <Grid item xs={12} sm={2}>
                   <Button onClick={() => this.openModal('Новый уровень цен')} variant="contained">
                     Добавить
@@ -800,7 +801,7 @@ class SitePriceLevel_Tab_Level extends React.Component {
                 </Grid>
               ) : null}
 
-              {parseInt(acces?.get_excel) ? (
+              {parseInt(acces?.get_excel_access) ? (
                 <Grid item xs={12} sm={4}>
                   <Button onClick={() => this.setState({ modalDialog_XLS: true })} variant="contained">
                     Скачать/Загрузить файл XLS
@@ -831,7 +832,7 @@ class SitePriceLevel_Tab_Level extends React.Component {
                           <TableCell>
                             <a href={'/site_price_lavel/'+level.id} target='_blank'>
                               <IconButton /*onClick={() => this.getOneLevel(level.id)}*/>
-                                {parseInt(acces?.edit_level) && level?.edit ? (
+                                {parseInt(acces?.edit_level_access) && level?.edit ? (
                                   <Tooltip title={<Typography color="inherit">Редактировать</Typography>}>
                                     <EditIcon />
                                   </Tooltip>
@@ -845,7 +846,7 @@ class SitePriceLevel_Tab_Level extends React.Component {
                             
                           </TableCell>
                           <TableCell>
-                            {parseInt(acces?.delete_level) && level?.delete ? (
+                            {parseInt(acces?.delete_level_acceess) && level?.delete ? (
                               <IconButton onClick={() => this.setState({ confirmDialog: true, delete_level: level })}>
                                 <CloseIcon />
                               </IconButton>

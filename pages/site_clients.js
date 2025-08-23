@@ -269,27 +269,27 @@ class SiteClients_ extends React.Component {
 		for (let key in acces) {
 			if (parseInt(acces[key])) {
 
-				if (key === 'search_clients') {
+				if (key === 'search_clients_access') {
 					tabs_data.push({key, 'name': "Поиск клиента"});
 				}
 
-				if (key === 'search_orders') {
+				if (key === 'search_orders_access') {
 					tabs_data.push({key, 'name': "Поиск заказов"});
 				}
 
-				if (key === 'find_orders_more') {
+				if (key === 'find_orders_more_access') {
 					tabs_data.push({key, 'name': "Поиск заказов расширенный"});
 				}
 
-				if (key === 'find_clients') {
+				if (key === 'find_clients_access') {
 					tabs_data.push({key, 'name': "Поиск клиентов"});
 				}
 
-				if (key === 'search_address') {
+				if (key === 'search_address_access') {
 					tabs_data.push({key, 'name': "Заказы по адресам"});
 				}
 
-				if (key === 'source_traffic') {
+				if (key === 'source_traffic_access') {
 					tabs_data.push({key, 'name': "Аналитика по оформленным заказам"});
 				}
 
@@ -1301,7 +1301,7 @@ class SiteClients_ extends React.Component {
 									</Button>
 								</Grid>
 
-								{!parseInt(this.state.acces?.download_file) ? null :
+								{!parseInt(this.state.acces?.download_file_access) ? null :
 									!this.state.search_orders.length ? null :
 										<Grid item xs={12} sm={2} x={{display: 'flex', alignItems: 'center'}}>
 											<Tooltip title={<Typography color="inherit">{'Скачать таблицу в Excel'}</Typography>}>

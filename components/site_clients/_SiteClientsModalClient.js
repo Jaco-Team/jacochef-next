@@ -327,7 +327,7 @@ export default class SiteClients_Modal_Client extends React.Component {
 										</Typography>
 									</Grid>
 
-									{parseInt(acces?.edit_mail) ?
+									{parseInt(acces?.edit_mail_access) ?
 										<Grid item xs={12} sm={12} mb={3} className='mail_box'>
 											<Typography style={{fontWeight: 'bold', whiteSpace: 'nowrap'}}>
 												Эл почта:
@@ -359,7 +359,7 @@ export default class SiteClients_Modal_Client extends React.Component {
 										</Typography>
 									</Grid>
 
-									{parseInt(acces?.edit_bir) ?
+									{parseInt(acces?.edit_bir_access) ?
 										<Grid item xs={12} sm={12} mb={3} className='select_box'>
 											<Typography style={{fontWeight: 'bold', whiteSpace: 'nowrap'}}>
 												Дата рождения:
@@ -419,7 +419,7 @@ export default class SiteClients_Modal_Client extends React.Component {
 									</Grid>
 
 									<Grid item xs={12} sm={12}>
-										{!parseInt(acces?.edit_bir) && !parseInt(acces?.edit_mail) ? null :
+										{!parseInt(acces?.edit_bir_access) && !parseInt(acces?.edit_mail_access) ? null :
 											<Button variant="contained" color='success' onClick={this.saveEdit.bind(this)}>
 												Сохранить
 											</Button>
@@ -432,7 +432,7 @@ export default class SiteClients_Modal_Client extends React.Component {
 						{/* О клиенте */}
 
 						{/* Заказы */}
-						{!parseInt(acces?.view_orders) ? null :
+						{!parseInt(acces?.view_orders_access) ? null :
 							<Grid item xs={12} sm={12}>
 								<TabPanel value={this.state.activeTab} index={1} id='client'>
 									<TableContainer sx={{maxHeight: {xs: 'none', sm: 607}}} component={Paper}>
@@ -476,7 +476,7 @@ export default class SiteClients_Modal_Client extends React.Component {
 						{/* Заказы */}
 
 						{/* Оформленные ошибки */}
-						{!parseInt(acces?.view_err) ? null :
+						{!parseInt(acces?.view_err_access) ? null :
 							<Grid item xs={12} sm={12}>
 								<TabPanel value={this.state.activeTab} index={2} id='client'>
 									<TableContainer sx={{maxHeight: {xs: 'none', sm: 607}}} component={Paper}>
@@ -511,7 +511,7 @@ export default class SiteClients_Modal_Client extends React.Component {
 						{/* Оформленные ошибки */}
 
 						{/* Обращения */}
-						{!parseInt(acces?.view_comment) ? null :
+						{!parseInt(acces?.view_comment_access) ? null :
 							<Grid item xs={12} sm={12}>
 								<TabPanel value={this.state.activeTab} index={3} id='client'>
 									{!comments.length ? null :
@@ -589,11 +589,11 @@ export default class SiteClients_Modal_Client extends React.Component {
 						{/* Обращения */}
 
 						{/* Авторизации */}
-						{!parseInt(acces?.view_auth) ? null :
+						{!parseInt(acces?.view_auth_access) ? null :
 							<Grid item xs={12} sm={12}>
 								<TabPanel value={this.state.activeTab} index={4} id='client'>
 
-									{parseInt(acces?.send_code) ?
+									{parseInt(acces?.send_code_access) ?
 										<Grid item xs={12} sm={12}>
 											<Button variant="contained" color='success' onClick={() => this.setState({confirmDialog: true})}>
 												Выслать новый код

@@ -623,7 +623,7 @@ export default function OrdersMore() {
 				status={errStatus}
 				text={errText}
 			/>
-			{parseInt(acces.send_feedback) === 1 ?
+			{parseInt(acces.send_feedback_access) === 1 ?
 				(<ModalOrderWithFeedback
 					getData={getData}
 					openOrder={openOrder}

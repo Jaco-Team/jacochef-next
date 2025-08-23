@@ -35,6 +35,8 @@ export default function JParamModal({
   useEffect(() => {
     if (propItem) {
       setItem(propItem);
+
+      console.log('propItem', propItem)
     }
   }, [propItem]);
 
