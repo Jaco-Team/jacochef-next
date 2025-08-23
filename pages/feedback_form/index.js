@@ -19,19 +19,20 @@ function FeedbackPage() {
 	const [active, setActive] = useState({});
 	const router = useRouter();
 	const tabsData = {
-    add_feedback: 'Добавление новой формы',
-  };
+    	add_feedback: 'Добавление новой формы',
+  	};
 
 	useEffect(() => {
 		getData('get_all').then((data) => {
 			document.title = data.module_info.name;
 			setModule(data.module_info);
 			setFormsActive(data.forms_active);
-			const tabsCheck = Object.entries(tabsData).filter(([key]) => data.acces[key] === '1');
+			const tabsCheck = Object.entries(tabsData).filter(([key]) => data.acces[key + '_access'] === '1');
 			setActive(Object.fromEntries(tabsCheck));
 			setFormsNonActive(data.forms_nonactive);
 		});
 	}, []);
+
 	const getData = async (method, data = {}) => {
 		setIsLoad(true);
 
