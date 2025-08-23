@@ -6,9 +6,6 @@ import { api_laravel } from '@/src/api_new';
 import { Backdrop, Button, CircularProgress, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import AppointmentModal from '@/components/appointment/AppointmentModal';
 
-
-
-
 class Appointment_ extends React.Component {
   constructor(props) {
     super(props);

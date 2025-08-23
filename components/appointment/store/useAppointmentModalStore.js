@@ -60,7 +60,6 @@ export const useAppointmentModalStore = create(
         const features = state.full_menu[main_key]?.chaild[parent_key]?.features || [];
         const features_cat = state.full_menu[main_key]?.chaild[parent_key]?.features_cat || [];
         const data = [...features, ...features_cat];
-        if (!data) return;
         const table_data = [];
         const accordion_data = [];
         data?.forEach((param, index) => {
@@ -119,7 +118,9 @@ export const useAppointmentModalStore = create(
             : event?.target?.value;
 
         const updateFeature = (features) => {
-          if (!features?.[fi]) return;
+          if (!features?.[fi]) {
+            return;
+          }
           features[fi] = { ...features[fi], [key]: value };
         };
 
@@ -128,6 +129,7 @@ export const useAppointmentModalStore = create(
         } else {
           updateFeature(parent.features);
         }
+        // state.setUiParams();
       });
     },
 
