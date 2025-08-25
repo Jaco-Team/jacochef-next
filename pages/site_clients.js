@@ -267,29 +267,32 @@ class SiteClients_ extends React.Component {
 		let tabs_data = [];
 
 		for (let key in acces) {
+
+			console.log(key);
+
 			if (parseInt(acces[key])) {
 
-				if (key === 'search_clients_access') {
+				if (key === 'search_clients_access' && parseInt(acces[key]) == 1) {
 					tabs_data.push({key, 'name': "Поиск клиента"});
 				}
 
-				if (key === 'search_orders_access') {
+				if (key === 'search_orders_access' && parseInt(acces[key]) == 1) {
 					tabs_data.push({key, 'name': "Поиск заказов"});
 				}
 
-				if (key === 'find_orders_more_access') {
+				if (key === 'find_orders_more_access' && parseInt(acces[key]) == 1) {
 					tabs_data.push({key, 'name': "Поиск заказов расширенный"});
 				}
 
-				if (key === 'find_clients_access') {
+				if (key === 'find_clients_access' && parseInt(acces[key]) == 1) {
 					tabs_data.push({key, 'name': "Поиск клиентов"});
 				}
 
-				if (key === 'search_address_access') {
+				if (key === 'search_address_access' && parseInt(acces[key]) == 1) {
 					tabs_data.push({key, 'name': "Заказы по адресам"});
 				}
 
-				if (key === 'source_traffic_access') {
+				if (key === 'source_traffic_access' && parseInt(acces[key]) == 1) {
 					tabs_data.push({key, 'name': "Аналитика по оформленным заказам"});
 				}
 
@@ -299,37 +302,37 @@ class SiteClients_ extends React.Component {
 		tabs_data.forEach((item, index) => {
 
 
-			if (item.key === 'search_clients') {
+			if (item.key === 'search_clients_access') {
 				this.setState({
 					index_clients: index
 				});
 			}
 
-			if (item.key === 'find_orders_more') {
+			if (item.key === 'find_orders_more_access') {
 				this.setState({
 					index_order_more: index
 				});
 			}
 
-			if (item.key === 'find_clients') {
+			if (item.key === 'find_clients_access') {
 				this.setState({
 					index_search_clients: index
 				});
 			}
 
-			if (item.key === 'search_orders') {
+			if (item.key === 'search_orders_access') {
 				this.setState({
 					index_orders: index
 				});
 			}
 
-			if (item.key === 'search_address') {
+			if (item.key === 'search_address_access') {
 				this.setState({
 					index_address: index
 				});
 			}
 
-			if (item.key === 'source_traffic') {
+			if (item.key === 'source_traffic_access') {
 				this.setState({
 					index_traffic: index
 				});
