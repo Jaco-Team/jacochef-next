@@ -651,7 +651,7 @@ export default function OrdersMore() {
 					xs: 'column-reverse'
 				}
 			}}
-						style={{marginTop: '64px', marginBottom: '24px'}}
+						style={{marginBottom: '24px'}}
 			>
 
 				<Grid container spacing={2} justifyContent="center" mb={3} mt={0}>
@@ -666,6 +666,21 @@ export default function OrdersMore() {
 									date_end_true: dayjs().subtract(1, 'day'),
 									date_start_false: dayjs().subtract(6, 'month'),
 									date_end_false: dayjs().subtract(92, 'day'),
+									count_orders_min: 1
+								}));
+							}}>
+							Вернувшиеся
+						</Button>
+						<Button
+							variant="contained"
+							style={{marginLeft: '20px', whiteSpace: 'nowrap'}}
+							onClick={() => {
+								setFormData((prev) => ({
+									...prev,
+									date_start_false: dayjs().subtract(91, 'day'),
+									date_end_false: dayjs().subtract(1, 'day'),
+									date_start_true: dayjs().subtract(6, 'month'),
+									date_end_true: dayjs().subtract(92, 'day'),
 									count_orders_min: 1
 								}));
 							}}>
@@ -875,10 +890,8 @@ export default function OrdersMore() {
 												<TableCell>Получен клиентом</TableCell>
 												<TableCell>Время обещ</TableCell>
 												<TableCell>Тип</TableCell>
-												<TableCell>Статус</TableCell>
 												<TableCell>Сумма</TableCell>
 												<TableCell>Оплата</TableCell>
-												<TableCell>Водитель</TableCell>
 											</TableRow>
 										</TableHead>
 
@@ -936,10 +949,8 @@ export default function OrdersMore() {
 														{item.unix_time_to_client == '0' || parseInt(item.is_preorder) == 1 ? '' : item.unix_time_to_client}
 													</TableCell>
 													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.type_order}</TableCell>
-													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.status}</TableCell>
 													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.order_price}</TableCell>
 													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.type_pay}</TableCell>
-													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.driver}</TableCell>
 												</TableRow>
 											)}
 										</TableBody>
