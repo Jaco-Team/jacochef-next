@@ -2,14 +2,15 @@ export default function handleUserAccess(accessData) {
   /**
    * @param {'view'|'edit'} action action to check
    * @param {string} keyBase - name of access param
-   * @returns {boolean}
+   * @return {boolean}
    */
-  const userCan = (action = 'view', key) => {
+  const userCan = (action, key) => {
+    if (!accessData) return false;
     const keyBase = key.replace(/_(access|view|edit)$/, '');
-    const active = !!+accessData[`${keyBase}`];
-    const access = !!+accessData[`${keyBase}_access`];
-    const view = !!+accessData[`${keyBase}_view`];
-    const edit = !!+accessData[`${keyBase}_edit`];
+    const active = !!+accessData[`${keyBase}`] ?? false;
+    const access = !!+accessData[`${keyBase}_access`] ?? false;
+    const view = !!+accessData[`${keyBase}_view`] ?? false;
+    const edit = !!+accessData[`${keyBase}_edit`] ?? false;
     const can = {
       view: active && view || access || edit,
       edit: active && edit || access,

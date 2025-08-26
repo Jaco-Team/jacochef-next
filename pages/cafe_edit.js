@@ -46,85 +46,8 @@ import {MyAutocomplite, MyTextInput, MySelect, MyCheckBox, MyAlert, formatDate, 
 import {api_laravel} from "@/src/api_new";
 import dayjs from 'dayjs';
 import handleUserAccess from '@/src/helpers/access/handleUserAccess';
-
-const access = {
-  "organization_point": "1",
-  "organization_point_edit": 0,
-  "organization_point_view": 1,
-  "organization_point_access": 0,
-  "active_point": "1",
-  "active_point_edit": 0,
-  "active_point_view": 0,
-  "active_point_access": 1,
-  "telephone_point": "1",
-  "telephone_point_edit": 0,
-  "telephone_point_view": 0,
-  "telephone_point_access": 0,
-  "rate_point": "1",
-  "rate_point_edit": 0,
-  "rate_point_view": 0,
-  "rate_point_access": 0,
-  "pay_point": "1",
-  "pay_point_edit": 0,
-  "pay_point_view": 0,
-  "pay_point_access": 0,
-  "settings_point": "1",
-  "settings_point_edit": 0,
-  "settings_point_view": 0,
-  "settings_point_access": 0,
-  "zone_point": "1",
-  "zone_point_edit": 0,
-  "zone_point_view": 0,
-  "zone_point_access": 0,
-  "settings_driver": "1",
-  "settings_driver_edit": 0,
-  "settings_driver_view": 0,
-  "settings_driver_access": 0,
-  "kkt_info": "1",
-  "kkt_info_edit": 0,
-  "kkt_info_view": 0,
-  "kkt_info_access": 1,
-  "add_kkt": "1",
-  "add_kkt_edit": 0,
-  "add_kkt_view": 0,
-  "add_kkt_access": 0,
-  "edit_kkt": "1",
-  "edit_kkt_edit": 0,
-  "edit_kkt_view": 0,
-  "edit_kkt_access": 1,
-  "edit_kassa": "1",
-  "edit_kassa_edit": 0,
-  "edit_kassa_view": 0,
-  "edit_kassa_access": 1,
-  "edit_dop_kassa": "1",
-  "edit_dop_kassa_edit": 0,
-  "edit_dop_kassa_view": 0,
-  "edit_dop_kassa_access": 0,
-  "edit_rn_kkt": "1",
-  "edit_rn_kkt_edit": 0,
-  "edit_rn_kkt_view": 0,
-  "edit_rn_kkt_access": 1,
-  "edit_base": "1",
-  "edit_base_edit": 0,
-  "edit_base_view": 0,
-  "edit_base_access": 0,
-  "edit_fn": "1",
-  "edit_fn_edit": 0,
-  "edit_fn_view": 0,
-  "edit_fn_access": 1,
-  "edit_license": "1",
-  "edit_license_edit": 0,
-  "edit_license_view": 0,
-  "edit_license_access": 0,
-  "edit_active": "1",
-  "edit_active_edit": 0,
-  "edit_active_view": 0,
-  "edit_active_access": 1,
-  "add_fn": "1",
-  "add_fn_edit": 0,
-  "add_fn_view": 0,
-  "add_fn_access": 0
-}
+import CafeEdit_Modal_Kkt_Info_Add from '@/components/cafe_edit/CafeEdit_Modal_Kkt_Info_Add';
+import CafeEdit_Modal_Kkt_Info from '@/components/cafe_edit/CafeEdit_Modal_Kkt_Info';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -157,599 +80,6 @@ function a11yProps(index) {
   };
 }
 
-class CafeEdit_Modal_Kkt_Info_Add extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      date_start: formatDate(new Date()),
-      date_end: formatDate(new Date()),
-
-      new_fn: '',
-
-      openAlert: false,
-      err_status: true,
-      err_text: '',
-
-    };
-  }
-
-  changeItem(data, event) {
-    this.setState({
-      [data]: event.target.value,
-    });
-  }
-
-  changeDateRange(data, event) {
-    this.setState({
-      [data]: event || null,
-    });
-  }
-
-  add_new_fn() {
-    let { new_fn, date_start, date_end } = this.state;
-
-    if(!date_start || !date_end){
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Указание дат обязательно',
-      });
-
-      return;
-    }
-
-    if(!new_fn){
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Указание номера обязательно',
-      });
-
-      return;
-    }
-
-    this.props.addFN(new_fn, date_start, date_end);
-
-    this.onClose();
-
-  }
-
-  onClose() {
-    this.setState({
-      date_start: formatDate(new Date()),
-      date_end: formatDate(new Date()),
-      new_fn: '',
-      openAlert: false,
-      err_status: true,
-      err_text: '',
-    });
-
-    this.props.onClose();
-  }
-
-  render() {
-
-    const { open, fullScreen } = this.props;
-
-    return (
-      <>
-        <MyAlert
-          isOpen={this.state.openAlert}
-          onClose={() => this.setState({ openAlert: false })}
-          status={this.state.err_status}
-          text={this.state.err_text}
-        />
-
-        <Dialog
-          open={open}
-          onClose={this.onClose.bind(this)}
-          fullScreen={fullScreen}
-          fullWidth
-          maxWidth="sm"
-        >
-          <DialogTitle style={{ display: 'flex', alignItems: 'center' }}>
-            Добавить ФН
-            <IconButton onClick={this.onClose.bind(this)} style={{ marginLeft: 'auto' }}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <MyDatePickerNew
-                  label="Дата регистрации"
-                  value={this.state.date_start}
-                  func={this.changeDateRange.bind(this, 'date_start')}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <MyDatePickerNew
-                  label="Дата окончания"
-                  value={this.state.date_end}
-                  func={this.changeDateRange.bind(this, 'date_end')}
-                />
-              </Grid>
-              <Grid item xs={12} sm={12}>
-                <MyTextInput
-                  label="ФН"
-                  value={this.state.new_fn}
-                  func={this.changeItem.bind(this, 'new_fn')}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button variant="contained" onClick={this.add_new_fn.bind(this)}>Добавить</Button>
-          </DialogActions>
-        </Dialog>
-
-      </>
-    );
-  }
-}
-
-class CafeEdit_Modal_Kkt_Info extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      date_license: null,
-      rn_kkt: '',
-      fn: '',
-      kassa: '',
-      dop_kassa: '',
-      base: '',
-      is_active: 1,
-      kass: [
-        { id: '1', name: '1' },
-        { id: '2', name: '2' },
-        { id: '3', name: '3' },
-        { id: '4', name: '4' },
-        { id: '5', name: '5' },
-        { id: '6', name: '6' },
-      ],
-      dop_kass: [
-        { id: '1', name: '1' },
-        { id: '2', name: '2' },
-        { id: '3', name: '3' },
-        { id: '4', name: '4' },
-        { id: '5', name: '5' },
-        { id: '6', name: '6' },
-      ],
-      all_fn: [],
-      openAlert: false,
-      err_status: true,
-      err_text: '',
-      addDialog: false,
-    };
-  }
-
-  componentDidUpdate(prevProps) {
-    // console.log(this.props.kkt);
-
-    if (!this.props) {
-      return;
-    }
-
-    if (this.props !== prevProps) {
-
-      this.setState({
-        all_fn: this.props.kkt?.all_fn ?? [],
-      });
-
-      if (this.props.type === 'update_kkt' || this.props.type === 'view_kkt') {
-
-        const dateStart = dayjs(this.props.kkt?.date_start).format('YYYY-MM-DD').split('-').reverse().join('-');
-        const dateEnd = dayjs(this.props.kkt?.date_end).format('YYYY-MM-DD').split('-').reverse().join('-');
-        const name = `${this.props.kkt?.fn} ( с ${dateStart} по ${dateEnd} )`;
-
-        let kkt_fn = { id: this.props.kkt?.fn, name, date_start: dayjs(this.props.kkt?.date_start).format('YYYY-MM-DD'), date_end: dayjs(this.props.kkt?.date_end).format('YYYY-MM-DD') };
-
-        this.setState({
-          rn_kkt: this.props.kkt.rn_kkt,
-          fn: kkt_fn,
-          kassa: this.props.kkt.kassa,
-          dop_kassa: this.props.kkt.dop_kassa,
-          base: this.props.kkt.base,
-          is_active: parseInt(this.props.kkt.is_active),
-          date_license: this.props.kkt.date_license ? formatDate(this.props.kkt.date_license) : null
-        });
-
-      } else {
-
-        this.setState({
-          rn_kkt: '',
-          fn: '',
-          kassa: '',
-          dop_kassa: '',
-          base: '',
-          is_active: 1,
-        });
-
-      }
-    }
-  }
-
-  changeItem(data, event) {
-    this.setState({
-      [data]: event.target.value,
-    });
-  }
-
-  changeDateRange(data, event) {
-    this.setState({
-      [data]: event || null,
-    });
-  }
-
-  changeSelect(data, event) {
-    this.setState({
-      [data]: event.target.value,
-    });
-  }
-
-  changeItemChecked(data, event) {
-    const value = event.target.checked === true ? 1 : 0;
-    this.setState({
-      [data]: value,
-    });
-  }
-
-  changeFN(event, value) {
-    if(value && parseInt(value?.id) === 0){
-
-      this.setState({
-        addDialog: true,
-      });
-
-    }
-
-    this.setState({
-      fn: value,
-    });
-
-  }
-
-  addFN(new_fn, date_start, date_end) {
-
-    let { all_fn } = this.state;
-
-    if(!date_start || !date_end){
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Указание дат обязательно',
-      });
-
-      return;
-    }
-
-    if(!new_fn){
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Указание номера обязательно',
-      });
-
-      return;
-    }
-
-    const dateStart = dayjs(date_start).format('YYYY-MM-DD').split('-').reverse().join('-');
-    const dateEnd = dayjs(date_end).format('YYYY-MM-DD').split('-').reverse().join('-');
-    const name = `${new_fn} ( с ${dateStart} по ${dateEnd} )`;
-
-    let add_fn = { id: new_fn, name, date_start: dayjs(date_start).format('YYYY-MM-DD'), date_end: dayjs(date_end).format('YYYY-MM-DD') };
-
-    all_fn = [...this.state.all_fn, ...[add_fn]];
-
-    this.setState({
-      date_start: formatDate(new Date()),
-      date_end: formatDate(new Date()),
-      new_fn: '',
-      all_fn,
-      addDialog: false,
-      fn: add_fn
-    });
-
-  }
-
-  close_modal() {
-    let { rn_kkt, fn, kassa, dop_kassa, base, is_active, date_license } = this.state;
-
-    if(!fn || parseInt(fn?.id) === 0) {
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо указать ФН',
-      });
-
-      return;
-    }
-
-    if(!rn_kkt || !kassa || !dop_kassa || !base || !date_license){
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо заполнить все поля',
-      });
-
-      return;
-    }
-
-    date_license = dayjs(date_license).format('YYYY-MM-DD');
-
-    const data = {
-      date_start: fn.date_start,
-      date_end: fn.date_end,
-      fn: fn.id,
-      rn_kkt,
-      kassa,
-      dop_kassa,
-      base,
-      is_active,
-      date_license
-    };
-
-    this.props.save_kkt(data);
-
-    this.onClose();
-  }
-
-  onClose() {
-    this.setState({
-      date_license: null,
-      rn_kkt: '',
-      fn: '',
-      kassa: '',
-      dop_kassa: '',
-      base: '',
-      is_active: 1,
-      all_fn: [],
-      openAlert: false,
-      err_status: true,
-      err_text: '',
-      addDialog: false,
-    });
-
-    this.props.onClose();
-  }
-
-  render() {
-
-    const { open, fullScreen, pointModal, type, acces } = this.props;
-
-    return (
-      <>
-        <MyAlert
-          isOpen={this.state.openAlert}
-          onClose={() => this.setState({ openAlert: false })}
-          status={this.state.err_status}
-          text={this.state.err_text}
-        />
-
-        <CafeEdit_Modal_Kkt_Info_Add
-          open={this.state.addDialog}
-          onClose={() => this.setState({ addDialog: false })}
-          fullScreen={fullScreen}
-          addFN={this.addFN.bind(this)}
-        />
-
-        <Dialog
-          open={open}
-          onClose={this.onClose.bind(this)}
-          fullScreen={fullScreen}
-          fullWidth
-          maxWidth="md"
-        >
-          <DialogTitle style={{ display: 'flex', alignItems: 'center' }}>
-            <Typography>Точка:{' '}<span style={{ fontWeight: 'bold' }}>{pointModal}</span></Typography>
-            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', marginLeft: 'auto' }}><CloseIcon /></IconButton>
-          </DialogTitle>
-
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3}>
-            {type === 'view_kkt' ?
-              <>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Номер кассы"
-                    value={this.state.kassa}
-                    disabled={true}
-                    className="disabled_input"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Доп касса"
-                    value={this.state.dop_kassa}
-                    disabled={true}
-                    className="disabled_input"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="РН ККТ"
-                    value={this.state.rn_kkt}
-                    disabled={true}
-                    className="disabled_input"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="База"
-                    value={this.state.base}
-                    disabled={true}
-                    className="disabled_input"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={12}>
-                  <MyTextInput
-                    label="ФН"
-                    value={this.state.fn?.name ?? ''}
-                    disabled={true}
-                    className="disabled_input"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Лицензия ОФД дата завершения"
-                    value={this.state.date_license}
-                    disabled={true}
-                    className="disabled_input"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="Активность"
-                    value={parseInt(this.state.is_active) === 1 ? 'Активна' : 'Не активна'}
-                    disabled={true}
-                    className="disabled_input"
-                  />
-                </Grid>
-              </>
-              :
-              <>
-                <Grid item xs={12} sm={6}>
-                  {type === 'add_kkt' || parseInt(acces?.edit_kassa) ?
-                    <MySelect
-                      is_none={false}
-                      data={this.state.kass}
-                      value={this.state.kassa}
-                      func={this.changeSelect.bind(this, 'kassa')}
-                      label="Номер кассы"
-                    />
-                    :
-                    <MyTextInput
-                      label="Номер кассы"
-                      value={this.state.kassa}
-                      disabled={true}
-                      className="disabled_input"
-                    />
-                  }
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  {type === 'add_kkt' || parseInt(acces?.edit_dop_kassa) ?
-                    <MySelect
-                      is_none={false}
-                      data={this.state.dop_kass}
-                      value={this.state.dop_kassa}
-                      func={this.changeSelect.bind(this, 'dop_kassa')}
-                      label="Доп касса"
-                    />
-                    :
-                    <MyTextInput
-                      label="Доп касса"
-                      value={this.state.dop_kassa}
-                      disabled={true}
-                      className="disabled_input"
-                    />
-                  }
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  {type === 'add_kkt' || parseInt(acces?.edit_rn_kkt) ?
-                    <MyTextInput
-                      label="РН ККТ"
-                      value={this.state.rn_kkt}
-                      func={this.changeItem.bind(this, 'rn_kkt')}
-                    />
-                    :
-                    <MyTextInput
-                      label="РН ККТ"
-                      value={this.state.rn_kkt}
-                      disabled={true}
-                      className="disabled_input"
-                    />
-                  }
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  {type === 'add_kkt' || parseInt(acces?.edit_base) ?
-                    <MyTextInput
-                      label="База"
-                      value={this.state.base}
-                      func={this.changeItem.bind(this, 'base')}
-                    />
-                    :
-                    <MyTextInput
-                      label="База"
-                      value={this.state.base}
-                      disabled={true}
-                      className="disabled_input"
-                    />
-                  }
-                </Grid>
-                <Grid item xs={12} sm={12}>
-                  {type === 'add_kkt' || parseInt(acces?.edit_fn) ?
-                    <MyAutocomplite
-                      label="ФН"
-                      multiple={false}
-                      data={this.state.all_fn}
-                      value={this.state.fn}
-                      func={this.changeFN.bind(this)}
-                    />
-                    :
-                    <MyTextInput
-                      label="ФН"
-                      value={this.state.fn?.name ?? ''}
-                      disabled={true}
-                      className="disabled_input"
-                    />
-                  }
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  {type === 'add_kkt' || parseInt(acces?.edit_license) ?
-                    <MyDatePickerNew
-                      label="Лицензия ОФД дата завершения"
-                      value={this.state.date_license}
-                      func={this.changeDateRange.bind(this, 'date_license')}
-                    />
-                    :
-                    <MyTextInput
-                      label="Лицензия ОФД дата завершения"
-                      value={this.state.date_license}
-                      disabled={true}
-                      className="disabled_input"
-                    />
-                  }
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  {type === 'add_kkt' || parseInt(acces?.edit_active) ?
-                    <MyCheckBox
-                      value={parseInt(this.state.is_active) === 1 ? true : false}
-                      func={this.changeItemChecked.bind(this, 'is_active')}
-                      label="Активность"
-                    />
-                    :
-                    <MyTextInput
-                      label="Активность"
-                      value={parseInt(this.state.is_active) === 1 ? 'Активна' : 'Не активна'}
-                      disabled={true}
-                      className="disabled_input"
-                    />
-                  }
-                </Grid>
-              </>
-            }
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            {type === 'view_kkt' ? null :
-              <Button variant="contained" onClick={this.close_modal.bind(this)}>
-                {type === 'update_kkt' ? 'Сохранить изменения' : 'Добавить кассу'}
-              </Button>
-            }
-          </DialogActions>
-        </Dialog>
-      </>
-    );
-  }
-}
 
 class CafeEdit_Modal_History extends React.Component {
   constructor(props) {
@@ -1645,7 +975,7 @@ class CafeEdit_ extends React.Component {
       module_name: '',
       is_load: false,
 
-      acces: access,
+      acces: null,
 
       fullScreen: false,
 
@@ -2969,6 +2299,8 @@ class CafeEdit_ extends React.Component {
           fullScreen={this.state.fullScreen}
           save_kkt={this.save_kkt.bind(this)}
           acces={this.state.acces}
+          canView={this.canView.bind(this)}
+          canEdit={this.canEdit.bind(this)}
         />
 
         <CafeEdit_Modal_Kkt_Info_Add
@@ -3256,10 +2588,11 @@ class CafeEdit_ extends React.Component {
               index={this.state.index_rate}
               id='rate'
             >
+              {this.canView('rate_point') && 
               <Grid container spacing={3}>
-
                 <Grid item xs={12} sm={4}>
                   <MyTextInput
+                    disabled={!this.canEdit('rate_point')}
                     label="Коэффициент количества пиццы в час"
                     value={this.state.point_info?.k_pizza ?? ''}
                     func={this.changeData.bind(this, 'k_pizza')}
@@ -3268,6 +2601,7 @@ class CafeEdit_ extends React.Component {
 
                 <Grid item xs={12} sm={4}>
                   <MyTextInput
+                    disabled={!this.canEdit('rate_point')}
                     label="Коэффициент мойки посуды для пиццы (кух раб)"
                     value={this.state.point_info?.k_pizza_kux ?? ''}
                     func={this.changeData.bind(this, 'k_pizza_kux')}
@@ -3276,12 +2610,14 @@ class CafeEdit_ extends React.Component {
 
                 <Grid item xs={12} sm={4}>
                   <MyTextInput
+                    disabled={!this.canEdit('rate_point')}
                     label="Коэффициент мойки посуды для роллов (кух раб)"
                     value={this.state.point_info?.k_rolls_kux ?? ''}
                     func={this.changeData.bind(this, 'k_rolls_kux')}
                   />
                 </Grid>
-
+  
+                {this.canEdit('rate_point') && 
                 <Grid item xs={12} sm={12} display='grid'>
                   <Button
                     onClick={this.open_edit_point.bind(this, 'rate')}
@@ -3292,8 +2628,9 @@ class CafeEdit_ extends React.Component {
                     Выбрать дату применения
                   </Button>
                 </Grid>
+                }
 
-                {!this.state.point_rate_hist.length ? null :
+                {this.canEdit('rate_point') && this.state.point_rate_hist.length > 0 &&
                   <Grid item xs={12} sm={12} mb={5}>
                     <Accordion style={{ width: '100%' }}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -3329,6 +2666,7 @@ class CafeEdit_ extends React.Component {
                 }
 
               </Grid>
+              }
             </TabPanel>
           </Grid>
 
@@ -3800,9 +3138,11 @@ class CafeEdit_ extends React.Component {
                               : null
                             }
                             <TableCell>
-                              <IconButton onClick={this.openModalKktInfo.bind(this, parseInt(this.state.acces?.edit_kkt) ? 'update_kkt' : 'view_kkt', item)}>
-                                {parseInt(this.state.acces?.edit_kkt) ? <EditIcon /> : <VisibilityIcon />}
-                              </IconButton>
+                              {this.canView('edit_kkt') && 
+                                <IconButton onClick={this.openModalKktInfo.bind(this, this.canEdit('edit_kkt') ? 'update_kkt' : 'view_kkt', item)}>
+                                  {parseInt(this.state.acces?.edit_kkt) ? <EditIcon /> : <VisibilityIcon />}
+                                </IconButton>
+                              }
                             </TableCell>
                           </TableRow>
                         ))}
