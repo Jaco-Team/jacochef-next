@@ -7,13 +7,13 @@ export default function handleUserAccess(accessData) {
   const userCan = (action, key) => {
     if (!accessData) return false;
     const keyBase = key.replace(/_(access|view|edit)$/, '');
-    const active = !!+accessData[`${keyBase}`] ?? false;
-    const access = !!+accessData[`${keyBase}_access`] ?? false;
-    const view = !!+accessData[`${keyBase}_view`] ?? false;
-    const edit = !!+accessData[`${keyBase}_edit`] ?? false;
+    const active = !!accessData[`${keyBase}`];
+    const access = !!accessData[`${keyBase}_access`];
+    const view = !!accessData[`${keyBase}_view`];
+    const edit = !!accessData[`${keyBase}_edit`];
     const can = {
-      view: active && view || access || edit,
-      edit: active && edit || access,
+      view: active && (view || access || edit),
+      edit: active && (edit || access),
     };
     return can[action] ?? false;
   }

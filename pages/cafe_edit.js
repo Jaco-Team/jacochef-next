@@ -48,6 +48,9 @@ import dayjs from 'dayjs';
 import handleUserAccess from '@/src/helpers/access/handleUserAccess';
 import CafeEdit_Modal_Kkt_Info_Add from '@/components/cafe_edit/CafeEdit_Modal_Kkt_Info_Add';
 import CafeEdit_Modal_Kkt_Info from '@/components/cafe_edit/CafeEdit_Modal_Kkt_Info';
+import CafeEdit_Modal_Close_Cafe from '@/components/cafe_edit/CafeEdit_Modal_Close_Cafe';
+import CafeEdit_Modal_History from '@/components/cafe_edit/CafeEdit_Modal_History';
+import CafeEdit_Modal_Edit from '@/components/cafe_edit/CafeEdit_Modal_Edit';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -78,646 +81,6 @@ function a11yProps(index) {
     id: `simple-tab-${index}`,
     'aria-controls': `simple-tabpanel-${index}`,
   };
-}
-
-
-class CafeEdit_Modal_History extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      itemView: null,
-    };
-  }
-
-  componentDidUpdate(prevProps) {
-    // console.log(this.props.itemView);
-
-    if (!this.props) {
-      return;
-    }
-
-    if (this.props !== prevProps) {
-      this.setState({
-        itemView: this.props.itemView
-      });
-    }
-  }
-
-  onClose() {
-    this.setState({
-      itemView: null,
-    });
-
-    this.props.onClose();
-  }
-
-  render() {
-
-    const { open, fullScreen, type_modal, date_edit } = this.props
-
-    return (
-      <Dialog
-        open={open}
-        fullWidth={true}
-        maxWidth={'md'}
-        onClose={this.onClose.bind(this)}
-        fullScreen={fullScreen}
-      >
-        <DialogTitle className="button">
-          <Typography style={{ alignSelf: 'center' }}>
-            {type_modal !== 'zone' ? 'Изменения выделены цветом' : 'Изменения в зоне доставки'}
-          </Typography>
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3}>
-
-            {type_modal === 'info' ?
-              <>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Город"
-                    value={this.state.itemView ? this.state.itemView.city_id?.color ? this.state.itemView.city_id.key : this.state.itemView.city_id : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.city_id?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Адрес"
-                    value={this.state.itemView ? this.state.itemView.addr?.color ? this.state.itemView.addr.key : this.state.itemView.addr : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.addr?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="Район"
-                    value={this.state.itemView ? this.state.itemView.raion?.color ? this.state.itemView.raion.key : this.state.itemView.raion : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.raion?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="Сортировка"
-                    value={this.state.itemView ? this.state.itemView.sort?.color ? this.state.itemView.sort.key : this.state.itemView.sort : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.sort?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="Организация"
-                    value={this.state.itemView ? this.state.itemView.organization?.color ? this.state.itemView.organization.key : this.state.itemView.organization : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.organization?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="ИНН"
-                    value={this.state.itemView ? this.state.itemView.inn?.color ? this.state.itemView.inn.key : this.state.itemView.inn : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.inn?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="ОГРН"
-                    value={this.state.itemView ? this.state.itemView.ogrn?.color ? this.state.itemView.ogrn.key : this.state.itemView.ogrn : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.ogrn?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="КПП"
-                    value={this.state.itemView ? this.state.itemView.kpp?.color ? this.state.itemView.kpp.key : this.state.itemView.kpp : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.kpp?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="Телефон управляющего"
-                    value={this.state.itemView ? this.state.itemView.phone_upr?.color ? this.state.itemView.phone_upr.key : this.state.itemView.phone_upr : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.phone_upr?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="Почта управляющего"
-                    value={this.state.itemView ? this.state.itemView.mail?.color ? this.state.itemView.mail.key : this.state.itemView.mail : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.mail?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="Телефон менеджера"
-                    value={this.state.itemView ? this.state.itemView.phone_man?.color ? this.state.itemView.phone_man.key : this.state.itemView.phone_man : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.phone_man?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <MyTextInput
-                    label="Активность"
-                    value={this.state.itemView ? this.state.itemView.is_active?.color ? this.state.itemView.is_active.key : this.state.itemView.is_active : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.is_active?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={12}>
-                  <MyTextInput
-                    label="Полный адрес"
-                    value={this.state.itemView ? this.state.itemView.full_addr?.color ? this.state.itemView.full_addr.key : this.state.itemView.full_addr : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.full_addr?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-              </>
-            : null}
-
-            {type_modal === 'rate' ?
-              <>
-                {!date_edit ? null :
-                  <Grid item xs={12} sm={12}>
-                    <Typography style={{ alignSelf: 'center', fontWeight: 'bold' }}>
-                      Дата начала изменений: {date_edit ?? ''}
-                    </Typography>
-                  </Grid>
-                }
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Коэффициент количества пиццы в час"
-                    value={this.state.itemView ? this.state.itemView.k_pizza?.color ? this.state.itemView.k_pizza.key : this.state.itemView.k_pizza : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.k_pizza?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Коэффициент мойки посуды для пиццы (кух раб)"
-                    value={this.state.itemView ? this.state.itemView.k_pizza_kux?.color ? this.state.itemView.k_pizza_kux.key : this.state.itemView.k_pizza_kux : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.k_pizza_kux?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Коэффициент мойки посуды для роллов (кух раб)"
-                    value={this.state.itemView ? this.state.itemView.k_rolls_kux?.color ? this.state.itemView.k_rolls_kux.key : this.state.itemView.k_rolls_kux : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.k_rolls_kux?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-              </>
-            : null}
-
-            {type_modal === 'pay' ?
-              <>
-                {!date_edit ? null :
-                  <Grid item xs={12} sm={12}>
-                    <Typography style={{ alignSelf: 'center', fontWeight: 'bold' }}>
-                      Дата начала изменений: {date_edit ?? ''}
-                    </Typography>
-                  </Grid>
-                }
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Оклад директора на 2 недели"
-                    value={this.state.itemView ? this.state.itemView.dir_price?.color ? this.state.itemView.dir_price.key : this.state.itemView.dir_price : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.dir_price?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Бонус от уровня директору"
-                    value={this.state.itemView ? this.state.itemView.price_per_lv?.color ? this.state.itemView.price_per_lv.key : this.state.itemView.price_per_lv : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.price_per_lv?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Часовая ставка курьера"
-                    value={this.state.itemView ? this.state.itemView.driver_price?.color ? this.state.itemView.driver_price.key : this.state.itemView.driver_price : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.driver_price?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-              </>
-            : null}
-
-            {type_modal === 'sett' ?
-              <>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Если в заказе только пицца, она выйдет на сборку после начала ее приготовления (напитки, допы и закуски не учитываются)"
-                    value={this.state.itemView ? this.state.itemView.priority_pizza?.color ? this.state.itemView.priority_pizza.key : this.state.itemView.priority_pizza : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.priority_pizza?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Если заказ приготовить зарнее - он выйдет в приоритете на сборку, кроме предов (напитки, допы и закуски не учитываются)"
-                    value={this.state.itemView ? this.state.itemView.priority_order?.color ? this.state.itemView.priority_order.key : this.state.itemView.priority_order : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.priority_order?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Пицца у повара будет отображаться, если более 50% роллов в заказе начнут готовить"
-                    value={this.state.itemView ? this.state.itemView.rolls_pizza_dif?.color ? this.state.itemView.rolls_pizza_dif.key : this.state.itemView.rolls_pizza_dif : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.rolls_pizza_dif?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Общий стол"
-                    value={this.state.itemView ? this.state.itemView.cook_common_stol?.color ? this.state.itemView.cook_common_stol.key : this.state.itemView.cook_common_stol : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.cook_common_stol?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Кафе"
-                    value={this.state.itemView ? this.state.itemView.cafe_handle_close?.color ? this.state.itemView.cafe_handle_close.key : this.state.itemView.cafe_handle_close : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.cafe_handle_close?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Управляющий"
-                    value={this.state.itemView ? this.state.itemView.manager_id?.color ? this.state.itemView.manager_id.key : this.state.itemView.manager_id : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.manager_id?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Количество столов сборки"
-                    value={this.state.itemView ? this.state.itemView.count_tables?.color ? this.state.itemView.count_tables.key : this.state.itemView.count_tables : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.count_tables?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-              </>
-            : null}
-
-            {type_modal === 'zone' ?
-              <Grid item xs={12} sm={12}>
-                <Typography style={{ alignSelf: 'center', fontWeight: 'bold' }}>
-                  {`${this.state.itemView?.zone_name} ${this.state.itemView?.is_active}: ${this.state.itemView?.date_time_update}`}
-                </Typography>
-              </Grid>
-            : null}
-
-            {type_modal === 'driver' ?
-              <>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Количество заказов на руках (0 - без ограничений)"
-                    value={this.state.itemView ? this.state.itemView.count_driver?.color ? this.state.itemView.count_driver.key : this.state.itemView.count_driver : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.count_driver?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Максимальная сумма нала для курьера"
-                    value={this.state.itemView ? this.state.itemView.summ_driver?.color ? this.state.itemView.summ_driver.key : this.state.itemView.summ_driver : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.summ_driver?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Максимальная сумма нала для курьера стажера"
-                    value={this.state.itemView ? this.state.itemView.summ_driver_min?.color ? this.state.itemView.summ_driver_min.key : this.state.itemView.summ_driver_min : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.summ_driver_min?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-              </>
-            : null}
-
-            {type_modal === 'kkt' ?
-              <>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Номер кассы"
-                    value={this.state.itemView ? this.state.itemView.kassa?.color ? this.state.itemView.kassa.key : this.state.itemView.kassa : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.kassa?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Доп касса"
-                    value={this.state.itemView ? this.state.itemView.dop_kassa?.color ? this.state.itemView.dop_kassa.key : this.state.itemView.dop_kassa : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.dop_kassa?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="РН ККТ"
-                    value={this.state.itemView ? this.state.itemView.number?.color ? this.state.itemView.number.key : this.state.itemView.number : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.number?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="База"
-                    value={this.state.itemView ? this.state.itemView.base?.color ? this.state.itemView.base.key : this.state.itemView.base : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.base?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={12}>
-                  <MyTextInput
-                    label="ФН"
-                    value={this.state.itemView ? this.state.itemView.fn?.color ? this.state.itemView.fn.key : this.state.itemView.fn : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.fn?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Дата регистрации"
-                    value={this.state.itemView ? this.state.itemView.date_start?.color ? this.state.itemView.date_start.key : this.state.itemView.date_start : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.date_start?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Дата окончания"
-                    value={this.state.itemView ? this.state.itemView.date_end?.color ? this.state.itemView.date_end.key : this.state.itemView.date_end : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.date_end?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Лицензия ОФД дата завершения"
-                    value={this.state.itemView ? this.state.itemView.date_license?.color ? this.state.itemView.date_license.key : this.state.itemView.date_license : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.date_license?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <MyTextInput
-                    label="Активность"
-                    value={this.state.itemView ? this.state.itemView.is_active?.color ? this.state.itemView.is_active.key : this.state.itemView.is_active : ''}
-                    disabled={true}
-                    className={this.state.itemView ? this.state.itemView.is_active?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-                  />
-                </Grid>
-              </>
-            : null}
-
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={this.onClose.bind(this)} variant="contained">
-            Закрыть
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  }
-}
-
-class CafeEdit_Modal_Close_Cafe extends React.Component {
-
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      confirmDialog: false,
-      openAlert: false,
-      err_status: true,
-      err_text: '',
-    };
-  }
-
-  open_confirm() {
-    if(!this.props.is_сlosed_technic && !this.props.is_сlosed_overload){
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо указать причину закрытия кафе',
-      })
-
-      return;
-    }
-
-    if(this.props.is_сlosed_technic && !this.props.chooseReason){
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо выбрать/указать причину технического закрытия кафе',
-      })
-
-      return;
-    }
-
-    this.setState ({
-      confirmDialog: true
-    });
-  }
-
-  save() {
-
-    this.setState ({
-      confirmDialog: false
-    });
-
-    this.props.stop_cafe();
-
-    this.props.onClose();
-  }
-
-  onClose() {
-    setTimeout(() => {
-      this.setState ({
-        confirmDialog: false,
-        openAlert: false,
-        err_status: true,
-        err_text: '',
-      });
-    }, 100);
-
-    this.props.onClose();
-  }
-
-  render() {
-    const { open, fullScreen, is_сlosed_overload, changeItemChecked, is_сlosed_technic, show_comment, reason_list, changeReason, chooseReason } = this.props;
-
-    return (
-      <>
-        <MyAlert
-          isOpen={this.state.openAlert}
-          onClose={() => this.setState({ openAlert: false })}
-          status={this.state.err_status}
-          text={this.state.err_text}
-        />
-
-        <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false })}>
-          <DialogTitle>Подтвердите действие</DialogTitle>
-          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
-            <Typography>Вы действительно хотите сохранить данные?</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button autoFocus onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
-            <Button onClick={this.save.bind(this)}>Сохранить</Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog
-          open={open}
-          onClose={this.onClose.bind(this)}
-          fullScreen={fullScreen}
-          fullWidth={true}
-          maxWidth={'sm'}
-        >
-          <DialogTitle>
-            Причина закрытия кафе
-            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
-              <CloseIcon />
-            </IconButton>
-            </DialogTitle>
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3}>
-
-              <Grid item xs={12} sm={12}>
-                <MyCheckBox
-                  label='Закрыто из-за большого количества заказов'
-                  value={parseInt(is_сlosed_overload) == 1 ? true : false}
-                  func={changeItemChecked.bind(this, 'is_сlosed_overload')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={12}>
-                <MyCheckBox
-                  label='Закрыто по техническим причинам'
-                  value={parseInt(is_сlosed_technic) == 1 ? true : false}
-                  func={changeItemChecked.bind(this, 'is_сlosed_technic')}
-                />
-              </Grid>
-
-              {!show_comment ? null :
-                <Grid item xs={12} sm={12} >
-                  <MyAutocomplite2
-                    id="cafe_upr_edit"
-                    data={reason_list}
-                    value={chooseReason}
-                    func={changeReason.bind(this)}
-                    onBlur={changeReason.bind(this)}
-                    multiple={false}
-                    label='Причина'
-                    freeSolo={true}
-                  />
-                </Grid>
-              }
-
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button variant="contained" onClick={this.open_confirm.bind(this)}>
-              Сохранить
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </>
-    );
-  }
-}
-
-class CafeEdit_Modal_Edit extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      date_edit: formatDate(new Date()),
-    };
-  }
-
-  changeDateRange(data, event) {
-    this.setState({
-      [data]: event ? event : ''
-    });
-  }
-
-  save(){
-    const date_edit = dayjs(this.state.date_edit).format('YYYY-MM-DD');
-
-    this.props.save(date_edit);
-
-    this.onClose();
-  }
-
-  onClose() {
-
-    setTimeout(() => {
-      this.setState ({
-        date_edit: formatDate(new Date()),
-      });
-    }, 100);
-
-    this.props.onClose();
-  }
-
-  render() {
-    const { open, fullScreen } = this.props;
-
-    return (
-      <Dialog
-        open={open}
-        onClose={this.onClose.bind(this)}
-        fullScreen={fullScreen}
-        fullWidth={true}
-        maxWidth={'sm'}
-      >
-        <DialogTitle>
-          Укажите дату с которой будут действовать изменения
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
-              <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <MyDatePickerNew
-            label="Дата изменений"
-            value={dayjs(this.state.date_edit)}
-            func={this.changeDateRange.bind(this, 'date_edit')}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button variant="contained" onClick={this.save.bind(this)}>
-            Сохранить
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  }
 }
 
 class CafeEdit_Modal_Zone extends React.Component {
@@ -1490,20 +853,20 @@ class CafeEdit_ extends React.Component {
 
     const res = await this.getData('stop_cafe', data);
 
-    if (!res.st) {
+    if (!res?.st) {
 
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
 
     } else {
 
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
 
       setTimeout(() => {
@@ -1546,20 +909,20 @@ class CafeEdit_ extends React.Component {
 
     const res = await this.getData('save_new_point', data);
 
-    if (!res.st) {
+    if (!res?.st) {
 
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
 
     } else {
 
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
 
       setTimeout(() => {
@@ -1672,20 +1035,20 @@ class CafeEdit_ extends React.Component {
 
     const res = await this.getData('save_edit_point_info', data);
 
-    if (!res.st) {
+    if (!res?.st) {
 
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
 
     } else {
 
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
 
       setTimeout(() => {
@@ -1712,20 +1075,20 @@ class CafeEdit_ extends React.Component {
       res = await this.getData('save_edit_point_pay', data);
     }
 
-    if (!res.st) {
+    if (!res?.st) {
 
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
 
     } else {
 
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
 
       setTimeout(() => {
@@ -1743,20 +1106,20 @@ class CafeEdit_ extends React.Component {
 
     const res = await this.getData('save_edit_point_sett_driver', data);
 
-    if (!res.st) {
+    if (!res?.st) {
 
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
 
     } else {
 
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
 
       setTimeout(() => {
@@ -1773,18 +1136,18 @@ class CafeEdit_ extends React.Component {
 
     const res = await this.getData('save_edit_point_sett', data);
 
-    if (!res.st) {
+    if (!res?.st) {
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
     } else {
 
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
 
       setTimeout(() => {
@@ -1806,11 +1169,11 @@ class CafeEdit_ extends React.Component {
 
     const res = await this.getData('stop_zone', data);
 
-    if (res.st) {
+    if (res?.st) {
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st,
+        err_text: res?.text,
       });
 
       setTimeout(() => {
@@ -2193,11 +1556,11 @@ class CafeEdit_ extends React.Component {
 
     const res = await this.getData('save_new_kkt', data);
 
-    if (res.st) {
+    if (res?.st) {
       this.setState({
         openAlert: true,
         err_status: true,
-        err_text: res.text,
+        err_text: res?.text,
       });
 
       setTimeout(() => {
@@ -2208,7 +1571,7 @@ class CafeEdit_ extends React.Component {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: res.text,
+        err_text: res?.text,
       });
     }
 
@@ -2229,11 +1592,11 @@ class CafeEdit_ extends React.Component {
       res = await this.getData('save_edit_kkt', data);
     }
 
-    if (res.st) {
+    if (res?.st) {
       this.setState({
         openAlert: true,
         err_status: true,
-        err_text: res.text,
+        err_text: res?.text,
       });
 
       setTimeout(() => {
@@ -2244,7 +1607,7 @@ class CafeEdit_ extends React.Component {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: res.text,
+        err_text: res?.text,
       });
     }
   }
@@ -2349,7 +1712,7 @@ class CafeEdit_ extends React.Component {
 
         <CafeEdit_Modal_History
           open={this.state.modalDialogView}
-          onClose={() => this.setState({ modalDialogView: false, itemView: null,type_modal: null, date_edit: null })}
+          onClose={() => this.setState({ modalDialogView: false, itemView: null, type_modal: null, date_edit: null })}
           itemView={this.state.itemView}
           fullScreen={this.state.fullScreen}
           type_modal={this.state.type_modal}
@@ -2369,6 +1732,7 @@ class CafeEdit_ extends React.Component {
               data={this.state.points}
               value={this.state.point}
               func={this.changePoint.bind(this)}
+              disableCloseOnSelect={false}
             />
           </Grid>
 
@@ -3049,10 +2413,10 @@ class CafeEdit_ extends React.Component {
                 <Grid item xs={12} sm={12} mb={5}>
                   <TableContainer>
                     <Table>
+                      <caption style={{ captionSide: 'top',fontWeight: 'bold', fontSize: '1.1rem', textAlign: "left" }}>
+                        Активные кассы
+                      </caption>
                       <TableHead>
-                        <TableRow>
-                          <TableCell colSpan={7} style={{ fontWeight: 700 }}>Активные кассы</TableCell>
-                        </TableRow>
                         <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
                           <TableCell style={{ minWidth: '50px' }}>№ кассы</TableCell>
                           <TableCell>РН ККТ</TableCell>
