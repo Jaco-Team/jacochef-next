@@ -1,8 +1,5 @@
 import React from 'react';
 
-import Script from 'next/script';
-
-import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -35,8 +32,6 @@ import {
   Typography,
 } from "@mui/material";
 
-import PropTypes from 'prop-types';
-
 import {
   MyAutocomplite,
   MyTextInput,
@@ -56,43 +51,12 @@ import CafeEdit_Modal_History from '@/components/cafe_edit/CafeEdit_Modal_Histor
 import CafeEdit_Modal_Edit from '@/components/cafe_edit/CafeEdit_Modal_Edit';
 import CafeEdit_Modal_New from '@/components/cafe_edit/CafeEdit_Modal_New';
 import CafeEdit_Modal_Zone from '@/components/cafe_edit/CafeEdit_Modal_Zone';
-
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>{children}</Box>
-      )}
-    </div>
-  );
-}
-
-TabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.number.isRequired,
-  value: PropTypes.number.isRequired,
-};
-
-function a11yProps(index) {
-  return {
-    id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
-  };
-}
-
-
+import TabPanel from '@/components/shared/TabPanel/TabPanel';
+import a11yProps from '@/components/shared/TabPanel/a11yProps';
+import CafeEdit_ZonesMap from '@/components/cafe_edit/CafeEdit_ZonesMap';
+import deepEqual from '@/src/helpers/utils/deepEqual';
 
 class CafeEdit_ extends React.Component {
-  map = null;
-  myGeoObject = null;
 
   constructor(props) {
     super(props);
@@ -198,8 +162,8 @@ class CafeEdit_ extends React.Component {
       this.getTabIndex();
     }, 100);
 
-    setTimeout(() => {
-      this.getDataPoint();
+    setTimeout(async () => {
+      await this.getDataPoint();
     }, 200);
 
   }
@@ -210,13 +174,20 @@ class CafeEdit_ extends React.Component {
     });
   }
 
-  getData = (method, data = {}) => {
+  async getData(method, data = {}) {
     this.setState({
       is_load: true,
     });
 
     let res = api_laravel(this.state.module, method, data)
       .then((result) => result.data)
+      .catch(e => {
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: e.message
+        })
+      })
       .finally(() => {
         setTimeout(() => {
           this.setState({
@@ -228,21 +199,21 @@ class CafeEdit_ extends React.Component {
     return res;
   };
 
-  async changePoint(event, value) {
+  async changePoint(_, value) {
     this.setState({
       point: value,
     });
 
-    setTimeout(() => {
-      this.getDataPoint();
+    setTimeout(async () => {
+      await this.getDataPoint();
     }, 100);
   }
 
-  async changeTab(event, value) {
+  async changeTab(_, value) {
 
     const { point_info, point_info_copy } = this.state;
 
-    const hasChanges = !this.deepEqual(point_info, point_info_copy);
+    const hasChanges = !deepEqual(point_info, point_info_copy);
 
     if (hasChanges) {
 
@@ -257,65 +228,30 @@ class CafeEdit_ extends React.Component {
 
     this.setState({ is_load: true });
 
-    const index_zone = this.state.index_zone;
+    // const index_zone = this.state.index_zone;
+    // if(value === index_zone) {
+    //   const zone = this.state.zone;
+    //   const other_zones = this.state.other_zones;
 
-    if(value === index_zone) {
-      const zone = this.state.zone;
-      const other_zones = this.state.other_zones;
+    //   if(zone.length && other_zones.length) {
+    //     setTimeout(() => {
+    //       this.getZones(zone, other_zones);
+    //     }, 300);
+    //   } else {
+    //     setTimeout(() => {
+    //       this.map?.geoObjects?.removeAll();
+    //     }, 300);
+    //   }
 
-      if(zone.length && other_zones.length) {
-        setTimeout(() => {
-          this.getZones(zone, other_zones);
-        }, 300);
-      } else {
-        setTimeout(() => {
-          this.map?.geoObjects?.removeAll();
-        }, 300);
-      }
-
-    } else {
-      this.map = null;
-    }
+    // } else {
+    //   this.map = null;
+    // }
 
     this.setState({
       activeTab: value,
     });
 
     await this.getDataPoint();
-  }
-
-  deepEqual(obj1, obj2) {
-    if (obj1 === obj2) return true;
-
-    if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
-      return false;
-    }
-
-    let keys1 = Object.keys(obj1).filter(key => key !== 'cafe_handle_close');
-    let keys2 = Object.keys(obj2).filter(key => key !== 'cafe_handle_close');
-
-    if (keys1.length !== keys2.length) return false;
-
-    for (let key of keys1) {
-      if (!keys2.includes(key) || !this.deepEqual(this.normalizeValue(obj1[key]), this.normalizeValue(obj2[key]))) {
-        // console.log(`Difference found in key: ${key}`);
-        // console.log(`obj1[${key}]:`, obj1[key]);
-        // console.log(`obj2[${key}]:`, obj2[key]);
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  normalizeValue(value) {
-    if (typeof value === 'string') {
-      return value.trim().toLowerCase();
-    }
-    if (typeof value === 'number') {
-      return value.toString();
-    }
-    return value;
   }
 
   async confirmTabChange() {
@@ -352,37 +288,37 @@ class CafeEdit_ extends React.Component {
       if(!this.canView(key)) { continue; }
 
       if(key === 'active_point' || key === 'organization_point' || key === 'telephone_point') {
-
-        const info = tabs_data.find(item => item.name === 'Информация о точке');
+        const infoName = "Информация о точке";
+        const info = tabs_data.find(item => item.name === infoName);
 
         if(!info) {
-          tabs_data.push({key, 'name': "Информация о точке"});
+          tabs_data.push({key, name: infoName});
         }
 
       }
 
       if(key === 'rate_point') {
-        tabs_data.push({key, 'name': "Коэффициенты"});
+        tabs_data.push({key, name: "Коэффициенты"});
       }
 
       if(key === 'pay_point') {
-        tabs_data.push({key, 'name': "Зарплата"});
+        tabs_data.push({key, name: "Зарплата"});
       }
 
       if(key === 'settings_point') {
-        tabs_data.push({key, 'name': "Настройки точки"});
+        tabs_data.push({key, name: "Настройки точки"});
       }
 
       if(key === 'zone_point') {
-        tabs_data.push({key, 'name': "Зоны доставки"});
+        tabs_data.push({key, name: "Зоны доставки"});
       }
 
       if(key === 'settings_driver') {
-        tabs_data.push({key, 'name': "Настройки курьеров"});
+        tabs_data.push({key, name: "Настройки курьеров"});
       }
 
       if(key === 'kkt_info') {
-        tabs_data.push({key, 'name': "Информация о кассах"});
+        tabs_data.push({key, name: "Информация о кассах"});
       }
     }
 
@@ -490,15 +426,15 @@ class CafeEdit_ extends React.Component {
       kkt_info_hist: res.kkt_info_hist,
     });
 
-    if(res.zone.length && res.other_zones.length) {
-      setTimeout(() => {
-        this.getZones(res.zone, res.other_zones);
-      }, 300);
-    } else {
-      setTimeout(() => {
-        this.map?.geoObjects?.removeAll();
-      }, 300);
-    }
+    // if(res.zone.length && res.other_zones.length) {
+    //   setTimeout(() => {
+    //     this.getZones(res.zone, res.other_zones);
+    //   }, 300);
+    // } else {
+    //   setTimeout(() => {
+    //     this.map?.geoObjects?.removeAll();
+    //   }, 300);
+    // }
 
   }
 
@@ -633,8 +569,8 @@ class CafeEdit_ extends React.Component {
         err_text: res?.text,
       });
 
-      setTimeout(() => {
-        this.getDataPoint();
+      setTimeout(async () => {
+        await this.getDataPoint();
       }, 300);
 
     }
@@ -689,8 +625,8 @@ class CafeEdit_ extends React.Component {
         err_text: res?.text,
       });
 
-      setTimeout(() => {
-        this.getDataPoint();
+      setTimeout(async () => {
+        await this.getDataPoint();
       }, 300);
 
     }
@@ -815,8 +751,8 @@ class CafeEdit_ extends React.Component {
         err_text: res?.text,
       });
 
-      setTimeout(() => {
-        this.getDataPoint();
+      setTimeout(async () => {
+        await this.getDataPoint();
       }, 300);
 
     }
@@ -855,8 +791,8 @@ class CafeEdit_ extends React.Component {
         err_text: res?.text,
       });
 
-      setTimeout(() => {
-        this.getDataPoint();
+      setTimeout(async () => {
+        await this.getDataPoint();
       }, 300);
 
     }
@@ -886,10 +822,9 @@ class CafeEdit_ extends React.Component {
         err_text: res?.text,
       });
 
-      setTimeout(() => {
-        this.getDataPoint();
+      setTimeout(async () => {
+        await this.getDataPoint();
       }, 300);
-
     }
   }
 
@@ -914,15 +849,14 @@ class CafeEdit_ extends React.Component {
         err_text: res?.text,
       });
 
-      setTimeout(() => {
-        this.getDataPoint();
+      setTimeout(async () => {
+        await this.getDataPoint();
       }, 300);
 
     }
   }
 
   async save_active_zone() {
-
     const zone_list = this.state.zone;
     const point_id = this.state.point.id;
 
@@ -940,158 +874,23 @@ class CafeEdit_ extends React.Component {
         err_text: res?.text,
       });
 
-      setTimeout(() => {
-        this.getDataPoint();
+      setTimeout(async () => {
+        await this.getDataPoint();
       }, 300);
     }
 
   }
 
-  getZones(points, all_zones) {
-    const zone_main = points[0];
-
-    if (!this.map) {
-      ymaps.ready(() => {
-
-        const mapElement = document.getElementById('map');
-        if (!mapElement) {
-          // console.log('Map element not found');
-          return;
-        }
-
-        this.map = new ymaps.Map(
-          'map',
-          { center: JSON.parse(zone_main['xy_point']), zoom: 11 },
-          { searchControlProvider: 'yandex#search' }
-        );
-
-        // зоны доставки точки
-        points.map((item) => {
-          let points_zone = [];
-
-          points_zone.push({xy: JSON.parse(item['zone']), active: item.is_active});
-
-          let myGeoObject2 = [];
-
-          for (var poly = 0; poly < points_zone.length; poly++) {
-            myGeoObject2[poly] = new ymaps.Polygon(
-              [points_zone[poly].xy],
-              {geometry: { fillRule: 'nonZero' }},
-              {
-                fillOpacity: 0.4,
-                fillColor: parseInt(points_zone[poly].active) ? '#00FF00' : '#AAAAAA',
-                strokeColor: parseInt(points_zone[poly].active) ? '#0000FF' : '#000000',
-                strokeWidth: 5,
-              }
-            );
-
-            this.map.geoObjects.add(myGeoObject2[poly]);
-          }
-
-        });
-
-        // другие зоны доставки
-        all_zones.map((item) => {
-          let points_zone = [];
-
-          points_zone.push(JSON.parse(item['zone']));
-
-          let myGeoObject3 = [];
-
-          for (var poly = 0; poly < points_zone.length; poly++) {
-            myGeoObject3[poly] = new ymaps.Polygon(
-              [points_zone[poly]],
-              {
-                hintContent: '',
-              },
-              {
-                fillOpacity: 0.4,
-                fillColor: 'rgb(240, 128, 128)',
-                strokeColor: 'rgb(187, 0, 37)',
-                strokeWidth: 5,
-              }
-            );
-
-            this.map.geoObjects.add(myGeoObject3[poly]);
-          }
-        });
-
-        this.map.geoObjects.events.add('click', this.openZone.bind(this));
-      });
-
-    } else {
-
-      this.map.geoObjects.removeAll();
-
-      this.map.setCenter(JSON.parse(points[0]['xy_point']));
-
-      // зоны доставки точки
-      points.map((item) => {
-        let points_zone = [];
-
-        points_zone.push({xy: JSON.parse(item['zone']), active: item.is_active});
-
-          let myGeoObject2 = [];
-
-          for (var poly = 0; poly < points_zone.length; poly++) {
-            myGeoObject2[poly] = new ymaps.Polygon(
-              [points_zone[poly].xy],
-              {geometry: { fillRule: 'nonZero' }},
-              {
-                fillOpacity: 0.4,
-                fillColor: parseInt(points_zone[poly].active) ? '#00FF00' : '#AAAAAA',
-                strokeColor: parseInt(points_zone[poly].active) ? '#0000FF' : '#000000',
-                strokeWidth: 5,
-              }
-            );
-
-            this.map.geoObjects.add(myGeoObject2[poly]);
-          }
-
-      });
-
-      // другие зоны
-      all_zones.map((item) => {
-        let points_zone = [];
-
-        points_zone.push(JSON.parse(item['zone']));
-
-        let myGeoObject3 = [];
-
-        for (var poly = 0; poly < points_zone.length; poly++) {
-          myGeoObject3[poly] = new ymaps.Polygon(
-            [points_zone[poly]],
-            {
-              hintContent: '',
-            },
-            {
-              fillOpacity: 0.4,
-              fillColor: 'rgb(240, 128, 128)',
-              strokeColor: 'rgb(187, 0, 37)',
-              strokeWidth: 5,
-            }
-          );
-
-          this.map.geoObjects.add(myGeoObject3[poly]);
-        }
-      });
-
-    }
-  }
-
-  openZone(event) {
+  openZone(index) {
     this.handleResize();
 
     const zone = this.state.zone;
-    const index = this.map.geoObjects.indexOf(event.get('target'));
-
     if(zone[index]) {
       this.setState({
         modalDialog_zone: true,
         one_zone: zone[index]
       });
     }
-
   }
 
   open_hist_view(index, type_modal) {
@@ -1231,7 +1030,7 @@ class CafeEdit_ extends React.Component {
     });
   }
 
-  async open_hist_view_zone(index, type_modal) {
+  open_hist_view_zone(index, type_modal) {
 
     const item = this.state.point_zone_hist;
 
@@ -1247,7 +1046,7 @@ class CafeEdit_ extends React.Component {
 
   }
 
-  changeUpr(data, event, value) {
+  changeUpr(data, _, value) {
     const point_info = this.state.point_info;
 
     point_info[data] = value;
@@ -1257,7 +1056,7 @@ class CafeEdit_ extends React.Component {
     });
   }
 
-  async openModalKktInfo(type_modal, kkt) {
+  openModalKktInfo(type_modal, kkt) {
     this.handleResize();
 
     const {points, point, kkt_info_active} = this.state;
@@ -1289,7 +1088,7 @@ class CafeEdit_ extends React.Component {
 
   }
 
-  async openModalKktInfo_add(kkt) {
+  openModalKktInfo_add(kkt) {
     this.handleResize();
 
     this.setState({
@@ -1327,8 +1126,8 @@ class CafeEdit_ extends React.Component {
         err_text: res?.text,
       });
 
-      setTimeout(() => {
-        this.getDataPoint();
+      setTimeout(async () => {
+        await this.getDataPoint();
       }, 300);
 
     } else {
@@ -1363,8 +1162,8 @@ class CafeEdit_ extends React.Component {
         err_text: res?.text,
       });
 
-      setTimeout(() => {
-        this.getDataPoint();
+      setTimeout(async () => {
+        await this.getDataPoint();
       }, 300);
 
     } else {
@@ -1389,8 +1188,6 @@ class CafeEdit_ extends React.Component {
   render() {
     return (
       <>
-        <Script src="https://api-maps.yandex.ru/2.1/?apikey=665f5b53-8905-4934-9502-4a6a7b06a900&lang=ru_RU" />
-
         <Backdrop style={{ zIndex: 999 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
@@ -2021,7 +1818,7 @@ class CafeEdit_ extends React.Component {
               id='zone'
             >
               <Grid item xs={12} sm={12} mb={3}>
-                <div id="map" name="map" style={{ width: '100%', height: 700, paddingTop: 10 }} />
+                <CafeEdit_ZonesMap zones={this.state.zone} otherZones={this.state.other_zones} clickCallback={this.openZone.bind(this)}/>
               </Grid>
 
               {this.state.point_zone_hist.length > 0 && (
@@ -2386,7 +2183,7 @@ export default function CafeEdit() {
   return <CafeEdit_ />;
 }
 
-export async function getServerSideProps({ req, res, query }) {
+export async function getServerSideProps({ res }) {
   res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');

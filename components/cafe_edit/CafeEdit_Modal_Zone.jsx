@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, memo } from "react";
+import { useState, memo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -23,6 +23,7 @@ function CafeEdit_Modal_Zone({ open, fullScreen, zone, save, onClose: parentOnCl
   };
 
   const handleSave = () => {
+    // TODO: test it, tries to mutate parent state through props
     if (zone) {
       zone.is_active = isActive;
     }
