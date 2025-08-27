@@ -157,8 +157,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
     setIsActive(1);
     setAllFn([]);
     setAddDialog(false);
-
-    parentOnClose();
+    // parentOnClose();
   };
 
   return (
