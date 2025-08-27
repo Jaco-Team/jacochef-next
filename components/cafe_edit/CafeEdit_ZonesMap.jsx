@@ -7,7 +7,7 @@ const strokePrimaryInactive = "#000000";
 const fillSecondary = "#f08080ff";
 const strokeSecondary = "#bb0025ff";
 
-const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback }) => {
+const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly }) => {
   const mapRef = useRef(null);
 
   const handleClickCallback = (e) => {
@@ -66,18 +66,24 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback }) => {
           return;
         }
 
-        mapRef.current = new ymaps.Map(
-          "map",
-          { center: JSON.parse(mainZone["xy_point"]), zoom: 11 },
-          { searchControlProvider: "yandex#search" }
-        );
+        const mapOptions = {
+          center: JSON.parse(mainZone["xy_point"]),
+          zoom: 11,
+        };
+        if (readonly) {
+          mapOptions.type = "yandex#grayMap";
+        }
+        mapRef.current = new ymaps.Map("map", mapOptions, {
+          searchControlProvider: "yandex#search",
+        });
 
         // зоны доставки точки
         buildMainZones();
         // другие зоны доставки
         buildOtherZones();
-
-        mapRef.current.geoObjects.events.add("click", handleClickCallback);
+        if (!readonly) {
+          mapRef.current.geoObjects.events.add("click", handleClickCallback);
+        }
       });
     } else {
       mapRef.current.geoObjects.removeAll();
@@ -102,7 +108,6 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback }) => {
     };
   }, []);
 
-
   return (
     <>
       <div
@@ -114,7 +119,6 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback }) => {
 };
 
 export default memo(CafeEdit_ZonesMap);
-
 
 // its already added in _document.js
 // import Script from "next/script";

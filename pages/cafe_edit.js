@@ -883,7 +883,7 @@ class CafeEdit_ extends React.Component {
 
   openZone(index) {
     this.handleResize();
-
+    if(!this.canEdit('zone_point')) return;
     const zone = this.state.zone;
     if(zone[index]) {
       this.setState({
@@ -1818,7 +1818,7 @@ class CafeEdit_ extends React.Component {
               id='zone'
             >
               <Grid item xs={12} sm={12} mb={3}>
-                <CafeEdit_ZonesMap zones={this.state.zone} otherZones={this.state.other_zones} clickCallback={this.openZone.bind(this)}/>
+                <CafeEdit_ZonesMap zones={this.state.zone} otherZones={this.state.other_zones} clickCallback={this.openZone.bind(this)} readonly={this.canEdit('zone_point')}/>
               </Grid>
 
               {this.state.point_zone_hist.length > 0 && (
