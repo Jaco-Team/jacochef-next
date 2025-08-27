@@ -2,45 +2,48 @@ import React from 'react';
 
 import Script from 'next/script';
 
-import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-
-import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import Box from '@mui/material/Box';
-import Tab from '@mui/material/Tab';
-import Paper from '@mui/material/Paper';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Backdrop,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  Paper,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tabs,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+
 import PropTypes from 'prop-types';
-import Tabs from '@mui/material/Tabs';
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TableContainer from '@mui/material/TableContainer';
-
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
-
-import Chip from '@mui/material/Chip';
-import Tooltip from '@mui/material/Tooltip';
-
-import {MyAutocomplite, MyTextInput, MySelect, MyCheckBox, MyAlert, formatDate, MyDatePickerNew, MyAutocomplite2} from '@/ui/elements';
+import {
+  MyAutocomplite,
+  MyTextInput,
+  MySelect,
+  MyCheckBox,
+  MyAlert,
+} from "@/ui/elements";
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import {api_laravel} from "@/src/api_new";
@@ -51,6 +54,8 @@ import CafeEdit_Modal_Kkt_Info from '@/components/cafe_edit/CafeEdit_Modal_Kkt_I
 import CafeEdit_Modal_Close_Cafe from '@/components/cafe_edit/CafeEdit_Modal_Close_Cafe';
 import CafeEdit_Modal_History from '@/components/cafe_edit/CafeEdit_Modal_History';
 import CafeEdit_Modal_Edit from '@/components/cafe_edit/CafeEdit_Modal_Edit';
+import CafeEdit_Modal_New from '@/components/cafe_edit/CafeEdit_Modal_New';
+import CafeEdit_Modal_Zone from '@/components/cafe_edit/CafeEdit_Modal_Zone';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -83,248 +88,7 @@ function a11yProps(index) {
   };
 }
 
-class CafeEdit_Modal_Zone extends React.Component {
-  constructor(props) {
-    super(props);
 
-    this.state = {
-      is_active: 0,
-      confirmDialog: false,
-    };
-  }
-
-  componentDidUpdate(prevProps) {
-    //console.log('componentDidUpdate', this.props);
-
-    if (!this.props.zone) {
-      return;
-    }
-
-    if (this.props.zone !== prevProps.zone) {
-      this.setState({
-        is_active: this.props.zone.is_active
-      });
-    }
-  }
-
-  changeItemChecked(data, event) {
-    const value = event.target.checked === true ? 1 : 0;
-
-    this.setState({
-      [data]: value
-    });
-  }
-
-  save(){
-    let zone = this.props.zone;
-    const is_active = this.state.is_active;
-
-    zone.is_active = is_active;
-
-    this.props.save();
-
-    this.onClose();
-  }
-
-  onClose() {
-
-    setTimeout(() => {
-      this.setState ({
-        isActive: 0,
-        confirmDialog: false,
-      });
-    }, 100);
-
-    this.props.onClose();
-  }
-
-  render() {
-    const { open, fullScreen, zone } = this.props;
-
-    return (
-      <>
-        <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false })}>
-          <DialogTitle>Подтвердите действие</DialogTitle>
-          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
-            <Typography>Вы действительно хотите сохранить данные?</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button autoFocus onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
-            <Button onClick={this.save.bind(this)}>Сохранить</Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog
-          open={open}
-          onClose={this.onClose.bind(this)}
-          fullScreen={fullScreen}
-          fullWidth={true}
-          maxWidth={'sm'}
-        >
-          <DialogTitle>
-            Настройка активных зон доставки
-            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
-              <CloseIcon />
-            </IconButton>
-            </DialogTitle>
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <div style={{ marginBottom: 20 }}>
-              <span>Если снять активность с выбранной зоны доставки, то прекратиться оформление новых доставок в данную зону</span>
-            </div>
-
-            <MyCheckBox
-              label={zone?.zone_name ?? ''}
-              value={parseInt(this.state.is_active) == 1 ? true : false}
-              func={this.changeItemChecked.bind(this, 'is_active')}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button variant="contained" onClick={() => this.setState({ confirmDialog: true })}>
-              Сохранить
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </>
-    );
-  }
-}
-
-class CafeEdit_Modal_New extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      item: null,
-
-      openAlert: false,
-      err_status: true,
-      err_text: '',
-    };
-  }
-
-  componentDidUpdate(prevProps) {
-    // console.log(this.props.item);
-
-    if (!this.props.item) {
-      return;
-    }
-
-    if (this.props.item !== prevProps.item) {
-      this.setState({
-        item: this.props.item,
-      });
-    }
-  }
-
-  changeItem(data, event) {
-    const item = this.state.item;
-
-    item[data] = event.target.value;
-
-    this.setState({
-      item,
-    });
-  }
-
-  save() {
-    const item = this.state.item;
-
-    if(!item.city_id) {
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо выбрать город',
-      })
-
-      return;
-    }
-
-    if(!item.addr) {
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо указать адрес',
-      })
-
-      return;
-    }
-
-    this.props.save(item);
-
-    this.onClose();
-  }
-
-  onClose() {
-    this.setState({
-      item: null,
-
-      openAlert: false,
-      err_status: true,
-      err_text: '',
-    });
-
-    this.props.onClose();
-  }
-
-  render() {
-    return (
-      <>
-        <MyAlert
-          isOpen={this.state.openAlert}
-          onClose={() => this.setState({ openAlert: false })}
-          status={this.state.err_status}
-          text={this.state.err_text}
-        />
-
-        <Dialog
-          open={this.props.open}
-          onClose={this.onClose.bind(this)}
-          fullScreen={this.props.fullScreen}
-          fullWidth={true}
-          maxWidth={'md'}
-        >
-          <DialogTitle className="button">
-            Новая точка
-            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3}>
-
-              <Grid item xs={12} sm={6}>
-                <MySelect
-                  label="Город"
-                  is_none={false}
-                  data={this.state.item ? this.state.item.cities : []}
-                  value={this.state.item ? this.state.item.city_id : ''}
-                  func={this.changeItem.bind(this, 'city_id')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <MyTextInput
-                  label="Адрес"
-                  value={this.state.item ? this.state.item.addr : ''}
-                  func={this.changeItem.bind(this, 'addr')}
-                />
-              </Grid>
-
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button variant="contained" onClick={this.save.bind(this)}>
-              Сохранить
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </>
-    );
-  }
-}
 
 class CafeEdit_ extends React.Component {
   map = null;
