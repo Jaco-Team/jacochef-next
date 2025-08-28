@@ -201,7 +201,7 @@ class SkladModules_ extends React.Component {
 				name: param.name,
 				category_new: param.categoryItem?.id === 0,
 				category: param.category,
-				category_name: param.category_name,
+				category_name: param.category_name || '',
 				param: param.param,
 				type: param.type,
 				module_id: param.module_id.id,
