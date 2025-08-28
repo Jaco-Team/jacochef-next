@@ -24,6 +24,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AppointmentModal from "@/components/appointment/AppointmentModal";
 import AppointmentUnitModal from "@/components/appointment/AppointmentUnitModal";
+import handleUserAccess from "@/src/heplers/access/handleUserAccess";
 
 class Appointment_ extends React.Component {
   constructor(props) {
@@ -69,6 +70,7 @@ class Appointment_ extends React.Component {
 
     this.setState({
       module_name: data.module_info.name,
+      access: data.access,
       items: data.apps,
       units: data.units,
     });
@@ -350,6 +352,16 @@ class Appointment_ extends React.Component {
         items: [...sortAppointmentsListKindSort(unit.items)],
       }));
     this.setState({ unitsWithItems: sortedUnits });
+  }
+
+  canView(key) {
+    const {userCan} = handleUserAccess(this.state.access);
+    return userCan('view', key);
+  }
+
+  canEdit(key) {
+    const {userCan} = handleUserAccess(this.state.access);
+    return userCan('edit', key);
   }
 
   render() {
