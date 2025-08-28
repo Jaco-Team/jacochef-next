@@ -79,25 +79,31 @@ class Appointment_ extends React.Component {
   componentDidUpdate(_, prevState) {
     if (prevState.units !== this.state.units || prevState.items !== this.state.items) {
       this.groupItemsByUnits();
+      // this.applyAppsSortingChangeUI();
     }
   }
 
-  getData = (method, data = {}) => {
+  getData = async (method, data = {}) => {
     this.setState({
       is_load: true,
     });
-
-    let res = api_laravel(this.state.module, method, data)
-      .then((result) => result.data)
-      .finally(() => {
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 500);
+    try {
+      const response = await api_laravel(this.state.module, method, data);
+      const res = response.data;
+      return res;
+    } catch (e) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: e.message || "Ошибка сервера",
       });
-
-    return res;
+    } finally {
+      setTimeout(() => {
+        this.setState({
+          is_load: false,
+        });
+      }, 500);
+    }
   };
 
   handleResize() {
@@ -146,9 +152,18 @@ class Appointment_ extends React.Component {
 
   async updateList() {
     const res = await this.getData("get_all");
-
+    if (!res?.st) {
+      this.setState({
+        openAlert: true,
+        err_status: res?.st,
+        err_text: res.text || "Ошибка сервера",
+      });
+      return;
+    }
     this.setState({
+      unitsWithItems: null,
       items: res.apps,
+      units: res.units,
     });
   }
 
@@ -231,7 +246,7 @@ class Appointment_ extends React.Component {
     this.setState({
       openAlert: true,
       err_status: res?.st,
-      err_text: res?.text || "Ошибка",
+      err_text: res?.st ? res?.text : "Ошибка",
     });
 
     if (res.st) {
@@ -239,7 +254,7 @@ class Appointment_ extends React.Component {
         modalUnit: false,
         openUnit: null,
       });
-      this.updateList();
+      await this.updateList();
     }
   }
 
@@ -325,12 +340,15 @@ class Appointment_ extends React.Component {
     this.setState({ unitsWithItems });
   }
 
-  applySortingChangeUI() {
+  applyAppsSortingChangeUI() {
     const { unitsWithItems } = this.state;
-    const sortedUnits = [...unitsWithItems].map((unit) => ({
-      ...unit,
-      items: sortAppointmentsListKindSort(unit.items),
-    }));
+    if (!unitsWithItems?.length) return;
+    const sortedUnits = [...unitsWithItems]
+      .sort((a, b) => a.sort - b.sort)
+      .map((unit) => ({
+        ...unit,
+        items: [...sortAppointmentsListKindSort(unit.items)],
+      }));
     this.setState({ unitsWithItems: sortedUnits });
   }
 
@@ -370,6 +388,7 @@ class Appointment_ extends React.Component {
             open={this.state.modalDialog}
             onClose={() => this.setState({ modalDialog: false, openApp: null })}
             item={this.state.openApp}
+            units={this.state.units}
             full_menu={this.state.full_menu}
             fullScreen={this.state.fullScreen}
             save={
@@ -414,14 +433,16 @@ class Appointment_ extends React.Component {
             xs={12}
             mb={1}
           >
-            {unitsWithItems.map((unit) => (
+            {unitsWithItems?.map((unit) => (
               <Accordion
                 defaultExpanded={unit.id !== null}
                 key={`u_${unit.id}`}
               >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <Typography style={{ paddingBlock: '.666em', marginRight: 20 }}>{unit.name}</Typography>
+                    <Typography style={{ paddingBlock: ".666em", marginRight: 20 }}>
+                      {unit.name}
+                    </Typography>
                     {unit.id !== null && (
                       <IconButton onClick={(e) => this.openUnitModal(unit.id, e)}>
                         <EditIcon />
@@ -460,7 +481,7 @@ class Appointment_ extends React.Component {
                                   label=""
                                   value={item.kind}
                                   func={this.changeItem.bind(this, "kind", item.id)}
-                                  onBlur={() => this.applySortingChangeUI()}
+                                  onBlur={() => this.applyAppsSortingChangeUI()}
                                 />
                               </TableCell>
                               <TableCell>
@@ -470,7 +491,7 @@ class Appointment_ extends React.Component {
                                   label=""
                                   value={item.sort}
                                   func={this.changeItem.bind(this, "sort", item.id)}
-                                  onBlur={() => this.applySortingChangeUI()}
+                                  onBlur={() => this.applyAppsSortingChangeUI()}
                                 />
                               </TableCell>
                             </TableRow>

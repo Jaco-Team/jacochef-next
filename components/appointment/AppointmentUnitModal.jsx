@@ -81,7 +81,7 @@ const AppointmentUnitModal = (props) => {
                 type="number"
                 inputProps={{ min: 0 }}
                 label="Сортировка"
-                value={unit?.sort || ""}
+                value={unit?.sort || 0}
                 func={(event) => {
                   setUnit((prev) => ({ ...prev, sort: event.target.value }));
                 }}
