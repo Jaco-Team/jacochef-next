@@ -9,6 +9,8 @@ const strokeSecondary = "#bb0025ff";
 
 const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false }) => {
   const mapRef = useRef(null);
+  const isYm = useRef(false);
+
 
   const handleClickCallback = (e) => {
     const zoneIndex = mapRef.current?.geoObjects.indexOf(e.get("target"));
@@ -58,10 +60,10 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
 
   const createZones = () => {
     const ymaps = window["ymaps"];
-    if (!ymaps) return;
+    if (!ymaps || isYm.current) return;
 
     ymaps.ready(() => {
-      if (mapRef.current) return;
+      if (isYm.current) return;
       const center = zones?.[0]?.xy_point || otherZones?.[0]?.xy_point || "[53.492595, 49.421882]";
 
       const mapElement = document.getElementById("map");
@@ -88,15 +90,20 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
       if (!readonly) {
         mapRef.current.geoObjects.events.add("click", handleClickCallback);
       }
+
+      isYm.current = true;
     });
   };
 
   const updateZones = () => {
-    if (!mapRef.current) {
+    if (!mapRef.current || !isYm.current) {
       return;
     }
     mapRef.current.geoObjects.removeAll();
-    mapRef.current.setCenter(JSON.parse(zones[0]["xy_point"]));
+    const center = String(zones?.[0]?.xy_point || otherZones?.[0]?.xy_point);
+    if (center) {
+      mapRef.current.setCenter(JSON.parse(center));
+    }
     // зоны доставки точки
     zones?.length && buildMainZones();
     // другие зоны доставки
@@ -108,6 +115,7 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
     return () => {
       mapRef.current?.destroy?.();
       mapRef.current = null;
+      isYm.current = false;
     };
   }, []);
 
