@@ -35,7 +35,8 @@ import ModalImage from "react-modal-image";
 import { MySelect, MyDatePickerNew, MyAlert, MyTextInput, formatDate } from '@/ui/elements';
 
 import dayjs from 'dayjs';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+// import {api_laravel_local as api_laravel} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 import Tooltip from "@mui/material/Tooltip";
 import EditIcon from "@mui/icons-material/Edit";
 //import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -412,7 +413,7 @@ class StatErrCash_Modal extends React.Component {
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Сотрудник</Typography>
                 <Typography sx={{ fontWeight: 'normal', whiteSpace: 'nowrap' }}>
                   {this.props.mark === 'errOrder' ? this.state.item ? this.state.item.full_user_name : 'Не указан' : this.state.item ? this.state.item.user_name : 'Не указан'}
-                  {parseInt(acces?.close_err) == 1 &&
+                  {parseInt(acces?.close_err_access) == 1 &&
                     <IconButton onClick={this.getStaffs}>
                       <Tooltip title={<Typography color="inherit">Редактировать</Typography>}>
                         <EditIcon/>
@@ -509,7 +510,7 @@ class StatErrCash_Modal extends React.Component {
                     ) : 'Фото отсутствует'}
                 </Grid>
               </Grid>
-              {parseInt(acces?.close_err) ? (
+              {parseInt(acces?.close_err_access) ? (
                 <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
                 <Grid mb={5}>
                   <Button variant="contained" onClick={this.openConfirm.bind(this, '50')} style={{ minWidth: '130px' }}>Снять 50%</Button>

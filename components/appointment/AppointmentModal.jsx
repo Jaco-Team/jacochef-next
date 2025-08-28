@@ -43,11 +43,10 @@ const AppointmentModal = (props) => {
     reset,
   } = useAppointmentModalStore.getState();
 
-  const [item, full_menu, method, paramModal] = useAppointmentModalStore((s) => [
+  const [item, full_menu, method] = useAppointmentModalStore((s) => [
     s.item,
     s.full_menu,
     s.method,
-    s.paramModal,
   ]);
 
   useEffect(() => {
@@ -63,10 +62,7 @@ const AppointmentModal = (props) => {
 
   useEffect(() => {
     // rebuilding modal params from features here
-    if (!full_menu) {
-      return;
-    }
-    setUiParams();
+    !!full_menu && setUiParams();
   }, [full_menu]);
 
   const changeItemChecked = (key, event) => {
@@ -94,9 +90,9 @@ const AppointmentModal = (props) => {
   const openParams = (paramMethod, main_key, parent_key, type) => {
     setMainKey(main_key);
     setParentKey(parent_key);
-    setUiParams(); // see the store: generates params structure for current module
     setParamMethod(paramMethod);
     setType(type);
+    setUiParams(); // see the store: generates params structure for current module
     setParamModal(true);
   };
 

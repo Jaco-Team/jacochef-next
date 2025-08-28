@@ -34,7 +34,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import {MySelect, MyDatePickerNew, formatDate, MyAlert, MyTextInput, MyAutocomplite} from '@/ui/elements';
 
-import { api_laravel_local, api_laravel } from '@/src/api_new';
+// import {api_laravel_local as api_laravel} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 
 import dayjs from 'dayjs';
 import moment from 'moment';
@@ -566,7 +567,7 @@ class Write_off_journal_modal extends React.Component {
             </TableContainer>
           </DialogContent>
           <DialogActions>
-            {method !== 'Новое списание' && this.props.acces?.delete_write_off ?
+            {method !== 'Новое списание' && parseInt(this.props.acces?.delete_write_off_access) == 1 ?
               <Button onClick={() => this.setState({ confirmDialog: true })} variant="contained" style={{ backgroundColor: 'rgba(53,59,72,1.000)' }}>
                 Удалить
               </Button>
@@ -1150,7 +1151,7 @@ class Write_off_journal_ extends React.Component {
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          {this.state.acces?.create_write_off && (
+          {parseInt(this.state.acces?.create_write_off_access) == 1 && (
             <Grid item xs={12} sm={3}>
               <Button onClick={this.openNewItem.bind(this, 'Новое списание')} variant="contained">
                 Новое списание
@@ -1313,7 +1314,7 @@ class Write_off_journal_ extends React.Component {
                     <TableCell style={{ width: '17%' }}>Время</TableCell>
                     <TableCell style={{ width: '15%' }}>Себестоимость</TableCell>
                     <TableCell style={{ width: '17%' }}>Создатель</TableCell>
-                    {this.state.acces?.edit_write_off ? (
+                    {parseInt(this.state.acces?.edit_write_off_access) == 1 ? (
                       <TableCell style={{width: '15%'}}>Редактирование</TableCell>
                     ) : null}
                     <TableCell style={{ width: '14%' }}>История изменений</TableCell>
@@ -1328,7 +1329,7 @@ class Write_off_journal_ extends React.Component {
                       <TableCell>{item.time}</TableCell>
                       <TableCell>{' '}{new Intl.NumberFormat('ru-RU').format(item?.price ?? '')} ₽</TableCell>
                       <TableCell>{item.user_name}</TableCell>
-                      {this.state.acces?.edit_write_off ? (
+                      {parseInt(this.state.acces?.edit_write_off_access) == 1 ? (
                         <TableCell style={{cursor: 'pointer'}} onClick={this.openItem.bind(this, item?.id, 'Редактрование списания')}>
                           <EditIcon/>
                         </TableCell>

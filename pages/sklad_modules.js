@@ -378,7 +378,7 @@ class SkladModules_ extends React.Component {
 
 					{!this.state.list ? null : (
 						<Grid item xs={12} sm={12} mb={10}>
-							{parseInt(this.state.acces?.view_pos) == 1 ? (
+							{parseInt(this.state.acces?.view_pos_access) == 1 ? (
 								<TableContainer>
 									<Table size="small">
 										<TableHead>

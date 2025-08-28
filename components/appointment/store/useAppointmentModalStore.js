@@ -13,8 +13,8 @@ export const useAppointmentModalStore = create(
     method: "",
     paramMethod: "",
     params: null,
-    main_key: "",
-    parent_key: "",
+    main_key: null,
+    parent_key: null,
     type: "",
     full_menu: null,
 
@@ -57,10 +57,15 @@ export const useAppointmentModalStore = create(
     setUiParams: () =>
       set((state) => {
         const { main_key, parent_key } = state;
+        if (main_key === null || parent_key === null) {
+          return;
+        }
         const features = state.full_menu[main_key]?.chaild[parent_key]?.features || [];
         const features_cat = state.full_menu[main_key]?.chaild[parent_key]?.features_cat || [];
         const data = [...features, ...features_cat];
-        if (!data) return;
+        if (!data?.length) {
+          return;
+        }
         const table_data = [];
         const accordion_data = [];
         data?.forEach((param, index) => {
@@ -71,10 +76,9 @@ export const useAppointmentModalStore = create(
           }
         });
         state.params = {
-          table: table_data,
-          accordion: accordion_data,
+          table: [...table_data],
+          accordion: [...accordion_data],
         };
-        // console.log("UI Params set: \n", state.params);
       }),
 
     setParams: (params) =>
@@ -119,7 +123,9 @@ export const useAppointmentModalStore = create(
             : event?.target?.value;
 
         const updateFeature = (features) => {
-          if (!features?.[fi]) return;
+          if (!features?.[fi]) {
+            return;
+          }
           features[fi] = { ...features[fi], [key]: value };
         };
 

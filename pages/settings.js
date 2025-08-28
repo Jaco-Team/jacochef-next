@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { formatDate, MyAlert, MyAutocomplite, MyDatePickerNew } from "@/ui/elements";
-import { api_laravel } from "@/src/api_new";
+// import {api_laravel_local as api_laravel} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
 import dayjs from "dayjs";
 
 import ModalAder from "@/components/settings/ModalAder";
@@ -32,6 +33,7 @@ function SettingsPage() {
   const [openUpdateAder, setOpenUpdateAder] = useState(false);
   const [activeAder, setActiveAder] = useState([]);
   const [disableAder, setDisableAder] = useState([]);
+  const [access, setAccess] = useState({})
 
   useEffect(() => {
     getData("get_all").then((data) => {
@@ -39,7 +41,8 @@ function SettingsPage() {
       setModule(data.module_info);
       setPoints(data.points);
       setMockItems(data.items);
-      const tabsCheck = Object.entries(tabsData).filter(([key]) => data.acces[key] === "1");
+      const tabsCheck = Object.entries(tabsData).filter(([key]) => data.acces[key+'_access'] === "1");
+      setAccess(data.acces);
       setTabs(Object.fromEntries(tabsCheck));
     });
   }, []);
@@ -162,195 +165,200 @@ function SettingsPage() {
           style={{ paddingTop: 0 }}
         >
           <TabContext value={value}>
-            <TabPanel value="birth_promo">
-              <PromoCodeForm
-                mockItems={mockItems}
-                getData={getData}
-                setIsLoad={setIsLoad}
-                setErrStatus={setErrStatus}
-                setErrText={setErrText}
-                setOpenAlert={setOpenAlert}
-              />
-            </TabPanel>
-            <TabPanel value="order_adver">
-              <Grid
-                container
-                spacing={2}
-                style={{ marginBottom: 16 }}
-              >
+            {parseInt(access.birth_promo_access) == 1 &&
+              <TabPanel value="birth_promo">
+                <PromoCodeForm
+                  mockItems={mockItems}
+                  getData={getData}
+                  setIsLoad={setIsLoad}
+                  setErrStatus={setErrStatus}
+                  setErrText={setErrText}
+                  setOpenAlert={setOpenAlert}
+                />
+              </TabPanel>
+            }
+            {parseInt(access.order_adver_access) == 1 &&
+              <TabPanel value="order_adver">
                 <Grid
-                  item
-                  xs={12}
-                  sm={3}
+                  container
+                  spacing={2}
+                  style={{ marginBottom: 16 }}
                 >
-                  <MyAutocomplite
-                    label="Точки"
-                    data={points}
-                    multiple={true}
-                    value={point}
-                    func={(event, data) => {
-                      setPoint(data);
-                    }}
-                  />
-                </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  sm={2}
-                >
-                  <MyDatePickerNew
-                    label="Дата начала"
-                    value={dateStart}
-                    func={(e) => setDateStart(formatDate(e))}
-                  />
-                </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  sm={2}
-                >
-                  <MyDatePickerNew
-                    label="Дата окончания"
-                    value={dateEnd}
-                    func={(e) => setDateEnd(formatDate(e))}
-                  />
-                </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  sm={3}
-                >
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => getAders()}
+                  <Grid
+                    item
+                    xs={12}
+                    sm={3}
                   >
-                    Показать отчет
-                  </Button>
-                </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  sm={2}
-                >
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => setOpenAder(true)}
+                    <MyAutocomplite
+                      label="Точки"
+                      data={points}
+                      multiple={true}
+                      value={point}
+                      func={(event, data) => {
+                        setPoint(data);
+                      }}
+                    />
+                  </Grid>
+                  <Grid
+                    item
+                    xs={12}
+                    sm={2}
                   >
-                    Добавить рекламу
-                  </Button>
-                </Grid>
-              </Grid>
-              {activeAder.length ? (
-                <Grid
-                  item
-                  xs={12}
-                  style={{ marginBottom: "24px" }}
-                >
-                  <Card elevation={3}>
-                    <CardHeader
-                      title="Активные"
-                      titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                    <MyDatePickerNew
+                      label="Дата начала"
+                      value={dateStart}
+                      func={(e) => setDateStart(formatDate(e))}
                     />
-                    <Divider />
-                    <TableContainer>
-                      <Table>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>#</TableCell>
-                            <TableCell align="left">
-                              <b>Название</b>
-                            </TableCell>
-                            <TableCell align="center">
-                              <b>Дата начала</b>
-                            </TableCell>
-                            <TableCell align="center">
-                              <b>Дата окончания</b>
-                            </TableCell>
-                            <TableCell align="center">
-                              <b>Где активно</b>
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {activeAder.map((row, index) => (
-                            <TableRow
-                              key={index}
-                              sx={{ cursor: "pointer" }}
-                              onClick={() => {
-                                setItemId(row.id);
-                                setOpenUpdateAder(true);
-                              }}
-                            >
-                              <TableCell>{index + 1}</TableCell>
-                              <TableCell align="left">{row.name}</TableCell>
-                              <TableCell align="center">{row.date_start}</TableCell>
-                              <TableCell align="center">{row.date_end}</TableCell>
-                              <TableCell align="center">{row.where_active}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Card>
-                </Grid>
-              ) : null}
-              {disableAder.length ? (
-                <Grid
-                  item
-                  xs={12}
-                  style={{ marginBottom: "24px" }}
-                >
-                  <Card elevation={3}>
-                    <CardHeader
-                      title="Не активные"
-                      titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                  </Grid>
+                  <Grid
+                    item
+                    xs={12}
+                    sm={2}
+                  >
+                    <MyDatePickerNew
+                      label="Дата окончания"
+                      value={dateEnd}
+                      func={(e) => setDateEnd(formatDate(e))}
                     />
-                    <Divider />
-                    <TableContainer>
-                      <Table>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>#</TableCell>
-                            <TableCell align="left">
-                              <b>Название</b>
-                            </TableCell>
-                            <TableCell align="center">
-                              <b>Дата начала</b>
-                            </TableCell>
-                            <TableCell align="center">
-                              <b>Дата окончания</b>
-                            </TableCell>
-                            <TableCell align="center">
-                              <b>Где активно</b>
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {disableAder.map((row, index) => (
-                            <TableRow
-                              key={index}
-                              sx={{ cursor: "pointer" }}
-                              onClick={() => {
-                                setItemId(row.id);
-                                setOpenUpdateAder(true);
-                              }}
-                            >
-                              <TableCell>{index + 1}</TableCell>
-                              <TableCell align="left">{row.name}</TableCell>
-                              <TableCell align="center">{row.date_start}</TableCell>
-                              <TableCell align="center">{row.date_end}</TableCell>
-                              <TableCell align="center">{row.where_active}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Card>
+                  </Grid>
+                  <Grid
+                    item
+                    xs={12}
+                    sm={3}
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => getAders()}
+                    >
+                      Показать отчет
+                    </Button>
+                  </Grid>
+                  <Grid
+                    item
+                    xs={12}
+                    sm={2}
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => setOpenAder(true)}
+                    >
+                      Добавить рекламу
+                    </Button>
+                  </Grid>
                 </Grid>
-              ) : null}
-            </TabPanel>
+                {activeAder.length ? (
+                  <Grid
+                    item
+                    xs={12}
+                    style={{ marginBottom: "24px" }}
+                  >
+                    <Card elevation={3}>
+                      <CardHeader
+                        title="Активные"
+                        titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                      />
+                      <Divider />
+                      <TableContainer>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>#</TableCell>
+                              <TableCell align="left">
+                                <b>Название</b>
+                              </TableCell>
+                              <TableCell align="center">
+                                <b>Дата начала</b>
+                              </TableCell>
+                              <TableCell align="center">
+                                <b>Дата окончания</b>
+                              </TableCell>
+                              <TableCell align="center">
+                                <b>Где активно</b>
+                              </TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {activeAder.map((row, index) => (
+                              <TableRow
+                                key={index}
+                                sx={{ cursor: "pointer" }}
+                                onClick={() => {
+                                  setItemId(row.id);
+                                  setOpenUpdateAder(true);
+                                }}
+                              >
+                                <TableCell>{index + 1}</TableCell>
+                                <TableCell align="left">{row.name}</TableCell>
+                                <TableCell align="center">{row.date_start}</TableCell>
+                                <TableCell align="center">{row.date_end}</TableCell>
+                                <TableCell align="center">{row.where_active}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Card>
+                  </Grid>
+                ) : null}
+
+                {disableAder.length ? (
+                  <Grid
+                    item
+                    xs={12}
+                    style={{ marginBottom: "24px" }}
+                  >
+                    <Card elevation={3}>
+                      <CardHeader
+                        title="Не активные"
+                        titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                      />
+                      <Divider />
+                      <TableContainer>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>#</TableCell>
+                              <TableCell align="left">
+                                <b>Название</b>
+                              </TableCell>
+                              <TableCell align="center">
+                                <b>Дата начала</b>
+                              </TableCell>
+                              <TableCell align="center">
+                                <b>Дата окончания</b>
+                              </TableCell>
+                              <TableCell align="center">
+                                <b>Где активно</b>
+                              </TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {disableAder.map((row, index) => (
+                              <TableRow
+                                key={index}
+                                sx={{ cursor: "pointer" }}
+                                onClick={() => {
+                                  setItemId(row.id);
+                                  setOpenUpdateAder(true);
+                                }}
+                              >
+                                <TableCell>{index + 1}</TableCell>
+                                <TableCell align="left">{row.name}</TableCell>
+                                <TableCell align="center">{row.date_start}</TableCell>
+                                <TableCell align="center">{row.date_end}</TableCell>
+                                <TableCell align="center">{row.where_active}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Card>
+                  </Grid>
+                ) : null}
+              </TabPanel>
+            }
           </TabContext>
         </Grid>
       </Grid>

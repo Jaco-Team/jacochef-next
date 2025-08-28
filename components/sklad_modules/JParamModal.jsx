@@ -26,7 +26,7 @@ export default function JParamModal({
   onClose,
   getData,
 }) {
-  const [item, setItem] = useState(propItem);
+  const [item, setItem] = useState(null);
   const [openAlert, setOpenAlert] = useState(false);
   const [errStatus, setErrStatus] = useState(false);
   const [errText, setErrText] = useState("");
@@ -55,7 +55,6 @@ export default function JParamModal({
             ...prev,
             categories: res.categories || [],
             categoryItem,
-            category: "",
           };
         });
       } catch (error) {
@@ -64,7 +63,6 @@ export default function JParamModal({
         setIsLoadingCategories(false);
       }
     };
-
     fetchData();
   }, [item?.module_id]);
 
@@ -76,15 +74,15 @@ export default function JParamModal({
     }
   };
 
-  const changeAutoComplete = (key, _, value) => {
+  const changeAutoComplete = (key, value) => {
     if (key === "category") {
       setItem((prev) =>
         !!prev
           ? {
               ...prev,
-              category: value?.id || "",
-              categoryItem: value,
+              category: value?.id || '',
               category_name: value?.id !== 0 ? value?.name : "",
+              categoryItem: value,
             }
           : prev
       );
@@ -100,7 +98,6 @@ export default function JParamModal({
     if (!item.param) return showError("Необходимо указать параметр");
     if (!item.module_id) return showError("Необходимо выбрать модуль");
     if (!item.type) return showError("Необходимо выбрать тип");
-
     const res = await save(item);
     if (res?.st) {
       handleClose();
@@ -194,7 +191,7 @@ export default function JParamModal({
                   multiple={false}
                   data={item?.modules || []}
                   value={item?.module_id || ""}
-                  func={(event, value) => changeAutoComplete("module_id", event, value)}
+                  func={(_, value) => changeAutoComplete("module_id", value)}
                 />
               </Grid>
 
@@ -223,8 +220,8 @@ export default function JParamModal({
                   disableCloseOnSelect={false}
                   data={item?.categories?.length > 0 ? item?.categories : []}
                   value={item?.categoryItem || ""}
-                  isOptionEqualToValue={(option, value) => option?.id === value?.id}
-                  func={(_, value) => changeAutoComplete("category", _, value)}
+                  isOptionEqualToValue={(option, value) => option?.id === value?.id || option?.name === value?.category_name}
+                  func={(_, value) => changeAutoComplete("category", value)}
                   renderInput={
                     (params) => (
                        <TextField

@@ -389,7 +389,7 @@ class SitePriceLevelEdit_ extends React.Component {
 
     let city;
 
-    if(parseInt(res.acces?.edit_level) && !dayjs(res.level.date_start).isBefore(dayjs(), 'day')) {
+    if(parseInt(res.acces?.edit_level_access) && !dayjs(res.level.date_start).isBefore(dayjs(), 'day')) {
       city = res.level.city_id;
     } else {
       city = res.cities.find((item) => item.id === res.level.city_id)?.name ?? '';
@@ -415,7 +415,7 @@ class SitePriceLevelEdit_ extends React.Component {
   render() {
 
     const { acces, date_start } = this.state;
-    const isEdit = parseInt(acces?.edit_level) && !dayjs(date_start).isBefore(dayjs(), 'day');
+    const isEdit = parseInt(acces?.edit_level_access) && !dayjs(date_start).isBefore(dayjs(), 'day');
 
     return (
       <>
