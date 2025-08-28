@@ -35,6 +35,8 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Divider from "@mui/material/Divider";
 import Card from "@mui/material/Card";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import ToggleButton from "@mui/material/ToggleButton";
 
 const ModalOrder = ({open, onClose, getData, pointId, orderId}) => {
 	const [order, setOrder] = useState({});
@@ -373,6 +375,7 @@ function FeedbackPage() {
 	const [openAlert, setOpenAlert] = useState(false);
 	const [errStatus, setErrStatus] = useState(false);
 	const [errText, setErrText] = useState('');
+	const [typeSale, setTypeSale] = useState(0);
 	const tabsData = {
 		view_form: 'Просомотр формы',
 		view_feed: 'Отчеты',
@@ -498,6 +501,29 @@ function FeedbackPage() {
 								setRating(newValue);
 							}}
 						/>
+					</div>
+				);
+				case 'discount':
+				return (
+					<div className="form-element">
+						<Typography variant="h6">Выписать скидку</Typography>
+						<ToggleButtonGroup
+              value={typeSale}
+              exclusive
+              size="small"
+							onChange={(event, data) => setTypeSale(data)}
+            >
+							{element.data.availableDiscount.map((discount) => {
+								return (
+									<ToggleButton value={discount} style={{backgroundColor: parseInt(typeSale) == discount ? '#dd1a32' : '#fff'}}>
+										<span style={{
+											color: parseInt(typeSale) == discount ? '#fff' : '#333',
+											padding: '0 20px'
+										}}>Скидка {discount}%</span>
+									</ToggleButton>
+								);
+							})}
+            </ToggleButtonGroup>
 					</div>
 				);
 			case 'input':

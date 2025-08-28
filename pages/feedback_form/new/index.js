@@ -7,7 +7,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DragHandleIcon from '@mui/icons-material/DragHandle';
 import {
 	CheckBoxOutlineBlank,
-	LocalOffer,
+	LocalOffer, MonetizationOn,
 	Notes,
 	PlaylistAddCheck,
 	StarBorder,
@@ -28,6 +28,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Dialog from "@mui/material/Dialog";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 const FormElementCard = styled(Paper)(({theme}) => ({
 	marginBottom: theme.spacing(3),
@@ -202,7 +204,7 @@ function FormBuilderDrag({
 														},
 													}}
 												>
-													<DragHandleIcon/>
+													{element.type !== 'discount' && <DragHandleIcon/>}
 												</IconButton>
 
 												<Box>
@@ -428,13 +430,35 @@ function FormBuilder() {
 			type,
 			data: getDefaultElementData(type),
 		};
-		setFormElements([...formElements, newElement]);
+
+		if (type === 'discount') {
+			// Если добавляется discount, всегда помещаем в конец
+			setFormElements([...formElements, newElement]);
+		} else {
+			// Если добавляется другой элемент, ищем существующий discount
+			const discountElement = formElements.find(el => el.type === 'discount');
+
+			if (discountElement) {
+				// Если discount уже есть, добавляем перед ним
+				const index = formElements.indexOf(discountElement);
+				const newElements = [...formElements];
+				newElements.splice(index, 0, newElement);
+				setFormElements(newElements);
+			} else {
+				// Если discount нет, просто добавляем в конец
+				setFormElements([...formElements, newElement]);
+			}
+		}
 	};
+
+	const availableDiscount = [10, 20];
 
 	const getDefaultElementData = (type) => {
 		switch (type) {
 			case 'rating':
 				return {value: 0};
+			case 'discount':
+				return {value: 0, availableDiscount: [...availableDiscount]};
 			case 'input':
 				return {title: 'Текстовое поле', placeholder: 'Введите текст'};
 			case 'textarea':
@@ -540,6 +564,28 @@ function FormBuilder() {
 					<div className="form-element">
 						<Typography variant="h6">Рейтинг</Typography>
 						<Rating value={element.data.value} readOnly/>
+					</div>
+				);
+			case 'discount':
+				return (
+					<div className="form-element">
+						<Typography variant="h6">Выписать скидку</Typography>
+						<ToggleButtonGroup
+              value={element.data.value}
+              exclusive
+              size="small"
+            >
+							{element.data.availableDiscount.map((discount) => {
+								return (
+									<ToggleButton value="20" style={{backgroundColor: parseInt(element.data.value) == discount ? '#dd1a32' : '#fff'}}>
+										<span style={{
+											color: parseInt(element.data.value) == discount ? '#fff' : '#333',
+											padding: '0 20px'
+										}}>Скидка {discount}%</span>
+									</ToggleButton>
+								);
+							})}
+            </ToggleButtonGroup>
 					</div>
 				);
 			case 'input':
@@ -1662,6 +1708,29 @@ function FormBuilder() {
 								}}
 							>
 								Блок элементов
+							</Button>
+						</Grid>
+						<Grid item xs={6}>
+							<Button
+								variant="contained"
+								fullWidth
+								disabled={formElements.some((el) => el.type === 'discount')}
+								onClick={() => addFormElement('discount')}
+								startIcon={<MonetizationOn/>}
+								sx={{
+									height: 100,
+									bgcolor: '#ef5555',
+									color: '#424242',
+									borderRadius: 2,
+									'&:hover': {bgcolor: '#EEEEEE'},
+									border: '1px solid #E0E0E0',
+									display: 'flex',
+									flexDirection: 'column',
+									justifyContent: 'center',
+									gap: 1,
+								}}
+							>
+								Скидка
 							</Button>
 						</Grid>
 					</Grid>

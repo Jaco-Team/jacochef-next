@@ -28,6 +28,8 @@ import TableFooter from "@mui/material/TableFooter";
 import TablePagination from "@mui/material/TablePagination";
 import {Checkbox, Chip, FormControlLabel, Rating, TextField} from "@mui/material";
 import Box from "@mui/material/Box";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import ToggleButton from "@mui/material/ToggleButton";
 
 const DialogUser = ({open, onClose, user, openOrder}) => {
 	return (
@@ -121,12 +123,18 @@ const DialogUser = ({open, onClose, user, openOrder}) => {
 const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_forms, getData, openOrder}) => {
 	const [formData, setFormData] = useState([]);
 	const [values, setValues] = useState([]);
+	const [discountValue, setDiscountValue] = useState(0);
+	const [userActive, setUserActive] = useState(0);
 	const saveFeedback = () => {
 		const feedbacks = [];
 		order_items.map((value, index) => {
 			feedbacks.push({...values[index], item: {...value}});
 		});
-		getData('save_feedbacks', {feedbacks, order_id: order.order_id, point_id: order.point_id}).then((data) => {
+		const anyPercent = {
+			sale: discountValue,
+			phone: order.number,
+		};
+		getData('save_feedbacks', {feedbacks, order_id: order.order_id, point_id: order.point_id, anyPercent, userActive}).then((data) => {
 			openOrder(order.point_id, order.order_id)
 		})
 	}
@@ -361,6 +369,8 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 				return null;
 		}
 	};
+	const hasDiscount = order_items?.some(item => item.form_data.some(data => data.type === 'discount'));
+	const hasFormFeed = order_items?.some(item => item.form_feed.length);
 	return (
 		<Dialog
 			open={open}
@@ -483,6 +493,81 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 								) : null}
 							</TableBody>
 							<TableFooter>
+								{order_items?.some(item => item.form_data.length) && (
+									<TableRow>
+										<TableCell style={{fontWeight: 'bold', color: '#000'}}>Тип клиента</TableCell>
+										<TableCell></TableCell>
+										<TableCell style={{
+											fontWeight: 'bold',
+											color: '#000'
+										}}></TableCell>
+										<TableCell>
+											<div className="form-element">
+												<ToggleButtonGroup
+													value={userActive}
+													exclusive
+													size="small"
+													onChange={(event, data) => setUserActive(data)}
+												>
+													<ToggleButton value={0} style={{
+														backgroundColor: parseInt(userActive) == 0 ? '#dd1a32' : '#fff',
+														borderRightWidth: 2
+													}}>
+														<span style={{
+															color: parseInt(userActive) == 0 ? '#fff' : '#333',
+															padding: '0 20px'
+														}}>Текущий</span>
+													</ToggleButton>
+													<ToggleButton value={1} style={{backgroundColor: parseInt(userActive) == 1 ? '#dd1a32' : '#fff'}}>
+														<span style={{
+															color: parseInt(userActive) == 1 ? '#fff' : '#333',
+															padding: '0 20px'
+														}}>Новый</span>
+													</ToggleButton>
+													<ToggleButton value={2} style={{backgroundColor: parseInt(userActive) == 2 ? '#dd1a32' : '#fff'}}>
+														<span style={{
+															color: parseInt(userActive) == 2 ? '#fff' : '#333',
+															padding: '0 20px'
+														}}>Ушедший</span>
+													</ToggleButton>
+												</ToggleButtonGroup>
+											</div>
+										</TableCell>
+									</TableRow>
+								)}
+								{hasDiscount && (
+									<TableRow>
+										<TableCell style={{fontWeight: 'bold', color: '#000'}}>Выписать скидку</TableCell>
+										<TableCell></TableCell>
+										<TableCell style={{
+											fontWeight: 'bold',
+											color: '#000'
+										}}></TableCell>
+										<TableCell>
+											<div className="form-element">
+												<ToggleButtonGroup
+													value={discountValue}
+													exclusive
+													size="small"
+													onChange={(event, data) => {
+														setDiscountValue(data)
+													}}
+												>
+													{[10, 20].map((discount) => {
+														return (
+															<ToggleButton value={discount} style={{backgroundColor: parseInt(discountValue) == discount ? '#dd1a32' : '#fff'}}>
+										<span style={{
+											color: parseInt(discountValue) == discount ? '#fff' : '#333',
+											padding: '0 20px'
+										}}>Скидка {discount}%</span>
+															</ToggleButton>
+														);
+													})}
+												</ToggleButtonGroup>
+											</div>
+										</TableCell>
+									</TableRow>
+								)}
 								<TableRow>
 									<TableCell style={{fontWeight: 'bold', color: '#000'}}>Сумма заказа</TableCell>
 									<TableCell></TableCell>
@@ -490,7 +575,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 										fontWeight: 'bold',
 										color: '#000'
 									}}>{`${order?.sum_order}`} р</TableCell>
-									<TableCell><Button variant="contained" onClick={saveFeedback}  sx={{display: order_items?.some(item => item.form_data.length) ? '' : 'none'}}>Сохранить отзывы</Button></TableCell>
+									<TableCell><Button variant="contained" onClick={saveFeedback} sx={{display: order_items?.some(item => item.form_data.length) ? '' : 'none'}}>Сохранить отзывы</Button></TableCell>
 								</TableRow>
 							</TableFooter>
 						</Table>

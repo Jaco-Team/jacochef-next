@@ -28,16 +28,24 @@ import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import ToggleButton from "@mui/material/ToggleButton";
 
 const ModalOrderWithFeedback = ({open, onClose, order, order_items, err_order, feedback_forms, getData, openOrder}) => {
 	const [formData, setFormData] = useState([]);
 	const [values, setValues] = useState([]);
+	const [discountValue, setDiscountValue] = useState(0);
+	const [userActive, setUserActive] = useState(0);
 	const saveFeedback = () => {
 		const feedbacks = [];
 		order_items.map((value, index) => {
 			feedbacks.push({...values[index], item: {...value}});
 		});
-		getData('save_feedbacks', {feedbacks, order_id: order.order_id, point_id: order.point_id}).then((data) => {
+		const anyPercent = {
+			sale: discountValue,
+			phone: order.number,
+		};
+		getData('save_feedbacks', {feedbacks, order_id: order.order_id, point_id: order.point_id, anyPercent, userActive}).then((data) => {
 			openOrder(order.point_id, order.order_id)
 		})
 	}
@@ -394,6 +402,81 @@ const ModalOrderWithFeedback = ({open, onClose, order, order_items, err_order, f
 								) : null}
 							</TableBody>
 							<TableFooter>
+								{order_items?.some(item => item.form_data.length) && (
+									<TableRow>
+										<TableCell style={{fontWeight: 'bold', color: '#000'}}>Тип клиента</TableCell>
+										<TableCell></TableCell>
+										<TableCell style={{
+											fontWeight: 'bold',
+											color: '#000'
+										}}></TableCell>
+										<TableCell>
+											<div className="form-element">
+												<ToggleButtonGroup
+													value={userActive}
+													exclusive
+													size="small"
+													onChange={(event, data) => setUserActive(data)}
+												>
+													<ToggleButton value={0} style={{
+														backgroundColor: parseInt(userActive) == 0 ? '#dd1a32' : '#fff',
+														borderRightWidth: 2
+													}}>
+														<span style={{
+															color: parseInt(userActive) == 0 ? '#fff' : '#333',
+															padding: '0 20px'
+														}}>Текущий</span>
+													</ToggleButton>
+													<ToggleButton value={1} style={{backgroundColor: parseInt(userActive) == 1 ? '#dd1a32' : '#fff'}}>
+														<span style={{
+															color: parseInt(userActive) == 1 ? '#fff' : '#333',
+															padding: '0 20px'
+														}}>Новый</span>
+													</ToggleButton>
+													<ToggleButton value={2} style={{backgroundColor: parseInt(userActive) == 2 ? '#dd1a32' : '#fff'}}>
+														<span style={{
+															color: parseInt(userActive) == 2 ? '#fff' : '#333',
+															padding: '0 20px'
+														}}>Ушедший</span>
+													</ToggleButton>
+												</ToggleButtonGroup>
+											</div>
+										</TableCell>
+									</TableRow>
+								)}
+								{order_items?.some(item => item.form_data.length && item.form_data.some(data => data.type === 'discount')) && (
+									<TableRow>
+										<TableCell style={{fontWeight: 'bold', color: '#000'}}>Выписать скидку</TableCell>
+										<TableCell></TableCell>
+										<TableCell style={{
+											fontWeight: 'bold',
+											color: '#000'
+										}}></TableCell>
+										<TableCell>
+											<div className="form-element">
+												<ToggleButtonGroup
+													value={discountValue}
+													exclusive
+													size="small"
+													onChange={(event, data) => {
+														setDiscountValue(data)
+													}}
+												>
+													{[10, 20].map((discount) => {
+														return (
+															<ToggleButton value={discount} style={{backgroundColor: parseInt(discountValue) == discount ? '#dd1a32' : '#fff'}}>
+										<span style={{
+											color: parseInt(discountValue) == discount ? '#fff' : '#333',
+											padding: '0 20px'
+										}}>Скидка {discount}%</span>
+															</ToggleButton>
+														);
+													})}
+												</ToggleButtonGroup>
+											</div>
+										</TableCell>
+									</TableRow>
+								)}
 								<TableRow>
 									<TableCell style={{fontWeight: 'bold', color: '#000'}}>Сумма заказа</TableCell>
 									<TableCell></TableCell>
@@ -605,7 +688,7 @@ export default function OrdersMore() {
 		setIsLoad(true);
 
 		try {
-			const result = await api_laravel('site_clients', method, data);
+			const result = await api_laravel_local('site_clients', method, data);
 			return result.data;
 		} finally {
 			setIsLoad(false);
