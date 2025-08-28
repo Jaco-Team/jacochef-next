@@ -18,27 +18,21 @@ const AppointmentUnitModal = (props) => {
   const [apps, setApps] = useState([]);
 
   const onClose = () => {
-    setTimeout(() => {
-      setUnit(null);
-    }, 100);
-
     props.onClose();
   };
 
   const save = useCallback(async () => {
-    try {
-      await props.save(unit);
-    } catch (error) {
-      console.error("Error saving unit:", error);
-    } finally {
-      onClose();
-    }
+    await props.save(unit);
+    onClose();
   }, [unit]);
 
   useEffect(() => {
-    console.dir(props.apps);
     setApps(props.apps);
   }, [props.apps]);
+
+  useEffect(() => {
+    setUnit(props.unit);
+  }, [props.unit]);
 
   const { fullScreen, open, method } = props;
 
@@ -85,8 +79,9 @@ const AppointmentUnitModal = (props) => {
             >
               <MyTextInput
                 type="number"
+                inputProps={{ min: 0 }}
                 label="Сортировка"
-                value={unit?.sort || ''}
+                value={unit?.sort || ""}
                 func={(event) => {
                   setUnit((prev) => ({ ...prev, sort: event.target.value }));
                 }}
