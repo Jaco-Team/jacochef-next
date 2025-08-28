@@ -5,6 +5,7 @@ import { MyTextInput, MyAlert } from '@/ui/elements';
 import { api_laravel } from '@/src/api_new';
 import { Backdrop, Button, CircularProgress, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import AppointmentModal from '@/components/appointment/AppointmentModal';
+import AppointmentUnitModal from '@/components/appointment/AppointmentUnitModal';
 
 class Appointment_ extends React.Component {
   constructor(props) {
@@ -15,6 +16,7 @@ class Appointment_ extends React.Component {
       module_name: '',
 
       modalDialog: false,
+      modalUnit: false,
       method: '',
       item : [],
       fullScreen: false,
@@ -29,6 +31,7 @@ class Appointment_ extends React.Component {
       items: [], 
 
       openApp: null,
+      openUnit: null,
       full_menu: [],
 
       method: '',
@@ -205,6 +208,24 @@ class Appointment_ extends React.Component {
     }
   }
 
+  async saveUnit(unit){
+    const res = await this.getData('save_unit', { unit });
+
+    this.setState({
+      openAlert: true,
+      err_status: res?.st,
+      err_text: res?.text || 'Ошибка'
+    });
+
+    if(res.st){
+      this.setState({
+        modalUnit: false,
+        openUnit: null
+      });
+      this.updateList();
+    }
+  }
+
   async openNewApp() {
     this.handleResize();
 
@@ -215,6 +236,35 @@ class Appointment_ extends React.Component {
       openApp: res.appointment,
       full_menu: res.full_menu,
       method: 'Новая должность'
+    });
+  }
+
+  async openUnitModal(unit_id = null) {
+    this.handleResize();
+    const unit = {
+      name: '',
+      sort: null,
+      apps: []
+    };
+
+    if(unit_id !== null) {
+      const data = {
+        unit_id
+      }
+      console.log(data)
+      const res = await this.getData('get_unit', data);
+      if(res?.unit) {
+        unit.id = res.unit.id;
+        unit.name = res.unit.name;
+        unit.sort = res.unit.sort;
+        unit.apps = res.unit.apps;
+      }
+    }
+
+    this.setState({
+      modalUnit: true,
+      openUnit: unit,
+      method: 'Новый отдел'
     });
   }
 
@@ -248,9 +298,22 @@ class Appointment_ extends React.Component {
             method={this.state.method}
           />
        
+          <AppointmentUnitModal
+            open={this.state.modalUnit}
+            onClose={() => this.setState({ modalUnit: false, openUnit: null })}
+            unit={this.state.openUnit}
+            apps={this.state.items}
+            fullScreen={this.state.fullScreen}
+            save={this.saveUnit.bind(this)}
+            method={this.state.method}
+          />
+       
           <Grid item xs={12} mb={1}>
             <Button variant="outlined" onClick={this.openNewApp.bind(this)}>
               Новая должность
+            </Button>
+            <Button variant="outlined" onClick={this.openUnitModal.bind(this, null)}>
+              Добавить отдел
             </Button>
           </Grid>
 
