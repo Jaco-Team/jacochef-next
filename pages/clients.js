@@ -734,7 +734,7 @@ function ClientPage() {
 		setIsLoad(true);
 
 		try {
-			const result = await api_laravel_local('clients', method, data);
+			const result = await api_laravel('clients', method, data);
 			return result.data;
 		} finally {
 			setIsLoad(false);
