@@ -7,7 +7,7 @@ const strokePrimaryInactive = "#000000";
 const fillSecondary = "#f08080ff";
 const strokeSecondary = "#bb0025ff";
 
-const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly }) => {
+const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false }) => {
   const mapRef = useRef(null);
 
   const handleClickCallback = (e) => {
@@ -56,57 +56,64 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly }) => {
     });
   };
 
-  const renderZones = (ymaps) => {
-    if (!zones?.length) return;
-    const mainZone = zones[0];
-    if (!mapRef.current) {
-      ymaps.ready(() => {
-        const mapElement = document.getElementById("map");
-        if (!mapElement) {
-          return;
-        }
+  const createZones = () => {
+    const ymaps = window["ymaps"];
+    if (!ymaps) return;
 
-        const mapOptions = {
-          center: JSON.parse(mainZone["xy_point"]),
+    ymaps.ready(() => {
+      if (mapRef.current) return;
+      const center = zones?.[0]?.xy_point || otherZones?.[0]?.xy_point || "[53.492595, 49.421882]";
+
+      const mapElement = document.getElementById("map");
+      if (!mapElement) {
+        return;
+      }
+
+      mapRef.current = new ymaps.Map(
+        "map",
+        {
+          center: JSON.parse(center),
           zoom: 11,
-        };
-        if (readonly) {
-          mapOptions.type = "yandex#grayMap";
-        }
-        mapRef.current = new ymaps.Map("map", mapOptions, {
+        },
+        {
           searchControlProvider: "yandex#search",
-        });
-
-        // зоны доставки точки
-        buildMainZones();
-        // другие зоны доставки
-        buildOtherZones();
-        if (!readonly) {
-          mapRef.current.geoObjects.events.add("click", handleClickCallback);
         }
-      });
-    } else {
-      mapRef.current.geoObjects.removeAll();
-      mapRef.current.setCenter(JSON.parse(zones[0]["xy_point"]));
+      );
 
       // зоны доставки точки
-      buildMainZones();
-      // другие зоны
-      buildOtherZones();
+      zones?.length && buildMainZones();
+      // другие зоны доставки
+      otherZones?.length && buildOtherZones();
+
+      if (!readonly) {
+        mapRef.current.geoObjects.events.add("click", handleClickCallback);
+      }
+    });
+  };
+
+  const updateZones = () => {
+    if (!mapRef.current) {
+      return;
     }
+    mapRef.current.geoObjects.removeAll();
+    mapRef.current.setCenter(JSON.parse(zones[0]["xy_point"]));
+    // зоны доставки точки
+    zones?.length && buildMainZones();
+    // другие зоны доставки
+    otherZones?.length && buildOtherZones();
   };
 
   useEffect(() => {
-    const ymaps = window["ymaps"];
-    if (!ymaps) {
-      return;
-    }
-    renderZones(ymaps);
+    createZones();
     return () => {
       mapRef.current?.destroy?.();
       mapRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    updateZones();
+  }, [zones, otherZones]);
 
   return (
     <>
