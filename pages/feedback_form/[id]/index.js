@@ -388,7 +388,7 @@ function FeedbackPage() {
 			setTitle(data.item.name);
 			setFormData(JSON.parse(data.item.form_data));
 			setActive(data.item.active);
-			const tabsCheck = Object.entries(tabsData).filter(([key]) => data.acces?.[key + '_access'] === '1' || key === 'view_form');
+			const tabsCheck = Object.entries(tabsData).filter(([key]) => parseInt(data.acces?.[key + '_access']) === 1 || key === 'view_form');
 			setAccess(Object.fromEntries(tabsCheck));
 			setPoints(data.points);
 			setItems(data.items);
