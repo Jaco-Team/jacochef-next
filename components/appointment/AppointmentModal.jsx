@@ -171,7 +171,7 @@ const AppointmentModal = (props) => {
                 multiple={false}
                 disableCloseOnSelect={false}
                 label="Отдел"
-                value={units.find((unit) => unit.id === item?.unit_id) || ""}
+                value={units?.find((unit) => unit.id === item?.unit_id) || ""}
                 func={(_, newValue) => setItemField("unit_id", newValue.id)}
               />
             </Grid>
