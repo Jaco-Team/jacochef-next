@@ -27,7 +27,7 @@ function FeedbackPage() {
 			document.title = data.module_info.name;
 			setModule(data.module_info);
 			setFormsActive(data.forms_active);
-			const tabsCheck = Object.entries(tabsData).filter(([key]) => data.acces[key + '_access'] === '1');
+			const tabsCheck = Object.entries(tabsData).filter(([key]) => parseInt(data.acces[key + '_access']) === 1);
 			setActive(Object.fromEntries(tabsCheck));
 			setFormsNonActive(data.forms_nonactive);
 		});
