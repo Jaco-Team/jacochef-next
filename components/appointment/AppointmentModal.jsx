@@ -23,7 +23,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import AppointmentParamModal from "@/components/appointment/AppointmentParamModal";
 import AppointmentModalInput from "@/components/appointment/AppointmentModalInput";
 import { Fragment, memo, useCallback, useEffect } from "react";
-import { MyCheckBox } from "@/ui/elements";
+import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/ui/elements";
 import { useAppointmentModalStore } from "@/components/appointment/store/useAppointmentModalStore";
 
 const AppointmentModal = (props) => {
@@ -96,7 +96,7 @@ const AppointmentModal = (props) => {
     setParamModal(true);
   };
 
-  const { fullScreen, open } = props;
+  const { fullScreen, open, units } = props;
 
   return (
     <>
@@ -144,16 +144,42 @@ const AppointmentModal = (props) => {
               label="Сокращенное название"
               type="short_name"
             />
-            <AppointmentModalInput
+            {/* <AppointmentModalInput
               data={item?.bonus}
               changeItem={setItemField}
               label="Норма бонусов"
               type="bonus"
-            />
+            /> */}
+            <Grid
+              item
+              xs={6}
+              md={4}
+            >
+              <MyTextInput
+                label="Норма бонусов"
+                type="number"
+                value={item?.bonus || 0}
+                func={({ target: { value } }) => setItemField("bonus", value)}
+              />
+            </Grid>
+            <Grid
+              item
+              xs={6}
+              md={4}
+            >
+              <MyAutocomplite
+                data={units}
+                multiple={false}
+                disableCloseOnSelect={false}
+                label="Отдел"
+                value={units.find((unit) => unit.id === item?.unit_id) || ""}
+                func={(_, newValue) => setItemField("unit_id", newValue.id)}
+              />
+            </Grid>
             <Grid
               item
               xs={12}
-              md={6}
+              md={4}
             >
               <MyCheckBox
                 func={(e) => changeItemChecked("is_graph", e)}

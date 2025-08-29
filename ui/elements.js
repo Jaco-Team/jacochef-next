@@ -369,10 +369,11 @@ export class MyTextInput extends React.PureComponent {
         multiline={this.props.multiline ? this.props.multiline : false}
         maxRows={this.props.maxRows ? this.props.maxRows : 1}
         type={ this.props.type ? this.props.type : this.state.type }
+        min={ this.props.min ? this.props.min : 0 }
         style={{ width: '100%' }}
         onKeyUp={this.props.enter}
         InputProps={this.props.inputAdornment}
-        inputProps={this.props.tabindex}
+        inputProps={{ tabIndex: this.props.tabindex, ...(this.props.inputProps || {}) }}
         className={this.props.className}
         onWheel={this.props.onWheel ? this.props.onWheel : null}
       />
