@@ -463,7 +463,7 @@ class Appointment_ extends React.Component {
                   </Box>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <TableContainer style={{ maxHeight: "60dvh" }}>
+                  <TableContainer>
                     <Table stickyHeader>
                       <TableHead>
                         <TableRow key={`unit_${unit.id}`}>
