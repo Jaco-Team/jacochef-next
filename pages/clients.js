@@ -30,6 +30,7 @@ import {Checkbox, Chip, FormControlLabel, Rating, TextField} from "@mui/material
 import Box from "@mui/material/Box";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
+import {ModalAccept} from "@/components/general/ModalAccept";
 
 const DialogUser = ({open, onClose, user, openOrder}) => {
 	return (
@@ -371,6 +372,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 	};
 	const hasDiscount = order_items?.some(item => item.form_data.some(data => data.type === 'discount'));
 	const hasFormFeed = order_items?.some(item => item.form_feed.length);
+	const [openAccept, setOpenAccept] = useState(false);
 	return (
 		<Dialog
 			open={open}
@@ -390,6 +392,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 					<CloseIcon/>
 				</IconButton>
 			</DialogTitle>
+			{openAccept && <ModalAccept open={openAccept} onClose={() => setOpenAccept(false)} save={() => {saveFeedback(); setOpenAccept(false)}}/>}
 
 			<DialogContent>
 
@@ -575,7 +578,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 										fontWeight: 'bold',
 										color: '#000'
 									}}>{`${order?.sum_order}`} р</TableCell>
-									<TableCell><Button variant="contained" onClick={saveFeedback} sx={{display: order_items?.some(item => item.form_data.length) ? '' : 'none'}}>Сохранить отзывы</Button></TableCell>
+									<TableCell><Button variant="contained" onClick={() => setOpenAccept(true)} sx={{display: order_items?.some(item => item.form_data.length) ? '' : 'none'}}>Сохранить отзывы</Button></TableCell>
 								</TableRow>
 							</TableFooter>
 						</Table>

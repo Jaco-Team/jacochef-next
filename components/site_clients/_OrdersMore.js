@@ -30,6 +30,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
+import {ModalAccept} from "@/components/general/ModalAccept";
 
 const ModalOrderWithFeedback = ({open, onClose, order, order_items, err_order, feedback_forms, getData, openOrder}) => {
 	const [formData, setFormData] = useState([]);
@@ -280,6 +281,7 @@ const ModalOrderWithFeedback = ({open, onClose, order, order_items, err_order, f
 				return null;
 		}
 	};
+	const [openAccept, setOpenAccept] = useState(false);
 	return (
 		<Dialog
 			open={open}
@@ -299,6 +301,7 @@ const ModalOrderWithFeedback = ({open, onClose, order, order_items, err_order, f
 					<CloseIcon/>
 				</IconButton>
 			</DialogTitle>
+			{openAccept && <ModalAccept open={openAccept} onClose={() => setOpenAccept(false)} save={() => {saveFeedback(); setOpenAccept(false)}}/>}
 
 			<DialogContent>
 
@@ -484,7 +487,7 @@ const ModalOrderWithFeedback = ({open, onClose, order, order_items, err_order, f
 										fontWeight: 'bold',
 										color: '#000'
 									}}>{`${order?.sum_order}`} р</TableCell>
-									<TableCell><Button variant="contained" onClick={saveFeedback}  sx={{display: order_items?.some(item => item.form_data.length) ? '' : 'none'}}>Сохранить отзывы</Button></TableCell>
+									<TableCell><Button variant="contained" onClick={() => setOpenAccept(true)} sx={{display: order_items?.some(item => item.form_data.length) ? '' : 'none'}}>Сохранить отзывы</Button></TableCell>
 								</TableRow>
 							</TableFooter>
 						</Table>
