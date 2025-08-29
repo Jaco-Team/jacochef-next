@@ -88,7 +88,7 @@ const PerformanceTable = ({dataTable}) => {
 							left: 0,
 							top: 0,
 							backgroundColor: 'white',
-							zIndex: 1300,
+							zIndex: 1200,
 							minWidth: paramColWidth + typeColWidth,
 							borderRight: thickBorder,
 							padding: '6px',

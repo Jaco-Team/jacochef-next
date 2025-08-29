@@ -40,6 +40,7 @@ function IndicatorsPage() {
 	const [value, setValue] = useState('average_time');
 	const [activeTab, setActiveTab] = useState('table_month');
 	const [point, setPoint] = useState([]);
+	const [pointSettings, setPointSettings] = useState({});
 	const [points, setPoints] = useState([]);
 	const [dateStart, setDateStart] = useState(null);
 	const [dateEnd, setDateEnd] = useState(null);
@@ -58,6 +59,7 @@ function IndicatorsPage() {
 	const [errText, setErrText] = useState('');
 	const [openModalDelete, setOpenModalDelete] = useState(false);
 	const [itemId, setItemId] = useState(0);
+	const [ball, setBall] = useState(0);
 	dayjs.extend(utc);
 	dayjs.extend(timezone);
 	dayjs.locale('ru');
@@ -70,7 +72,7 @@ function IndicatorsPage() {
 			color_name: '#fff',
 			backgroundColor_name: '#B22222',
 			type: 'times',
-			data: []
+			data: [],
 		},
 	]);
 	const handleChange = (event, newValue) => {
@@ -90,11 +92,12 @@ function IndicatorsPage() {
 			document.title = data.module_info.name;
 			setModule(data.module_info);
 			setPoints(data.points);
+			setPointSettings(data.points[0]);
 		});
 	}, []);
 
 	const getSettings = () => {
-		getData('get_settings').then((data) => {
+		getData('get_settings', {point_id: pointSettings.id}).then((data) => {
 			const rowCl = [...rowClients];
 			rowCl[0].data = data.stat_times.map((item) => {
 				if (item.type === 'times') {
@@ -103,6 +106,7 @@ function IndicatorsPage() {
 						value: item.value,
 						value_range: `${item.max_value} - ${item.min_value}`,
 						backgroundColor: item.value_color,
+						ball: item.ball,
 					};
 				}
 			});
@@ -189,6 +193,8 @@ function IndicatorsPage() {
 			}
 		}
 
+		console.log(data);
+
 		const res = await getData('save_sett', data);
 		if (res.st) {
 			getSettings();
@@ -204,9 +210,10 @@ function IndicatorsPage() {
 		const res = await getData('delete_sett', data);
 	}
 
-	const openModalRate_clients = (type_modal, name_row, item_type, id, value_edit, color_edit) => {
+	const openModalRate_clients = (type_modal, name_row, item_type, id, value_edit, color_edit, balls) => {
 		setValueEdit(value_edit);
 		setColorEdit(color_edit);
+		setBall(balls);
 		setItemIdEdit(id);
 		setTypeModal(type_modal);
 		setItemType(item_type);
@@ -248,10 +255,13 @@ function IndicatorsPage() {
 					onClose={() => setOpenModal(false)}
 					fullScreen={false}
 					save={save_sett_rate_clients}
+					point_chose={pointSettings}
 					value={valueEdit}
+					balls={ball}
 					type_modal={typeModal}
 					color_edit={colorEdit}
 					itemIdEdit={itemIdEdit}
+					points={points}
 					openAlert={(status, text) => {
 						setOpenAlert(true);
 						setErrStatus(status);
@@ -309,6 +319,17 @@ function IndicatorsPage() {
 							<Grid item xs={12} sm={12} style={{paddingBottom: 10}}>
 								{activeTab === 'settings' && (
 									<Grid container spacing={3}>
+											<Grid item xs={12} sm={6}>
+												<MyAutocomplite label="Точки" data={points} value={pointSettings} func={(event, data) => {
+													setPointSettings(data)
+												}}/>
+											</Grid>
+
+											<Grid item xs={12} sm={6}>
+												<Button variant="contained" onClick={getSettings}>
+													Показать
+												</Button>
+											</Grid>
 										<Grid item xs={12} sm={12} mt={3} mb={5}>
 											<TableContainer style={{
 												overflowX: 'auto',
@@ -345,7 +366,7 @@ function IndicatorsPage() {
 																				cursor: 'pointer',
 																				border: '1px solid #ccc'
 																			}}
-																			onClick={() => openModalRate_clients('edit', item.name, item.type, it.id, it.value, it.backgroundColor)}
+																			onClick={() => openModalRate_clients('edit', item.name, item.type, it.id, it.value, it.backgroundColor, it.ball)}
 																		>
 																			{it?.value_range ?? 0}
 																		</TableCell>
@@ -404,15 +425,53 @@ function IndicatorsPage() {
 																							backgroundColor: value?.backgroundColor || '#fff',
 																							textAlign: 'center',
 																							fontWeight: '900',
-																							border: value?.value === it.value ? '4px dashed blue' : '1px solid #ccc'
+																							border: value?.value === it.value ? '4px dashed #1976d2' : '1px solid #e0e0e0',
+																							position: 'relative',
+																							transition: 'all 0.3s ease',
+																						}}
+																						sx={{
+																							'&:hover': {
+																								boxShadow: value?.value === it.value ? '0 0 8px rgba(25, 118, 210, 0.4)' : '0 0 4px rgba(0, 0, 0, 0.1)',
+																							}
 																						}}
 																					>
-																						{value?.value_range ?? 0}
+																						<div style={{
+																							display: 'flex',
+																							flexDirection: 'column',
+																							alignItems: 'center',
+																							justifyContent: 'center',
+																							minHeight: '50px'
+																						}}>
+        																		<span style={{
+																							fontSize: '16px',
+																							fontWeight: 'bold',
+																						}}>
+            																	{value?.value_range ?? 0}
+																							</span>
+																							{(it?.ball !== value?.ball && value?.value === it.value) && (
+																								<div style={{
+																									display: 'flex',
+																									alignItems: 'center',
+																									gap: '4px',
+																									marginTop: '4px',
+																									padding: '2px 6px',
+																									backgroundColor: 'rgba(255, 255, 255, 0.9)',
+																									borderRadius: '12px',
+																									border: '1px solid #e0e0e0',
+																									fontSize: '10px',
+																									fontWeight: '600',
+																									color: '#666'
+																								}}>
+																									<span style={{color: '#ff6b6b'}}>{value?.ball ?? 0}</span>
+																									<span style={{color: '#4ecdc4'}}>→ {it?.ball}</span>
+																								</div>
+																							)}
+																						</div>
 																					</TableCell>
 																				)
 																			})}</TableCell>
 																			<TableCell>
-																				<IconButton
+																			<IconButton
 																					onClick={() => openModalDeleteFut(it.id)}
 																				>
 																					<DeleteIcon/>
