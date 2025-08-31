@@ -40,7 +40,7 @@ export default function MyApp(props) {
       
         <Header isHeader={isHeader} suppressHydrationWarning />
         
-        <div className={font.variable}>
+        <div className={font.className}>
           <Component {...pageProps} />
         </div>
         

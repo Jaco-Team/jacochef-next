@@ -3,15 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build && npm run sentry:sourcemaps",
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
     "start": "next start",
     "lint": "next lint",
     "deploy:local": "next build && pm2 startOrRestart ecosystem.config.js --env local",
     "deploy:dev": "next build && pm2 startOrRestart ecosystem.config.js --env development",
     "deploy_test:prod": "npm update && next build && npm run sentry:sourcemaps && pm2 startOrRestart ecosystem.config.js --env production",
     "deploy:prod": "npm update && next build && pm2 startOrRestart ecosystem.config.js --env production",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org sentry --project jacosoft-dop-react ./out && sentry-cli --url https://sentry.jacochef.ru/ sourcemaps upload --org sentry --project jacosoft-dop-react ./out"
+    "sentry:sourcemaps": "sentry-cli --url https://sentry.jacochef.ru/ sourcemaps upload --org sentry --project jacosoft-dop-react ./.next --rewrite"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -24,17 +24,17 @@
     "@mui/styled-engine-sc": "^5.14.12",
     "@mui/x-date-pickers": "^7.29.4",
     "@sentry/cli": "^2.52.0",
-    "@sentry/react": "^10.5.0",
+    "@sentry/react": "^10.8.0",
     "@tinymce/tinymce-react": "^5.1.1",
     "axios": "^1.11.0",
     "childprocess": "^2.0.2",
     "common-es": "^1.1.0",
-    "dayjs": "^1.11.13",
+    "dayjs": "^1.11.18",
     "dropzone": "^6.0.0-beta.2",
     "js-cookie": "^3.0.5",
     "mathjs": "^14.6.0",
     "moment": "^2.30.1",
-    "next": "14.2.32",
+    "next": "15.5.2",
     "node-tls": "^0.10.2",
     "query-string": "^9.2.2",
     "react": "^18.2.0",
@@ -44,10 +44,12 @@
     "react-draggable": "^4.5.0",
     "react-modal-image": "^2.6.0",
     "react-multi-date-picker": "^4.5.2",
-    "sass": "^1.90.0",
     "styled-components": "^5.3.11",
     "tinymce": "^7.9.1",
     "tr46": "^5.1.1",
     "zustand": "^4.5.7"
+  },
+  "devDependencies": {
+    "sass": "^1.91.0"
   }
 }
