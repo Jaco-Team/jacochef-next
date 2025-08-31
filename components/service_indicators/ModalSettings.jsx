@@ -34,7 +34,7 @@ export const ModalAcceptEdit = ({open, onClose, save, title = 'Подтверд�
 			<DialogTitle>{title}</DialogTitle>
 			<DialogContent align="center" sx={{fontWeight: 'bold'}}>
 				<Grid container spacing={3}>
-					<Grid item xs={12} sm={12}>
+					<Grid item xs={12} sm={12} sx={{marginTop: '10px'}}>
 						<MyAutocomplite label="Точки" data={points} multiple={true} value={pointSettings} func={(event, data) => {
 							setPointSettings(data)
 						}}/>

@@ -237,6 +237,12 @@ function IndicatorsPage() {
 		setOpenModalDelete(true);
 	}
 
+	useEffect(() => {
+		if (pointSettings.id) {
+			getSettings();
+		}
+	}, [pointSettings]);
+
 
 	return (
 		<Grid item xs={12} sm={12} container spacing={3} mb={3} className="container_first_child">
@@ -321,14 +327,8 @@ function IndicatorsPage() {
 									<Grid container spacing={3}>
 											<Grid item xs={12} sm={6}>
 												<MyAutocomplite label="Точки" data={points} value={pointSettings} func={(event, data) => {
-													setPointSettings(data)
+													setPointSettings(data);
 												}}/>
-											</Grid>
-
-											<Grid item xs={12} sm={6}>
-												<Button variant="contained" onClick={getSettings}>
-													Показать
-												</Button>
 											</Grid>
 										<Grid item xs={12} sm={12} mt={3} mb={5}>
 											<TableContainer style={{
@@ -408,13 +408,17 @@ function IndicatorsPage() {
 																			<TableCell>{k + 1}</TableCell>
 																			<TableCell>{it.type}</TableCell>
 																			<TableCell>{it.date_start}</TableCell>
-																			<TableCell>{it.update_list.map((item) => {
+																			<TableCell>{it.update_list.map((item, index) => {
 																				if (item.type === 'times') {
+																					const prevItem = index > 0 ? it.update_list[index + 1] : null;
+    																			const prevBall = prevItem ? prevItem.ball : null;
 																					return {
 																						id: item.id,
 																						value: item.value,
 																						value_range: `${item.max_value} - ${item.min_value}`,
 																						backgroundColor: item.value_color,
+																						ball: item['ball'],
+																						prevBall,
 																					};
 																				}
 																			}).map((value, ind) => {
@@ -448,24 +452,26 @@ function IndicatorsPage() {
 																						}}>
             																	{value?.value_range ?? 0}
 																							</span>
-																							{(it?.ball !== value?.ball && value?.value === it.value) && (
-																								<div style={{
-																									display: 'flex',
-																									alignItems: 'center',
-																									gap: '4px',
-																									marginTop: '4px',
-																									padding: '2px 6px',
-																									backgroundColor: 'rgba(255, 255, 255, 0.9)',
-																									borderRadius: '12px',
-																									border: '1px solid #e0e0e0',
-																									fontSize: '10px',
-																									fontWeight: '600',
-																									color: '#666'
-																								}}>
-																									<span style={{color: '#ff6b6b'}}>{value?.ball ?? 0}</span>
-																									<span style={{color: '#4ecdc4'}}>→ {it?.ball}</span>
-																								</div>
-																							)}
+																							<div style={{
+																								display: 'flex',
+																								alignItems: 'center',
+																								gap: '4px',
+																								marginTop: '4px',
+																								padding: '2px 6px',
+																								backgroundColor: 'rgba(255, 255, 255, 0.9)',
+																								borderRadius: '12px',
+																								border: '1px solid #e0e0e0',
+																								fontSize: '10px',
+																								fontWeight: '600',
+																								color: '#666'
+																							}}>
+																								{value?.value === it.value ? (
+																									<>
+																										<span style={{color: '#ff6b6b'}}>{statFutureTimes[k + 1]?.update_list[ind]?.ball ?? 0}</span>
+																										<span style={{color: '#4ecdc4'}}>→ {it?.ball}</span>
+																									</>
+																								) : (<span style={{color: '#ff6b6b'}}>{value?.ball}</span>)}
+																							</div>
 																						</div>
 																					</TableCell>
 																				)
