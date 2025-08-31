@@ -6,7 +6,7 @@ const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
   subsets: ['latin'],
   display: 'swap',
-  variable: '--inter-font',
+  //variable: '--inter-font',
 });
 
 // Create a theme instance.
@@ -24,6 +24,7 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: roboto.style.fontFamily,
+    // fontFamily: 'var(--inter-font), ' + roboto.style.fontFamily,
   },
 });
 
