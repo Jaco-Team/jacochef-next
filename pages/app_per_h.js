@@ -84,7 +84,7 @@ class AppPerH_ extends React.Component {
     const items = this.state.items;
 
     items.forEach((item) => {
-      if (item.app_id === id) {
+      if (parseInt(item.app_id) === parseInt(id)) {
         item[data] = event.target.value;
       }
     });
@@ -170,11 +170,11 @@ class AppPerH_ extends React.Component {
 
           <SectionHeader title="В графике работы"/>
           <Grid item xs={12} sm={12}>
-            <SalaryTable items={itemsInGraph} onChange={this.changeItem}/>
+            <SalaryTable items={itemsInGraph} onChange={this.changeItem.bind(this)}/>
           </Grid>
           <SectionHeader title="Без графика"/>
           <Grid item xs={12} sm={12}>
-            <SalaryTable items={itemsNotGraph} onChange={this.changeItem}/>
+            <SalaryTable items={itemsNotGraph} onChange={this.changeItem.bind(this)}/>
           </Grid>
         </Grid>
       </>
