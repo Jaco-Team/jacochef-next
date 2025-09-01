@@ -23,7 +23,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import AppointmentParamModal from "@/components/appointment/AppointmentParamModal";
 import AppointmentModalInput from "@/components/appointment/AppointmentModalInput";
 import { Fragment, memo, useCallback, useEffect } from "react";
-import { MyCheckBox } from "@/ui/elements";
+import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/ui/elements";
 import { useAppointmentModalStore } from "@/components/appointment/store/useAppointmentModalStore";
 
 const AppointmentModal = (props) => {
@@ -88,6 +88,7 @@ const AppointmentModal = (props) => {
   }, [item, full_menu]);
 
   const openParams = (paramMethod, main_key, parent_key, type) => {
+    if (!canEdit("app")) return;
     setMainKey(main_key);
     setParentKey(parent_key);
     setParamMethod(paramMethod);
@@ -96,7 +97,7 @@ const AppointmentModal = (props) => {
     setParamModal(true);
   };
 
-  const { fullScreen, open } = props;
+  const { fullScreen, open, units, canEdit, canView } = props;
 
   return (
     <>
@@ -134,30 +135,55 @@ const AppointmentModal = (props) => {
           >
             <AppointmentModalInput
               data={item?.name}
+              disabled={!canEdit("app")}
               changeItem={setItemField}
               label="Название должности"
               type="name"
             />
             <AppointmentModalInput
               data={item?.short_name}
+              disabled={!canEdit("app")}
               changeItem={setItemField}
               label="Сокращенное название"
               type="short_name"
             />
-            <AppointmentModalInput
-              data={item?.bonus}
-              changeItem={setItemField}
-              label="Норма бонусов"
-              type="bonus"
-            />
+            <Grid
+              item
+              xs={6}
+              md={4}
+            >
+              <MyTextInput
+                label="Норма бонусов"
+                type="number"
+                value={item?.bonus || 0}
+                disabled={!canEdit("app")}
+                func={({ target: { value } }) => setItemField("bonus", value)}
+              />
+            </Grid>
+            <Grid
+              item
+              xs={6}
+              md={4}
+            >
+              <MyAutocomplite
+                data={units}
+                disabled={!canEdit("app") || !canEdit("units")}
+                multiple={false}
+                disableCloseOnSelect={false}
+                label="Отдел"
+                value={units.find((unit) => unit.id === item?.unit_id) || ""}
+                func={(_, newValue) => setItemField("unit_id", newValue.id)}
+              />
+            </Grid>
             <Grid
               item
               xs={12}
-              md={6}
+              md={4}
             >
               <MyCheckBox
                 func={(e) => changeItemChecked("is_graph", e)}
                 value={parseInt(item?.is_graph) == 1 ? true : false}
+                disabled={!canEdit("app")}
                 label="Нужен в графике работы"
               />
             </Grid>
@@ -230,6 +256,7 @@ const AppointmentModal = (props) => {
                                       <Checkbox
                                         edge="end"
                                         onChange={(e) => changeActiveModule(key, k, e)}
+                                        disabled={!canEdit("module_active")}
                                         checked={!!+it.is_active}
                                       />
                                     </TableCell>
@@ -269,6 +296,7 @@ const AppointmentModal = (props) => {
                                       <Checkbox
                                         edge="end"
                                         onChange={(e) => changeActiveModule(key, k, e)}
+                                        disabled={!canEdit("module_active")}
                                         checked={!!+it.is_active}
                                       />
                                     </TableCell>
@@ -291,6 +319,7 @@ const AppointmentModal = (props) => {
                                       edge="end"
                                       onChange={(e) => changeActiveModule(key, k, e)}
                                       checked={!!+it.is_active}
+                                      disabled={!canEdit("module_active")}
                                     />
                                   </TableCell>
                                 </TableRow>
@@ -322,12 +351,14 @@ const AppointmentModal = (props) => {
         </DialogContent>
 
         <DialogActions>
-          <Button
-            color="primary"
-            onClick={save}
-          >
-            Сохранить
-          </Button>
+          {canEdit("app") && (
+            <Button
+              color="primary"
+              onClick={save}
+            >
+              Сохранить
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </>

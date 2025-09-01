@@ -41,7 +41,7 @@ function SettingsPage() {
       setModule(data.module_info);
       setPoints(data.points);
       setMockItems(data.items);
-      const tabsCheck = Object.entries(tabsData).filter(([key]) => data.acces[key+'_access'] === "1");
+      const tabsCheck = Object.entries(tabsData).filter(([key]) => parseInt(data.acces[key+'_access']) === 1);
       setAccess(data.acces);
       setTabs(Object.fromEntries(tabsCheck));
     });
