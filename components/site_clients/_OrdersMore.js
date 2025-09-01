@@ -31,6 +31,7 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
 import {ModalAccept} from "@/components/general/ModalAccept";
+import CheckIcon from "@mui/icons-material/Check";
 
 const ModalOrderWithFeedback = ({open, onClose, order, order_items, err_order, feedback_forms, getData, openOrder}) => {
 	const [formData, setFormData] = useState([]);
@@ -53,6 +54,14 @@ const ModalOrderWithFeedback = ({open, onClose, order, order_items, err_order, f
 
 	useEffect(() => {
 		setValues([]);
+		setDiscountValue(0);
+		setUserActive(0);
+		if (order?.feedback_data?.discount_id) {
+			setDiscountValue(order.feedback_data?.count_promo);
+		}
+		if (order?.feedback_data?.user_active) {
+			setUserActive(order.feedback_data?.user_active);
+		}
 	}, [open])
 
 	const renderElementFeed = (element, item) => {
@@ -414,7 +423,7 @@ const ModalOrderWithFeedback = ({open, onClose, order, order_items, err_order, f
 											color: '#000'
 										}}></TableCell>
 										<TableCell>
-											<div className="form-element">
+											<div className="form-element" style={order.feedback_data?.user_active || order.feedback_data?.user_active === 0 ? {pointerEvents: 'none', opacity: 0.4} : {}}>
 												<ToggleButtonGroup
 													value={userActive}
 													exclusive
@@ -456,7 +465,7 @@ const ModalOrderWithFeedback = ({open, onClose, order, order_items, err_order, f
 											color: '#000'
 										}}></TableCell>
 										<TableCell>
-											<div className="form-element">
+											<div className="form-element" style={order.feedback_data?.discount_id ? {pointerEvents: 'none', opacity: 0.4} : {}}>
 												<ToggleButtonGroup
 													value={discountValue}
 													exclusive
@@ -967,6 +976,7 @@ export default function OrdersMore() {
 												<TableCell>Заказ</TableCell>
 												<TableCell>Точка</TableCell>
 												<TableCell>Источник трафика</TableCell>
+												{acces?.send_feedback_access && <TableCell>Оценка заказа</TableCell>}
 												<TableCell>Оформил</TableCell>
 												<TableCell>Номер клиента</TableCell>
 												<TableCell>Адрес доставки</TableCell>
@@ -1008,6 +1018,7 @@ export default function OrdersMore() {
 													</TableCell>
 													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.point_addr}</TableCell>
 													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.source}</TableCell>
+													{acces?.send_feedback_access && <TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.feedback_id ? <CheckIcon style={{ color: "green" }} /> : null}</TableCell>}
 													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.type_user}</TableCell>
 													<TableCell style={{color: 'inherit', fontWeight: 'inherit'}}>{item.number}</TableCell>
 													<TableCell style={{

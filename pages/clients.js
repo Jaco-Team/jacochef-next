@@ -142,6 +142,14 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 
 	useEffect(() => {
 		setValues([]);
+		setDiscountValue(0);
+		setUserActive(0);
+		if (order?.feedback_data?.discount_id) {
+			setDiscountValue(order.feedback_data?.count_promo);
+		}
+		if (order?.feedback_data?.user_active) {
+			setUserActive(order.feedback_data?.user_active);
+		}
 	}, [open])
 
 	const renderElementFeed = (element, item) => {
@@ -505,7 +513,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 											color: '#000'
 										}}></TableCell>
 										<TableCell>
-											<div className="form-element">
+											<div className="form-element" style={order.feedback_data?.user_active || order.feedback_data?.user_active === 0 ? {pointerEvents: 'none', opacity: 0.4} : {}}>
 												<ToggleButtonGroup
 													value={userActive}
 													exclusive
@@ -547,7 +555,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 											color: '#000'
 										}}></TableCell>
 										<TableCell>
-											<div className="form-element">
+											<div className="form-element" style={order.feedback_data?.discount_id ? {pointerEvents: 'none', opacity: 0.4} : {}}>
 												<ToggleButtonGroup
 													value={discountValue}
 													exclusive

@@ -44,7 +44,7 @@ import {
 
 import {ExlIcon} from '@/ui/icons';
 
-import {api_laravel} from '@/src/api_new';
+import {api_laravel, api_laravel_local} from '@/src/api_new';
 import dayjs from 'dayjs';
 import SiteClientsOrdersByUtmTable from '@/components/site_clients/SiteClientsOrdersByUtmTable';
 import SiteClientsOrdersBySourceTable from '@/components/site_clients/SiteClientsOrdersBySourceTable';
