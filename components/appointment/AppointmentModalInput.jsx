@@ -4,7 +4,7 @@ import { MyTextInput } from "@/ui/elements";
 import { Grid } from "@mui/material";
 import { memo, useState } from "react";
 
-const AppointmentModalInput = ({data, type, label, changeItem}) => {
+const AppointmentModalInput = ({data, type, label, changeItem, ...restArgs}) => {
 
   const [item, setItem] = useState(data);
 
@@ -19,6 +19,7 @@ const AppointmentModalInput = ({data, type, label, changeItem}) => {
         value={item}
         func={({target: {value}}) => setItem(value)}
         onBlur={save_data_input}
+        {...restArgs}
       />
     </Grid>
   );
