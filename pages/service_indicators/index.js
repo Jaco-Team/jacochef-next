@@ -368,7 +368,30 @@ function IndicatorsPage() {
 																			}}
 																			onClick={() => openModalRate_clients('edit', item.name, item.type, it.id, it.value, it.backgroundColor, it.ball)}
 																		>
-																			{it?.value_range ?? 0}
+																			<div style={{
+																				display: 'flex',
+																				flexDirection: 'column',
+																				alignItems: 'center',
+																				justifyContent: 'center',
+																				minHeight: '50px'
+																			}}>
+        															<span style={{fontSize: '16px', fontWeight: 'bold',}}>{it?.value_range ?? 0}</span>
+																				<div style={{
+																					display: 'flex',
+																					alignItems: 'center',
+																					gap: '4px',
+																					marginTop: '4px',
+																					padding: '2px 6px',
+																					backgroundColor: 'rgba(255, 255, 255, 0.9)',
+																					borderRadius: '12px',
+																					border: '1px solid #e0e0e0',
+																					fontSize: '10px',
+																					fontWeight: '600',
+																					color: '#666'
+																				}}>
+																					<span style={{color: '#ff6b6b'}}>{it.ball}</span>
+																				</div>
+																			</div>
 																		</TableCell>
 																	</Tooltip>
 																))}
