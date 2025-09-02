@@ -44,7 +44,7 @@ import {api_laravel} from "@/src/api_new";
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
-dayjs.locale('ru'); 
+dayjs.locale('ru');
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -90,13 +90,14 @@ class MyTimePicker extends React.PureComponent {
         variant="outlined"
         size="small"
         color="primary"
+        disabled={this.props.disabled}
         label={this.props.label}
         type="time"
         id={this.props.id}
         value={this.props.value || ''}
         onChange={this.handleChange}
         InputLabelProps={{ shrink: true }}
-        inputProps={{ step: 1 }} 
+        inputProps={{ step: 1 }}
         fullWidth
       />
     );
@@ -116,6 +117,7 @@ class MyTimePickerHM extends React.PureComponent {
         variant="outlined"
         size="small"
         color="primary"
+        disabled={this.props.disabled}
         label={this.props.label}
         type="time"
         id={this.props.id}
@@ -135,8 +137,8 @@ class EventTime_Tab_Kassir_Registr_Modal_Edit extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = { 
-      date_start: dayjs() 
+    this.state = {
+      date_start: dayjs()
     };
 
   }
@@ -159,7 +161,7 @@ class EventTime_Tab_Kassir_Registr_Modal_Edit extends React.Component {
       this.props.openAlert(false, 'Сохранение возможно только при указании сегодняшней или будущей даты');
       return;
     }
-    
+
     const newBlock = {
       id: this.props.dateModalData.id,
       date_start: date_start.format('YYYY-MM-DD'),
@@ -187,11 +189,11 @@ class EventTime_Tab_Kassir_Registr_Modal_Edit extends React.Component {
     const fullScreen = typeof window !== 'undefined' && window.innerWidth < 601;
 
     return (
-      <Dialog 
-        open={open} 
-        onClose={this.close} 
-        fullScreen={fullScreen} 
-        fullWidth 
+      <Dialog
+        open={open}
+        onClose={this.close}
+        fullScreen={fullScreen}
+        fullWidth
         maxWidth="sm"
       >
 
@@ -205,10 +207,10 @@ class EventTime_Tab_Kassir_Registr_Modal_Edit extends React.Component {
         <DialogContent sx={{ pt: 2, pb: 2 }}>
           <Grid container spacing={3}>
             <Grid item xs={12} sm={12} sx={{ mt: 1 }}>
-              <MyDatePickerNew 
-                label="Дата изменений" 
-                value={date_start} 
-                func={this.changeDate} 
+              <MyDatePickerNew
+                label="Дата изменений"
+                value={date_start}
+                func={this.changeDate}
               />
             </Grid>
           </Grid>
@@ -247,27 +249,27 @@ class EventTime_Tab_Kassir_Registr_Modal extends React.Component {
 
   changeLevel = (idx, e) => {
     let raw = e.target.value;
-  
+
     let v = raw;
     if (v.length > 1 && v.startsWith('0')) {
       v = v.replace(/^0+/, '');
     }
-  
+
     if (v === '') {
       v = '0';
     }
-  
+
     const numVal = Number(v);
-  
+
     const levels = this.state.levels.map((lvl, i) =>
       i === idx
         ? { ...lvl, price: numVal }
         : lvl
     );
-  
+
     this.setState({ levels });
   };
-  
+
 
   save = () => {
 
@@ -277,7 +279,7 @@ class EventTime_Tab_Kassir_Registr_Modal extends React.Component {
       this.props.openAlert(false, 'Сохранение возможно только при указании сегодняшней или будущей даты');
       return;
     }
-    
+
     const newBlock = {
       date_start: date_start.format('YYYY-MM-DD'),
       levels: this.state.levels.map(l => ({ ...l }))
@@ -294,11 +296,11 @@ class EventTime_Tab_Kassir_Registr_Modal extends React.Component {
     const fullScreen = typeof window !== 'undefined' && window.innerWidth < 601;
 
     return (
-      <Dialog 
-        open={open} 
-        onClose={onClose} 
-        fullScreen={fullScreen} 
-        fullWidth 
+      <Dialog
+        open={open}
+        onClose={onClose}
+        fullScreen={fullScreen}
+        fullWidth
         maxWidth="md"
       >
         <DialogTitle  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2}}>
@@ -403,13 +405,13 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
     if (raw.length > 1 && raw.startsWith('0')) {
       raw = raw.replace(/^0+/, '');
     }
-  
+
     if (raw === '') {
       raw = '0';
     }
-  
+
     const numVal = Number(raw);
-  
+
     const newArr = this.state.kassir_registr.map((blk, i) =>
       i === blockIdx
         ? {
@@ -422,7 +424,7 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
           }
         : blk
     );
-  
+
     this.setState({ kassir_registr: newArr });
   };
 
@@ -437,6 +439,7 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
 
   render() {
     const { expanded, addModalOpen, kassir_registr, dateModalOpen, dateModalData, confirmDialog } = this.state;
+    const { acces } = this.props;
 
     return (
       <Grid item xs={12} mb={5}>
@@ -459,9 +462,11 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
         </Dialog>
 
         <Box sx={{ display: 'flex', mb: 2 }}>
-          <Button variant="contained" onClick={this.handleModalOpen}>
-            Добавить
-          </Button>
+          {acces.kassir_registr_edit ? (
+            <Button variant="contained" onClick={this.handleModalOpen}>
+              Добавить
+            </Button>
+          ) : null}
         </Box>
 
         <TableContainer component={Paper}>
@@ -530,8 +535,8 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
                                         value={String(lvl.price)}
                                         func={e => this.handleLevelChange(i, j, e)}
                                         onBlur={e => this.handleLevelChange(i, j, e)}
-                                        disabled={!editable}
-                                        className={!editable ? "disabled_input" : null}
+                                        disabled={!editable && (!acces.kassir_registr_view || !acces.kassir_registr_edit)}
+                                        className={!editable && (!acces.kassir_registr_view || !acces.kassir_registr_edit) ? "disabled_input" : null}
                                       />
                                     </TableCell>
                                   </TableRow>
@@ -539,10 +544,10 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
                               </TableBody>
                             </Table>
 
-                            {editable && 
+                            {editable &&
                               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, mb: 2 }}>
-                                <Button 
-                                  color="success" 
+                                <Button
+                                  color="success"
                                   variant="contained"
                                   style={{ whiteSpace: 'nowrap' }}
                                   onClick={() => this.openDateModal(block)}
@@ -575,7 +580,7 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
         <EventTime_Tab_Kassir_Registr_Modal_Edit
           open={dateModalOpen}
           onClose={this.closeDateModal}
-          dateModalData={dateModalData}  
+          dateModalData={dateModalData}
           onSave={this.props.onSave}
           openAlert={this.props.openAlert}
         />
@@ -589,7 +594,7 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
 class EventTime_Tab_Cur extends React.PureComponent {
   render() {
 
-    const {activeTab, index_cur, cur, onCurChange, saveKey, onSave } = this.props;
+    const {activeTab, index_cur, cur, onCurChange, saveKey, onSave, acces } = this.props;
 
     const handlers = {
 
@@ -647,6 +652,7 @@ class EventTime_Tab_Cur extends React.PureComponent {
                       <MyTextInput
                         type="number"
                         tabindex={{ min: 0 }}
+                        disabled={!acces.cur_view || !acces.cur_edit}
                         value={String(row.count)}
                         func={e => handlers.edit(idx, 'count', e.target.value)}
                       />
@@ -655,25 +661,29 @@ class EventTime_Tab_Cur extends React.PureComponent {
                       <MyTimePicker
                         value={row.time_rolls}
                         onChange={val => handlers.edit(idx, 'time_rolls', val)}
+                        disabled={!acces.cur_view || !acces.cur_edit}
                         fullWidth
                       />
                     </TableCell>
                     <TableCell>
                       <MyTimePicker
                         value={row.time_pizza}
+                        disabled={!acces.cur_view || !acces.cur_edit}
                         onChange={val => handlers.edit(idx, 'time_pizza', val)}
                         fullWidth
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        title="Удалить"
-                        onClick={() => handlers.del(row.id)}
-                      >
-                        <DeleteOutline />
-                      </IconButton>
+                      {acces.cur_edit ? (
+                        <IconButton
+                          size="small"
+                          color="error"
+                          title="Удалить"
+                          onClick={() => handlers.del(row.id)}
+                        >
+                          <DeleteOutline/>
+                        </IconButton>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -681,14 +691,16 @@ class EventTime_Tab_Cur extends React.PureComponent {
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={4} align="right">
-                    <IconButton
-                      size="small"
-                      color="success"
-                      title="Добавить"
-                      onClick={handlers.add}
-                    >
-                      <AddCircleOutline />
-                    </IconButton>
+                    {acces.cur_edit ? (
+                      <IconButton
+                        size="small"
+                        color="success"
+                        title="Добавить"
+                        onClick={handlers.add}
+                      >
+                        <AddCircleOutline/>
+                      </IconButton>
+                    ) : null}
                   </TableCell>
                 </TableRow>
               </TableFooter>
@@ -696,9 +708,11 @@ class EventTime_Tab_Cur extends React.PureComponent {
           </TableContainer>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Button variant="contained" color="success" onClick={() => onSave(saveKey)}>
-              Сохранить изменения
-            </Button>
+            {acces.cur_edit ? (
+              <Button variant="contained" color="success" onClick={() => onSave(saveKey)}>
+                Сохранить изменения
+              </Button>
+            ) : null}
           </Box>
         </TabPanel>
       </Grid>
@@ -710,7 +724,7 @@ class EventTime_Tab_Cur extends React.PureComponent {
 class EventTime_Tab_TableLv extends React.PureComponent {
   render() {
 
-    const { activeTab, index_table_lv, table_lv, onLvChange, saveKey, onSave } = this.props;
+    const { activeTab, index_table_lv, table_lv, onLvChange, saveKey, onSave, acces } = this.props;
 
     const handlers = {
 
@@ -730,11 +744,11 @@ class EventTime_Tab_TableLv extends React.PureComponent {
       edit: (idx, field, raw) => {
         let v = raw;
 
-        if ((field === 'lavel' || field === 'min_count' || field === 'max_count') 
+        if ((field === 'lavel' || field === 'min_count' || field === 'max_count')
             && v.length > 1 && v.startsWith('0')) {
           v = v.replace(/^0+/, '');
         }
-   
+
         if (v === '') v = '0';
 
         const newArr = table_lv.map((r, i) => i === idx ? { ...r, [field]: Number(v) } : r);
@@ -764,6 +778,7 @@ class EventTime_Tab_TableLv extends React.PureComponent {
                       <MyTextInput
                         type="number"
                         tabindex={{ min: 1 }}
+                        disabled={!acces.table_lv_view || !acces.table_lv_edit}
                         value={String(row.lavel)}
                         func={e => handlers.edit(idx, 'lavel', e.target.value)}
                       />
@@ -772,6 +787,7 @@ class EventTime_Tab_TableLv extends React.PureComponent {
                       <MyTextInput
                         type="number"
                         tabindex={{ min: 0 }}
+                        disabled={!acces.table_lv_view || !acces.table_lv_edit}
                         value={String(row.min_count)}
                         func={e => handlers.edit(idx, 'min_count', e.target.value)}
                       />
@@ -780,19 +796,22 @@ class EventTime_Tab_TableLv extends React.PureComponent {
                       <MyTextInput
                         type="number"
                         tabindex={{ min: 0 }}
+                        disabled={!acces.table_lv_view || !acces.table_lv_edit}
                         value={String(row.max_count)}
                         func={e => handlers.edit(idx, 'max_count', e.target.value)}
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        title="Удалить"
-                        onClick={() => handlers.del(row.id)}
-                      >
-                        <DeleteOutline />
-                      </IconButton>
+                      {acces.table_lv_edit ? (
+                        <IconButton
+                          size="small"
+                          color="error"
+                          title="Удалить"
+                          onClick={() => handlers.del(row.id)}
+                        >
+                          <DeleteOutline/>
+                        </IconButton>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -800,14 +819,16 @@ class EventTime_Tab_TableLv extends React.PureComponent {
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={4} align="right">
-                    <IconButton
-                      size="small"
-                      color="success"
-                      title="Добавить"
-                      onClick={handlers.add}
-                    >
-                      <AddCircleOutline />
-                    </IconButton>
+                    {acces.table_lv_edit ? (
+                      <IconButton
+                        size="small"
+                        color="success"
+                        title="Добавить"
+                        onClick={handlers.add}
+                      >
+                        <AddCircleOutline/>
+                      </IconButton>
+                    ) : null}
                   </TableCell>
                 </TableRow>
               </TableFooter>
@@ -815,9 +836,11 @@ class EventTime_Tab_TableLv extends React.PureComponent {
           </TableContainer>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Button variant="contained" color="success" onClick={() => onSave(saveKey)}>
-              Сохранить изменения
-            </Button>
+            {acces.table_lv_edit ? (
+              <Button variant="contained" color="success" onClick={() => onSave(saveKey)}>
+                Сохранить изменения
+              </Button>
+            ) : null}
           </Box>
         </TabPanel>
       </Grid>
@@ -830,7 +853,7 @@ class EventTime_Tab_Kassir_Time extends React.PureComponent {
 
   render() {
 
-    const { activeTab, index_kassir_time, kassir: { time_order, time_pic, time_hall, time_check }, onKassirChange, onSave, saveKey } = this.props;
+    const { activeTab, index_kassir_time, kassir: { time_order, time_pic, time_hall, time_check }, onKassirChange, onSave, saveKey, acces } = this.props;
 
     const update = (field, val) => onKassirChange({ ...this.props.kassir, [field]: val });
 
@@ -912,6 +935,7 @@ class EventTime_Tab_Kassir_Time extends React.PureComponent {
                             type="number"
                             tabindex={{ min: 0 }}
                             value={String(row.price_min || 0)}
+                            disabled={!acces.kassir_time_view || !acces.kassir_time_edit}
                             func={e => h.edit(idx, 'price_min', e.target.value)}
                           />
                         </TableCell>
@@ -920,19 +944,23 @@ class EventTime_Tab_Kassir_Time extends React.PureComponent {
                             type="number"
                             tabindex={{ min: 0 }}
                             value={String(row.price_max || 0)}
+                            disabled={!acces.kassir_time_view || !acces.kassir_time_edit}
                             func={e => h.edit(idx, 'price_max', e.target.value)}
                           />
                         </TableCell>
                         <TableCell>
                           <MyTimePicker
                             value={row.time_format}
+                            disabled={!acces.kassir_time_view || !acces.kassir_time_edit}
                             onChange={val => h.edit(idx, 'time_format', val)}
                           />
                         </TableCell>
                         <TableCell align="right">
-                          <IconButton size="small" color="error" onClick={() => h.del(row.id)} title="Удалить">
-                            <DeleteOutline />
-                          </IconButton>
+                          {acces.kassir_time_edit ? (
+                            <IconButton size="small" color="error" onClick={() => h.del(row.id)} title="Удалить">
+                              <DeleteOutline/>
+                            </IconButton>
+                          ) : null}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -940,9 +968,11 @@ class EventTime_Tab_Kassir_Time extends React.PureComponent {
                   <TableFooter>
                     <TableRow>
                       <TableCell colSpan={4} align="right">
-                        <IconButton size="small" color="success" onClick={h.add} title="Добавить">
-                          <AddCircleOutline />
-                        </IconButton>
+                        {acces.kassir_time_edit ? (
+                          <IconButton size="small" color="success" onClick={h.add} title="Добавить">
+                            <AddCircleOutline/>
+                          </IconButton>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   </TableFooter>
@@ -972,6 +1002,7 @@ class EventTime_Tab_Kassir_Time extends React.PureComponent {
                       <TableCell>
                         <MyTimePicker
                           value={time_check[key] || '00:00:00'}
+                          disabled={!acces.kassir_time_view || !acces.kassir_time_edit}
                           onChange={val => editCheck(key, val)}
                         />
                       </TableCell>
@@ -982,10 +1013,12 @@ class EventTime_Tab_Kassir_Time extends React.PureComponent {
             </TableContainer>
           </Box>
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Button variant="contained" color="success" onClick={() => onSave(saveKey)}>
-              Сохранить изменения
-            </Button>
+          <Box sx={{display: 'flex', justifyContent: 'flex-end', mt: 2}}>
+            {acces.kassir_time_edit ? (
+              <Button variant="contained" color="success" onClick={() => onSave(saveKey)}>
+                Сохранить изменения
+              </Button>
+            ) : null}
           </Box>
         </TabPanel>
       </Grid>
@@ -1023,7 +1056,7 @@ class EventTime_Tab_Rate extends React.PureComponent {
 
   render() {
 
-    const { activeTab, index_rate, rate, onRateChange, onSave, saveKey } = this.props;
+    const { activeTab, index_rate, rate, onRateChange, onSave, saveKey, acces } = this.props;
     const { pizza_lv } = rate;
     const { sortedDow } = this.state;
     const days = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
@@ -1051,6 +1084,7 @@ class EventTime_Tab_Rate extends React.PureComponent {
                   type="number"
                   tabindex={{ min: 0 }}
                   value={String(row.coef)}
+                  disabled={!acces.rate_view || !acces.rate_edit}
                   func={e => {
                     let v = e.target.value;
 
@@ -1079,6 +1113,7 @@ class EventTime_Tab_Rate extends React.PureComponent {
             </Typography>
             <MyTextInput
               type="number"
+              disabled={!acces.rate_view || !acces.rate_edit}
               tabindex={{ min: 0 }}
               value={String(pizza_lv)}
               func={e => {
@@ -1099,9 +1134,11 @@ class EventTime_Tab_Rate extends React.PureComponent {
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Button variant="contained" color="success" onClick={() => onSave(saveKey)}>
-              Сохранить изменения
-            </Button>
+            {acces.rate_edit ? (
+              <Button variant="contained" color="success" onClick={() => onSave(saveKey)}>
+                Сохранить изменения
+              </Button>
+            ) : null}
           </Box>
         </TabPanel>
       </Grid>
@@ -1112,7 +1149,7 @@ class EventTime_Tab_Rate extends React.PureComponent {
 // ---------- Таб Время за открытие / закрытие смены ----------
 class EventTime_Tab_Time_Smena extends React.PureComponent {
   render() {
-    const { activeTab, index_time_smena, time_smena, onTimeChange, onSave, saveKey } = this.props;
+    const { activeTab, index_time_smena, time_smena, onTimeChange, onSave, saveKey, acces } = this.props;
     const { time_open_smena, time_close_smena } = time_smena;
 
     const handleCloseChange = (idx, field, raw) => {
@@ -1143,6 +1180,7 @@ class EventTime_Tab_Time_Smena extends React.PureComponent {
             </Typography>
             <MyTimePicker
               value={time_open_smena || '00:00:00'}
+              disabled={!acces.time_smena_view || !acces.time_smena_edit}
               onChange={val=>onTimeChange('time_open_smena', val)}
             />
           </Box>
@@ -1169,6 +1207,7 @@ class EventTime_Tab_Time_Smena extends React.PureComponent {
                       <MyTextInput
                         type="number"
                         tabindex={{min:0}}
+                        disabled={!acces.time_smena_view || !acces.time_smena_edit}
                         value={String(row.price_min || 0)}
                         func={e => handleCloseChange(idx,'price_min',e.target.value)}
                       />
@@ -1176,6 +1215,7 @@ class EventTime_Tab_Time_Smena extends React.PureComponent {
                     <TableCell>
                       <MyTextInput
                         type="number"
+                        disabled={!acces.time_smena_view || !acces.time_smena_edit}
                         tabindex={{min:0}}
                         value={String(row.price_max || 0)}
                         func={e => handleCloseChange(idx,'price_max',e.target.value)}
@@ -1185,12 +1225,15 @@ class EventTime_Tab_Time_Smena extends React.PureComponent {
                       <MyTimePicker
                         value={row.time || '00:00:00'}
                         onChange={val => handleCloseChange(idx,'time',val)}
+                        disabled={!acces.time_smena_view || !acces.time_smena_edit}
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton size="small" color="error" onClick={()=>handleDeleteRow(row.id)} title="Удалить">
+                      {acces.time_smena_edit ? (
+                        <IconButton size="small" color="error" onClick={()=>handleDeleteRow(row.id)} title="Удалить">
                         <DeleteOutline />
                       </IconButton>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -1198,18 +1241,22 @@ class EventTime_Tab_Time_Smena extends React.PureComponent {
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={4} align="right">
-                    <IconButton size="small" color="success" onClick={handleAddRow} title="Добавить">
-                      <AddCircleOutline />
-                    </IconButton>
+                    {acces.time_smena_edit ? (
+                      <IconButton size="small" color="success" onClick={handleAddRow} title="Добавить">
+                        <AddCircleOutline/>
+                      </IconButton>
+                    ) : null}
                   </TableCell>
                 </TableRow>
               </TableFooter>
             </Table>
           </TableContainer>
           <Box sx={{ display:'flex', justifyContent:'flex-end', mt:2 }}>
-            <Button variant="contained" color="success" onClick={() => onSave(saveKey)}>
-              Сохранить изменения
-            </Button>
+            {acces.time_smena_edit ? (
+              <Button variant="contained" color="success" onClick={() => onSave(saveKey)}>
+                Сохранить изменения
+              </Button>
+            ) : null}
           </Box>
         </TabPanel>
       </Grid>
@@ -1221,9 +1268,9 @@ class EventTime_Tab_Time_Smena extends React.PureComponent {
 class EventTime_Tab_Time_Manager extends React.PureComponent {
   render() {
 
-    const { activeTab, index_time_manager, time_manager, onTimeChange, onSave, saveKey } = this.props;
+    const { activeTab, index_time_manager, time_manager, onTimeChange, onSave, saveKey, acces } = this.props;
     const { manager_spis, manager_check, manager_cash, manager_time_voice } = time_manager;
- 
+
     const update = (field, val) => onTimeChange(field, val);
 
     const cashH = {
@@ -1252,7 +1299,7 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
     return (
       <Grid item xs={12} sm={12} mb={5}>
         <TabPanel value={activeTab} index={index_time_manager}>
-  
+
           <Grid container spacing={2} mb={3}>
             <Grid item xs={12} sm={4}>
               <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -1260,6 +1307,7 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
               </Typography>
               <MyTimePicker
                 value={manager_spis || '00:00:00'}
+                disabled={!acces.time_manager_view || !acces.time_manager_edit}
                 onChange={val => update('manager_spis', val)}
                 fullWidth
               />
@@ -1270,6 +1318,7 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
               </Typography>
               <MyTimePicker
                 value={manager_check || '00:00:00'}
+                disabled={!acces.time_manager_view || !acces.time_manager_edit}
                 onChange={val => update('manager_check', val)}
                 fullWidth
               />
@@ -1281,6 +1330,7 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
             </Typography>
             <MyTimePicker
               value={manager_time_voice || '00:00:00'}
+              disabled={!acces.time_manager_view || !acces.time_manager_edit}
               onChange={val => update('manager_time_voice', val)}
               fullWidth
             />
@@ -1288,7 +1338,7 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
           </Grid>
 
           <Divider />
-         
+
           <Box mt={3} mb={3}>
             <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
               Время менеджера за наличку с курьеров
@@ -1310,6 +1360,7 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
                         <MyTextInput
                           type="number"
                           tabindex={{ min: 0 }}
+                          disabled={!acces.time_manager_view || !acces.time_manager_edit}
                           value={String(row.price_min || 0)}
                           func={e => cashH.edit(idx, 'price_min', e.target.value)}
                         />
@@ -1317,6 +1368,7 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
                       <TableCell>
                         <MyTextInput
                           type="number"
+                          disabled={!acces.time_manager_view || !acces.time_manager_edit}
                           tabindex={{ min: 0 }}
                           value={String(row.price_max || 0)}
                           func={e => cashH.edit(idx, 'price_max', e.target.value)}
@@ -1325,13 +1377,16 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
                       <TableCell>
                         <MyTimePicker
                           value={row.time_format}
+                          disabled={!acces.time_manager_view || !acces.time_manager_edit}
                           onChange={val => cashH.edit(idx, 'time_format', val)}
                         />
                       </TableCell>
                       <TableCell align="right">
-                        <IconButton size="small" color="error" onClick={() => cashH.del(row.id)} title="Удалить">
+                        {acces.time_manager_edit ? (
+                          <IconButton size="small" color="error" onClick={() => cashH.del(row.id)} title="Удалить">
                           <DeleteOutline />
                         </IconButton>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1339,9 +1394,11 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
                 <TableFooter>
                   <TableRow>
                     <TableCell colSpan={4} align="right">
-                      <IconButton size="small" color="success" onClick={cashH.add} title="Добавить">
-                        <AddCircleOutline />
-                      </IconButton>
+                      {acces.time_manager_edit ? (
+                        <IconButton size="small" color="success" onClick={cashH.add} title="Добавить">
+                          <AddCircleOutline/>
+                        </IconButton>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 </TableFooter>
@@ -1350,9 +1407,11 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
-            <Button variant="contained" color="success" onClick={() => onSave(saveKey)}>
-              Сохранить изменения
-            </Button>
+            {acces.time_manager_edit ? (
+              <Button variant="contained" color="success" onClick={() => onSave(saveKey)}>
+                Сохранить изменения
+              </Button>
+            ) : null}
           </Box>
 
         </TabPanel>
@@ -1364,7 +1423,7 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
 // ---------- Таб Время приготовления заказа ----------
 class EventTime_Tab_Time_Cook extends React.PureComponent {
   render() {
-    const { activeTab, index_time_cook, time_cook, onTimeChange, onSave, saveKey } = this.props;
+    const { activeTab, index_time_cook, time_cook, onTimeChange, onSave, saveKey, acces } = this.props;
 
     const rows = [
       { label: 'Самовывоз / Зал', key: 'time_pic' },
@@ -1390,6 +1449,7 @@ class EventTime_Tab_Time_Cook extends React.PureComponent {
                     <TableCell>
                       <MyTimePickerHM
                         label=""
+                        disabled={!acces.time_cook_view || !acces.time_cook_edit}
                         value={time_cook[key]}
                         onChange={(val) => onTimeChange(key, val)}
                       />
@@ -1399,11 +1459,13 @@ class EventTime_Tab_Time_Cook extends React.PureComponent {
               </TableBody>
             </Table>
           </TableContainer>
-          <Box sx={{ display:'flex', justifyContent:'flex-end', mt: 2 }}>
-            <Button variant="contained" onClick={() => onSave(saveKey)} color='success'>
-              Сохранить изменения
-            </Button>
-          </Box>
+          {acces.time_cook_edit ? (
+            <Box sx={{display: 'flex', justifyContent: 'flex-end', mt: 2}}>
+              <Button variant="contained" onClick={() => onSave(saveKey)} color='success'>
+                Сохранить изменения
+              </Button>
+            </Box>
+          ) : null}
         </TabPanel>
       </Grid>
     );
@@ -1413,7 +1475,7 @@ class EventTime_Tab_Time_Cook extends React.PureComponent {
 class EventTime2_ extends React.Component {
   constructor(props) {
     super(props);
-        
+
     this.state = {
       module: 'event_time_2',
       module_name: '',
@@ -1449,10 +1511,10 @@ class EventTime2_ extends React.Component {
       snapshot: null,
       confirmDialog: false,
       nextTab: null,
-  
+
     };
   }
-  
+
   async componentDidMount(){
     const data = await this.getData('get_all');
 
@@ -1469,7 +1531,7 @@ class EventTime2_ extends React.Component {
 
     document.title = data.module_info.name;
   }
-  
+
   getData = (method, data = {}) => {
     this.setState({
       is_load: true,
@@ -1521,7 +1583,7 @@ class EventTime2_ extends React.Component {
 
   changeTab = (_, nextIndex) => {
     const current = this.makeSnapshot(this.state);
-    const pristine = this.state.snapshot;            
+    const pristine = this.state.snapshot;
     const dirty = !this.deepEqual(current, pristine);
 
     if (dirty) {
@@ -1536,10 +1598,10 @@ class EventTime2_ extends React.Component {
 
   deepEqual = (a, b) => {
     if (a === b) return true;
-  
+
     if (typeof a !== 'object' || a === null ||
         typeof b !== 'object' || b === null) return false;
-  
+
     if (Array.isArray(a) || Array.isArray(b)) {
       if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
       for (let i = 0; i < a.length; i++) {
@@ -1547,12 +1609,12 @@ class EventTime2_ extends React.Component {
       }
       return true;
     }
-  
+
     const aKeys = Object.keys(a);
     const bKeys = Object.keys(b);
 
     if (aKeys.length !== bKeys.length) return false;
-  
+
     for (const k of aKeys) {
       if (!bKeys.includes(k) || !this.deepEqual(a[k], b[k])) return false;
     }
@@ -1590,15 +1652,21 @@ class EventTime2_ extends React.Component {
     const tabs_data = [];
     const indices   = {};
 
-    let idx = 0;  
+    let idx = 0;
 
-    config.forEach(item => {
-      if (parseInt(acces?.[item.key])) {
-        tabs_data.push({ key: item.key, name: item.name });
-        indices[item.indexState] = idx;
-        idx++;
+    for (const item of config) {
+      const hasAccess = parseInt(acces?.[item.key]);
+
+      if (!hasAccess) continue;
+
+      if ((!acces?.[`${item.key}_edit`] && !acces?.[`${item.key}_view`])) {
+        continue;
       }
-    });
+
+      tabs_data.push({key: item.key, name: item.name});
+      indices[item.indexState] = idx;
+      idx++;
+    }
 
     this.setState({
       tabs_data,
@@ -1608,7 +1676,7 @@ class EventTime2_ extends React.Component {
   }
 
   saveTabData = async (tabKey) => {
-  
+
     const data = this.state[tabKey];
 
     let res;
@@ -1618,7 +1686,7 @@ class EventTime2_ extends React.Component {
     }
 
     if(tabKey === 'time_manager') {
-      res = await this.getData('save_time_manager', data); 
+      res = await this.getData('save_time_manager', data);
     }
 
     if(tabKey === 'time_smena') {
@@ -1630,7 +1698,7 @@ class EventTime2_ extends React.Component {
     }
 
     if(tabKey === 'kassir_time') {
-      res = await this.getData('save_kassir_time', data); 
+      res = await this.getData('save_kassir_time', data);
     }
 
     if(tabKey === 'table_lv') {
@@ -1645,8 +1713,8 @@ class EventTime2_ extends React.Component {
 
     if (res.st) {
       this.getDataSett();
-    } 
-   
+    }
+
   };
 
   saveTabData_registr = async (saveKey, data) => {
@@ -1664,7 +1732,7 @@ class EventTime2_ extends React.Component {
     if (res.st) {
       this.getDataSett();
     }
-  } 
+  }
 
   deleteTabData_registr = async (block) => {
 
@@ -1677,10 +1745,10 @@ class EventTime2_ extends React.Component {
     if (res.st) {
       this.getDataSett();
     }
-  } 
+  }
 
   render() {
-    const { is_load, openAlert, err_status, err_text, module_name, activeTab, tabs_data, time_cook, index_time_cook, index_time_manager, time_manager, index_time_smena, time_smena, rate, index_rate, index_kassir_time, kassir_time, index_table_lv, table_lv, index_cur, cur, kassir_registr, index_kassir_registr, confirmDialog } = this.state;
+    const { acces, is_load, openAlert, err_status, err_text, module_name, activeTab, tabs_data, time_cook, index_time_cook, index_time_manager, time_manager, index_time_smena, time_smena, rate, index_rate, index_kassir_time, kassir_time, index_table_lv, table_lv, index_cur, cur, kassir_registr, index_kassir_registr, confirmDialog } = this.state;
 
     return (
       <>
@@ -1711,7 +1779,7 @@ class EventTime2_ extends React.Component {
           status={err_status}
           text={err_text}
         />
-        
+
         <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
             <h1>{module_name}</h1>
@@ -1719,10 +1787,10 @@ class EventTime2_ extends React.Component {
 
           <Grid item xs={12} sm={12} style={{ paddingBottom: 24 }}>
             <Paper>
-              <Tabs 
-                value={activeTab} 
-                onChange={this.changeTab} 
-                variant='scrollable' 
+              <Tabs
+                value={activeTab}
+                onChange={this.changeTab}
+                variant='scrollable'
                 scrollButtons='auto'
                 allowScrollButtonsMobile={true}
               >
@@ -1732,11 +1800,11 @@ class EventTime2_ extends React.Component {
               </Tabs>
             </Paper>
           </Grid>
-
           {/* Время приготовления заказа */}
             {activeTab === index_time_cook && time_cook && (
               <EventTime_Tab_Time_Cook
                 activeTab={activeTab}
+                acces={acces}
                 index_time_cook={index_time_cook}
                 time_cook={time_cook}
                 onTimeChange={(key, val) =>
@@ -1745,7 +1813,7 @@ class EventTime2_ extends React.Component {
                   }))
                 }
                 saveKey="time_cook"
-                onSave={this.saveTabData} 
+                onSave={this.saveTabData}
               />
             )}
           {/* Время приготовления заказа */}
@@ -1754,6 +1822,7 @@ class EventTime2_ extends React.Component {
           {activeTab === index_time_manager && time_manager && (
             <EventTime_Tab_Time_Manager
               activeTab={activeTab}
+              acces={acces}
               index_time_manager={index_time_manager}
               time_manager={time_manager}
               onTimeChange={(key,val)=>{
@@ -1769,6 +1838,7 @@ class EventTime2_ extends React.Component {
             {activeTab === index_time_smena && time_smena && (
               <EventTime_Tab_Time_Smena
                 activeTab={activeTab}
+                acces={acces}
                 index_time_smena={index_time_smena}
                 time_smena={time_smena}
                 onTimeChange={(key, val) =>
@@ -1789,6 +1859,7 @@ class EventTime2_ extends React.Component {
             {activeTab === index_rate && rate && (
               <EventTime_Tab_Rate
                 activeTab={activeTab}
+                acces={acces}
                 index_rate={index_rate}
                 rate={rate}
                 onRateChange={newRate => this.setState({ rate: newRate })}
@@ -1802,6 +1873,7 @@ class EventTime2_ extends React.Component {
             {activeTab === index_kassir_time && kassir_time && (
               <EventTime_Tab_Kassir_Time
                 activeTab={activeTab}
+                acces={acces}
                 index_kassir_time={index_kassir_time}
                 kassir={kassir_time}
                 onKassirChange={newKassir => this.setState({ kassir_time: newKassir })}
@@ -1815,6 +1887,7 @@ class EventTime2_ extends React.Component {
             {activeTab === index_table_lv && table_lv && (
               <EventTime_Tab_TableLv
                 activeTab={activeTab}
+                acces={acces}
                 index_table_lv={index_table_lv}
                 table_lv={table_lv}
                 onLvChange={newArr => this.setState({ table_lv: newArr })}
@@ -1830,6 +1903,7 @@ class EventTime2_ extends React.Component {
                 activeTab={activeTab}
                 index_cur={index_cur}
                 cur={cur}
+                acces={acces}
                 onCurChange={newArr => this.setState({ cur: newArr })}
                 saveKey="cur"
                 onSave={this.saveTabData}
@@ -1843,6 +1917,7 @@ class EventTime2_ extends React.Component {
                 activeTab={activeTab}
                 index_kassir_registr={index_kassir_registr}
                 kassir_registr={kassir_registr}
+                acces={acces}
                 onSave={this.saveTabData_registr}
                 openAlert={this.openAlert}
                 onDelete={this.deleteTabData_registr}
