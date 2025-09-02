@@ -1575,9 +1575,9 @@ class StatSale_Tab_Sett extends React.Component {
                     centered
                     variant='fullWidth'
                   >
-                    <Tab label="Коэффициенты (Продажи)" {...a11yProps(0)} />
-                    <Tab label="Коэффициенты (Клиенты)" {...a11yProps(1)} />
-                    <Tab label="Жители (Клиенты)" {...a11yProps(2)} />
+                    {this.props.acces.sale_view && this.props.acces.sale_edit ? (<Tab label="Коэффициенты (Продажи)" {...a11yProps(0)} />) : null}
+                    {this.props.acces.client_view && this.props.acces.client_view ? (<Tab label="Коэффициенты (Клиенты)" {...a11yProps(1)} />) : null}
+                    {this.props.acces.client_view && this.props.acces.client_view ? (<Tab label="Жители (Клиенты)" {...a11yProps(2)} />) : null}
                   </Tabs>
                 </Paper>
               </Grid>
@@ -2551,6 +2551,7 @@ class StatSale_ extends React.Component {
     this.state = {
       module: 'stat_sale',
       module_name: '',
+      acces: {},
       is_load: false,
 
       fullScreen: false,
@@ -2578,7 +2579,8 @@ class StatSale_ extends React.Component {
       data_sett_rate_clients: data.data_sett_rate_clients,
       module_name: data.module_info.name,
       points: data.points,
-      cities: data.cities
+      cities: data.cities,
+      acces: data.acces ?? {}
     });
 
     document.title = data.module_info.name;
@@ -2897,7 +2899,9 @@ class StatSale_ extends React.Component {
               >
                 <Tab label="Продажи" {...a11yProps(0)} sx={{ minWidth: "fit-content", flex: 1 }}/>
                 <Tab label="Клиенты" {...a11yProps(1)} sx={{ minWidth: "fit-content", flex: 1 }}/>
-                <Tab label="Настройки" {...a11yProps(2)} sx={{ minWidth: "fit-content", flex: 1 }}/>
+                {this.state.acces.client_edit || this.state.acces.sale_edit ? (
+                  <Tab label="Настройки" {...a11yProps(2)} sx={{ minWidth: "fit-content", flex: 1 }}/>
+                ) : null}
               </Tabs>
             </Paper>
           </Grid>
@@ -2934,6 +2938,7 @@ class StatSale_ extends React.Component {
             <StatSale_Tab_Sett
               activeTab={this.state.activeTab}
               fullScreen={this.state.fullScreen}
+              acces={this.state.acces}
               rows={this.state.data_sett_rate}
               rows_clietns={this.state.data_sett_rate_clients}
               getDataSet={this.getDataSet}
