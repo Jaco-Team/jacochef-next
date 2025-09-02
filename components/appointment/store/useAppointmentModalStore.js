@@ -127,8 +127,12 @@ export const useAppointmentModalStore = create(
             return;
           }
           features[fi] = { ...features[fi], [key]: value };
-          if(key === 'edit') {
-            features[fi] = { ...features[fi], view: value };
+          // if(key === 'edit') {
+          //   features[fi] = { ...features[fi], view: value };
+          // }
+
+          if(key === 'view' && event?.target?.checked == false) {
+            features[fi] = { ...features[fi], edit: value };
           }
         };
 
