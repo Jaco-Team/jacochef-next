@@ -23,7 +23,7 @@
     "@mui/material-nextjs": "^5.18.0",
     "@mui/styled-engine-sc": "^5.14.12",
     "@mui/x-date-pickers": "^7.29.4",
-    "@sentry/cli": "^2.52.0",
+    "@sentry/cli": "^2.53.0",
     "@sentry/react": "^10.8.0",
     "@tinymce/tinymce-react": "^5.1.1",
     "axios": "^1.11.0",
