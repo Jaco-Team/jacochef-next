@@ -24,7 +24,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AppointmentModal from "@/components/appointment/AppointmentModal";
 import AppointmentUnitModal from "@/components/appointment/AppointmentUnitModal";
-import handleUserAccess from "@/src/heplers/access/handleUserAccess";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 class Appointment_ extends React.Component {
   constructor(props) {
