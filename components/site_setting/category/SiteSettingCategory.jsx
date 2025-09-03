@@ -60,6 +60,9 @@ export function SiteSettingCategory() {
     getData,
     fetchCoreData
   );
+  const [acces] = useSiteSettingStore((state) => [
+    state.acces,
+  ]);
 
   const saveSort = useDebounce(async (id, event) => {
     const targetCategory = useCategoryStore.getState().categories.find((cat) => cat.id === id);
@@ -88,12 +91,16 @@ export function SiteSettingCategory() {
       ),
       modalPrefix,
       () => (
-        <Button
-          variant="contained"
-          onClick={async () => (action === "newCategory" ? await saveNew() : await saveEdit())}
-        >
-          {action === "newCategory" ? "Добавить" : "Сохранить"}
-        </Button>
+        <>
+          {acces.category_edit ? (
+            <Button
+              variant="contained"
+              onClick={async () => (action === "newCategory" ? await saveNew() : await saveEdit())}
+            >
+              {action === "newCategory" ? "Добавить" : "Сохранить"}
+            </Button>
+          ) : null}
+        </>
       ),
       () => {
         setItem(null), setItemName("");
@@ -131,13 +138,14 @@ export function SiteSettingCategory() {
         }}
       >
         <Typography variant="h5">{moduleName}</Typography>
-
-        <Button
-          onClick={() => openModal("newCategory", "Новая категория")}
-          variant="contained"
-        >
-          Добавить новую категорию
-        </Button>
+        {acces.category_edit ? (
+          <Button
+            onClick={() => openModal("newCategory", "Новая категория")}
+            variant="contained"
+          >
+            Добавить новую категорию
+          </Button>
+        ) : null}
       </Grid>
       <Grid
         item
@@ -177,6 +185,7 @@ export function SiteSettingCategory() {
                         <MyTextInput
                           type="number"
                           label=""
+                          disabled={acces.category_view && !acces.category_edit}
                           value={item.sort}
                           func={(e) => changeSort(item.id, e)}
                           onBlur={(e) => saveSort(item.id, e)}
@@ -207,6 +216,7 @@ export function SiteSettingCategory() {
                           <MyTextInput
                             type="number"
                             label=""
+                            disabled={acces.category_view && !acces.category_edit}
                             value={subcat.sort}
                             func={(e) => changeSort(subcat.id, e)}
                             onBlur={(e) => saveSort(subcat.id, e)}
@@ -233,6 +243,7 @@ export function SiteSettingCategory() {
                       <MyTextInput
                         type="number"
                         label=""
+                        disabled={acces.category_view && !acces.category_edit}
                         value={item.sort}
                         func={(e) => changeSort(item.id, e)}
                         onBlur={(e) => saveSort(item.id, e)}

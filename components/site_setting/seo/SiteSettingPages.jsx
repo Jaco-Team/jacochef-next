@@ -21,9 +21,10 @@ import { MySelect } from "@/ui/elements";
 export function SiteSettingPages() {
   const submodule = "seo";
   // Settings state
-  const [cityId, cities, setCityId] = useSiteSettingStore((state) => [
+  const [cityId, cities, acces, setCityId] = useSiteSettingStore((state) => [
     state.city_id,
     state.cities,
+    state.acces,
     state.setCityId,
   ]);
   const createModal = useSiteSettingStore((state) => state.createModal);
@@ -73,12 +74,16 @@ export function SiteSettingPages() {
       ),
       modalPrefix,
       () => (
-        <Button
-          variant="contained"
-          onClick={async () => (action === "newPage" ? await saveNew() : await saveEdit())}
-        >
-          {action === "newPage" ? "Добавить" : "Сохранить"}
-        </Button>
+        <>
+          {acces.seo_edit ? (
+            <Button
+              variant="contained"
+              onClick={async () => (action === "newPage" ? await saveNew() : await saveEdit())}
+            >
+              {action === "newPage" ? "Добавить" : "Сохранить"}
+            </Button>
+          ) : null}
+        </>
       ),
       () => {
         setItem(null), setItemName("");
@@ -117,12 +122,14 @@ export function SiteSettingPages() {
       >
         <Typography variant="h5">{moduleName}</Typography>
 
-        <Button
-          onClick={() => openModal("newPage", "Новая страница")}
-          variant="contained"
-        >
-          Добавить новую страницу
-        </Button>
+        {acces.seo_edit ? (
+          <Button
+            onClick={() => openModal("newPage", "Новая страница")}
+            variant="contained"
+          >
+            Добавить новую страницу
+          </Button>
+        ) : null}
       </Grid>
 
       <Grid

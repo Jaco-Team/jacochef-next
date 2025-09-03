@@ -56,6 +56,7 @@ export default function SiteSetting() {
     setOpenAlert,
     closeModal,
     setActiveTab,
+    setAcces,
   } = useSiteSettingStore.getState();
   const {
     subModules,
@@ -95,7 +96,8 @@ export default function SiteSetting() {
       setData(data);
       setCities(data?.cities);
       setModuleName(data.module_info.name);
-      setSubList(subModules.filter((sub) => +data.access[sub.key] === 1));
+      setSubList(subModules.filter((sub) => data.access[`${sub.key}_view`] === 1 || data.access[`${sub.key}_edit`] === 1));
+      setAcces(data.access);
       document.title = data.module_info.name;
     } catch (error) {
       showAlert(`Error loading data: ${error.message}`);

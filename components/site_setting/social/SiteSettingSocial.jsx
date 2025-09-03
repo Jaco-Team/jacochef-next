@@ -16,9 +16,10 @@ export function SiteSettingSocial() {
 
   const { setDataInfo, setModuleName, getData } = useSocialStore.getState();
 
-  const [cityId, cities, setCityId] = useSiteSettingStore((state) => [
+  const [cityId, cities, acces, setCityId] = useSiteSettingStore((state) => [
     state.city_id,
     state.cities,
+    state.acces,
     state.setCityId,
   ]);
 
@@ -117,6 +118,7 @@ export function SiteSettingSocial() {
                 >
                   <MyTextInput
                     label="Вконтакте"
+                    disabled={acces.social_view && !acces.social_edit}
                     value={dataInfo?.vk || ""}
                     func={(e) => changeData("vk", e)}
                   />
@@ -128,6 +130,7 @@ export function SiteSettingSocial() {
                 >
                   <MyTextInput
                     label="Инстаграм"
+                    disabled={acces.social_view && !acces.social_edit}
                     value={dataInfo?.inst || ""}
                     func={(e) => changeData("inst", e)}
                   />
@@ -141,6 +144,7 @@ export function SiteSettingSocial() {
                   <MyTextInput
                     label="Одноклассники"
                     value={dataInfo?.ok || ""}
+                    disabled={acces.social_view && !acces.social_edit}
                     func={(e) => changeData("ok", e)}
                   />
                 </Grid>
@@ -152,6 +156,7 @@ export function SiteSettingSocial() {
                   <MyTextInput
                     label="Телеграм"
                     value={dataInfo?.tg || ""}
+                    disabled={acces.social_view && !acces.social_edit}
                     func={(e) => changeData("tg", e)}
                   />
                 </Grid>
@@ -163,6 +168,7 @@ export function SiteSettingSocial() {
                   <MyTextInput
                     label="Facebook"
                     value={dataInfo?.fb || ""}
+                    disabled={acces.social_view && !acces.social_edit}
                     func={(e) => changeData("fb", e)}
                   />
                 </Grid>
@@ -172,12 +178,14 @@ export function SiteSettingSocial() {
                   xs={12}
                   sm={6}
                 >
-                  <Button
-                    variant="contained"
-                    onClick={saveData}
-                  >
-                    Обновить данные
-                  </Button>
+                  {acces.social_edit ? (
+                    <Button
+                      variant="contained"
+                      onClick={saveData}
+                    >
+                      Обновить данные
+                    </Button>
+                  ) : null}
                 </Grid>
               </Grid>
             </Grid>

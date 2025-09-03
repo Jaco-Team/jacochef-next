@@ -32,6 +32,9 @@ export function SiteSettingBanners(props) {
     state.cities,
   ]);
   const { createModal, setCityId, closeModal, setModalTitle, showAlert } = useSiteSettingStore.getState();
+  const [acces] = useSiteSettingStore((state) => [
+    state.acces,
+  ]);
 
   // banners list state
   const { getData, setActiveBanners, setNonActiveBanners, setModuleName } =
@@ -109,12 +112,16 @@ export function SiteSettingBanners(props) {
       ),
       modalPrefix,
       () => (
-        <Button
-          variant="contained"
-          onClick={async () => (action === "bannerNew" ? await saveNew() : await saveEdit())}
-        >
-          Сохранить
-        </Button>
+        <>
+          {acces.banners_edit ? (
+            <Button
+              variant="contained"
+              onClick={async () => (action === "bannerNew" ? await saveNew() : await saveEdit())}
+            >
+              Сохранить
+            </Button>
+          ) : null}
+        </>
       )
     );
   };
@@ -150,12 +157,14 @@ export function SiteSettingBanners(props) {
       >
         <Typography variant="h5">{moduleName}</Typography>
 
-        <Button
-          onClick={async () => await openModal("bannerNew", "Новый баннер")}
-          variant="contained"
-        >
-          Добавить баннер
-        </Button>
+        {acces.banners_edit ? (
+          <Button
+            onClick={() => openModal("bannerNew", "Новый баннер")}
+            variant="contained"
+          >
+            Добавить новую категорию
+          </Button>
+        ) : null}
       </Grid>
 
       <Grid
@@ -224,6 +233,7 @@ export function SiteSettingBanners(props) {
                       >
                         <MyTextInput
                           value={item.sort}
+                          disabled={acces.banners_view && !acces.banners_edit}
                           func={(e) => setSort(item.id, e)}
                           onBlur={async (e) => await updateItemSort(item, e)}
                         />
@@ -235,6 +245,7 @@ export function SiteSettingBanners(props) {
                     <TableCell>
                       <MyCheckBox
                         value={!!item.is_active}
+                        disabled={acces.banners_view && !acces.banners_edit}
                         func={async (e) => await updateItemActive(item, e)}
                       />
                     </TableCell>

@@ -1,6 +1,6 @@
 "use client";
 
-import { api_laravel } from "@/src/api_new";
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 import { create } from "zustand";
 
 const defaultSubmodules = [
@@ -15,8 +15,10 @@ export const useSiteSettingStore = create((set, get) => ({
   module: "site_setting",
   module_name: "",
   is_load: false,
+  acces: {},
   data: null,
   setModule: (module) => set({ module }),
+  setAcces: (acces) => set({ acces }),
   setModuleName: (module_name) => set({ module_name }),
   setIsLoad: (is_load) => set({ is_load }),
   setData: (data) => set({ data }),

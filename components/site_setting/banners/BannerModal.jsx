@@ -14,6 +14,7 @@ import { useBannerModalStore } from "./useBannerModalStore";
 import Dropzone from "dropzone";
 import dayjs from "dayjs";
 import { dropzoneOptions } from "./bannerUtils";
+import {useSiteSettingStore} from "@/components/site_setting/useSiteSettingStore";
 
 export function BannerModal({ getData, showAlert, id, action }) {
   const banner = useBannerModalStore((state) => state.banner);
@@ -30,6 +31,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
   const changeThisBanFieldBool = useBannerModalStore((state) => state.changeThisBanFieldBool);
   const changeAutoComplete = useBannerModalStore((state) => state.changeAutoComplete);
   const getNewBanner = useBannerModalStore((state) => state.getNewBanner);
+  const [acces] = useSiteSettingStore((state) => [
+    state.acces,
+  ]);
 
   // dropZones
   const [dropZonesReady, setDropZonesReady] = useState(false);
@@ -150,6 +154,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <MyTextInput
               label="Название банера (внутреннее)"
               value={banner?.this_ban?.name || ""}
+              disabled={acces.banners_view && !acces.banners_edit}
               func={(e) => changeThisBanField("name", e)}
             />
           </Grid>
@@ -160,6 +165,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyTextInput
               label="Заголовок"
+              disabled={acces.banners_view && !acces.banners_edit}
               value={banner?.this_ban?.title || ""}
               func={(e) => changeThisBanField("title", e)}
             />
@@ -173,6 +179,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <MySelect
               is_none={false}
               label="Город"
+              disabled={acces.banners_view && !acces.banners_edit}
               data={banner?.cities || []}
               value={banner?.this_ban?.city_id || ""}
               func={(e) => changeThisBanField("city_id", e)}
@@ -192,6 +199,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyDatePickerNew
               label="Дата старта"
+              disabled={acces.banners_view && !acces.banners_edit}
               value={banner ? dayjs(banner?.this_ban?.date_start) : ""}
               func={(e) => changeDateRange("date_start", e)}
             />
@@ -204,6 +212,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyDatePickerNew
               label="Дата окончания"
+              disabled={acces.banners_view && !acces.banners_edit}
               value={banner ? dayjs(banner?.this_ban?.date_end) : ""}
               func={(e) => changeDateRange("date_end", e)}
             />
@@ -217,6 +226,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <MyAutocomplite
               label="Позиции (вместо промика)"
               multiple={true}
+              disabled={acces.banners_view && !acces.banners_edit}
               data={banner?.items || []}
               value={banner?.this_ban?.items || []}
               func={(...params) => changeAutoComplete("items", ...params)}
@@ -231,6 +241,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <MyAutocomplite
               label="Промокод (вместо позиций)"
               multiple={false}
+              disabled={acces.banners_view && !acces.banners_edit}
               data={promos || null}
               value={banner?.this_ban?.promo_id || null}
               func={(...params) => changeAutoComplete("promo_id", ...params)}
@@ -244,6 +255,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyCheckBox
               label="Активность"
+              disabled={acces.banners_view && !acces.banners_edit}
               value={!!+banner?.this_ban?.is_active}
               func={(e) => changeThisBanFieldBool("is_active", e)}
             />
@@ -255,6 +267,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyCheckBox
               label="Показывать в акциях"
+              disabled={acces.banners_view && !acces.banners_edit}
               value={!!+banner?.this_ban?.is_active_actii}
               func={(e) => changeThisBanFieldBool("is_active_actii", e)}
             />
@@ -266,6 +279,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyCheckBox
               label="Показывать на главной"
+              disabled={acces.banners_view && !acces.banners_edit}
               value={!!+banner?.this_ban?.is_active_home}
               func={(e) => changeThisBanFieldBool("is_active_home", e)}
             />
@@ -278,6 +292,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <MyTextInput
               label="Заголовок SEO"
               value={banner?.this_ban?.seo_title || ""}
+              disabled={acces.banners_view && !acces.banners_edit}
               func={(e) => changeThisBanField("seo_title", e)}
             />
           </Grid>
@@ -289,6 +304,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <TextField
               label="Описание SEO"
               value={banner?.this_ban?.seo_desc || ""}
+              disabled={acces.banners_view && !acces.banners_edit}
               onChange={(e) => changeThisBanField("seo_desc", e)}
               multiline
               //rows={2}
@@ -323,7 +339,13 @@ export function BannerModal({ getData, showAlert, id, action }) {
               className="dropzone"
               id="for_img_edit"
               ref={desktopDropzoneContainerRef}
-              style={{ width: "100%", minHeight: 150 }}
+              style={{
+                width: "100%",
+                minHeight: 150,
+                opacity: acces.banners_view && !acces.banners_edit ? 0.6 : 1,
+                cursor: acces.banners_view && !acces.banners_edit ? 'not-allowed' : 'pointer',
+                pointerEvents: acces.banners_view && !acces.banners_edit ? 'none' : 'auto'
+              }}
             />
           </Grid>
 
@@ -354,7 +376,13 @@ export function BannerModal({ getData, showAlert, id, action }) {
               className="dropzone"
               id="for_img_edit_"
               ref={mobileDropzoneContainerRef}
-              style={{ width: "100%", minHeight: 150 }}
+              style={{
+                width: "100%",
+                minHeight: 150,
+                opacity: acces.banners_view && !acces.banners_edit ? 0.6 : 1,
+                cursor: acces.banners_view && !acces.banners_edit ? 'not-allowed' : 'pointer',
+                pointerEvents: acces.banners_view && !acces.banners_edit ? 'none' : 'auto'
+              }}
             />
           </Grid>
 
@@ -367,6 +395,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
               value={banner?.this_ban?.text || ""}
               func={(content) => changeThisBanField("text", null, content)}
               language="ru"
+              disabled={acces.banners_view && !acces.banners_edit}
             />
           </Grid>
         </>

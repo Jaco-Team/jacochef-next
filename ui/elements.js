@@ -335,7 +335,7 @@ export class MySelect extends React.PureComponent {
           {this.props.is_none === false ? null :
             <MenuItem value=""><em>None</em></MenuItem>
           }
-          
+
           { this.props.data?.map( (item, key) =>
             <MenuItem key={key} value={item.id} style={{ color: item?.color ? item.color : null, zIndex: 9999 }}>{item.name}</MenuItem>
           ) }
@@ -694,6 +694,7 @@ export function TextEditor(props){
     <Editor
       apiKey='q3skq93mjg9kb2pusut1jjvqd15b8wncykg7tj0ke02dbipj'
       value={props.value}
+      disabled={props.disabled}
       onEditorChange={props.func}
       init={{
         height: 500,
