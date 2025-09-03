@@ -320,7 +320,7 @@ class Appointment_ extends React.Component {
   groupItemsByUnits() {
     const { units, items } = this.state;
 
-    const unitMap = units.reduce((acc, unit) => {
+    const unitMap = units?.reduce((acc, unit) => {
       acc[unit.id] = { ...unit, items: [] };
       return acc;
     }, {});

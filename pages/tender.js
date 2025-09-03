@@ -13,9 +13,22 @@ import TableContainer from '@mui/material/TableContainer';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyAutocomplite, MySelect } from '@/ui/elements';
+import { MyAlert, MyAutocomplite, MySelect } from '@/ui/elements';
 
 import queryString from 'query-string';
+import { api_laravel } from '@/src/api_new';
+
+
+const cellBgColor = {
+  white: "#fff",
+  red: "#a00",
+  green: "#00a550"
+}
+const cellColor = {
+  white: "#000",
+  red: "#fff",
+  green: "#fff"
+}
 
 class TenderCell extends React.Component {
   // shouldComponentUpdate(nextProps){
@@ -45,8 +58,6 @@ class TenderCell extends React.Component {
       className += 'maxPriceCell ';
     }
 
-    //console.log('render');
-
     return (
       <TableCell
         className={className}
@@ -72,6 +83,9 @@ class Tender_ extends React.Component {
       city: '',
 
       // url: '',
+      alertOpened: false,
+      alertStatus: true,
+      alertText: '',
 
       allVendors: [],
       allTenders: [],
@@ -101,53 +115,75 @@ class Tender_ extends React.Component {
     document.title = data.module_info.name;
   }
 
+  // getData = (method, data = {}) => {
+  //   this.setState({
+  //     is_load: true,
+  //   });
+
+  //   return fetch('https://jacochef.ru/api/index_new.php', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/x-www-form-urlencoded',
+  //     },
+  //     body: queryString.stringify({
+  //       method: method,
+  //       module: this.state.module,
+  //       version: 2,
+  //       login: localStorage.getItem('token'),
+  //       data: JSON.stringify(data),
+  //     }),
+  //   })
+  //     .then((res) => res.json())
+  //     .then((json) => {
+  //       if (json.st === false && json.type == 'redir') {
+  //         window.location.pathname = '/';
+  //         return;
+  //       }
+
+  //       if (json.st === false && json.type == 'auth') {
+  //         window.location.pathname = '/auth';
+  //         return;
+  //       }
+
+  //       setTimeout(() => {
+  //         this.setState({
+  //           is_load: false,
+  //         });
+  //       }, 300);
+
+  //       return json;
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //       this.setState({
+  //         is_load: false,
+  //       });
+  //     });
+  // };
+
   getData = (method, data = {}) => {
     this.setState({
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
-
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
+    let result = api_laravel(this.state.module, method, data)
+      .then((response) => response?.data)
+      .catch( (e) => {
+        this.showAlert(`Ошибка сервера: ${e.message}`, false)
+        return null;
+      })
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({
-          is_load: false,
-        });
+        }, 500);
       });
+
+    return result;
   };
 
-  changeTender(event, data){
+  changeTender(_, data){
     this.setState({
       tender: data
     });
@@ -169,14 +205,14 @@ class Tender_ extends React.Component {
     });
   }
 
-  changeVendor(event, value) {
+  changeVendor(_, value) {
     this.setState({
       vendor: value,
       newCat: '',
     });
   }
 
-  changeCat(event, value) {
+  changeCat(_, value) {
     this.setState({
       newCat: value,
       vendor: [],
@@ -192,8 +228,6 @@ class Tender_ extends React.Component {
     };
 
     const res = await this.getData('get_data', data);
-
-    // console.log('getDataTable', res);
 
     // передаем урл для скачивания Excel
     // this.setState({
@@ -227,12 +261,8 @@ class Tender_ extends React.Component {
   }
 
   changePrice(vendor_id, cat_id, price) {
-    // console.log(vendor_id, cat_id, price)
-
     const vendors = this.state.vendors;
     const cats = this.state.cats;
-
-    // console.log(cats);
 
     cats.forEach((cat) => {
       cat.cats.forEach((it) => {
@@ -280,13 +310,9 @@ class Tender_ extends React.Component {
       items: items,
     };
 
-    // console.log(data);
-
-    await this.getData('save', data);
-
+    const response = await this.getData('save', data);
+    this.showAlert(response?.text, response?.st)
     this.getDataTable();
-
-    // console.log(res)
   }
 
   // запрос на подготовку  Excel вендора
@@ -294,7 +320,7 @@ class Tender_ extends React.Component {
     const data = {
       city_id: this.state.city,
       vendor_id: vendor_id,
-      date: this.state.tender['name']
+      date: this.state.tender?.name
     };
 
     const res =  await this.getData('downLoadVendor', data);
@@ -316,6 +342,7 @@ class Tender_ extends React.Component {
       vendors: this.state.vendor,
       cat: this.state.newCat,
       date: this.state.tender.name,
+      withUrl: true
     };
 
     const res = await this.getData('get_data', data);
@@ -346,6 +373,17 @@ class Tender_ extends React.Component {
     }
   }
 
+  showAlert(message = 'Ошибка', status = false) {
+    this.setState({
+      alertOpened: true,
+      alertStatus: status,
+      alertText: message
+    })
+    setTimeout(() => {
+      this.setState({alertOpened: false})
+    }, 3000);
+  }
+
   render() {
     return (
       <>
@@ -353,13 +391,20 @@ class Tender_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
 
+        <MyAlert 
+          isOpen={this.state.alertOpened}
+          onClose={() => this.setState({alertOpened: false, alertText: ''})}
+          status={this.state.alertStatus}
+          text={this.state.alertText}
+        />
+
         <Grid container spacing={3} mb={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid> 
         </Grid>
 
-        <Grid container spacing={3} mb={3}>
+        <Grid container spacing={3} mb={3} mt={1}>
 
           <Grid item xs={12} sm={2}>
             <MySelect
@@ -373,6 +418,7 @@ class Tender_ extends React.Component {
             <MyAutocomplite
               label="Тендер"
               multiple={false}
+              disableCloseOnSelect={false}
               data={this.state.allTenders}
               value={this.state.tender}
               func={this.changeTender.bind(this)}
@@ -391,6 +437,7 @@ class Tender_ extends React.Component {
           <Grid item xs={12} sm={2}>
             <MyAutocomplite
               label="Категория"
+              disableCloseOnSelect={false}
               multiple={false}
               data={this.state.allCats}
               value={this.state.newCat}
@@ -548,17 +595,9 @@ class Tender_ extends React.Component {
                             textAlign: 'center',
 
                             backgroundColor:
-                              vendor.type == 'white'
-                                ? '#fff'
-                                : vendor.type == 'red'
-                                ? 'red'
-                                : 'green',
+                              cellBgColor[vendor.type],
                             color:
-                              vendor.type == 'white'
-                                ? '#000'
-                                : vendor.type == 'red'
-                                ? '#fff'
-                                : '#fff',
+                              cellColor[vendor.type],
                             fontWeight: 700,
                           }}
                         >
@@ -656,7 +695,7 @@ export default function Tender() {
   return <Tender_ />;
 }
 
-export async function getServerSideProps({ req, res, query }) {
+export async function getServerSideProps({ res }) {
   res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
