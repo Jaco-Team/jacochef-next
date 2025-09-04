@@ -28,7 +28,7 @@ import dayjs from "dayjs";
 import StatTableAccordeon from "@/components/kitchen_stat/StatTableAccordeon";
 import ExcelIcon from "@/components/shared/ExcelIcon";
 import DownloadButton from "@/components/shared/DownloadButton";
-import { Stack } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 
 const statPartsNames = [
   "promo_stat",
@@ -86,7 +86,7 @@ class KitchenStat_ extends React.Component {
     });
 
     let res = api_laravel(this.state.module, method, data)
-      .then((result) => result.data)
+      .then((result) => result?.data)
       .finally(() => {
         setTimeout(() => {
           this.setState({
@@ -388,13 +388,18 @@ class KitchenStat_ extends React.Component {
                   <TableHead>
                     <TableRow>
                       <TableCell colSpan={`${this.state.arrayOrdersByH?.length}` + 2}>
-                        <h2>Оформленные заказы по часам</h2>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: "1em",
+                            flexDirection: { xs: "column", sm: "row" },
+                            alignItems: { sm: "center", xs: "left" },
+                          }}
+                        >
+                          <h2>Оформленные заказы по часам</h2>
+                          {this.state.is_load_parts?.orders_by_h && <CircularProgress size={24} />}
+                        </Box>
                       </TableCell>
-                      {this.state.is_load_parts?.orders_by_h && (
-                        <TableCell>
-                          <CircularProgress size={24} />
-                        </TableCell>
-                      )}
                     </TableRow>
                     {this.state.arrayOrdersByH?.length > 0 && (
                       <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
@@ -480,20 +485,25 @@ class KitchenStat_ extends React.Component {
                   <TableHead>
                     <TableRow>
                       <TableCell colSpan={2}>
-                        <h2>Завершенные заказы по типу</h2>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: "1em",
+                            flexDirection: { xs: "column", sm: "row" },
+                            alignItems: { sm: "center", xs: "left" },
+                          }}
+                        >
+                          <h2>Завершенные заказы по типу</h2>
+                          {this.state.is_load_parts?.type_stat_new && (
+                            <CircularProgress size={24} />
+                          )}
+                        </Box>
                       </TableCell>
                     </TableRow>
                     {this.state.data?.type_stat_new?.length > 0 && (
                       <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                         <TableCell>Тип заказа</TableCell>
                         <TableCell>Количество</TableCell>
-                      </TableRow>
-                    )}
-                    {this.state.is_load_parts?.type_stat_new && (
-                      <TableRow>
-                        <TableCell colSpan={2}>
-                          <CircularProgress size={24} />
-                        </TableCell>
                       </TableRow>
                     )}
                   </TableHead>
@@ -528,16 +538,19 @@ class KitchenStat_ extends React.Component {
                   <TableHead>
                     <TableRow>
                       <TableCell colSpan={2}>
-                        <h2>Заказы по статусу</h2>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: "1em",
+                            flexDirection: { xs: "column", sm: "row" },
+                            alignItems: { sm: "center", xs: "left" },
+                          }}
+                        >
+                          <h2>Заказы по статусу</h2>
+                          {this.state.is_load_parts?.status_stat && <CircularProgress size={24} />}
+                        </Box>
                       </TableCell>
                     </TableRow>
-                    {this.state.is_load_parts?.status_stat && (
-                      <TableRow>
-                        <TableCell colSpan={2}>
-                          <CircularProgress size={24} />
-                        </TableCell>
-                      </TableRow>
-                    )}
                     {this.state.data?.status_stat?.length > 0 && (
                       <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                         <TableCell>Статус заказа</TableCell>
@@ -575,14 +588,19 @@ class KitchenStat_ extends React.Component {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell colSpan={6 - Number(this.state.is_load_parts?.fake_orders)}>
-                        <h2>Не завершенные заказы</h2>
+                      <TableCell colSpan={6}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: "1em",
+                            flexDirection: { xs: "column", sm: "row" },
+                            alignItems: { sm: "center", xs: "left" },
+                          }}
+                        >
+                          <h2>Не завершенные заказы</h2>
+                          {this.state.is_load_parts?.fake_orders && <CircularProgress size={24} />}
+                        </Box>
                       </TableCell>
-                      {this.state.is_load_parts?.fake_orders && (
-                        <TableCell>
-                          <CircularProgress size={24} />
-                        </TableCell>
-                      )}
                     </TableRow>
                     {this.state.data?.fake_orders?.length > 0 && (
                       <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
@@ -695,12 +713,11 @@ class KitchenStat_ extends React.Component {
               mt={3}
             >
               <Accordion>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  sx={{ display: "flex", gap: "1em" }}
-                >
-                  <Typography sx={{ fontWeight: "bold" }}>Проданные позиции (все)</Typography>
-                  {this.state.is_load_parts?.all_items_all && <CircularProgress size={24} />}
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    <Typography sx={{ fontWeight: "bold" }}>Проданные позиции (все)</Typography>
+                    {this.state.is_load_parts?.all_items_all && <CircularProgress size={24} />}
+                  </Box>
                 </AccordionSummary>
                 {this.state.data?.all_items_all?.length > 0 && (
                   <AccordionDetails style={{ overflow: "hidden" }}>
@@ -731,7 +748,7 @@ class KitchenStat_ extends React.Component {
           )}
 
           {/* аккордион Проданные позиции (разбивка сетов, без допов) по типу оформления */}
-          {(this.state.data?.stat_items_checkout ||
+          {(this.state.statItemsCheckoutCount > 0 ||
             this.state.is_load_parts?.stat_items_checkout) && (
             <Grid
               item
@@ -741,11 +758,11 @@ class KitchenStat_ extends React.Component {
             >
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Grid
+                  <Box
                     sx={{
                       display: "flex",
-                      flexDirection: { xs: "column", sm: "row" },
                       gap: "1em",
+                      flexDirection: { xs: "column", sm: "row" },
                       alignItems: { sm: "center", xs: "left" },
                     }}
                   >
@@ -759,14 +776,17 @@ class KitchenStat_ extends React.Component {
                       Проданные позиции (разбивка сетов, без допов) по типу оформления
                     </Typography>
                     {this.state.is_load_parts?.stat_items_checkout && (
-                      <CircularProgress size={24} />
+                      <CircularProgress
+                        size={24}
+                        sx={{ minWidth: 24 }}
+                      />
                     )}
-                    {this.state.data?.stat_items_checkout && (
+                    {this.state.statItemsCheckoutCount > 0 && (
                       <Typography sx={{ fontWeight: "bold" }}>
                         Всего: {this.state.statItemsCheckoutCount}
                       </Typography>
                     )}
-                  </Grid>
+                  </Box>
                   {this.state.data?.stat_items_checkout?.excel_link && (
                     <DownloadButton
                       url={this.state.data?.stat_items_checkout?.excel_link}
@@ -777,7 +797,7 @@ class KitchenStat_ extends React.Component {
                     </DownloadButton>
                   )}
                 </AccordionSummary>
-                {this.state.data?.stat_items_checkout && (
+                {this.state.data?.stat_items_checkout && this.state.statItemsCheckoutCount > 0 && (
                   <AccordionDetails>
                     <Grid
                       container
@@ -818,7 +838,7 @@ class KitchenStat_ extends React.Component {
           )}
 
           {/* аккордион Проданные позиции (все) по типу оформления */}
-          {(this.state.data?.stat_items_checkout_all ||
+          {(this.state.statAllItemsCount > 0 ||
             this.state.is_load_parts?.stat_items_checkout_all) && (
             <Grid
               item
@@ -828,12 +848,13 @@ class KitchenStat_ extends React.Component {
             >
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                    flexGrow={1}
-                    gap={1}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: "1em",
+                      flexDirection: { xs: "column", sm: "row" },
+                      alignItems: { sm: "center", xs: "left" },
+                    }}
                   >
                     <Typography sx={{ fontWeight: "bold" }}>
                       Проданные позиции (все) по типу оформления
@@ -849,7 +870,7 @@ class KitchenStat_ extends React.Component {
                         <ExcelIcon />
                       </DownloadButton>
                     )}
-                  </Stack>
+                  </Box>
                 </AccordionSummary>
                 {this.state.data?.stat_items_checkout_all && (
                   <AccordionDetails>
@@ -904,10 +925,19 @@ class KitchenStat_ extends React.Component {
                   expandIcon={<ExpandMoreIcon />}
                   sx={{ display: "flex", gap: "1em" }}
                 >
-                  <Typography sx={{ fontWeight: "bold" }}>
-                    Проданные позиции по категориям
-                  </Typography>
-                  {this.state.is_load_parts?.stat_cat && <CircularProgress size={24} />}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: "1em",
+                      flexDirection: { xs: "column", sm: "row" },
+                      alignItems: { sm: "center", xs: "left" },
+                    }}
+                  >
+                    <Typography sx={{ fontWeight: "bold" }}>
+                      Проданные позиции по категориям
+                    </Typography>
+                    {this.state.is_load_parts?.stat_cat && <CircularProgress size={24} />}
+                  </Box>
                 </AccordionSummary>
                 {this.state.data?.stat_cat?.length > 0 && (
                   <AccordionDetails style={{ overflow: "hidden" }}>
@@ -950,8 +980,17 @@ class KitchenStat_ extends React.Component {
                   expandIcon={<ExpandMoreIcon />}
                   sx={{ display: "flex", gap: "1em" }}
                 >
-                  <Typography sx={{ fontWeight: "bold" }}>Использованные промокоды</Typography>
-                  {this.state.is_load_parts?.promo_stat && <CircularProgress size={24} />}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: "1em",
+                      flexDirection: { xs: "column", sm: "row" },
+                      alignItems: { sm: "center", xs: "left" },
+                    }}
+                  >
+                    <Typography sx={{ fontWeight: "bold" }}>Использованные промокоды</Typography>
+                    {this.state.is_load_parts?.promo_stat && <CircularProgress size={24} />}
+                  </Box>
                 </AccordionSummary>
                 {this.state.data?.promo_stat?.length > 0 && (
                   <AccordionDetails style={{ overflow: "hidden" }}>
