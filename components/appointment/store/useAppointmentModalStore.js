@@ -62,18 +62,16 @@ export const useAppointmentModalStore = create(
         }
         const features = state.full_menu[main_key]?.chaild[parent_key]?.features || [];
         const features_cat = state.full_menu[main_key]?.chaild[parent_key]?.features_cat || [];
-        const data = [...features, ...features_cat];
-        if (!data?.length) {
+        if (!features?.length && !features_cat?.length) {
           return;
         }
         const table_data = [];
         const accordion_data = [];
-        data?.forEach((param, index) => {
-          if (param.category) {
-            accordion_data.push({ ...param, index });
-          } else {
-            table_data.push({ ...param, index });
-          }
+        features?.forEach((param, index) => {
+          table_data.push({ ...param, index });
+        });
+        features_cat?.forEach((param, index) => {
+          accordion_data.push({ ...param, index });
         });
         state.params = {
           table: [...table_data],
@@ -131,7 +129,7 @@ export const useAppointmentModalStore = create(
           //   features[fi] = { ...features[fi], view: value };
           // }
 
-          if(key === 'view' && event?.target?.checked == false) {
+          if (key === "view" && event?.target?.checked == false) {
             features[fi] = { ...features[fi], edit: value };
           }
         };
