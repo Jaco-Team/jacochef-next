@@ -30,6 +30,19 @@ import ExcelIcon from '@/components/shared/ExcelIcon';
 import DownloadButton from '@/components/shared/DownloadButton';
 import { Stack } from '@mui/material';
 
+const statPartsNames = [
+  "promo_stat",
+  "stat_all_items",
+  "all_items_all",
+  "stat_items_checkout",
+  "stat_items_checkout_all",
+  "stat_cat",
+  "type_stat_new",
+  "status_stat",
+  "orders_by_h",
+  "fake_orders"
+];
+
 class KitchenStat_ extends React.Component {
   constructor(props) {
     super(props);
@@ -38,6 +51,7 @@ class KitchenStat_ extends React.Component {
       module: 'kitchen_stat',
       module_name: '',
       is_load: false,
+      is_load_parts: {},
 
       points: [],
       point: [],
@@ -84,7 +98,16 @@ class KitchenStat_ extends React.Component {
     return res;
   };
 
-  changePoint(data, event, value) {
+  getDataSilent = async (method, data = {}) => {
+    try {
+      const res = await api_laravel(this.state.module, method, data);
+      return res.data;
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  changePoint(data, _, value) {
     this.setState({
       [data]: value,
     });
@@ -96,7 +119,23 @@ class KitchenStat_ extends React.Component {
     });
   }
 
-  async getStat() {
+  getCurrentPointsList() {
+    const point = this.state.point;
+
+    if (!point.length) {
+      console.log('Нет выбранных точек');
+      return;
+    }
+
+    const point_list = point.reduce((list, item) => {
+      list.push({ id: item.id, base: item.base });
+      return list;
+    }, []);
+
+    return point_list;
+  }
+
+  async getStat() { // deprecated
     const point = this.state.point;
 
     if (!point.length) {
@@ -152,6 +191,76 @@ class KitchenStat_ extends React.Component {
     });
   }
 
+  async getStatParts() {
+    const date_start = this.state.date_start;
+    const date_end = this.state.date_end;
+    const point_list = this.getCurrentPointsList();
+
+    const data = {
+      start_date: dayjs(date_start).format('YYYY-MM-DD'),
+      end_date: dayjs(date_end).format('YYYY-MM-DD'),
+      point_list,
+    };
+
+    const partPromise = async(key) => {
+      this.setState(state => ({
+        is_load_parts: {
+          ...state.is_load_parts,
+          [key]: true
+        }
+      }));
+      try{
+        const result = await this.getDataSilent(`get_stat/${key}`, data);
+        if(key === 'orders_by_h'){
+          const arrayOrdersByH = Object.entries(result).reduce((data, [k, value]) => {
+          if (Number(k)) {
+
+            if (k.startsWith('0')) { // backend adds leading zero
+              k = k.substring(1);
+            }
+
+            value = {...value, h: k };
+            data = [...data, value];
+          }
+          return data;
+          }, []).sort((a, b) => a.h - b.h);
+          this.setState({ arrayOrdersByH });
+        }
+        if(key === 'stat_all_items'){
+          const statAllItemsCount = res.stat_all_items.reduce((count, item) => count + Number(item.count), 0);
+          this.setState({ statAllItemsCount });
+        }
+        if(key === 'stat_items_checkout'){
+          const statItemsCheckoutCount = [
+            ...res.stat_items_checkout.cash, 
+            ...res.stat_items_checkout.callcenter, 
+            ...res.stat_items_checkout.client
+          ]
+          .reduce((total, item) => total + Number(item.count), 0);
+          this.setState({ statItemsCheckoutCount });
+        }
+
+        this.setState(state => ({
+          ...state,
+          data: { ...state.data, [key]: result }
+        }))
+      } catch (e) {
+        console.log(`${key} fetch failed: `, e);
+      } finally {
+        this.setState(state => ({
+          is_load_parts: {
+            ...state.is_load_parts,
+            [key]: false
+          }
+        }));
+      }
+    };
+    const partPromises = statPartsNames.map(key => partPromise(key));
+
+    await Promise.all(partPromises);
+    console.log('All part data fetched');
+  }
+
   render() {
     return (
       <>
@@ -198,7 +307,7 @@ class KitchenStat_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={1}>
-            <Button onClick={this.getStat.bind(this)} variant="contained">
+            <Button onClick={this.getStatParts.bind(this)} variant="contained">
               Обновить
             </Button>
           </Grid>
