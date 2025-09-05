@@ -4,11 +4,11 @@ import { IconButton, Tooltip } from "@mui/material";
 
 export default function DownloadButton({ children, url = null, ...restProps }) {
   if (!url) {
-    console.warn("no excel link");
+    // console.warn("no excel link");
     return null;
   }
 
-  console.info(`Excel link passed: ${url}`); 
+  // console.info(`Excel link passed: ${url}`); 
 
   const handleDownload = (e) => {
     e.preventDefault();

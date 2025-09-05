@@ -80,6 +80,11 @@ class KitchenStat_ extends React.Component {
     document.title = data.module_info.name;
   }
 
+  async componentWillUnmount() {
+    this.activeControllers?.forEach((c) => c.abort());
+    this.activeControllers = [];
+  }
+
   getData = (method, data = {}) => {
     this.setState({
       is_load: true,
@@ -100,10 +105,17 @@ class KitchenStat_ extends React.Component {
 
   getDataSilent = async (method, data = {}) => {
     try {
-      const res = await api_laravel(this.state.module, method, data);
-      return res.data;
+      const controller = new AbortController();
+      this.activeControllers.push(controller);
+      const res = await api_laravel(this.state.module, method, data, { signal: controller.signal });
+      const result = { ...res?.data, controller };
+      return result;
     } catch (e) {
-      console.log(e);
+      if (e.name === "CanceledError" || e.name === "AbortError") {
+        console.log(`${method} request aborted`);
+      } else {
+        console.error(`${method} failed:`, e);
+      }
     }
   };
 
@@ -217,26 +229,15 @@ class KitchenStat_ extends React.Component {
       point_list,
     };
 
-    // drop all data
-    this.setState({
-      data: null,
-      is_load: true,
-      is_load_parts: {},
-      arrayOrdersByH: null,
-      statAllItemsCount: null,
-      statItemsCheckoutCount: null,
-    });
+    // abort previous requests if any
+    this.activeControllers?.forEach((c) => c.abort());
+    this.activeControllers = [];
 
     const partPromise = async (key) => {
-      this.setState((state) => ({
-        is_load_parts: {
-          ...state.is_load_parts,
-          [key]: true,
-        },
-      }));
       try {
         const result = await this.getDataSilent(`get_stat/${key}`, data);
         const keyResult = result[key];
+        if (!keyResult) return;
         if (key === "orders_by_h") {
           const arrayOrdersByH = Object.entries(keyResult)
             .reduce((data, [k, value]) => {
@@ -262,11 +263,12 @@ class KitchenStat_ extends React.Component {
           this.setState({ statAllItemsCount });
         }
         if (key === "stat_items_checkout") {
-          const statItemsCheckoutCount = [
-            ...keyResult.cash,
-            ...keyResult.callcenter,
-            ...keyResult.client,
-          ].reduce((total, item) => total + Number(item.count), 0);
+          const { cash, callcenter, client } = keyResult;
+          if (!cash && !callcenter && !client) return;
+          const statItemsCheckoutCount = [...cash, ...callcenter, ...client].reduce(
+            (total, item) => total + Number(item.count),
+            0
+          );
           this.setState({ statItemsCheckoutCount });
         }
 
@@ -274,22 +276,42 @@ class KitchenStat_ extends React.Component {
           ...state,
           is_load: false,
           data: { ...state.data, [key]: keyResult },
-        }));
-      } catch (e) {
-        console.log(`${key} fetch failed: `, e);
-      } finally {
-        this.setState((state) => ({
           is_load_parts: {
-            ...state.is_load_parts,
+            ...(state.is_load_parts || {}),
             [key]: false,
           },
         }));
+      } catch (e) {
+        console.log(`${key} fetch failed: `, e);
       }
     };
+    // drop all data
+    const resetPromise = new Promise((resolve) => {
+    this.setState(
+      {
+        data: {},
+        is_load: true,
+        is_load_parts: statPartsNames.reduce(
+          (acc, key) => ({ ...acc, [key]: true }),
+          {}
+        ),
+        arrayOrdersByH: null,
+        statAllItemsCount: null,
+        statItemsCheckoutCount: null,
+      },
+      resolve // resolve after state updated
+    );
+  });
+    this.setState({
+      data: {},
+      is_load: true,
+      is_load_parts: statPartsNames.reduce((acc, key) => ({ ...acc, [key]: true }), {}),
+      arrayOrdersByH: null,
+      statAllItemsCount: null,
+      statItemsCheckoutCount: null,
+    });
     const partPromises = statPartsNames.map((key) => partPromise(key));
-
     await Promise.all(partPromises);
-    console.log("All part data fetched");
   }
 
   render() {
