@@ -6,7 +6,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import {MyTextInput, MyAlert} from '@/ui/elements';
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
-import {api_laravel} from "@/src/api_new";
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
 import Box from "@mui/material/Box";
@@ -15,7 +15,7 @@ import JModal from '@/components/sklad_modules/JModal';
 import JParamModal from '@/components/sklad_modules/JParamModal';
 
 const defaultParamTypes = [
-	{id: 2, name: "2 значения ( чекбокс - показывать / скрыть )"}, 
+	{id: 2, name: "2 значения ( чекбокс - показывать / скрыть )"},
 	{id: 3, name: "3 значения ( селект - не активный / просмотр / редактировать )"}
 ];
 
@@ -36,6 +36,8 @@ class SkladModules_ extends React.Component {
 			mark: null,
 			modalDialog: false,
 			listCat: null,
+			listNav: null,
+			listContent: null,
 			item: null,
 
 			itemNew: {
@@ -145,10 +147,26 @@ class SkladModules_ extends React.Component {
 				item: res.item[0],
 				itemName: res.item[0]?.name,
 				listCat: res.main_cat,
+				listNav: res.list_nav,
+				listContent: res.list_cont,
 				modalDialog: true,
 				method: 'Редактирование модуля',
 			});
 		}
+	}
+
+	updateOne = async (id) => {
+		const data = {
+			id,
+		};
+
+		const res = await this.getData('get_one', data);
+		if (!res) return;
+
+		this.setState({
+			listNav: res.list_nav,
+			listContent: res.list_cont,
+		});
 	}
 
 	async openModal_param(mark_param, id) {
@@ -243,6 +261,8 @@ class SkladModules_ extends React.Component {
 				name: item.name,
 				link: item.link,
 				parent_id: item.parent_id,
+				navs: item.itemNav,
+				cont: item.itemContent
 			};
 
 			res = await this.getData('save_new', data);
@@ -256,6 +276,8 @@ class SkladModules_ extends React.Component {
 				parent_id: item.parent_id,
 				is_show: item.is_show,
 				modul_id: item.modul_id,
+				navs: item.itemNav,
+				cont: item.itemContent
 			};
 
 			res = await this.getData('save_edit', data);
@@ -352,7 +374,11 @@ class SkladModules_ extends React.Component {
 					onClose={() => this.setState({modalDialog: false, itemName: '', method: ''})}
 					mark={this.state.mark}
 					item={this.state.item}
+					updateOne={this.updateOne}
 					listCat={this.state.listCat}
+					getData={this.getData}
+					listNav={this.state.listNav}
+					listContent={this.state.listContent}
 					method={this.state.method}
 					itemName={this.state.itemName}
 					fullScreen={this.state.fullScreen}
