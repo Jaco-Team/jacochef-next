@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,6 +13,59 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/ui/elements";
 
+const ModalNewTagNav = ({open, onClose, save}) => {
+  const [newTagName, setNewTagName] = useState('');
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+    >
+      <DialogTitle>Добавить новый тег навигации</DialogTitle>
+      <DialogContent>
+        <Grid item xs={12} sm={12} mt={2}>
+          <MyTextInput
+            label="Название"
+            value={newTagName}
+            func={(e) => setNewTagName(e.target.value)}
+          />
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Отмена</Button>
+        <Button variant="contained" onClick={() => save(newTagName)}>Сохранить</Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+const ModalNewTagCont = ({open, onClose, save}) => {
+  const [newTagName, setNewTagName] = useState('');
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+    >
+      <DialogTitle>Добавить новое название контента</DialogTitle>
+      <DialogContent>
+        <Grid item xs={12} sm={12} mt={2}>
+          <MyTextInput
+            label="Название"
+            value={newTagName}
+            func={(e) => setNewTagName(e.target.value)}
+          />
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Отмена</Button>
+        <Button variant="contained" onClick={() => save(newTagName)}>Сохранить</Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
 
 export default function JModal({
   open,
@@ -21,13 +74,23 @@ export default function JModal({
   itemName,
   item: propItem,
   listCat: propListCat,
+  listNav: propListNav,
+  listContent : propListContent,
   mark,
+  updateOne,
+  getData,
   save,
   onClose,
 }) {
   const [item, setItem] = useState(null);
   const [listCat, setListCat] = useState(null);
+  const [listNav, setListNav] = useState(null);
+  const [listContent, setListContent] = useState(null);
   const [itemCat, setItemCat] = useState(null);
+  const [itemNav, setItemNav] = useState([]);
+  const [itemContent, setItemContent] = useState([]);
+  const [openNewTagNavModal, setOpenNewNavTagModal] = useState(false);
+  const [openNewContTagModal, setOpenNewContTagModal] = useState(false);
 
   useEffect(() => {
     if (propItem) {
@@ -36,9 +99,49 @@ export default function JModal({
       );
       setItem(propItem);
       setListCat(propListCat || []);
+      const navEls = [];
+      const contsEls = [];
+      if (propListNav?.length && propItem.navs_id) {
+        propItem.navs_id.split(',').map((id) => {
+          const item = propListNav.find((item) => item.id == id);
+          if (item?.id) {
+            navEls.push(item);
+          }
+        })
+      }
+
+      if (propListContent?.length && propItem.conts_id) {
+        propItem.conts_id.split(',').map((id) => {
+          const item = propListContent.find((item) => item.id == id);
+          if (item?.id) {
+            contsEls.push(item);
+          }
+        })
+      }
+
+      setItemContent(contsEls);
+      setItemNav(navEls);
       setItemCat(foundCat || null);
     }
   }, [propItem, propListCat]);
+
+  useEffect(() => {
+    if (propListContent?.length || propListNav?.length) {
+      if (propListNav?.length) {
+        setListNav([
+          {id: -1, name: 'Добавить новый'},
+          ...propListNav,
+        ] || []);
+      }
+
+      if (propListContent?.length) {
+        setListContent([
+          {id: -1, name: 'Добавить новый'},
+          ...propListContent,
+        ] || []);
+      }
+    }
+  }, [propListCat, propListContent]);
 
   const changeItem = (key, value) => {
     setItem((prev) => (prev ? { ...prev, [key]: value } : prev));
@@ -55,9 +158,52 @@ export default function JModal({
     setItemCat(value);
   };
 
+  const changeItemNav = (key, value) => {
+    setItem((prev) => (prev ? { ...prev, [key]: value ? value.id : "" } : prev));
+    const addPlaceholder = value.find(tag => tag.id === -1);
+    let selected = value;
+    if (addPlaceholder) {
+      selected = value.filter(tag => tag.id !== -1);
+      setOpenNewNavTagModal(true);
+    }
+    setItemNav(selected);
+  };
+
+  const changeItemContent = (key, value) => {
+    setItem((prev) => (prev ? { ...prev, [key]: value ? value.id : "" } : prev));
+    const addPlaceholder = value.find(tag => tag.id === -1);
+    let selected = value;
+    if (addPlaceholder) {
+      selected = value.filter(tag => tag.id !== -1);
+      setOpenNewContTagModal(true);
+    }
+    setItemContent(selected);
+  };
+
+  const handleSaveNav = async (name) => {
+    const res = await getData('save_nav', {name});
+    if (res.st) {
+      setOpenNewNavTagModal(false);
+      updateOne(propItem.id);
+    } else {
+
+    }
+  }
+
+  const handleSaveCont = async (name) => {
+    const res = await getData('save_cont', {name});
+    if (res.st) {
+      setOpenNewContTagModal(false);
+      updateOne(propItem.id);
+    } else {
+
+    }
+  }
+
   const handleSave = () => {
     if (!item) return;
-    save(item);
+    const itemCurrent = {...item, itemContent, itemNav};
+    save(itemCurrent);
     handleClose();
   };
 
@@ -80,6 +226,8 @@ export default function JModal({
         {method}
         {itemName ? `: ${itemName}` : null}
       </DialogTitle>
+      {openNewTagNavModal && <ModalNewTagNav open={openNewTagNavModal} onClose={() => setOpenNewNavTagModal(false)} save={handleSaveNav}/>}
+      {openNewContTagModal && <ModalNewTagCont open={openNewContTagModal} onClose={() => setOpenNewContTagModal(false)} save={handleSaveCont}/>}
 
       <IconButton
         onClick={handleClose}
@@ -119,6 +267,26 @@ export default function JModal({
               data={listCat || []}
               value={itemCat || ""}
               func={(_event, value) => changeItemCat("parent_id", value)}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <MyAutocomplite
+              label="Внутренняя навигация"
+              multiple={true}
+              data={listNav || []}
+              value={itemNav || []}
+              func={(_event, value) => changeItemNav("navs", value)}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <MyAutocomplite
+              label="Контент"
+              multiple={true}
+              data={listContent || []}
+              value={itemContent || []}
+              func={(_event, value) => changeItemContent("conts", value)}
             />
           </Grid>
 
