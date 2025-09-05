@@ -283,6 +283,7 @@ class KitchenStat_ extends React.Component {
         }));
       } catch (e) {
         console.log(`${key} fetch failed: `, e);
+        this.setState({ is_load: false });
       }
     };
     // drop all data
