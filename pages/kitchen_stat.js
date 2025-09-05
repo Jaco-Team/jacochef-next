@@ -288,21 +288,18 @@ class KitchenStat_ extends React.Component {
     };
     // drop all data
     const resetPromise = new Promise((resolve) => {
-    this.setState(
-      {
-        data: {},
-        is_load: true,
-        is_load_parts: statPartsNames.reduce(
-          (acc, key) => ({ ...acc, [key]: true }),
-          {}
-        ),
-        arrayOrdersByH: null,
-        statAllItemsCount: null,
-        statItemsCheckoutCount: null,
-      },
-      resolve // resolve after state updated
-    );
-  });
+      this.setState(
+        {
+          data: {},
+          is_load: true,
+          is_load_parts: statPartsNames.reduce((acc, key) => ({ ...acc, [key]: true }), {}),
+          arrayOrdersByH: null,
+          statAllItemsCount: null,
+          statItemsCheckoutCount: null,
+        },
+        resolve // resolve after state updated
+      );
+    });
     this.setState({
       data: {},
       is_load: true,
@@ -809,16 +806,16 @@ class KitchenStat_ extends React.Component {
                         Всего: {this.state.statItemsCheckoutCount}
                       </Typography>
                     )}
+                    {this.state.data?.stat_items_checkout?.excel_link && (
+                      <DownloadButton
+                        url={this.state.data?.stat_items_checkout?.excel_link}
+                        sx={{ marginRight: "1em" }}
+                      >
+                        <ExcelIcon />
+                        {/* <DownloadIcon/> */}
+                      </DownloadButton>
+                    )}
                   </Box>
-                  {this.state.data?.stat_items_checkout?.excel_link && (
-                    <DownloadButton
-                      url={this.state.data?.stat_items_checkout?.excel_link}
-                      sx={{ marginRight: "1em" }}
-                    >
-                      <ExcelIcon />
-                      {/* <DownloadIcon/> */}
-                    </DownloadButton>
-                  )}
                 </AccordionSummary>
                 {this.state.data?.stat_items_checkout && this.state.statItemsCheckoutCount > 0 && (
                   <AccordionDetails>
