@@ -322,7 +322,7 @@ export class MySelect extends React.PureComponent {
 
   render(){
     return (
-      <FormControl fullWidth variant="outlined" size="small">
+      <FormControl fullWidth variant="outlined" size="small" style={this.props.style}>
         <InputLabel>{this.props.label}</InputLabel>
         <Select
           value={this.props.value}

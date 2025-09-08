@@ -171,27 +171,86 @@ class CitiesModules_Modal extends React.Component {
 	constructor(props) {
 		super(props);
 		dayjs.locale('ru');
-		this.state = {
-			item: null,
-			openHist: [{id: 1, name: 'Общее'}, {id: 2, name: 'Коэффициенты бонуса'}, {id: 3, name: 'Курьеры'}],
-			dateCoefs:
-				[
+		const getDateCoefs = () => {
+			const today = dayjs();
+			const currentDate = today.date();
+
+			const getPeriodName = (startDate, endDate) => {
+				if (startDate.date() === 1 && endDate.date() === 15) {
+					return `с 1 по 15 ${startDate.format('MMMM YYYY')} г.`;
+				} else {
+					return `с ${startDate.format('D')} по ${endDate.format('D MMMM YYYY')} г.`;
+				}
+			};
+
+			if (currentDate <= 15) {
+				const period1Start = today.startOf('month');
+				const period1End = today.date(15);
+
+				const period2Start = today.date(16);
+				const period2End = today.endOf('month');
+
+				const nextMonth = today.add(1, 'month');
+				const period3Start = nextMonth.startOf('month');
+				const period3End = nextMonth.date(15);
+
+				return [
 					{
 						id: 1,
-						name: 'с ' + dayjs(new Date()).format('D MMMM YYYY') + " г.",
-						value: dayjs(new Date()).format('YYYY-MM-DD')
+						name: getPeriodName(period1Start, period1End),
+						value: period1Start.format('YYYY-MM-DD'),
+						end_date: period1End.format('YYYY-MM-DD')
 					},
 					{
 						id: 2,
-						name: 'с ' + dayjs(new Date()).add(15, 'day').format('D MMMM YYYY') + " г.",
-						value: dayjs(new Date()).add(15, 'day').format('YYYY-MM-DD')
+						name: getPeriodName(period2Start, period2End),
+						value: period2Start.format('YYYY-MM-DD'),
+						end_date: period2End.format('YYYY-MM-DD')
 					},
 					{
 						id: 3,
-						name: 'с ' + dayjs(new Date()).add(1, 'month').format('D MMMM YYYY') + " г.",
-						value: dayjs(new Date()).add(1, 'month').format('YYYY-MM-DD')
+						name: getPeriodName(period3Start, period3End),
+						value: period3Start.format('YYYY-MM-DD'),
+						end_date: period3End.format('YYYY-MM-DD')
 					}
-				],
+				];
+			} else {
+				const period1Start = today.date(16);
+				const period1End = today.endOf('month');
+
+				const nextMonth = today.add(1, 'month');
+				const period2Start = nextMonth.startOf('month');
+				const period2End = nextMonth.date(15);
+
+				const period3Start = nextMonth.date(16);
+				const period3End = nextMonth.endOf('month');
+
+				return [
+					{
+						id: 1,
+						name: getPeriodName(period1Start, period1End),
+						value: period1Start.format('YYYY-MM-DD'),
+						end_date: period1End.format('YYYY-MM-DD')
+					},
+					{
+						id: 2,
+						name: getPeriodName(period2Start, period2End),
+						value: period2Start.format('YYYY-MM-DD'),
+						end_date: period2End.format('YYYY-MM-DD')
+					},
+					{
+						id: 3,
+						name: getPeriodName(period3Start, period3End),
+						value: period3Start.format('YYYY-MM-DD'),
+						end_date: period3End.format('YYYY-MM-DD')
+					}
+				];
+			}
+		};
+		this.state = {
+			item: null,
+			openHist: [{id: 1, name: 'Общее'}, {id: 2, name: 'Коэффициенты бонуса'}, {id: 3, name: 'Курьеры'}],
+			dateCoefs: getDateCoefs(),
 			dateCoef: null,
 			ItemTab1: 1,
 			confirmDialog: false,
@@ -313,6 +372,7 @@ class CitiesModules_Modal extends React.Component {
 						<DialogContent align="center" sx={{fontWeight: 'bold'}}>
 							<MySelect
 								label="Период"
+								style={{marginTop: '10px'}}
 								is_none={false}
 								data={this.state.dateCoefs || []}
 								value={this.state.dateCoef || ''}
