@@ -53,7 +53,9 @@ export default function Header() {
 
 		if (response?.data?.st === true) {
 			setCatMenu(response?.data?.left_menu);
-			setFullMenu(response?.data?.full_menu);
+			setFullMenu(response?.data?.full_menu.filter((item, index, self) =>
+  index === self.findIndex(t => t.name === item.name)
+));
 		}
 
 	}
@@ -126,6 +128,22 @@ export default function Header() {
 						size="small"
 						options={FullMenu}
 						getOptionLabel={(option) => option.name}
+						filterOptions={(options, {inputValue}) => {
+							const searchTerm = inputValue.toLowerCase().trim();
+							if (!searchTerm) return options;
+
+							return options.filter(option => {
+								// В первую очередь ищем по основному названию
+								if (option.name.toLowerCase().includes(searchTerm)) {
+									return true;
+								}
+
+								// Во вторую очередь - по навигационным элементам
+								return option.navs_id && option.navs_id.some(nav =>
+									nav.name.toLowerCase().includes(searchTerm)
+								);
+							});
+						}}
 						onChange={(event, newValue) => {
 							if (newValue) {
 								window.location = "/" + newValue.key_query;
@@ -133,53 +151,70 @@ export default function Header() {
 							}
 						}}
 						style={{width: '100%'}}
-						renderOption={(props, option) => (
-							<li {...props} style={{
-								padding: '8px 16px',
-								fontSize: '14px',
-								display: 'flex',
-								flexDirection: 'column',
-								alignItems: 'flex-start',
-								borderBottom: '1px solid #e0e0e0'
-							}}>
-								<i style={{
-									display: 'flex',
+						renderOption={(props, option, {inputValue, selectedOptions}) => {
+							const searchTerm = inputValue.toLowerCase();
+
+							const isDuplicate = selectedOptions?.some(selected => selected.name === option.name);
+
+							if (isDuplicate) {
+								return null;
+							}
+
+							// Находим совпадающие nav элементы
+							const matchingNavs = option.navs_id
+								? option.navs_id.filter(nav =>
+									nav.name.toLowerCase().includes(searchTerm)
+								)
+								: [];
+
+							return (
+								<li {...props} key={option.name} style={{
+									padding: '8px 16px',
 									fontSize: '14px',
-									fontStyle: 'normal',
-									alignItems: 'center'
-								}}>{option.name}</i>
-								{option.navs_id && option.navs_id.length > 0 && (
-									<div style={{
+									display: 'flex',
+									flexDirection: 'column',
+									alignItems: 'flex-start',
+									borderBottom: '1px solid #e0e0e0'
+								}}>
+									<i style={{
 										display: 'flex',
-										flexWrap: 'wrap',
-										gap: '4px',
-										marginTop: '4px',
-									}}>
-										<span style={{
-											fontSize: '12px',
-											color: '#666',
-											marginRight: '4px',
-										}}>↳</span>
-										{option.navs_id.map((nav, index) => (
-											<i
-												key={index}
-												style={{
-													padding: '2px 8px',
-													backgroundColor: '#e3f2fd',
-													color: '#1976d2',
-													borderRadius: '12px',
-													fontSize: '11px',
-													fontWeight: 500,
-													border: '1px solid #bbdefb'
-												}}
-											>
-												{nav.name}
-											</i>
-										))}
-									</div>
-								)}
-							</li>
-						)}
+										fontSize: '14px',
+										fontStyle: 'normal',
+										alignItems: 'center'
+									}}>{option.name}</i>
+									{option.navs_id && option.navs_id.length > 0 && (
+										<div style={{
+											display: 'flex',
+											flexWrap: 'wrap',
+											gap: '4px',
+											marginTop: '4px',
+										}}>
+          <span style={{
+						fontSize: '12px',
+						color: '#666',
+						marginRight: '4px',
+					}}>↳</span>
+											{option.navs_id.map((nav, index) => (
+												<i
+													key={index}
+													style={{
+														padding: '2px 8px',
+														backgroundColor: '#e3f2fd',
+														color: '#1976d2',
+														borderRadius: '12px',
+														fontSize: '11px',
+														fontWeight: 500,
+														border: '1px solid #bbdefb'
+													}}
+												>
+													{nav.name}
+												</i>
+											))}
+										</div>
+									)}
+								</li>
+							);
+						}}
 						renderInput={(params) => <TextField {...params} label="Поиск" variant="outlined"/>}
 					/>
 
