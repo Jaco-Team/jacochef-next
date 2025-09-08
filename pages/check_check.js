@@ -44,18 +44,20 @@ import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined
 import {MySelect, MyDatePickerNew, MyAlert, MyAutocomplite, formatDateReverse, MyTextInput} from '@/ui/elements';
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
-import {api_laravel} from "@/src/api_new";
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 
 import dayjs from 'dayjs';
 
 const formatNumber = (num) => new Intl.NumberFormat('ru-RU').format(num);
 
-function getColor(val1, val2, summColor) {
+function getColor(val1, val2, serverColor) {
   const n1 = Number(val1) || 0;
   const n2 = Number(val2) || 0;
-  if (summColor === 'green') return 'green';
+
   if (n1 !== n2) return 'red';
-  if (summColor === 'gray') return 'gray';
+
+  if (serverColor === 'gray' || serverColor === 'grey') return 'gray';
+  if (serverColor === 'green') return 'green';
   return 'inherit';
 }
 
@@ -68,21 +70,30 @@ const DiffButton = ({
 }) => {
   if (!visible) return null;
 
-  const canComment = ctx?.scope === 'kassa_day';
-  const hasComment =
-    canComment && typeof ctx.comment === 'string' && ctx.comment.trim().length > 0;
+  const scope = ctx?.scope;
+  const canComment = scope === 'kassa_day';
 
-   const tooltip = canComment ? (hasComment ? 'Расхождение сумм — есть комментарий' : (canEdit ? 'Расхождение сумм — добавить комментарий' : 'Расхождение сумм — подробности')) : title;
+  const hasComment =
+    (typeof ctx?.hasComment === 'boolean' ? ctx.hasComment : undefined) ??
+    (canComment && typeof ctx?.comment === 'string' && ctx.comment.trim().length > 0);
+
+
+  const tooltip = scope === 'kassa_day'
+    ? (hasComment
+        ? 'Расхождение сумм — есть комментарий'
+        : (canEdit ? 'Расхождение сумм — добавить комментарий'
+                   : 'Расхождение сумм — подробности'))
+    : scope === 'day'
+      ? (hasComment ? 'Расхождение сумм — есть комментарии'
+                    : 'Расхождение сумм — подробности')
+      : title;
 
   return (
     <Tooltip title={tooltip} arrow>
       <IconButton
         size="small"
         aria-label={tooltip}
-        onClick={(e) => {
-          e.stopPropagation?.();
-          onClick?.(ctx, e);
-        }}
+        onClick={(e) => { e.stopPropagation?.(); onClick?.(ctx, e); }}
         sx={{ ml: 0.5 }}
       >
         <ReportProblemOutlinedIcon
@@ -93,6 +104,7 @@ const DiffButton = ({
     </Tooltip>
   );
 };
+
 
 const status = [
   {
@@ -319,8 +331,19 @@ class CheckCheck_Accordion extends React.Component {
         return { ...s, count: baseCount };
     });
 
-    const colorAllCash = getColor(summ_ofd?.all_cash, summ_chef?.all_cash, summ_ofd?.color);
-    const colorAllBank = getColor(summ_ofd?.all_bank, summ_chef?.all_bank, summ_ofd?.color);
+    const num = v => Number(v) || 0;
+    const hasCashMismatchInside = daysMerged.some(({ ofdDay, chefDay }) =>
+      num(ofdDay?.summ_cash) !== num(chefDay?.summ_cash)
+    );
+    const hasBankMismatchInside = daysMerged.some(({ ofdDay, chefDay }) =>
+      num(ofdDay?.summ_bank) !== num(chefDay?.summ_bank)
+    );
+
+    let colorAllCash = getColor(summ_ofd?.all_cash, summ_chef?.all_cash, summ_ofd?.color);
+    let colorAllBank = getColor(summ_ofd?.all_bank, summ_chef?.all_bank, summ_ofd?.color);
+
+    if (hasCashMismatchInside) colorAllCash = 'red';
+    if (hasBankMismatchInside) colorAllBank = 'red';
 
     const canEdit = Number(acces_comment) === 1;
     
@@ -608,6 +631,11 @@ class CheckCheck_Accordion extends React.Component {
                   const colorCashDay = getColor(ofdDay?.summ_cash, chefDay?.summ_cash, ofdDay?.color);
                   const colorBankDay = getColor(ofdDay?.summ_bank, chefDay?.summ_bank, ofdDay?.color);
 
+                  const hasCommentForDate = [
+                    ...(ofdDay?.kass ?? []),
+                    ...(chefDay?.kass ?? []),
+                  ].some(k => typeof k?.comment === 'string' && k.comment.trim().length > 0);
+
                   return (
                     <React.Fragment key={date}>
                       <TableRow hover onClick={() => this.toggleRow(date)} style={{ cursor: 'pointer' }}>
@@ -630,6 +658,7 @@ class CheckCheck_Accordion extends React.Component {
                                 chef: chefDay?.summ_cash,
                                 smena_list: '',
                                 comment: '',
+                                hasComment: hasCommentForDate,
                               }}
                               canEdit={canEdit}
                             />
@@ -660,6 +689,7 @@ class CheckCheck_Accordion extends React.Component {
                                 chef: chefDay?.summ_bank,
                                 smena_list: ofdDay?.smena_list || '',
                                 comment: '',
+                                hasComment: hasCommentForDate,
                               }}
                               canEdit={canEdit}
                             />
@@ -852,15 +882,38 @@ class CheckCheck_Accordion extends React.Component {
         </Accordion>
 
         {/* Модалка по ошибкам (расхождение сумм ОФД и ШЕФ) */}
-        <Dialog open={mismatchOpen} onClose={this.closeMismatch} maxWidth="sm" fullWidth>
+        <Dialog open={mismatchOpen} onClose={this.closeMismatch} maxWidth="md" fullWidth>
           <DialogTitle>Расхождение сумм</DialogTitle>
           <DialogContent dividers>
             {(() => {
               const c = mismatchCtx || {};
-              const nOfd = Number(c.ofd) || 0;
+              const nOfd  = Number(c.ofd)  || 0;
               const nChef = Number(c.chef) || 0;
-              const diff = nOfd - nChef;
+              const diff  = nOfd - nChef;
               const smenaList = (typeof c.smena_list === 'string' ? c.smena_list : '').trim();
+              const num = v => Number(v) || 0;
+      
+              let dayCommentRows = [];
+              if (c.scope === 'day') {
+                const ofdDay  = (summ_ofd?.days  ?? []).find(d => d.date === c.date) || {};
+                const chefDay = (summ_chef?.days ?? []).find(d => d.date === c.date) || {};
+
+                (ofdDay?.kass ?? []).forEach(ofdK => {
+                  const id  = Number(ofdK?.kassa);
+                  const txt = (ofdK?.comment ?? '').trim();
+                  if (!id || !txt) return;
+
+                  const chfK = (chefDay?.kass ?? []).find(k => Number(k.kassa) === id) || {};
+                  const cashMismatch = num(ofdK?.summ_cash) !== num(chfK?.summ_cash);
+                  const bankMismatch = num(ofdK?.summ_bank) !== num(chfK?.summ_bank);
+
+                  if (cashMismatch) dayCommentRows.push({ kassa: id, payType: 'Наличные', comment: txt });
+                  if (bankMismatch) dayCommentRows.push({ kassa: id, payType: 'Безнал',   comment: txt });
+                });
+
+                const order = { 'Наличные': 1, 'Безнал': 2 };
+                dayCommentRows.sort((a, b) => (a.kassa - b.kassa) || (order[a.payType] - order[b.payType]));
+              }
 
               return (
                 <>
@@ -884,13 +937,45 @@ class CheckCheck_Accordion extends React.Component {
                       Показатель: <b>{c.label}</b>
                     </Typography>
                   )}
-                  <Box>
-                    <Typography>ОФД: <b>{typeof formatNumber === 'function' ? formatNumber(nOfd) : nOfd} ₽</b></Typography>
-                    <Typography>ШЕФ: <b>{typeof formatNumber === 'function' ? formatNumber(nChef) : nChef} ₽</b></Typography>
+
+                  <Box sx={{ mb: 2 }}>
+                    <Typography>ОФД: <b>{formatNumber ? formatNumber(nOfd) : nOfd} ₽</b></Typography>
+                    <Typography>ШЕФ: <b>{formatNumber ? formatNumber(nChef) : nChef} ₽</b></Typography>
                     <Typography sx={{ mt: 1 }}>
-                      Разница: <b>{typeof formatNumber === 'function' ? formatNumber(diff) : diff} ₽</b>
+                      Разница: <b>{formatNumber ? formatNumber(diff) : diff} ₽</b>
                     </Typography>
                   </Box>
+
+                  {c.scope === 'day' && dayCommentRows.length > 0 && (
+                    <TableContainer component={Paper}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell colSpan={3}>Комментарии:</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell sx={{ width: '18%' }}>Касса</TableCell>
+                            <TableCell sx={{ width: '22%' }}>Тип оплаты</TableCell>
+                            <TableCell>Комментарий</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {dayCommentRows.map((row, idx) => (
+                            <TableRow key={`${row.kassa}-${row.payType}-${idx}`}>
+                              <TableCell>{`${row.kassa}${row.kassa === 2 ? ' (онлайн)' : ''}`}</TableCell>
+                              <TableCell>{row.payType}</TableCell>
+                              <TableCell>
+                                <Typography sx={{ whiteSpace: 'pre-line' }}>
+                                  {row.comment}
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
+
                   {c.scope === 'kassa_day' && (
                     <Box sx={{ mt: 2 }}>
                       <MyTextInput
@@ -917,7 +1002,6 @@ class CheckCheck_Accordion extends React.Component {
             )}
             <Button onClick={this.closeMismatch} variant="contained">Закрыть</Button>
           </DialogActions>
-          
         </Dialog>
 
       </Box>
