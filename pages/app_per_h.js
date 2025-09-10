@@ -12,247 +12,484 @@ import CircularProgress from '@mui/material/CircularProgress';
 import {MyAlert, MySelect, MyTextInput} from '@/ui/elements';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 import Typography from "@mui/material/Typography";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import dayjs from "dayjs";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import IconButton from "@mui/material/IconButton";
+import DeleteIcon from "@mui/icons-material/Delete";
+import {ModalAccept} from "@/components/general/ModalAccept";
 
 class AppPerH_ extends React.Component {
-  constructor(props) {
-    super(props);
+	constructor(props) {
+		super(props);
+		dayjs.locale('ru');
+		const getDateCoefs = () => {
+			const today = dayjs();
+			const currentDate = today.date();
 
-    this.state = {
-      module: 'app_per_h',
-      module_name: '',
-      is_load: false,
-      cities: [],
-      city: '',
-      items: [],
-      openAlert: false,
-      err_status: true,
-      err_text: '',
-    };
-  }
+			const getPeriodName = (startDate, endDate) => {
+				if (startDate.date() === 1 && endDate.date() === 15) {
+					return `с 1 по 15 ${startDate.format('MMMM YYYY')} г.`;
+				} else {
+					return `с ${startDate.format('D')} по ${endDate.format('D MMMM YYYY')} г.`;
+				}
+			};
 
-  async componentDidMount() {
-    const data = await this.getData('get_all');
-    const city = {
-      city_id: data.cities[0].id,
-    };
+			if (currentDate <= 15) {
+				const period1Start = today.startOf('month');
+				const period1End = today.date(15);
 
-    const res = await this.getData('get_one', city);
+				const period2Start = today.date(16);
+				const period2End = today.endOf('month');
 
-    this.setState({
-      items: res.lavel_price,
-      cities: data.cities,
-      city: data.cities[0].id,
-      module_name: data.module_info.name,
-    });
+				const nextMonth = today.add(1, 'month');
+				const period3Start = nextMonth.startOf('month');
+				const period3End = nextMonth.date(15);
 
-    document.title = data.module_info.name;
-  }
+				return [
+					{
+						id: 1,
+						name: getPeriodName(period1Start, period1End),
+						value: period1Start.format('YYYY-MM-DD'),
+						end_date: period1End.format('YYYY-MM-DD')
+					},
+					{
+						id: 2,
+						name: getPeriodName(period2Start, period2End),
+						value: period2Start.format('YYYY-MM-DD'),
+						end_date: period2End.format('YYYY-MM-DD')
+					},
+					{
+						id: 3,
+						name: getPeriodName(period3Start, period3End),
+						value: period3Start.format('YYYY-MM-DD'),
+						end_date: period3End.format('YYYY-MM-DD')
+					}
+				];
+			} else {
+				const period1Start = today.date(16);
+				const period1End = today.endOf('month');
 
-  getData = (method, data = {}, dop_type = {}) => {
+				const nextMonth = today.add(1, 'month');
+				const period2Start = nextMonth.startOf('month');
+				const period2End = nextMonth.date(15);
 
-    this.setState({
-      is_load: true,
-    });
+				const period3Start = nextMonth.date(16);
+				const period3End = nextMonth.endOf('month');
 
-    return api_laravel(this.state.module, method, data, dop_type)
-        .then(result => {
-        return result.data;
-        })
-        .finally(() => {
-          setTimeout(() => {
-            this.setState({
-              is_load: false,
-            });
-          }, 500);
-        });
-  }
+				return [
+					{
+						id: 1,
+						name: getPeriodName(period1Start, period1End),
+						value: period1Start.format('YYYY-MM-DD'),
+						end_date: period1End.format('YYYY-MM-DD')
+					},
+					{
+						id: 2,
+						name: getPeriodName(period2Start, period2End),
+						value: period2Start.format('YYYY-MM-DD'),
+						end_date: period2End.format('YYYY-MM-DD')
+					},
+					{
+						id: 3,
+						name: getPeriodName(period3Start, period3End),
+						value: period3Start.format('YYYY-MM-DD'),
+						end_date: period3End.format('YYYY-MM-DD')
+					}
+				];
+			}
+		};
+		this.state = {
+			module: 'app_per_h',
+			module_name: '',
+			is_load: false,
+			cities: [],
+			city: '',
+			items: [],
+			openAlert: false,
+			err_status: true,
+			err_text: '',
+			dateCoefs: getDateCoefs(),
+			dateCoef: null,
+			deleteItem: {},
+			openDelete: false,
+			confirmDialog: false,
+			app_history: {}
+		};
+	}
 
-  async changeCity(event) {
-    const data = {
-      city_id: event.target.value,
-    };
+	async componentDidMount() {
+		const data = await this.getData('get_all');
+		const city = {
+			city_id: data.cities[0].id,
+		};
 
-    const res = await this.getData('get_one', data);
+		const res = await this.getData('get_one', city);
 
-    this.setState({
-      city: event.target.value,
-      items: res.lavel_price,
-    });
-  }
+		this.setState({
+			items: res.lavel_price,
+			cities: data.cities,
+			city: data.cities[0].id,
+			module_name: data.module_info.name,
+			app_history: res.app_history,
+		});
 
-  changeItem(data, id, event) {
-    const items = this.state.items;
+		document.title = data.module_info.name;
+	}
 
-    items.forEach((item) => {
-      if (parseInt(item.app_id) === parseInt(id)) {
-        item[data] = event.target.value;
-      }
-    });
+	getData = (method, data = {}, dop_type = {}) => {
 
-    this.setState({
-      items,
-    });
-  }
+		this.setState({
+			is_load: true,
+		});
 
-  async save() {
-    const {city, items} = this.state;
+		return api_laravel(this.state.module, method, data, dop_type)
+			.then(result => {
+				return result.data;
+			})
+			.finally(() => {
+				setTimeout(() => {
+					this.setState({
+						is_load: false,
+					});
+				}, 500);
+			});
+	}
 
-    const data = {
-      city_id: city,
-      app_list: items,
-    };
+	async changeCity(event) {
+		const data = {
+			city_id: event.target.value,
+		};
 
-    await this.getData('save_edit', data);
+		const res = await this.getData('get_one', data);
 
-    this.setState({
-      openAlert: true,
-      err_status: true,
-      err_text: 'Обновлено',
-    }, () => this.update());
-  }
+		this.setState({
+			city: event.target.value,
+			items: res.lavel_price,
+			app_history: res.app_history
+		});
+	}
 
-  async update() {
-    const {city} = this.state;
+	changeItem(data, id, event) {
+		const items = this.state.items;
 
-    const data = {
-      city_id: city,
-    };
+		items.forEach((item) => {
+			if (parseInt(item.app_id) === parseInt(id)) {
+				item[data] = event.target.value;
+			}
+		});
 
-    const res = await this.getData('get_one', data);
+		this.setState({
+			items,
+		});
+	}
 
-    this.setState({
-      items: res.lavel_price,
-    });
-  }
+	async save() {
+		const {city, items} = this.state;
+		const dateStart = this.state.dateCoefs.find((item) => item.id === this.state.dateCoef);
+		const data = {
+			city_id: city,
+			app_list: items,
+			dateStart
+		};
 
-  render() {
-    const {is_load, items, openAlert, err_text, err_status, module_name, cities, city } = this.state;
-    const itemsInGraph = items.filter(value => value.is_graph === 1);
-    const itemsNotGraph = items.filter(value => value.is_graph === 0);
-    return (
-      <>
-        <Backdrop style={{ zIndex: 99 }} open={is_load}>
-          <CircularProgress color="inherit" />
-        </Backdrop>
+		await this.getData('save_edit', data);
 
-        <MyAlert
-          isOpen={openAlert}
-          onClose={() => this.setState({ openAlert: false }) }
-          status={err_status}
-          text={err_text} />
+		this.setState({
+			openAlert: true,
+			err_status: true,
+			err_text: 'Обновлено',
+		}, () => this.update());
+	}
 
-        <Grid container spacing={3} mb={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
-            <h1>{module_name}</h1>
-          </Grid>
+	async update() {
+		const {city} = this.state;
 
-          <Grid item xs={12} sm={3}>
-            <MySelect
-              label="Город"
-              is_none={false}
-              data={cities}
-              value={city}
-              func={this.changeCity.bind(this)}
-            />
-          </Grid>
+		const data = {
+			city_id: city,
+		};
 
-          <Grid item xs={12} sm={9}>
-            <Button onClick={this.save.bind(this)} variant="contained">
-              Сохранить изменения
-            </Button>
-          </Grid>
+		const res = await this.getData('get_one', data);
 
-          <Grid item xs={12} sm={12} mt={5}>
+		this.setState({
+			items: res.lavel_price,
+			app_history: res.app_history
+		});
+	}
+
+	onSave(method) {
+		const dateStart = this.state.dateCoefs.find((item) => item.id === this.state.dateCoef);
+	}
+
+	changeCoef(data, event) {
+		this.setState({
+			dateCoef: event.target.value,
+		});
+	}
+
+	async saveLevel(data) {
+		const res = await this.getData('del_history', this.state.deleteItem);
+		this.setState({
+			openAlert: true,
+			err_status: true,
+			err_text: 'Обновлено',
+		}, () => this.update());
+	}
+
+	render() {
+		const {is_load, items, openAlert, err_text, err_status, module_name, cities, city} = this.state;
+		const itemsInGraph = items.filter(value => value.is_graph === 1);
+		const itemsNotGraph = items.filter(value => value.is_graph === 0);
+		const {openDelete} = this.state;
+		return (
+			<>
+				<Backdrop style={{zIndex: 99}} open={is_load}>
+					<CircularProgress color="inherit"/>
+				</Backdrop>
+
+				<MyAlert
+					isOpen={openAlert}
+					onClose={() => this.setState({openAlert: false})}
+					status={err_status}
+					text={err_text}/>
+
+				{openDelete &&
+					<ModalAccept
+						open={openDelete}
+						onClose={() => this.setState({openDelete: false})}
+						title="Удалить запись?"
+						save={() => {this.saveLevel();
+							this.setState({openDelete: false})}}
+					/>
+				}
+
+				{/*Модалка с кэфом бонуса и пмериодом*/}
+				{this.state.confirmDialog ? (
+					<Dialog
+						open={this.state.confirmDialog}
+						onClose={() => this.setState({confirmDialog: false})}
+						maxWidth="sm"
+					>
+						<DialogTitle>Подтвердите действие</DialogTitle>
+						<DialogContent align="center" sx={{fontWeight: 'bold'}}>
+							<MySelect
+								label="Период"
+								style={{marginTop: '10px'}}
+								is_none={false}
+								data={this.state.dateCoefs || []}
+								value={this.state.dateCoef || ''}
+								func={this.changeCoef.bind(this, 'dateCoef')}
+								fullWidth
+							/>
+						</DialogContent>
+						<DialogActions>
+							<Button onClick={() => this.setState({confirmDialog: false})}>Отмена</Button>
+							<Button onClick={this.save.bind(this)}>Сохранить</Button>
+						</DialogActions>
+					</Dialog>
+				) : null}
+
+				<Grid container spacing={3} mb={3} className='container_first_child'>
+					<Grid item xs={12} sm={12}>
+						<h1>{module_name}</h1>
+					</Grid>
+
+					<Grid item xs={12} sm={3}>
+						<MySelect
+							label="Город"
+							is_none={false}
+							data={cities}
+							value={city}
+							func={this.changeCity.bind(this)}
+						/>
+					</Grid>
+
+					<Grid item xs={12} sm={9}>
+						<Button onClick={() => this.setState({confirmDialog: true})} variant="contained">
+							Сохранить изменения
+						</Button>
+					</Grid>
+
+					<Grid item xs={12} sm={12} mt={5}>
             <span style={{backgroundColor: '#ef5350', color: '#fff', padding: '10px 15px'}}>
               Данные применяться с текущего периода
             </span>
-          </Grid>
+					</Grid>
 
-          <SectionHeader title="В графике работы"/>
-          <Grid item xs={12} sm={12}>
-            <SalaryTable items={itemsInGraph} onChange={this.changeItem.bind(this)}/>
-          </Grid>
-          <SectionHeader title="Без графика"/>
-          <Grid item xs={12} sm={12}>
-            <SalaryTable items={itemsNotGraph} onChange={this.changeItem.bind(this)}/>
-          </Grid>
-        </Grid>
-      </>
-    );
-  }
+					<SectionHeader title="В графике работы"/>
+					<Grid item xs={12} sm={12}>
+						<SalaryTable items={itemsInGraph} onChange={this.changeItem.bind(this)}/>
+					</Grid>
+					<SectionHeader title="Без графика"/>
+					<Grid item xs={12} sm={12}>
+						<SalaryTable items={itemsNotGraph} onChange={this.changeItem.bind(this)}/>
+					</Grid>
+					{console.log(Object.entries(this.state.app_history))}
+					{Object.entries(this.state.app_history).length ? (
+						<Grid item xs={12} sm={12}>
+							<Accordion style={{width: '100%'}}>
+								<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+									<Typography style={{fontWeight: 'bold'}}>История изменений</Typography>
+								</AccordionSummary>
+								<AccordionDetails>
+									<Table>
+										<TableHead>
+											<TableRow>
+												<TableCell></TableCell>
+											</TableRow>
+										</TableHead>
+										<TableBody>
+											{Object.entries(this.state.app_history).map(([k, it]) => (
+												<TableRow hover key={k}>
+													<TableCell>
+														<Accordion style={{width: '100%'}}>
+															<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+																<Typography style={{fontWeight: 'bold'}}>{k}</Typography>
+															</AccordionSummary>
+															<AccordionDetails>
+																<Table>
+																	<TableHead>
+																		<TableRow>
+																			<TableCell>#</TableCell>
+																			<TableCell>Город</TableCell>
+																			<TableCell>Дата изменения</TableCell>
+																			<TableCell>Дата создания</TableCell>
+																			<TableCell style={{textAlign: 'center'}}>Оклад</TableCell>
+																			<TableCell style={{textAlign: 'center'}}>Минимальная ставка</TableCell>
+																			<TableCell style={{textAlign: 'center'}}>Максимальная ставка</TableCell>
+																			<TableCell style={{textAlign: 'center'}}>Средняя ставка</TableCell>
+																			<TableCell style={{textAlign: 'center'}}>Изменил</TableCell>
+																			<TableCell style={{textAlign: 'center'}}></TableCell>
+																		</TableRow>
+																	</TableHead>
+																	<TableBody>
+																		{it.map((app, i) => (
+																			<TableRow hover key={i}>
+																				<TableCell>{i + 1}</TableCell>
+																				<TableCell>{app.city_name}</TableCell>
+																				<TableCell>{app.date_start}</TableCell>
+																				<TableCell>{app.date_update}</TableCell>
+																				<TableCell>{app.oklad}</TableCell>
+																				<TableCell>{app.min_price}</TableCell>
+																				<TableCell>{app.max_price}</TableCell>
+																				<TableCell>{app.avg_price}</TableCell>
+																				<TableCell>{app.creator}</TableCell>
+																				<TableCell>
+																					{app.date_start > dayjs(new Date()).format('YYYY-MM-DD') ? (
+																						<IconButton
+																					size="small"
+																					onClick={() => {
+																						this.setState({deleteItem: it, openDelete: true})
+																					}}
+																					sx={{
+																						color: 'text.secondary',
+																						'&:hover': {
+																							color: 'error.main',
+																						},
+																					}}
+																				>
+																					<DeleteIcon fontSize="small"/>
+																				</IconButton>
+																					) : null}
+																				</TableCell>
+																			</TableRow>
+																		))}
+																	</TableBody>
+																</Table>
+															</AccordionDetails>
+														</Accordion>
+													</TableCell>
+												</TableRow>
+											))}
+										</TableBody>
+									</Table>
+								</AccordionDetails>
+							</Accordion>
+						</Grid>
+					) : null}
+				</Grid>
+			</>
+		);
+	}
 }
 
 export default function AppPerH() {
-  return <AppPerH_ />;
+	return <AppPerH_/>;
 }
 
 const tableCellStyles = {
-  '#': { width: '5%' },
-  'Должность': { width: '35%' },
-  'Оклад': { width: '15%' },
-  'Минимальная ставка': { width: '15%' },
-  'Средняя ставка': { width: '15%' },
-  'Максимальная ставка': { width: '15%' },
+	'#': {width: '5%'},
+	'Должность': {width: '35%'},
+	'Оклад': {width: '15%'},
+	'Минимальная ставка': {width: '15%'},
+	'Средняя ставка': {width: '15%'},
+	'Максимальная ставка': {width: '15%'},
 };
 
-const SalaryTable = ({ items, onChange }) => {
-  const fields = ['oklad', 'min_price', 'avg_price', 'max_price'];
-  const fieldLabels = ['Оклад', 'Минимальная ставка', 'Средняя ставка', 'Максимальная ставка'];
+const SalaryTable = ({items, onChange}) => {
+	const fields = ['oklad', 'min_price', 'avg_price', 'max_price'];
+	const fieldLabels = ['Оклад', 'Минимальная ставка', 'Средняя ставка', 'Максимальная ставка'];
 
-  return (
-    <TableContainer>
-      <Table>
-        <TableHead>
-          <TableRow>
-            {Object.entries(tableCellStyles).map(([label, style]) => (
-              <TableCell key={label} style={style}>{label}</TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {items.length > 0 ? (
-            items.map((item, index) => (
-              <TableRow key={item.app_id} hover>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{item.app_name}</TableCell>
-                {fields.map((field) => (
-                  <TableCell key={`${item.app_id}-${field}`}>
-                    <MyTextInput
-                      label=""
-                      value={item[field]}
-                      func={onChange.bind(this, field, item.app_id)}
-                    />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={6} align="center">Нет данных</TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
+	return (
+		<TableContainer>
+			<Table>
+				<TableHead>
+					<TableRow>
+						{Object.entries(tableCellStyles).map(([label, style]) => (
+							<TableCell key={label} style={style}>{label}</TableCell>
+						))}
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					{items.length > 0 ? (
+						items.map((item, index) => (
+							<TableRow key={item.app_id} hover>
+								<TableCell>{index + 1}</TableCell>
+								<TableCell>{item.app_name}</TableCell>
+								{fields.map((field) => (
+									<TableCell key={`${item.app_id}-${field}`}>
+										<MyTextInput
+											label=""
+											value={item[field]}
+											func={onChange.bind(this, field, item.app_id)}
+										/>
+									</TableCell>
+								))}
+							</TableRow>
+						))
+					) : (
+						<TableRow>
+							<TableCell colSpan={6} align="center">Нет данных</TableCell>
+						</TableRow>
+					)}
+				</TableBody>
+			</Table>
+		</TableContainer>
+	);
 };
 
-const SectionHeader = ({ title }) => (
-  <Grid item xs={12} sm={12}>
-    <Typography variant="h5" component="h1" gutterBottom>
-      {title}
-    </Typography>
-  </Grid>
+const SectionHeader = ({title}) => (
+	<Grid item xs={12} sm={12}>
+		<Typography variant="h5" component="h1" gutterBottom>
+			{title}
+		</Typography>
+	</Grid>
 );
 
-export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+export async function getServerSideProps({req, res, query}) {
+	res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
+	res.setHeader('Access-Control-Allow-Origin', '*');
+	res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+	res.setHeader('Access-Control-Allow-Credentials', 'true');
+	res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
 
-  return {
-    props: {},
-  }
+	return {
+		props: {},
+	}
 }
