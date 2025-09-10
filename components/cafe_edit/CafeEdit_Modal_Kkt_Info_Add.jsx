@@ -99,7 +99,7 @@ const CafeEdit_Modal_Kkt_Info_Add = (props) => {
               <MyTextInput
                 label="ФН"
                 value={new_fn}
-                func={setNewFn}
+                func={ e => setNewFn(e.target.value) }
               />
             </Grid>
           </Grid>
