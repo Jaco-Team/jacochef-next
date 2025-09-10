@@ -330,7 +330,6 @@ class AppPerH_ extends React.Component {
 					<Grid item xs={12} sm={12}>
 						<SalaryTable items={itemsNotGraph} onChange={this.changeItem.bind(this)}/>
 					</Grid>
-					{console.log(Object.entries(this.state.app_history))}
 					{Object.entries(this.state.app_history).length ? (
 						<Grid item xs={12} sm={12}>
 							<Accordion style={{width: '100%'}}>
