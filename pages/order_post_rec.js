@@ -35,6 +35,7 @@ const Alert = React.forwardRef(function Alert(props, ref) {
 import {MySelect, MyAutocomplite2, MyAutocomplite } from '@/ui/elements';
 
 import queryString from 'query-string';
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 
 class OrderPostRec_Modal extends React.Component {
   constructor(props) {
@@ -217,28 +218,28 @@ class OrderPostRec_Table extends React.Component {
 
         catsFilter.map((cat) => {
           let arr = [];
-  
+
           cat.cats.map((el) => {
             el.items = el.items.filter((value) =>
               value.name.toLowerCase().includes(searchValue.toLowerCase())
             );
-  
+
             if (!el.items.length) {
               arr.push(el);
             }
-  
+
             return el;
           });
-  
+
           if (cat.cats.length === arr.length) {
             cat.all = 0;
           }
         });
-  
+
         const freeItemsFilter = freeItems.filter((value) =>
           value.name.toLowerCase().includes(searchValue.toLowerCase())
         );
-  
+
         this.setState({
           cats: catsFilter,
           freeItems: freeItemsFilter,
@@ -275,7 +276,7 @@ class OrderPostRec_Table extends React.Component {
       this.setState({
         search: searchValue
         });
-    } 
+    }
 
     const catsFilter = this.state.cats;
 
@@ -312,7 +313,7 @@ class OrderPostRec_Table extends React.Component {
       });
 
     } else {
-      
+
       this.setState({
         cats: JSON.parse(JSON.stringify(this.props.cats)),
         freeItems: JSON.parse(JSON.stringify(this.props.freeItems)),
@@ -485,53 +486,28 @@ class OrderPostRec_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
-    this.setState({
-      is_load: true,
-    });
+		this.setState({
+			is_load: true,
+		});
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
+		let res = api_laravel(this.state.module, method, data)
+			.then(result => result.data)
+			.finally(() => {
+				setTimeout(() => {
+					this.setState({
+						is_load: false,
+					});
+				}, 500);
+			});
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
-
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+		return res;
+	}
 
   async changePoint(event) {
     let data = {
       point_id: event.target.value
     }
-    
+
     let res = await this.getData('get_all', data);
 
     this.setState({
@@ -578,7 +554,7 @@ class OrderPostRec_ extends React.Component {
         cat.cats.forEach((it) => {
           it.items.forEach((el) => {
             if (el.id === id) {
-              
+
               el[key] = event.target.value;
 
               if( key == 'vendor_id_rec' ){
@@ -642,7 +618,7 @@ class OrderPostRec_ extends React.Component {
         error: res.text,
         snackbar: true,
       });
-      
+
     }
 
   }
@@ -651,7 +627,7 @@ class OrderPostRec_ extends React.Component {
     let data = {
       point_id: this.state.point
     }
-    
+
     let res = await this.getData('get_all', data);
 
     // console.log(data);
@@ -671,21 +647,21 @@ class OrderPostRec_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        <Snackbar 
-          open={this.state.snackbar} 
+        <Snackbar
+          open={this.state.snackbar}
           autoHideDuration={30000}
-          anchorOrigin={{  
+          anchorOrigin={{
             vertical: 'top',
-            horizontal: 'center', 
+            horizontal: 'center',
           }}
           onClose={() => {
             this.setState({ snackbar: false });
           }}>
-          <Alert 
+          <Alert
             onClose={() => {
             this.setState({ snackbar: false });
-            }} 
-            severity={ this.state.st ? "success" : "error" } 
+            }}
+            severity={ this.state.st ? "success" : "error" }
             sx={{ width: '100%' }}>
              { this.state.st ? 'Данные успешно сохранены!' : `${this.state.error}` }
           </Alert>
@@ -805,7 +781,7 @@ class OrderPostRec_TableHist extends React.Component{
 
               <TableContainer>
                 <Table>
-                  
+
                   <TableBody>
                     {item.items.map((it, item_k) => (
                       <TableRow
@@ -873,7 +849,7 @@ class OrderPostRec_TableItemNew extends React.Component {
         <TableCell>{it.name}</TableCell>
 
         <TableCell>
-          { items.length == 1 ? 
+          { items.length == 1 ?
             item
               :
             <MySelect
@@ -948,59 +924,34 @@ class OrderPostRecNew_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
-    this.setState({
-      is_load: true,
-    });
+		this.setState({
+			is_load: true,
+		});
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
-          return;
-        }
+		let res = api_laravel(this.state.module, method, data)
+			.then(result => result.data)
+			.finally(() => {
+				setTimeout(() => {
+					this.setState({
+						is_load: false,
+					});
+				}, 500);
+			});
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
-          return;
-        }
+		return res;
+	}
 
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-
-  async changePoint(event) {
+  async changePoint(event, value) {
     let data = {
-      point_id: event.target.value
+      point_id: value.id
     }
-    
+
     let res = await this.getData('get_data', data);
 
     console.log( res );
-    
+
     this.setState({
-      point: event.target.value,
+      point: value,
       mainCats: res.mainCats,
       freePf: res.free_pf,
       vendors: res.vendors,
@@ -1055,7 +1006,7 @@ class OrderPostRecNew_ extends React.Component {
         item[ 'pq' ] = '';
         item[ 'vendor_id_rec' ] = '';
       }
-      
+
     }
 
     item[ [type] ] = value;
@@ -1086,7 +1037,7 @@ class OrderPostRecNew_ extends React.Component {
         item[ 'pq' ] = '';
         item[ 'vendor_id_rec' ] = '';
       }
-      
+
     }
 
     item[ [type] ] = value;
@@ -1129,13 +1080,13 @@ class OrderPostRecNew_ extends React.Component {
       items.push( item )
     } )
 
-    let check = items.find( item => parseInt(item.vendor_id_rec) == 0 || item.vendor_id_rec == '' || 
+    let check = items.find( item => parseInt(item.vendor_id_rec) == 0 || item.vendor_id_rec == '' ||
                         parseInt(item.item_id_rec) == 0 || item.item_id_rec == '' ||
                         parseFloat(item.pq) == 0 || item.pq == '' );
 
     if( check ){
 
-      this.setState({ 
+      this.setState({
         st: false,
         snackbar: true,
         error: 'Не заполнены данные у позиции "' + check.name + '"'
@@ -1169,7 +1120,7 @@ class OrderPostRecNew_ extends React.Component {
         error: res.text,
         snackbar: true,
       });
-      
+
     }
 
   }
@@ -1181,18 +1132,18 @@ class OrderPostRecNew_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        <Snackbar 
-          open={this.state.snackbar} 
+        <Snackbar
+          open={this.state.snackbar}
           autoHideDuration={30000}
-          anchorOrigin={{  
+          anchorOrigin={{
             vertical: 'top',
-            horizontal: 'center', 
+            horizontal: 'center',
           }}
           onClose={() => { this.setState({ snackbar: false }); }}
         >
-          <Alert 
-            onClose={() => { this.setState({ snackbar: false }); }} 
-            severity={ this.state.st ? "success" : "error" } 
+          <Alert
+            onClose={() => { this.setState({ snackbar: false }); }}
+            severity={ this.state.st ? "success" : "error" }
             sx={{ width: '100%' }}
           >
             { this.state.st ? 'Данные успешно сохранены!' : `${this.state.error}` }
@@ -1233,11 +1184,11 @@ class OrderPostRecNew_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={4}>
-            <MySelect
+            <MyAutocomplite
+              label="Точка"
               data={this.state.points}
               value={this.state.point}
               func={this.changePoint.bind(this)}
-              label="Точка"
             />
           </Grid>
 
@@ -1248,13 +1199,13 @@ class OrderPostRecNew_ extends React.Component {
           </Grid>
 
           <Grid item xs={12}>
-            {this.state.mainCats.map((mainCat, key) => (
+            {this.state.mainCats.length ? this.state.mainCats.map((mainCat, key) => (
               <Accordion key={key}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography>{mainCat.name}</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  
+
                   {mainCat.cats.map( (cat, k) =>
                     <Accordion key={k}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -1275,8 +1226,8 @@ class OrderPostRecNew_ extends React.Component {
                             </TableHead>
                             <TableBody>
                               {cat.items.map((it, item_k) => (
-                                <OrderPostRec_TableItemNew 
-                                  key={item_k} 
+                                <OrderPostRec_TableItemNew
+                                  key={item_k}
 
                                   main_key={key}
                                   dop_key={k}
@@ -1299,7 +1250,7 @@ class OrderPostRecNew_ extends React.Component {
 
                 </AccordionDetails>
               </Accordion>
-            ))}
+            )) : null}
 
             { this.state.freePf.length == 0 ? null :
               <Accordion>
@@ -1307,7 +1258,7 @@ class OrderPostRecNew_ extends React.Component {
                   <Typography>Без категории</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  
+
                   <TableContainer>
                     <Table>
                       <TableHead>
@@ -1322,7 +1273,7 @@ class OrderPostRecNew_ extends React.Component {
                       <TableBody>
                         {this.state.freePf.map((it, item_k) => (
                           <OrderPostRec_TableItemNew
-                            key={it.id} 
+                            key={it.id}
 
                             main_key={0}
                             dop_key={0}
