@@ -205,7 +205,10 @@ class AppPerH_ extends React.Component {
 			openAlert: true,
 			err_status: true,
 			err_text: 'Обновлено',
-		}, () => this.update());
+		}, () => {
+			this.update(),
+			this.setState({confirmDialog: false})
+		});
 	}
 
 	async update() {
@@ -312,14 +315,8 @@ class AppPerH_ extends React.Component {
 
 					<Grid item xs={12} sm={9}>
 						<Button onClick={() => this.setState({confirmDialog: true})} variant="contained">
-							Сохранить изменения
+							Выбрать период
 						</Button>
-					</Grid>
-
-					<Grid item xs={12} sm={12} mt={5}>
-            <span style={{backgroundColor: '#ef5350', color: '#fff', padding: '10px 15px'}}>
-              Данные применяться с текущего периода
-            </span>
 					</Grid>
 
 					<SectionHeader title="В графике работы"/>
