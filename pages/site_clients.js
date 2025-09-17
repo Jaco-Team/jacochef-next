@@ -1409,6 +1409,7 @@ class SiteClients_ extends React.Component {
 										padding: '10px',
 										borderTop: '1px solid #ddd',
 										fontWeight: 'bold',
+										marginBottom: '1rem',
 										textAlign: 'center',
 										position: 'sticky',
 										bottom: 0
@@ -1417,9 +1418,19 @@ class SiteClients_ extends React.Component {
 											marginRight: '24px',
 											marginLeft: '10px'
 										}}>Кол-во заказов: {this.state.search_orders.length}</span>
-										{this.state.acces?.count_complete_order_view ?
-											<span style={{color: 'green'}}>Кол-во завершенных заказов: {this.state.search_orders.filter((src) => src.status_order === 6)?.length}</span>
-											: null}
+										{this.state.acces?.count_complete_order_access && (
+											<>
+      									<span style={{color: 'green', marginRight: '24px'}}>
+        									Кол-во завершенных заказов: {this.state.search_orders.filter((src) => src.status_order === 6)?.length}
+      									</span>
+												<span style={{color: 'blue'}}>
+													Сумма завершенных заказов: {this.state.search_orders
+													.filter((src) => src.status_order === 6)
+													.reduce((sum, order) => sum + (parseFloat(order.order_price) || 0), 0)
+													.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2})} руб.
+      									</span>
+											</>
+										)}
 									</Box>
 								) : null}
 							</Grid>
