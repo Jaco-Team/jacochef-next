@@ -1403,6 +1403,25 @@ class SiteClients_ extends React.Component {
 										</TableBody>
 									</Table>
 								</TableContainer>
+								{this.state.search_orders.length ? (
+									<Box sx={{
+										backgroundColor: '#f5f5f5',
+										padding: '10px',
+										borderTop: '1px solid #ddd',
+										fontWeight: 'bold',
+										textAlign: 'center',
+										position: 'sticky',
+										bottom: 0
+									}}>
+										<span style={{
+											marginRight: '24px',
+											marginLeft: '10px'
+										}}>Кол-во заказов: {this.state.search_orders.length}</span>
+										{this.state.acces?.count_complete_order_view ?
+											<span style={{color: 'green'}}>Кол-во завершенных заказов: {this.state.search_orders.filter((src) => src.status_order === 6)?.length}</span>
+											: null}
+									</Box>
+								) : null}
 							</Grid>
 
 						</TabPanel>
