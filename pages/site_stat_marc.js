@@ -21,6 +21,10 @@ import { MyTextInput, MySelect, MyAutocomplite, MyCheckBox, MyDatePickerNew, for
 import { api_laravel, api_laravel_local } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import DeleteIcon from "@mui/icons-material/Delete";
+import Chip from "@mui/material/Chip";
 
 class SiteStatMarc_ extends React.Component {
   chartnewusers = null;
@@ -33,11 +37,11 @@ class SiteStatMarc_ extends React.Component {
   chartavgsummD = null;
   chartcountposD = null;
 
- 
+
 
   constructor(props) {
     super(props);
-        
+
     this.state = {
       module: 'site_stat_marc',
       module_name: '',
@@ -47,7 +51,7 @@ class SiteStatMarc_ extends React.Component {
       show_stat_roll:   false,
       show_stat_set:    false,
       show_stat_pizza:  false,
-      
+
       choosePoint: [],
       points: [],
       rangeDate: [formatDate(new Date()), formatDate(new Date())],
@@ -84,15 +88,15 @@ class SiteStatMarc_ extends React.Component {
 
   async componentDidMount(){
     let data = await this.getData('get_all');
-    
+
     this.setState({
       module_name: data.module_info.name,
       points: data.points
     })
-    
+
       document.title = data.module_info.name;
   }
-  
+
   getData = (method, data = {}) => {
     this.setState({
       is_load: true,
@@ -110,7 +114,7 @@ class SiteStatMarc_ extends React.Component {
 
     return res;
   };
-  
+
   changeChekBox(type, event) {
       this.setState({
           [type]: event.target.checked
@@ -130,7 +134,7 @@ class SiteStatMarc_ extends React.Component {
 
       return;
     }
-    
+
     let data = {
       points: choosePoint,
       dateStart: dayjs(this.state.date_start).format('YYYY-MM-DD'),
@@ -146,7 +150,7 @@ class SiteStatMarc_ extends React.Component {
 
     // Итоговый результат
     if (parseInt(this.state.typeShow) == 1) {
-        
+
       this.setState({
         newUsersTable: res.new_users,
         countOrdersTable: res.count_orders,
@@ -192,13 +196,13 @@ class SiteStatMarc_ extends React.Component {
       am5themes_Animated.new(root)
     ]);
 
-    var chart = root.container.children.push( 
+    var chart = root.container.children.push(
       am5xy.XYChart.new(root, {
         panY: false,
         wheelY: "zoomX",
         layout: root.verticalLayout,
         //maxTooltipDistance: 0
-      }) 
+      })
     );
 
     var data_site = [];
@@ -260,16 +264,16 @@ class SiteStatMarc_ extends React.Component {
 
     // Create series правка 1 Новые клиенты по месяцам
     function createSeries(name, field, data) {
-      var series = chart.series.push( 
+      var series = chart.series.push(
       am5xy.SmoothedXLineSeries.new(root, {
           name: name,
-          xAxis: xAxis, 
-          yAxis: yAxis, 
-          valueYField: field, 
+          xAxis: xAxis,
+          yAxis: yAxis,
+          valueYField: field,
           valueXField: "date",
           tooltip: am5.Tooltip.new(root, {}),
           maskBullets: false
-        }) 
+        })
       );
 
       // правка radius: 5->3
@@ -281,7 +285,7 @@ class SiteStatMarc_ extends React.Component {
           })
         });
       });
-        
+
       series.strokes.template.set("strokeWidth", 2);
       if (name == 'Всего') {
          series.strokes.template.set("strokeWidth", 8)
@@ -321,20 +325,20 @@ class SiteStatMarc_ extends React.Component {
       am5themes_Animated.new(root)
     ]);
 
-    var chart = root.container.children.push( 
+    var chart = root.container.children.push(
       am5xy.XYChart.new(root, {
         panY: false,
         wheelY: "zoomX",
         layout: root.verticalLayout,
         //maxTooltipDistance: 0
-      }) 
+      })
     );
 
     var data_site = [];
     var data_center = [];
     var data_kassa = [];
     var data_all = [];
-   
+
 
     MyData.site.map( (item) => {
       let date = item.date_new.split('-');
@@ -394,17 +398,17 @@ class SiteStatMarc_ extends React.Component {
     function createSeries(name, field, data) {
 
       // новые клиенты по дням правка 2
-      var series = chart.series.push( 
+      var series = chart.series.push(
       am5xy.SmoothedXLineSeries.new(root, {
           name: name,
          //stacked: true,
-          xAxis: xAxis, 
-          yAxis: yAxis, 
-          valueYField: field, 
+          xAxis: xAxis,
+          yAxis: yAxis,
+          valueYField: field,
           valueXField: "date",
           tooltip: am5.Tooltip.new(root, {}),
           maskBullets: false
-        }) 
+        })
       );
 
       series.bullets.push(function() {
@@ -415,7 +419,7 @@ class SiteStatMarc_ extends React.Component {
           })
         });
       });
-      
+
         series.strokes.template.set("strokeWidth", 2);
         if (name == 'Всего') {
             series.strokes.template.set("strokeWidth", 8)
@@ -428,10 +432,10 @@ class SiteStatMarc_ extends React.Component {
     createSeries("Касса", "value", data_kassa);
     createSeries("Контакт-центр", "value", data_center);
     createSeries("Всего", "value", data_all);
-   
+
 
     // Add cursor
-    
+
     chart.set("cursor", am5xy.XYCursor.new(root, {
       behavior: "zoomXY",
       xAxis: xAxis
@@ -444,7 +448,7 @@ class SiteStatMarc_ extends React.Component {
     yAxis.set("tooltip", am5.Tooltip.new(root, {
       themeTags: ["axis"]
     }));
-    
+
   }
 
   renderGraphOrders(MyData){
@@ -452,7 +456,7 @@ class SiteStatMarc_ extends React.Component {
       this.chartorders.dispose();
     }
 
-    var root = am5.Root.new("chartorders"); 
+    var root = am5.Root.new("chartorders");
 
     this.chartorders = root;
 
@@ -460,13 +464,13 @@ class SiteStatMarc_ extends React.Component {
       am5themes_Animated.new(root)
     ]);
 
-    var chart = root.container.children.push( 
+    var chart = root.container.children.push(
       am5xy.XYChart.new(root, {
         panY: false,
         wheelY: "zoomX",
         layout: root.verticalLayout,
         //maxTooltipDistance: 0
-      }) 
+      })
     );
 
     var data_all = [];
@@ -474,7 +478,7 @@ class SiteStatMarc_ extends React.Component {
     var data_dev = [];
     var data_hall = [];
     var data_adv = [];
-     
+
     MyData.all.map( (item) => {
 
       let date = item.date_new.split('-');
@@ -540,18 +544,18 @@ class SiteStatMarc_ extends React.Component {
 
     // Create series Правка 3 Заказы по месяцам
     function createSeries(name, field, data) {
-      var series = chart.series.push( 
+      var series = chart.series.push(
       am5xy.SmoothedXLineSeries.new(root, {
           name: name,
-          xAxis: xAxis, 
-          yAxis: yAxis, 
-          valueYField: field, 
+          xAxis: xAxis,
+          yAxis: yAxis,
+          valueYField: field,
           valueXField: "date",
           tooltip: am5.Tooltip.new(root, {}),
           maskBullets: false
-        }) 
+        })
       );
-      
+
       series.bullets.push(function() {
         return am5.Bullet.new(root, {
           sprite: am5.Circle.new(root, {
@@ -560,7 +564,7 @@ class SiteStatMarc_ extends React.Component {
           })
         });
       });
-      
+
       series.strokes.template.set("strokeWidth", 2);
       if (name == 'Всего') {
         series.strokes.template.set("strokeWidth", 8)
@@ -573,7 +577,7 @@ class SiteStatMarc_ extends React.Component {
     createSeries("Самовывозов", "value", data_pic);
     createSeries("Доставок", "value", data_dev);
     createSeries("Зал", "value", data_hall);
-   
+
     // Add cursor
     chart.set("cursor", am5xy.XYCursor.new(root, {
       behavior: "zoomXY",
@@ -595,7 +599,7 @@ class SiteStatMarc_ extends React.Component {
       this.chartordersD.dispose();
     }
 
-    var root = am5.Root.new("chartordersD"); 
+    var root = am5.Root.new("chartordersD");
 
     this.chartordersD = root;
 
@@ -604,24 +608,24 @@ class SiteStatMarc_ extends React.Component {
     ]);
 
     root.dateFormatter.setAll({
-        dateFormat: "yyyy-MM-dd", 
-        dateFields: ["valueX", "openValueX"] 
+        dateFormat: "yyyy-MM-dd",
+        dateFields: ["valueX", "openValueX"]
     });
 
-    var chart = root.container.children.push( 
+    var chart = root.container.children.push(
       am5xy.XYChart.new(root, {
         panY: false,
         wheelY: "zoomX",
         layout: root.verticalLayout,
         //maxTooltipDistance: 0
-      }) 
+      })
     );
 
     var data_all = [];
     var data_pic = [];
     var data_dev = [];
     var data_hall = [];
- 
+
     MyData.all.map( (item) => {
       let date = item.date_new.split('-');
       data_all.push({
@@ -653,7 +657,7 @@ class SiteStatMarc_ extends React.Component {
         value: parseInt(item.count)
       })
     })
-     
+
      // Create Y-axis
       var yAxis = chart.yAxes.push(
           am5xy.ValueAxis.new(root, {
@@ -690,18 +694,18 @@ class SiteStatMarc_ extends React.Component {
 
     // Create series правка 4 Заказы по дням
     function createSeries(name, field, data) {
-     
-      var series = chart.series.push( 
+
+      var series = chart.series.push(
         am5xy.SmoothedXLineSeries.new(root, {
           name: name,
-          xAxis: xAxis, 
-          yAxis: yAxis, 
+          xAxis: xAxis,
+          yAxis: yAxis,
           valueYField: field,
           strokeWidth: 5,
           valueXField: "date",
           tooltip: am5.Tooltip.new(root, {}),
           maskBullets: false
-        }) 
+        })
       );
 
       series.strokes.template.set("strokeWidth", 2);
@@ -709,7 +713,7 @@ class SiteStatMarc_ extends React.Component {
       if (name == 'Всего') {
           series.strokes.template.set("strokeWidth", 8)
       }
-       
+
       series.bullets.push(function() {
         return am5.Bullet.new(root, {
           sprite: am5.Circle.new(root, {
@@ -718,7 +722,7 @@ class SiteStatMarc_ extends React.Component {
           })
         });
       });
-      
+
       series.get("tooltip").label.set("text", "[bold]{name}[/]\n{valueX.formatDate()}: {valueY}")
       series.data.setAll(data);
     }
@@ -815,7 +819,7 @@ class SiteStatMarc_ extends React.Component {
       this.chartavgsumm.dispose();
     }
 
-    var root = am5.Root.new("chartavgsumm"); 
+    var root = am5.Root.new("chartavgsumm");
 
     this.chartavgsumm = root;
 
@@ -823,13 +827,13 @@ class SiteStatMarc_ extends React.Component {
       am5themes_Animated.new(root)
     ]);
 
-    var chart = root.container.children.push( 
+    var chart = root.container.children.push(
       am5xy.XYChart.new(root, {
         panY: false,
         wheelY: "zoomX",
         layout: root.verticalLayout,
         //maxTooltipDistance: 0
-      }) 
+      })
     );
 
     var data_all = [];
@@ -892,7 +896,7 @@ class SiteStatMarc_ extends React.Component {
     xAxis.get("dateFormats")["day"] = "MM/dd";
     xAxis.get("periodChangeDateFormats")["day"] = "MM/dd";
 
-     
+
 
       // Create series правка 4 Заказы по дням
       function createSeries(name, field, data) {
@@ -926,14 +930,14 @@ class SiteStatMarc_ extends React.Component {
           });
 
           series.get("tooltip").label.set("text", "[bold]{name}[/]\n{valueX.formatDate()}: {valueY}");
-         
+
           series.data.setAll(data);
       }
     createSeries("Всего", "value", data_all);
     createSeries("Самовывозов", "value", data_pic);
     createSeries("Доставок", "value", data_dev);
     createSeries("Зал", "value", data_hall);
-    
+
     // Add cursor
     chart.set("cursor", am5xy.XYCursor.new(root, {
       behavior: "zoomXY",
@@ -954,7 +958,7 @@ class SiteStatMarc_ extends React.Component {
       this.chartavgsummD.dispose();
     }
 
-    var root = am5.Root.new("chartavgsummD"); 
+    var root = am5.Root.new("chartavgsummD");
 
     this.chartavgsummD = root;
 
@@ -967,13 +971,13 @@ class SiteStatMarc_ extends React.Component {
        dateFields: ["valueX", "openValueX"]
     });
 
-    var chart = root.container.children.push( 
+    var chart = root.container.children.push(
       am5xy.XYChart.new(root, {
         panY: false,
         wheelY: "zoomX",
         layout: root.verticalLayout,
         //maxTooltipDistance: 0
-      }) 
+      })
     );
 
     var data_all = [];
@@ -1183,7 +1187,7 @@ class SiteStatMarc_ extends React.Component {
       this.chartcountpos.dispose();
     }
 
-    var root = am5.Root.new("chartcountpos"); 
+    var root = am5.Root.new("chartcountpos");
 
     this.chartcountpos = root;
 
@@ -1191,13 +1195,13 @@ class SiteStatMarc_ extends React.Component {
       am5themes_Animated.new(root)
     ]);
 
-    var chart = root.container.children.push( 
+    var chart = root.container.children.push(
       am5xy.XYChart.new(root, {
         panY: false,
         wheelY: "zoomX",
         layout: root.verticalLayout,
         //maxTooltipDistance: 0
-      }) 
+      })
     );
 
     var data_pizza = [];
@@ -1249,18 +1253,18 @@ class SiteStatMarc_ extends React.Component {
 
     // Create series правка 7 Позиций по месяцам
     function createSeries(name, field, data) {
-      var series = chart.series.push( 
+      var series = chart.series.push(
           am5xy.SmoothedXLineSeries.new(root, {
           name: name,
-          xAxis: xAxis, 
-          yAxis: yAxis, 
-          valueYField: field, 
+          xAxis: xAxis,
+          yAxis: yAxis,
+          valueYField: field,
           valueXField: "date",
           tooltip: am5.Tooltip.new(root, {}),
           maskBullets: false
-        }) 
+        })
       );
-      
+
       series.bullets.push(function() {
         return am5.Bullet.new(root, {
           sprite: am5.Circle.new(root, {
@@ -1269,9 +1273,9 @@ class SiteStatMarc_ extends React.Component {
           })
         });
       });
-      
+
       series.strokes.template.set("strokeWidth", 2);
-      
+
       series.get("tooltip").label.set("text", "[bold]{name}[/]\n{valueX.formatDate()}: {valueY}")
       series.data.setAll(data);
     }
@@ -1390,7 +1394,7 @@ class SiteStatMarc_ extends React.Component {
       this.chartcountposD.dispose();
     }
 
-    var root = am5.Root.new("chartcountposD"); 
+    var root = am5.Root.new("chartcountposD");
 
     this.chartcountposD = root;
 
@@ -1403,13 +1407,13 @@ class SiteStatMarc_ extends React.Component {
        dateFields: ["valueX", "openValueX"]
     });
 
-    var chart = root.container.children.push( 
+    var chart = root.container.children.push(
       am5xy.XYChart.new(root, {
         panY: false,
         wheelY: "zoomX",
         layout: root.verticalLayout,
         //maxTooltipDistance: 0
-      }) 
+      })
     );
 
     var data_pizza = [];
@@ -1569,7 +1573,7 @@ class SiteStatMarc_ extends React.Component {
 
      createSeries("Роллов", "value", data_rolls);
      createSeries("Пиццы", "value", data_pizza);
-      
+
      if (this.state.is_show_adv && MyData.adv_data.length > '1') {
         createSeries2("Акция", "value", MyData.adv_data)
      }
@@ -1605,7 +1609,7 @@ class SiteStatMarc_ extends React.Component {
           case 'set':
               val = this.state.show_stat_set ? false : true;
               this.setState({ show_stat_set: val });
-              
+
           break;
           case 'pizza':
               val = this.state.show_stat_pizza ? false : true;
@@ -1624,7 +1628,7 @@ class SiteStatMarc_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
+
         <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
@@ -1651,17 +1655,17 @@ class SiteStatMarc_ extends React.Component {
           <Grid item xs={6} sm={3}>
             <MyTextInput value={this.state.promoName} func={ (event) => { this.setState({ promoName: event.target.value }) } } label='Промокод' />
           </Grid>
-          <Grid item xs={6} sm={3}> 
+          <Grid item xs={6} sm={3}>
             <MySelect data={this.state.typesShow} value={this.state.typeShow} func={ (event) => { this.setState({ typeShow: event.target.value }) } } label='Как показать' />
           </Grid>
-          <Grid item xs={12} sm={1}> 
+          <Grid item xs={12} sm={1}>
             <MyCheckBox label='Показать акции' value={this.state.is_show_adv} func={this.changeChekBox.bind(this, 'is_show_adv') }   />
           </Grid>
 
           <Grid item xs={12} sm={3}>
             <Button variant="contained" onClick={this.show.bind(this)}>Обновить данные</Button>
           </Grid>
-        
+
 
           { this.state.typeShow != 1 ? null :
             <Grid item xs={12}>
@@ -1677,7 +1681,7 @@ class SiteStatMarc_ extends React.Component {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                  
+
                     <TableRow>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.newUsersTable.all ? this.state.newUsersTable.all : 0}</TableCell>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.newUsersTable.kassa ? this.state.newUsersTable.kassa : 0}</TableCell>
@@ -1685,7 +1689,7 @@ class SiteStatMarc_ extends React.Component {
                       <TableCell style={{ textAlign: 'center' }}>{this.state.newUsersTable.site ? this.state.newUsersTable.site : 0}</TableCell>
                     </TableRow>
 
-                    
+
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -1706,7 +1710,7 @@ class SiteStatMarc_ extends React.Component {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                  
+
                     <TableRow>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.countOrdersTable.all ? this.state.countOrdersTable.all : 0}</TableCell>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.countOrdersTable.dev ? this.state.countOrdersTable.dev : 0}</TableCell>
@@ -1714,7 +1718,7 @@ class SiteStatMarc_ extends React.Component {
                       <TableCell style={{ textAlign: 'center' }}>{this.state.countOrdersTable.pic ? this.state.countOrdersTable.pic : 0}</TableCell>
                     </TableRow>
 
-                    
+
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -1735,7 +1739,7 @@ class SiteStatMarc_ extends React.Component {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                  
+
                     <TableRow>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.avgSumm.all ? this.state.avgSumm.all : 0}</TableCell>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.avgSumm.dev ? this.state.avgSumm.dev : 0}</TableCell>
@@ -1743,7 +1747,7 @@ class SiteStatMarc_ extends React.Component {
                       <TableCell style={{ textAlign: 'center' }}>{this.state.avgSumm.pic ? this.state.avgSumm.pic : 0}</TableCell>
                     </TableRow>
 
-                    
+
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -1762,13 +1766,13 @@ class SiteStatMarc_ extends React.Component {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                  
+
                     <TableRow>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.countPos.count_rolls ? this.state.countPos.count_rolls : 0}</TableCell>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.countPos.count_pizza ? this.state.countPos.count_pizza : 0}</TableCell>
                     </TableRow>
 
-                    
+
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -1785,27 +1789,61 @@ class SiteStatMarc_ extends React.Component {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell style={{ textAlign: 'center' }}>Ушли</TableCell>
-                      <TableCell style={{ textAlign: 'center' }}>Вернулись</TableCell>
-                      <TableCell style={{ textAlign: 'center' }}>Вернулись и продолжают заказывать</TableCell>
+                      <TableCell style={{textAlign: 'center'}}>Ушли
+                        <Tooltip title={`
+                        Заказывали с ${dayjs(this.state.date_start).subtract(90, 'day').locale("ru").format('DD MMMM YYYY')}
+                         по ${dayjs(this.state.date_start).locale("ru").format('DD MMMM YYYY')} и не сделал ни одного заказа
+                          с ${dayjs(this.state.date_end).locale("ru").format('DD MMMM YYYY')} по ${dayjs(new Date()).locale("ru").format('DD MMMM YYYY')}`} arrow>
+                        <Chip
+                          label="?"
+                          size="small"
+                          sx={{ ml: 1, fontWeight: 500, cursor: 'default' }}
+                        />
+                      </Tooltip>
+                      </TableCell>
+                      <TableCell style={{ textAlign: 'center' }}>Вернулись
+                        <Tooltip title={`
+                        Заказывали с ${dayjs(this.state.date_start).locale("ru").format('DD MMMM YYYY')}
+                         по ${dayjs(this.state.date_end).locale("ru").format('DD MMMM YYYY')} и не сделал ни одного заказа
+                          с ${dayjs(this.state.date_start).subtract(90, 'day').locale("ru").format('DD MMMM YYYY')} по ${dayjs(this.state.date_start).locale("ru").format('DD MMMM YYYY')}`} arrow>
+                        <Chip
+                          label="?"
+                          size="small"
+                          sx={{ ml: 1, fontWeight: 500, cursor: 'default' }}
+                        />
+                      </Tooltip>
+                      </TableCell>
+                      <TableCell style={{ textAlign: 'center' }}>Вернулись и продолжают заказывать
+                        <Tooltip title={`
+                          Заказывали с ${dayjs(this.state.date_start).locale("ru").format('DD MMMM YYYY')}
+                         по ${dayjs(this.state.date_end).locale("ru").format('DD MMMM YYYY')} и не сделал ни одного заказа
+                          с ${dayjs(this.state.date_start).subtract(90, 'day').locale("ru").format('DD MMMM YYYY')} по ${dayjs(this.state.date_start).locale("ru").format('DD MMMM YYYY')}
+                          и сделали заказ в промежутке с ${dayjs(this.state.date_end).locale("ru").format('DD MMMM YYYY')} по ${dayjs(new Date()).locale("ru").subtract(1, 'year').format('DD MMMM YYYY')}`} arrow>
+                        <Chip
+                          label="?"
+                          size="small"
+                          sx={{ ml: 1, fontWeight: 500, cursor: 'default' }}
+                        />
+                      </Tooltip>
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                  
+
                     <TableRow>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.fakeUsers.lost_users ? this.state.fakeUsers.lost_users : 0}</TableCell>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.fakeUsers.ret_users ? this.state.fakeUsers.ret_users : 0}</TableCell>
                       <TableCell style={{ textAlign: 'center' }}>{this.state.fakeUsers.ret_users_more ? this.state.fakeUsers.ret_users_more : 0}</TableCell>
                     </TableRow>
 
-                    
+
                   </TableBody>
                 </Table>
               </TableContainer>
 
                  <Grid container spacing={3}>
-                   
-                    <Grid style={{ marginTop: 20, marginBottom: 200}} item xs={12} sm={4}> 
+
+                    <Grid style={{ marginTop: 20, marginBottom: 200}} item xs={12} sm={4}>
                         <h2 style={{ textAlign: 'center' }}>Рейтинг роллов </h2>
                         <h5 style={{ textAlign: 'center', cursor: 'pointer' }} onClick={this.showStat.bind(this, 'roll')} >Показать/Скрыть</h5>
                         {this.state.show_stat_roll != true ? null :
@@ -1847,7 +1885,7 @@ class SiteStatMarc_ extends React.Component {
                         }
                     </Grid>
 
-                     <Grid style={{ marginTop: 20, marginBottom: 200 }} item  xs={12} sm={4}> 
+                     <Grid style={{ marginTop: 20, marginBottom: 200 }} item  xs={12} sm={4}>
                         <h2 style={{ textAlign: 'center' }}>Рейтинг Пиццы</h2>
                         <h5 style={{ textAlign: 'center', cursor: 'pointer' }} onClick={this.showStat.bind(this, 'pizza')}>Показать/Скрыть</h5>
                         {this.state.show_stat_pizza != true ? null :
