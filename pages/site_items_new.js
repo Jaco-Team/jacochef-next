@@ -593,14 +593,6 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 								className={this.state.itemView ? this.state.itemView.date_start?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
-							<MyTextInput
-								label="по"
-								value={this.state.itemView ? this.state.itemView.date_end?.color ? this.state.itemView.date_end.key : this.state.itemView.date_end : ''}
-								disabled={true}
-								className={this.state.itemView ? this.state.itemView.date_end?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
-							/>
-						</Grid>
 						<Grid item xs={12} sm={12}>
 							<MyTextInput
 								label="Состав"
@@ -770,7 +762,6 @@ class SiteItems_Modal_History extends React.Component {
 									<TableCell style={{width: '2%'}}>#</TableCell>
 									<TableCell style={{width: '19%'}}>Наименование</TableCell>
 									<TableCell style={{width: '18%'}}>Действует с</TableCell>
-									<TableCell style={{width: '18%'}}>по</TableCell>
 									<TableCell style={{width: '18%'}}>Дата редактирования</TableCell>
 									<TableCell style={{width: '20%'}}>Редактор</TableCell>
 									<TableCell style={{width: '5%'}}>Просмотр</TableCell>
@@ -783,7 +774,6 @@ class SiteItems_Modal_History extends React.Component {
 										<TableCell>{key + 1}</TableCell>
 										<TableCell>{it.name}</TableCell>
 										<TableCell>{it.date_start}</TableCell>
-										<TableCell>{it.date_end}</TableCell>
 										<TableCell>{it.date_update}</TableCell>
 										<TableCell>{it.user}</TableCell>
 										<TableCell style={{cursor: 'pointer'}} onClick={this.props.openModalHistoryView.bind(this, key)}><TextSnippetOutlinedIcon/></TableCell>
@@ -812,7 +802,7 @@ class SiteItems_Modal_Mark extends React.Component {
 		parallelUploads: 10,
 		acceptedFiles: 'image/jpeg,image/png',
 		addRemoveLinks: true,
-		url: 'https://jacochef.ru/src/img/site_img/upload_img_new.php',
+		url: 'https://apichef.jacochef.ru/api/site_setting/upload_banner',
 	};
 
 	myDropzoneNew = null;
@@ -842,9 +832,69 @@ class SiteItems_Modal_Mark extends React.Component {
 		};
 	}
 
-	componentDidUpdate(prevProps) {
-		//console.log(this.props.item);
+	// Метод для валидации размеров изображения
+	validateImageSize = (file, done) => {
+		const allowedSizes = [
+			{ width: 600, height: 400 },
+			{ width: 300, height: 200 }
+		];
 
+		// Создаем изображение для проверки размеров
+		const img = new Image();
+		img.src = URL.createObjectURL(file);
+
+		img.onload = () => {
+			URL.revokeObjectURL(img.src); // Очищаем память
+
+			const isValid = allowedSizes.some(size =>
+				img.width === size.width && img.height === size.height
+			);
+
+			if (isValid) {
+				done(); // Файл принят
+				this.setState({ dropzoneError: '' }); // Очищаем ошибку
+			} else {
+				// Формируем сообщение об ошибке
+				const allowedSizesText = allowedSizes.map(size =>
+					`${size.width}x${size.height}`
+				).join(' или ');
+
+				const errorMsg = `Неверный размер изображения. Допустимые размеры: ${allowedSizesText}. Ваше изображение: ${img.width}x${img.height}`;
+				this.setState({
+					openAlert: true,
+					err_status: true,
+					err_text: errorMsg,
+				});
+
+				done(errorMsg); // Отклоняем файл
+				this.setState({
+					dropzoneError: errorMsg,
+					openAlert: true,
+					err_status: false,
+					err_text: errorMsg
+				});
+			}
+		};
+
+		img.onerror = () => {
+			URL.revokeObjectURL(img.src);
+			const errorMsg = 'Не удалось прочитать изображение';
+			this.setState({
+					openAlert: true,
+					err_status: true,
+					err_text: errorMsg,
+				});
+			done(errorMsg);
+			this.setState({
+				dropzoneError: errorMsg,
+				openAlert: true,
+				err_status: false,
+				err_text: errorMsg
+			});
+		};
+	}
+
+	componentDidUpdate(prevProps) {
 		if (!this.props.item) {
 			return;
 		}
@@ -913,9 +963,10 @@ class SiteItems_Modal_Mark extends React.Component {
 				weight: this.props.item.weight,
 				stol: this.props.item.stol,
 				type: this.props.item.type,
+				type_save: 'mark',
 			};
 
-			const res = await this.props.getData('save_edit_mark', data);
+			const res = await this.props.getData('save_edit', data);
 
 			if (res.st === false) {
 
@@ -940,8 +991,9 @@ class SiteItems_Modal_Mark extends React.Component {
 							file_type = file_type[file_type.length - 1];
 							file_type = file_type.toLowerCase();
 
-							data.append("typeFile", type);
-							data.append("name", name);
+							data.append("type", 'mini');
+							data.append("name", name + 'site_items');
+							data.append("login", localStorage.getItem('token'));
 							data.append("id", id);
 						});
 
@@ -1053,23 +1105,15 @@ class SiteItems_Modal_Mark extends React.Component {
 								<MyDatePickerNew
 									label="Действует с"
 									value={this.state.date_start}
-									disabled={!this.props.acces?.date_start}
+									disabled={!this.props.acces?.date_start_edit}
 									func={this.changeDateRange.bind(this, 'date_start')}
-								/>
-							</Grid>
-							<Grid item xs={12} sm={3}>
-								<MyDatePickerNew
-									label="по"
-									value={this.state.date_end}
-									disabled={!this.props.acces?.date_end}
-									func={this.changeDateRange.bind(this, 'date_end')}
 								/>
 							</Grid>
 							<Grid item xs={12} sm={12}>
 								<MyTextInput
 									label="Состав"
 									value={this.state.tmp_desc}
-									disabled={!this.props.acces?.tmp_desc}
+									disabled={!this.props.acces?.tmp_desc_edit}
 									func={this.changeItem.bind(this, 'tmp_desc')}
 									multiline={true}
 									maxRows={3}
@@ -1079,7 +1123,7 @@ class SiteItems_Modal_Mark extends React.Component {
 								<MyTextInput
 									label="Короткое описание (в карточке)"
 									value={this.state.marc_desc}
-									disabled={!this.props.acces?.marc_desc}
+									disabled={!this.props.acces?.marc_desc_edit}
 									func={this.changeItem.bind(this, 'marc_desc')}
 									multiline={true}
 									maxRows={3}
@@ -1089,7 +1133,7 @@ class SiteItems_Modal_Mark extends React.Component {
 								<MyTextInput
 									label="Полное описание (в карточке)"
 									value={this.state.marc_desc_full}
-									disabled={!this.props.acces?.marc_desc_full}
+									disabled={!this.props.acces?.marc_desc_full_edit}
 									func={this.changeItem.bind(this, 'marc_desc_full')}
 									multiline={true}
 									maxRows={3}
@@ -1099,7 +1143,7 @@ class SiteItems_Modal_Mark extends React.Component {
 								<MyCheckBox
 									label="На кассе"
 									value={parseInt(this.state.show_program) == 1 ? true : false}
-									disabled={!this.props.acces?.show_program}
+									disabled={!this.props.acces?.show_program_edit}
 									func={this.changeItemChecked.bind(this, 'show_program')}
 								/>
 							</Grid>
@@ -1107,7 +1151,7 @@ class SiteItems_Modal_Mark extends React.Component {
 								<MyCheckBox
 									label="Новинка"
 									value={parseInt(this.state.is_new) == 1 ? true : false}
-									disabled={!this.props.acces?.is_new}
+									disabled={!this.props.acces?.is_new_edit}
 									func={this.changeItemChecked.bind(this, 'is_new')}
 								/>
 							</Grid>
@@ -1116,7 +1160,7 @@ class SiteItems_Modal_Mark extends React.Component {
 								<MyCheckBox
 									label="На сайте и КЦ"
 									value={parseInt(this.state.show_site) == 1 ? true : false}
-									disabled={!this.props.acces?.show_site}
+									disabled={!this.props.acces?.show_site_edit}
 									func={this.changeItemChecked.bind(this, 'show_site')}
 								/>
 							</Grid>
@@ -1124,7 +1168,7 @@ class SiteItems_Modal_Mark extends React.Component {
 								<MyCheckBox
 									label="Хит"
 									value={parseInt(this.state.is_hit) == 1 ? true : false}
-									disabled={!this.props.acces?.is_hit}
+									disabled={!this.props.acces?.is_hit_edit}
 									func={this.changeItemChecked.bind(this, 'is_hit')}
 								/>
 							</Grid>
@@ -1132,29 +1176,15 @@ class SiteItems_Modal_Mark extends React.Component {
 							<Grid item xs={12}>
 								<Grid container spacing={3}>
 									<Grid item xs={12}>
-										<Typography>Картинка соотношением сторон (1:1) (пример: 2000х2000) только JPG</Typography>
+										<Typography>Картинка соотношением сторон 600х400 или 300х200 только JPG</Typography>
 									</Grid>
 
 									{this.state.img_app.length > 0 ? (
 										<Grid item xs={12} sm={6}>
-											<picture>
-												<source
-													srcSet={`https://storage.yandexcloud.net/site-img/${this.state.img_app}_276x276.jpg 138w, 
-                                    https://storage.yandexcloud.net/site-img/${this.state.img_app}_292x292.jpg 146w,
-                                    https://storage.yandexcloud.net/site-img/${this.state.img_app}_366x366.jpg 183w,
-                                    https://storage.yandexcloud.net/site-img/${this.state.img_app}_466x466.jpg 233w,
-                                    https://storage.yandexcloud.net/site-img/${this.state.img_app}_585x585.jpg 292w
-                                    https://storage.yandexcloud.net/site-img/${this.state.img_app}_732x732.jpg 366w,
-                                    https://storage.yandexcloud.net/site-img/${this.state.img_app}_1168x1168.jpg 584w,
-                                    https://storage.yandexcloud.net/site-img/${this.state.img_app}_1420x1420.jpg 760w,
-                                    https://storage.yandexcloud.net/site-img/${this.state.img_app}_2000x2000.jpg 1875w`}
-													sizes="(max-width=1439px) 233px, (max-width=1279px) 218px, 292px"
-												/>
 												<img
-													style={{maxHeight: 300}}
-													src={`https://storage.yandexcloud.net/site-img/${this.state.img_app}_276x276.jpg`}
+													style={{maxHeight: 300, maxWidth: 400}}
+													src={`https://storage.yandexcloud.net/site-home-img/${this.state.img_app}site_items_600x400.jpg?date_update=${this.props.item.date_update}`}
 												/>
-											</picture>
 										</Grid>
 									) : null}
 									<Grid item xs={12} sm={6}>
@@ -1164,7 +1194,7 @@ class SiteItems_Modal_Mark extends React.Component {
 											style={{
 												width: '100%',
 												minHeight: 150,
-												...(!this.props.acces?.dropzone ? {
+												...(!this.props.acces?.dropzone_edit ? {
 													pointerEvents: 'none',
 													cursor: 'not-allowed',
 													filter: 'grayscale(50%)'
@@ -1699,7 +1729,7 @@ class SiteItems_Modal_Tech extends React.Component {
 							<Grid item xs={12} sm={4}>
 								<MyTextInput
 									label="Наименование"
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.name}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.name_edit}
 									value={this.state.name}
 									func={this.changeItem.bind(this, 'name')}
 								/>
@@ -1708,23 +1738,15 @@ class SiteItems_Modal_Tech extends React.Component {
 								<MyDatePickerNew
 									label="Действует с"
 									value={this.state.date_start}
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.date_start}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.date_start_edit}
 									func={this.changeDateRange.bind(this, 'date_start')}
-								/>
-							</Grid>
-							<Grid item xs={12} sm={2}>
-								<MyDatePickerNew
-									label="по"
-									value={this.state.date_end}
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.date_end}
-									func={this.changeDateRange.bind(this, 'date_end')}
 								/>
 							</Grid>
 							<Grid item xs={12} sm={4}>
 								<MyTextInput
 									label="Код 1С"
 									value={this.state.art}
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.art}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.art_edit}
 									func={this.changeItem.bind(this, 'art')}
 								/>
 							</Grid>
@@ -1733,7 +1755,7 @@ class SiteItems_Modal_Tech extends React.Component {
 									is_none={false}
 									data={category}
 									value={this.state.category_id}
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.category_id}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.category_id_edit}
 									func={this.changeSelect.bind(this, 'category_id')}
 									label="Категория"
 								/>
@@ -1741,7 +1763,7 @@ class SiteItems_Modal_Tech extends React.Component {
 							<Grid item xs={12} sm={2}>
 								<MyTextInput
 									label="Кусочков или размер"
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.count_part}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.count_part_edit}
 									value={this.state.count_part}
 									func={this.changeItem.bind(this, 'count_part')}
 								/>
@@ -1750,7 +1772,7 @@ class SiteItems_Modal_Tech extends React.Component {
 								<MyTextInput
 									label="Стол"
 									value={this.state.stol}
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.stol}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.stol_edit}
 									func={this.changeItem.bind(this, 'stol')}
 								/>
 							</Grid>
@@ -1758,14 +1780,14 @@ class SiteItems_Modal_Tech extends React.Component {
 								<MyTextInput
 									label="Вес"
 									value={this.state.weight}
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.weight}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.weight_edit}
 									func={this.changeItem.bind(this, 'weight')}
 								/>
 							</Grid>
 							<Grid item xs={12} sm={3}>
 								<MyCheckBox
 									label="Установить цену"
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.is_price}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.is_price_edit}
 									value={parseInt(this.state.is_price) == 1 ? true : false}
 									func={this.changeItemChecked.bind(this, 'is_price')}
 								/>
@@ -1773,7 +1795,7 @@ class SiteItems_Modal_Tech extends React.Component {
 							<Grid item xs={12} sm={3}>
 								<MyCheckBox
 									label="Активность"
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.is_show}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.is_show_edit}
 									value={parseInt(this.state.is_show) == 1 ? true : false}
 									func={this.changeItemChecked.bind(this, 'is_show')}
 								/>
@@ -1783,7 +1805,7 @@ class SiteItems_Modal_Tech extends React.Component {
 								<MyTextInput
 									label="Белки"
 									value={this.state.protein}
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.protein}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.protein_edit}
 									func={this.changeItem.bind(this, 'protein')}
 								/>
 							</Grid>
@@ -1791,7 +1813,7 @@ class SiteItems_Modal_Tech extends React.Component {
 								<MyTextInput
 									label="Жиры"
 									value={this.state.fat}
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.fat}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.fat_edit}
 									func={this.changeItem.bind(this, 'fat')}
 								/>
 							</Grid>
@@ -1799,7 +1821,7 @@ class SiteItems_Modal_Tech extends React.Component {
 								<MyTextInput
 									label="Углеводы"
 									value={this.state.carbohydrates}
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.carbohydrates}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.carbohydrates_edit}
 									func={this.changeItem.bind(this, 'carbohydrates')}
 								/>
 							</Grid>
@@ -1808,7 +1830,7 @@ class SiteItems_Modal_Tech extends React.Component {
 								<MyTextInput
 									label="Время на 1 этап"
 									value={this.state.time_stage_1}
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.time_stage_1}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.time_stage_1_edit}
 									func={this.changeItem.bind(this, 'time_stage_1')}
 								/>
 							</Grid>
@@ -1816,7 +1838,7 @@ class SiteItems_Modal_Tech extends React.Component {
 								<MyTextInput
 									label="Время на 2 этап"
 									value={this.state.time_stage_2}
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.time_stage_2}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.time_stage_2_edit}
 									func={this.changeItem.bind(this, 'time_stage_2')}
 								/>
 							</Grid>
@@ -1824,7 +1846,7 @@ class SiteItems_Modal_Tech extends React.Component {
 								<MyTextInput
 									label="Время на 3 этап"
 									value={this.state.time_stage_3}
-									disabled={method !== 'Новое блюдо' && !this.props.acces?.time_stage_3}
+									disabled={method !== 'Новое блюдо' && !this.props.acces?.time_stage_3_edit}
 									func={this.changeItem.bind(this, 'time_stage_3')}
 								/>
 							</Grid>
@@ -2263,7 +2285,7 @@ class SiteItems_Modal_Tech extends React.Component {
 						</Grid>
 					</DialogContent>
 					<DialogActions>
-						<Button variant="contained" onClick={this.save.bind(this)}>
+						<Button variant="contained" onClick={this.save.bind(this)} disabled={method !== 'Новое блюдо' && !this.props.acces?.name_edit}>
 							Сохранить
 						</Button>
 					</DialogActions>
@@ -2368,7 +2390,7 @@ class SiteItems_ extends React.Component {
 		super(props);
 
 		this.state = {
-			module: 'site_items',
+			module: 'site_items_new',
 			module_name: '',
 			is_load: false,
 
@@ -2409,15 +2431,11 @@ class SiteItems_ extends React.Component {
 
 	async componentDidMount() {
 		const data = await this.getData('get_all');
-		const result = Object.keys(data.acces).reduce((acc, key) => {
-			acc[key] = parseInt(data.acces[key], 10);
-			return acc;
-		}, {});
 
 		this.setState({
 			module_name: data.module_info.name,
 			cats: data.cats,
-			acces: result,
+			acces: data.acces,
 			user_app: data.user_app,
 			timeUpdate: new Date(),
 		});
@@ -2703,15 +2721,16 @@ class SiteItems_ extends React.Component {
 			pf_stage_3,
 			rec_stage_1,
 			rec_stage_2,
-			rec_stage_3
+			rec_stage_3,
+			type_save: 'tech',
 		}
 
 		let res;
 
 		if (method === 'Новое блюдо') {
-			res = await this.getData('save_new_tech', data);
+			res = await this.getData('save_new', data);
 		} else {
-			res = await this.getData('save_edit_tech', data);
+			res = await this.getData('save_edit', data);
 		}
 
 		if (res.st) {

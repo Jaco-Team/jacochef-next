@@ -482,7 +482,7 @@ class SkladItemsModule_Modal extends React.Component {
 								<MyTextInput
 									label="Название товара"
 									value={this.state.itemEdit ? this.state.itemEdit.item.name : ''}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.name}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.name_edit}
 									func={this.changeItem.bind(this, 'name')}
 								/>
 							</Grid>
@@ -492,7 +492,7 @@ class SkladItemsModule_Modal extends React.Component {
 									multiple={false}
 									data={this.state.itemEdit ? this.state.itemEdit.cats : []}
 									value={this.state.itemEdit ? this.state.itemEdit.item.cat_id === '0' ? '' : this.state.itemEdit.item.cat_id : ''}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.cats}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.cats_edit}
 									func={(event, value) => {
 										let this_storages = this.state.itemEdit;
 										this_storages.item.cat_id = value;
@@ -505,7 +505,7 @@ class SkladItemsModule_Modal extends React.Component {
 									data={this.state.itemEdit ? this.state.itemEdit.ed_izmer : []}
 									value={this.state.itemEdit ? this.state.itemEdit.item.ed_izmer_id === '0' ? '' : this.state.itemEdit.item.ed_izmer_id : ''}
 									func={this.changeItem.bind(this, 'ed_izmer_id')}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.ed_izmer}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.ed_izmer_edit}
 									label="Ед измер"
 									is_none={false}
 								/>
@@ -514,15 +514,23 @@ class SkladItemsModule_Modal extends React.Component {
 								<MyTextInput
 									label="Максимальное количество заказов в месяц (0 - без ограничений)"
 									value={this.state.itemEdit ? this.state.itemEdit.item.max_count_in_m : ''}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.max_count_in_m}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.max_count_in_m_edit}
 									func={this.changeItem.bind(this, 'max_count_in_m')}
+								/>
+							</Grid>
+							<Grid item xs={12} sm={3.5}>
+								<MyTextInput
+									label="Маркетинговое название"
+									value={this.state.itemEdit ? this.state.itemEdit.item.mark_name : ''}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.mark_name_edit}
+									func={this.changeItem.bind(this, 'mark_name')}
 								/>
 							</Grid>
 							<Grid item xs={12} sm={3.5}>
 								<MyTextInput
 									label="Название товара для поставщика"
 									value={this.state.itemEdit ? this.state.itemEdit.item.name_for_vendor : ''}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.name_for_vendor}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.name_for_vendor_edit}
 									func={this.changeItem.bind(this, 'name_for_vendor')}
 								/>
 							</Grid>
@@ -530,7 +538,7 @@ class SkladItemsModule_Modal extends React.Component {
 								<MyTextInput
 									label="Количество в упаковке"
 									value={this.state.itemEdit ? this.state.itemEdit.item.pq : ''}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.pq}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.pq_edit}
 									func={this.changeItem.bind(this, 'pq')}
 								/>
 							</Grid>
@@ -538,7 +546,7 @@ class SkladItemsModule_Modal extends React.Component {
 								<MyTextInput
 									label="% заявки"
 									value={this.state.itemEdit ? this.state.itemEdit.item.percent : ''}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.percent}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.percent_edit}
 									func={this.changeItem.bind(this, 'percent')}
 								/>
 							</Grid>
@@ -546,7 +554,7 @@ class SkladItemsModule_Modal extends React.Component {
 								<MyTextInput
 									label="Разрешенный % повышения ценника"
 									value={this.state.itemEdit ? this.state.itemEdit.item.vend_percent : ''}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.vend_percent}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.vend_percent_edit}
 									func={this.changeItem.bind(this, 'vend_percent')}
 								/>
 							</Grid>
@@ -554,7 +562,7 @@ class SkladItemsModule_Modal extends React.Component {
 								<MyTextInput
 									label="Код для 1с"
 									value={this.state.itemEdit ? this.state.itemEdit.item.art : ''}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.art}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.art_edit}
 									func={this.changeItem.bind(this, 'art')}
 								/>
 							</Grid>
@@ -562,7 +570,7 @@ class SkladItemsModule_Modal extends React.Component {
 								<MyTextInput
 									label="Минимальный остаток"
 									value={this.state.itemEdit ? this.state.itemEdit.item.min_count : ''}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.min_count}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.min_count_edit}
 									func={this.changeItem.bind(this, 'min_count')}
 								/>
 							</Grid>
@@ -573,7 +581,7 @@ class SkladItemsModule_Modal extends React.Component {
 									multiple={false}
 									data={this.state.itemEdit ? this.state.itemEdit.pf_list : []}
 									value={this.state.itemEdit ? this.state.itemEdit.item.pf_id === '0' ? '' : this.state.itemEdit.item.pf_id : ''}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.pf_list}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.pf_list_edit}
 									func={(event, value) => {
 										let this_storages = this.state.itemEdit;
 										this_storages.item.pf_id = value;
@@ -588,7 +596,7 @@ class SkladItemsModule_Modal extends React.Component {
 									multiple={true}
 									data={this.state.itemEdit ? this.state.itemEdit.allergens : []}
 									value={this.state.itemEdit ? this.state.itemEdit.item.my_allergens : ''}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.allergens}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.allergens_edit}
 									func={(event, value) => {
 										let this_storages = this.state.itemEdit;
 										this_storages.item.my_allergens = value;
@@ -603,7 +611,7 @@ class SkladItemsModule_Modal extends React.Component {
 									multiple={true}
 									data={this.state.itemEdit ? this.state.itemEdit.allergens : []}
 									value={this.state.itemEdit ? this.state.itemEdit.item.my_allergens_other : ''}
-									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.my_allergens_other}
+									disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.my_allergens_other_edit}
 									func={(event, value) => {
 										let this_storages = this.state.itemEdit;
 										this_storages.item.my_allergens_other = value;
@@ -621,7 +629,7 @@ class SkladItemsModule_Modal extends React.Component {
 											multiple={true}
 											data={this.state.itemEdit ? this.state.itemEdit.storages : []}
 											value={this.state.itemEdit ? this.state.itemEdit.this_storages : ''}
-											disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.this_storages}
+											disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.this_storages_edit}
 											func={(event, value) => {
 												let this_storages = {...this.state.itemEdit};
 												this_storages.this_storages = value;
@@ -642,7 +650,7 @@ class SkladItemsModule_Modal extends React.Component {
 													label="Должность в кафе"
 													data={this.state.itemEdit ? this.state.itemEdit.apps : []}
 													value={this.state.itemEdit ? this.state.itemEdit.item.app_id : ''}
-													disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.apps}
+													disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.apps_edit}
 													func={this.changeItem.bind(this, 'app_id')}
 													is_none={false}
 												/>
@@ -651,7 +659,7 @@ class SkladItemsModule_Modal extends React.Component {
 												<MyTextInput
 													label="Время ММ:SS (15:20)"
 													value={this.state.itemEdit ? this.state.itemEdit.item.time_min_other : ''}
-													disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.time_min_other}
+													disabled={this.props.method === 'Редактирование товара' && !this.props.acces?.time_min_other_edit}
 													func={this.changeItem.bind(this, 'time_min_other')}
 													placeholder="00:00"
 												/>
@@ -733,7 +741,7 @@ class SkladItemsModule_ extends React.Component {
 		super(props);
 
 		this.state = {
-			module: 'sklad_items_module',
+			module: 'sklad_items_module_new',
 			module_name: '',
 			is_load: false,
 
@@ -772,17 +780,13 @@ class SkladItemsModule_ extends React.Component {
 
 	async componentDidMount() {
 		const data = await this.getData('get_all');
-		const resultObject = data.acces.reduce((acc, item) => {
-			acc[item.param] = parseInt(item.value, 10);
-			return acc;
-		}, {});
 
 		this.setState({
 			module_name: data.module_info.name,
 			cats: data.cats,
 			freeItems: data.items_free,
 			unusedItems: data.unused_items,
-			acces: resultObject
+			acces: data.acces
 		});
 
 		document.title = data.module_info.name;

@@ -119,6 +119,7 @@ export class MyAutocomplite extends React.PureComponent {
           options={this.props.data ?? []}
           getOptionLabel={(option) => option?.name || ''}
           disableClearable={this.props.disableClearable}
+          getOptionKey={this.props.getOptionKey}
           value={this.props.value}
           onChange={this.props.func}
           filterSelectedOptions
@@ -132,7 +133,7 @@ export class MyAutocomplite extends React.PureComponent {
             />
           ))}
           renderOption={(props, option) => (
-            <li {...props} key={option.id}>
+            <li {...props} key={this.props.optionKey ? option[`${this.props.optionKey}`] : option.id}>
               {option.name}
             </li>
           )}
