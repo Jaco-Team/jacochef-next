@@ -248,7 +248,10 @@ class SiteSale2_edit_ extends React.Component {
       once_number: false,
       for_registred: false,
 
-      created: ''
+      created: '',
+
+      for_number: false,
+      for_number_text: '',
     };
   }
   
@@ -336,7 +339,10 @@ class SiteSale2_edit_ extends React.Component {
         once_number: parseInt(res.promo.once_number) == 1 ? true : false,
         for_registred: parseInt(res.promo.for_registred) == 1 ? true : false,
 
-        created: res.created
+        created: res.created,
+
+        for_number: parseInt(res.promo.for_number) == 1 ? true : false,
+        for_number_text: res.promo.for_number_text,
       })
     }, 300 )
     
@@ -428,7 +434,9 @@ class SiteSale2_edit_ extends React.Component {
 
         for_new: this.state.for_new ? 1 : 0,
         once_number: this.state.once_number ? 1 : 0,
-        for_registred: this.state.for_registred ? 1 : 0
+        for_registred: this.state.for_registred ? 1 : 0,
+        for_number: this.state.for_number ? 1 : 0,
+        for_number_text: this.state.for_number_text
       };
       
       let res = await this.getData('save_edit_promo', data);
@@ -716,6 +724,7 @@ class SiteSale2_edit_ extends React.Component {
     let for_new = this.state.for_new;
     let once_number = this.state.once_number;
     let for_registred = this.state.for_registred;
+    let for_number = this.state.for_number;
 
     let textFalse = 'Промокод действует c '+dateStart+' до '+dateEnd+' с '+this.state.time_start+' до '+this.state.time_end+dop_text;
     
@@ -729,6 +738,10 @@ class SiteSale2_edit_ extends React.Component {
 
     if( once_number === true ){
       textFalse += " Можно применить 1 раз.";
+    }
+
+    if( for_number === true ){
+      textFalse += " Привязан к номеру телефона.";
     }
 
     this.setState({
@@ -848,6 +861,17 @@ class SiteSale2_edit_ extends React.Component {
             <Grid item xs={12} sm={3}>
               <MyCheckBox value={this.state.for_registred} func={ this.changeDataCheck.bind(this, 'for_registred') } label='Только для зарегистрированных клиентов' />
             </Grid>
+            <Grid item xs={12} sm={3}>
+              <MyCheckBox value={this.state.for_number} func={ this.changeDataCheck.bind(this, 'for_number') } label='Привязан к номеру телефона' />
+            </Grid>
+            
+          </Grid>
+
+          <Grid container style={{ paddingTop: 20 }} spacing={3}>
+            
+            {this.state.for_number && <Grid item xs={3}>
+              <MyTextInput value={this.state.for_number_text} func={ this.changeData.bind(this, 'for_number_text') } label='Номер телефона' />
+            </Grid>}
             
           </Grid>
           
