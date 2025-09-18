@@ -16,7 +16,6 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
 import Paper from '@mui/material/Paper';
-import PropTypes from 'prop-types';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
@@ -44,7 +43,7 @@ import {
 
 import {ExlIcon} from '@/ui/icons';
 
-import {api_laravel, api_laravel_local} from '@/src/api_new';
+import {api_laravel} from '@/src/api_new';
 import dayjs from 'dayjs';
 import SiteClientsOrdersByUtmTable from '@/components/site_clients/SiteClientsOrdersByUtmTable';
 import SiteClientsOrdersBySourceTable from '@/components/site_clients/SiteClientsOrdersBySourceTable';
@@ -56,37 +55,10 @@ import SiteClients_Modal_Client_Order from "@/components/site_clients/_SiteClien
 import SiteClients_Modal_Client from "@/components/site_clients/_SiteClientsModalClient";
 import Clients from "@/components/site_clients/_Clients";
 import OrdersMore from "@/components/site_clients/_OrdersMore";
-
-function TabPanel(props) {
-	const {children, value, index, ...other} = props;
-
-	return (
-		<div
-			role="tabpanel"
-			hidden={value !== index}
-			id={`simple-tabpanel-${index}`}
-			aria-labelledby={`simple-tab-${index}`}
-			{...other}
-		>
-			{value === index && (
-				<Box sx={{p: 3}}>{children}</Box>
-			)}
-		</div>
-	);
-}
-
-TabPanel.propTypes = {
-	children: PropTypes.node,
-	index: PropTypes.number.isRequired,
-	value: PropTypes.number.isRequired,
-};
-
-function a11yProps(index) {
-	return {
-		id: `simple-tab-${index}`,
-		'aria-controls': `simple-tabpanel-${index}`,
-	};
-}
+import a11yProps from '@/components/shared/TabPanel/a11yProps';
+import TabPanel from '@/components/shared/TabPanel/TabPanel';
+import handleUserAccess from '@/src/helpers/access/handleUserAccess';
+import SiteClientsMarketingTab from '@/components/site_clients/marketing/SiteClientsMarketingTab';
 
 class SiteClients_ extends React.Component {
 
@@ -180,6 +152,7 @@ class SiteClients_ extends React.Component {
 			index_orders: -1,
 			index_address: -1,
 			index_traffic: -1,
+			index_marketing: -1,
 			tabs_data: [],
 
 			address_list: '',
@@ -234,7 +207,7 @@ class SiteClients_ extends React.Component {
 				if (method === 'export_file_xls') {
 					return result;
 				} else {
-					return result.data;
+					return result?.data;
 				}
 
 			})
@@ -261,39 +234,46 @@ class SiteClients_ extends React.Component {
 		}
 	}
 
+	canAccess(key) {
+		const {userCan} = handleUserAccess(this.state.acces);
+		return userCan('access', key)
+	}
+
 	getTabIndex() {
 		const acces = this.state.acces;
 
-		let tabs_data = [];
+		const tabs_data = [];
 
 		for (let key in acces) {
 
-			console.log(key);
+			if (this.canAccess(key)) {
 
-			if (parseInt(acces[key])) {
-
-				if (key === 'search_clients_access' && parseInt(acces[key]) == 1) {
+				if (key === 'search_clients') {
 					tabs_data.push({key, 'name': "Поиск клиента"});
 				}
 
-				if (key === 'search_orders_access' && parseInt(acces[key]) == 1) {
+				if (key === 'search_orders') {
 					tabs_data.push({key, 'name': "Поиск заказов"});
 				}
 
-				if (key === 'find_orders_more_access' && parseInt(acces[key]) == 1) {
+				if (key === 'find_orders_more') {
 					tabs_data.push({key, 'name': "Поиск заказов расширенный"});
 				}
 
-				if (key === 'find_clients_access' && parseInt(acces[key]) == 1) {
+				if (key === 'find_clients') {
 					tabs_data.push({key, 'name': "Поиск клиентов"});
 				}
 
-				if (key === 'search_address_access' && parseInt(acces[key]) == 1) {
+				if (key === 'search_address') {
 					tabs_data.push({key, 'name': "Заказы по адресам"});
 				}
 
-				if (key === 'source_traffic_access' && parseInt(acces[key]) == 1) {
+				if (key === 'source_traffic') {
 					tabs_data.push({key, 'name': "Аналитика по оформленным заказам"});
+				}
+
+				if (key === 'marketing_data') {
+					tabs_data.push({key, 'name': "Маркетинговая аналитика"});
 				}
 
 			}
@@ -301,40 +281,45 @@ class SiteClients_ extends React.Component {
 
 		tabs_data.forEach((item, index) => {
 
-
-			if (item.key === 'search_clients_access') {
+			if (item.key === 'search_clients') {
 				this.setState({
 					index_clients: index
 				});
 			}
 
-			if (item.key === 'find_orders_more_access') {
+			if (item.key === 'find_orders_more') {
 				this.setState({
 					index_order_more: index
 				});
 			}
 
-			if (item.key === 'find_clients_access') {
+			if (item.key === 'find_clients') {
 				this.setState({
 					index_search_clients: index
 				});
 			}
 
-			if (item.key === 'search_orders_access') {
+			if (item.key === 'search_orders') {
 				this.setState({
 					index_orders: index
 				});
 			}
 
-			if (item.key === 'search_address_access') {
+			if (item.key === 'search_address') {
 				this.setState({
 					index_address: index
 				});
 			}
 
-			if (item.key === 'source_traffic_access') {
+			if (item.key === 'source_traffic') {
 				this.setState({
 					index_traffic: index
+				});
+			}
+
+			if (item.key === 'marketing_data') {
+				this.setState({
+					index_marketing: index
 				});
 			}
 
@@ -431,11 +416,7 @@ class SiteClients_ extends React.Component {
 
 		if (select_toggle === 'city' && !city_id.length) {
 
-			this.setState({
-				openAlert: true,
-				err_status: false,
-				err_text: 'Необходимо выбрать город'
-			});
+			this.showAlert('Необходимо выбрать город', false);
 
 			return null;
 
@@ -445,11 +426,7 @@ class SiteClients_ extends React.Component {
 
 			if (!point_id.length) {
 
-				this.setState({
-					openAlert: true,
-					err_status: false,
-					err_text: 'Необходимо выбрать точку'
-				});
+				this.showAlert('Необходимо выбрать точку', false);
 
 				return null;
 
@@ -473,11 +450,7 @@ class SiteClients_ extends React.Component {
 			if (number.length > 0 || order.length > 0 || items.length > 0 || addr.length > 0 || promo.length > 0) {
 
 			} else {
-				this.setState({
-					openAlert: true,
-					err_status: false,
-					err_text: 'Необходимо указать дату или что-то кроме нее'
-				});
+				this.showAlert('Необходимо указать дату или что-то кроме нее', false);
 
 				return null;
 			}
@@ -525,11 +498,7 @@ class SiteClients_ extends React.Component {
 
 		if (!search || search.length < 4) {
 
-			this.setState({
-				openAlert: true,
-				err_status: false,
-				err_text: 'Необходимо указать минимум 4 цифры из номера телефона'
-			});
+			this.showAlert('Необходимо указать минимум 4 цифры из номера телефона', false);
 
 			return;
 		}
@@ -540,30 +509,17 @@ class SiteClients_ extends React.Component {
 
 		const res = await this.getData('get_clients', data);
 
-		if (res.st) {
+		if (res?.st) {
 
-			if (!res.clients.length) {
-
-				this.setState({
-					openAlert: true,
-					err_status: false,
-					err_text: 'Клиенты с таким номером не найдены'
-				});
-
+			if (!res.clients?.length) {
+				this.showAlert('Клиенты с таким номером не найдены', false);
 			}
-
 			this.setState({
 				clients: res.clients
 			});
 
 		} else {
-
-			this.setState({
-				openAlert: true,
-				err_status: res.st,
-				err_text: res.text,
-			});
-
+			this.showAlert(res?.text || 'Error', false);
 		}
 
 	}
@@ -576,18 +532,15 @@ class SiteClients_ extends React.Component {
 
 		const res = await this.getData('get_orders', data);
 
-		if (res.search_orders.length) {
+		if (res?.search_orders?.length) {
 
 			this.setState({
 				search_orders: res.search_orders
 			});
 
 		} else {
-
+			this.showAlert('Заказы с заданными параметрами не найдены', false);
 			this.setState({
-				openAlert: true,
-				err_status: false,
-				err_text: 'Заказы с заданными параметрами не найдены',
 				search_orders: []
 			});
 
@@ -668,25 +621,18 @@ class SiteClients_ extends React.Component {
 	async saveEdit(data) {
 		const res = await this.getData('save_edit_client', data);
 
-		if (res.st) {
+
+		if (res?.st) {
 
 			const login = this.state.client_login;
 
-			this.setState({
-				openAlert: true,
-				err_status: res.st,
-				err_text: res.text,
-			});
+			this.showAlert(res.text, res.st);
 
 			this.openModalClient(login, 'update');
 
 		} else {
 
-			this.setState({
-				openAlert: true,
-				err_status: res.st,
-				err_text: res.text,
-			});
+			this.showAlert(res?.text || 'Error', false);
 
 		}
 	}
@@ -694,46 +640,31 @@ class SiteClients_ extends React.Component {
 	async saveComment(data) {
 		const res = await this.getData('save_comment', data);
 
-		if (res.st) {
-
+		if (res?.st) {
+			
+			this.showAlert(res.text, res.st);
 			this.setState({
-				openAlert: true,
-				err_status: res.st,
-				err_text: res.text,
 				comments: res.client_comments,
 			});
 
 		} else {
-
-			this.setState({
-				openAlert: true,
-				err_status: res.st,
-				err_text: res.text,
-			});
-
+			this.showAlert(res?.text || 'Error', false);
 		}
 	}
 
 	async saveCommentAction(data) {
 		const res = await this.getData('save_action', data);
 
-		if (res.st) {
-
+		if (res?.st) {
+			this.showAlert(res.text, res.st);
 			this.setState({
-				openAlert: true,
-				err_status: res.st,
-				err_text: res.text,
 				comments: res.client_comments,
 				modalDialogAction: false
 			});
 
 		} else {
 
-			this.setState({
-				openAlert: true,
-				err_status: res.st,
-				err_text: res.text,
-			});
+			this.showAlert(res?.text || 'Error', false);
 
 		}
 	}
@@ -760,22 +691,15 @@ class SiteClients_ extends React.Component {
 
 		const res = await this.getData('get_code', data);
 
-		if (res.st) {
-
+		if (res?.st) {
+			this.showAlert(res.text, res.st);
 			this.setState({
-				openAlert: true,
-				err_status: res.st,
-				err_text: res.text,
 				login_sms: res.client_login_sms,
 			});
 
 		} else {
 
-			this.setState({
-				openAlert: true,
-				err_status: res.st,
-				err_text: res.text,
-			});
+			this.showAlert(res?.text || 'Error', false);
 
 		}
 	}
@@ -808,7 +732,7 @@ class SiteClients_ extends React.Component {
 			return;
 		}
 
-		if ((!date_start && !date_end) || !date_start || !date_end) {
+		if (!date_start || !date_end) {
 
 			this.setState({
 				openAlert: true,
@@ -839,7 +763,7 @@ class SiteClients_ extends React.Component {
 
 		const res = await this.getData('get_data_address', data);
 
-		if (res.orders.length || res.addresses.length) {
+		if (res?.orders?.length || res?.addresses?.length) {
 
 			this.setState({
 				orders_list: res.orders,
@@ -888,7 +812,7 @@ class SiteClients_ extends React.Component {
 
 		const res = await this.getData('get_traffic', data);
 
-		if (res.st) {
+		if (res?.st) {
 			this.setState({
 				traffic_stats: res.stats,
 				traffic_sources: res.sources,
@@ -896,11 +820,7 @@ class SiteClients_ extends React.Component {
 				orders_by_utm: res.orders_by_utm,
 			});
 		} else {
-			this.setState({
-				openAlert: true,
-				err_status: false,
-				err_text: 'За период нет статистики',
-			});
+			this.showAlert('За период нет статистики', false);
 		}
 
 	}
@@ -941,7 +861,6 @@ class SiteClients_ extends React.Component {
 					city_id: [],
 				});
 			}
-
 		}
 	};
 
@@ -950,6 +869,23 @@ class SiteClients_ extends React.Component {
 			[type]: event.target.checked
 		})
 	}
+
+	showAlert = (text, status) => {
+		this.setState({
+			openAlert: true,
+			err_text: text,
+			err_status: status
+		});
+		setTimeout(() => {
+			this.setState({
+				openAlert: false
+			});
+		}, 10000);
+	}
+
+	canAccess = (property) => handleUserAccess(this.state.acces)?.userCan('access', property);
+	canView = (property) => handleUserAccess(this.state.acces)?.userCan('view', property);
+	canEdit = (property) => handleUserAccess(this.state.acces)?.userCan('edit', property);
 
 	render() {
 		return (
@@ -1014,7 +950,8 @@ class SiteClients_ extends React.Component {
 							<Tabs
 								value={this.state.activeTab}
 								onChange={this.changeTab.bind(this)}
-								variant={this.state.fullScreen ? 'scrollable' : 'fullWidth'}
+								// variant={this.state.fullScreen ? 'scrollable' : 'fullWidth'}
+								variant='scrollable'
 								scrollButtons={false}
 							>
 								{this.state.tabs_data?.map((item, index) => {
@@ -1304,8 +1241,8 @@ class SiteClients_ extends React.Component {
 									</Button>
 								</Grid>
 
-								{!parseInt(this.state.acces?.download_file_access) ? null :
-									!this.state.search_orders.length ? null :
+								{this.canAccess('download_file') &&
+									this.state.search_orders?.length > 0 &&
 										<Grid item xs={12} sm={2} x={{display: 'flex', alignItems: 'center'}}>
 											<Tooltip title={<Typography color="inherit">{'Скачать таблицу в Excel'}</Typography>}>
 												<IconButton disableRipple sx={{padding: 0}} onClick={this.downLoad.bind(this)}>
@@ -1764,6 +1701,25 @@ class SiteClients_ extends React.Component {
 						</TabPanel>
 					</Grid>
 					{/* Аналитика по заказам */}
+
+					{/* Маркетинговая Аналитика */}
+										{/* Поиск заказов расширенный */}
+					<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
+						<TabPanel
+							value={this.state.activeTab}
+							index={this.state.index_marketing}
+							id='marketing'
+						>
+							<SiteClientsMarketingTab
+								points={this.state.points}
+								getData={this.getData.bind(this)}
+								showAlert={this.showAlert.bind(this)}
+								canAccess={this.canAccess.bind(this)}
+							/>
+						</TabPanel>
+					</Grid>
+					{/* Поиск заказов расширенный */}
+					{/* Маркетинговая Аналитика */}
 
 				</Grid>
 			</>

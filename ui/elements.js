@@ -122,6 +122,7 @@ export class MyAutocomplite extends React.PureComponent {
           getOptionKey={this.props.getOptionKey}
           value={this.props.value}
           onChange={this.props.func}
+          onBlur={this.props.onBlur || undefined}
           filterSelectedOptions
           multiple={ this.props.multiple && this.props.multiple === true ? true : false }
           isOptionEqualToValue={this.props.isOptionEqualToValue || ((option, value) => parseInt(option?.id) === parseInt(value?.id)) }

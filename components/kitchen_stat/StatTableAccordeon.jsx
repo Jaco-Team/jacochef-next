@@ -11,7 +11,7 @@ import {
   Stack,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExcelIcon from "@/components/shared/ExcelIcon";
+import ExcelIcon from "@/ui/ExcelIcon";
 import DownloadButton from "@/components/shared/DownloadButton";
 
 export default function StatTableAccordeon(props) {

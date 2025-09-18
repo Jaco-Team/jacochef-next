@@ -26,7 +26,7 @@ import { api_laravel_local, api_laravel } from "@/src/api_new";
 import dayjs from "dayjs";
 
 import StatTableAccordeon from "@/components/kitchen_stat/StatTableAccordeon";
-import ExcelIcon from "@/components/shared/ExcelIcon";
+import ExcelIcon from "@/ui/ExcelIcon";
 import DownloadButton from "@/components/shared/DownloadButton";
 import { Box, Stack } from "@mui/material";
 
