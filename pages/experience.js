@@ -71,7 +71,7 @@ class Experience_Modal_Cloth extends React.Component {
       });
     }
   }
- 
+
   changeName(index, event) {
     let listCloth = this.state.listCloth;
 
@@ -415,8 +415,8 @@ class Experience_Modal_User extends React.Component {
               <TabPanel value={'1'} style={{ padding: '24px 0' }}>
                 <Grid container spacing={3}>
                   <Grid item xs={12} sm={4} display="flex" justifyContent="center">
-                    {this.state.item ? 
-                      this.state.item.photo ? 
+                    {this.state.item ?
+                      this.state.item.photo ?
                         <img src={this.state.item.photo} style={{ width: '100%', height: 'auto' }}/>
                         : 'Фото отсутствует' : 'Фото отсутствует'}
                   </Grid>
@@ -459,7 +459,7 @@ class Experience_Modal_User extends React.Component {
                       {this.state.setEdit ? (
                         <Grid display="flex" flexDirection="row">
                           <Grid mr={2}>
-                            <MyDatePickerNew 
+                            <MyDatePickerNew
                               label="Изменить датy"
                               value={dayjs(this.state.item?.date_registration ?? '')}
                               func={this.changeDateRange.bind(this, 'registration', 0, 0)}
@@ -509,7 +509,7 @@ class Experience_Modal_User extends React.Component {
                                   func={this.changeDateRange.bind(this, 'list', item.type, 0)}
                                 />
                               </TableCell>
-                              <TableCell 
+                              <TableCell
                                 style={{ backgroundColor: item.change ? item.change === 'daysOver' ? '#c03' : '#ffcc00' : null,
                                   color: item.change ? item.change === 'daysOver' ? '#fff' : null : null }}>
                                 {item.end}
@@ -631,6 +631,8 @@ class Experience_ extends React.Component {
       openAlert: false,
       err_status: true,
       err_text: '',
+      apps: [],
+      app: {},
 
       listData: [
         { type: 'type_2', name: 'Отоларинголог' },
@@ -672,6 +674,8 @@ class Experience_ extends React.Component {
       point,
       points: data.points,
       pointsCopy: data.points,
+      apps: data.apps,
+      app: data.apps.find((app) => app.id === -2),
       cities: data.cities,
       module_name: data.module_info.name,
     });
@@ -696,7 +700,7 @@ class Experience_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
-          
+
     this.setState({
       is_load: true,
     });
@@ -730,22 +734,22 @@ class Experience_ extends React.Component {
 
   changePoint = (event, newValue, reason, details) => {
     const clicked = details?.option;
-  
+
     if (reason === 'clear') {
       this.setState({ point: [] });
       return;
     }
-  
+
     if (reason === 'removeOption') {
       this.setState({ point: newValue });
       return;
     }
-  
+
     if (reason === 'selectOption' && (clicked.id === -1 || clicked.id === -2)) {
       this.setState({ point: [clicked] });
       return;
     }
-   
+
     const normalPoints = newValue.filter(p => p.id > 0);
     this.setState({ point: normalPoints });
   }
@@ -762,19 +766,20 @@ class Experience_ extends React.Component {
 
       return;
     }
-    
+
     const data = {
       point_id: point,
+      app: this.state.app,
     };
 
     let res = await this.getData('get_info', data);
 
     res.users.sort((a, b) => new Date(a.date_registration) - new Date(b.date_registration));
 
-    this.setState({ 
+    this.setState({
       stat: res.stat,
-      users: res.users, 
-      stat_of: res.stat_of, 
+      users: res.users,
+      stat_of: res.stat_of,
     });
   }
 
@@ -915,7 +920,7 @@ class Experience_ extends React.Component {
       });
 
     }
-    
+
   }
 
   async saveListClothUser(data) {
@@ -942,6 +947,12 @@ class Experience_ extends React.Component {
       });
 
     }
+  }
+
+  changeAutocomplite(data, event, value) {
+    this.setState({
+      [data]: value,
+    });
   }
 
   render() {
@@ -987,7 +998,7 @@ class Experience_ extends React.Component {
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={3}>
             <MySelect
               label="Город"
               is_none={false}
@@ -997,7 +1008,7 @@ class Experience_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={3}>
             <MyAutocomplite
               label="Точки"
               multiple={true}
@@ -1007,7 +1018,17 @@ class Experience_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={3}>
+            <MyAutocomplite
+              label="Должность"
+              multiple={false}
+              data={this.state.apps}
+              value={this.state.app}
+              func={this.changeAutocomplite.bind(this, 'app')}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={2}>
             <Button variant="contained" onClick={this.getInfo.bind(this)} sx={{ whiteSpace: 'nowrap' }}>
               Обновить данные
             </Button>
