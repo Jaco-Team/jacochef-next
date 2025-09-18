@@ -37,6 +37,8 @@ import Tooltip from "@mui/material/Tooltip";
 import Chip from "@mui/material/Chip";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Box from "@mui/material/Box";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
 
 class SiteUserManagerTable extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -66,6 +68,7 @@ class SiteUserManagerTable extends React.Component {
               <TableCell>Телефон</TableCell>
               <TableCell>Имя</TableCell>
               <TableCell>Должность</TableCell>
+              <TableCell align="center">Трудоустройство</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -84,6 +87,7 @@ class SiteUserManagerTable extends React.Component {
                 <TableCell>{item.login}</TableCell>
                 <TableCell>{item.name}</TableCell>
                 <TableCell>{item.app_name}</TableCell>
+                <TableCell align="center">{ parseInt(item.acc_to_kas) == 1 ? <CheckIcon style={{ color: 'green' }} /> : <CloseIcon style={{ color: 'red' }} /> }</TableCell>
               </TableRow>
             ))}
           </TableBody>
