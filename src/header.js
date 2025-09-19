@@ -33,12 +33,138 @@ import Cookies from 'js-cookie';
 
 import {font} from "@/src/theme";
 import {api_laravel, api_laravel_local} from "@/src/api_new";
-import {Attachment} from "@mui/icons-material";
+import {AccountCircle, Attachment, Dashboard, ExitToApp, Person} from "@mui/icons-material";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import {
+	Menu,
+	MenuItem,
+} from '@mui/material';
+import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import {useRouter} from "next/router";
+
+const UserMenu = ({my,logOut}) => {
+	const [anchorEl, setAnchorEl] = useState(null);
+	const router = useRouter();
+	const handleMenuOpen = (event) => {
+		setAnchorEl(event.currentTarget);
+	};
+
+	const handleMenuClose = () => {
+		setAnchorEl(null);
+	};
+
+	const handleNavigation = (path) => {
+		// Навигация по страницам
+		handleMenuClose();
+		router.push(path);
+	};
+
+	return (
+		<>
+			<IconButton color="inherit" onClick={handleMenuOpen}>
+				<Badge color="secondary">
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: 1.5,
+							padding: 1,
+							borderRadius: 1,
+							'&:hover': {
+								backgroundColor: 'action.hover',
+							}
+						}}
+					>
+						{my.img ? (
+							<Avatar
+								alt={my.short_name}
+								src={`https://storage.yandexcloud.net/user-img/min-img/${my.img}?${my.img_update}`}
+								sx={{
+									width: 38,
+									height: 38,
+									border: theme => `2px solid ${theme.palette.background.paper}`,
+									boxShadow: 1
+								}}
+							/>
+						) : (
+							<Avatar
+								sx={{
+									width: 38,
+									height: 38,
+									bgcolor: 'primary.main',
+									border: theme => `2px solid ${theme.palette.background.paper}`,
+									boxShadow: 1
+								}}
+							>
+								<AccountCircle sx={{width: 24, height: 24}}/>
+							</Avatar>
+						)}
+
+						<Typography
+							variant="body1"
+							sx={{
+								fontWeight: 500,
+								maxWidth: 200,
+								overflow: 'hidden',
+								textOverflow: 'ellipsis',
+								whiteSpace: 'nowrap',
+							}}
+						>
+							{my.short_name}
+						</Typography>
+						<KeyboardArrowDownIcon sx={{width: 24, height: 24}}/>
+					</Box>
+				</Badge>
+			</IconButton>
+
+			<Menu
+				anchorEl={anchorEl}
+				open={Boolean(anchorEl)}
+				onClose={handleMenuClose}
+				PaperProps={{
+					elevation: 3,
+					sx: {
+						mt: 1.5,
+						minWidth: 200,
+						borderRadius: 2
+					}
+				}}
+				transformOrigin={{horizontal: 'right', vertical: 'top'}}
+				anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
+			>
+				<MenuItem onClick={() => handleNavigation('/lk')}>
+					<ListItemIcon>
+						<Person fontSize="small"/>
+					</ListItemIcon>
+					<ListItemText>Личный кабинет</ListItemText>
+				</MenuItem>
+
+				<MenuItem onClick={() => handleNavigation('/work_schedule')}>
+					<ListItemIcon>
+						<Dashboard fontSize="small"/>
+					</ListItemIcon>
+					<ListItemText>График работы</ListItemText>
+				</MenuItem>
+				<Divider/>
+				<MenuItem onClick={logOut}>
+					<ListItemIcon>
+						<ExitToApp fontSize="small"/>
+					</ListItemIcon>
+					<ListItemText>Выйти</ListItemText>
+				</MenuItem>
+			</Menu>
+		</>
+	);
+};
 
 export default function Header() {
 	const [isOpenMenu, setIsOpenMenu] = useState(false);
 	const [CatMenu, setCatMenu] = useState([]);
 	const [FullMenu, setFullMenu] = useState([]);
+	const [my, setMy] = useState({});
 
 	function openMenu() {
 		setIsOpenMenu(state => !state);
@@ -53,9 +179,10 @@ export default function Header() {
 
 		if (response?.data?.st === true) {
 			setCatMenu(response?.data?.left_menu);
+			setMy(response?.data?.my);
 			setFullMenu(response?.data?.full_menu.filter((item, index, self) =>
-  index === self.findIndex(t => t.name === item.name)
-));
+				index === self.findIndex(t => t.name === item.name)
+			));
 		}
 
 	}
@@ -106,11 +233,7 @@ export default function Header() {
 					<Typography component="h1" variant="h6" color="inherit" noWrap style={{flexGrow: 1}}>
 						Dashboard
 					</Typography>
-					<IconButton color="inherit">
-						<Badge badgeContent={4} color="secondary">
-							<NotificationsIcon/>
-						</Badge>
-					</IconButton>
+					<UserMenu my={my} logOut={logOut}/>
 				</Toolbar>
 			</AppBar>
 
