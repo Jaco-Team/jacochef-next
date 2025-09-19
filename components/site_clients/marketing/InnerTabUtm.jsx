@@ -8,6 +8,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
@@ -20,35 +21,6 @@ import dayjs from "dayjs";
 import useXLSExport from "@/src/hooks/useXLSXExport";
 import ExcelIcon from "@/ui/ExcelIcon";
 
-// config
-const utmStatsColumns = [
-  { label: "Источник (utm_source)", key: "utm_source" },
-  { label: "Тип (utm_medium)", key: "utm_medium" },
-  { label: "Кампания (utm_campaign)", key: "utm_campaign" },
-  { label: "ID (utm_content)", key: "utm_content" },
-  { label: "Ключевое слово (utm_term)", key: "utm_term" },
-  {
-    key: "orders",
-    label: "Все заказы",
-    format: (row) => (row.orders ? row.orders.length : 0),
-  },
-  {
-    key: "new",
-    label: "Новые",
-    format: (row) => (row.orders ? row.orders.filter((o) => o.is_new).length : 0),
-  },
-  {
-    key: "old",
-    label: "Повторные",
-    format: (row) => (row.orders ? row.orders.filter((o) => !o.is_new).length : 0),
-  },
-  {
-    key: "promo",
-    label: "С промо",
-    format: (row) => (row.orders ? row.orders.filter((o) => o.promo_id).length : 0),
-  },
-];
-
 function InnerTabUtm({ getData, showAlert }) {
   const { dateStart, dateEnd, points, setPage } = useMarketingTabStore();
 
@@ -57,8 +29,8 @@ function InnerTabUtm({ getData, showAlert }) {
   const exportXLSX = useXLSExport();
 
   // stats sorting state
-  const [sortBy, setSortBy] = useState("utm_source"); // by utmStatsColumns.key
-  const [sortDir, setSortDir] = useState("asc");
+  const [sortBy, setSortBy] = useState("orders"); // by utmStatsColumns.key
+  const [sortDir, setSortDir] = useState("desc");
 
   const getUtmStats = async () => {
     if (!points.length || !dateStart || !dateEnd) {
@@ -76,14 +48,14 @@ function InnerTabUtm({ getData, showAlert }) {
         return;
       }
       setPage(1);
-      setUtmStats(resData.stats || null);
+      setUtmStats(sortUtmStats(resData.stats, sortBy, sortDir));
     } catch (e) {
       showAlert(`Ошибка при загрузке статистики utm: ${e.message}`, false);
     }
   };
 
   const sortUtmStats = (data, sortBy, sortDir) => {
-    return data.slice().sort((a, b) => {
+    return data?.slice().sort((a, b) => {
       let valA, valB;
 
       // Columns that are arrays → sort by length
@@ -113,6 +85,10 @@ function InnerTabUtm({ getData, showAlert }) {
     setUtmStats(sorted);
   }
 
+  // pagination
+  const [page, setLocalPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
+
   const debouncedGetOrdersStats = useDebounce(getUtmStats, 500);
   useEffect(() => {
     debouncedGetOrdersStats();
@@ -122,7 +98,7 @@ function InnerTabUtm({ getData, showAlert }) {
     <>
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
         <IconButton
-          style={{ cursor: "pointer", padding: 20 }}
+          style={{ cursor: "pointer", padding: 10 }}
           onClick={() => exportXLSX(utmStats, utmStatsColumns, "utm-stats.xlsx")}
           title="Экспортировать в Excel"
         >
@@ -130,7 +106,6 @@ function InnerTabUtm({ getData, showAlert }) {
         </IconButton>
       </Box>
       <TableContainer
-        wfull
         sx={{
           maxHeight: "70dvh",
         }}
@@ -152,7 +127,7 @@ function InnerTabUtm({ getData, showAlert }) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {utmStats?.map((group, key) => {
+            {utmStats?.slice((page - 1) * perPage, page * perPage)?.map((group, key) => {
               const orders = group["orders"] || [];
               const newOrders = orders?.filter((o) => o.is_new);
               const oldOrders = orders?.filter((o) => !o.is_new);
@@ -162,11 +137,10 @@ function InnerTabUtm({ getData, showAlert }) {
                   <TableCell>{group.utm_source}</TableCell>
                   <TableCell>
                     <Typography
-                      noWrap
                       sx={{
                         maxWidth: 150,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        // overflow: "hidden",
+                        // textOverflow: "ellipsis",
                         wordBreak: "break-all",
                       }}
                       title={group.utm_medium}
@@ -176,11 +150,10 @@ function InnerTabUtm({ getData, showAlert }) {
                   </TableCell>
                   <TableCell>
                     <Typography
-                      noWrap
                       sx={{
                         maxWidth: 150,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        // overflow: "hidden",
+                        // textOverflow: "ellipsis",
                         wordBreak: "break-all",
                       }}
                       title={group.utm_campaign}
@@ -190,11 +163,10 @@ function InnerTabUtm({ getData, showAlert }) {
                   </TableCell>
                   <TableCell>
                     <Typography
-                      noWrap
                       sx={{
                         maxWidth: 150,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        // overflow: "hidden",
+                        // textOverflow: "ellipsis",
                         wordBreak: "break-all",
                       }}
                       title={group.utm_content}
@@ -207,13 +179,10 @@ function InnerTabUtm({ getData, showAlert }) {
                       // noWrap
                       sx={{
                         maxWidth: 200,
-                        // overflow: "hidden",
-                        // textOverflow: "ellipsis",
                         wordBreak: "break-all",
                       }}
                       title={group.utm_term}
                     >
-                      {/* {group.utm_term.slice(-25)} */}
                       {group.utm_term}
                     </Typography>
                   </TableCell>
@@ -247,6 +216,23 @@ function InnerTabUtm({ getData, showAlert }) {
           </TableBody>
         </Table>
       </TableContainer>
+      <TablePagination
+        rowsPerPageOptions={[10, 50, 100, 300]}
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
+        labelRowsPerPage="Строк на странице:"
+        component="div"
+        count={utmStats?.length ?? 0}
+        rowsPerPage={perPage}
+        page={page - 1}
+        onPageChange={(_, newPage) => {
+          setLocalPage(newPage + 1);
+        }}
+        onRowsPerPageChange={(event) => {
+          const newPerPage = parseInt(event.target.value, 10);
+          setPerPage(newPerPage);
+          setLocalPage(1);
+        }}
+      />
     </>
   ) : (
     <Typography>Нет данных</Typography>
@@ -254,3 +240,32 @@ function InnerTabUtm({ getData, showAlert }) {
 }
 
 export default memo(InnerTabUtm);
+
+// config
+const utmStatsColumns = [
+  { label: "Источник (utm_source)", key: "utm_source" },
+  { label: "Тип (utm_medium)", key: "utm_medium" },
+  { label: "Кампания (utm_campaign)", key: "utm_campaign" },
+  { label: "ID (utm_content)", key: "utm_content" },
+  { label: "Ключевое слово (utm_term)", key: "utm_term" },
+  {
+    key: "orders",
+    label: "Все заказы",
+    format: (row) => (row.orders ? row.orders.length : 0),
+  },
+  {
+    key: "new",
+    label: "Новые",
+    format: (row) => (row.orders ? row.orders.filter((o) => o.is_new).length : 0),
+  },
+  {
+    key: "old",
+    label: "Повторные",
+    format: (row) => (row.orders ? row.orders.filter((o) => !o.is_new).length : 0),
+  },
+  {
+    key: "promo",
+    label: "С промо",
+    format: (row) => (row.orders ? row.orders.filter((o) => o.promo_id).length : 0),
+  },
+];

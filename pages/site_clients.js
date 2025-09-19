@@ -1715,6 +1715,8 @@ class SiteClients_ extends React.Component {
 								getData={this.getData.bind(this)}
 								showAlert={this.showAlert.bind(this)}
 								canAccess={this.canAccess.bind(this)}
+								isLoading={this.state.is_load}
+								setIsLoading={(loading) => this.setState({ is_load: loading })}
 							/>
 						</TabPanel>
 					</Grid>

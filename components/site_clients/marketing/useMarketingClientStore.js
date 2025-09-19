@@ -13,17 +13,6 @@ const useMarketingClientStore = create((set, get) => ({
   setClientLoading: (clientLoading) => set({ clientLoading }),
   setClientModalOpened: (clientModalOpened) => set({ clientModalOpened }),
 
-  setClientInfoProp: (key, value) => {
-    set((state) => ({
-      client: {
-        ...state.client,
-        info: {
-          ...state.client.info,
-          [key]: value,
-        },
-      },
-    }));
-  },
   setClientLoginSms: (record) => {
     set((state) => ({
       client: {
@@ -32,33 +21,7 @@ const useMarketingClientStore = create((set, get) => ({
       },
     }));
   },
-  /**
-   * update bd by part
-   * @param {'day'|'month'} part
-   * @param {number} value
-   */
-  setClientBd: (part, value) => {
-    let newDateBir = null;
-    console.log(`BD ${part} setting to ${value}`);
-    if (part) {
-      const oldBdParts = (get().client?.client_info?.date_bir ?? "1970-00-00").split("-");
-      console.log(`BD was ${oldBdParts.join('-')}`)
-      const newBdParts = [...oldBdParts];
-      newBdParts[part === "day" ? 2 : 1] = String(value ?? 0).padStart(2, "0");
-      console.log(`BD is now ${newBdParts.join('-')}`);
-      newDateBir = newBdParts.join("-");
-    }
 
-    set((state) => ({
-      client: {
-        ...state.client,
-        client_info: {
-          ...state.client.client_info,
-          date_bir: newDateBir,
-        },
-      },
-    }));
-  },
   setClientHistory: (history) => {
     set((state) => ({
       client: {
@@ -70,3 +33,18 @@ const useMarketingClientStore = create((set, get) => ({
 }));
 
 export default useMarketingClientStore;
+
+const months = [
+  { id: 1, name: "января" },
+  { id: 2, name: "февраля" },
+  { id: 3, name: "марта" },
+  { id: 4, name: "апреля" },
+  { id: 5, name: "мая" },
+  { id: 6, name: "июня" },
+  { id: 7, name: "июля" },
+  { id: 8, name: "августа" },
+  { id: 9, name: "сентября" },
+  { id: 10, name: "октября" },
+  { id: 11, name: "ноября" },
+  { id: 12, name: "декабря" },
+];

@@ -11,6 +11,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
@@ -29,11 +30,15 @@ const InnerTabPromo = ({ getData, showAlert }) => {
   const exportXLSX = useXLSExport();
 
   // stats sorting state
-  const [sortBy, setSortBy] = useState("utm_source"); // by utmStatsColumns.key
-  const [sortDir, setSortDir] = useState("asc");
+  const [sortBy, setSortBy] = useState("orders"); // by promoStatsColumns.key
+  const [sortDir, setSortDir] = useState("desc");
+
+  // pagination
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
 
   const sortPromoStats = (data, sortBy, sortDir) => {
-    return data.slice().sort((a, b) => {
+    return data?.slice().sort((a, b) => {
       let valA, valB;
 
       // Columns that are arrays → sort by length
@@ -80,7 +85,7 @@ const InnerTabPromo = ({ getData, showAlert }) => {
     }
     setOrders(null);
     resetFilters();
-    setPromoStats(resData.promo_stats);
+    setPromoStats(sortPromoStats(resData.promo_stats, sortBy, sortDir));
   };
 
   const debouncedGetStats = useDebounce(getPromoStats, 500);
@@ -90,7 +95,7 @@ const InnerTabPromo = ({ getData, showAlert }) => {
     <>
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
         <IconButton
-          style={{ cursor: "pointer", padding: 20 }}
+          style={{ cursor: "pointer", padding: 10 }}
           onClick={() => exportXLSX(promoStats, promoStatsColumns, "promo-stats.xlsx")}
           title="Экспортировать в Excel"
         >
@@ -98,9 +103,9 @@ const InnerTabPromo = ({ getData, showAlert }) => {
         </IconButton>
       </Box>
       <TableContainer
-        wfull
+        hfull
         sx={{
-          maxHeight: "70dvh",
+          maxHeight: "55dvh",
         }}
       >
         <Table stickyHeader>
@@ -120,7 +125,7 @@ const InnerTabPromo = ({ getData, showAlert }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {promoStats?.map((promo, key) => (
+            {promoStats?.slice((page - 1) * perPage, page * perPage).map((promo, key) => (
               <TableRow key={+promo || key}>
                 <TableCell>{promo.promo_name}</TableCell>
                 <TableCell>
@@ -146,11 +151,28 @@ const InnerTabPromo = ({ getData, showAlert }) => {
           </TableBody>
         </Table>
       </TableContainer>
+      <TablePagination
+        rowsPerPageOptions={[10, 50, 100, 300]}
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
+        labelRowsPerPage="Строк на странице:"
+        component="div"
+        count={promoStats?.length ?? 0}
+        rowsPerPage={perPage}
+        page={page - 1}
+        onPageChange={(_, newPage) => {
+          setPage(newPage + 1);
+        }}
+        onRowsPerPageChange={(event) => {
+          const newPerPage = parseInt(event.target.value, 10);
+          setPerPage(newPerPage);
+          setPage(1);
+        }}
+      />
     </>
   ) : (
     <Typography>Нет данных</Typography>
   );
-}
+};
 export default memo(InnerTabPromo);
 
 const promoStatsColumns = [

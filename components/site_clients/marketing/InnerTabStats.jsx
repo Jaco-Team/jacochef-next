@@ -6,6 +6,7 @@ import SiteClientsMarketingStatCard from "./SiteClientsMarketingStatCard";
 import useMarketingTabStore from "./useMarketingTabStore";
 import dayjs from "dayjs";
 import { useDebounce } from "@/src/hooks/useDebounce";
+import { useLoading } from "./useClientsLoadingContext";
 
 const InnerTabStats = ({ getData, showAlert }) => {
   const {
@@ -23,6 +24,8 @@ const InnerTabStats = ({ getData, showAlert }) => {
     sliceReset,
     setOrders,
   } = useMarketingTabStore();
+
+  const { setIsLoading } = useLoading();
 
   const getStats = async () => {
     if (!points.length || !dateStart || !dateEnd) {
@@ -64,6 +67,7 @@ const InnerTabStats = ({ getData, showAlert }) => {
               value={stats?.total_orders}
               bgcolor="#1976d2"
               onClick={async () => {
+                setIsLoading(true);
                 sliceReset();
                 setOrderIds(null);
                 setIsModalOpen(true);
@@ -81,6 +85,7 @@ const InnerTabStats = ({ getData, showAlert }) => {
               value={stats?.online_orders}
               bgcolor="#5e8f65ff"
               onClick={() => {
+                setIsLoading(true);
                 sliceOnline();
                 setOrderIds(null);
                 setIsModalOpen(true);
@@ -98,6 +103,7 @@ const InnerTabStats = ({ getData, showAlert }) => {
               value={stats?.offline_orders}
               bgcolor="#8a5b35ff"
               onClick={() => {
+                setIsLoading(true);
                 sliceOnline("offline");
                 setOrderIds(null);
                 setIsModalOpen(true);
@@ -115,6 +121,7 @@ const InnerTabStats = ({ getData, showAlert }) => {
               value={stats?.promo_orders}
               bgcolor="#61dd34ff"
               onClick={() => {
+                setIsLoading(true);
                 slicePromo();
                 setOrderIds(null);
                 setIsModalOpen(true);
@@ -132,6 +139,7 @@ const InnerTabStats = ({ getData, showAlert }) => {
               value={stats?.new_clients}
               bgcolor="#d219b9ff"
               onClick={() => {
+                setIsLoading(true);
                 sliceNew();
                 setOrderIds(null);
                 setIsModalOpen(true);
@@ -149,6 +157,7 @@ const InnerTabStats = ({ getData, showAlert }) => {
               value={stats?.old_clients}
               bgcolor="#312a9dff"
               onClick={() => {
+                setIsLoading(true);
                 sliceNew("old");
                 setOrderIds(null);
                 setIsModalOpen(true);

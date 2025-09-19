@@ -4,10 +4,14 @@ import {
   Badge,
   Box,
   Button,
+  CircularProgress,
+  ClickAwayListener,
   Collapse,
+  FormControlLabel,
   IconButton,
   InputAdornment,
-  Stack,
+  Radio,
+  RadioGroup,
   Table,
   TableBody,
   TableCell,
@@ -21,11 +25,11 @@ import {
 import dayjs from "dayjs";
 import { memo, useEffect, useState } from "react";
 import useMarketingTabStore, { defaultFilters } from "./useMarketingTabStore";
-import { ChildCare, Clear, FilterAlt, FilterAltOff, Sort, SwapVert } from "@mui/icons-material";
+import { Clear, FilterAlt, FilterAltOff, Sort, SwapVert } from "@mui/icons-material";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import ExcelIcon from "@/ui/ExcelIcon";
 import DownloadButton from "@/components/shared/DownloadButton";
-import Link from "next/link";
+import { useLoading } from "./useClientsLoadingContext";
 
 function SiteClientsMarketingOrdersTable({
   openOrder,
@@ -48,6 +52,8 @@ function SiteClientsMarketingOrdersTable({
     resetFilters,
     toggleSortDir,
   } = useMarketingTabStore();
+
+  const { isLoading, setIsLoading } = useLoading();
 
   const handleSort = (key) => {
     if (filters.sortBy === key) {
@@ -85,7 +91,6 @@ function SiteClientsMarketingOrdersTable({
       slices,
       setOrders,
       setTotal,
-      setLoadingOrders,
     } = useMarketingTabStore.getState();
     try {
       if (!points.length || !dateStart || !dateEnd) {
@@ -95,8 +100,8 @@ function SiteClientsMarketingOrdersTable({
         showAlert("Дата начала должна быть перед датой окончания", false);
         return;
       }
+      setIsLoading(true);
       setOrders(null);
-      setLoadingOrders(true);
       setTotal(0);
       const resData = await getData("get_marketing_orders", {
         points: points,
@@ -119,7 +124,7 @@ function SiteClientsMarketingOrdersTable({
     } catch (e) {
       showAlert(`Ошибка при загрузке заказов: ${e.message}`, false);
     } finally {
-      setLoadingOrders(false);
+      setIsLoading(false);
     }
   };
 
@@ -151,13 +156,15 @@ function SiteClientsMarketingOrdersTable({
   };
 
   // effects
-  const debouncedGetOrders = useDebounce(getOrders, 500);
+  const debouncedGetOrders = useDebounce(getOrders, 700);
 
   useEffect(() => {
     debouncedGetOrders();
-  }, [orderIds, page, perPage, filters, slices]);
+  }, [filters, page, perPage, slices, orderIds]);
 
-  return (
+  return isLoading ? (
+    <CircularProgress />
+  ) : (
     <>
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
         <DownloadButton
@@ -177,7 +184,6 @@ function SiteClientsMarketingOrdersTable({
       </Box>
       <TableContainer
         {...restAttrs}
-        wfull
         sx={{
           maxHeight: "70dvh", // adjust to fit Dialog
         }}
@@ -209,6 +215,7 @@ function SiteClientsMarketingOrdersTable({
                           sx={{
                             transform: filters.sortDir === "asc" ? "scaleY(-1)" : "none",
                             transition: "transform 0.2s ease",
+                            color: "primary.main",
                           }}
                           fontSize="small"
                         />
@@ -219,9 +226,13 @@ function SiteClientsMarketingOrdersTable({
                     {defaultFilters.hasOwnProperty(col.key) && (
                       <IconButton
                         size="small"
-                        title={`${
-                          col.title ? `${col.title}. ` : ""
-                        }*: не пустые, -*: пустые, abc, -abc, "a b c", -"a b c"`}
+                        title={
+                          col.filterType !== "boolean"
+                            ? `${
+                                col.title ? `${col.title}, ` : ""
+                              }*: не пустые, -*: пустые, abc, -abc, "a b c", -"a b c"`
+                            : ""
+                        }
                         onClick={(e) => {
                           e.stopPropagation();
                           handleToggleFilter(col.key);
@@ -249,36 +260,60 @@ function SiteClientsMarketingOrdersTable({
                       zIndex: 3,
                     }}
                   >
-                    <Box
-                      px={1}
-                      pb={1}
-                    >
-                      <TextField
-                        size="small"
-                        variant="outlined"
-                        sx={{ backgroundColor: "white" }}
-                        placeholder="Содержит..."
-                        value={filters[col.key] || ""}
-                        onChange={(e) => setFiltersItem(col.key, e.target.value)}
-                        onBlur={() => handleToggleFilter(col.key, false)}
-                        autoFocus
-                        fullWidth
-                        InputProps={{
-                          endAdornment: filters[col.key] && (
-                            <InputAdornment position="end">
-                              <IconButton
-                                size="small"
-                                onClick={() => setFiltersItem(col.key, "")}
-                                edge="end"
-                                aria-label="Очистить"
-                              >
-                                <Clear fontSize="small" />
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    </Box>
+                    <ClickAwayListener onClickAway={() => handleToggleFilter(col.key, false)}>
+                      <Box
+                        px={1}
+                        pb={1}
+                        onMouseLeave={() => handleToggleFilter(col.key, false)}
+                      >
+                        {col.filterType === "boolean" ? (
+                          <RadioGroup
+                            row
+                            value={filters[col.key] ?? ""}
+                            onChange={(e) => setFiltersItem(col.key, e.target.value)}
+                            onBlur={() => handleToggleFilter(col.key, false)}
+                            sx={{ backgroundColor: "white", fontSize: "small" }}
+                          >
+                            <FormControlLabel
+                              control={<Radio />}
+                              label="Да"
+                              value={1}
+                            />
+                            <FormControlLabel
+                              control={<Radio />}
+                              label="Нет"
+                              value={0}
+                            />
+                          </RadioGroup>
+                        ) : (
+                          <TextField
+                            size="small"
+                            variant="outlined"
+                            sx={{ backgroundColor: "white" }}
+                            placeholder="Содержит..."
+                            value={filters[col.key] || ""}
+                            onChange={(e) => setFiltersItem(col.key, e.target.value)}
+                            onBlur={() => handleToggleFilter(col.key, false)}
+                            autoFocus
+                            fullWidth
+                            InputProps={{
+                              endAdornment: filters[col.key] && (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => setFiltersItem(col.key, "")}
+                                    edge="end"
+                                    aria-label="Очистить"
+                                  >
+                                    <Clear fontSize="small" />
+                                  </IconButton>
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                        )}
+                      </Box>
+                    </ClickAwayListener>
                   </Collapse>
                 </TableCell>
               ))}
@@ -290,9 +325,7 @@ function SiteClientsMarketingOrdersTable({
                 key={o.id}
                 hover
               >
-                <TableCell>
-                  {dayjs(o.date_time_origin).format("DD.MM.YYYY")}
-                </TableCell>
+                <TableCell>{dayjs(o.date_time_origin).format("DD.MM.YYYY")}</TableCell>
                 <TableCell>
                   <Button
                     variant="text"
@@ -307,16 +340,11 @@ function SiteClientsMarketingOrdersTable({
                       disabled={!o.number || o.client_id <= 0}
                       onClick={() => openClient(o.number)}
                     >
-                      {o.client_id}
+                      {o.number || "без номера"}
                     </Button>
-                    {!!o.is_new && (
-                      <ChildCare
-                        fontSize="small"
-                        color="success"
-                      />
-                    )}
                   </Box>
                 </TableCell>
+                <TableCell>{o.is_new === 1 ? "Новый" : ""}</TableCell>
                 <TableCell>{Number(o.order_price).toFixed(2)}</TableCell>
                 <TableCell>{o.promo_name}</TableCell>
                 <TableCell>{o.type_order}</TableCell>
@@ -352,10 +380,11 @@ export default memo(SiteClientsMarketingOrdersTable);
 const ordersTableColumns = [
   { label: "Дата", key: "date_time_origin" },
   { label: "Заказ", key: "id" },
-  { label: "Клиент", key: "client_id", title: "new: новые, -new: не новые" },
+  { label: "Клиент", key: "number", title: "new: новые, -new: не новые" },
+  { label: "Новый", key: "is_new", filterType: "boolean" },
   { label: "Сумма", key: "order_price" },
   { label: "Промокод", key: "promo_name" },
   { label: "Тип", key: "type_order" },
-  { label: "Кафе", key: "point_id" },
+  { label: "Кафе", key: "point_addr" },
   // { label: "Статус", key: "status" },
 ];
