@@ -37,12 +37,16 @@ import ExcelIcon from "@/ui/ExcelIcon";
 import useXLSExport from "@/src/hooks/useXLSXExport";
 import formatPrice from "@/src/helpers/ui/formatPrice";
 import vocabulary from "./vocabulary";
+import { useLoading } from "./useClientsLoadingContext";
 
 dayjs.locale("ru");
 
 function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
   const { clientLogin, clientModalOpened, setClientModalOpened, setClientHistory } =
     useMarketingClientStore();
+
+  // global isLoading
+  const { isLoading, setIsLoading } = useLoading();
 
   const exportXLSX = useXLSExport();
 
@@ -90,6 +94,7 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
     const { clientLogin, setClient, setClientLoading } = useMarketingClientStore.getState();
     try {
       setClientLoading(true);
+      setIsLoading(true);
       setClient(null);
       const res = await getData("get_one_client", { login: clientLogin });
       if (!res?.st) {
@@ -101,6 +106,7 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
       showAlert(`Error fetching client data: ${error.message}`, false);
     } finally {
       setClientLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -126,6 +132,7 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
         fullScreen={fullScreen}
         fullWidth={true}
         maxWidth={"xl"}
+        sx={{ opacity: isLoading ? 0 : 1 }}
       >
         <DialogTitle>
           <Grid
@@ -203,7 +210,7 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
         </DialogTitle>
         <Divider />
         {clientLoading ? (
-          <CircularProgress />
+          <CircularProgress sx={{ padding: 20 }} />
         ) : (
           <DialogContent style={{ paddingBottom: 10 }}>
             <Grid

@@ -83,6 +83,7 @@ export default function SiteClientsMarketingTab(props) {
 
   const openClient = async (login) => {
     const { setClientLogin, setClientModalOpened } = useMarketingClientStore.getState();
+    setIsLoading(true);
     setClientLogin(login);
     setClientModalOpened(true);
   };
