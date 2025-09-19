@@ -25,37 +25,9 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Box from "@mui/material/Box";
 import PropTypes from "prop-types";
+import a11yProps from "../shared/TabPanel/a11yProps";
+import TabPanel from "../shared/TabPanel/TabPanel";
 
-function TabPanel(props) {
-	const {children, value, index, ...other} = props;
-
-	return (
-		<div
-			role="tabpanel"
-			hidden={value !== index}
-			id={`simple-tabpanel-${index}`}
-			aria-labelledby={`simple-tab-${index}`}
-			{...other}
-		>
-			{value === index && (
-				<Box sx={{p: 3}}>{children}</Box>
-			)}
-		</div>
-	);
-}
-
-TabPanel.propTypes = {
-	children: PropTypes.node,
-	index: PropTypes.number.isRequired,
-	value: PropTypes.number.isRequired,
-};
-
-function a11yProps(index) {
-	return {
-		id: `simple-tab-${index}`,
-		'aria-controls': `simple-tabpanel-${index}`,
-	};
-}
 export default class SiteClients_Modal_Client extends React.Component {
 	click = false;
 
@@ -432,7 +404,7 @@ export default class SiteClients_Modal_Client extends React.Component {
 						{/* О клиенте */}
 
 						{/* Заказы */}
-						{!parseInt(acces?.view_orders_access) ? null :
+						{parseInt(acces?.view_orders_access) ? null :
 							<Grid item xs={12} sm={12}>
 								<TabPanel value={this.state.activeTab} index={1} id='client'>
 									<TableContainer sx={{maxHeight: {xs: 'none', sm: 607}}} component={Paper}>
