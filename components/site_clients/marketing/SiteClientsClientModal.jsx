@@ -83,7 +83,6 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
       return result;
     } catch (error) {
       console.error("Error fetching data:", error);
-      throw error;
     }
   };
 
@@ -94,7 +93,7 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
       setClient(null);
       const res = await getData("get_one_client", { login: clientLogin });
       if (!res?.st) {
-        throw new Error("Ошибка загрузки данных клиента");
+        throw new Error(res?.text || "Ошибка загрузки данных клиента");
       }
       // console.log(useMarketingClientStore.getState());
       setClient(res);
