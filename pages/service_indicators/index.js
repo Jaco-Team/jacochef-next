@@ -193,11 +193,13 @@ function IndicatorsPage() {
 			}
 		}
 
-		console.log(data);
-
 		const res = await getData('save_sett', data);
 		if (res.st) {
 			getSettings();
+		} else {
+			setOpenAlert(true);
+			setErrStatus(res.st);
+			setErrText(res.text);
 		}
 	}
 
