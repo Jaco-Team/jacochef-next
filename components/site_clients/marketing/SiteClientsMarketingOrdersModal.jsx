@@ -13,15 +13,17 @@ import {
 import { forwardRef, memo } from "react";
 import useMarketingTabStore from "./useMarketingTabStore";
 import { Close } from "@mui/icons-material";
+import { useLoading } from "./useClientsLoadingContext";
 
 const Transition = forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-function SiteClientsMarketingOrdersModal({ isOpen, onClose, title, children, isLoading }) {
+function SiteClientsMarketingOrdersModal({ isOpen, onClose, title, children }) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const subtitle = useMarketingTabStore((state) => state.subtitle);
+  const {isLoading} = useLoading();
 
   return (
     <Dialog
