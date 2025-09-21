@@ -284,43 +284,48 @@ class CafeEdit_ extends React.Component {
 
     let tabs_data = [];
 
-    for (let key in acces) {
-      if(!this.canView(key)) { continue; }
+    console.log( acces )
 
-      if(key === 'active_point' || key === 'organization_point' || key === 'telephone_point') {
+    //for (let key in acces) {
+      //if(!this.canView(key)) { continue; }
+
+      //console.log(acces, key)
+
+      if( this.checkAccess('active_point') || this.checkAccess('organization_point') || this.checkAccess('telephone_point') ){
+
         const infoName = "Информация о точке";
         const info = tabs_data.find(item => item.name === infoName);
 
         if(!info) {
-          tabs_data.push({key, name: infoName});
+          tabs_data.push({key: 'active_point', name: infoName});
         }
 
       }
 
-      if(key === 'rate_point') {
-        tabs_data.push({key, name: "Коэффициенты"});
+      if( this.checkAccess('rate_point')) {
+        tabs_data.push({key: 'rate_point', name: "Коэффициенты"});
       }
 
-      if(key === 'pay_point') {
-        tabs_data.push({key, name: "Зарплата"});
+      if(this.checkAccess('pay_point')) {
+        tabs_data.push({key: 'pay_point', name: "Зарплата"});
       }
 
-      if(key === 'settings_point') {
-        tabs_data.push({key, name: "Настройки точки"});
+      if(this.checkAccess('settings_point')) {
+        tabs_data.push({key: 'settings_point', name: "Настройки точки"});
       }
 
-      if(key === 'zone_point') {
-        tabs_data.push({key, name: "Зоны доставки"});
+      if(this.checkAccess('zone_point')) {
+        tabs_data.push({key: 'zone_point_access', name: "Зоны доставки"});
       }
 
-      if(key === 'settings_driver') {
-        tabs_data.push({key, name: "Настройки курьеров"});
+      if(this.checkAccess('settings_driver')) {
+        tabs_data.push({key: 'settings_driver', name: "Настройки курьеров"});
       }
 
-      if(key === 'kkt_info') {
-        tabs_data.push({key, name: "Информация о кассах"});
+      if(this.checkAccess('kkt_info')) {
+        tabs_data.push({key: 'kkt_info', name: "Информация о кассах"});
       }
-    }
+    //}
 
     tabs_data.forEach((item, index) => {
 
@@ -1185,6 +1190,26 @@ class CafeEdit_ extends React.Component {
     return userCan('edit', key);
   }
 
+  checkAccess(key) {
+    const access = this.state.acces;
+
+    if( parseInt(access[key+'_access']) == 1 || parseInt(access[key+'_view']) == 1 || parseInt(access[key+'_edit']) == 1 ){
+      return true;
+    }
+
+    return false;
+  }
+
+  checkAccessEdit(key) {
+    const access = this.state.acces;
+
+    if( parseInt(access[key+'_access']) == 1 || parseInt(access[key+'_edit']) == 1 ){
+      return true;
+    }
+
+    return false;
+  }
+
   render() {
     return (
       <>
@@ -1328,11 +1353,11 @@ class CafeEdit_ extends React.Component {
             >
               <Grid container spacing={3}>
 
-                {this.canView('organization_point') && (
+                {this.checkAccessEdit.bind(this, 'organization_point') && (
                   <>
                     <Grid item xs={12} sm={3}>
                       <MySelect
-                        disabled={!this.canEdit('organization_point')}
+                        disabled={!this.checkAccessEdit.bind(this, 'organization_point')}
                         label="Город"
                         is_none={false}
                         data={this.state.cities}
@@ -1343,7 +1368,7 @@ class CafeEdit_ extends React.Component {
 
                     <Grid item xs={12} sm={3}>
                       <MyTextInput
-                        disabled={!this.canEdit('organization_point')}
+                        disabled={!this.checkAccessEdit.bind(this, 'organization_point')}
                         label="Адрес"
                         value={this.state.point_info?.addr ?? ''}
                         func={this.changeData.bind(this, 'addr')}
@@ -1352,7 +1377,7 @@ class CafeEdit_ extends React.Component {
 
                     <Grid item xs={12} sm={3}>
                       <MyTextInput
-                        disabled={!this.canEdit('organization_point')}
+                        disabled={!this.checkAccessEdit.bind(this, 'organization_point')}
                         label="Район"
                         value={this.state.point_info?.raion ?? ''}
                         func={this.changeData.bind(this, 'raion')}
@@ -1361,7 +1386,7 @@ class CafeEdit_ extends React.Component {
 
                     <Grid item xs={12} sm={3}>
                       <MyTextInput
-                        disabled={!this.canEdit('organization_point')}
+                        disabled={!this.checkAccessEdit.bind(this, 'organization_point')}
                         label="Сортировка ( порядок точек во всех модулях и на сайте )"
                         value={this.state.point_info?.sort ?? ''}
                         func={this.changeData.bind(this, 'sort')}
@@ -1370,7 +1395,7 @@ class CafeEdit_ extends React.Component {
 
                     <Grid item xs={12} sm={3}>
                       <MyTextInput
-                        disabled={!this.canEdit('organization_point')}
+                        disabled={!this.checkAccessEdit.bind(this, 'organization_point')}
                         label="Организация"
                         value={this.state.point_info?.organization ?? ''}
                         func={this.changeData.bind(this, 'organization')}
@@ -1379,7 +1404,7 @@ class CafeEdit_ extends React.Component {
 
                     <Grid item xs={12} sm={3}>
                       <MyTextInput
-                        disabled={!this.canEdit('organization_point')}
+                        disabled={!this.checkAccessEdit.bind(this, 'organization_point')}
                         label="ИНН"
                         value={this.state.point_info?.inn ?? ''}
                         func={this.changeData.bind(this, 'inn')}
@@ -1388,7 +1413,7 @@ class CafeEdit_ extends React.Component {
 
                     <Grid item xs={12} sm={3}>
                       <MyTextInput
-                        disabled={!this.canEdit('organization_point')}
+                        disabled={!this.checkAccessEdit.bind(this, 'organization_point')}
                         label="ОГРН"
                         value={this.state.point_info?.ogrn ?? ''}
                         func={this.changeData.bind(this, 'ogrn')}
@@ -1397,7 +1422,7 @@ class CafeEdit_ extends React.Component {
 
                     <Grid item xs={12} sm={3}>
                       <MyTextInput
-                        disabled={!this.canEdit('organization_point')}
+                        disabled={!this.checkAccessEdit.bind(this, 'organization_point')}
                         label="КПП"
                         value={this.state.point_info?.kpp ?? ''}
                         func={this.changeData.bind(this, 'kpp')}
@@ -1406,7 +1431,7 @@ class CafeEdit_ extends React.Component {
 
                     <Grid item xs={12} sm={12}>
                       <MyTextInput
-                        disabled={!this.canEdit('organization_point')}
+                        disabled={!this.checkAccessEdit.bind(this, 'organization_point')}
                         label="Полный адрес"
                         value={this.state.point_info?.full_addr ?? ''}
                         func={this.changeData.bind(this, 'full_addr')}
@@ -1415,22 +1440,22 @@ class CafeEdit_ extends React.Component {
                   </>
                 )}
 
-                {this.canView('active_point') && (
+                {this.checkAccessEdit.bind(this, 'active_point') && (
                   <Grid item xs={12} sm={12}>
                     <MyCheckBox
                       label="Активность"
-                      disabled={!this.canEdit('active_point')}
+                      disabled={!this.checkAccessEdit.bind(this, 'active_point')}
                       value={parseInt(this.state.point_info?.is_active ?? 0) == 1 ? true : false}
                       func={this.changeItemChecked.bind(this, 'is_active')}
                     />
                   </Grid>
                 )}
 
-                {this.canView('telephone_point') && (
+                {this.checkAccessEdit.bind(this, 'telephone_point') && (
                   <>
                     <Grid item xs={12} sm={4}>
                       <MyTextInput
-                        disabled={!this.canEdit('telephone_point')}
+                        disabled={!this.checkAccessEdit.bind(this, 'telephone_point')}
                         label="Телефон управляющего"
                         value={this.state.point_info?.phone_upr ?? ''}
                         func={this.changeData.bind(this, 'phone_upr')}
@@ -1439,7 +1464,7 @@ class CafeEdit_ extends React.Component {
 
                     <Grid item xs={12} sm={4}>
                       <MyTextInput
-                        disabled={!this.canEdit('telephone_point')}
+                        disabled={!this.checkAccessEdit.bind(this, 'telephone_point')}
                         label="Почта управляющего"
                         value={this.state.point_info?.mail ?? ''}
                         func={this.changeData.bind(this, 'mail')}
@@ -1448,7 +1473,7 @@ class CafeEdit_ extends React.Component {
 
                     <Grid item xs={12} sm={4}>
                       <MyTextInput
-                        disabled={!this.canEdit('telephone_point')}
+                        disabled={!this.checkAccessEdit.bind(this, 'telephone_point')}
                         label="Телефон менеджера"
                         value={this.state.point_info?.phone_man ?? ''}
                         func={this.changeData.bind(this, 'phone_man')}
@@ -1457,7 +1482,7 @@ class CafeEdit_ extends React.Component {
                   </>
                 )}
 
-                {(this.canEdit('telephone_point') || this.canEdit('active_point') || this.canEdit('organization_point')) && (
+                {(this.checkAccessEdit.bind(this, 'telephone_point') || this.checkAccessEdit.bind(this, 'active_point') || this.checkAccessEdit.bind(this, 'organization_point')) && (
                   <Grid item xs={12} sm={12} display='grid'>
                     <Button
                       onClick={this.save_edit_point_info.bind(this)}
@@ -1470,7 +1495,7 @@ class CafeEdit_ extends React.Component {
                   </Grid>
                 )}
 
-                {(this.canEdit('telephone_point') || this.canEdit('active_point') || this.canEdit('organization_point')) && this.state.point_info_hist.length > 0 && (
+                {(this.checkAccessEdit.bind(this, 'telephone_point') || this.checkAccessEdit.bind(this, 'active_point') || this.checkAccessEdit.bind(this, 'organization_point')) && this.state.point_info_hist.length > 0 && (
                   <Grid item xs={12} sm={12} mb={5}>
                     <Accordion style={{ width: '100%' }}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -1693,7 +1718,7 @@ class CafeEdit_ extends React.Component {
                   <MyCheckBox
                     label='Если в заказе только пицца, она выйдет на сборку после начала ее приготовления (напитки, допы и закуски не учитываются)'
                     value={parseInt(this.state.point_info?.priority_pizza ?? 0) == 1 ? true : false}
-                    disabled={!this.canEdit('settings_point')}
+                    disabled={!this.checkAccessEdit.bind(this, 'settings_point')}
                     func={this.changeItemChecked.bind(this, 'priority_pizza')}
                   />
                 </Grid>
@@ -1702,7 +1727,7 @@ class CafeEdit_ extends React.Component {
                   <MyCheckBox
                     label='Если заказ приготовить зарнее - он выйдет в приоритете на сборку, кроме предов (напитки, допы и закуски не учитываются)'
                     value={parseInt(this.state.point_info?.priority_order ?? 0) == 1 ? true : false}
-                    disabled={!this.canEdit('settings_point')}
+                    disabled={!this.checkAccessEdit.bind(this, 'settings_point')}
                     func={this.changeItemChecked.bind(this, 'priority_order')}
                   />
                 </Grid>
@@ -1711,7 +1736,7 @@ class CafeEdit_ extends React.Component {
                   <MyCheckBox
                     label='Пицца у повара будет отображаться, если более 50% роллов в заказе начнут готовить'
                     value={parseInt(this.state.point_info?.rolls_pizza_dif ?? 0) == 1 ? true : false}
-                    disabled={!this.canEdit('settings_point')}
+                    disabled={!this.checkAccessEdit.bind(this, 'settings_point')}
                     func={this.changeItemChecked.bind(this, 'rolls_pizza_dif')}
                   />
                 </Grid>
@@ -1721,13 +1746,13 @@ class CafeEdit_ extends React.Component {
                   <MyCheckBox
                     label='Общий стол'
                     value={parseInt(this.state.point_info?.cook_common_stol ?? 0) == 1 ? true : false}
-                    disabled={!this.canEdit('settings_point')}
+                    disabled={!this.checkAccessEdit.bind(this, 'settings_point')}
                     func={this.changeItemChecked.bind(this, 'cook_common_stol')}
                   />
                 </Grid>
 
                 <Grid item xs={12} sm={12}>
-                  {this.canEdit('settings_point') ? (
+                  {this.checkAccessEdit.bind(this, 'settings_point') ? (
                     <Button
                       onClick={this.changeActivePoint.bind(this)}
                       color={parseInt(this.state.point_info?.cafe_handle_close ?? 0) == 1 ? 'success' : 'primary'}
@@ -1747,7 +1772,7 @@ class CafeEdit_ extends React.Component {
                     multiple={false}
                     data={this.state.upr_list}
                     value={this.state.point_info?.manager_id ?? ''}
-                    disabled={!this.canEdit('settings_point')}
+                    disabled={!this.checkAccessEdit.bind(this, 'settings_point')}
                     func={this.changeUpr.bind(this, 'manager_id')}
                   />
                 </Grid>
@@ -1756,11 +1781,11 @@ class CafeEdit_ extends React.Component {
                   <MyTextInput
                     label="Количество столов сборки"
                     value={this.state.point_info?.count_tables ?? ''}
-                    disabled={!this.canEdit('settings_point')}
+                    disabled={!this.checkAccessEdit.bind(this, 'settings_point')}
                     func={this.changeData.bind(this, 'count_tables')}
                   />
                 </Grid>
-                {this.canEdit('settings_point') &&
+                {this.checkAccessEdit.bind(this, 'settings_point') &&
                   <Grid item xs={12} sm={12} display='grid'>
                     <Button
                       onClick={this.save_edit_point_sett.bind(this)}
