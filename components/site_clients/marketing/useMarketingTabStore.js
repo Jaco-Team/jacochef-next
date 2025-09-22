@@ -12,13 +12,14 @@ const defaultSlices = {
 export const defaultFilters = {
   status: null,
   id: null,
-  client_id: null,
+  number: null,
+  is_new: null,
   type_order: null,
-  point_id: null,
+  point_addr: null,
   promo_name: null,
   /**
    * Сортировка
-   * @type {'date_time_origin' | 'id' | 'client_id' | 'type_order' | 'promo_name' | 'order_price' | null}
+   * @type {'date_time_origin' | 'id' | 'client_id' | 'type_order' | 'promo_name' | 'order_price' | 'point_addr' | null}
    */
   sortBy: null,
   sortDir: "desc",
@@ -29,7 +30,6 @@ const useMarketingTabStore = create((set, get) => ({
   dateStart: dayjs(),
   dateEnd: dayjs(),
   isModalOpen: false,
-  loadingOrders: false,
   orderIds: null,
   orders: [],
   stats: null,
@@ -44,7 +44,6 @@ const useMarketingTabStore = create((set, get) => ({
   setDateStart: (dateStart) => set({ dateStart }),
   setDateEnd: (dateEnd) => set({ dateEnd }),
   setIsModalOpen: (isModalOpen) => set({ isModalOpen }),
-  setLoadingOrders: (loadingOrders) => set({ loadingOrders }),
   setOrderIds: (orderIds) => set({ orderIds }),
   setOrders: (orders) => set({ orders }),
   setStats: (stats) => set({ stats }),
@@ -90,7 +89,7 @@ const useMarketingTabStore = create((set, get) => ({
         new_old: type === "new" ? "new" : "old",
       },
       filters: defaultFilters,
-      subtitle: type === "new" ? "Новые клиенты" : "Старые клиенты",
+      subtitle: type === "new" ? "Новые клиенты" : "Постоянные клиенты",
       page: 1,
     })),
   sliceReset: () =>

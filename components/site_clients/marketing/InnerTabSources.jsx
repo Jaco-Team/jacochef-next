@@ -10,6 +10,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
@@ -26,13 +27,13 @@ const InnerTabSources = ({ getData, showAlert }) => {
   const [srcStats, setSrcStats] = useState(null);
 
   // sorting
-  const [sortBy, setSortBy] = useState(sourceStatsColumns[0].key); // by sourceStatsColumns.key
-  const [sortDir, setSortDir] = useState("asc");
+  const [sortBy, setSortBy] = useState("orders"); // by sourceStatsColumns.key
+  const [sortDir, setSortDir] = useState("desc");
   const sortSourceStats = (data, sortBy, sortDir) => {
-    return data.slice().sort((a, b) => {
+    return data?.slice().sort((a, b) => {
       let valA, valB;
       if (["orders", "new", "old", "promo"].includes(sortBy)) {
-        const format = sourceStatsColumns.find(col => col.key === sortBy).format;
+        const format = sourceStatsColumns.find((col) => col.key === sortBy).format;
         valA = format(a);
         valB = format(b);
       } else {
@@ -63,6 +64,10 @@ const InnerTabSources = ({ getData, showAlert }) => {
   const exportXLSX = useXLSExport();
   // /export
 
+  // pagination
+  const [page, setLocalPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
+
   const getSourcesOrdersStats = async () => {
     if (!points.length || !dateStart || !dateEnd) {
       return;
@@ -79,7 +84,10 @@ const InnerTabSources = ({ getData, showAlert }) => {
         return;
       }
       setPage(1);
-      setSrcStats(resData || null);
+      setSrcStats((old) => ({
+        ...old,
+        sources: sortSourceStats(resData?.sources, sortBy, sortDir),
+      }));
     } catch (e) {
       showAlert(`Ошибка при загрузке источников: ${e.message}`, false);
     }
@@ -94,7 +102,7 @@ const InnerTabSources = ({ getData, showAlert }) => {
     <>
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
         <IconButton
-          style={{ cursor: "pointer", padding: 20 }}
+          style={{ cursor: "pointer", padding: 10 }}
           onClick={() => exportXLSX(srcStats.sources, sourceStatsColumns, "sources-stats.xlsx")}
           title="Экспортировать в Excel"
         >
@@ -102,7 +110,6 @@ const InnerTabSources = ({ getData, showAlert }) => {
         </IconButton>
       </Box>
       <TableContainer
-        wfull
         sx={{
           maxHeight: "70dvh",
         }}
@@ -124,7 +131,7 @@ const InnerTabSources = ({ getData, showAlert }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {srcStats?.sources?.map((row) => {
+            {srcStats?.sources?.slice((page - 1) * perPage, page * perPage)?.map((row) => {
               const { source, medium, orders } = row;
               const newOrders = orders?.filter((o) => o.is_new);
               const oldOrders = orders?.filter((o) => !o.is_new);
@@ -163,6 +170,23 @@ const InnerTabSources = ({ getData, showAlert }) => {
           </TableBody>
         </Table>
       </TableContainer>
+      <TablePagination
+        rowsPerPageOptions={[10, 50, 100, 300]}
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
+        labelRowsPerPage="Строк на странице:"
+        component="div"
+        count={srcStats?.sources?.length ?? 0}
+        rowsPerPage={perPage}
+        page={page - 1}
+        onPageChange={(_, newPage) => {
+          setLocalPage(newPage + 1);
+        }}
+        onRowsPerPageChange={(event) => {
+          const newPerPage = parseInt(event.target.value, 10);
+          setPerPage(newPerPage);
+          setLocalPage(1);
+        }}
+      />
     </>
   ) : (
     <Typography>Нет данных</Typography>

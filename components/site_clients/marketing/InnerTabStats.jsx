@@ -6,6 +6,7 @@ import SiteClientsMarketingStatCard from "./SiteClientsMarketingStatCard";
 import useMarketingTabStore from "./useMarketingTabStore";
 import dayjs from "dayjs";
 import { useDebounce } from "@/src/hooks/useDebounce";
+import { useLoading } from "./useClientsLoadingContext";
 
 const InnerTabStats = ({ getData, showAlert }) => {
   const {
@@ -23,6 +24,8 @@ const InnerTabStats = ({ getData, showAlert }) => {
     sliceReset,
     setOrders,
   } = useMarketingTabStore();
+
+  const { setIsLoading } = useLoading();
 
   const getStats = async () => {
     if (!points.length || !dateStart || !dateEnd) {
@@ -53,6 +56,7 @@ const InnerTabStats = ({ getData, showAlert }) => {
         <Grid
           container
           spacing={3}
+          sx={{ justifyContent: "center" }}
         >
           <Grid
             item
@@ -62,8 +66,8 @@ const InnerTabStats = ({ getData, showAlert }) => {
             <SiteClientsMarketingStatCard
               title="Всего заказов"
               value={stats?.total_orders}
-              bgcolor="#1976d2"
               onClick={async () => {
+                setIsLoading(true);
                 sliceReset();
                 setOrderIds(null);
                 setIsModalOpen(true);
@@ -79,8 +83,8 @@ const InnerTabStats = ({ getData, showAlert }) => {
             <SiteClientsMarketingStatCard
               title="Онлайн"
               value={stats?.online_orders}
-              bgcolor="#5e8f65ff"
               onClick={() => {
+                setIsLoading(true);
                 sliceOnline();
                 setOrderIds(null);
                 setIsModalOpen(true);
@@ -96,8 +100,8 @@ const InnerTabStats = ({ getData, showAlert }) => {
             <SiteClientsMarketingStatCard
               title="Офлайн"
               value={stats?.offline_orders}
-              bgcolor="#8a5b35ff"
               onClick={() => {
+                setIsLoading(true);
                 sliceOnline("offline");
                 setOrderIds(null);
                 setIsModalOpen(true);
@@ -113,8 +117,8 @@ const InnerTabStats = ({ getData, showAlert }) => {
             <SiteClientsMarketingStatCard
               title="Активаций промокодов"
               value={stats?.promo_orders}
-              bgcolor="#61dd34ff"
               onClick={() => {
+                setIsLoading(true);
                 slicePromo();
                 setOrderIds(null);
                 setIsModalOpen(true);
@@ -130,8 +134,8 @@ const InnerTabStats = ({ getData, showAlert }) => {
             <SiteClientsMarketingStatCard
               title="Заказали новые клиенты"
               value={stats?.new_clients}
-              bgcolor="#d219b9ff"
               onClick={() => {
+                setIsLoading(true);
                 sliceNew();
                 setOrderIds(null);
                 setIsModalOpen(true);
@@ -147,8 +151,8 @@ const InnerTabStats = ({ getData, showAlert }) => {
             <SiteClientsMarketingStatCard
               title="Заказали постоянные клиенты"
               value={stats?.old_clients}
-              bgcolor="#312a9dff"
               onClick={() => {
+                setIsLoading(true);
                 sliceNew("old");
                 setOrderIds(null);
                 setIsModalOpen(true);
@@ -163,8 +167,7 @@ const InnerTabStats = ({ getData, showAlert }) => {
           >
             <SiteClientsMarketingStatCard
               title="Средний чек"
-              value={`₽ ${Number(stats?.avg_order_value || 0).toFixed(2)}`}
-              bgcolor="#cbcad2"
+              value={`${Number(stats?.avg_order_value || 0).toFixed(2)} ₽`}
             />
           </Grid>
         </Grid>

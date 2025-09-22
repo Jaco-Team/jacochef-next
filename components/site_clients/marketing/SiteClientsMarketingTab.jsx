@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { MyAutocomplite, MyDatePickerNew } from "@/ui/elements";
-import { Button, CircularProgress, Grid, Stack, Tab, Tabs } from "@mui/material";
+import { Button, Grid, Stack, Tab, Tabs } from "@mui/material";
 import dayjs from "dayjs";
 import useMarketingTabStore from "./useMarketingTabStore";
-import ModalOrderWithFeedback from "../ModalOrderWithFeedback";
 import ModalOrder from "../ModalOrder";
 import a11yProps from "@/components/shared/TabPanel/a11yProps";
 import TabPanel from "@/components/shared/TabPanel/TabPanel";
@@ -17,9 +16,10 @@ import InnerTabPromo from "./InnerTabPromo";
 import useMarketingClientStore from "./useMarketingClientStore";
 import SiteClientsMarketingOrdersModal from "./SiteClientsMarketingOrdersModal";
 import SiteClientsClientModal from "./SiteClientsClientModal";
+import { LoadingProvider } from "./useClientsLoadingContext";
 
 export default function SiteClientsMarketingTab(props) {
-  const { points: allPoints = [], showAlert, getData, canAccess } = props;
+  const { points: allPoints = [], showAlert, getData, canAccess, isLoading, setIsLoading } = props;
 
   // TODO: move order modal state out
   const [order, setOrder] = useState(null);
@@ -34,7 +34,6 @@ export default function SiteClientsMarketingTab(props) {
     setDateStart,
     setDateEnd,
     setIsModalOpen,
-    setLoadingOrders,
     loadingOrders,
     points,
     setPoints,
@@ -50,55 +49,42 @@ export default function SiteClientsMarketingTab(props) {
     setPoints(tabPoints);
   };
 
-  const setLastWeek = () => {
-    setTabDateStart(dayjs().subtract(7, "day"));
-    setTabDateEnd(dayjs());
-    applyRange();
-  };
-
-  const setLastMonth = () => {
-    setTabDateStart(dayjs().subtract(1, "month"));
-    setTabDateEnd(dayjs());
-    applyRange();
-  };
-
-  const { clientModalOpened } = useMarketingClientStore();
-
   const openOrder = async (point_id, order_id) => {
     try {
       setOrder(null);
-      setLoadingOrders(true);
+      setIsLoading(true);
       const resData = await getData("get_order", { point_id, order_id });
       if (!resData) {
         showAlert(resData?.text || "Ошибка запроса заказа", false);
         return;
       }
-      setIsOrderModalOpen(true);
       setOrder(resData || null);
+      setIsOrderModalOpen(true);
     } catch (error) {
       console.error("Error fetching order:", error);
     } finally {
-      setLoadingOrders(false);
+      setIsLoading(false);
     }
   };
 
+  const { clientModalOpened } = useMarketingClientStore();
+
   const openClient = async (login) => {
     const { setClientLogin, setClientModalOpened } = useMarketingClientStore.getState();
+    setIsLoading(true);
     setClientLogin(login);
     setClientModalOpened(true);
   };
 
   return (
-    <>
+    <LoadingProvider isLoading={isLoading} setIsLoading={setIsLoading}>
       <SiteClientsMarketingOrdersModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Заказы"
       >
-        {loadingOrders && <CircularProgress />}
         <>
           <SiteClientsMarketingOrdersTable
-            sx={{ opacity: loadingOrders ? 0.5 : 1 }}
             openOrder={openOrder}
             openClient={openClient}
             showAlert={showAlert}
@@ -107,26 +93,14 @@ export default function SiteClientsMarketingTab(props) {
         </>
       </SiteClientsMarketingOrdersModal>
 
-      {canAccess("send_feedback") ? (
-        <ModalOrderWithFeedback
-          open={isOrderModalOpen}
-          onClose={() => setIsOrderModalOpen(false)}
-          order={order?.order}
-          order_items={order?.order_items}
-          err_order={order?.err_order}
-          feedback_forms={order?.feedback_forms}
-          openOrder={openOrder}
-        />
-      ) : (
-        <ModalOrder
-          open={isOrderModalOpen}
-          onClose={() => setIsOrderModalOpen(false)}
-          order={order?.order}
-          order_items={order?.order_items}
-          err_order={order?.err_order}
-          feedback_forms={order?.feedback_forms}
-        />
-      )}
+      <ModalOrder
+        open={isOrderModalOpen}
+        onClose={() => setIsOrderModalOpen(false)}
+        order={order?.order}
+        order_items={order?.order_items}
+        err_order={order?.err_order}
+        feedback_forms={order?.feedback_forms}
+      />
 
       {clientModalOpened && (
         <SiteClientsClientModal
@@ -202,20 +176,6 @@ export default function SiteClientsMarketingTab(props) {
             spacing={1}
             alignContent={"stretch"}
           >
-            <Button
-              onClick={setLastWeek}
-              variant="contained"
-              type="submit"
-            >
-              За неделю
-            </Button>
-            <Button
-              onClick={setLastMonth}
-              variant="contained"
-              type="submit"
-            >
-              За месяц
-            </Button>
             <Button
               onClick={applyRange}
               variant="contained"
@@ -335,6 +295,6 @@ export default function SiteClientsMarketingTab(props) {
           </TabPanel>
         </Grid>
       </Grid>
-    </>
+    </LoadingProvider>
   );
 }

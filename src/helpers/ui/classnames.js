@@ -1,3 +1,8 @@
+/**
+ * Utility function to join class names conditionally
+ * @param  {...any} args 
+ * @returns 
+ */
 export default function cn(...args) {
   const classes = [];
 
