@@ -387,17 +387,19 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                 index={1}
                 id="history"
               >
-                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                  <IconButton
-                    style={{ cursor: "pointer", padding: 10 }}
-                    onClick={() =>
-                      exportXLSX(client?.history, historyColumns, "history-stats.xlsx")
-                    }
-                    title="Экспортировать в Excel"
-                  >
-                    <ExcelIcon />
-                  </IconButton>
-                </Box>
+                {canAccess("export_items") && (
+                  <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                    <IconButton
+                      style={{ cursor: "pointer", padding: 10 }}
+                      onClick={() =>
+                        exportXLSX(client?.history, historyColumns, "history-stats.xlsx")
+                      }
+                      title="Экспортировать в Excel"
+                    >
+                      <ExcelIcon />
+                    </IconButton>
+                  </Box>
+                )}
                 <TableContainer style={{ maxHeight: "55dvh", position: "relative" }}>
                   <Table
                     size="small"

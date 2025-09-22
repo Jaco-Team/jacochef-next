@@ -18,10 +18,13 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 import { MyDatePickerNew, MyAlert, formatDate, MyAutocomplite } from '@/ui/elements';
 
-import { api_laravel_local, api_laravel } from '@/src/api_new';
+// import { api_laravel_local as api_laravel } from '@/src/api_new';
+import { api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
+import handleUserAccess from '@/src/helpers/access/handleUserAccess';
+import TestAccess from '@/components/shared/TestAccess';
 dayjs.locale('ru'); 
 
 class ReportRevenue_Table extends React.Component {
@@ -303,6 +306,7 @@ class ReportRevenue_ extends React.Component {
       points: data.points,
       cats: data.cats,
       module_name: data.module_info.name,
+      access: data.access
     });
     
     document.title = data.module_info.name;
@@ -449,6 +453,11 @@ class ReportRevenue_ extends React.Component {
     document.body.removeChild(link);
   }
 
+  canAccess(key){
+    const {userCan} = handleUserAccess(this.state.access)
+    return userCan('access', key);
+  }
+
   render() {
     const { is_load, openAlert, err_status, err_text, module_name, date_start, date_end, points, point, cats, cat, months, reportCats } = this.state;
 
@@ -457,6 +466,8 @@ class ReportRevenue_ extends React.Component {
         <Backdrop style={{ zIndex: 999 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+
+        {/* <TestAccess access={this.state.access} setAccess={(access) => this.setState({access})} /> */}
 
         <MyAlert
           isOpen={openAlert}
@@ -511,12 +522,13 @@ class ReportRevenue_ extends React.Component {
               Показать
             </Button>
           </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Button variant={!(months.length && reportCats.length) ? "outlined" : "contained"} onClick={this.downLoad} disabled={!(months.length && reportCats.length)}>
-              Скачать таблицу в XLS
-            </Button>
-          </Grid>
+          {this.canAccess('export_items') && (
+            <Grid item xs={12} sm={6}>
+              <Button variant={!(months.length && reportCats.length) ? "outlined" : "contained"} onClick={this.downLoad} disabled={!(months.length && reportCats.length)}>
+                Скачать таблицу в XLS
+              </Button>
+            </Grid>
+          )}
 
           {months.length && reportCats.length ? (
             <Grid item xs={12} sm={12} mt={3}>

@@ -32,6 +32,8 @@ import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'; // импортируем русскую локаль
+import handleUserAccess from '@/src/helpers/access/handleUserAccess';
+import TestAccess from '@/components/shared/TestAccess';
 
 // для редактирования времени (при этом дату нельзя редактировать)
 class DateWithEditableTimePicker extends React.PureComponent {
@@ -442,6 +444,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
     this.state = {
       module: 'journal_of_work_of_bactericidal_lamps',
       module_name: '',
+      access: null,
       is_load: false,
 
       points: [],
@@ -476,6 +479,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
       points: data.point_list,
       point: data.point_list[0].id,
       module_name: data.module_info.name,
+      access: data.access
     });
 
     document.title = data.module_info.name;
@@ -709,6 +713,11 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
     }
   }
 
+  canAccess(key){
+    const {userCan} = handleUserAccess(this.state.access);
+    return userCan('access', key);
+  }
+
   render() {
     return (
       <>
@@ -722,6 +731,11 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
+
+        {/* <TestAccess 
+          access={this.state.access} 
+          setAccess={(access) => this.setState({access})} 
+        /> */}
 
         <Lamps_Modal_Add
           open={this.state.modalAddLamp}
@@ -784,9 +798,11 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
             </Button>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Button variant="contained" onClick={this.download.bind(this)}>
-              Скачать файл XLS
-            </Button>
+            {this.canAccess('export_excel') && (
+              <Button variant="contained" onClick={this.download.bind(this)}>
+                Скачать файл XLS
+              </Button>
+            )}
           </Grid>
 
           <Grid item xs={12} sm={12} mt={3} mb={5}>

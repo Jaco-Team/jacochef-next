@@ -61,6 +61,8 @@ import { PickersDay } from '@mui/x-date-pickers/PickersDay';
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import handleUserAccess from '@/src/helpers/access/handleUserAccess';
+import TestAccess from '@/components/shared/TestAccess';
 
 function SimpleDialog(props) {
   const { onClose, selectedValue, open } = props;
@@ -889,6 +891,7 @@ class WorkSchedule_ extends React.Component {
     this.state = {
       module: 'work_schedule',
       module_name: '',
+      access: null,
       is_load: false,
 
       points: [],
@@ -1024,6 +1027,7 @@ class WorkSchedule_ extends React.Component {
     this.setState({
       points: res.point_list,
       point: res.point_list[0].id,
+      // access: res.access,
 
       mounths: res.mounths,
       mounth: res.mounths.find((item) => parseInt(item.is_active) == 1)['id'],
@@ -2358,12 +2362,19 @@ class WorkSchedule_ extends React.Component {
     }
   }
 
+  canAccess(property) {
+    // return handleUserAccess(this.state.access)?.userCan('access', property);
+    return true;
+  }
+
   render() {
     return (
       <>
         <Backdrop open={this.state.is_load} style={{ zIndex: 999 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
+
+        {/* <TestAccess access={this.state.access} setAccess={(access) => this.setState({ access })} /> */}
 
         <MyAlert
           isOpen={this.state.operAlert}
@@ -3373,8 +3384,20 @@ class WorkSchedule_ extends React.Component {
             </Grid>
           </DialogContent>
           <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.downloadHJ.bind(this)}>Скачать</Button>
-            <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ isOpenHJ: false })}>Отмена</Button>
+            {this.canAccess('export_excel') && (
+              <Button 
+              style={{ backgroundColor: 'green', color: '#fff' }} 
+              onClick={this.downloadHJ.bind(this)}
+              >
+                Скачать
+              </Button>
+            )}
+            <Button 
+              style={{ backgroundColor: 'red', color: '#fff' }} 
+              onClick={() => this.setState({ isOpenHJ: false })}
+              >
+              Отмена
+            </Button>
           </DialogActions>
         </Dialog>
 
@@ -3409,8 +3432,20 @@ class WorkSchedule_ extends React.Component {
             </Grid>
           </DialogContent>
           <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.downloadWS.bind(this)}>Скачать</Button>
-            <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ isOpenWS: false })}>Отмена</Button>
+            {this.canAccess('export_excel') && (
+              <Button 
+                style={{ backgroundColor: 'green', color: '#fff' }} 
+                onClick={this.downloadWS.bind(this)}
+              >
+                Скачать
+              </Button>
+            )}
+            <Button 
+              style={{ backgroundColor: 'red', color: '#fff' }} 
+              onClick={() => this.setState({ isOpenWS: false })}
+            >
+              Отмена
+            </Button>
           </DialogActions>
         </Dialog>
 

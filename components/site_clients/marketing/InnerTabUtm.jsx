@@ -21,7 +21,7 @@ import dayjs from "dayjs";
 import useXLSExport from "@/src/hooks/useXLSXExport";
 import ExcelIcon from "@/ui/ExcelIcon";
 
-function InnerTabUtm({ getData, showAlert }) {
+function InnerTabUtm({ getData, showAlert, canExport }) {
   const { dateStart, dateEnd, points, setPage } = useMarketingTabStore();
 
   const [utmStats, setUtmStats] = useState(null);
@@ -96,15 +96,17 @@ function InnerTabUtm({ getData, showAlert }) {
 
   return utmStats ? (
     <>
-      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <IconButton
-          style={{ cursor: "pointer", padding: 10 }}
-          onClick={() => exportXLSX(utmStats, utmStatsColumns, "utm-stats.xlsx")}
-          title="Экспортировать в Excel"
-        >
-          <ExcelIcon />
-        </IconButton>
-      </Box>
+      {canExport && (
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <IconButton
+            style={{ cursor: "pointer", padding: 10 }}
+            onClick={() => exportXLSX(utmStats, utmStatsColumns, "utm-stats.xlsx")}
+            title="Экспортировать в Excel"
+          >
+            <ExcelIcon />
+          </IconButton>
+        </Box>
+      )}
       <TableContainer
         sx={{
           maxHeight: "70dvh",

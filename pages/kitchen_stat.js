@@ -29,6 +29,8 @@ import StatTableAccordeon from "@/components/kitchen_stat/StatTableAccordeon";
 import ExcelIcon from "@/ui/ExcelIcon";
 import DownloadButton from "@/components/shared/DownloadButton";
 import { Box, Stack } from "@mui/material";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import TestAccess from "@/components/shared/TestAccess";
 
 const statPartsNames = [
   "orders_by_h",
@@ -73,11 +75,12 @@ class KitchenStat_ extends React.Component {
     const data = await this.getData("get_all");
 
     this.setState({
-      points: data.points,
-      module_name: data.module_info.name,
+      points: data?.points,
+      module_name: data?.module_info.name,
+      access: data?.access,
     });
 
-    document.title = data.module_info.name;
+    document.title = data?.module_info.name;
   }
 
   async componentWillUnmount() {
@@ -287,20 +290,7 @@ class KitchenStat_ extends React.Component {
         this.setState({ is_load: false });
       }
     };
-    // drop all data
-    const resetPromise = new Promise((resolve) => {
-      this.setState(
-        {
-          data: {},
-          is_load: true,
-          is_load_parts: statPartsNames.reduce((acc, key) => ({ ...acc, [key]: true }), {}),
-          arrayOrdersByH: null,
-          statAllItemsCount: null,
-          statItemsCheckoutCount: null,
-        },
-        resolve // resolve after state updated
-      );
-    });
+
     this.setState({
       data: {},
       is_load: true,
@@ -319,6 +309,11 @@ class KitchenStat_ extends React.Component {
     return isEmpty;
   }
 
+  canAccess(key) {
+    const { userCan } = handleUserAccess(this.state.access);
+    return userCan("access", key);
+  }
+
   render() {
     return (
       <>
@@ -328,6 +323,11 @@ class KitchenStat_ extends React.Component {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
+
+        {/* <TestAccess
+          access={this.state.access}
+          setAccess={(access) => this.setState({ access })}
+        /> */}
 
         <MyAlert
           isOpen={this.state.openAlert}
@@ -339,8 +339,6 @@ class KitchenStat_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={3}
-          pb={4}
           className="container_first_child"
         >
           <Grid
@@ -354,7 +352,7 @@ class KitchenStat_ extends React.Component {
           <Grid
             item
             xs={12}
-            sm={5}
+            sm={4}
           >
             <MyAutocomplite
               label="Точки"
@@ -392,7 +390,7 @@ class KitchenStat_ extends React.Component {
           <Grid
             item
             xs={12}
-            sm={1}
+            sm={2}
           >
             <Button
               onClick={this.getStatParts.bind(this)}
@@ -401,6 +399,13 @@ class KitchenStat_ extends React.Component {
               Обновить
             </Button>
           </Grid>
+        </Grid>
+
+        <Grid
+          container
+          pt={1}
+          spacing={3}
+        >
 
           {/* таблица Оформленные заказы по часам */}
           {(this.state.arrayOrdersByH?.length || this.state.is_load_parts?.orders_by_h) && (
@@ -663,8 +668,7 @@ class KitchenStat_ extends React.Component {
           )}
 
           {/* аккордион Проданные позиции (разбивка сетов, без допов) */}
-          {(this.state.statAllItemsCount > 0 ||
-            this.state.is_load_parts?.stat_all_items) && (
+          {(this.state.statAllItemsCount > 0 || this.state.is_load_parts?.stat_all_items) && (
             <Grid
               item
               xs={12}
@@ -814,15 +818,16 @@ class KitchenStat_ extends React.Component {
                         Всего: {this.state.statItemsCheckoutCount}
                       </Typography>
                     )}
-                    {this.state.data?.stat_items_checkout?.excel_link && (
-                      <DownloadButton
-                        url={this.state.data?.stat_items_checkout?.excel_link}
-                        sx={{ marginRight: "1em" }}
-                      >
-                        <ExcelIcon />
-                        {/* <DownloadIcon/> */}
-                      </DownloadButton>
-                    )}
+                    {this.canAccess("export_items") &&
+                      this.state.data?.stat_items_checkout?.excel_link && (
+                        <DownloadButton
+                          url={this.state.data?.stat_items_checkout?.excel_link}
+                          sx={{ marginRight: "1em" }}
+                        >
+                          <ExcelIcon />
+                          {/* <DownloadIcon/> */}
+                        </DownloadButton>
+                      )}
                   </Box>
                 </AccordionSummary>
                 {this.state.data?.stat_items_checkout && this.state.statItemsCheckoutCount > 0 && (
@@ -838,6 +843,7 @@ class KitchenStat_ extends React.Component {
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout?.cash}
                           title={"Касса"}
+                          canExport={this.canAccess("export_items")}
                         />
                       </Grid>
                       <Grid
@@ -847,6 +853,7 @@ class KitchenStat_ extends React.Component {
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout?.callcenter}
                           title={"Колл-центр"}
+                          canExport={this.canAccess("export_items")}
                         />
                       </Grid>
                       <Grid
@@ -856,6 +863,7 @@ class KitchenStat_ extends React.Component {
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout?.client}
                           title={"Клиент"}
+                          canExport={this.canAccess("export_items")}
                         />
                       </Grid>
                     </Grid>
@@ -891,14 +899,15 @@ class KitchenStat_ extends React.Component {
                     {this.state.is_load_parts?.stat_items_checkout_all && (
                       <CircularProgress size={24} />
                     )}
-                    {this.state.data?.stat_items_checkout_all?.excel_link && (
-                      <DownloadButton
-                        url={this.state.data?.stat_items_checkout_all?.excel_link}
-                        ml="auto"
-                      >
-                        <ExcelIcon />
-                      </DownloadButton>
-                    )}
+                    {this.canAccess("export_items") &&
+                      this.state.data?.stat_items_checkout_all?.excel_link && (
+                        <DownloadButton
+                          url={this.state.data?.stat_items_checkout_all?.excel_link}
+                          ml="auto"
+                        >
+                          <ExcelIcon />
+                        </DownloadButton>
+                      )}
                   </Box>
                 </AccordionSummary>
                 {this.state.data?.stat_items_checkout_all && (
@@ -914,6 +923,7 @@ class KitchenStat_ extends React.Component {
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout_all?.cash}
                           title={"Касса"}
+                          canExport={this.canAccess("export_items")}
                         />
                       </Grid>
                       <Grid
@@ -923,6 +933,7 @@ class KitchenStat_ extends React.Component {
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout_all?.callcenter}
                           title={"Колл-центр"}
+                          canExport={this.canAccess("export_items")}
                         />
                       </Grid>
                       <Grid
@@ -932,6 +943,7 @@ class KitchenStat_ extends React.Component {
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout_all?.client}
                           title={"Клиент"}
+                          canExport={this.canAccess("export_items")}
                         />
                       </Grid>
                     </Grid>

@@ -22,7 +22,7 @@ import ShowOrdersButton from "./ShowOrdersButton";
 import useXLSExport from "@/src/hooks/useXLSXExport";
 import ExcelIcon from "@/ui/ExcelIcon";
 
-const InnerTabSources = ({ getData, showAlert }) => {
+const InnerTabSources = ({ getData, showAlert, canExport }) => {
   const { dateStart, dateEnd, points, setPage } = useMarketingTabStore();
   const [srcStats, setSrcStats] = useState(null);
 
@@ -100,15 +100,17 @@ const InnerTabSources = ({ getData, showAlert }) => {
 
   return srcStats ? (
     <>
-      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <IconButton
-          style={{ cursor: "pointer", padding: 10 }}
-          onClick={() => exportXLSX(srcStats.sources, sourceStatsColumns, "sources-stats.xlsx")}
-          title="Экспортировать в Excel"
-        >
-          <ExcelIcon />
-        </IconButton>
-      </Box>
+      {canExport && (
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <IconButton
+            style={{ cursor: "pointer", padding: 10 }}
+            onClick={() => exportXLSX(srcStats.sources, sourceStatsColumns, "sources-stats.xlsx")}
+            title="Экспортировать в Excel"
+          >
+            <ExcelIcon />
+          </IconButton>
+        </Box>
+      )}
       <TableContainer
         sx={{
           maxHeight: "70dvh",

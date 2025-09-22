@@ -36,6 +36,7 @@ function SiteClientsMarketingOrdersTable({
   openClient,
   showAlert,
   getData,
+  canExport,
   ...restAttrs
 }) {
   const {
@@ -167,13 +168,15 @@ function SiteClientsMarketingOrdersTable({
   ) : (
     <>
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-        <DownloadButton
-          url={async () => await getExportLink()}
-          title="Экспортировать в Excel"
-          style={{ cursor: "pointer", padding: 10 }}
-        >
-          <ExcelIcon />
-        </DownloadButton>
+        {canExport && (
+          <DownloadButton
+            url={async () => await getExportLink()}
+            title="Экспортировать в Excel"
+            style={{ cursor: "pointer", padding: 10 }}
+          >
+            <ExcelIcon />
+          </DownloadButton>
+        )}
         <IconButton
           title="Сбросить фильтры"
           style={{ cursor: "pointer", padding: 10 }}

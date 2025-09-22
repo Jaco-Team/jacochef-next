@@ -1,64 +1,63 @@
 import React from 'react';
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import {
+  Grid,
+  Backdrop,
+  Box,
+  Button,
+  CircularProgress,
+  Collapse,
+  Typography,
+  IconButton,
+  InputAdornment,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Tabs,
+  Tab,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  TextareaAutosize,
+} from "@mui/material";
 
-import ClearIcon from '@mui/icons-material/Clear';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
+import ClearIcon from "@mui/icons-material/Clear";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-
-import Paper from '@mui/material/Paper';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
-
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
-
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-
-import Tooltip from '@mui/material/Tooltip';
-import TextareaAutosize from '@mui/material/TextareaAutosize';
-import Collapse from '@mui/material/Collapse';
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import {
-	MyAlert,
-	MyTextInput,
-	MyAutocomplite,
-	formatDate,
-	MyDatePickerNew,
-	MyCheckBox
-} from '@/ui/elements';
+  MyAlert,
+  MyTextInput,
+  MyAutocomplite,
+  formatDate,
+  MyDatePickerNew,
+  MyCheckBox,
+} from "@/ui/elements";
 
-import {ExlIcon} from '@/ui/icons';
+import { ExlIcon } from "@/ui/icons";
 
-import {api_laravel} from '@/src/api_new';
-import dayjs from 'dayjs';
-import SiteClientsOrdersByUtmTable from '@/components/site_clients/SiteClientsOrdersByUtmTable';
-import SiteClientsOrdersBySourceTable from '@/components/site_clients/SiteClientsOrdersBySourceTable';
-import SiteClientsTrafficBySourceTable from '@/components/site_clients/SiteClientsTrafficBySourceTable';
-import SiteClientsTrafficSummaryTable from '@/components/site_clients/SiteClientsTrafficSummaryTable';
+import { api_laravel } from "@/src/api_new";
+import dayjs from "dayjs";
+import SiteClientsOrdersByUtmTable from "@/components/site_clients/SiteClientsOrdersByUtmTable";
+import SiteClientsOrdersBySourceTable from "@/components/site_clients/SiteClientsOrdersBySourceTable";
+import SiteClientsTrafficBySourceTable from "@/components/site_clients/SiteClientsTrafficBySourceTable";
+import SiteClientsTrafficSummaryTable from "@/components/site_clients/SiteClientsTrafficSummaryTable";
 
 import SiteClients_Modal_Comment_Action from "@/components/site_clients/_SiteClientsModalCommentAction";
 import SiteClients_Modal_Client_Order from "@/components/site_clients/_SiteClientsModalClientOrder";
 import SiteClients_Modal_Client from "@/components/site_clients/_SiteClientsModalClient";
 import Clients from "@/components/site_clients/_Clients";
 import OrdersMore from "@/components/site_clients/_OrdersMore";
-import a11yProps from '@/components/shared/TabPanel/a11yProps';
-import TabPanel from '@/components/shared/TabPanel/TabPanel';
-import handleUserAccess from '@/src/helpers/access/handleUserAccess';
-import SiteClientsMarketingTab from '@/components/site_clients/marketing/SiteClientsMarketingTab';
+import a11yProps from "@/components/shared/TabPanel/a11yProps";
+import TabPanel from "@/components/shared/TabPanel/TabPanel";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import SiteClientsMarketingTab from "@/components/site_clients/marketing/SiteClientsMarketingTab";
+import TestAccess from '@/components/shared/TestAccess';
+
 
 class SiteClients_ extends React.Component {
 
@@ -894,6 +893,11 @@ class SiteClients_ extends React.Component {
 					<CircularProgress color="inherit"/>
 				</Backdrop>
 
+				{/* <TestAccess
+          access={this.state.access}
+          setAccess={(access) => this.setState({ access })}
+        /> */}
+
 				<MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
@@ -1703,7 +1707,6 @@ class SiteClients_ extends React.Component {
 					{/* Аналитика по заказам */}
 
 					{/* Маркетинговая Аналитика */}
-										{/* Поиск заказов расширенный */}
 					<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
 						<TabPanel
 							value={this.state.activeTab}
@@ -1720,7 +1723,6 @@ class SiteClients_ extends React.Component {
 							/>
 						</TabPanel>
 					</Grid>
-					{/* Поиск заказов расширенный */}
 					{/* Маркетинговая Аналитика */}
 
 				</Grid>

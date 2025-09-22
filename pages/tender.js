@@ -17,6 +17,8 @@ import { MyAlert, MyAutocomplite, MySelect } from '@/ui/elements';
 
 import queryString from 'query-string';
 import { api_laravel } from '@/src/api_new';
+import handleUserAccess from '@/src/helpers/access/handleUserAccess';
+import TestAccess from '@/components/shared/TestAccess';
 
 
 const cellBgColor = {
@@ -77,6 +79,7 @@ class Tender_ extends React.Component {
     this.state = {
       module: 'tender',
       module_name: '',
+      access: null,
       is_load: false,
 
       cities: [],
@@ -110,6 +113,7 @@ class Tender_ extends React.Component {
     this.setState({
       module_name: data.module_info.name,
       cities: data.cities,
+      access: data.access
     });
 
     document.title = data.module_info.name;
@@ -347,6 +351,11 @@ class Tender_ extends React.Component {
 
     const res = await this.getData('get_data', data);
 
+    if(!res?.st) {
+      this.showAlert(res?.text || 'Ошибка', false);
+      return;
+    }
+
     if(res?.url){
       const link = document.createElement('a');
       link.href = res.url;
@@ -384,12 +393,19 @@ class Tender_ extends React.Component {
     }, 3000);
   }
 
+  canAccess(key){
+    const {userCan} = handleUserAccess(this.state.access)
+    return userCan('access', key);
+  }
+
   render() {
     return (
       <>
         <Backdrop open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+
+        {/* <TestAccess access={this.state.access} setAccess={(access) => this.setState({access})} /> */}
 
         <MyAlert 
           isOpen={this.state.alertOpened}
@@ -470,17 +486,19 @@ class Tender_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={1}>
-            <Button
-              style={{
-                whiteSpace: 'nowrap',
-                backgroundColor: '#00a550',
-                color: 'white',
-              }}
-              onClick={this.onDownload.bind(this)}
-              //onClick={this.onDownload2.bind(this)}
-            >
-              Скачать
-            </Button>
+            {this.state.city && this.canAccess('export') && (
+              <Button
+                style={{
+                  whiteSpace: 'nowrap',
+                  backgroundColor: '#00a550',
+                  color: 'white',
+                }}
+                onClick={this.onDownload.bind(this)}
+                //onClick={this.onDownload2.bind(this)}
+              >
+                Скачать
+              </Button>
+            )}
           </Grid>  
         </Grid>
 
@@ -525,25 +543,27 @@ class Tender_ extends React.Component {
                       ))}
                     </TableRow>
 
-                    <TableRow>
-                      <TableCell style={{ zIndex: 3 }}></TableCell>
-                      <TableCell></TableCell>
-                      <TableCell></TableCell>
-                      {this.state.vendors.map((vendor, key) => (
-                        <TableCell
-                          key={key}
-                          style={{
-                            maxWidth: 150,
-                            textAlign: 'center',
-                            cursor: 'pointer'
-                          }}
-                          onClick={this.downLoadVendor.bind(this, vendor.id)}
-                        >
-                          Скачать
-                        </TableCell>
-                       
-                      ))}
-                    </TableRow>
+                    {this.canAccess('export') && (
+                      <TableRow>
+                        <TableCell style={{ zIndex: 3 }}></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        {this.state.vendors.map((vendor, key) => (
+                          <TableCell
+                            key={key}
+                            style={{
+                              maxWidth: 150,
+                              textAlign: 'center',
+                              cursor: 'pointer'
+                            }}
+                            onClick={this.downLoadVendor.bind(this, vendor.id)}
+                          >
+                            Скачать
+                          </TableCell>
+                        
+                        ))}
+                      </TableRow>
+                    )}
 
                     <TableRow>
                       <TableCell style={{ zIndex: 3 }}></TableCell>
