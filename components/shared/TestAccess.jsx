@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import handleUserAccess from '@/src/helpers/access/handleUserAccess';
-import { Close, Edit } from '@mui/icons-material';
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import { Close, Edit } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -17,33 +17,33 @@ import {
   TableRow,
   TextField,
   Typography,
-} from '@mui/material';
-import { useEffect, useState } from 'react';
-import TextFilter from './TextFilter';
+} from "@mui/material";
+import { useEffect, useState } from "react";
+import TextFilter from "./TextFilter";
 
 function TestAccess({ access, setAccess }) {
   // protect leaking to production
-  if (process.env.NODE_ENV !== 'development') {
+  if (process.env.NODE_ENV !== "development") {
     return null;
   }
 
   const [localAccess, setLocalAccess] = useState(access);
 
-  const [nameFilter, setNameFilter] = useState('');
+  const [nameFilter, setNameFilter] = useState("");
 
   const [modalOpened, setModalOpened] = useState(false);
 
   const canAccess = (key) => {
     const { userCan } = handleUserAccess(localAccess);
-    return userCan('access', key);
+    return userCan("access", key);
   };
   const canView = (key) => {
     const { userCan } = handleUserAccess(localAccess);
-    return userCan('view', key);
+    return userCan("view", key);
   };
   const canEdit = (key) => {
     const { userCan } = handleUserAccess(localAccess);
-    return userCan('edit', key);
+    return userCan("edit", key);
   };
 
   useEffect(() => setLocalAccess({ ...access }), [access]);
@@ -52,12 +52,16 @@ function TestAccess({ access, setAccess }) {
     <>
       <IconButton
         onClick={() => setModalOpened((prev) => !prev)}
-        sx={{ position: 'fixed', bottom: 16, right: 16, p: 2, zIndex: 11 }}
+        sx={{ position: "fixed", bottom: 16, right: 16, p: 2, zIndex: 11, background: "#44885545" }}
       >
         {modalOpened ? <Close /> : <Edit />}
       </IconButton>
-      <Dialog open={modalOpened} onClose={() => setModalOpened(false)} maxWidth="md">
-        <DialogTitle sx={{ position: 'relative' }}>
+      <Dialog
+        open={modalOpened}
+        onClose={() => setModalOpened(false)}
+        maxWidth="md"
+      >
+        <DialogTitle sx={{ position: "relative" }}>
           <Typography>Access Override</Typography>
           <p>
             Измените значение параметра - увидите, как изменится результат проверок
@@ -66,19 +70,22 @@ function TestAccess({ access, setAccess }) {
           <p>Нажмите Apply - применится к модулю.</p>
           <IconButton
             onClick={() => setModalOpened(false)}
-            sx={{ position: 'absolute', top: 1, right: 1, p: 1 }}
+            sx={{ position: "absolute", top: 1, right: 1, p: 1 }}
           >
             <Close />
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          <TableContainer sx={{ maxHeight: '55dvh' }}>
+          <TableContainer sx={{ maxHeight: "55dvh" }}>
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell>
                     Access Key
-                    <TextFilter value={nameFilter} onChange={setNameFilter} />
+                    <TextFilter
+                      value={nameFilter}
+                      onChange={setNameFilter}
+                    />
                   </TableCell>
                   <TableCell>Value</TableCell>
                   <TableCell>canAccess</TableCell>
@@ -100,15 +107,15 @@ function TestAccess({ access, setAccess }) {
                             inputProps={{
                               min: 0,
                               max: 1,
-                              autoComplete: 'off',
+                              autoComplete: "off",
                             }}
                             onChange={(e) =>
                               setLocalAccess({ ...localAccess, [key]: +e.target.value })
                             }
                             sx={{
-                              '& .MuiInputBase-input': {
-                                padding: '6px 10px', // custom padding
-                                fontSize: '14px', // custom font size
+                              "& .MuiInputBase-input": {
+                                padding: "6px 10px", // custom padding
+                                fontSize: "14px", // custom font size
                               },
                             }}
                           />
@@ -121,7 +128,7 @@ function TestAccess({ access, setAccess }) {
               </TableBody>
             </Table>
           </TableContainer>
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 1 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", p: 1 }}>
             <Button
               variant="contained"
               color="primary"
@@ -140,7 +147,7 @@ function TestAccess({ access, setAccess }) {
 }
 
 const YesNo = ({ yes }) => {
-  return <span style={{ color: yes ? 'green' : 'red' }}>{yes ? 'Yes' : 'No'}</span>;
+  return <span style={{ color: yes ? "green" : "red" }}>{yes ? "Yes" : "No"}</span>;
 };
 
 export default TestAccess;

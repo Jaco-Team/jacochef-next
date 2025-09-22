@@ -34,7 +34,6 @@ export default function SiteClientsMarketingTab(props) {
     setDateStart,
     setDateEnd,
     setIsModalOpen,
-    loadingOrders,
     points,
     setPoints,
   } = useMarketingTabStore();
@@ -89,6 +88,7 @@ export default function SiteClientsMarketingTab(props) {
             openClient={openClient}
             showAlert={showAlert}
             getData={getData}
+            canExport={canAccess('export_items')}
           />
         </>
       </SiteClientsMarketingOrdersModal>
@@ -257,6 +257,7 @@ export default function SiteClientsMarketingTab(props) {
             <InnerTabSources
               getData={getData}
               showAlert={showAlert}
+              canExport={canAccess('export_items')}
             />
           </TabPanel>
         </Grid>
@@ -274,6 +275,7 @@ export default function SiteClientsMarketingTab(props) {
             <InnerTabUtm
               getData={getData}
               showAlert={showAlert}
+              canExport={canAccess('export_items')}
             />
           </TabPanel>
         </Grid>
@@ -291,6 +293,7 @@ export default function SiteClientsMarketingTab(props) {
             <InnerTabPromo
               getData={getData}
               showAlert={showAlert}
+              canExport={canAccess('export_items')}
             />
           </TabPanel>
         </Grid>

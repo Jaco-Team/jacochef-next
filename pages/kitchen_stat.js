@@ -324,10 +324,10 @@ class KitchenStat_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        <TestAccess
+        {/* <TestAccess
           access={this.state.access}
           setAccess={(access) => this.setState({ access })}
-        />
+        /> */}
 
         <MyAlert
           isOpen={this.state.openAlert}

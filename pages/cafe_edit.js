@@ -1139,10 +1139,10 @@ class CafeEdit_ extends React.Component {
         <Backdrop style={{ zIndex: 999 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        <TestAccess
+        {/* <TestAccess
           access={this.state.acces}
           setAccess={(acces) => this.setState({ acces: { ...acces } })}
-        />
+        /> */}
         <Dialog
           open={this.state.confirmDialog}
           onClose={() => this.setState({ confirmDialog: false })}

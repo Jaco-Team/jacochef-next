@@ -118,7 +118,7 @@ const DialogUser = ({open, onClose, user, openOrder}) => {
 }
 
 
-export default function Clients() {
+export default function Clients({canAccess}) {
 	const [isLoad, setIsLoad] = useState(false);
 	const [module, setModule] = useState({});
 	const [points, setPoints] = useState([]);
@@ -414,7 +414,7 @@ export default function Clients() {
 						<Button
 							variant="contained"
 							style={{marginLeft: 10, backgroundColor: !!url ? '#3cb623ff' : '#ffcc00'}}
-							disabled={!users.length}
+							disabled={!users.length || !canAccess('export_items')}
 							onClick={onDownload}
 						>
 							<DownloadIcon/>
@@ -425,7 +425,7 @@ export default function Clients() {
 						<Button
 							variant="contained"
 							style={{marginLeft: 10, backgroundColor: !!urlCsv ? '#3cb62388' : 'rgba(215,184,111,0.55)'}}
-							disabled={!users.length}
+							disabled={!users.length || !canAccess('export_items')}
 							onClick={onDownloadCsv}
 						>
 							<DownloadIcon/>
