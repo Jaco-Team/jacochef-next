@@ -49,18 +49,6 @@ export default function SiteClientsMarketingTab(props) {
     setPoints(tabPoints);
   };
 
-  const setLastWeek = () => {
-    setTabDateStart(dayjs().subtract(7, "day"));
-    setTabDateEnd(dayjs());
-    applyRange();
-  };
-
-  const setLastMonth = () => {
-    setTabDateStart(dayjs().subtract(1, "month"));
-    setTabDateEnd(dayjs());
-    applyRange();
-  };
-
   const openOrder = async (point_id, order_id) => {
     try {
       setOrder(null);
@@ -188,20 +176,6 @@ export default function SiteClientsMarketingTab(props) {
             spacing={1}
             alignContent={"stretch"}
           >
-            <Button
-              onClick={setLastWeek}
-              variant="contained"
-              type="submit"
-            >
-              За неделю
-            </Button>
-            <Button
-              onClick={setLastMonth}
-              variant="contained"
-              type="submit"
-            >
-              За месяц
-            </Button>
             <Button
               onClick={applyRange}
               variant="contained"
