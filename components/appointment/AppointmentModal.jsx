@@ -62,9 +62,6 @@ const AppointmentModal = (props) => {
           )})
         )
       : full_menu;
-    console.log(moduleNameFilter);
-    console.log(full_menu);
-    console.log(filtered);
     setFullMenuFiltered(filtered);
   };
   const debouncedFilterFullMenu = useDebounce(filterFullMenu, 400);

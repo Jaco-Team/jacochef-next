@@ -4,6 +4,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Box,
   Button,
   Checkbox,
   Dialog,
@@ -28,7 +29,7 @@ const AppointmentParamModal = (props) => {
   const paramMethod = useAppointmentModalStore((s) => s.paramMethod);
   const type = useAppointmentModalStore((s) => s.type);
   const paramModal = useAppointmentModalStore((s) => s.paramModal);
-  const { changeParamFlag } = useAppointmentModalStore.getState();
+  const changeParamFlag = useAppointmentModalStore((s) => s.changeParamFlag);
 
   const onClose = () => {
     setTimeout(() => {
@@ -50,7 +51,7 @@ const AppointmentParamModal = (props) => {
               <Checkbox
                 key={`${categoryIndex}-${featureIndex}-${i}`}
                 checked={!!+feature[field]}
-                onChange={(e) => changeParamFlag(field, featureIndex, categoryIndex, e)}
+                onChange={(e) => changeParamFlag(field, categoryIndex, featureIndex, e)}
                 label={fields[field]}
               />
             )}
@@ -80,15 +81,33 @@ const AppointmentParamModal = (props) => {
         </IconButton>
       </DialogTitle>
 
-      <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+      <DialogContent style={{ paddingBottom: 10 }}>
         {params?.table?.length > 0 && (
-          <Table size="small">
+          <Table
+            size="small"
+            stickyHeader
+          >
             <TableHead>
               <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                 <TableCell style={{ width: "70%" }}>Параметр</TableCell>
-                <TableCell style={{ width: "10%" }}>Доступ</TableCell>
-                <TableCell style={{ width: "10%" }}>Просмотр</TableCell>
-                <TableCell style={{ width: "10%" }}>Редактирование</TableCell>
+                <TableCell style={{ width: "10%" }}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Доступ
+                    <MassCheckBox prop="access" />
+                  </Box>
+                </TableCell>
+                <TableCell style={{ width: "10%" }}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Просмотр
+                    <MassCheckBox prop="view" />
+                  </Box>
+                </TableCell>
+                <TableCell style={{ width: "10%" }}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    Редактирование
+                    <MassCheckBox prop="edit" />
+                  </Box>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -128,9 +147,33 @@ const AppointmentParamModal = (props) => {
                   <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                     <TableCell style={{ width: "30%" }}>Категория</TableCell>
                     <TableCell style={{ width: "40%" }}>Параметр</TableCell>
-                    <TableCell style={{ width: "10%" }}>Доступ</TableCell>
-                    <TableCell style={{ width: "10%" }}>Просмотр</TableCell>
-                    <TableCell style={{ width: "10%" }}>Редактирование</TableCell>
+                    <TableCell style={{ width: "10%" }}>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        Доступ
+                        <MassCheckBox
+                          prop="access"
+                          cat={f_key}
+                        />
+                      </Box>
+                    </TableCell>
+                    <TableCell style={{ width: "10%" }}>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        Просмотр
+                        <MassCheckBox
+                          prop="view"
+                          cat={f_key}
+                        />
+                      </Box>
+                    </TableCell>
+                    <TableCell style={{ width: "10%" }}>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        Редактирование
+                        <MassCheckBox
+                          prop="edit"
+                          cat={f_key}
+                        />
+                      </Box>
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -161,5 +204,19 @@ const AppointmentParamModal = (props) => {
     </Dialog>
   );
 };
+
+function MassCheckBox({ prop, cat = -1 }) {
+  const { massToggleParamFlag, massParamIsChecked, massCheckboxShow } = useAppointmentModalStore();
+  return (
+    massCheckboxShow(prop, cat) && (
+      <IconButton sx={{ p: 1 }}>
+        <Checkbox
+          checked={massParamIsChecked(prop, cat)}
+          onChange={() => massToggleParamFlag(prop, cat)}
+        />
+      </IconButton>
+    )
+  );
+}
 
 export default memo(AppointmentParamModal);

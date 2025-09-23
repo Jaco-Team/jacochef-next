@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 export const useAppointmentModalStore = create(
-  immer((set) => ({
+  immer((set, get) => ({
     item: null,
     name: "",
     short_name: "",
@@ -100,11 +100,7 @@ export const useAppointmentModalStore = create(
         state.type = type;
       }),
 
-    changeActiveFeature: (featureIndex, categoryIndex, event) => {
-      get().changeParamFlag("is_active", featureIndex, categoryIndex, event);
-    },
-
-    changeParamFlag: (key, featureIndex, categoryIndex, event) => {
+    changeParamFlag: (key, categoryIndex, featureIndex, event) => {
       set((state) => {
         const ci = +categoryIndex;
         const fi = +featureIndex;
@@ -125,12 +121,14 @@ export const useAppointmentModalStore = create(
             return;
           }
           features[fi] = { ...features[fi], [key]: value };
-          // if(key === 'edit') {
-          //   features[fi] = { ...features[fi], view: value };
-          // }
 
-          if (key === "view" && event?.target?.checked == false) {
-            features[fi] = { ...features[fi], edit: value };
+          // on view off - edit off
+          if (key === "view" && value === 0) {
+            features[fi] = { ...features[fi], edit: 0 };
+          }
+          // on edit on - view on
+          if (key === "edit" && value === 1) {
+            features[fi] = { ...features[fi], view: 1 };
           }
         };
 
@@ -140,6 +138,79 @@ export const useAppointmentModalStore = create(
           updateFeature(parent.features);
         }
       });
+    },
+
+    massToggleParamFlag: (key, categoryIndex = -1) => {
+      // console.log(`try toggle ${key} ${categoryIndex}`);
+      set((state) => {
+        const ci = +categoryIndex;
+        const { full_menu, main_key, parent_key } = state;
+        const parent = full_menu[main_key]?.chaild[parent_key];
+        if (!parent) {
+          // console.error(`Parent not found for main_key: ${main_key}, parent_key: ${parent_key}`);
+          return;
+        }
+
+        const updateFeatures = (features) => {
+          if (!features) return;
+
+          const values = features.map((f) => f[key]);
+          const defined = values.filter((v) => v !== null && v !== undefined);
+
+          if (defined.length === 0) return;
+
+          const allOnes = defined.every((v) => v === 1);
+          const newValue = allOnes ? 0 : 1;
+
+          features.forEach((f) => {
+            if (f[key] === null || f[key] === undefined) return; // keep as is
+            f[key] = newValue;
+
+            // view off - edit off
+            if (key === "view" && newValue === 0 && f.edit) {
+              f.edit = 0;
+            }
+            // edit on - view on
+            if (key === "edit" && newValue === 1 && f.view) {
+              f.view = 1;
+            }
+          });
+        };
+
+        if (ci > -1) {
+          updateFeatures(parent.features_cat[ci]?.features);
+        } else {
+          updateFeatures(parent.features);
+        }
+      });
+    },
+
+    massParamIsChecked: (key, catIndex) => {
+      const ci = +catIndex;
+      const { full_menu, main_key, parent_key } = get();
+      const parent = full_menu[main_key]?.chaild[parent_key];
+      if (!parent) {
+        return;
+      }
+      const features = ci > -1 ? parent.features_cat[ci]?.features ?? [] : parent.features ?? [];
+
+      return features?.every((f) => (f[key] ?? 1) === 1);
+    },
+
+    massCheckboxShow: (key, catIndex) => {
+      const ci = +catIndex;
+      const { full_menu, main_key, parent_key } = get();
+      const parent = full_menu[main_key]?.chaild[parent_key];
+      if (!parent) {
+        return;
+      }
+      const features = ci > -1 ? parent.features_cat[ci]?.features ?? [] : parent.features ?? [];
+
+      if (!features.length) return false;
+
+      const allEmpty = features.every((f) => f[key] === null || f[key] === undefined);
+
+      return !allEmpty;
     },
 
     changeActiveModule: (mainKey, parentKey, event) =>
