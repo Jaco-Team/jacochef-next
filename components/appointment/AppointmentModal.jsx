@@ -22,9 +22,11 @@ import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import AppointmentParamModal from "@/components/appointment/AppointmentParamModal";
 import AppointmentModalInput from "@/components/appointment/AppointmentModalInput";
-import { Fragment, memo, useCallback, useEffect } from "react";
+import { Fragment, memo, useCallback, useEffect, useState } from "react";
 import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/ui/elements";
 import { useAppointmentModalStore } from "@/components/appointment/store/useAppointmentModalStore";
+import TextFilter from "../shared/TextFilter";
+import { useDebounce } from "@/src/hooks/useDebounce";
 
 const AppointmentModal = (props) => {
   const {
@@ -48,6 +50,28 @@ const AppointmentModal = (props) => {
     s.full_menu,
     s.method,
   ]);
+
+  // filter by name
+  const [moduleNameFilter, setModuleNameFilter] = useState("");
+  const [fullMenuFiltered, setFullMenuFiltered] = useState(full_menu);
+  const filterFullMenu = () => {
+    const filtered = moduleNameFilter
+      ? full_menu?.map((item) => ({...item, chaild:
+          item.chaild?.filter((child) =>
+            child.name?.toLowerCase()?.includes(moduleNameFilter?.toLowerCase())
+          )})
+        )
+      : full_menu;
+    console.log(moduleNameFilter);
+    console.log(full_menu);
+    console.log(filtered);
+    setFullMenuFiltered(filtered);
+  };
+  const debouncedFilterFullMenu = useDebounce(filterFullMenu, 400);
+  useEffect(() => {
+    debouncedFilterFullMenu();
+  }, [full_menu, moduleNameFilter]);
+  //
 
   useEffect(() => {
     if (!props) {
@@ -188,7 +212,7 @@ const AppointmentModal = (props) => {
               />
             </Grid>
 
-            {full_menu?.length > 0 && (
+            {fullMenuFiltered?.length > 0 && (
               <Grid
                 item
                 xs={12}
@@ -203,13 +227,19 @@ const AppointmentModal = (props) => {
                     <TableHead>
                       <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                         <TableCell style={{ width: "5%" }}>#</TableCell>
-                        <TableCell style={{ width: "40%" }}>Наименование модуля</TableCell>
+                        <TableCell style={{ width: "40%" }}>
+                          Наименование модуля
+                          <TextFilter
+                            value={moduleNameFilter}
+                            onChange={setModuleNameFilter}
+                          />
+                        </TableCell>
                         <TableCell style={{ width: "30%" }}>Параметры модуля</TableCell>
                         <TableCell style={{ width: "25%" }}>Активность модуля</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {full_menu.map((item, key) =>
+                      {fullMenuFiltered.map((item, key) =>
                         item.chaild?.length > 0 ? (
                           <Fragment key={key}>
                             <TableRow sx={{ "& th": { border: "none" } }}>

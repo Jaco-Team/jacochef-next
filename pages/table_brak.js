@@ -17,6 +17,8 @@ import { MySelect, MyDatePickerNew, MyAlert, MyTextInput } from '@/ui/elements';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
+import TestAccess from '@/components/shared/TestAccess';
+import handleUserAccess from '@/src/helpers/access/handleUserAccess';
 
 class TableBrak_ extends React.Component {
   constructor(props) {
@@ -51,6 +53,7 @@ class TableBrak_ extends React.Component {
       points: data.points,
       point: data.points[0].id,
       module_name: data.module_info.name,
+      access: data.access,
     });
 
     document.title = data.module_info.name;
@@ -217,13 +220,18 @@ class TableBrak_ extends React.Component {
     this.setState({ items: filterItems });
   };
 
+  canAccess(key){
+    const {userCan} = handleUserAccess(this.state.access)
+    return userCan('access', key);
+  }
+
   render() {
     return (
       <>
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
+        {/* <TestAccess access={this.state.access} setAccess={(access) => this.setState({access})} /> */}
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
@@ -279,14 +287,16 @@ class TableBrak_ extends React.Component {
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <Button
-              variant={this.state.items.length ? 'contained' : 'outlined'}
-              color="success"
-              onClick={this.onDownload.bind(this)}
-              disabled={!this.state.items.length}
-            >
-              Скачать Excel
-            </Button>
+            {this.canAccess('export') && (
+              <Button
+                variant={this.state.items.length ? 'contained' : 'outlined'}
+                color="success"
+                onClick={this.onDownload.bind(this)}
+                disabled={!this.state.items.length}
+              >
+                Скачать Excel
+              </Button>
+            )}
           </Grid>
 
           {/* таблица */}

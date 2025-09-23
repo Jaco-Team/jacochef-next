@@ -36,7 +36,7 @@ const defaultKassRange = [
 
 const CafeEdit_Modal_Kkt_Info = (props) => {
   const { kkt, save_kkt, type, onClose: parentOnClose, fullScreen, pointModal, open } = props;
-  const { canView, canEdit } = props;
+  const { canEdit } = props;
 
   const [dateLicense, setDateLicense] = useState(null);
   const [rnKkt, setRnKkt] = useState("");

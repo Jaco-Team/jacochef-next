@@ -129,6 +129,7 @@ class Stat_buy_ extends React.Component {
       cats: data.cats,
       cat: data.cats[0].id,
       points: data.points,
+      // access: data.access,
 
       module_name: data.module_info.name,
     });
@@ -267,6 +268,11 @@ class Stat_buy_ extends React.Component {
     link.href = url;
     link.click();
   }
+
+  // canAccess(key){
+  //   const {userCan} = handleUserAccess(this.state.access);
+  //   return userCan('access', key);
+  // }
 
   render() {
     console.log('render');
