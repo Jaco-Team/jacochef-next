@@ -362,10 +362,10 @@ class SkladModules_ extends React.Component {
 				<Backdrop open={this.state.is_load} style={{zIndex: 99}}>
 					<CircularProgress color="inherit"/>
 				</Backdrop>
-				<TestAccess 
+				{/* <TestAccess 
 					access={this.state.acces}
 					setAccess={(acces) => this.setState({acces})} 
-				/>
+				/> */}
 				<MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}

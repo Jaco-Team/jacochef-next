@@ -252,13 +252,13 @@ export default function JModal({
               func={(e) => changeItem("name", e.target.value)}
             />
           </Grid>
-        
+
           <Grid item xs={12}>
             <MyTextInput
               label="Адрес модуля (URL)"
               value={item?.link ?? ""}
               func={(e) => changeItem("link", e.target.value)}
-              disabled={mark === "edit" && !canEdit('app_params')}
+              disabled={mark === "edit"}
             />
           </Grid>
 
