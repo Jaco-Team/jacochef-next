@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { IconButton, Popover, TextField, InputAdornment } from "@mui/material";
-import { FilterList, Clear } from "@mui/icons-material";
+import { FilterList, Clear, FilterAlt } from "@mui/icons-material";
 
 export default function TextFilter({ value, onChange }) {
   const [anchor, setAnchor] = useState(null);
@@ -12,7 +12,8 @@ export default function TextFilter({ value, onChange }) {
         onClick={(e) => setAnchor(e.currentTarget)}
         sx={{ ml: 1, color: value ? "primary.main" : "inherit" }}
       >
-        <FilterList fontSize="small" />
+        {/* <FilterList fontSize="small" /> */}
+        <FilterAlt fontSize="small" />
       </IconButton>
 
       <Popover
