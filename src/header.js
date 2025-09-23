@@ -45,7 +45,7 @@ import Box from "@mui/material/Box";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import {useRouter} from "next/router";
 
-const UserMenu = ({my,logOut}) => {
+const UserMenu = ({my, logOut}) => {
 	const [anchorEl, setAnchorEl] = useState(null);
 	const router = useRouter();
 	const handleMenuOpen = (event) => {
@@ -64,17 +64,19 @@ const UserMenu = ({my,logOut}) => {
 
 	return (
 		<>
-			<IconButton color="inherit" onClick={handleMenuOpen}>
-				<Badge color="secondary">
+			<IconButton color="inherit" onClick={handleMenuOpen} sx={{borderRadius: 0}}>
+				<Badge
+					color="secondary"
+				>
 					<Box
 						sx={{
 							display: 'flex',
 							alignItems: 'center',
 							gap: 1.5,
 							padding: 1,
-							borderRadius: 1,
+							boxShadow: 'none',
 							'&:hover': {
-								backgroundColor: 'action.hover',
+								backgroundColor: 'transparent !important',
 							}
 						}}
 					>
@@ -85,8 +87,6 @@ const UserMenu = ({my,logOut}) => {
 								sx={{
 									width: 38,
 									height: 38,
-									border: theme => `2px solid ${theme.palette.background.paper}`,
-									boxShadow: 1
 								}}
 							/>
 						) : (
@@ -95,8 +95,7 @@ const UserMenu = ({my,logOut}) => {
 									width: 38,
 									height: 38,
 									bgcolor: 'primary.main',
-									border: theme => `2px solid ${theme.palette.background.paper}`,
-									boxShadow: 1
+									boxShadow: 'none'
 								}}
 							>
 								<AccountCircle sx={{width: 24, height: 24}}/>

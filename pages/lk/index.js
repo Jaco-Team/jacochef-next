@@ -21,8 +21,11 @@ import {MyAlert, MyTextInput} from "@/ui/elements";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
-const ModalEdit = ({open, onClose, save, title = 'Смена кода доступа', content = ''}) => {
+const ModalEdit = ({open, onClose, save, title = 'Смена кода доступа', content = '', auth_code = 0}) => {
 	const [authCode, setAuthCode] = useState(0);
+	useEffect(() => {
+		setAuthCode(auth_code);
+	}, [])
 	return (
 		<Dialog
 			sx={{'& .MuiDialog-paper': {width: '80%', maxHeight: 435}}}
@@ -110,7 +113,7 @@ function LkPage() {
 				status={errStatus}
 				text={errText}
 			/>
-			{open ? <ModalEdit open={open} onClose={() => setOpen(false)} save={save} /> : null}
+			{open ? <ModalEdit open={open} onClose={() => setOpen(false)} save={save} auth_code={my.auth_code} /> : null}
 			<Grid item xs={12} sm={6}>
 				<h1>{module.name}</h1>
 			</Grid>
@@ -118,8 +121,8 @@ function LkPage() {
 				<Card
 					elevation={3}
 					sx={{
-						margin: 'auto',
 						borderRadius: 2,
+						maxWidth: '900px'
 					}}
 				>
 					<CardContent sx={{p: 3}}>
@@ -127,24 +130,18 @@ function LkPage() {
 						<Grid container spacing={3}>
 							<Grid item xs={12} md={4} sx={{display: 'flex', justifyContent: 'center'}}>
 								<Paper
-									elevation={2}
 									sx={{
 										p: 1,
-										borderRadius: 2,
-										background: 'white',
-										display: 'flex',
-										flexDirection: 'column',
-										alignItems: 'center'
 									}}
 								>
 									{my.img_name ? (
 										<Avatar
 											src={`https://storage.yandexcloud.net/user-img/min-img/${my.img_name}?${my.img_update}`}
 											sx={{
-												width: 120,
-												height: 120,
-												border: '3px solid',
-												borderColor: 'primary.main'
+												width: 200,
+												height: 305,
+												borderColor: 'primary.main',
+												borderRadius: 0
 											}}
 										/>
 									) : (
@@ -160,16 +157,12 @@ function LkPage() {
 											<Person sx={{fontSize: 60}}/>
 										</Avatar>
 									)}
-									<Typography variant="body2" color="text.secondary" sx={{mt: 1}}>
-										Фотография
-									</Typography>
 								</Paper>
 							</Grid>
 
 							<Grid item xs={12} md={8}>
 								<Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
 									<Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-										<Person color="primary"/>
 										<Box>
 											<Typography variant="body2" color="text.secondary">
 												ФИО
@@ -182,7 +175,6 @@ function LkPage() {
 
 									<Divider/>
 									<Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-										<VpnKey color="secondary"/>
 										<Box>
 											<Typography variant="body2" color="text.secondary">
 												Код доступа
@@ -195,7 +187,6 @@ function LkPage() {
 
 									{/* Должность */}
 									<Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-										<Work color="action"/>
 										<Box>
 											<Typography variant="body2" color="text.secondary">
 												Должность
@@ -212,7 +203,6 @@ function LkPage() {
 									<Grid container spacing={2}>
 										<Grid item xs={12} sm={6}>
 											<Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-												<CalendarToday color="action"/>
 												<Box>
 													<Typography variant="body2" color="text.secondary">
 														Дата регистрации
@@ -226,7 +216,6 @@ function LkPage() {
 
 										<Grid item xs={12} sm={6}>
 											<Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-												<Timeline color="action"/>
 												<Box>
 													<Typography variant="body2" color="text.secondary">
 														Стаж работы
