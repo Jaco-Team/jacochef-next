@@ -13,6 +13,8 @@ import Box from "@mui/material/Box";
 import { Backdrop, Button, CircularProgress, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
 import JModal from '@/components/sklad_modules/JModal';
 import JParamModal from '@/components/sklad_modules/JParamModal';
+import handleUserAccess from '@/src/helpers/access/handleUserAccess';
+import TestAccess from '@/components/shared/TestAccess';
 
 const defaultParamTypes = [
 	{id: 2, name: "2 значения ( чекбокс - показывать / скрыть )"},
@@ -344,13 +346,26 @@ class SkladModules_ extends React.Component {
 		});
 	}
 
+	canView(key) {
+		return handleUserAccess(this.state.acces)?.userCan('view', key);
+	}
+	canEdit(key) {
+		return handleUserAccess(this.state.acces)?.userCan('edit', key);
+	}
+	canAccess(key) {
+		return handleUserAccess(this.state.acces)?.userCan('access', key);
+	}
+
 	render() {
 		return (
 			<>
 				<Backdrop open={this.state.is_load} style={{zIndex: 99}}>
 					<CircularProgress color="inherit"/>
 				</Backdrop>
-
+				{/* <TestAccess 
+					access={this.state.acces}
+					setAccess={(acces) => this.setState({acces})} 
+				/> */}
 				<MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
@@ -397,9 +412,11 @@ class SkladModules_ extends React.Component {
 					</Grid>
 
 					<Grid item xs={12} sm={6}>
-						<Button variant="contained" color="primary" style={{whiteSpace: 'nowrap'}} onClick={this.openModal_param.bind(this, 'add_param', null)}>
-							Добавить параметр модулю
-						</Button>
+						{this.canEdit('app_params') && (
+							<Button variant="contained" color="primary" style={{whiteSpace: 'nowrap'}} onClick={this.openModal_param.bind(this, 'add_param', null)}>
+								Добавить параметр модулю
+							</Button>
+						)}
 					</Grid>
 
 					{!this.state.list ? null : (
@@ -463,7 +480,9 @@ class SkladModules_ extends React.Component {
 																		}}
 																	>
 																		<TableCell></TableCell>
-																		<TableCell onClick={this.openModal.bind(this, 'edit', it.id)} sx={{paddingLeft: 10, alignItems: 'center'}}>
+																		<TableCell 
+																			onClick={this.openModal.bind(this, 'edit', it.id)}
+																			sx={{paddingLeft: 10, alignItems: 'center'}}>
 																			<li>{it.name}</li>
 																		</TableCell>
 																		<TableCell>
@@ -535,18 +554,23 @@ class SkladModules_ extends React.Component {
 																			<TableCell></TableCell>
 																		</TableRow>
 																	))}
-																	{it?.params.map((param, k) => (
+																	{this.canView(`app_params`) && it?.params.map((param, k) => (
 																		<TableRow hover key={k}>
 																			<TableCell></TableCell>
 																			<TableCell sx={{paddingLeft: 20, alignItems: 'center'}}>
 																				<li className='li_disc'>{param.name}</li>
 																			</TableCell>
 																			<TableCell>{param.category_name}</TableCell>
-																			<TableCell sx={{textAlign: 'center'}} onClick={this.openModal_param.bind(this, 'edit_param', param.id)}>
-																				<Tooltip title={
-																					<Typography color="inherit">Редактирование параметра</Typography>}>
-																					<EditIcon sx={{paddingLeft: 20, cursor: 'pointer'}}/>
-																				</Tooltip>
+																			<TableCell sx={{textAlign: 'center'}}>
+																				{this.canEdit('app_params') && (
+																					<Tooltip title={
+																						<Typography color="inherit">Редактирование параметра</Typography>}>
+																						<EditIcon 
+																							onClick={this.openModal_param.bind(this, 'edit_param', param.id)}
+																							sx={{paddingLeft: 20, cursor: 'pointer'}}
+																						/>
+																					</Tooltip>
+																				)}
 																			</TableCell>
 																			<TableCell></TableCell>
 																		</TableRow>
