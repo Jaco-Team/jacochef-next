@@ -142,14 +142,13 @@ export default class Stat_buy_ extends React.Component {
     };
 
     const res = await this.getData("get_items", data);
+    if (!res?.st) {
+      this.showAlert(res?.text || "Ошибка");
+      return;
+    }
 
-    if (!res.counts.unic_date.length || !res.counts.unic_date.length) {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: "Данные за указанный период отсутствуют!",
-      });
-
+    if (!res?.counts?.unic_date?.length) {
+      this.showAlert("Данные за указанный период отсутствуют!");
       return;
     }
 
