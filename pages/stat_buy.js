@@ -1,7 +1,7 @@
 "use server";
 
 import Stat_buy_ from "@/components/stat_buy/StatBuy_";
-import { getDataSSR } from "@/server/api";
+import { getDataSSR } from "@/backend/api";
 
 export default function StatBuy({ initialData }) {
   return <Stat_buy_ initialData={initialData} />;
