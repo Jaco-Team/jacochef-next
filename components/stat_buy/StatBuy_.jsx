@@ -12,6 +12,7 @@ import Stat_buy_Table_ from "./StatBuyTable_";
 import dayjs from "dayjs";
 import { api_laravel } from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import {formatNumber} from "@/src/helpers/utils/i18n";
 dayjs.locale("ru");
 
 export default class Stat_buy_ extends React.Component {
@@ -167,16 +168,11 @@ export default class Stat_buy_ extends React.Component {
 
     const ItemTab = this.state.ItemTab;
 
-    let item = items.find((item) => item.item_id === id && item.date === date);
+    const item = items.find((item) => item.item_id === id && item.date === date);
+    const values = [item?.count, item?.price, item?.avg_price]
+    const value = values[ItemTab - 1] ?? null
 
-    item =
-      ItemTab === "1"
-        ? item?.count ?? null
-        : ItemTab === "2"
-        ? item?.price ?? null
-        : item?.avg_price ?? null;
-
-    return item ? <TableCell key={key}>{item}</TableCell> : <TableCell key={key}></TableCell>;
+    return item ? <TableCell key={key}>{formatNumber(value)}</TableCell> : <TableCell key={key}></TableCell>;
   }
 
   onDownload() {
