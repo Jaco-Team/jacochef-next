@@ -601,6 +601,16 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 								className={this.state.itemView ? this.state.itemView.tmp_desc?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
+						<Grid item xs={12}>
+							<MyAutocomplite
+								label="Теги"
+								multiple={true}
+								disabled={true}
+								data={this.state.itemView?.tags_all?.key}
+								value={this.state.itemView?.tags?.key}
+								className={this.state.itemView ? this.state.itemView.tags?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
+							/>
+						</Grid>
 						<Grid item xs={12} sm={12}>
 							<MyTextInput
 								label="Короткое описание (в карточке)"
@@ -826,73 +836,14 @@ class SiteItems_Modal_Mark extends React.Component {
 			openAlert: false,
 			err_status: true,
 			err_text: '',
-			openAlert: false,
-			err_status: true,
-			err_text: ''
+			tags_all: [],
+			tags_my: [],
+			modalNewTag: '',
+			tag_name_new: '',
 		};
 	}
 
 	// Метод для валидации размеров изображения
-	validateImageSize = (file, done) => {
-		const allowedSizes = [
-			{ width: 600, height: 400 },
-			{ width: 300, height: 200 }
-		];
-
-		// Создаем изображение для проверки размеров
-		const img = new Image();
-		img.src = URL.createObjectURL(file);
-
-		img.onload = () => {
-			URL.revokeObjectURL(img.src); // Очищаем память
-
-			const isValid = allowedSizes.some(size =>
-				img.width === size.width && img.height === size.height
-			);
-
-			if (isValid) {
-				done(); // Файл принят
-				this.setState({ dropzoneError: '' }); // Очищаем ошибку
-			} else {
-				// Формируем сообщение об ошибке
-				const allowedSizesText = allowedSizes.map(size =>
-					`${size.width}x${size.height}`
-				).join(' или ');
-
-				const errorMsg = `Неверный размер изображения. Допустимые размеры: ${allowedSizesText}. Ваше изображение: ${img.width}x${img.height}`;
-				this.setState({
-					openAlert: true,
-					err_status: true,
-					err_text: errorMsg,
-				});
-
-				done(errorMsg); // Отклоняем файл
-				this.setState({
-					dropzoneError: errorMsg,
-					openAlert: true,
-					err_status: false,
-					err_text: errorMsg
-				});
-			}
-		};
-
-		img.onerror = () => {
-			URL.revokeObjectURL(img.src);
-			const errorMsg = 'Не удалось прочитать изображение';
-			this.setState({
-					openAlert: true,
-					err_status: true,
-					err_text: errorMsg,
-				});
-			done(errorMsg);
-			this.setState({
-				dropzoneError: errorMsg,
-				openAlert: true,
-				err_status: false,
-				err_text: errorMsg
-			});
-		};
-	}
 
 	componentDidUpdate(prevProps) {
 		if (!this.props.item) {
@@ -900,7 +851,7 @@ class SiteItems_Modal_Mark extends React.Component {
 		}
 
 		if (this.props.item !== prevProps.item) {
-
+			const tags = [{id: -1, name: 'Новый'}, ...this.props.item?.tags_all];
 			this.setState({
 				date_start: this.props.item?.date_start ? formatDate(this.props.item.date_start) : null,
 				date_end: this.props.item?.date_end ? formatDate(this.props.item.date_end) : null,
@@ -912,6 +863,8 @@ class SiteItems_Modal_Mark extends React.Component {
 				show_program: parseInt(this.props.item?.show_program) ? 1 : 0,
 				show_site: parseInt(this.props.item?.show_site) ? 1 : 0,
 				img_app: this.props.item?.img_app ?? '',
+				tags_all: tags ?? [],
+				tags_my: this.props.item?.tags,
 			});
 
 			setTimeout(() => {
@@ -963,13 +916,13 @@ class SiteItems_Modal_Mark extends React.Component {
 				weight: this.props.item.weight,
 				stol: this.props.item.stol,
 				type: this.props.item.type,
+				tags: this.state.tags_my,
 				type_save: 'mark',
 			};
 
 			const res = await this.props.getData('save_edit', data);
 
 			if (res.st === false) {
-
 				this.setState({
 					openAlert: true,
 					err_status: res.st,
@@ -1007,13 +960,6 @@ class SiteItems_Modal_Mark extends React.Component {
 							});
 
 							if (check_img) {
-								this.setState({
-									openAlert: true,
-									err_status: false,
-									err_text: 'Ошибка при загрузке фотографии',
-								});
-
-								return;
 
 							} else {
 
@@ -1032,13 +978,6 @@ class SiteItems_Modal_Mark extends React.Component {
 					this.myDropzone.processQueue();
 
 				} else {
-
-					this.setState({
-						openAlert: true,
-						err_status: res.st,
-						err_text: res.text,
-					});
-
 					this.onClose(true);
 					this.props.update();
 				}
@@ -1052,6 +991,13 @@ class SiteItems_Modal_Mark extends React.Component {
 		this.onClose();
 	}
 
+	openNewTag(){
+    this.setState({
+      modalNewTag: true,
+      tag_name_new: ''
+    })
+  }
+
 	onClose() {
 		this.setState({
 			date_start: null,
@@ -1064,12 +1010,40 @@ class SiteItems_Modal_Mark extends React.Component {
 			show_program: '0',
 			show_site: '0',
 			img_app: '',
-			err_status: true,
-			err_text: '',
 		});
 
 		this.props.onClose();
 	}
+
+	changeAutocomplite(data, event, value) {
+
+		let check = value.find(item => parseInt(item.id) === -1);
+
+		if (check) {
+			this.openNewTag();
+
+			return;
+		} else {
+			this.setState({
+				[data]: value
+			});
+		}
+	}
+
+	async saveNewTag(){
+    let data = {
+      name: this.state.tag_name_new
+    };
+
+    let res = await this.props.getData('saveNewTag', data);
+
+    if( res.st === true ){
+      this.setState({
+        tags_all: res.tags_all,
+				modalNewTag: false
+      })
+    }
+  }
 
 	render() {
 		const {open, method, fullScreen} = this.props;
@@ -1082,6 +1056,28 @@ class SiteItems_Modal_Mark extends React.Component {
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
+
+				{this.state.modalNewTag ? (
+					<Dialog
+          maxWidth={'sm'}
+          fullWidth={true}
+          open={ this.state.modalNewTag }
+          onClose={() => this.setState({modalNewTag: false})}
+        >
+          <DialogTitle>Новый тег</DialogTitle>
+          <DialogContent>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <MyTextInput label="" value={ this.state.tag_name_new } func={this.changeItem.bind(this, 'tag_name_new')} />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => this.setState({modalNewTag: false})}>Отмена</Button>
+            <Button type="submit" onClick={this.saveNewTag.bind(this)}>Сохранить</Button>
+          </DialogActions>
+        </Dialog>
+				) : null}
 
 				<Dialog
 					open={open}
@@ -1106,6 +1102,7 @@ class SiteItems_Modal_Mark extends React.Component {
 									label="Действует с"
 									value={this.state.date_start}
 									disabled={!this.props.acces?.date_start_edit}
+									minDate={dayjs(new Date())}
 									func={this.changeDateRange.bind(this, 'date_start')}
 								/>
 							</Grid>
@@ -1117,6 +1114,15 @@ class SiteItems_Modal_Mark extends React.Component {
 									func={this.changeItem.bind(this, 'tmp_desc')}
 									multiline={true}
 									maxRows={3}
+								/>
+							</Grid>
+							<Grid item xs={12}>
+								<MyAutocomplite
+									label="Теги"
+									multiple={true}
+									data={this.state.tags_all}
+									value={this.state.tags_my}
+									func={this.changeAutocomplite.bind(this, 'tags_my')}
 								/>
 							</Grid>
 							<Grid item xs={12} sm={12}>
@@ -1178,13 +1184,12 @@ class SiteItems_Modal_Mark extends React.Component {
 									<Grid item xs={12}>
 										<Typography>Картинка соотношением сторон 600х400 или 300х200 только JPG</Typography>
 									</Grid>
-
 									{this.state.img_app.length > 0 ? (
 										<Grid item xs={12} sm={6}>
-												<img
-													style={{maxHeight: 300, maxWidth: 400}}
-													src={`https://storage.yandexcloud.net/site-home-img/${this.state.img_app}site_items_600x400.jpg?date_update=${this.props.item.date_update}`}
-												/>
+											<img
+												style={{maxHeight: 300, maxWidth: 400}}
+												src={`https://storage.yandexcloud.net/site-home-img/${this.state.img_app}site_items_600x400.jpg?date_update=${this.props.item.img_new_update}`}
+											/>
 										</Grid>
 									) : null}
 									<Grid item xs={12} sm={6}>
@@ -2590,7 +2595,7 @@ class SiteItems_ extends React.Component {
 		};
 
 		const res = await this.getData('get_one_mark', data);
-
+		res.item.tags_all = res?.tags_all;
 		this.setState({
 			itemMark: res.item,
 			modalDialogMark: true,
@@ -2732,6 +2737,7 @@ class SiteItems_ extends React.Component {
 		} else {
 			res = await this.getData('save_edit', data);
 		}
+		console.log(data);
 
 		if (res.st) {
 
@@ -2899,6 +2905,7 @@ class SiteItems_ extends React.Component {
 
 		itemView.is_show = parseInt(itemView.is_show) ? 'Да' : 'Нет';
 		itemView.is_price = parseInt(itemView.is_price) ? 'Да' : 'Нет';
+
 
 		if (parseInt(index) !== 0) {
 
