@@ -32,6 +32,9 @@ import queryString from 'query-string';
 
 import dayjs from 'dayjs';
 
+// import { api_laravel_local as api_laravel } from '@/src/api_new';
+import { api_laravel } from '@/src/api_new';
+
 class RasByBill_ extends React.Component {
   constructor(props) {
     super(props);
@@ -39,6 +42,7 @@ class RasByBill_ extends React.Component {
     this.state = {
       module: 'ras_by_bill',
       module_name: '',
+      access: null,
       is_load: false,
       
       modalDialog: false,
@@ -60,12 +64,14 @@ class RasByBill_ extends React.Component {
   }
   
   async componentDidMount(){
-    let data = await this.getData('get_all');
-    
+    const data = await this.getData('get_all');
+    if(!data){
+      this.showAlert('Ошибка получения исходных данных')
+      return;
+    }
     this.setState({
       module_name: data.module_info.name,
       points: data.points,
-      
       items: data.items,
       cats: data.cats,
       items_cat: data.items_cat
@@ -73,50 +79,31 @@ class RasByBill_ extends React.Component {
     
     document.title = data.module_info.name;
   }
+
+  showAlert (text, status = false) {
+		this.setState({
+			openAlert: true,
+			err_text: text,
+			err_status: status
+		});
+		setTimeout(() => {
+			this.setState({
+				openAlert: false
+			});
+		}, 10000);
+	}
   
-  getData = (method, data = {}) => {
-    
-    this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      console.log( err )
-      this.setState({
-        is_load: false
-      })
-    });
+  async getData (method, data = {}) {
+    try {
+      this.setState({ is_load: true });
+      const result = await api_laravel(this.state.module, method, data);
+      if (!result) throw new Error("Api call failed");
+      return result.data;
+    } catch (e) {
+      this.showAlert(e.message || 'text')
+    } finally {
+      this.setState({ is_load: false });
+    }
   }
    
   changePoint(event){
@@ -194,6 +181,10 @@ class RasByBill_ extends React.Component {
       [data]: (event)
     })
   }
+
+  canAccess = (property) => handleUserAccess(this.state.access)?.userCan('access', property);
+	canView = (property) => handleUserAccess(this.state.access)?.userCan('view', property);
+	canEdit = (property) => handleUserAccess(this.state.access)?.userCan('edit', property);
   
   render(){
     return (
@@ -202,7 +193,7 @@ class RasByBill_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
         
-        <Dialog
+        {/* <Dialog
           open={this.state.modalDialog}
           onClose={ () => { this.setState({ modalDialog: false }) } }
           aria-labelledby="alert-dialog-title"
@@ -218,7 +209,7 @@ class RasByBill_ extends React.Component {
           <DialogActions>
             <Button onClick={ () => {} } color="primary">Сохранить</Button>
           </DialogActions>
-        </Dialog>
+        </Dialog> */}
         
         <Grid container spacing={3} className='container_first_child'>
           <Grid item xs={12} sm={12}>
@@ -257,7 +248,7 @@ class RasByBill_ extends React.Component {
             <>
               <Grid item xs={12}>
                 
-                <h1>Куплено по наклданым</h1>
+                <h1>Куплено по накладным</h1>
                 <TableContainer component={Paper}>
                   <Table aria-label="a dense table">
                     <TableHead>
@@ -266,7 +257,7 @@ class RasByBill_ extends React.Component {
                         <TableCell>Объем товра</TableCell>
                         <TableCell>Объем заготовки</TableCell>
                         <TableCell>Сумма</TableCell>
-                        <TableCell>Кол-во наклданых</TableCell>
+                        <TableCell>Кол-во накладных</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -448,6 +439,7 @@ export async function getServerSideProps({ req, res, query }) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
 
+  // const initialData = getDataSSR()
   return {
     props: {},
   }
