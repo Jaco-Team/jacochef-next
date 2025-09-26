@@ -29,6 +29,7 @@
     "axios": "^1.12.2",
     "childprocess": "^2.0.2",
     "common-es": "^1.1.0",
+    "cookie": "^1.0.2",
     "dayjs": "^1.11.18",
     "dropzone": "^6.0.0-beta.2",
     "file-saver": "^2.0.5",
@@ -52,7 +53,7 @@
     "zustand": "^4.5.7"
   },
   "devDependencies": {
-    "sass": "^1.92.1",
-    "@types/file-saver": "^2.0.7"
+    "@types/file-saver": "^2.0.7",
+    "sass": "^1.92.1"
   }
 }
