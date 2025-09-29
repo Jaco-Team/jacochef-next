@@ -640,7 +640,7 @@ class SiteClients_ extends React.Component {
 		const res = await this.getData('save_comment', data);
 
 		if (res?.st) {
-			
+
 			this.showAlert(res.text, res.st);
 			this.setState({
 				comments: res.client_comments,
@@ -1605,7 +1605,7 @@ class SiteClients_ extends React.Component {
 							index={this.state.index_search_clients}
 							id='traffic'
 						>
-							<Clients/>
+							<Clients canAccess={this.canAccess}/>
 						</TabPanel>
 					</Grid>
 					{/* Поиск клиентов */}

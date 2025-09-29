@@ -42,7 +42,8 @@ const ModalOrderWithFeedback = ({
 }) => {
   const [values, setValues] = useState([]);
   const [discountValue, setDiscountValue] = useState(0);
-  const [userActive, setUserActive] = useState(0);
+  const [answerValue, setAnswerValue] = useState(0);
+  const [userActive, setUserActive] = useState('');
   const saveFeedback = () => {
     const feedbacks = [];
     order_items.map((value, index) => {
@@ -52,10 +53,15 @@ const ModalOrderWithFeedback = ({
       sale: discountValue,
       phone: order.number,
     };
+    const anyAnswer = {
+      answer: answerValue,
+      phone: order.number,
+    };
     getData("save_feedbacks", {
       feedbacks,
       order_id: order.order_id,
       point_id: order.point_id,
+      anyAnswer,
       anyPercent,
       userActive,
     }).then(() => {
@@ -527,6 +533,18 @@ const ModalOrderWithFeedback = ({
             </Grid>
           )}
 
+          {!order?.ready_answer ? null : (
+            <Grid
+              item
+              xs={12}
+            >
+              <b>Готов давать обратную связь: </b>
+              {order?.ready_answer === 'Да' ? <span style={{color: 'green'}}>{order?.ready_answer}</span> : null}
+              {order?.ready_answer === 'Нет' ? <span style={{color: 'red'}}>{order?.ready_answer}</span> : null}
+              {order?.ready_answer === 'Редко' ? <span style={{color: 'yellow'}}>{order?.ready_answer}</span> : null}
+            </Grid>
+          )}
+
           <Grid
             item
             xs={12}
@@ -696,6 +714,64 @@ const ModalOrderWithFeedback = ({
                                   }}
                                 >
                                   Скидка {discount}%
+                                </span>
+                              </ToggleButton>
+                            );
+                          })}
+                        </ToggleButtonGroup>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+                {(order_items?.some(
+                  (item) =>
+                    item.form_data.length
+                ) && !order?.ready_answer) && (
+                  <TableRow>
+                    <TableCell style={{ fontWeight: "bold", color: "#000" }}>
+                      Готов давать обратную связь
+                    </TableCell>
+                    <TableCell></TableCell>
+                    <TableCell
+                      style={{
+                        fontWeight: "bold",
+                        color: "#000",
+                      }}
+                    ></TableCell>
+                    <TableCell>
+                      <div
+                        className="form-element"
+                        style={
+                          order.feedback_data?.discount_id
+                            ? { pointerEvents: "none", opacity: 0.4 }
+                            : {}
+                        }
+                      >
+                        <ToggleButtonGroup
+                          value={answerValue}
+                          exclusive
+                          size="small"
+                          onChange={(event, data) => {
+                            console.log(data);
+                            setAnswerValue(data);
+                          }}
+                        >
+                          {['Да', 'Нет', 'Редко'].map((answer) => {
+                            return (
+                              <ToggleButton
+                                value={answer}
+                                style={{
+                                  backgroundColor:
+                                    answerValue === answer ? "#dd1a32" : "#fff",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    color: answerValue === answer ? "#fff" : "#333",
+                                    padding: "0 20px",
+                                  }}
+                                >
+                                  {answer}
                                 </span>
                               </ToggleButton>
                             );
