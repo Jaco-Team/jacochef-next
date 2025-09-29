@@ -21,6 +21,7 @@ import {MyAlert, MyTextInput} from "@/ui/elements";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
+import Cookies from "js-cookie";
 const ModalEdit = ({open, onClose, save, title = 'Смена кода доступа', content = '', auth_code = 0}) => {
 	const [authCode, setAuthCode] = useState(0);
 	useEffect(() => {
@@ -55,11 +56,54 @@ const ModalEdit = ({open, onClose, save, title = 'Смена кода досту
 		</Dialog>
 	);
 }
+
+const ModalChangePassword = ({open, onClose, save, title = 'Смена пароля'}) => {
+	const [password, setPassword] = useState('');
+	const [passwordReset, setPasswordReset] = useState('');
+
+	return (
+		<Dialog
+			sx={{'& .MuiDialog-paper': {width: '80%', maxHeight: 435}}}
+			maxWidth="xs"
+			open={open}
+			onClose={onClose}
+		>
+			<DialogTitle>{title}</DialogTitle>
+			<DialogContent align="center" sx={{fontWeight: 'bold'}} style={{ paddingBottom: 10, paddingTop: 10 }}>
+				<MyTextInput
+					label="Новый пароль"
+					type="password"
+					value={password}
+					func={(event) => {
+						setPassword(event.target.value)
+					}}
+				/>
+			</DialogContent>
+			<DialogContent align="center" sx={{fontWeight: 'bold'}} style={{ paddingBottom: 10, paddingTop: 10 }}>
+				<MyTextInput
+					label="Повторите пароль"
+					value={passwordReset}
+					type="password"
+					func={(event) => {
+						setPasswordReset(event.target.value)
+					}}
+				/>
+			</DialogContent>
+			<DialogActions>
+				<Button autoFocus onClick={onClose}>
+					Отмена
+				</Button>
+				<Button onClick={() => save(password, passwordReset)}>Подтвердить</Button>
+			</DialogActions>
+		</Dialog>
+	);
+}
 function LkPage() {
 	const [isLoad, setIsLoad] = useState(false);
 	const [module, setModule] = useState({});
 	const [my, setMy] = useState({});
 	const [open, setOpen] = useState(false);
+	const [openPassword, setOpenPassword] = useState(false);
 	const [openAlert, setOpenAlert] = useState(false);
 	const [errStatus, setErrStatus] = useState(false);
 	const [errText, setErrText] = useState('');
@@ -76,6 +120,22 @@ function LkPage() {
 		getData('save_acc', {auth_code}).then((data) => {
 			if (data.st) {
 				showAlert(data.st, data.text);
+				getData('get_all').then((data) => {
+					setMy(data.my);
+				});
+			} else {
+				showAlert(data.st, data.text);
+			}
+		})
+	}
+
+	const savePassword = (password, resetPassword) => {
+		getData('save_password', {password, resetPassword}).then((data) => {
+			if (data.st) {
+				showAlert(data.st, data.text);
+				localStorage.setItem('token', data.token);
+				Cookies.set('token', data.token, {expires: 60});
+				setOpenPassword(false);
 				getData('get_all').then((data) => {
 					setMy(data.my);
 				});
@@ -114,6 +174,7 @@ function LkPage() {
 				text={errText}
 			/>
 			{open ? <ModalEdit open={open} onClose={() => setOpen(false)} save={save} auth_code={my.auth_code} /> : null}
+			{openPassword ? <ModalChangePassword open={openPassword} onClose={() => setOpenPassword(false)} save={savePassword} /> : null}
 			<Grid item xs={12} sm={6}>
 				<h1>{module.name}</h1>
 			</Grid>
@@ -197,6 +258,13 @@ function LkPage() {
 										</Box>
 									</Box>
 
+									<Divider/>
+
+									<Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+										<Box>
+											<Button variant="contained" onClick={() => setOpenPassword(true)}>Сменить пароль</Button>
+										</Box>
+									</Box>
 									<Divider/>
 
 									{/* Даты */}
