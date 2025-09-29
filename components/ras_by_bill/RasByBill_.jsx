@@ -111,11 +111,9 @@ export default class RasByBill_ extends Component {
     }
   }
 
-  changePoint(event) {
-    let data = event.target.value;
-
+  changePoint(_, value) {
     this.setState({
-      point: data,
+      point: value,
     });
   }
 
@@ -243,13 +241,19 @@ export default class RasByBill_ extends Component {
             xs={12}
             sm={3}
           >
-            <MySelect
+            {/* <MySelect
               data={this.state.points}
               multiple={true}
               value={this.state.point}
               func={this.changePoint.bind(this)}
               label="Точка"
-            />
+            /> */}
+            <MyAutocomplite 
+              data={this.state.points}
+              multiple={true}
+              value={this.state.point}
+              func = {this.changePoint.bind(this)} 
+              />
           </Grid>
 
           <Grid
@@ -280,12 +284,13 @@ export default class RasByBill_ extends Component {
             xs={12}
             sm={3}
           >
-            <MySelect
+            <MyAutocomplite
               data={this.state.items_cat}
               multiple={false}
+              disableCloseOnSelect={false}
               value={this.state.item_cat}
-              func={(event) => {
-                this.setState({ item_cat: event.target.value });
+              func={(_, value) => {
+                this.setState({ item_cat: value });
               }}
               label="Категория товара"
             />
@@ -360,7 +365,7 @@ export default class RasByBill_ extends Component {
                             {formatNumber(item.count_pf) + " " + item.ei_name_pf}{" "}
                           </TableCell>
                           <TableCell> {formatNumber(item.sum)} </TableCell>
-                          <TableCell> {formatNumber(item.count_bill)} </TableCell>
+                          <TableCell> {formatNumber(item.count_bill, 0, 0)} </TableCell>
                         </TableRow>
                       ))}
 
@@ -478,7 +483,7 @@ export default class RasByBill_ extends Component {
                     {item.parent_cat.map((it, k) => (
                       <Accordion key={k}>
                         <AccordionSummary
-                          expandIcon={<ExpandMoreIcon />}
+                          expandIcon={<ExpandMore />}
                           aria-controls="panel1bh-content"
                         >
                           <Typography style={{ width: "60%", paddingLeft: 20 }}>
@@ -532,7 +537,7 @@ export default class RasByBill_ extends Component {
                                   {formatNumber(parent_items.count_pf)} {parent_items.ei_name}
                                 </Typography>
                                 <Typography style={{ width: "20%", paddingLeft: 40 }}>
-                                  {formatNumber(parent_items.count_bill)}
+                                  {formatNumber(parent_items.count_bill, 0, 0)}
                                 </Typography>
                                 <Typography style={{ width: "20%", paddingLeft: 40 }}>
                                   {formatNumber(parent_items.sum)}
