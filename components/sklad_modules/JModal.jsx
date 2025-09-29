@@ -81,6 +81,7 @@ export default function JModal({
   getData,
   save,
   onClose,
+  canEdit
 }) {
   const [item, setItem] = useState(null);
   const [listCat, setListCat] = useState(null);
@@ -257,6 +258,7 @@ export default function JModal({
               label="Адрес модуля (URL)"
               value={item?.link ?? ""}
               func={(e) => changeItem("link", e.target.value)}
+              disabled={mark === "edit"}
             />
           </Grid>
 

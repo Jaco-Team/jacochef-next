@@ -398,6 +398,8 @@ class SkladModules_ extends React.Component {
 					itemName={this.state.itemName}
 					fullScreen={this.state.fullScreen}
 					save={this.save.bind(this)}
+					canEdit={this.canEdit.bind(this)}
+					canView={this.canView.bind(this)}
 				/>
 
 				<Grid container spacing={3} className='container_first_child'>
