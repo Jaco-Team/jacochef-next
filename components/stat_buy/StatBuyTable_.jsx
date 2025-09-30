@@ -29,7 +29,7 @@ export default class Stat_buy_Table_ extends React.Component {
         style={{ padding: "24px 0" }}
         className="tender"
       >
-        <TableContainer sx={{ maxHeight: { xs: "none", sm: 1000 } }}>
+        <TableContainer sx={{ maxHeight: { xs: "none", sm: '60dvh' } }}>
           <Table
             stickyHeader
             size="small"

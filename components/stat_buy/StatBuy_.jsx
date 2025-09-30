@@ -31,7 +31,7 @@ export default class Stat_buy_ extends React.Component {
       point: [],
 
       cats: data?.cats || [],
-      cat: data?.cats?.[0] || "",
+      cat: [data?.cats?.[0] || []],
 
       catsData: [],
       unic_date: [],
@@ -96,9 +96,9 @@ export default class Stat_buy_ extends React.Component {
     }
   }
 
-  changeCat(data, event) {
+  changeCat(data, _, value) {
     this.setState({
-      [data]: event.target.value,
+      [data]: value,
     });
   }
 
@@ -134,9 +134,7 @@ export default class Stat_buy_ extends React.Component {
     }
 
     const data = {
-      cat: {
-        id: this.state.cat,
-      },
+      cat: this.state.cat,
       points,
       date_start: dayjs(this.state.date_start).format("YYYY-MM-DD"),
       date_end: dayjs(this.state.date_end).format("YYYY-MM-DD"),
@@ -221,7 +219,7 @@ export default class Stat_buy_ extends React.Component {
             sm={6}
           >
             <MyAutocomplite
-              label="Точки"
+              label="Кафе"
               multiple={true}
               data={this.state.points}
               value={this.state.point}
@@ -234,9 +232,17 @@ export default class Stat_buy_ extends React.Component {
             xs={12}
             sm={6}
           >
-            <MySelect
+            {/* <MySelect
               label="Категория"
               is_none={false}
+              data={this.state.cats}
+              value={this.state.cat}
+              func={this.changeCat.bind(this, "cat")}
+            /> */}
+            <MyAutocomplite
+              label="Категория"
+              multiple={false}
+              disableCloseOnSelect={false}
               data={this.state.cats}
               value={this.state.cat}
               func={this.changeCat.bind(this, "cat")}
