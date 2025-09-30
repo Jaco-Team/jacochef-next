@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
@@ -1222,6 +1222,46 @@ class SiteItems_Modal_Mark extends React.Component {
 	}
 }
 
+const ModalEditTags = ({open, onClose, save, title = 'Редактирование тэгов', tags}) => {
+	const [chooseTag, setChooseTag] = useState({});
+	const [name, setName] = useState('');
+
+	return (
+		<Dialog
+			sx={{'& .MuiDialog-paper': {width: '80%', maxHeight: 435}}}
+			maxWidth="xs"
+			open={open}
+			onClose={onClose}
+		>
+			<DialogTitle>{title}</DialogTitle>
+			<DialogContent align="center" sx={{fontWeight: 'bold'}} style={{paddingBottom: 10, paddingTop: 10}}>
+				<MyAutocomplite
+					label="Теги"
+					multiple={false}
+					data={tags}
+					value={chooseTag}
+					func={(data, value) => {setChooseTag(value), setName(value.name)}}
+				/>
+			</DialogContent>
+			<DialogContent align="center" sx={{fontWeight: 'bold'}} style={{ paddingBottom: 10, paddingTop: 10 }}>
+				<MyTextInput
+					label="Новое название"
+					value={name}
+					func={(event) => {
+						setName(event.target.value)
+					}}
+				/>
+			</DialogContent>
+			<DialogActions>
+				<Button autoFocus onClick={onClose}>
+					Отмена
+				</Button>
+				<Button onClick={() => save(chooseTag, name)}>Подтвердить</Button>
+			</DialogActions>
+		</Dialog>
+	);
+}
+
 class SiteItems_Modal_Tech extends React.Component {
 	constructor(props) {
 		super(props);
@@ -2412,12 +2452,15 @@ class SiteItems_ extends React.Component {
 
 			modalDialogTech: false,
 			itemTech: null,
+			modalChangeTags: false,
 
 			modalDialogMark: false,
 			itemMark: null,
 
 			modalDialogHist: false,
 			itemHist: null,
+			tags: [],
+			modalEditTags: false,
 
 			modalDialogView_Mark: false,
 			itemView_Mark: null,
@@ -2443,6 +2486,7 @@ class SiteItems_ extends React.Component {
 			acces: data.acces,
 			user_app: data.user_app,
 			timeUpdate: new Date(),
+			tags: data.tags,
 		});
 
 		document.title = data.module_info.name;
@@ -2485,6 +2529,7 @@ class SiteItems_ extends React.Component {
 			cats: data.cats,
 			user_app: data.user_app,
 			timeUpdate: new Date(),
+			tags: data.tags
 		});
 	}
 
@@ -2862,6 +2907,25 @@ class SiteItems_ extends React.Component {
 
 	}
 
+	async changeTags(chooseTag, name) {
+		const res = await this.getData('edit_tag', {chooseTag, name});
+		if (res.st) {
+			this.setState({
+				modalEditTags: false,
+				tags: res.tags,
+				openAlert: true,
+				err_status: res.st,
+				err_text: res.text,
+			})
+		} else {
+			this.setState({
+				openAlert: true,
+				err_status: res.st,
+				err_text: res.text,
+			})
+		}
+	}
+
 	openModalHistoryView_Mark(index) {
 
 		const item = this.state.itemHist;
@@ -2947,7 +3011,7 @@ class SiteItems_ extends React.Component {
 						return newList = [...newList, ...[it]]
 					}, []).concat(itemView_old.stage_1.filter((it) => {
 						if (it.type === 'rec') {
-							item_old = itemView_old.stage_1.find((item) => item.type === 'rec' && parseInt(item.rec_id) === parseInt(it.rec_id));
+							let item_old = itemView_old.stage_1.find((item) => item.type === 'rec' && parseInt(item.rec_id) === parseInt(it.rec_id));
 							if (!itemView.stage_1.find((item) => item.type === 'rec' && parseInt(item.rec_id) === parseInt(it.rec_id))) {
 								for (let key in it) {
 									it[key] = {key: it[key], color: 'del'}
@@ -2992,7 +3056,7 @@ class SiteItems_ extends React.Component {
 						return newList = [...newList, ...[it]]
 					}, []).concat(itemView_old.stage_2.filter((it) => {
 						if (it.type === 'rec') {
-							item_old = itemView_old.stage_2.find((item) => item.type === 'rec' && parseInt(item.rec_id) === parseInt(it.rec_id));
+							let item_old = itemView_old.stage_2.find((item) => item.type === 'rec' && parseInt(item.rec_id) === parseInt(it.rec_id));
 							if (!itemView.stage_2.find((item) => item.type === 'rec' && parseInt(item.rec_id) === parseInt(it.rec_id))) {
 								for (let key in it) {
 									it[key] = {key: it[key], color: 'del'}
@@ -3104,7 +3168,7 @@ class SiteItems_ extends React.Component {
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
+				{this.state.modalEditTags ? <ModalEditTags tags={this.state.tags} onClose={() => this.setState({modalEditTags: false})} open={this.state.modalEditTags} save={this.changeTags.bind(this)} /> : null}
 				<SiteItems_Modal_Tech
 					open={this.state.modalDialogTech}
 					onClose={() => this.setState({modalDialogTech: false, itemTech: null})}
@@ -3175,11 +3239,18 @@ class SiteItems_ extends React.Component {
 						<h1>{this.state.module_name}</h1>
 					</Grid>
 
-					<Grid item xs={12} sm={6}>
+					<Grid item xs={12} sm={3}>
 						<Button onClick={this.state.user_app === 'technologist' ? this.openItemNew.bind(this, 'Новое блюдо') : () => this.setState({confirmDialog: true})} color="primary" variant="contained">
 							{this.state.user_app === 'technologist' ? 'Новый товар' : 'Обновить товары VK'}
 						</Button>
 					</Grid>
+					{this.state.acces?.change_tag_edit ? (
+						<Grid item xs={12} sm={3}>
+						<Button onClick={() => this.setState({modalEditTags: true})} color="primary" variant="contained">
+							Редактировать тэги
+						</Button>
+					</Grid>
+					): null}
 
 					{this.state.cats.length == 0 ? null : (
 						<SiteItems_Table
