@@ -381,7 +381,7 @@ class AppPerH_ extends React.Component {
 																						<IconButton
 																					size="small"
 																					onClick={() => {
-																						this.setState({deleteItem: it, openDelete: true})
+																						this.setState({deleteItem: app, openDelete: true})
 																					}}
 																					sx={{
 																						color: 'text.secondary',
