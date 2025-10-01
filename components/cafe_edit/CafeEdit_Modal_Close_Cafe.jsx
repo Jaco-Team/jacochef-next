@@ -14,25 +14,22 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import useMyAlert from "@/src/hooks/useMyAlert";
+import useCafeEditModalsStore from "./useCafeEditModalsStore";
 
 const CafeEdit_Modal_Close_Cafe = (props) => {
-  const {
-    open,
-    fullScreen,
-    is_сlosed_overload,
-    changeItemChecked,
-    is_сlosed_technic,
-    show_comment,
-    reason_list,
-    changeReason,
-    chooseReason,
-  } = props;
+  const { open, fullScreen, changeItemChecked } = props;
 
   const [confirmDialog, setConfirmDialog] = useState(false);
 
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
+  const { is_сlosed_overload, is_сlosed_technic, show_comment, reason_list, chooseReason } =
+    useCafeEditModalsStore();
+
   const open_confirm = () => {
+    console.log(useCafeEditModalsStore.getState().reason_list)
+    const { is_сlosed_overload, is_сlosed_technic, chooseReason } =
+      useCafeEditModalsStore.getState();
     if (!is_сlosed_technic && !is_сlosed_overload) {
       showAlert("Необходимо указать причину закрытия кафе");
       return;
@@ -42,6 +39,12 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
       return;
     }
     setConfirmDialog(true);
+  };
+
+  const changeReason = (event, value) => {
+    const res = event.target.value || value || "";
+    setModalsStateKey("chooseReason", res);
+
   };
 
   const save = () => {
@@ -147,7 +150,6 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
                   data={reason_list}
                   value={chooseReason}
                   func={(e, v) => changeReason(e, v)}
-                  onBlur={(e, v) => changeReason(e, v)}
                   multiple={false}
                   label="Причина"
                   freeSolo={true}

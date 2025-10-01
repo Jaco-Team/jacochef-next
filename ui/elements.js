@@ -663,7 +663,7 @@ export class MyCheckBox extends React.PureComponent {
           control={
             <Checkbox
               disabled={ this.props.disabled || this.props.disabled === true ? true : false }
-              checked={this.props.value}
+              checked={!!this.props.value}
               onChange={this.props.func}
               color="primary"
               size={this.props.size ? this.props.size : 'medium'}
