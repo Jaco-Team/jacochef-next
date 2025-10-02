@@ -209,7 +209,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 >
                   <MyTextInput
                     label="Номер кассы"
-                    value={kassa}
+                    value={kassa ?? ""}
                     disabled={true}
                     className="disabled_input"
                   />
@@ -221,7 +221,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 >
                   <MyTextInput
                     label="Доп касса"
-                    value={dopKassa}
+                    value={dopKassa ?? ""}
                     disabled={true}
                     className="disabled_input"
                   />
@@ -233,7 +233,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 >
                   <MyTextInput
                     label="РН ККТ"
-                    value={rnKkt}
+                    value={rnKkt ?? ""}
                     disabled={true}
                     className="disabled_input"
                   />
@@ -245,7 +245,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 >
                   <MyTextInput
                     label="База"
-                    value={base}
+                    value={base ?? ""}
                     disabled={true}
                     className="disabled_input"
                   />
@@ -269,7 +269,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 >
                   <MyTextInput
                     label="Лицензия ОФД дата завершения"
-                    value={dateLicense}
+                    value={dateLicense ?? ""}
                     disabled={true}
                     className="disabled_input"
                   />
@@ -299,7 +299,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                   <MySelect
                     is_none={false}
                     data={defaultKassRange}
-                    value={kassa}
+                    value={kassa ?? ""}
                     disabled={!canEdit("edit_kkt")}
                     func={(e) => canEdit("edit_kkt") && setKassa(e.target.value)}
                     label="Номер кассы"
@@ -313,7 +313,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                   <MySelect
                     is_none={false}
                     data={defaultKassRange}
-                    value={dopKassa}
+                    value={dopKassa ?? ""}
                     disabled={!canEdit("edit_dop_kassa")}
                     func={(e) => canEdit("edit_dop_kassa") && setDopKassa(e.target.value)}
                     label="Доп касса"
@@ -326,7 +326,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 >
                   <MyTextInput
                     label="РН ККТ"
-                    value={rnKkt}
+                    value={rnKkt ?? ""}
                     disabled={!canEdit("edit_rn_kkt")}
                     func={(e) => canEdit("edit_rn_kkt") && setRnKkt(e.target.value)}
                   />
@@ -338,7 +338,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 >
                   <MyTextInput
                     label="База"
-                    value={base}
+                    value={base ?? ""}
                     disabled={!canEdit("edit_base")}
                     func={(e) => canEdit("edit_base") && setBase(e.target.value)}
                   />
@@ -365,7 +365,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 >
                   <MyDatePickerNew
                     label="Лицензия ОФД дата завершения"
-                    value={dateLicense}
+                    value={dateLicense ?? ""}
                     disabled={!canEdit("edit_license")}
                     func={(date) => canEdit("edit_license") && setDateLicense(date)}
                   />
@@ -378,7 +378,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                   <MyCheckBox
                     value={parseInt(isActive) === 1 ? true : false}
                     disabled={!canEdit("edit_active")}
-                    func={(e) => canEdit("edit_active") && setIsActive(e.target.checked)}
+                    func={(e) => canEdit("edit_active") && setIsActive(e.target.checked ? 1 : 0)}
                     label="Активность"
                   />
                 </Grid>
