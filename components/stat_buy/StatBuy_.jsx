@@ -4,7 +4,7 @@ import React from "react";
 
 import { Grid, Button, TableCell, Box, Tab, Backdrop, CircularProgress } from "@mui/material";
 
-import { MyAlert, MySelect, MyAutocomplite, MyDatePickerNew, formatDate } from "@/ui/elements";
+import { MyAlert, MyAutocomplite, MyDatePickerNew, formatDate } from "@/ui/elements";
 
 import { TabContext, TabList } from "@mui/lab";
 import Stat_buy_Table_ from "./StatBuyTable_";
@@ -13,6 +13,7 @@ import dayjs from "dayjs";
 import { api_laravel } from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import {formatNumber} from "@/src/helpers/utils/i18n";
+
 dayjs.locale("ru");
 
 export default class Stat_buy_ extends React.Component {
@@ -20,6 +21,7 @@ export default class Stat_buy_ extends React.Component {
     super(props);
 
     const data = props.initialData?.data || null;
+    // console.log("SSR DATA: ", data)
 
     this.state = {
       module: "stat_buy",
@@ -31,7 +33,7 @@ export default class Stat_buy_ extends React.Component {
       point: [],
 
       cats: data?.cats || [],
-      cat: [data?.cats?.[0] || []],
+      cat: null,
 
       catsData: [],
       unic_date: [],
@@ -57,7 +59,7 @@ export default class Stat_buy_ extends React.Component {
 
       this.setState({
         cats: data?.cats,
-        cat: data?.cats?.[0]?.id,
+        cat: data?.cats?.[0],
         points: data?.points,
         access: data.access,
         module_name: data?.module_info?.name,
@@ -124,12 +126,7 @@ export default class Stat_buy_ extends React.Component {
     const points = this.state.point;
 
     if (!points.length) {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: "Выберите точку!",
-      });
-
+      this.showAlert("Выберите точку!");
       return;
     }
 
@@ -221,8 +218,8 @@ export default class Stat_buy_ extends React.Component {
             <MyAutocomplite
               label="Кафе"
               multiple={true}
-              data={this.state.points}
-              value={this.state.point}
+              data={this.state.points || []}
+              value={this.state.point || []}
               func={this.changePoint.bind(this, "point")}
             />
           </Grid>
@@ -232,18 +229,11 @@ export default class Stat_buy_ extends React.Component {
             xs={12}
             sm={6}
           >
-            {/* <MySelect
-              label="Категория"
-              is_none={false}
-              data={this.state.cats}
-              value={this.state.cat}
-              func={this.changeCat.bind(this, "cat")}
-            /> */}
             <MyAutocomplite
               label="Категория"
               multiple={false}
               disableCloseOnSelect={false}
-              data={this.state.cats}
+              data={this.state.cats || []}
               value={this.state.cat}
               func={this.changeCat.bind(this, "cat")}
             />
