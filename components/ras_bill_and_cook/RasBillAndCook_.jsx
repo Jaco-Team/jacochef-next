@@ -38,10 +38,10 @@ export default class RasBillAndCook_ extends Component {
       is_load: false,
 
       points: data?.points || [],
-      point: data?.point || 0,
+      point: data?.point || [],
 
       rev_list: data?.rev_list || [],
-      rev: data?.rev || 0,
+      rev: data?.rev || null,
       cats: [],
 
       date_end: formatDate(new Date()),
@@ -192,7 +192,7 @@ export default class RasBillAndCook_ extends Component {
             <MySelect
               is_none={false}
               data={this.state.points}
-              value={this.state.point}
+              value={this.state.point || ''}
               func={this.changePoint.bind(this)}
               label="Точка"
             />
@@ -206,7 +206,7 @@ export default class RasBillAndCook_ extends Component {
             <MySelect
               is_none={false}
               data={this.state.rev_list}
-              value={this.state.rev}
+              value={this.state.rev || ''}
               func={this.changeRev.bind(this)}
               label="Ревизия"
             />
