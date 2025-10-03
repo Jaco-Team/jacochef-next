@@ -33,11 +33,12 @@ import Paper from '@mui/material/Paper';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
-import {MyCheckBox, MyAutocomplite, MyDatePickerNew, MyTextInput, MyAlert, TextEditor22} from '@/ui/elements';
+import {MyCheckBox, MyAutocomplite, MyDatePickerNew, MyTextInput, TextEditor22} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 // class ListFakeUsers_Modal extends React.Component {
 //   constructor(props) {
@@ -307,7 +308,12 @@ class ListFakeUsers_Modal_Action extends React.Component {
         <DialogTitle>Описание ситуации</DialogTitle>
         <DialogContent style={{ paddingTop: 10 }}>
 
-          <Grid item xs={12} sm={12} style={{ justifyContent: 'center', display: 'flex', marginBottom: 20 }}>
+          <Grid
+            style={{ justifyContent: 'center', display: 'flex', marginBottom: 20 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <ToggleButtonGroup
               value={raiting}
               exclusive
@@ -326,7 +332,12 @@ class ListFakeUsers_Modal_Action extends React.Component {
             </ToggleButtonGroup>
           </Grid>
 
-          <Grid item xs={12} sm={12} style={{ justifyContent: 'center', display: 'flex', marginBottom: 20 }}>
+          <Grid
+            style={{ justifyContent: 'center', display: 'flex', marginBottom: 20 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <ToggleButtonGroup
               value={type_sale}
               exclusive
@@ -342,7 +353,11 @@ class ListFakeUsers_Modal_Action extends React.Component {
             </ToggleButtonGroup>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TextEditor22 id="EditorNew" value={''} refs_={myRef_action} toolbar={true} menubar={true} />
           </Grid>
 
@@ -408,32 +423,46 @@ class ListFakeUsers_Modal_Order extends React.Component {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent>
           
           <Grid container spacing={0}>
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <span>{this.state.showOrder?.order?.type_order}: {this.state.showOrder?.order?.type_order_addr_new}</span>
             </Grid>
 
             { parseInt(this.state.showOrder?.order?.type_order_) == 1 ?
               parseInt(this.state.showOrder?.order?.fake_dom) == 0 ?
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <b style={{ color: 'red', fontWeight: 900 }}>Домофон не работает</b>
                 </Grid>
                   :
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <b style={{ color: 'green', fontWeight: 900 }}>Домофон работает</b>
                 </Grid>
                 :
               null
             }
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <span>{this.state.showOrder?.order?.time_order_name}: {this.state.showOrder?.order?.time_order}</span>
             </Grid>
 
             { this.state.showOrder?.order?.number?.length > 1 ? 
-              <Grid item xs={12}>
+              <Grid
+                size={{
+                  xs: 12
+                }}>
                 <b>Телефон: </b> 
                 <span>{this.state.showOrder?.order?.number}</span> 
               </Grid>
@@ -441,52 +470,82 @@ class ListFakeUsers_Modal_Order extends React.Component {
               null
             }
 
-            { this.state.showOrder?.order?.delete_reason?.length > 0 ? <Grid item xs={12}><span style={{ color: 'red' }}>Удален: {this.state.showOrder?.order?.date_time_delete}</span></Grid> : null}
-            { this.state.showOrder?.order?.delete_reason?.length > 0 ? <Grid item xs={12}><span style={{ color: 'red' }}>{this.state.showOrder?.order?.delete_reason}</span></Grid> : null}
+            { this.state.showOrder?.order?.delete_reason?.length > 0 ? <Grid
+              size={{
+                xs: 12
+              }}><span style={{ color: 'red' }}>Удален: {this.state.showOrder?.order?.date_time_delete}</span></Grid> : null}
+            { this.state.showOrder?.order?.delete_reason?.length > 0 ? <Grid
+              size={{
+                xs: 12
+              }}><span style={{ color: 'red' }}>{this.state.showOrder?.order?.delete_reason}</span></Grid> : null}
             
             { parseInt(this.state.showOrder?.order?.is_preorder) == 1 ? null :
-              <Grid item xs={12}><span>{'Обещали: ' + this.state.showOrder?.order?.time_to_client + ' / '}{this.state.showOrder?.order?.text_time}{this.state.showOrder?.order?.time}</span></Grid>
+              <Grid
+                size={{
+                  xs: 12
+                }}><span>{'Обещали: ' + this.state.showOrder?.order?.time_to_client + ' / '}{this.state.showOrder?.order?.text_time}{this.state.showOrder?.order?.time}</span></Grid>
             }
             
             { this.state.showOrder?.order?.promo_name == null || this.state.showOrder?.order?.promo_name?.length == 0 ? null :
               <>
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <b>Промокод: </b>
                   <span>{this.state.showOrder?.order?.promo_name}</span>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <span className="noSpace">{this.state.showOrder?.order?.promo_text}</span>
                 </Grid>
               </>
             }
             
             { this.state.showOrder?.order?.comment == null || this.state.showOrder?.order?.comment.length == 0 ? null :
-              <Grid item xs={12}>
+              <Grid
+                size={{
+                  xs: 12
+                }}>
                 <b>Комментарий: </b>
                 <span>{this.state.showOrder?.order?.comment}</span>
               </Grid>
             }
             
             { this.state.showOrder?.order?.sdacha == null || parseInt(this.state.showOrder?.order?.sdacha) == 0 ? null :
-              <Grid item xs={12}>
+              <Grid
+                size={{
+                  xs: 12
+                }}>
                 <b>Сдача: </b>
                 <span>{this.state.showOrder?.order?.sdacha}</span>
               </Grid>
             }
             
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <b>Сумма заказа: </b>
               <span>{this.state.showOrder?.order?.sum_order} р</span>
             </Grid>
 
             { this.state.showOrder?.order?.check_pos_drive == null || !this.state.showOrder?.order?.check_pos_drive ? null :
-              <Grid item xs={12}>
+              <Grid
+                size={{
+                  xs: 12
+                }}>
                 <b>Довоз оформлен: </b>
                 <span>{this.state.showOrder?.order?.check_pos_drive?.comment}</span>
               </Grid>
             }
 
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <Table size={'small'} style={{ marginTop: 15 }}>
                 <TableBody>
                   { this.state.showOrder?.order_items.map( (item, key) =>
@@ -508,7 +567,11 @@ class ListFakeUsers_Modal_Order extends React.Component {
             </Grid>
 
             {!this.state.showOrder?.err_order ? null : 
-              <Grid item xs={12} mt={3}>
+              <Grid
+                mt={3}
+                size={{
+                  xs: 12
+                }}>
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography style={{fontWeight: 'bold'}}>Ошибка</Typography>
@@ -578,7 +641,6 @@ class ListFakeUsers_Modal extends React.Component {
     const { open, fullScreen, saveComment, openNumber, orderOpen, myRef, openModalAction } = this.props;
 
     return (
-
       <Dialog
         open={open}
         onClose={this.onClose.bind(this)}
@@ -588,53 +650,93 @@ class ListFakeUsers_Modal extends React.Component {
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-
         <DialogTitle className="button">
           <Typography style={{ fontWeight: 'bold', alignSelf: 'center' }}>Информация о клиенте</Typography>
           <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent style={{ paddingTop: 10 }}>
           
           <Grid container spacing={3}>
             
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
 
               <Grid container>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <span>Телефон: </span>
                   <span>{openNumber}</span>
                 </Grid>
-                <Grid item xs={12} sm={12} style={{ paddingTop: 12 }}>
+                <Grid
+                  style={{ paddingTop: 12 }}
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <span>Имя: </span>
                   <span>{this.state.user?.info?.name}</span>
                 </Grid>
-                <Grid item xs={12} sm={12} style={{ paddingTop: 12 }}>
+                <Grid
+                  style={{ paddingTop: 12 }}
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <span>Регистрация: </span>
                   <span>{this.state.user?.info?.date_reg}</span>
                 </Grid>
-                <Grid item xs={12} sm={12} style={{ paddingTop: 12 }}>
+                <Grid
+                  style={{ paddingTop: 12 }}
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <span>День рождения: </span>
                   <span>{this.state.user?.info?.date_bir}</span>
                 </Grid>
-                <Grid item xs={12} sm={12} style={{ paddingTop: 12 }}>
+                <Grid
+                  style={{ paddingTop: 12 }}
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <span>Заказов: </span>
                   <span>{this.state.user?.info?.all_count_order} / {this.state.user?.info?.summ} р.</span>
                 </Grid>
-                <Grid item xs={12} sm={12} style={{ paddingTop: 12 }}>
+                <Grid
+                  style={{ paddingTop: 12 }}
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <span>Доставок: </span>
                   <span>{this.state.user?.info?.count_dev} / {this.state.user?.info?.summ_dev} р.</span>
                 </Grid>
-                <Grid item xs={12} sm={12} style={{ paddingTop: 12 }}>
+                <Grid
+                  style={{ paddingTop: 12 }}
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <span>Самовывозов: </span>
                   <span>{this.state.user?.info?.count_pic} / {this.state.user?.info?.summ_pic} р.</span>
                 </Grid>
               </Grid>
             </Grid>
 
-            <Grid item xs={12} sm={8}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 8
+              }}>
               <Accordion style={{ width: '100%' }}>
                 <AccordionSummary
                   expandIcon={<ExpandMoreIcon />}
@@ -659,7 +761,11 @@ class ListFakeUsers_Modal extends React.Component {
               </Accordion>
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               {this.state.user?.comments.map( (item, key) => 
                 <Paper key={key} style={{ padding: 15, marginBottom: 15}} elevation={3}>
                   <b>{item?.description ? 'Обращение:' : 'Комментарий:' }</b>
@@ -700,14 +806,17 @@ class ListFakeUsers_Modal extends React.Component {
               )}
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TextEditor22 id="EditorNew" value={''} refs_={myRef} toolbar={true} menubar={true} />
             </Grid>
             
           </Grid>
 
         </DialogContent>
-
         <DialogActions>
           <Button color="primary" variant="contained" onClick={saveComment.bind(this)}>Добавить новый комментарий</Button>
         </DialogActions>
@@ -1126,13 +1235,11 @@ class ListFakeUsers_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.openAlert} 
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 
           text={this.state.err_text} />
-
         <ListFakeUsers_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false })}
@@ -1144,14 +1251,12 @@ class ListFakeUsers_ extends React.Component {
           myRef={this.myRef}
           openModalAction={this.openModalAction.bind(this)}
         />
-
         <ListFakeUsers_Modal_Order
           open={this.state.openOrder}
           onClose={() => this.setState({ openOrder: false })}
           showOrder={this.state.showOrder}
           fullScreen={this.state.fullScreen}
         />
-
         <ListFakeUsers_Modal_Action
           open={this.state.modalDialogAction}
           onClose={() => this.setState({ modalDialogAction: false })}
@@ -1164,14 +1269,27 @@ class ListFakeUsers_ extends React.Component {
           setRaiting={this.setRaiting.bind(this)}
           setTypeSale={this.setTypeSale.bind(this)}
         />
+        <Grid
+          container
+          spacing={3}
+          justifyContent="center"
+          sx={{ flexDirection: { sm: 'row', xs: 'column-reverse' } }}
+          style={{ marginTop: '64px', marginBottom: '24px' }}>
 
-        <Grid item container spacing={3} justifyContent="center" sx={{ flexDirection: { sm: 'row', xs: 'column-reverse' } }} style={{ marginTop: '64px', marginBottom: '24px' }}>
-
-          <Grid item xs={12} mb={3}>
+          <Grid
+            mb={3}
+            size={{
+              xs: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3} sx={{ order: { sm: 0, xs: 1 } }}>
+          <Grid
+            sx={{ order: { sm: 0, xs: 1 } }}
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Делал заказ от"
               value={this.state.date_start_true}
@@ -1179,7 +1297,12 @@ class ListFakeUsers_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3} sx={{ order: { sm: 1, xs: 0 } }}>
+          <Grid
+            sx={{ order: { sm: 1, xs: 0 } }}
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Делал заказ до"
               value={this.state.date_end_true}
@@ -1187,7 +1310,14 @@ class ListFakeUsers_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3} sx={{ order: { sm: 2, xs: 2 } }} display="flex" flexDirection="row">
+          <Grid
+            sx={{ order: { sm: 2, xs: 2 } }}
+            display="flex"
+            flexDirection="row"
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
 
             <Grid>
               <Button variant="contained" style={{ whiteSpace: 'nowrap' }} onClick={this.getUsers.bind(this)}>
@@ -1208,9 +1338,12 @@ class ListFakeUsers_ extends React.Component {
 
           </Grid>
         </Grid>
-
         <Grid container spacing={3} justifyContent="center" mb={3}>
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Не заказывал от"
               value={this.state.date_start_false}
@@ -1218,7 +1351,11 @@ class ListFakeUsers_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Не заказывал до"
               value={this.state.date_end_false}
@@ -1226,7 +1363,11 @@ class ListFakeUsers_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyCheckBox
               label="Была оформлена ошибка на заказ"
               value={parseInt(this.state.is_show_claim) == 1 ? true : false}
@@ -1234,9 +1375,12 @@ class ListFakeUsers_ extends React.Component {
             />
           </Grid>
         </Grid>
-
         <Grid container spacing={3} justifyContent="center" mb={3}>
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTextInput
               label="Количество заказов от"
               value={this.state.count_orders_min}
@@ -1244,7 +1388,11 @@ class ListFakeUsers_ extends React.Component {
               func={this.changeNumber.bind(this, 'count_orders_min')}
             />
           </Grid>
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTextInput
               label="Количество заказов до"
               value={this.state.count_orders_max}
@@ -1253,7 +1401,11 @@ class ListFakeUsers_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyCheckBox
               label="Была оформлена ошибка на последний заказ"
               value={parseInt(this.state.is_show_claim_last) == 1 ? true : false}
@@ -1261,9 +1413,12 @@ class ListFakeUsers_ extends React.Component {
             />
           </Grid>
         </Grid>
-
         <Grid container spacing={3} justifyContent="center" mb={3}>
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTextInput
               label="От суммы"
               value={this.state.min_summ}
@@ -1272,7 +1427,11 @@ class ListFakeUsers_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTextInput
               label="До суммы"
               value={this.state.max_summ}
@@ -1281,7 +1440,11 @@ class ListFakeUsers_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyCheckBox
               label="Подписка на рекламную рассылку"
               value={parseInt(this.state.is_show_marketing) == 1 ? true : false}
@@ -1289,9 +1452,12 @@ class ListFakeUsers_ extends React.Component {
             />
           </Grid>
         </Grid>
-
         <Grid container spacing={3} justifyContent="center" mb={3}>
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyAutocomplite
               label="Точки"
               multiple={true}
@@ -1301,7 +1467,11 @@ class ListFakeUsers_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyAutocomplite
               label="Позиции в заказе"
               multiple={true}
@@ -1311,12 +1481,19 @@ class ListFakeUsers_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}></Grid>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}></Grid>
         </Grid>
-
         {!this.state.users.length ? null : (
           <Grid container justifyContent="center">
-            <Grid item xs={12} sm={9}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 9
+              }}>
               <TableContainer>
                 <Table>
                   <TableHead>

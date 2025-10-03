@@ -37,6 +37,8 @@ import {AccountCircle, Attachment, Dashboard, ExitToApp, Person} from "@mui/icon
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import {
+	Button,
+	ListItemButton,
 	Menu,
 	MenuItem,
 } from '@mui/material';
@@ -361,9 +363,9 @@ export default function Header() {
 
 								{item.chaild.map((it, k) =>
 									<Link href={`/${it.key_query}`} key={k} onClick={closeMenu}>
-										<ListItem button>
+										<ListItemButton style={{height: 50}}>
 											{it.name}
-										</ListItem>
+										</ListItemButton>
 									</Link>
 								)}
 

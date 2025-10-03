@@ -17,11 +17,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MyCheckBox, MyTextInput, MyAutocomplite, MyDatePickerNew, MyAlert } from '@/ui/elements';
+import {MyCheckBox, MyTextInput, MyAutocomplite, MyDatePickerNew } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 function roundTo(n, digits) {
 
@@ -161,14 +162,22 @@ class ReceptModuleNew_Modal extends React.Component {
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
             
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Наименование"
                 value={this.state.name}
                 func={this.changeItem.bind(this, 'name')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyAutocomplite
                 label="Категория"
                 multiple={false}
@@ -177,14 +186,20 @@ class ReceptModuleNew_Modal extends React.Component {
                 func={this.changeItem.bind(this, 'cat_pf_id')}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <MyTextInput
                 label="Срок хранения"
                 value={this.state.shelf_life}
                 func={this.changeItem.bind(this, 'shelf_life')}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <MyTextInput
                 label="Состав"
                 value={this.state.structure}
@@ -192,7 +207,10 @@ class ReceptModuleNew_Modal extends React.Component {
               />
             </Grid>
             
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <MyAutocomplite
                 label="Места хранения"
                 multiple={true}
@@ -201,7 +219,10 @@ class ReceptModuleNew_Modal extends React.Component {
                 func={this.changeItem.bind(this, 'storages')}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <MyAutocomplite
                 label="Аллергены"
                 multiple={true}
@@ -210,7 +231,10 @@ class ReceptModuleNew_Modal extends React.Component {
                 func={this.changeItem.bind(this, 'my_allergens')}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <MyAutocomplite
                 label="Возможные аллергены"
                 multiple={true}
@@ -219,28 +243,42 @@ class ReceptModuleNew_Modal extends React.Component {
                 func={this.changeItem.bind(this, 'my_other_allergens')}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid
+              size={{
+                xs: 6
+              }}>
               <MyDatePickerNew
                 label="Дата от"
                 value={this.state.date_start}
                 func={this.changeItem.bind(this, 'date_start')}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid
+              size={{
+                xs: 6
+              }}>
               <MyDatePickerNew
                 label="Дата до"
                 value={this.state.date_end}
                 func={this.changeItem.bind(this, 'date_end')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyCheckBox
                 label="Активность"
                 value={parseInt(this.state.is_show) == 1 ? true : false}
                 func={this.changeItem.bind(this, 'is_show')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyCheckBox
                 label="Активность в ревизии"
                 value={parseInt(this.state.show_in_rev) == 1 ? true : false}
@@ -248,7 +286,10 @@ class ReceptModuleNew_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <table>
                 <thead>
                   <tr>
@@ -516,14 +557,22 @@ class ReceptModuleEdit_Modal extends React.Component {
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
             
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Наименование"
                 value={this.state.name}
                 func={this.changeItem.bind(this, 'name')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyAutocomplite
                 label="Категория"
                 multiple={false}
@@ -532,14 +581,22 @@ class ReceptModuleEdit_Modal extends React.Component {
                 func={this.changeItem.bind(this, 'cat_pf_id')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyCheckBox
                 label="Активность"
                 value={parseInt(this.state.is_show) == 1 ? true : false}
                 func={this.changeItem.bind(this, 'is_show')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyCheckBox
                 label="Активность в ревизии"
                 value={parseInt(this.state.show_in_rev) == 1 ? true : false}
@@ -549,14 +606,20 @@ class ReceptModuleEdit_Modal extends React.Component {
 
 
 
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <MyTextInput
                 label="Срок хранения"
                 value={this.state.shelf_life}
                 func={this.changeItem.bind(this, 'shelf_life')}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <MyTextInput
                 label="Состав"
                 value={this.state.structure}
@@ -564,7 +627,10 @@ class ReceptModuleEdit_Modal extends React.Component {
               />
             </Grid>
             
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <MyAutocomplite
                 label="Места хранения"
                 multiple={true}
@@ -573,7 +639,10 @@ class ReceptModuleEdit_Modal extends React.Component {
                 func={this.changeItem.bind(this, 'storages')}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <MyAutocomplite
                 label="Аллергены"
                 multiple={true}
@@ -582,7 +651,10 @@ class ReceptModuleEdit_Modal extends React.Component {
                 func={this.changeItem.bind(this, 'my_allergens')}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <MyAutocomplite
                 label="Возможные аллергены"
                 multiple={true}
@@ -591,14 +663,20 @@ class ReceptModuleEdit_Modal extends React.Component {
                 func={this.changeItem.bind(this, 'my_other_allergens')}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid
+              size={{
+                xs: 6
+              }}>
               <MyDatePickerNew
                 label="Дата от"
                 value={this.state.date_start}
                 func={this.changeItem.bind(this, 'date_start')}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid
+              size={{
+                xs: 6
+              }}>
               <MyDatePickerNew
                 label="Дата до"
                 value={this.state.date_end}
@@ -607,7 +685,10 @@ class ReceptModuleEdit_Modal extends React.Component {
             </Grid>
             
 
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <table>
                 <thead>
                   <tr>
@@ -1345,13 +1426,11 @@ class ReceptModuleNew_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.operAlert} 
           onClose={() => { this.setState({ operAlert: false }); }} 
           status={this.state.err_status} 
           text={this.state.err_text} />
-
         <ReceptModuleNew_Modal 
           is_open={this.state.is_open_modal_new_pf}
           items={this.state.items_for_pf}
@@ -1361,7 +1440,6 @@ class ReceptModuleNew_ extends React.Component {
           saveNewPF={this.saveNewPF.bind(this)}
           cats={this.state.cats}
         />
-
         { this.state.is_open_modal_edit_pf === true ?
           <ReceptModuleEdit_Modal 
             is_open={this.state.is_open_modal_edit_pf}
@@ -1377,13 +1455,21 @@ class ReceptModuleNew_ extends React.Component {
             :
           false
         }
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3} mb={3}>
+          <Grid
+            mb={3}
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button
               onClick={this.openModalNew.bind(this)}
               variant="contained"
@@ -1391,7 +1477,12 @@ class ReceptModuleNew_ extends React.Component {
               Добавить рецепт
             </Button>
           </Grid>
-          <Grid item xs={12} sm={3} mb={3}>
+          <Grid
+            mb={3}
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button
               onClick={this.openModalNewPF.bind(this)}
               variant="contained"
@@ -1400,8 +1491,12 @@ class ReceptModuleNew_ extends React.Component {
             </Button>
           </Grid>
         </Grid>
-
-        <Grid item xs={12} sm={6} style={{ paddingLeft: '24px' }}>
+        <Grid
+          style={{ paddingLeft: '24px' }}
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <table>
             <tbody>
               { this.state.pf_list.map( (item, key) =>
@@ -1414,7 +1509,6 @@ class ReceptModuleNew_ extends React.Component {
             </tbody>
           </table>
         </Grid>
-
       </>
     );
   }

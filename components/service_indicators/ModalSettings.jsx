@@ -11,8 +11,9 @@ import TextField from "@mui/material/TextField";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import {CustomColorPicker} from "@/pages/stat_sale";
-import {formatDate, MyAutocomplite, MyDatePickerNewViews} from "@/ui/elements";
+import {MyAutocomplite, MyDatePickerNewViews} from "@/components/shared/Forms";
 import dayjs from "dayjs";
+import { formatDate } from "@/src/helpers/ui/formatDate";
 
 export const ModalAcceptEdit = ({open, onClose, save, title = 'Подтвердить действие', points, point_chose}) => {
 	const [pointSettings, setPointSettings] = useState([]);
@@ -25,30 +26,35 @@ export const ModalAcceptEdit = ({open, onClose, save, title = 'Подтверд�
 	}, [open, point_chose]);
 
 	return (
-		<Dialog
+        <Dialog
 			sx={{'& .MuiDialog-paper': {width: '80%', maxHeight: 435}}}
 			maxWidth="xs"
 			open={open}
 			onClose={onClose}
 		>
-			<DialogTitle>{title}</DialogTitle>
-			<DialogContent align="center" sx={{fontWeight: 'bold'}}>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogContent align="center" sx={{fontWeight: 'bold'}}>
 				<Grid container spacing={3}>
-					<Grid item xs={12} sm={12} sx={{marginTop: '10px'}}>
+					<Grid
+                        sx={{marginTop: '10px'}}
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<MyAutocomplite label="Точки" data={points} multiple={true} value={pointSettings} func={(event, data) => {
 							setPointSettings(data)
 						}}/>
 					</Grid>
 				</Grid>
 			</DialogContent>
-			<DialogActions>
+            <DialogActions>
 				<Button autoFocus onClick={onClose}>
 					Отмена
 				</Button>
 				<Button onClick={() =>save(pointSettings)}>Подтвердить</Button>
 			</DialogActions>
-		</Dialog>
-	);
+        </Dialog>
+    );
 }
 
 const ModalSettings = (props) => {
@@ -155,14 +161,14 @@ const ModalSettings = (props) => {
 	};
 
 	return (
-		<Dialog
+        <Dialog
 			open={open}
 			onClose={handleClose}
 			fullWidth={true}
 			maxWidth={'md'}
 			fullScreen={fullScreen}
 		>
-			<DialogTitle className="button">
+            <DialogTitle className="button">
 				<Typography style={{fontWeight: 'bold'}}>
 					{type_modal === 'edit'
 						? `Редактировать данные в таблице в строке ${name_row}`
@@ -172,10 +178,15 @@ const ModalSettings = (props) => {
 					<CloseIcon/>
 				</IconButton>
 			</DialogTitle>
-			{openAlert && (<ModalAcceptEdit open={openAccept} onClose={() => setOpenAccept(false)} save={handleSave} points={points} point_chose={point_chose} />)}
-			<DialogContent>
+            {openAlert && (<ModalAcceptEdit open={openAccept} onClose={() => setOpenAccept(false)} save={handleSave} points={points} point_chose={point_chose} />)}
+            <DialogContent>
 				<Grid container spacing={10}>
-					<Grid item xs={12} sm={3} mt={3}>
+					<Grid
+                        mt={3}
+                        size={{
+                            xs: 12,
+                            sm: 3
+                        }}>
 						<Typography>Время в минутах</Typography>
 						<TextField
 							type="number"
@@ -234,7 +245,12 @@ const ModalSettings = (props) => {
 							}}
 						/>
 					</Grid>
-					<Grid item xs={12} sm={3} mt={6}>
+					<Grid
+                        mt={6}
+                        size={{
+                            xs: 12,
+                            sm: 3
+                        }}>
 						<MyDatePickerNewViews
 							label="Дата старта"
 							value={date}
@@ -243,7 +259,12 @@ const ModalSettings = (props) => {
 						/>
 					</Grid>
 
-					<Grid item xs={12} sm={6} mt={3}>
+					<Grid
+                        mt={3}
+                        size={{
+                            xs: 12,
+                            sm: 6
+                        }}>
 						<CustomColorPicker
 							hsvaConvertHex={hsvaConvertHex}
 							initialColor={color}
@@ -251,8 +272,7 @@ const ModalSettings = (props) => {
 					</Grid>
 				</Grid>
 			</DialogContent>
-
-			<DialogActions sx={{
+            <DialogActions sx={{
 				display: 'flex',
 				justifyContent: type_modal === 'edit' ? 'space-between' : 'flex-end'
 			}}>
@@ -266,8 +286,8 @@ const ModalSettings = (props) => {
 					Сохранить
 				</Button>
 			</DialogActions>
-		</Dialog>
-	);
+        </Dialog>
+    );
 };
 
 export default memo(ModalSettings);

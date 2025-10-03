@@ -14,7 +14,8 @@ import {
   TextField,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { MyAlert, MyAutocomplite, MyCheckBox, MySelect, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyCheckBox, MySelect, MyTextInput } from "@/components/shared/Forms";
+import MyAlert from "@/components/shared/MyAlert";
 
 export default function JParamModal({
   open,
@@ -125,7 +126,6 @@ export default function JParamModal({
         status={errStatus}
         text={errText}
       />
-
       <Dialog
         open={open}
         onClose={handleClose}
@@ -158,10 +158,10 @@ export default function JParamModal({
               mt={2}
             >
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Название"
                   value={item.name || ""}
@@ -170,10 +170,10 @@ export default function JParamModal({
               </Grid>
 
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Параметр (ключ)"
                   value={item.param || ""}
@@ -182,9 +182,9 @@ export default function JParamModal({
               </Grid>
 
               <Grid
-                item
-                xs={12}
-              >
+                size={{
+                  xs: 12
+                }}>
                 <MyAutocomplite
                   label="Модуль"
                   disableCloseOnSelect={false}
@@ -196,9 +196,9 @@ export default function JParamModal({
               </Grid>
 
               <Grid
-                item
-                xs={12}
-              >
+                size={{
+                  xs: 12
+                }}>
                 <MySelect
                   is_none={false}
                   label="Тип"
@@ -208,10 +208,10 @@ export default function JParamModal({
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                {item?.module_id && (
                 <MyAutocomplite
                   disabled={isLoadingCategories}
@@ -265,10 +265,10 @@ export default function JParamModal({
               </Grid>
               {item?.module_id && (
                 <Grid
-                  item
-                  xs={12}
-                  sm={4}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyCheckBox
                     label="Доступ"
                     value={parseInt(item?.access) === 1}

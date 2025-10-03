@@ -5,7 +5,7 @@ import {
   Grid,
 } from "@mui/material";
 import useCafeEditStore from "../useCafeEditStore";
-import { MyTextInput } from "@/ui/elements";
+import { MyTextInput } from "@/components/shared/Forms";
 import HistDropDownTable from "../HistDropDownTable";
 import useCafeEditModalsStore from "../useCafeEditModalsStore";
 
@@ -25,9 +25,7 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
         spacing={3}
       >
         <Grid
-          item
-          xs={12}
-          sm={4}
+          size={{ xs: 12, sm: 4 }}
         >
           <MyTextInput
             disabled={!canEdit("rate_point")}
@@ -44,9 +42,7 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={4}
+          size={{ xs: 12, sm: 4 }}
         >
           <MyTextInput
             disabled={!canEdit("rate_point")}
@@ -63,9 +59,7 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={4}
+          size={{ xs: 12, sm: 4 }}
         >
           <MyTextInput
             disabled={!canEdit("rate_point")}
@@ -83,8 +77,7 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
 
         {canEdit("rate_point") && (
           <Grid
-            item
-            xs={12}
+            size={12}
             display="grid"
           >
             <Button
@@ -100,8 +93,7 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
 
         {canEdit("rate_point") && point_rate_hist.length > 0 && (
           <Grid
-            item
-            xs={12}
+            size={12}
             mb={5}
           >
             <HistDropDownTable

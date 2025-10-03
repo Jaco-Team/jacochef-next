@@ -1,10 +1,12 @@
 "use client";
 
-import { formatDate, MyAlert, MyDatePickerNew, MyTextInput } from "@/ui/elements";
+import { MyDatePickerNew, MyTextInput } from "@/components/shared/Forms";
 import { memo, useState } from "react";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
-import useMyAlert from "../../src/hooks/useMyAlert";
+import useMyAlert from "@/src/hooks/useMyAlert";
+import MyAlert from "@/components/shared/MyAlert";
+import { formatDate } from "@/src/helpers/ui/formatDate";
 
 const CafeEdit_Modal_Kkt_Info_Add = (props) => {
   const { open, fullScreen, addFN, onClose: parentOnClose } = props;
@@ -47,7 +49,6 @@ const CafeEdit_Modal_Kkt_Info_Add = (props) => {
         status={alertStatus}
         text={alertMessage}
       />
-
       <Dialog
         open={open}
         onClose={onClose}
@@ -70,10 +71,10 @@ const CafeEdit_Modal_Kkt_Info_Add = (props) => {
             spacing={3}
           >
             <Grid
-              item
-              xs={12}
-              sm={6}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew
                 label="Дата регистрации"
                 value={date_start}
@@ -81,10 +82,10 @@ const CafeEdit_Modal_Kkt_Info_Add = (props) => {
               />
             </Grid>
             <Grid
-              item
-              xs={12}
-              sm={6}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew
                 label="Дата окончания"
                 value={date_end}
@@ -92,10 +93,10 @@ const CafeEdit_Modal_Kkt_Info_Add = (props) => {
               />
             </Grid>
             <Grid
-              item
-              xs={12}
-              sm={12}
-            >
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput
                 label="ФН"
                 value={new_fn}

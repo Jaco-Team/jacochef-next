@@ -75,9 +75,7 @@ function CafeEditTabKKT({ canAccess, canView, canEdit, openHistModal }) {
     >
       {canAccess("add_kkt") && (
         <Grid
-          item
-          xs={12}
-          sm={2}
+          size={{ xs: 12, sm: 2 }}
         >
           <Button
             variant="contained"
@@ -90,8 +88,7 @@ function CafeEditTabKKT({ canAccess, canView, canEdit, openHistModal }) {
       )}
 
       <Grid
-        item
-        xs={12}
+        size={12}
         mb={5}
       >
         <TableContainer>
@@ -243,8 +240,7 @@ function CafeEditTabKKT({ canAccess, canView, canEdit, openHistModal }) {
 
       {kkt_info_none_active.length > 0 && (
         <Grid
-          item
-          xs={12}
+          size={12}
           mb={kkt_info_hist.length ? 0 : 5}
         >
           <Accordion style={{ width: "100%" }}>
@@ -287,8 +283,7 @@ function CafeEditTabKKT({ canAccess, canView, canEdit, openHistModal }) {
 
       {kkt_info_hist.length > 0 && canView("edit_kkt") && (
         <Grid
-          item
-          xs={12}
+          size={12}
           mb={5}
         >
           <Accordion style={{ width: "100%" }}>

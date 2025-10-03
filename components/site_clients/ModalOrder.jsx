@@ -47,16 +47,15 @@ const ModalOrder = ({ open, onClose, order, order_items, err_order }) => {
           <Close />
         </IconButton>
       </DialogTitle>
-
       <DialogContent>
         <Grid
           container
           spacing={0}
         >
           <Grid
-            item
-            xs={12}
-          >
+            size={{
+              xs: 12
+            }}>
             <span>
               {order?.type_order}: {order?.type_order_addr_new}
             </span>
@@ -65,24 +64,24 @@ const ModalOrder = ({ open, onClose, order, order_items, err_order }) => {
           {parseInt(order?.type_order_) == 1 ? (
             parseInt(order?.fake_dom) == 0 ? (
               <Grid
-                item
-                xs={12}
-              >
+                size={{
+                  xs: 12
+                }}>
                 <b style={{ color: "red", fontWeight: 900 }}>Домофон не работает</b>
               </Grid>
             ) : (
               <Grid
-                item
-                xs={12}
-              >
+                size={{
+                  xs: 12
+                }}>
                 <b style={{ color: "green", fontWeight: 900 }}>Домофон работает</b>
               </Grid>
             )
           ) : null}
           <Grid
-            item
-            xs={12}
-          >
+            size={{
+              xs: 12
+            }}>
             <span>
               {order?.time_order_name}: {order?.time_order}
             </span>
@@ -90,9 +89,9 @@ const ModalOrder = ({ open, onClose, order, order_items, err_order }) => {
 
           {order?.number?.length > 1 ? (
             <Grid
-              item
-              xs={12}
-            >
+              size={{
+                xs: 12
+              }}>
               <b>Телефон: </b>
               <span>{order?.number}</span>
             </Grid>
@@ -100,26 +99,26 @@ const ModalOrder = ({ open, onClose, order, order_items, err_order }) => {
 
           {order?.delete_reason?.length > 0 ? (
             <Grid
-              item
-              xs={12}
-            >
+              size={{
+                xs: 12
+              }}>
               <span style={{ color: "red" }}>Удален: {order?.date_time_delete}</span>
             </Grid>
           ) : null}
           {order?.delete_reason?.length > 0 ? (
             <Grid
-              item
-              xs={12}
-            >
+              size={{
+                xs: 12
+              }}>
               <span style={{ color: "red" }}>{order?.delete_reason}</span>
             </Grid>
           ) : null}
 
           {parseInt(order?.is_preorder) == 1 ? null : (
             <Grid
-              item
-              xs={12}
-            >
+              size={{
+                xs: 12
+              }}>
               <span>
                 {"Обещали: " + order?.time_to_client + " / "}
                 {order?.text_time}
@@ -131,16 +130,16 @@ const ModalOrder = ({ open, onClose, order, order_items, err_order }) => {
           {order?.promo_name == null || order?.promo_name?.length == 0 ? null : (
             <>
               <Grid
-                item
-                xs={12}
-              >
+                size={{
+                  xs: 12
+                }}>
                 <b>Промокод: </b>
                 <span>{order?.promo_name}</span>
               </Grid>
               <Grid
-                item
-                xs={12}
-              >
+                size={{
+                  xs: 12
+                }}>
                 <span className="noSpace">{order?.promo_text}</span>
               </Grid>
             </>
@@ -148,9 +147,9 @@ const ModalOrder = ({ open, onClose, order, order_items, err_order }) => {
 
           {order?.comment == null || order?.comment.length == 0 ? null : (
             <Grid
-              item
-              xs={12}
-            >
+              size={{
+                xs: 12
+              }}>
               <b>Комментарий: </b>
               <span>{order?.comment}</span>
             </Grid>
@@ -158,36 +157,36 @@ const ModalOrder = ({ open, onClose, order, order_items, err_order }) => {
 
           {order?.sdacha == null || parseInt(order?.sdacha) == 0 ? null : (
             <Grid
-              item
-              xs={12}
-            >
+              size={{
+                xs: 12
+              }}>
               <b>Сдача: </b>
               <span>{order?.sdacha}</span>
             </Grid>
           )}
 
           <Grid
-            item
-            xs={12}
-          >
+            size={{
+              xs: 12
+            }}>
             <b>Сумма заказа: </b>
             <span>{order?.sum_order} р</span>
           </Grid>
 
           {order?.check_pos_drive == null || !order?.check_pos_drive ? null : (
             <Grid
-              item
-              xs={12}
-            >
+              size={{
+                xs: 12
+              }}>
               <b>Довоз оформлен: </b>
               <span>{order?.check_pos_drive?.comment}</span>
             </Grid>
           )}
 
           <Grid
-            item
-            xs={12}
-          >
+            size={{
+              xs: 12
+            }}>
             <Table
               size={"small"}
               style={{ marginTop: 15 }}
@@ -224,10 +223,10 @@ const ModalOrder = ({ open, onClose, order, order_items, err_order }) => {
 
           {!err_order ? null : (
             <Grid
-              item
-              xs={12}
               mt={3}
-            >
+              size={{
+                xs: 12
+              }}>
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMore />}>
                   <Typography style={{ fontWeight: "bold" }}>Ошибка</Typography>

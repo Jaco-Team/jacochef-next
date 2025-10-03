@@ -9,7 +9,7 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 
 import Typography from '@mui/material/Typography';
@@ -19,7 +19,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 
-import { MyAutocomplite, MyDatePickerNew, formatDate, MyAlert, TextEditor22 } from '@/ui/elements';
+import { MyAutocomplite, MyDatePickerNew, TextEditor22 } from '@/components/shared/Forms';
 
 import dayjs from 'dayjs';
 import queryString from 'query-string';
@@ -39,6 +39,8 @@ import TableHead from '@mui/material/TableHead';
 import Paper from '@mui/material/Paper';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import MyAlert from '@/components/shared/MyAlert';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class CatWork_ extends React.Component {
   chartordersD = null;
@@ -550,17 +552,13 @@ class CatWork_ extends React.Component {
   render(){
     return (
       <>
-
         <Script src="https://cdn.amcharts.com/lib/5/index.js"></Script>
         <Script src="https://cdn.amcharts.com/lib/5/xy.js"></Script>
         <Script src="//cdn.amcharts.com/lib/5/themes/Animated.js"></Script>
-
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
         <MyAlert isOpen={this.state.openAlert} onClose={ () => { this.setState({ openAlert: false }) } } status={this.state.alertStatus} text={this.state.alertText} />
-
         { !this.state.showOrder ? null : 
           <Dialog
             open={this.state.openOrder}
@@ -574,28 +572,43 @@ class CatWork_ extends React.Component {
             <DialogContent>
               
               <Grid container spacing={0}>
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <span>{this.state.showOrder.order.type_order}: {this.state.showOrder.order.type_order_addr_new}</span>
                 </Grid>
 
                 { parseInt(this.state.showOrder.order.type_order_) == 1 ?
                   parseInt(this.state.showOrder.order.fake_dom) == 0 ?
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <b style={{ color: 'red', fontWeight: 900 }}>Домофон не работает</b>
                     </Grid>
                       :
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <b style={{ color: 'green', fontWeight: 900 }}>Домофон работает</b>
                     </Grid>
                     :
                   null
                 }
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <span>{this.state.showOrder.order.time_order_name}: {this.state.showOrder.order.time_order}</span>
                 </Grid>
 
                 { this.state.showOrder.order.number.length > 1 ? 
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <b>Телефон: </b> 
                     <span>{this.state.showOrder.order.number}</span> 
                   </Grid>
@@ -603,52 +616,82 @@ class CatWork_ extends React.Component {
                   null
                 }
 
-                { this.state.showOrder.order.delete_reason.length > 0 ? <Grid item xs={12}><span style={{ color: 'red' }}>Удален: {this.state.showOrder.order.date_time_delete}</span></Grid> : null}
-                { this.state.showOrder.order.delete_reason.length > 0 ? <Grid item xs={12}><span style={{ color: 'red' }}>{this.state.showOrder.order.delete_reason}</span></Grid> : null}
+                { this.state.showOrder.order.delete_reason.length > 0 ? <Grid
+                  size={{
+                    xs: 12
+                  }}><span style={{ color: 'red' }}>Удален: {this.state.showOrder.order.date_time_delete}</span></Grid> : null}
+                { this.state.showOrder.order.delete_reason.length > 0 ? <Grid
+                  size={{
+                    xs: 12
+                  }}><span style={{ color: 'red' }}>{this.state.showOrder.order.delete_reason}</span></Grid> : null}
                 
                 { parseInt(this.state.showOrder.order.is_preorder) == 1 ? null :
-                  <Grid item xs={12}><span>{'Обещали: ' + this.state.showOrder.order.time_to_client + ' / '}{this.state.showOrder.order.text_time}{this.state.showOrder.order.time}</span></Grid>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}><span>{'Обещали: ' + this.state.showOrder.order.time_to_client + ' / '}{this.state.showOrder.order.text_time}{this.state.showOrder.order.time}</span></Grid>
                 }
                 
                 { this.state.showOrder.order.promo_name == null || this.state.showOrder.order.promo_name.length == 0 ? null :
                   <>
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <b>Промокод: </b>
                       <span>{this.state.showOrder.order.promo_name}</span>
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <span className="noSpace">{this.state.showOrder.order.promo_text}</span>
                     </Grid>
                   </>
                 }
                 
                 { this.state.showOrder.order.comment == null || this.state.showOrder.order.comment.length == 0 ? null :
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <b>Комментарий: </b>
                     <span>{this.state.showOrder.order.comment}</span>
                   </Grid>
                 }
                 
                 { this.state.showOrder.order.sdacha == null || parseInt(this.state.showOrder.order.sdacha) == 0 ? null :
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <b>Сдача: </b>
                     <span>{this.state.showOrder.order.sdacha}</span>
                   </Grid>
                 }
                 
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <b>Сумма заказа: </b>
                   <span>{this.state.showOrder.order.sum_order} р</span>
                 </Grid>
 
                 { this.state.showOrder.order.check_pos_drive == null || !this.state.showOrder.order.check_pos_drive ? null :
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <b>Довоз оформлен: </b>
                     <span>{this.state.showOrder.order.check_pos_drive.comment}</span>
                   </Grid>
                 }
 
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <Table size={'small'} style={{ marginTop: 15 }}>
                     <TableBody>
                       { this.state.showOrder.order_items.map( (item, key) =>
@@ -670,7 +713,11 @@ class CatWork_ extends React.Component {
                 </Grid>
 
                 {!this.state.errOrder ? null : 
-                  <Grid item xs={12} mt={3}>
+                  <Grid
+                    mt={3}
+                    size={{
+                      xs: 12
+                    }}>
                   <Accordion>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography style={{fontWeight: 'bold'}}>Ошибка</Typography>
@@ -706,7 +753,6 @@ class CatWork_ extends React.Component {
             
           </Dialog>
         }
-
         <Dialog
           open={this.state.modalDialogNew}
           onClose={ () => { this.setState({ modalDialogNew: false }) } }
@@ -718,41 +764,83 @@ class CatWork_ extends React.Component {
             
             <Grid container spacing={3}>
               
-              <Grid item xs={12} sm={4}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
 
                 <Grid container>
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <span>Телефон: </span>
                     <span>{this.state.openNumber}</span>
                   </Grid>
-                  <Grid item xs={12} sm={12} style={{ paddingTop: 12 }}>
+                  <Grid
+                    style={{ paddingTop: 12 }}
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <span>Имя: </span>
                     <span>{this.state.user_info?.name}</span>
                   </Grid>
-                  <Grid item xs={12} sm={12} style={{ paddingTop: 12 }}>
+                  <Grid
+                    style={{ paddingTop: 12 }}
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <span>Регистрация: </span>
                     <span>{this.state.user_info?.date_reg}</span>
                   </Grid>
-                  <Grid item xs={12} sm={12} style={{ paddingTop: 12 }}>
+                  <Grid
+                    style={{ paddingTop: 12 }}
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <span>День рождения: </span>
                     <span>{this.state.user_info?.date_bir}</span>
                   </Grid>
-                  <Grid item xs={12} sm={12} style={{ paddingTop: 12 }}>
+                  <Grid
+                    style={{ paddingTop: 12 }}
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <span>Заказов: </span>
                     <span>{this.state.user_info?.all_count_order} / {this.state.user_info?.summ} р.</span>
                   </Grid>
-                  <Grid item xs={12} sm={12} style={{ paddingTop: 12 }}>
+                  <Grid
+                    style={{ paddingTop: 12 }}
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <span>Доставок: </span>
                     <span>{this.state.user_info?.count_dev} / {this.state.user_info?.summ_dev} р.</span>
                   </Grid>
-                  <Grid item xs={12} sm={12} style={{ paddingTop: 12 }}>
+                  <Grid
+                    style={{ paddingTop: 12 }}
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <span>Самовывозов: </span>
                     <span>{this.state.user_info?.count_pic} / {this.state.user_info?.summ_pic} р.</span>
                   </Grid>
                 </Grid>
               </Grid>
 
-              <Grid item xs={12} sm={8}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 8
+                }}>
                 <Accordion style={{ width: '100%' }}>
                   <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
@@ -777,7 +865,11 @@ class CatWork_ extends React.Component {
                 </Accordion>
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 {this.state.comments.map( (item, key) => 
                   <Paper key={key} style={{ padding: 15, marginBottom: 15}} elevation={3}>
                     <b>{item?.description ? 'Обращение:' : 'Комментарий:' }</b>
@@ -819,7 +911,11 @@ class CatWork_ extends React.Component {
                 )}
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TextEditor22 id="EditorNew" value={''} refs_={this.myRef} toolbar={true} menubar={true} />
               </Grid>
               
@@ -830,7 +926,6 @@ class CatWork_ extends React.Component {
             <Button color="primary" variant="contained" onClick={this.saveComment.bind(this)}>Добавить новый комментарий</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.state.modalDialogNewShowComments}
           onClose={ () => { this.setState({ modalDialogNewShowComments: false }) } }
@@ -842,7 +937,10 @@ class CatWork_ extends React.Component {
             
             <Grid container spacing={3}>
               
-              <Grid item xs={12}>
+              <Grid
+                size={{
+                  xs: 12
+                }}>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -869,7 +967,6 @@ class CatWork_ extends React.Component {
 
           </DialogContent>
         </Dialog>
-
         <Dialog
           open={this.state.modalDialogAction}
           onClose={ () => { this.setState({ modalDialogAction: false }) } }
@@ -879,7 +976,12 @@ class CatWork_ extends React.Component {
           <DialogTitle>Описание ситуации</DialogTitle>
           <DialogContent style={{ paddingTop: 10 }}>
 
-            <Grid item xs={12} sm={12} style={{ justifyContent: 'center', display: 'flex', marginBottom: 20 }}>
+            <Grid
+              style={{ justifyContent: 'center', display: 'flex', marginBottom: 20 }}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <ToggleButtonGroup
                 value={this.state.raiting}
                 exclusive
@@ -898,7 +1000,12 @@ class CatWork_ extends React.Component {
               </ToggleButtonGroup>
             </Grid>
 
-            <Grid item xs={12} sm={12} style={{ justifyContent: 'center', display: 'flex', marginBottom: 20 }}>
+            <Grid
+              style={{ justifyContent: 'center', display: 'flex', marginBottom: 20 }}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <ToggleButtonGroup
                 value={this.state.type_sale}
                 exclusive
@@ -914,7 +1021,11 @@ class CatWork_ extends React.Component {
               </ToggleButtonGroup>
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TextEditor22 id="EditorNew" value={''} refs_={this.myRef_action} toolbar={true} menubar={true} />
             </Grid>
 
@@ -925,13 +1036,20 @@ class CatWork_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-        
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyAutocomplite
               label="Точки"
               multiple={true}
@@ -942,20 +1060,36 @@ class CatWork_ extends React.Component {
           
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew minDate={formatDate('2023-01-01')} label={'Дата от'} value={this.state.date_start} func={ this.changeDate.bind(this, 'date_start') } />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew minDate={formatDate('2023-01-01')} label={'Дата до'} value={this.state.date_end} func={ this.changeDate.bind(this, 'date_end') } />
           </Grid>
 
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button variant="contained" color="primary" onClick={ this.show.bind(this) }>Показать</Button>
           </Grid>
           
-          <Grid item xs={12} style={{ marginBottom: 100 }}>
+          <Grid
+            style={{ marginBottom: 100 }}
+            size={{
+              xs: 12
+            }}>
             {this.state.stat_open.map( (item, key) =>
               <Accordion style={{ width: '100%' }} key={key}>
                 <AccordionSummary
@@ -1003,12 +1137,19 @@ class CatWork_ extends React.Component {
             
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <h2 style={{ textAlign: 'center' }}>Новые клиенты по дням</h2>
             <div id="chartordersD" style={{ width: "100%", height: "500px" }} />
           </Grid>
 
-          <Grid item xs={12} style={{ marginBottom: 100 }}>
+          <Grid
+            style={{ marginBottom: 100 }}
+            size={{
+              xs: 12
+            }}>
             {this.state.svod.map( (item, key) =>
               <Accordion style={{ width: '100%' }} key={key}>
                 <AccordionSummary
@@ -1019,10 +1160,10 @@ class CatWork_ extends React.Component {
                 <AccordionDetails>
                   <List style={{ width: '100%' }}>
                     { item.users.map( (it, k) =>
-                      <ListItem button key={k} onClick={ this.get_user_info.bind(this, it.number) } style={{ backgroundColor: parseInt(it.check_comment) == 1 ? '#fff' : parseInt(it.count) == 1 ? '#ffba00' : '#90ee90' }}>
+                      <ListItemButton key={k} onClick={ this.get_user_info.bind(this, it.number) } style={{ backgroundColor: parseInt(it.check_comment) == 1 ? '#fff' : parseInt(it.count) == 1 ? '#ffba00' : '#90ee90' }}>
                         <ListItemText primary={ it.number + ' / заказов - ' + it.count } />
                         <span style={{ maxWidth: '50%' }} dangerouslySetInnerHTML={{__html: it.last_comment}} />
-                      </ListItem>
+                      </ListItemButton>
                     ) }
                   </List>
                 </AccordionDetails>
@@ -1033,7 +1174,7 @@ class CatWork_ extends React.Component {
         
         </Grid>
       </>
-    )
+    );
   }
 }
 

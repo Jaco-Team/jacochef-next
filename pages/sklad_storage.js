@@ -18,10 +18,11 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import { MyTextInput, MyAlert } from '@/ui/elements';
+import { MyTextInput } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
+import MyAlert from '@/components/shared/MyAlert';
 
 class SkladStorage_Modal extends React.Component {
 
@@ -77,39 +78,41 @@ class SkladStorage_Modal extends React.Component {
 
   render() {
     return (
-        <Dialog
-          open={this.props.open}
-          onClose={this.onClose.bind(this)}
-          fullScreen={this.props.fullScreen}
-          fullWidth={true}
-          maxWidth='md'
-        >
-          <DialogTitle className="button">
-            {this.props.method}
-            {this.props.itemName ? `: ${this.props.itemName}` : null}
-          </DialogTitle>
-
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
-            <CloseIcon />
-          </IconButton>
-
-            <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={12}>
-                  <MyTextInput
-                    label="Название"
-                    value={ this.state.item ? this.state.item.name : '' }
-                    func={this.changeItem.bind(this, 'name')}
-                  />
-                </Grid>
-              </Grid>
-            </DialogContent>
-          <DialogActions>
-            <Button variant="contained" onClick={this.save.bind(this)}>
-              Сохранить
-            </Button>
-          </DialogActions>
-        </Dialog>
+      <Dialog
+        open={this.props.open}
+        onClose={this.onClose.bind(this)}
+        fullScreen={this.props.fullScreen}
+        fullWidth={true}
+        maxWidth='md'
+      >
+        <DialogTitle className="button">
+          {this.props.method}
+          {this.props.itemName ? `: ${this.props.itemName}` : null}
+        </DialogTitle>
+        <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+          <CloseIcon />
+        </IconButton>
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          <Grid container spacing={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
+              <MyTextInput
+                label="Название"
+                value={ this.state.item ? this.state.item.name : '' }
+                func={this.changeItem.bind(this, 'name')}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={this.save.bind(this)}>
+            Сохранить
+          </Button>
+        </DialogActions>
+      </Dialog>
     );
   }
 }
@@ -288,14 +291,12 @@ class SkladStorage_ extends React.Component {
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <SkladStorage_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false, itemName: '', method: '' })}
@@ -306,13 +307,20 @@ class SkladStorage_ extends React.Component {
           fullScreen={this.state.fullScreen}
           save={this.save.bind(this)}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button
               variant="contained"
               color="primary"
@@ -323,7 +331,13 @@ class SkladStorage_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12} mb={5} className='sklad_storage'>
+          <Grid
+            mb={5}
+            className='sklad_storage'
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             {!this.state.list ? null : (
               <Table>
                 <TableHead>

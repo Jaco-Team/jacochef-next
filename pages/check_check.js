@@ -41,12 +41,14 @@ import ListItemText from '@mui/material/ListItemText';
 import HelpIcon from '@mui/icons-material/Help';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 
-import {MySelect, MyDatePickerNew, MyAlert, MyAutocomplite, formatDateReverse, MyTextInput} from '@/ui/elements';
+import {MySelect, MyDatePickerNew, MyAutocomplite, MyTextInput} from '@/components/shared/Forms';
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 
 import dayjs from 'dayjs';
+import { formatDateReverse } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 const formatNumber = (num) => new Intl.NumberFormat('ru-RU').format(num);
 
@@ -919,7 +921,7 @@ class CheckCheck_Accordion extends React.Component {
                 <>
                   {c.date && (
                     <Typography sx={{ mb: 0.5 }}>
-                      Дата: <b>{typeof formatDateReverse === 'function' ? formatDateReverse(c.date) : c.date}</b>
+                      Дата: <b>{formatDateReverse(c.date) || c.date}</b>
                     </Typography>
                   )}
                   {c.kassaId != null && (
@@ -1084,7 +1086,6 @@ class CheckCheck_Modal extends React.Component {
             <Button variant="contained" color='success' onClick={this.save}>Сохранить</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={open}
           onClose={this.onClose}
@@ -1103,7 +1104,14 @@ class CheckCheck_Modal extends React.Component {
 
           <DialogContent style={{ paddingTop: 10, paddingBottom: 10 }}>
 
-            <Grid item xs={12} sm={6} display="flex" flexDirection="column" marginBottom={2}>
+            <Grid
+              display="flex"
+              flexDirection="column"
+              marginBottom={2}
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Grid display="flex" flexDirection="row">
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', marginRight: 2 }}>Дата/Время заказа:</Typography>
                 <Typography sx={{ whiteSpace: 'nowrap' }}>{order?.date} {order?.time}</Typography>
@@ -1473,7 +1481,6 @@ class CheckCheck_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 600 } }}
           maxWidth="md"
@@ -1564,14 +1571,12 @@ class CheckCheck_ extends React.Component {
             <Button variant='contained' onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
           </DialogActions>
         </Dialog>
-
         <MyAlert
           isOpen={openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={err_status}
           text={err_text}
         />
-
         <CheckCheck_Modal
           open={modalOrder}
           onClose={() => this.setState({ modalOrder: false, orders: [], order: null })}
@@ -1580,13 +1585,20 @@ class CheckCheck_ extends React.Component {
           order={order}
           saveOrder={this.saveOrder}
         />
-       
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNew
               label="Начало периода"
               value={date_start}
@@ -1594,7 +1606,11 @@ class CheckCheck_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNew
               label="Конец периода"
               value={date_end}
@@ -1602,7 +1618,11 @@ class CheckCheck_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MySelect
               label="Точка"
               is_none={false}
@@ -1612,7 +1632,11 @@ class CheckCheck_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite
               label="Касса"
               multiple={true}
@@ -1622,7 +1646,11 @@ class CheckCheck_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Button onClick={this.getOrders} variant="contained">
                 Показать
@@ -1660,7 +1688,11 @@ class CheckCheck_ extends React.Component {
             </Box>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             {Number(acces?.check_access) === 1 ? (
               <Button
                 onClick={this.set_orders}
@@ -1685,7 +1717,13 @@ class CheckCheck_ extends React.Component {
           </Grid>
 
           {Number(acces?.check_access) === 1 && Number(acces?.upload_access) === 1 && (
-            <Grid item xs={12} sm={3} container justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
+            <Grid
+              container
+              justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <Button
                 onClick={this.check_data_for_1C}
                 variant={canAct ? "contained" : "outlined"}
@@ -1699,7 +1737,12 @@ class CheckCheck_ extends React.Component {
           )}
 
           {complete_data?.length > 0 && Number(acces?.check_access) === 1 &&
-            <Grid item xs={12} sm={12} mb={summ_ofd ? 0 : 5}>
+            <Grid
+              mb={summ_ofd ? 0 : 5}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Accordion
                 style={{ width: '100%' }}
                 expanded={complete_data.length > 100 ? false : this.state.isAccordionOpen}
@@ -1753,7 +1796,11 @@ class CheckCheck_ extends React.Component {
           }
 
           {unfisc_online_orders?.length > 0 && Number(acces?.check_access) === 1 &&
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <CheckCheck_Accordion_online
                 orders={unfisc_online_orders}
               />
@@ -1761,7 +1808,12 @@ class CheckCheck_ extends React.Component {
           }
 
           {summ_ofd && summ_chef &&
-            <Grid item xs={12} sm={12} mb={5}>
+            <Grid
+              mb={5}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <CheckCheck_Accordion
                 summ_ofd={summ_ofd}
                 summ_chef={summ_chef}

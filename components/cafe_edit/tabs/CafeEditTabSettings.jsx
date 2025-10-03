@@ -3,7 +3,7 @@
 import { Button, Grid, Typography } from "@mui/material";
 import HistDropDownTable from "../HistDropDownTable";
 import useCafeEditStore from "../useCafeEditStore";
-import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/components/shared/Forms";
 import useCafeEditModalsStore from "../useCafeEditModalsStore";
 
 function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) {
@@ -28,8 +28,7 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
       spacing={3}
     >
       <Grid
-        item
-        xs={12}
+        size={12}
       >
         <MyCheckBox
           label="Если в заказе только пицца, она выйдет на сборку после начала ее приготовления (напитки, допы и закуски не учитываются)"
@@ -40,8 +39,7 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
       </Grid>
 
       <Grid
-        item
-        xs={12}
+        size={12}
       >
         <MyCheckBox
           label="Если заказ приготовить зарнее - он выйдет в приоритете на сборку, кроме предов (напитки, допы и закуски не учитываются)"
@@ -52,8 +50,7 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
       </Grid>
 
       <Grid
-        item
-        xs={12}
+        size={12}
       >
         <MyCheckBox
           label="Пицца у повара будет отображаться, если более 50% роллов в заказе начнут готовить"
@@ -64,8 +61,7 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
       </Grid>
 
       <Grid
-        item
-        xs={12}
+        size={12}
       >
         <MyCheckBox
           label="Общий стол"
@@ -76,8 +72,7 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
       </Grid>
 
       <Grid
-        item
-        xs={12}
+        size={12}
       >
         {canEdit("settings_point") ? (
           <Button
@@ -98,9 +93,7 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
       </Grid>
 
       <Grid
-        item
-        xs={12}
-        sm={4}
+        size={{ xs: 12, sm: 4 }}
       >
         <MyAutocomplite
           label="Управляющий"
@@ -113,9 +106,7 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
       </Grid>
 
       <Grid
-        item
-        xs={12}
-        sm={4}
+       size={{ xs: 12, sm: 4 }}
       >
         <MyTextInput
           label="Количество столов сборки"
@@ -127,8 +118,7 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
       </Grid>
       {canEdit("settings_point") && (
         <Grid
-          item
-          xs={12}
+          size={12}
           display="grid"
         >
           <Button
@@ -144,8 +134,7 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
 
       {canView("settings_point") && point_sett_hist.length > 0 && (
         <Grid
-          item
-          xs={12}
+          size={12}
           mb={5}
         >
           <HistDropDownTable

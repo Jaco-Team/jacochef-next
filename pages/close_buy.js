@@ -25,9 +25,10 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox, MyAlert } from '@/ui/elements';
+import { MySelect, MyCheckBox } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class CloseBuy_ extends React.Component {
   constructor(props) {
@@ -185,14 +186,12 @@ class CloseBuy_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="sm"
@@ -206,13 +205,20 @@ class CloseBuy_ extends React.Component {
             <Button onClick={this.changeItemChecked.bind(this, 'all')}>Ok</Button>
           </DialogActions>
         </Dialog>
-
         <Grid container spacing={3} mb={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect
               is_none={false}
               data={this.state.points}
@@ -222,8 +228,12 @@ class CloseBuy_ extends React.Component {
             />
           </Grid>
         </Grid>
-
-        <Grid item xs={12} mb={1} style={{ padding: '24px' }}>
+        <Grid
+          mb={1}
+          style={{ padding: '24px' }}
+          size={{
+            xs: 12
+          }}>
           {this.state.cats.map((cat, key) => {
             return (
               <Accordion key={key}>
@@ -231,7 +241,7 @@ class CloseBuy_ extends React.Component {
                   <CheckBoxIcon style={{ marginRight: 30, color: '#c03' }} onClick={this.openConfirm.bind(this, cat)}/>
                   <Typography>{cat.name}</Typography>
                 </AccordionSummary>
-                <AccordionDetails style={{ width: '100%', overflow: 'scroll' }}>
+                <AccordionDetails sx={{ maxWidth: '100%', overflowY: 'auto' }}>
                   <TableContainer>
                     <Table>
                       <TableHead>

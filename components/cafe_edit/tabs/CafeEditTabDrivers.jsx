@@ -1,6 +1,6 @@
 "use client";
 
-import { MyCheckBox, MyTextInput } from "@/ui/elements";
+import { MyCheckBox, MyTextInput } from "@/components/shared/Forms";
 import { Button, Grid } from "@mui/material";
 import useCafeEditStore from "../useCafeEditStore";
 import HistDropDownTable from "../HistDropDownTable";
@@ -15,9 +15,7 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
       spacing={3}
     >
       <Grid
-        item
-        xs={12}
-        sm={4}
+        size={{ xs: 12, sm: 4 }}
       >
         <MyTextInput
           label="Количество заказов на руках (0 - без ограничений)"
@@ -29,9 +27,7 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
       </Grid>
 
       <Grid
-        item
-        xs={12}
-        sm={4}
+        size={{ xs: 12, sm: 4 }}
       >
         <MyTextInput
           value={point_info?.summ_driver ?? ""}
@@ -43,9 +39,7 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
       </Grid>
 
       <Grid
-        item
-        xs={12}
-        sm={4}
+        size={{ xs: 12, sm: 4 }}
       >
         <MyTextInput
           value={point_info?.summ_driver_min ?? ""}
@@ -56,9 +50,7 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
         />
       </Grid>
       <Grid
-        item
-        xs={12}
-        sm={6}
+        size={{ xs: 12, sm: 6 }}
       >
         <MyCheckBox
           label="Необходима геолокация для завершения заказа"
@@ -69,9 +61,7 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
       </Grid>
       {canEdit("settings_driver") && (
         <Grid
-          item
-          xs={12}
-          sm={6}
+          size={{ xs: 12, sm: 6 }}
           display="grid"
         >
           <Button
@@ -87,8 +77,7 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
 
       {point_sett_driver_hist.length > 0 && canView("settings_driver") && (
         <Grid
-          item
-          xs={12}
+          size={12}
           mb={5}
         >
           <HistDropDownTable
