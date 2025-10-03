@@ -1,8 +1,9 @@
 "use server";
 
-import RasByBill_ from "@/components/ras_by_bill/RasByBill_";
 import { getDataSSR } from "@/backend/api";
+import dynamic from "next/dynamic";
 
+const RasByBill_ = dynamic(() => import("@/components/ras_by_bill/RasByBill_"), { ssr: false });
 export default function RasByBill({ initialData }) {
   return <RasByBill_ initialData={initialData} />;
 }

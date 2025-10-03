@@ -18,7 +18,7 @@ import {
   Button,
 } from "@mui/material";
 
-import { MySelect, MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from "@/ui/elements";
+import { MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from "@/ui/elements";
 
 import dayjs from "dayjs";
 
@@ -55,7 +55,7 @@ export default class RasByBill_ extends Component {
       items: data?.items || [],
       cats: data?.cats || [],
       items_cat: data?.items_cat || [],
-      item_cat: 0,
+      item_cat: null,
 
       myItems: [],
 
@@ -248,12 +248,13 @@ export default class RasByBill_ extends Component {
               func={this.changePoint.bind(this)}
               label="Точка"
             /> */}
-            <MyAutocomplite 
-              data={this.state.points}
+            <MyAutocomplite
+              data={this.state.points || []}
               multiple={true}
-              value={this.state.point}
-              func = {this.changePoint.bind(this)} 
-              />
+              value={this.state.point || []}
+              func={this.changePoint.bind(this)}
+              label="Кафе"
+            />
           </Grid>
 
           <Grid
@@ -285,10 +286,10 @@ export default class RasByBill_ extends Component {
             sm={3}
           >
             <MyAutocomplite
-              data={this.state.items_cat}
+              data={this.state.items_cat || []}
               multiple={false}
               disableCloseOnSelect={false}
-              value={this.state.item_cat}
+              value={this.state.item_cat || null}
               func={(_, value) => {
                 this.setState({ item_cat: value });
               }}

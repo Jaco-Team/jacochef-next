@@ -1,22 +1,19 @@
 import * as React from 'react';
+import * as Sentry from "@sentry/react";
 import PropTypes from 'prop-types';
-import Head from 'next/head';
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
+import { AppCacheProvider } from '@mui/material-nextjs/v15-pagesRouter';
 import { ThemeProvider } from '@mui/material/styles';
 
 import dynamic from 'next/dynamic'
-import * as Sentry from "@sentry/react";
 
-Sentry.init({
-  dsn: "https://5f1483a8fb0efb009af305503f334119@sentry.jacochef.ru/6"
-});
-
-import theme from '@/src/theme';
+import theme,{ font } from '@/src/theme';
 
 import '@/styles/global.scss'
 import '@/styles/tender.scss'
 
-import { font } from "@/src/theme";
+Sentry.init({
+  dsn: "https://5f1483a8fb0efb009af305503f334119@sentry.jacochef.ru/6"
+});
 
 const Header = dynamic(() => import('@/src/header'), { ssr: false })
 
@@ -35,17 +32,17 @@ export default function MyApp(props) {
   }
 
   return (
-    <AppRouterCacheProvider {...props} options={{ enableCssLayer: false }}>
+    <AppCacheProvider {...props} options={{ enableCssLayer: false }}>
       <ThemeProvider theme={theme}>
       
         <Header isHeader={isHeader} suppressHydrationWarning />
         
         <div className={font.className}>
-          <Component {...pageProps} />
+          <Component {...pageProps} router={router}/>
         </div>
         
       </ThemeProvider>
-    </AppRouterCacheProvider>
+    </AppCacheProvider>
   );
 }
 
