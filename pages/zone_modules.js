@@ -39,10 +39,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 
-import { MySelect, MyTextInput, MyCheckBox, MyAlert, MyDatePickerNew } from '@/ui/elements';
+import { MySelect, MyTextInput, MyCheckBox, MyDatePickerNew } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 class ZoneModules_Modal_History extends React.Component {
   map_2 = null;

@@ -30,7 +30,7 @@ import { api_laravel_local, api_laravel } from '@/src/api_new';
 import Cookies from 'js-cookie';
 
 import { EyeShow, EyeHide } from '@/ui/icons';
-import { MyAlert} from '@/ui/elements';
+import MyAlert from '@/components/shared/MyAlert';
 
 export default function Registration() {
   const steps = ['Телефон', 'Подтверждение', 'Новый пароль'];

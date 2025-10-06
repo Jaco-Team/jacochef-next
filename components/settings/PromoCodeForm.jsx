@@ -29,7 +29,7 @@ import { useEffect, useState } from "react";
 import DialogPromoHistory from "./DialogPromoHistory";
 import ModalDelete from "./ModalDelete";
 import DateModal from "./DateModal";
-import { MyAutocomplite, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyTextInput } from "@/components/shared/Forms";
 
 export default function PromoCodeForm({
   mockItems,

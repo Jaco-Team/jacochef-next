@@ -12,7 +12,7 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect } from '@/ui/elements';
+import { MySelect } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 

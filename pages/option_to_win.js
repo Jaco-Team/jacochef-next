@@ -21,7 +21,7 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyTextInput, MyAutocomplite, MyCheckBox } from '@/ui/elements';
+import { MyTextInput, MyAutocomplite, MyCheckBox } from '@/components/shared/Forms';
 
 import { api, api_laravel, api_laravel_local } from '@/src/api_new';
 

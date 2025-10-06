@@ -12,11 +12,12 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyDatePickerNew, MyTextInput, MyAutocomplite, formatDate } from '@/ui/elements';
+import { MyDatePickerNew, MyTextInput, MyAutocomplite } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class PromoItemsStat_ extends React.Component {
   constructor(props) {

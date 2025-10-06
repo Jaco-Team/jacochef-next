@@ -21,9 +21,10 @@ import TabPanel from '@mui/lab/TabPanel';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MyAutocomplite, MyTextInput, MySelect, MyCheckBox, MyAlert} from '@/ui/elements';
+import {MyAutocomplite, MyTextInput, MySelect, MyCheckBox} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
+import MyAlert from '@/components/shared/MyAlert';
 
 class CafeDirEdit_Modal extends React.Component {
   constructor(props) {

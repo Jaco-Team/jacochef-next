@@ -1,7 +1,7 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
 // import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
-import { MyTextInput } from "@/ui/elements";
+import { MyTextInput } from "@/components/shared/Forms";
 import { useEffect, useState } from "react";
 
 export default function AllergensModal(props) {

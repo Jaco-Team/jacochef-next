@@ -24,7 +24,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyDatePickerNew, MyAlert} from '@/ui/elements';
+import {MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyDatePickerNew} from '@/components/shared/Forms';
 
 import Dropzone from 'dropzone';
 import { api_laravel, api_laravel_local } from '@/src/api_new';
@@ -39,6 +39,7 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import Box from "@mui/material/Box";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import MyAlert from '@/components/shared/MyAlert';
 
 class SiteUserManagerTable extends React.Component {
   shouldComponentUpdate(nextProps) {

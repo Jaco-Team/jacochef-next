@@ -8,7 +8,7 @@ import Button from '@mui/material/Button';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect } from '@/ui/elements';
+import { MySelect } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import {api_laravel, api_laravel_local} from "@/src/api_new";

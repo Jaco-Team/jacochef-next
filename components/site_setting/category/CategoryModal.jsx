@@ -2,7 +2,7 @@
 
 import { Grid } from "@mui/material";
 import { useCategoryStore } from "./useCategoryStore";
-import { MyAutocomplite, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyTextInput } from "@/components/shared/Forms";
 import {useSiteSettingStore} from "@/components/site_setting/useSiteSettingStore";
 
 export function CategoryModal() {

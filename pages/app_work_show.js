@@ -22,7 +22,7 @@ import Box from '@mui/material/Box';
 
 import Typography from '@mui/material/Typography';
 
-import { MySelect } from '@/ui/elements';
+import { MySelect } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 

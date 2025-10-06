@@ -21,9 +21,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MySelect, MyAutocomplite2, MyTextInput, MyAlert} from '@/ui/elements';
+import {MySelect, MyAutocomplite2, MyTextInput} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
+import MyAlert from '@/components/shared/MyAlert';
 
 // Модальные окна
 class OrderPost2Manual_Modal extends React.Component {

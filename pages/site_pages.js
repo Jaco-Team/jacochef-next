@@ -18,9 +18,10 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import { MyTextInput, MyAlert } from '@/ui/elements';
+import { MyTextInput } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
+import MyAlert from '@/components/shared/MyAlert';
 
 class SitePages_Modal extends React.Component {
 

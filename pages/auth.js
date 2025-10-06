@@ -16,8 +16,8 @@ import api from '@/src/api';
 import Cookies from 'js-cookie';
 
 import { EyeShow, EyeHide } from '@/ui/icons';
-import { MyAlert} from '@/ui/elements';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
+import MyAlert from '@/components/shared/MyAlert';
 
 export default function Auth() {
 

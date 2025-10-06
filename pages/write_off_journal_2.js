@@ -32,13 +32,15 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import {MySelect, MyDatePickerNew, formatDate, MyAlert, MyTextInput, MyAutocomplite} from '@/ui/elements';
+import {MySelect, MyDatePickerNew, MyTextInput, MyAutocomplite} from '@/components/shared/Forms';
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 
 import dayjs from 'dayjs';
 import moment from 'moment';
+import { formatDate } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 class Write_off_journal_View extends React.Component {
 	constructor(props) {

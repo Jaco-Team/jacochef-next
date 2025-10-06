@@ -24,10 +24,12 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MyAlert, MySelect, MyTextInput, MyDatePickerNew, formatDate, MyCheckBox} from '@/ui/elements';
+import {MySelect, MyTextInput, MyDatePickerNew, MyCheckBox} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class Kkt_Info_Modal extends React.Component {
   constructor(props) {

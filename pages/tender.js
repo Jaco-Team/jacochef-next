@@ -13,12 +13,13 @@ import TableContainer from '@mui/material/TableContainer';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyAlert, MyAutocomplite, MySelect } from '@/ui/elements';
+import { MyAutocomplite, MySelect } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import { api_laravel } from '@/src/api_new';
 import handleUserAccess from '@/src/helpers/access/handleUserAccess';
 import TestAccess from '@/components/shared/TestAccess';
+import MyAlert from '@/components/shared/MyAlert';
 
 
 const cellBgColor = {
@@ -407,7 +408,7 @@ class Tender_ extends React.Component {
 
         {/* <TestAccess access={this.state.access} setAccess={(access) => this.setState({access})} /> */}
 
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.alertOpened}
           onClose={() => this.setState({alertOpened: false, alertText: ''})}
           status={this.state.alertStatus}

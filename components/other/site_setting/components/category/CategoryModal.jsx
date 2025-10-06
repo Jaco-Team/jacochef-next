@@ -2,7 +2,7 @@
 
 import { Grid } from "@mui/material";
 import { useCategoryStore } from "./useCategoryStore";
-import { MyAutocomplite, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyTextInput } from "@/components/shared/Forms";
 
 export function CategoryModal() {
   const currentItem = useCategoryStore((state) => state.item);

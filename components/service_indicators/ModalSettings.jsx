@@ -11,8 +11,9 @@ import TextField from "@mui/material/TextField";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import {CustomColorPicker} from "@/pages/stat_sale";
-import {formatDate, MyAutocomplite, MyDatePickerNewViews} from "@/ui/elements";
+import {MyAutocomplite, MyDatePickerNewViews} from "@/components/shared/Forms";
 import dayjs from "dayjs";
+import { formatDate } from "@/src/helpers/ui/formatDate";
 
 export const ModalAcceptEdit = ({open, onClose, save, title = 'Подтвердить действие', points, point_chose}) => {
 	const [pointSettings, setPointSettings] = useState([]);

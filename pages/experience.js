@@ -30,12 +30,13 @@ import TabPanel from '@mui/lab/TabPanel';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyAutocomplite, MyAlert, MyDatePickerNew, MyTextInput } from '@/ui/elements';
+import { MySelect, MyAutocomplite, MyDatePickerNew, MyTextInput } from '@/components/shared/Forms';
 
 import moment from 'moment';
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 const formatter = new Intl.NumberFormat('ru', {
   style: 'unit',

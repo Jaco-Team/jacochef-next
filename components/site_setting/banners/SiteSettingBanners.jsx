@@ -1,6 +1,6 @@
 "use client";
 
-import { MyCheckBox, MySelect, MyTextInput } from "@/ui/elements";
+import { MyCheckBox, MySelect, MyTextInput } from "@/components/shared/Forms";
 import {
   Accordion,
   AccordionDetails,

@@ -36,11 +36,12 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 
-import {MySelect, MyAutocomplite2, MyTimePicker, MyDatePickerNew, MyAlert} from '@/ui/elements';
+import {MySelect, MyAutocomplite2, MyTimePicker, MyDatePickerNew} from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -238,7 +239,7 @@ class EventTime1_Modal extends React.Component {
   render() {
     return (
       <>
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.openAlert} 
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 

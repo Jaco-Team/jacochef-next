@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
 import { Grid, Backdrop, Box, CircularProgress, Tabs, Tab } from "@mui/material";
-import { MyAlert } from "@/ui/elements";
 
 import { useSiteSettingStore } from "@/pages/site_setting/components/useSiteSettingStore";
 import { SiteSettingBanners } from "@/pages/site_setting/components/banners/SiteSettingBanners";
@@ -10,6 +9,7 @@ import { SiteSettingModal } from "@/pages/site_setting/components/SiteSettingMod
 import { SiteSettingPages } from "@/pages/site_setting/components/seo/SiteSettingPages";
 import { SiteSettingSocial } from "@/pages/site_setting/components/social/SiteSettingSocial";
 import { SiteSettingCategory } from "@/pages/site_setting/components/category/SiteSettingCategory";
+import MyAlert from "@/components/shared/MyAlert";
 
 const subMap = {
   social: SiteSettingSocial,

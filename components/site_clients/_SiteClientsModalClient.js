@@ -1,6 +1,6 @@
 import React from "react";
 import dayjs from "dayjs";
-import {MyAlert, MySelect, MyTextInput} from "@/ui/elements";
+import {MySelect, MyTextInput} from "@/components/shared/Forms";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -27,6 +27,7 @@ import Box from "@mui/material/Box";
 import PropTypes from "prop-types";
 import a11yProps from "../shared/TabPanel/a11yProps";
 import TabPanel from "../shared/TabPanel/TabPanel";
+import MyAlert from "@/components/shared/MyAlert";
 
 export default class SiteClients_Modal_Client extends React.Component {
 	click = false;

@@ -22,7 +22,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
 import {api_laravel, api_laravel_local} from '@/src/api_new';
-import {MyAlert} from "@/ui/elements";
 import {useRouter} from "next/router";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -30,6 +29,7 @@ import DialogActions from "@mui/material/DialogActions";
 import Dialog from "@mui/material/Dialog";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import MyAlert from '@/components/shared/MyAlert';
 
 const FormElementCard = styled(Paper)(({theme}) => ({
 	marginBottom: theme.spacing(3),

@@ -14,9 +14,10 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 
-import { MyTextInput, TextEditor, MyAlert } from '@/ui/elements';
+import { MyTextInput, TextEditor } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class CatWork_Modal extends React.PureComponent {
   render() {

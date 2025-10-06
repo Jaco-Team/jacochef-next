@@ -10,7 +10,7 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
 import {api_laravel, api_laravel_local} from '@/src/api_new';
-import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput, TextEditor22} from "@/ui/elements";
+import {MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput, TextEditor22} from "@/components/shared/Forms";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableContainer from "@mui/material/TableContainer";
 import dayjs from "dayjs";
@@ -31,6 +31,7 @@ import Box from "@mui/material/Box";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
 import {ModalAccept} from "@/components/general/ModalAccept";
+import MyAlert from '@/components/shared/MyAlert';
 
 const DialogUser = ({open, onClose, user, openOrder}) => {
 	return (

@@ -39,7 +39,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox, MyTextInput, MyDatePickerNew, formatDate, MyAutocomplite } from '@/ui/elements';
+import { MySelect, MyCheckBox, MyTextInput, MyDatePickerNew, MyAutocomplite } from '@/components/shared/Forms';
 
 import Dropzone from "dropzone";
 
@@ -50,6 +50,7 @@ import IconButton from '@mui/material/IconButton';
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class TableStages extends React.Component{
   render (){

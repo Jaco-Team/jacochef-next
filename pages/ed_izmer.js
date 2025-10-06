@@ -18,10 +18,11 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import { MyTextInput, MySelect, MyAlert } from '@/ui/elements';
+import { MyTextInput, MySelect } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
+import MyAlert from '@/components/shared/MyAlert';
 
 class EdIzmer_Modal extends React.Component {
 

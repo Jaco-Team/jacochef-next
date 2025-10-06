@@ -18,7 +18,7 @@ import TableRow from '@mui/material/TableRow';
 
 import Dropzone from "dropzone";
 
-import { MyTextInput, MySelect } from '@/ui/elements';
+import { MyTextInput, MySelect } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 

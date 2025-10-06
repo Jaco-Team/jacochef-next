@@ -26,9 +26,10 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MySelect, MyCheckBox, MyTextInput, MyAutocomplite, MyAlert} from '@/ui/elements';
+import {MySelect, MyCheckBox, MyTextInput, MyAutocomplite} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
+import MyAlert from '@/components/shared/MyAlert';
 
 class PolufabricatModule_Modal extends React.Component {
   constructor(props) {
@@ -479,7 +480,7 @@ class PolufabricatModule_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.openAlert} 
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 

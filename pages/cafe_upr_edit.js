@@ -30,7 +30,7 @@ import ListItemText from '@mui/material/ListItemText';
 
 import CloseIcon from '@mui/icons-material/Close';
 
-import { MyTextInput, MyTimePicker, MySelect, MyAutocomplite2, MyCheckBox } from '@/ui/elements';
+import { MyTextInput, MyTimePicker, MySelect, MyAutocomplite2, MyCheckBox } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 

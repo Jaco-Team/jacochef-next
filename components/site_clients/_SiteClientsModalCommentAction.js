@@ -1,5 +1,5 @@
 import React from "react";
-import {MyAlert, TextEditor22} from "@/ui/elements";
+import {TextEditor22} from "@/components/shared/Forms";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
@@ -11,6 +11,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
+import MyAlert from "@/components/shared/MyAlert";
 
 export default class SiteClients_Modal_Comment_Action extends React.Component {
 	click = false;

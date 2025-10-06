@@ -3,7 +3,7 @@ import React from 'react';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import {MyTextInput, MyAlert} from '@/ui/elements';
+import {MyTextInput} from '@/components/shared/Forms';
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import {api_laravel, api_laravel_local} from "@/src/api_new";
@@ -15,6 +15,7 @@ import JModal from '@/components/sklad_modules/JModal';
 import JParamModal from '@/components/sklad_modules/JParamModal';
 import handleUserAccess from '@/src/helpers/access/handleUserAccess';
 import TestAccess from '@/components/shared/TestAccess';
+import MyAlert from '@/components/shared/MyAlert';
 
 const defaultParamTypes = [
 	{id: 2, name: "2 значения ( чекбокс - показывать / скрыть )"},

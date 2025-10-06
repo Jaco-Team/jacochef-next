@@ -14,7 +14,7 @@ import TabContext from "@mui/lab/TabContext";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import TabPanel from "@mui/lab/TabPanel";
-import {formatDate, MyAlert, MyAutocomplite, MyDatePickerNewViews} from "@/ui/elements";
+import {MyAutocomplite, MyDatePickerNewViews} from "@/components/shared/Forms";
 import TableContainer from "@mui/material/TableContainer";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
@@ -33,6 +33,8 @@ import timezone from 'dayjs/plugin/timezone';
 import ModalDelete from "@/components/service_indicators/ModalDelete";
 import DeleteIcon from "@mui/icons-material/Delete";
 import IconButton from "@mui/material/IconButton";
+import { formatDate } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 function IndicatorsPage() {
 	const [isLoad, setIsLoad] = useState(false);

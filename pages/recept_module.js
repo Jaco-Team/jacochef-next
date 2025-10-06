@@ -25,11 +25,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MyCheckBox, MyTextInput, MyAutocomplite, MyDatePickerNew, MyAlert} from '@/ui/elements';
+import {MyCheckBox, MyTextInput, MyAutocomplite, MyDatePickerNew} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 class ReceptModule_Modal_Container extends React.Component {
   constructor(props) {
@@ -856,7 +857,7 @@ class ReceptModule_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.operAlert} 
           onClose={() => { this.setState({ operAlert: false }); }} 
           status={this.state.err_status} 

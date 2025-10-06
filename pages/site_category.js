@@ -19,9 +19,10 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import { MyTextInput, MySelect, MyAlert } from '@/ui/elements';
+import { MyTextInput, MySelect } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class SiteCategory_Modal extends React.Component {
   constructor(props) {

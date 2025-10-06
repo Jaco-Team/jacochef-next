@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useState } from "react";
-import { MyAlert, MyAutocomplite2, MyCheckBox } from "@/ui/elements";
+import { MyAutocomplite2, MyCheckBox } from "@/components/shared/Forms";
 import {
   Button,
   Dialog,
@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import useMyAlert from "@/src/hooks/useMyAlert";
+import MyAlert from "@/components/shared/MyAlert";
 
 const CafeEdit_Modal_Close_Cafe = (props) => {
   const {

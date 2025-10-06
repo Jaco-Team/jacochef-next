@@ -25,7 +25,7 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MyTextInput, MySelect, MyCheckBox, MyAlert, MyDatePickerNew} from '@/ui/elements';
+import {MyTextInput, MySelect, MyCheckBox, MyDatePickerNew} from '@/components/shared/Forms';
 
 import {api_laravel, api_laravel_local} from '@/src/api_new';
 
@@ -42,6 +42,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {ModalAccept} from "@/components/general/ModalAccept";
+import MyAlert from '@/components/shared/MyAlert';
 
 class CitiesModules_Levels_Modal extends React.Component {
 	constructor(props) {

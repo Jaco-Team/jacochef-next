@@ -28,10 +28,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 
-import { formatDateMin, MyDatePickerNewViews, MyDatePickerNew, formatDate } from '@/ui/elements';
+import { MyDatePickerNewViews, MyDatePickerNew } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
+import { formatDate, formatDateMin } from '@/src/helpers/ui/formatDate';
 
 var am5locales_ru_RU = {
   Jan: 'Янв',

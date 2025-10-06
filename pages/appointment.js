@@ -1,6 +1,6 @@
 import React from "react";
 
-import { MyTextInput, MyAlert } from "@/ui/elements";
+import { MyTextInput } from "@/components/shared/Forms";
 import { api_laravel } from "@/src/api_new";
 import {
   Accordion,
@@ -25,6 +25,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AppointmentModal from "@/components/appointment/AppointmentModal";
 import AppointmentUnitModal from "@/components/appointment/AppointmentUnitModal";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import MyAlert from "@/components/shared/MyAlert";
 
 class Appointment_ extends React.Component {
   constructor(props) {

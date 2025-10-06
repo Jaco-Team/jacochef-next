@@ -37,13 +37,14 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyDatePickerNew, MyTextInput, MyAlert } from '@/ui/elements';
+import { MyDatePickerNew, MyTextInput } from '@/components/shared/Forms';
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import {api_laravel} from "@/src/api_new";
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
+import MyAlert from '@/components/shared/MyAlert';
 dayjs.locale('ru');
 
 function TabPanel(props) {

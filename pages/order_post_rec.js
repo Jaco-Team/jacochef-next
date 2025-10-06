@@ -32,7 +32,7 @@ const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
-import {MySelect, MyAutocomplite2, MyAutocomplite } from '@/ui/elements';
+import {MySelect, MyAutocomplite2, MyAutocomplite } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import {api_laravel, api_laravel_local} from "@/src/api_new";

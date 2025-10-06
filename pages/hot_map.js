@@ -13,7 +13,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material
 
 import HelpIcon from '@mui/icons-material/Help';
 
-import {MySelect, MyDatePickerNew, MyTimePicker, MyCheckBox } from '@/ui/elements';
+import {MySelect, MyDatePickerNew, MyTimePicker, MyCheckBox } from '@/components/shared/Forms';
 
 import { api_laravel, api_laravel_local } from '@/src/api_new';
 

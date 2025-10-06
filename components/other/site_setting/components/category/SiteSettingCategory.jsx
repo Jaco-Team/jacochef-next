@@ -15,7 +15,7 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import useSaveCategory from "../hooks/useSaveCategory";
 import { useCategoryStore } from "./useCategoryStore";
 import { useSiteSettingStore } from "../useSiteSettingStore";
-import { MyTextInput } from "@/ui/elements";
+import { MyTextInput } from "@/components/shared/Forms";
 import { CategoryModal } from "./CategoryModal";
 import { useDebounce } from "../hooks/useDebounce";
 

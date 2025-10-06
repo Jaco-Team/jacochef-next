@@ -1,6 +1,6 @@
 "use client";
 
-import { MyTextInput } from "@/ui/elements";
+import { MyTextInput } from "@/components/shared/Forms";
 import { Grid } from "@mui/material";
 import { memo, useState } from "react";
 

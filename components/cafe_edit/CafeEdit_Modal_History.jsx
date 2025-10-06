@@ -4,7 +4,7 @@ import { memo, useEffect, useState } from "react";
 import cn from "@/src/helpers/ui/classnames";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { MyTextInput } from "@/ui/elements";
+import { MyTextInput } from "@/components/shared/Forms";
 
 const CafeEdit_Modal_History = (props) => {
   const { itemView, open, fullScreen, type_modal, date_edit } = props;

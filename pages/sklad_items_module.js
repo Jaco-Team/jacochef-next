@@ -31,7 +31,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from '@/ui/elements';
+import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 

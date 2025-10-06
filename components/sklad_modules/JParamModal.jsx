@@ -14,7 +14,8 @@ import {
   TextField,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { MyAlert, MyAutocomplite, MyCheckBox, MySelect, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyCheckBox, MySelect, MyTextInput } from "@/components/shared/Forms";
+import MyAlert from "@/components/shared/MyAlert";
 
 export default function JParamModal({
   open,

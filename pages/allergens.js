@@ -11,10 +11,9 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 
-import { MyAlert } from "@/ui/elements";
-
 import { api_laravel } from "@/src/api_new";
 import AllergensModal from "@/components/allergens/AllergensModal";
+import MyAlert from "@/components/shared/MyAlert";
 
 class Allergens_ extends React.Component {
   constructor(props) {

@@ -7,7 +7,7 @@ import {
   MySelect,
   MyTextInput,
   TextEditor,
-} from "@/ui/elements";
+} from "@/components/shared/Forms";
 import { CircularProgress, Grid, TextField, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBannerModalStore } from "./useBannerModalStore";

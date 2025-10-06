@@ -20,9 +20,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyAlert, MyTextInput, MyAutocomplite } from '@/ui/elements';
+import { MySelect, MyTextInput, MyAutocomplite } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class VendorItemPrice_ extends React.Component {
   constructor(props) {

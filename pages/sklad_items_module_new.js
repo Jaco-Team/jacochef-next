@@ -36,10 +36,11 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyAlert} from '@/ui/elements';
+import {MySelect, MyCheckBox, MyAutocomplite, MyTextInput} from '@/components/shared/Forms';
 
 import {api_laravel_local, api_laravel} from '@/src/api_new';
 import Box from "@mui/material/Box";
+import MyAlert from '@/components/shared/MyAlert';
 
 class SkladItemsModule_Modal_History_View extends React.Component {
 	constructor(props) {

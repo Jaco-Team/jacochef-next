@@ -1,6 +1,6 @@
 "use client";
 
-import { MySelect, MyTextInput } from "@/ui/elements";
+import { MySelect, MyTextInput } from "@/components/shared/Forms";
 import { Button, Grid, Typography } from "@mui/material";
 import { useCallback, useEffect } from "react";
 import { useSocialStore } from "./useSocialStore";

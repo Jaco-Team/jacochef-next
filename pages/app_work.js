@@ -23,9 +23,10 @@ import ListItemText from '@mui/material/ListItemText';
 import CloseIcon from '@mui/icons-material/Close';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
-import {MyTextInput, MyCheckBox, MySelect, MyTimePicker, MyAutocomplite, MyAlert} from '@/ui/elements';
+import {MyTextInput, MyCheckBox, MySelect, MyTimePicker, MyAutocomplite} from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class AppWorkTable extends React.Component {
   shouldComponentUpdate(nextProps) {

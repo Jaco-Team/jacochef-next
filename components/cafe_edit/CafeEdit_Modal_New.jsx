@@ -2,9 +2,10 @@
 
 import { memo, useState } from "react";
 import useMyAlert from "@/src/hooks/useMyAlert";
-import { MyAlert, MySelect, MyTextInput } from "@/ui/elements";
+import { MySelect, MyTextInput } from "@/components/shared/Forms";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import MyAlert from "@/components/shared/MyAlert";
 
 const CafeEdit_Modal_New = (props) => {
   const { open, fullScreen } = props;

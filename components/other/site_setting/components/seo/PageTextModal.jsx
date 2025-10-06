@@ -1,6 +1,6 @@
 "use client";
 
-import { MyAutocomplite, MySelect, MyTextInput, TextEditor } from "@/ui/elements";
+import { MyAutocomplite, MySelect, MyTextInput, TextEditor } from "@/components/shared/Forms";
 import { usePagesStore } from "./usePagesStore";
 import { Grid, Typography } from "@mui/material";
 

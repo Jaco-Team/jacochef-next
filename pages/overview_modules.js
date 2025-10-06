@@ -34,9 +34,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyAutocomplite, TextEditor22, MyTextInput, MyAlert } from '@/ui/elements';
+import { MyAutocomplite, TextEditor22, MyTextInput } from '@/components/shared/Forms';
 
 import { api_laravel, api_laravel_local } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class OverviewModules_Modal_View extends React.Component {
 

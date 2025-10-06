@@ -17,7 +17,7 @@ import TableRow from '@mui/material/TableRow';
 
 import CloseIcon from '@mui/icons-material/Close';
 
-import {MyTextInput, TextEditor, MyAutocomplite} from '@/ui/elements';
+import {MyTextInput, TextEditor, MyAutocomplite} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import {api_laravel, api_laravel_local} from "@/src/api_new";

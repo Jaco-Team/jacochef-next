@@ -55,7 +55,7 @@ import SendIcon from '@mui/icons-material/Send';
 import TimeToLeaveIcon from '@mui/icons-material/TimeToLeave';
 import InfoIcon from '@mui/icons-material/Info';
 
-import { MySelect, MyTextInput, MyTimePicker, MyDatePickerGraph, formatDate, MyAlert, MyCheckBox, MyAutocomplite2, MyDatePickerNew } from '@/ui/elements';
+import { MyDatePickerGraph, MySelect, MyTextInput, MyTimePicker, MyCheckBox, MyAutocomplite2, MyDatePickerNew } from '@/components/shared/Forms';
 import { PickersDay } from '@mui/x-date-pickers/PickersDay';
 
 import queryString from 'query-string';
@@ -63,6 +63,7 @@ import queryString from 'query-string';
 import dayjs from 'dayjs';
 import handleUserAccess from '@/src/helpers/access/handleUserAccess';
 import TestAccess from '@/components/shared/TestAccess';
+import MyAlert from '@/components/shared/MyAlert';
 
 function SimpleDialog(props) {
   const { onClose, selectedValue, open } = props;
@@ -324,7 +325,7 @@ class WorkSchedule_Table extends React.Component {
 
     //this.props.openModalDirBonus;
 
-    console.log('this.props', this.props);
+    // console.log('this.props', this.props);
 
     return (
       <TableContainer component={Paper} style={{ paddingRight: 0 }}>

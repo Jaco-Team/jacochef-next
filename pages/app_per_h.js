@@ -9,7 +9,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
-import {MyAlert, MySelect, MyTextInput} from '@/ui/elements';
+import {MySelect, MyTextInput} from '@/components/shared/Forms';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 import Typography from "@mui/material/Typography";
 import Dialog from "@mui/material/Dialog";
@@ -24,6 +24,7 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import IconButton from "@mui/material/IconButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {ModalAccept} from "@/components/general/ModalAccept";
+import MyAlert from '@/components/shared/MyAlert';
 
 class AppPerH_ extends React.Component {
 	constructor(props) {

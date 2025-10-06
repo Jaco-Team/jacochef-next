@@ -41,12 +41,14 @@ import ListItemText from '@mui/material/ListItemText';
 import HelpIcon from '@mui/icons-material/Help';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 
-import {MySelect, MyDatePickerNew, MyAlert, MyAutocomplite, formatDateReverse, MyTextInput} from '@/ui/elements';
+import {MySelect, MyDatePickerNew, MyAutocomplite, MyTextInput} from '@/components/shared/Forms';
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 
 import dayjs from 'dayjs';
+import { formatDateReverse } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 const formatNumber = (num) => new Intl.NumberFormat('ru-RU').format(num);
 
@@ -919,7 +921,7 @@ class CheckCheck_Accordion extends React.Component {
                 <>
                   {c.date && (
                     <Typography sx={{ mb: 0.5 }}>
-                      Дата: <b>{typeof formatDateReverse === 'function' ? formatDateReverse(c.date) : c.date}</b>
+                      Дата: <b>{formatDateReverse(c.date) || c.date}</b>
                     </Typography>
                   )}
                   {c.kassaId != null && (

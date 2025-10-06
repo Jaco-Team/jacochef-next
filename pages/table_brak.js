@@ -13,12 +13,13 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyDatePickerNew, MyAlert, MyTextInput } from '@/ui/elements';
+import { MySelect, MyDatePickerNew, MyTextInput } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 import TestAccess from '@/components/shared/TestAccess';
 import handleUserAccess from '@/src/helpers/access/handleUserAccess';
+import MyAlert from '@/components/shared/MyAlert';
 
 class TableBrak_ extends React.Component {
   constructor(props) {

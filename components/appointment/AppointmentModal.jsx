@@ -23,7 +23,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import AppointmentParamModal from "@/components/appointment/AppointmentParamModal";
 import AppointmentModalInput from "@/components/appointment/AppointmentModalInput";
 import { Fragment, memo, useCallback, useEffect, useState } from "react";
-import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/components/shared/Forms";
 import { useAppointmentModalStore } from "@/components/appointment/store/useAppointmentModalStore";
 import TextFilter from "../shared/TextFilter";
 import { useDebounce } from "@/src/hooks/useDebounce";

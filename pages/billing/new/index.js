@@ -34,7 +34,7 @@ import IconButton from '@mui/material/IconButton';
 
 import Dropzone from 'dropzone';
 
-import { MySelect, MyAutocomplite, MyAutocomplite2, MyDatePickerNew, MyTextInput, MyCheckBox, MyAlert} from '@/ui/elements';
+import { MySelect, MyAutocomplite, MyAutocomplite2, MyDatePickerNew, MyTextInput, MyCheckBox } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import dayjs from 'dayjs';
@@ -53,6 +53,7 @@ import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import Draggable from 'react-draggable';
 
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import MyAlert from '@/components/shared/MyAlert';
 
 const types = [
   {

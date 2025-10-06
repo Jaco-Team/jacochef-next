@@ -22,11 +22,12 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MyAlert, MySelect, MyTextInput, MyDatePickerNew, formatDate} from '@/ui/elements';
+import {MySelect, MyTextInput, MyDatePickerNew} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 class TabletRepair_Modal extends React.Component {
   constructor(props) {

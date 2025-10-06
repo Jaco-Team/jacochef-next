@@ -30,9 +30,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyAutocomplite, TextEditor22, MyAlert, MyTextInput } from '@/ui/elements';
+import { MyAutocomplite, TextEditor22, MyTextInput } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
+import MyAlert from '@/components/shared/MyAlert';
 
 class FAQ_Modal_View extends React.Component {
   constructor(props) {

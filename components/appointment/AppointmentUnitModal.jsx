@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { memo, useCallback, useEffect, useState } from "react";
-import { MyAutocomplite, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyTextInput } from "@/components/shared/Forms";
 
 const AppointmentUnitModal = (props) => {
   const [unit, setUnit] = useState(props.unit);

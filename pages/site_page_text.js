@@ -22,9 +22,10 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyTextInput, MyAlert, TextEditor, MyAutocomplite } from '@/ui/elements';
+import { MySelect, MyTextInput, TextEditor, MyAutocomplite } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class SitePageText_Modal extends React.Component {
   constructor(props) {

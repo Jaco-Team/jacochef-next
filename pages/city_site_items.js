@@ -14,9 +14,10 @@ import Paper from '@mui/material/Paper';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyAlert, MyCheckBox } from '@/ui/elements';
+import { MyCheckBox } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class CitySiteItems_ extends React.Component {
   constructor(props) {

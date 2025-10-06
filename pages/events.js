@@ -33,10 +33,11 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox, MyTimePicker, MyAlert } from '@/ui/elements';
+import { MySelect, MyCheckBox, MyTimePicker } from '@/components/shared/Forms';
 import Typography from '@mui/material/Typography';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class Events_ extends React.Component {
   constructor(props) {

@@ -33,11 +33,12 @@ import Paper from '@mui/material/Paper';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
-import {MyCheckBox, MyAutocomplite, MyDatePickerNew, MyTextInput, MyAlert, TextEditor22} from '@/ui/elements';
+import {MyCheckBox, MyAutocomplite, MyDatePickerNew, MyTextInput, TextEditor22} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 // class ListFakeUsers_Modal extends React.Component {
 //   constructor(props) {
@@ -1127,7 +1128,7 @@ class ListFakeUsers_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.openAlert} 
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 

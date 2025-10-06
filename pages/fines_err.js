@@ -26,11 +26,13 @@ import Dropzone from 'dropzone';
 
 import ModalImage from "react-modal-image";
 
-import {MyDatePickerNew, MySelect, MyAutocomplite, MyTimePicker, MyCheckBox, MyTextInput, MyAlert, formatDate} from '@/ui/elements';
+import {MyDatePickerNew, MySelect, MyAutocomplite, MyTimePicker, MyCheckBox, MyTextInput} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class Fines_err_Modal_item extends React.Component {
   constructor(props) {
@@ -192,7 +194,7 @@ class Fines_err_Modal_item extends React.Component {
   render() {
     return (
       <>
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.openAlert} 
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 

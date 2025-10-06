@@ -17,11 +17,12 @@ import EditIcon from "@mui/icons-material/Edit";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
-import {MyAlert, MyTextInput} from "@/ui/elements";
+import {MyTextInput} from "@/components/shared/Forms";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Cookies from "js-cookie";
+import MyAlert from '@/components/shared/MyAlert';
 const ModalEdit = ({open, onClose, save, title = 'Смена кода доступа', content = '', auth_code = 0}) => {
 	const [authCode, setAuthCode] = useState(0);
 	useEffect(() => {

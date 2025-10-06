@@ -26,7 +26,7 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 
-import {MySelect, MyTimePicker, MyDatePickerNew, MyTextInput} from '@/ui/elements';
+import {MySelect, MyTimePicker, MyDatePickerNew, MyTextInput} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 

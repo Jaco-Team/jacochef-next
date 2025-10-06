@@ -32,7 +32,7 @@ import {
   Typography,
 } from '@mui/material';
 
-import { MyAutocomplite, MyTextInput, MySelect, MyCheckBox, MyAlert } from '@/ui/elements';
+import { MyAutocomplite, MyTextInput, MySelect, MyCheckBox } from '@/components/shared/Forms';
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import { api_laravel } from '@/src/api_new';
@@ -50,6 +50,7 @@ import a11yProps from '@/components/shared/TabPanel/a11yProps';
 import CafeEdit_ZonesMap from '@/components/cafe_edit/CafeEdit_ZonesMap';
 import deepEqual from '@/src/helpers/utils/deepEqual';
 import TestAccess from '@/components/shared/TestAccess';
+import MyAlert from '@/components/shared/MyAlert';
 
 class CafeEdit_ extends React.Component {
   constructor(props) {

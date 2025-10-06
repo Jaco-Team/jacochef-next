@@ -26,7 +26,7 @@ import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import TextField from '@mui/material/TextField';
 
-import {MyAlert, MySelect, MyTextInput, formatDateMin, MyDatePickerNewViews, MyDateTimePickerNew} from '@/ui/elements';
+import {MySelect, MyTextInput, MyDatePickerNewViews, MyDateTimePickerNew} from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
@@ -34,6 +34,8 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ru'; // импортируем русскую локаль
 import handleUserAccess from '@/src/helpers/access/handleUserAccess';
 import TestAccess from '@/components/shared/TestAccess';
+import MyAlert from '@/components/shared/MyAlert';
+import { formatDateMin } from '@/src/helpers/ui/formatDate';
 
 // для редактирования времени (при этом дату нельзя редактировать)
 class DateWithEditableTimePicker extends React.PureComponent {

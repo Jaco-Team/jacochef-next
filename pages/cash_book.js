@@ -31,12 +31,13 @@ import Collapse from '@mui/material/Collapse';
 
 import HelpIcon from '@mui/icons-material/Help';
 
-import { MySelect, MyTextInput, MyDatePickerNew, formatDate } from '@/ui/elements';
+import { MySelect, MyTextInput, MyDatePickerNew } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 const text = {
   'virycka_fiz': 'Выручка проставляется автоматически на основании Z-отчетов после закрытия кассовой смены',

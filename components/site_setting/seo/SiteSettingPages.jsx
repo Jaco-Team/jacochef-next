@@ -16,7 +16,7 @@ import {
   Typography,
 } from "@mui/material";
 import { PageTextModal } from "./PageTextModal";
-import { MySelect } from "@/ui/elements";
+import { MySelect } from "@/components/shared/Forms";
 
 export function SiteSettingPages() {
   const submodule = "seo";

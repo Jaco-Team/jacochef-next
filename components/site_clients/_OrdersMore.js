@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
-import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/ui/elements";
+import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/components/shared/Forms";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -17,6 +17,7 @@ import TablePagination from "@mui/material/TablePagination";
 import CheckIcon from "@mui/icons-material/Check";
 import ModalOrderWithFeedback from "./ModalOrderWithFeedback";
 import ModalOrder from "./ModalOrder";
+import MyAlert from "@/components/shared/MyAlert";
 
 export default function OrdersMore() {
 	const [isLoad, setIsLoad] = useState(false);

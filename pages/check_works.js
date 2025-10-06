@@ -45,11 +45,12 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 
-import { MySelect, MyDatePickerNew, MyTextInput, MyAlert } from '@/ui/elements';
+import { MySelect, MyDatePickerNew, MyTextInput } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 class CheckWorks_Confirm extends React.Component {
   constructor(props) {
@@ -690,7 +691,7 @@ class Checkworks_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
 
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.openAlert} 
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 

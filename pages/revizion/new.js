@@ -42,10 +42,11 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 
-import {MySelect, MyTextInput, MyAlert} from '@/ui/elements';
+import {MySelect, MyTextInput} from '@/components/shared/Forms';
 
 import { evaluate } from 'mathjs';
 import queryString from 'query-string';
+import MyAlert from '@/components/shared/MyAlert';
 
 function formatDate(date) {
   var d = new Date(date),

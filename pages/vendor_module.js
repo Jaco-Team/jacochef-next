@@ -28,7 +28,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from '@/ui/elements';
+import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from '@/components/shared/Forms';
 import Typography from '@mui/material/Typography';
 
 import queryString from 'query-string';

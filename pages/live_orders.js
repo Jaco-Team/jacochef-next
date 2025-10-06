@@ -14,7 +14,7 @@ import Paper from '@mui/material/Paper';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox } from '@/ui/elements';
+import { MySelect, MyCheckBox } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 

@@ -15,7 +15,7 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Paper from '@mui/material/Paper';
 
-import {MySelect, MyAutocomplite2} from '@/ui/elements';
+import {MySelect, MyAutocomplite2} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 

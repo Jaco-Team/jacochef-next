@@ -11,7 +11,7 @@ import {
   Button,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/components/shared/Forms";
 
 const ModalNewTagNav = ({open, onClose, save}) => {
   const [newTagName, setNewTagName] = useState('');

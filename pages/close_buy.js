@@ -25,9 +25,10 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox, MyAlert } from '@/ui/elements';
+import { MySelect, MyCheckBox } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class CloseBuy_ extends React.Component {
   constructor(props) {
