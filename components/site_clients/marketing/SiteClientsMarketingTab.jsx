@@ -171,7 +171,6 @@ export default function SiteClientsMarketingTab(props) {
           xs={12}
           sm={2}
         >
-          {" "}
           <Stack
             spacing={1}
             alignContent={"stretch"}

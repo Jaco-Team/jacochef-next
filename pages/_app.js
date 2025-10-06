@@ -1,21 +1,21 @@
-import * as React from 'react';
+import * as React from "react";
 import * as Sentry from "@sentry/react";
-import PropTypes from 'prop-types';
-import { AppCacheProvider } from '@mui/material-nextjs/v15-pagesRouter';
-import { ThemeProvider } from '@mui/material/styles';
+import PropTypes from "prop-types";
+import { AppCacheProvider } from "@mui/material-nextjs/v15-pagesRouter";
+import { ThemeProvider } from "@mui/material/styles";
 
-import dynamic from 'next/dynamic'
+import dynamic from "next/dynamic";
 
-import theme,{ font } from '@/src/theme';
+import theme, { font } from "@/src/theme";
 
-import '@/styles/global.scss'
-import '@/styles/tender.scss'
+import "@/styles/global.scss";
+import "@/styles/tender.scss";
 
 Sentry.init({
-  dsn: "https://5f1483a8fb0efb009af305503f334119@sentry.jacochef.ru/6"
+  dsn: "https://5f1483a8fb0efb009af305503f334119@sentry.jacochef.ru/6",
 });
 
-const Header = dynamic(() => import('@/src/header'), { ssr: false })
+const Header = dynamic(() => import("@/src/header"), { ssr: false });
 
 export default function MyApp(props) {
   const { Component, pageProps, router } = props;
@@ -23,24 +23,31 @@ export default function MyApp(props) {
   let this_page = router?.state?.route;
   let isHeader = true;
 
-  if( this_page ){
-    this_page = this_page.split('/');
+  if (this_page) {
+    this_page = this_page.split("/");
 
-    if( this_page[1] == 'auth' || this_page[1] == 'registration' ){
+    if (this_page[1] == "auth" || this_page[1] == "registration") {
       isHeader = false;
     }
   }
 
   return (
-    <AppCacheProvider {...props} options={{ enableCssLayer: false }}>
+    <AppCacheProvider
+      {...props}
+      options={{ enableCssLayer: false }}
+    >
       <ThemeProvider theme={theme}>
-      
-        <Header isHeader={isHeader} suppressHydrationWarning />
-        
+        <Header
+          isHeader={isHeader}
+          suppressHydrationWarning
+        />
+
         <div className={font.className}>
-          <Component {...pageProps} router={router}/>
+          <Component
+            {...pageProps}
+            router={router}
+          />
         </div>
-        
       </ThemeProvider>
     </AppCacheProvider>
   );

@@ -29,7 +29,6 @@ const InnerTabStats = ({ getData, showAlert }) => {
 
   const getStats = async () => {
     if (!points.length || !dateStart || !dateEnd) {
-      // showAlert("Пожалуйста, выберите кафе и даты", false);
       return;
     }
     const resData = await getData("get_marketing_stats", {
