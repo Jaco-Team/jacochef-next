@@ -523,8 +523,8 @@ export default function Clients({canAccess}) {
 					<MyAutocomplite
 						label="Точки"
 						multiple={true}
-						data={points}
-						value={formData.point}
+						data={points || []}
+						value={formData.point || ''}
 						func={(event, value) => handleChange(value, 'point')}
 					/>
 				</Grid>
@@ -533,8 +533,8 @@ export default function Clients({canAccess}) {
 					<MyAutocomplite
 						label="Позиции в заказе"
 						multiple={true}
-						data={items}
-						value={formData.item}
+						data={items || []}
+						value={formData.item || ''}
 						func={(event, value) => handleChange(value, 'item')}
 					/>
 				</Grid>
@@ -543,8 +543,8 @@ export default function Clients({canAccess}) {
 					<MyAutocomplite
 						label="Пользователи"
 						disableClearable={true}
-						data={typeParam}
-						value={formData.param}
+						data={typeParam || []}
+						value={formData.param || ''}
 						func={(event, value) => handleChange(value, 'param')}
 					/>
 				</Grid>

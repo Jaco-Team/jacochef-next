@@ -33,9 +33,9 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
     return statuses[status];
   };
 
-  const renderPlacemarks = () => {
+  const renderPlacemarks = (ymaps) => {
     // important: rebind ymaps, it should be initialized fully
-    const ymaps = window["ymaps"];
+    // const ymaps = window["ymaps"];
     if (!ymaps) {
       console.error("no ymaps");
       return;
@@ -203,7 +203,6 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
     setDrivers(res.drivers);
     setOrders(res.orders);
     setHome(res.home);
-    renderPlacemarks();
   };
 
   useEffect(() => {

@@ -106,7 +106,6 @@ const InnerTabPromo = ({ getData, showAlert, canExport }) => {
       )}
 
       <TableContainer
-        hfull
         sx={{
           maxHeight: "55dvh",
         }}
