@@ -16,7 +16,6 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
-import dayjs from "dayjs";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -25,20 +24,23 @@ import IconButton from "@mui/material/IconButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {ModalAccept} from "@/components/general/ModalAccept";
 import MyAlert from '@/components/shared/MyAlert';
+import dayjs from "dayjs";
+import 'dayjs/locale/ru'
+dayjs.locale('ru');
 
 class AppPerH_ extends React.Component {
 	constructor(props) {
 		super(props);
-		dayjs.locale('ru');
 		const getDateCoefs = () => {
 			const today = dayjs();
 			const currentDate = today.date();
 
-			const getPeriodName = (startDate, endDate) => {
-				if (startDate.date() === 1 && endDate.date() === 15) {
-					return `с 1 по 15 ${startDate.format('MMMM YYYY')} г.`;
+			const getPeriodName = (start, end) => {
+				console.log(dayjs.locale())
+				if (start.date() === 1 && end.date() === 15) {
+					return `с 1 по 15 ${end.format('D MMMM YYYY').replace(/^\d+\s/, '')} г.`; // no D makes nominative
 				} else {
-					return `с ${startDate.format('D')} по ${endDate.format('D MMMM YYYY')} г.`;
+					return `с ${start.format('D')} по ${end.format('D MMMM YYYY')} г.`;
 				}
 			};
 
