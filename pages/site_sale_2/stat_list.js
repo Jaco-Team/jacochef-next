@@ -25,96 +25,67 @@ import Typography from '@mui/material/Typography';
 import dayjs from 'dayjs';
 
 import queryString from 'query-string';
+import {api_laravel_local} from "@/src/api_new";
 
 class SiteSale2_StatList_ extends React.Component {
   click = false;
-  
+
   constructor(props) {
     super(props);
-        
+
     this.state = {
       module: 'site_sale_2',
       module_name: '',
       is_load: false,
-      
+
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
 
       promo_list: []
     };
   }
-  
+
   async componentDidMount(){
-    
+
     let data = await this.getData('get_spam_list');
-    
+
     console.log( data )
-    
+
     this.setState({
       module_name: data.module_info.name,
       spam_list: data.spam_list
     })
-    
+
     document.title = data.module_info.name;
   }
-  
+
   getData = (method, data = {}) => {
-    
     this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      console.log( err )
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
+      is_load: true,
     });
-  }
-  
+
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
+  };
+
   async show(){
     let data = {
       spam_id: this.state.spam_id
     }
-    
+
     let res = await this.getData('get_spam_data', data);
-    
+
     console.log( res )
-    
+
     this.setState({
       spam_list_data: res.spam_list,
       spam_list_data_stat: res.stat
@@ -126,14 +97,14 @@ class SiteSale2_StatList_ extends React.Component {
       dateStart  : dayjs(this.state.date_start).format('YYYY-MM-DD'),
       dateEnd    : dayjs(this.state.date_end).format('YYYY-MM-DD'),
     }
-    
+
     let res = await this.getData('get_promo_users', data);
-    
+
     this.setState({
       promo_list: res.promo_list
     })
   }
-  
+
   changeDateRange(data, event){
     this.setState({
       [data]: (event)
@@ -146,30 +117,30 @@ class SiteSale2_StatList_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
+
         <Grid container style={{ marginTop: '80px', paddingLeft: '24px' }}>
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
-          
+
           <Grid container direction="row" style={{ paddingTop: 20 }} spacing={3}>
-            
+
             <Grid item xs={12} sm={3}>
               <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDateRange.bind(this, 'date_start') } />
             </Grid>
             <Grid item xs={12} sm={3}>
               <MyDatePickerNew label="Дата до" value={ this.state.date_end } func={ this.changeDateRange.bind(this, 'date_end') } />
             </Grid>
-            
+
             <Grid item xs={12} sm={3}>
               <Button variant="contained" onClick={this.getUsers.bind(this)}>Обновить</Button>
             </Grid>
 
-          </Grid>  
-          
+          </Grid>
+
           <Grid item xs={12} sm={12} style={{ marginTop: 20 }}>
-            
-            { this.state.promo_list.map( (item, key) => 
+
+            { this.state.promo_list.map( (item, key) =>
               <Accordion key={key} style={{ width: '100%' }}>
                 <AccordionSummary
                   expandIcon={<ExpandMoreIcon />}
@@ -188,14 +159,14 @@ class SiteSale2_StatList_ extends React.Component {
                         </TableRow>
                       ) }
                     </TableBody>
-                    
+
                   </Table>
                 </AccordionDetails>
               </Accordion>
             ) }
-            
+
           </Grid>
-        
+
         </Grid>
       </>
     )

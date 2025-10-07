@@ -24,127 +24,115 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { MySelect, MyTextInput } from '@/ui/elements';
 
 import queryString from 'query-string';
+import {api_laravel, api_laravel_local} from "@/src/api_new";
+import {PromoEdit} from "@/components/site_sale_2/PromoEdit";
 
 class SiteSale2_ extends React.Component {
   click = false;
-  
+
   constructor(props) {
     super(props);
-        
+
     this.state = {
       module: 'site_sale_2',
       module_name: '',
       is_load: false,
       modalText: '',
-      
+      modalDialogEdit: false,
+
       modalDialog: false,
       modalLink: '',
-      
+
       city_list: [],
       city_id: 0,
       promoName: '',
-      
+      promo_id: 0,
+
       findPromoList: []
     };
   }
-  
+
   async componentDidMount(){
     let data = await this.getData('get_all');
-    
+
     this.setState({
       module_name: data.module_info.name,
       city_list: data.all_city_list
     })
-    
+
     document.title = data.module_info.name;
   }
-  
+
   getData = (method, data = {}) => {
-    
     this.setState({
-      is_load: true
-    })
-    
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type':'application/x-www-form-urlencoded'},
-      body: queryString.stringify({
-        method: method, 
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem('token'),
-        data: JSON.stringify( data )
-      })
-    }).then(res => res.json()).then(json => {
-      
-      if( json.st === false && json.type == 'redir' ){
-        window.location.pathname = '/';
-        return;
-      }
-      
-      if( json.st === false && json.type == 'auth' ){
-        window.location.pathname = '/auth';
-        return;
-      }
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
-      
-      return json;
-    })
-    .catch(err => { 
-      console.log( err )
-      
-      setTimeout( () => {
-        this.setState({
-          is_load: false
-        })
-      }, 300 )
+      is_load: true,
     });
-  }
-  
+
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
+
+    return res;
+  };
+
   async showPromoList(){
     let data = {
       city_id: this.state.city_id,
       promo_name: this.state.promoName
     };
-    
+
     let res = await this.getData('search_promo', data);
-    
-    console.log( res )
-    
+
     this.setState({
       findPromoList: res
     })
   }
-  
+
   async delPromo(promo_id){
     let check = confirm("Удалить промокод ?");
-    
+
     if( check ){
       let data = {
         promo_id: promo_id
       };
-      
+
       let res = await this.getData('remove_promo', data);
-      
+
       setTimeout( () => {
         this.showPromoList();
       }, 300 )
     }
   }
-  
+
+  editPromo(promo_id){
+    this.setState({
+      promo_id: promo_id,
+      modalDialogEdit: true
+    }, () => {
+     this.setState({modalDialogEdit: true})
+    })
+  }
+
   render(){
     return (
       <>
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
+        {this.state.modalDialogEdit ? (
+          <PromoEdit
+            modalDialogEdit={this.state.modalDialogEdit}
+            promo_id={this.state.promo_id}
+            promoName={this.state.promoName}
+            onClose={ () => { this.setState({ modalDialogEdit: false }) } }
+          />
+        ) : null}
         <Dialog
           open={this.state.modalDialog}
           onClose={ () => { this.setState({ modalDialog: false, modalLink: '' }) } }
@@ -163,20 +151,20 @@ class SiteSale2_ extends React.Component {
             <Button color="primary" onClick={ () => { this.setState({ modalDialog: false }) } }>Хорошо</Button>
           </DialogActions>
         </Dialog>
-        
+
         <Grid container style={{ marginTop: '80px', paddingLeft: '24px' }}>
           <Grid item xs={12} sm={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
-          
+
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-            
+
             <Grid item xs={12} sm={12}>
-              
+
               <Link href={"/site_sale_2/new"} style={{ zIndex: 10 }}>
                 <Button variant="contained">Новый промокод</Button>
               </Link>
-              
+
               <Link href={"/site_sale_2/stat"} style={{ zIndex: 10, marginLeft: 20 }}>
                 <Button variant="contained">Статистика</Button>
               </Link>
@@ -192,23 +180,23 @@ class SiteSale2_ extends React.Component {
               <Link href={"/site_sale_2/repeat_orders "} style={{ zIndex: 10, marginLeft: 20 }}>
                 <Button variant="contained">Повторные заказы с промокода</Button>
               </Link>
-              
+
             </Grid>
-            
+
             <Grid item xs={12} sm={4}>
               <MySelect data={this.state.city_list} value={this.state.city_id} func={ (event) => { this.setState({city_id: event.target.value}) } } label='Город' />
             </Grid>
-            
+
             <Grid item xs={12} sm={4}>
               <MyTextInput value={this.state.promoName} func={ (event) => { this.setState({promoName: event.target.value}) } } label='Промокод' />
             </Grid>
-            
+
             <Grid item xs={12} sm={4}>
               <Button variant="contained" onClick={this.showPromoList.bind(this)}>Найти</Button>
             </Grid>
-            
-          </Grid>  
-          
+
+          </Grid>
+
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
             <Grid item xs={12}>
               <Table>
@@ -224,13 +212,13 @@ class SiteSale2_ extends React.Component {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  
+
                   { this.state.findPromoList.map( (item, key) =>
                     <TableRow key={key}>
                       <TableCell>
-                        <Link href={"/site_sale_2/edit/"+item.id} style={{ zIndex: 10, textDecoration: 'none', color: 'rgba(0, 0, 0, 0.87)' }}>
-                          {item.name}    
-                        </Link>
+                        <Button variant="contained" onClick={this.editPromo.bind(this, item.id)}>
+                          {item.name}
+                        </Button>
                       </TableCell>
                       <TableCell>{ parseInt(item.city_id) == 0 ? 'Все города' : item.city_name }</TableCell>
                       <TableCell>{item.def_count}</TableCell>
@@ -240,13 +228,13 @@ class SiteSale2_ extends React.Component {
                       <TableCell> <CloseIcon style={{ cursor: 'pointer' }} onClick={this.delPromo.bind(this, item.id)} /> </TableCell>
                     </TableRow>
                   ) }
-                  
+
                 </TableBody>
               </Table>
-            </Grid>  
+            </Grid>
           </Grid>
-          
-          
+
+
         </Grid>
       </>
     )
