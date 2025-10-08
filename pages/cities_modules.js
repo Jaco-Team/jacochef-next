@@ -121,24 +121,27 @@ class CitiesModules_Levels_Modal extends React.Component {
 		const {date_start, levels, selectedLevel} = this.state;
 
 		return (
-			<Dialog
+            <Dialog
 				open={open}
 				onClose={this.close}
 				fullScreen={fullScreen}
 				fullWidth
 				maxWidth="md"
 			>
-				<DialogTitle>
+                <DialogTitle>
 					Город: {kassir_lavel?.city_name ?? ''}<br/>
 					Выберите уровень кассира и укажите дату с которой будут действовать изменения
 					<IconButton onClick={this.close} sx={{position: 'absolute', top: 8, right: 8}}>
 						<CloseIcon/>
 					</IconButton>
 				</DialogTitle>
-
-				<DialogContent sx={{pt: 2, pb: 2}}>
+                <DialogContent sx={{pt: 2, pb: 2}}>
 					<Grid container spacing={3}>
-						<Grid item xs={12} sx={{mt: 2}}>
+						<Grid
+                            sx={{mt: 2}}
+                            size={{
+                                xs: 12
+                            }}>
 							<MyDatePickerNew
 								label="Дата изменений"
 								value={date_start}
@@ -146,7 +149,10 @@ class CitiesModules_Levels_Modal extends React.Component {
 							/>
 						</Grid>
 
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<MySelect
 								label="Уровень кассира за регистрацию"
 								is_none={false}
@@ -157,14 +163,13 @@ class CitiesModules_Levels_Modal extends React.Component {
 						</Grid>
 					</Grid>
 				</DialogContent>
-
-				<DialogActions>
+                <DialogActions>
 					<Button variant="contained" color="success" onClick={this.save}>
 						Сохранить изменения
 					</Button>
 				</DialogActions>
-			</Dialog>
-		);
+            </Dialog>
+        );
 	}
 }
 
@@ -355,15 +360,15 @@ class CitiesModules_Modal extends React.Component {
 
 	render() {
 		return (
-			<Dialog
+            <Dialog
 				open={this.props.open}
 				onClose={this.onClose.bind(this)}
 				fullScreen={this.props.fullScreen}
 				fullWidth={true}
 				maxWidth={'lg'}
 			>
-				{/*Модалка с кэфом бонуса и пмериодом*/}
-				{this.state.confirmDialog ? (
+                {/*Модалка с кэфом бонуса и пмериодом*/}
+                {this.state.confirmDialog ? (
 					<Dialog
 						open={this.state.confirmDialog}
 						onClose={() => this.setState({confirmDialog: false})}
@@ -387,18 +392,21 @@ class CitiesModules_Modal extends React.Component {
 						</DialogActions>
 					</Dialog>
 				) : null}
-
-				<DialogTitle className="button">
+                <DialogTitle className="button">
 					{this.props.method}{this.props.itemName ? `: ${this.props.itemName}` : null}
 					<IconButton onClick={this.onClose.bind(this)} style={{cursor: 'pointer'}}>
 						<CloseIcon/>
 					</IconButton>
 				</DialogTitle>
-				<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
+                <DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
 					<Grid container spacing={3} pl={1}>
 						{this.props.mark === 'newItem' ? (
 							<>
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<MyTextInput
 										label="Название города"
 										value={this.state.item ? this.state.item.city.name : ''}
@@ -406,7 +414,11 @@ class CitiesModules_Modal extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<MyTextInput
 										label="Склонение города (Меня нет в ...)"
 										value={this.state.item ? this.state.item.city.name_2 : ''}
@@ -414,7 +426,11 @@ class CitiesModules_Modal extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<MyTextInput
 										label="Адрес (URL)"
 										value={this.state.item ? this.state.item.city.link : ''}
@@ -425,7 +441,10 @@ class CitiesModules_Modal extends React.Component {
 						) : null}
 						<TabContext value={this.state.ItemTab1}>
 							<Grid container spacing={2}>
-								<Grid item xs={12}>
+								<Grid
+                                    size={{
+                                        xs: 12
+                                    }}>
 									<Box sx={{borderBottom: 1, borderColor: 'divider'}}>
 										<TabList
 											onChange={this.changeTab1.bind(this)}
@@ -443,10 +462,17 @@ class CitiesModules_Modal extends React.Component {
 									</Box>
 								</Grid>
 
-								<Grid item xs={12}>
+								<Grid
+                                    size={{
+                                        xs: 12
+                                    }}>
 									<TabPanel value={1} sx={{p: 0, pt: 2}}>
 										<Grid container spacing={3}>
-											<Grid item xs={12} sm={6}>
+											<Grid
+                                                size={{
+                                                    xs: 12,
+                                                    sm: 6
+                                                }}>
 												<MySelect
 													label="Уровень цен"
 													is_none={false}
@@ -457,7 +483,11 @@ class CitiesModules_Modal extends React.Component {
 												/>
 											</Grid>
 
-											<Grid item xs={12} sm={6}>
+											<Grid
+                                                size={{
+                                                    xs: 12,
+                                                    sm: 6
+                                                }}>
 												<MyTextInput
 													label="Телефон контакт-центра"
 													value={this.state.item?.city?.phone || ''}
@@ -466,7 +496,11 @@ class CitiesModules_Modal extends React.Component {
 												/>
 											</Grid>
 											{this.props.mark === 'editItem' ? (
-												<Grid item xs={12} sm={3}>
+												<Grid
+                                                    size={{
+                                                        xs: 12,
+                                                        sm: 3
+                                                    }}>
 													<MyCheckBox
 														label="Активность"
 														value={this.state.item ? parseInt(this.state.item.city.is_show) == 1 ? true : false : false}
@@ -479,7 +513,11 @@ class CitiesModules_Modal extends React.Component {
 
 									<TabPanel value={2} sx={{p: 0, pt: 2}}>
 										<Grid container spacing={2}>
-											<Grid item xs={12} sm={6}>
+											<Grid
+                                                size={{
+                                                    xs: 12,
+                                                    sm: 6
+                                                }}>
 												<MyTextInput
 													label="Коэф. роллов для бонуса"
 													value={this.state.item?.city?.k_rolls || ''}
@@ -490,7 +528,11 @@ class CitiesModules_Modal extends React.Component {
 												/>
 											</Grid>
 
-											<Grid item xs={12} sm={6}>
+											<Grid
+                                                size={{
+                                                    xs: 12,
+                                                    sm: 6
+                                                }}>
 												<MyTextInput
 													label="Коэф. пиццы для бонуса"
 													value={this.state.item?.city?.k_pizza || ''}
@@ -505,7 +547,11 @@ class CitiesModules_Modal extends React.Component {
 
 									<TabPanel value={3} sx={{p: 0, pt: 2}}>
 										<Grid container spacing={2}>
-											<Grid item xs={12} sm={6}>
+											<Grid
+                                                size={{
+                                                    xs: 12,
+                                                    sm: 6
+                                                }}>
 												<MyTextInput
 													type="number"
 													label="Сумма вознагрождения курьеру за завершенный заказ в радиусе"
@@ -518,7 +564,11 @@ class CitiesModules_Modal extends React.Component {
 												/>
 											</Grid>
 
-											<Grid item xs={12} sm={6}>
+											<Grid
+                                                size={{
+                                                    xs: 12,
+                                                    sm: 6
+                                                }}>
 												<MyTextInput
 													type="number"
 													label="Радиус в метрах в пределах которого положено вознагрождение"
@@ -537,7 +587,7 @@ class CitiesModules_Modal extends React.Component {
 						</TabContext>
 					</Grid>
 				</DialogContent>
-				<DialogActions>
+                <DialogActions>
 					{this.props.mark === 'editItem' ? (
 						<Button variant="contained" color="success" onClick={() => {
 							if (this.state.ItemTab1 === 1) {
@@ -559,8 +609,8 @@ class CitiesModules_Modal extends React.Component {
 						</Button>
 					)}
 				</DialogActions>
-			</Dialog>
-		);
+            </Dialog>
+        );
 	}
 }
 
@@ -803,19 +853,17 @@ class CitiesModules_ extends React.Component {
 	render() {
 		const {openDelete} = this.state;
 		return (
-			<>
-				<Backdrop style={{zIndex: 99}} open={this.state.is_load}>
+            <>
+                <Backdrop style={{zIndex: 99}} open={this.state.is_load}>
 					<CircularProgress color="inherit"/>
 				</Backdrop>
-
-				<MyAlert
+                <MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
-				<CitiesModules_Levels_Modal
+                <CitiesModules_Levels_Modal
 					open={this.state.modalDialog_lavel}
 					kassir_lavel={this.state.kassir_lavel}
 					onSave={this.saveLevel.bind(this)}
@@ -823,8 +871,7 @@ class CitiesModules_ extends React.Component {
 					openAlert={this.openAlert.bind(this)}
 					fullScreen={this.state.fullScreen}
 				/>
-
-				<CitiesModules_Modal
+                <CitiesModules_Modal
 					open={this.state.modalDialog}
 					onClose={() => this.setState({modalDialog: false, itemName: ''})}
 					method={this.state.method}
@@ -836,8 +883,7 @@ class CitiesModules_ extends React.Component {
 					fullScreen={this.state.fullScreen}
 					openAlert={this.openAlert.bind(this)}
 				/>
-
-				{openDelete &&
+                {openDelete &&
 					<ModalAccept
 						open={openDelete}
 						onClose={() => this.setState({openDelete: false})}
@@ -846,19 +892,30 @@ class CitiesModules_ extends React.Component {
 							this.setState({openDelete: false})}}
 					/>
 				}
-
-				<Grid container spacing={3} mb={3} className='container_first_child'>
-					<Grid item xs={12} sm={12}>
+                <Grid container spacing={3} mb={3} className='container_first_child'>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<h1>{this.state.module_name}</h1>
 					</Grid>
 
-					<Grid item xs={12} sm={3}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 3
+                        }}>
 						<Button onClick={this.openModal.bind(this, 'newItem', 'Новый город')} variant="contained">
 							Добавить город
 						</Button>
 					</Grid>
 
-					<Grid item xs={12} sm={12}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<TableContainer>
 							<Table>
 								<TableHead>
@@ -906,7 +963,11 @@ class CitiesModules_ extends React.Component {
 						</TableContainer>
 					</Grid>
 					{this.state.coef_history.length ? (
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<Accordion style={{width: '100%'}}>
 								<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
 									<Typography style={{fontWeight: 'bold'}}>История изменений</Typography>
@@ -958,8 +1019,8 @@ class CitiesModules_ extends React.Component {
 						</Grid>
 					) : null}
 				</Grid>
-			</>
-		);
+            </>
+        );
 	}
 }
 

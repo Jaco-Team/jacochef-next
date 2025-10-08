@@ -67,7 +67,6 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
         status={alertStatus}
         text={alertMessage}
       />
-
       <Dialog
         sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
         maxWidth="sm"
@@ -91,7 +90,6 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
           <Button onClick={save}>Сохранить</Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={open}
         onClose={onClose}
@@ -114,10 +112,10 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
             spacing={3}
           >
             <Grid
-              item
-              xs={12}
-              sm={12}
-            >
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyCheckBox
                 label="Закрыто из-за большого количества заказов"
                 value={parseInt(is_сlosed_overload) == 1 ? true : false}
@@ -126,10 +124,10 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
             </Grid>
 
             <Grid
-              item
-              xs={12}
-              sm={12}
-            >
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyCheckBox
                 label="Закрыто по техническим причинам"
                 value={parseInt(is_сlosed_technic) == 1 ? true : false}
@@ -139,10 +137,10 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
 
             {!!show_comment && (
               <Grid
-                item
-                xs={12}
-                sm={12}
-              >
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyAutocomplite2
                   id="cafe_upr_edit"
                   data={reason_list}

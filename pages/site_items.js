@@ -104,75 +104,77 @@ class SiteItemsTable extends React.Component {
 
   render(){
     return (
-      <Grid item xs={12}>
-          {this.props.cats.map( (cat, key) =>
-            <Accordion key={key}>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-              >
-                <Typography>{cat.name}</Typography>
-              </AccordionSummary>
-              <AccordionDetails style={{ width: '100%', overflow: 'scroll' }}>
-                
-                <Table>
-                
-                  <TableHead>
-                    <TableRow>
-                      <TableCell style={{ width: '2%' }}>id</TableCell>
+      <Grid
+        size={{
+          xs: 12
+        }}>
+        {this.props.cats.map( (cat, key) =>
+          <Accordion key={key}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+            >
+              <Typography>{cat.name}</Typography>
+            </AccordionSummary>
+            <AccordionDetails style={{ width: '100%', overflow: 'scroll' }}>
+              
+              <Table>
+              
+                <TableHead>
+                  <TableRow>
+                    <TableCell style={{ width: '2%' }}>id</TableCell>
 
-                      <TableCell style={{ width: '23%' }}>Название</TableCell>
-                      <TableCell style={{ width: '15%' }}>Ближайшее обновление</TableCell>
-                      <TableCell style={{ width: '15%' }}>Сортировка</TableCell>
+                    <TableCell style={{ width: '23%' }}>Название</TableCell>
+                    <TableCell style={{ width: '15%' }}>Ближайшее обновление</TableCell>
+                    <TableCell style={{ width: '15%' }}>Сортировка</TableCell>
 
-                      <TableCell style={{ width: '15%' }}>Активность</TableCell>
-                      <TableCell style={{ width: '15%' }}>Сайт</TableCell>
-                      <TableCell style={{ width: '15%' }}>Склад</TableCell>
-                    </TableRow>
-                  </TableHead>
+                    <TableCell style={{ width: '15%' }}>Активность</TableCell>
+                    <TableCell style={{ width: '15%' }}>Сайт</TableCell>
+                    <TableCell style={{ width: '15%' }}>Склад</TableCell>
+                  </TableRow>
+                </TableHead>
 
-                  <TableBody>
-                    
-                    { cat.items.map( (it, k) =>
-                      <TableRow key={k}>
-                        <TableCell>{it.id}</TableCell>
-                        <TableCell onClick={this.props.openItem.bind(this, it, it.date_update ? 'hist' : 'origin', true)}>{it.name}</TableCell>
-                        { it.date_update ?
-                          <TableCell>
-                            <MyDatePickerNew label="" value={ dayjs(it.date_update) } func={ this.props.changeDateUpdate.bind(this, key, k, it.date_update_id) } />
-                          </TableCell>
-                            :
-                          <TableCell></TableCell>
-                        }
-                        <TableCell>
-                          <MyTextInput label="" value={it.sort} func={ this.props.changeSort.bind(this, key, k) } onBlur={this.props.saveSort.bind(this, it.id)} />
-                        </TableCell>
-
-                        <TableCell> 
-                          { parseInt(it.is_show) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon /> } 
-                        </TableCell>
-                        <TableCell> 
-                          { parseInt(it.show_site) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon /> } 
-                        </TableCell>
-                        <TableCell> 
-                          { parseInt(it.show_program) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon /> } 
-                        </TableCell>
-
-                        
-                      </TableRow>           
-                    ) }
+                <TableBody>
                   
-                  </TableBody>
+                  { cat.items.map( (it, k) =>
+                    <TableRow key={k}>
+                      <TableCell>{it.id}</TableCell>
+                      <TableCell onClick={this.props.openItem.bind(this, it, it.date_update ? 'hist' : 'origin', true)}>{it.name}</TableCell>
+                      { it.date_update ?
+                        <TableCell>
+                          <MyDatePickerNew label="" value={ dayjs(it.date_update) } func={ this.props.changeDateUpdate.bind(this, key, k, it.date_update_id) } />
+                        </TableCell>
+                          :
+                        <TableCell></TableCell>
+                      }
+                      <TableCell>
+                        <MyTextInput label="" value={it.sort} func={ this.props.changeSort.bind(this, key, k) } onBlur={this.props.saveSort.bind(this, it.id)} />
+                      </TableCell>
+
+                      <TableCell> 
+                        { parseInt(it.is_show) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon /> } 
+                      </TableCell>
+                      <TableCell> 
+                        { parseInt(it.show_site) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon /> } 
+                      </TableCell>
+                      <TableCell> 
+                        { parseInt(it.show_program) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon /> } 
+                      </TableCell>
+
+                      
+                    </TableRow>           
+                  ) }
                 
-                </Table>
+                </TableBody>
+              
+              </Table>
 
-              </AccordionDetails>
-            </Accordion>
-          )
-          
-        }
-
+            </AccordionDetails>
+          </Accordion>
+        )
+        
+      }
       </Grid>
-    )
+    );
   }
 }
 
@@ -1558,7 +1560,6 @@ class SiteItems_ extends React.Component {
         <Backdrop open={this.state.is_load} style={{ zIndex: 99999 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Snackbar
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           open={this.state.is_snack}
@@ -1567,7 +1568,6 @@ class SiteItems_ extends React.Component {
           message={this.state.textSnack}
           action={action}
         />
-
         <Dialog
           maxWidth={'sm'}
           fullWidth={true}
@@ -1577,7 +1577,10 @@ class SiteItems_ extends React.Component {
           <DialogTitle>Новый тег</DialogTitle>
           <DialogContent>
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid
+                size={{
+                  xs: 12
+                }}>
                 <MyTextInput label="" value={ this.state.tag_name_new } func={ this.changeItem_.bind(this, 'tag_name_new') } />
               </Grid>
             </Grid>
@@ -1587,7 +1590,6 @@ class SiteItems_ extends React.Component {
             <Button type="submit" onClick={ this.saveNewTag.bind(this) }>Сохранить</Button>
           </DialogActions>
         </Dialog>
-        
         <Dialog
           open={this.state.modalEdit}
           fullWidth={true}
@@ -1599,7 +1601,10 @@ class SiteItems_ extends React.Component {
             
             <Grid container spacing={3}>
               {this.state.editItem && this.state.modalEdit ?
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
 
                   <TabContext value={this.state.ItemTab1}>
                     <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -1615,7 +1620,10 @@ class SiteItems_ extends React.Component {
 
                   <Grid container spacing={3}>
 
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <TabContext value={this.state.ItemTab}>
                         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                           <TabList onChange={ this.changeTab.bind(this) } variant="fullWidth">
@@ -1629,14 +1637,23 @@ class SiteItems_ extends React.Component {
                           <Grid container spacing={3}>
 
                             { parseInt( this.state.ItemTab1 ) == -1 || parseInt( this.state.ItemTab1 ) > 0 ?
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                                 <Grid container spacing={3} justifyContent="center">
-                                  <Grid item xs={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 4
+                                    }}>
                                     <MyDatePickerNew label="Дата обновления" value={ this.state.date_update } func={ this.changeDateRange.bind(this, 'date_update') } />
                                   </Grid>
 
                                   { parseInt( this.state.ItemTab1 ) > 0 ?
-                                    <Grid item xs={4}>
+                                    <Grid
+                                      size={{
+                                        xs: 4
+                                      }}>
                                       <Button onClick={this.delUpdateItem.bind(this)} style={{ backgroundColor: '#c03', color: '#fff', height: '100%' }}><CloseIcon /></Button>
                                     </Grid>
                                       :
@@ -1648,59 +1665,115 @@ class SiteItems_ extends React.Component {
                               null
                             }
 
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <Grid container spacing={3}>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 6
+                                  }}>
                                   <MyTextInput label="Название" value={ this.state.editItem.name } func={ this.changeItem.bind(this, 'name') } />
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 6
+                                  }}>
                                   <MyTextInput label="Короткое название (20 сим.)" value={ this.state.editItem.short_name } func={ this.changeItem.bind(this, 'short_name') } />
                                 </Grid>
                               </Grid>
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <Grid container spacing={3}>
-                                <Grid item xs={12} sm={4}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 4
+                                  }}>
                                   <MySelect data={this.state.types} value={this.state.editItem.type} func={ this.changeItem.bind(this, 'type') } disabled={true} label='Тип' />
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 4
+                                  }}>
                                   <MySelect data={this.state.cat_list} value={this.state.editItem.category_id} func={ this.changeItem.bind(this, 'category_id') } label='Категория' />
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 4
+                                  }}>
                                   <MyTextInput label="Код из 1с" value={ this.state.editItem.art } func={ this.changeItem.bind(this, 'art') } />
                                 </Grid>
                               </Grid>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <Grid container spacing={3}>
-                                <Grid item xs={12} sm={4}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 4
+                                  }}>
                                   <MySelect data={this.state.cat_list_new} value={this.state.editItem.category_id2} func={ this.changeItem.bind(this, 'category_id2') } label='Категория для нового сайта' />
                                 </Grid>
                               </Grid>
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <Grid container spacing={3}>
-                                <Grid item xs={12} sm={3}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 3
+                                  }}>
                                   <MyTextInput label="Стол" value={ this.state.editItem.stol } func={ this.changeItem.bind(this, 'stol') } />
                                 </Grid>
                                 
                                 { parseInt(this.state.editItem.category_id) == 6 ?
-                                  <Grid item xs={12} sm={3}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 3
+                                    }}>
                                     <MyTextInput label="Объем" value={ this.state.editItem.weight } func={ this.changeItem.bind(this, 'weight') } />
                                   </Grid>
                                     :
-                                  <Grid item xs={12} sm={3}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 3
+                                    }}>
                                     <MyTextInput label="Вес" value={ this.state.editItem.weight } func={ this.changeItem.bind(this, 'weight') } />
                                   </Grid>
                                 }
 
-                                <Grid item xs={12} sm={3}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 3
+                                  }}>
                                   <MyTextInput label="Кол-во кусочков" value={ this.state.editItem.count_part } func={ this.changeItem.bind(this, 'count_part') } />
                                 </Grid>
                                   
-                                <Grid item xs={12} sm={3}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 3
+                                  }}>
                                   <MyTextInput label="Размер" value={ this.state.editItem.size_pizza } func={ this.changeItem.bind(this, 'size_pizza') } />
                                 </Grid>
                                 
@@ -1710,15 +1783,30 @@ class SiteItems_ extends React.Component {
                             
 
                             { parseInt( this.state.editItem.type ) != 2 ?
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                                 <Grid container spacing={3}>
-                                  <Grid item xs={12} sm={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 4
+                                    }}>
                                     <MyTextInput label="Белки" value={ this.state.editItem.protein } func={ this.changeItem.bind(this, 'protein') } />
                                   </Grid>
-                                  <Grid item xs={12} sm={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 4
+                                    }}>
                                     <MyTextInput label="Жиры" value={ this.state.editItem.fat } func={ this.changeItem.bind(this, 'fat') } />
                                   </Grid>
-                                  <Grid item xs={12} sm={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 4
+                                    }}>
                                     <MyTextInput label="Углеводы" value={ this.state.editItem.carbohydrates } func={ this.changeItem.bind(this, 'carbohydrates') } />
                                   </Grid>
                                 </Grid>
@@ -1728,15 +1816,30 @@ class SiteItems_ extends React.Component {
                             }
 
                             { parseInt( this.state.editItem.type ) != 2 ?
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                                 <Grid container spacing={3}>
-                                  <Grid item xs={12} sm={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 4
+                                    }}>
                                     <MyTextInput label="Время на 1 этап (ММ:СС)" value={ this.state.editItem.time_stage_1 } func={ this.changeItem.bind(this, 'time_stage_1') } />
                                   </Grid>
-                                  <Grid item xs={12} sm={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 4
+                                    }}>
                                     <MyTextInput label="Время на 2 этап (ММ:СС)" value={ this.state.editItem.time_stage_2 } func={ this.changeItem.bind(this, 'time_stage_2') } />
                                   </Grid>
-                                  <Grid item xs={12} sm={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 4
+                                    }}>
                                     <MyTextInput label="Время на 3 этап (ММ:СС)" value={ this.state.editItem.time_stage_3 } func={ this.changeItem.bind(this, 'time_stage_3') } />
                                   </Grid>
                                 </Grid>
@@ -1745,14 +1848,24 @@ class SiteItems_ extends React.Component {
                               null
                             }
 
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <Grid container spacing={3}>
-                                <Grid item xs={12}>
+                                <Grid
+                                  size={{
+                                    xs: 12
+                                  }}>
                                   <Typography>Картинка соотношением сторон (1:1) (пример: 2000х2000) только JPG</Typography>
                                 </Grid>
                               
 
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 6
+                                  }}>
                                   { this.state.editItem.img_app.length > 0 ?
                                     <img 
                                       src={"https://cdnimg.jacofood.ru/"+this.state.editItem.img_app+"_732x732.jpg"} 
@@ -1762,27 +1875,46 @@ class SiteItems_ extends React.Component {
                                     <div style={{maxWidth: 300, maxHeight: 300}}/>
                                   }
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 6
+                                  }}>
                                   <div className="dropzone" id="for_img_edit_new" style={{ width: '100%', minHeight: 150 }} />
                                 </Grid>
                               </Grid>
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <Grid container spacing={3}>
-                                <Grid item xs={12}>
+                                <Grid
+                                  size={{
+                                    xs: 12
+                                  }}>
                                   <MyTextInput label="Состав" value={ this.state.editItem.tmp_desc } func={ this.changeItem.bind(this, 'tmp_desc') } />
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid
+                                  size={{
+                                    xs: 12
+                                  }}>
                                   <MyTextInput label="Короткое описание (в списке)" value={ this.state.editItem.marc_desc } func={ this.changeItem.bind(this, 'marc_desc') } />
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid
+                                  size={{
+                                    xs: 12
+                                  }}>
                                   <MyTextInput label="Полное описание (в карточке)" value={ this.state.editItem.marc_desc_full } func={ this.changeItem.bind(this, 'marc_desc_full') } />
                                 </Grid>
                               </Grid>
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <MyAutocomplite
                                 label="Теги"
                                 multiple={true}
@@ -1792,29 +1924,59 @@ class SiteItems_ extends React.Component {
                               />
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <Grid container spacing={3}>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 6
+                                  }}>
                                   <MyCheckBox label="Новинка" value={ parseInt(this.state.editItem.is_new) == 1 ? true : false } func={ this.changeItem.bind(this, 'is_new') } style={{ justifyContent: 'center' }} />
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 6
+                                  }}>
                                   <MyCheckBox label="Хит" value={ parseInt(this.state.editItem.is_hit) == 1 ? true : false } func={ this.changeItem.bind(this, 'is_hit') } style={{ justifyContent: 'center' }} />
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 6
+                                  }}>
                                   <MyCheckBox label="Обновлено" value={ parseInt(this.state.editItem.is_updated) == 1 ? true : false } func={ this.changeItem.bind(this, 'is_updated') } style={{ justifyContent: 'center' }} />
                                 </Grid>
                               </Grid>
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <Grid container spacing={3}>
-                                <Grid item xs={12} sm={4}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 4
+                                  }}>
                                   <MyCheckBox label="Активность" value={ parseInt(this.state.editItem.is_show) == 1 ? true : false } func={ this.changeItem.bind(this, 'is_show') } style={{ justifyContent: 'center' }} />
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 4
+                                  }}>
                                   <MyCheckBox label="Сайт и контакт-центр" value={ parseInt(this.state.editItem.show_site) == 1 ? true : false } func={ this.changeItem.bind(this, 'show_site') } style={{ justifyContent: 'center' }} />
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 4
+                                  }}>
                                   <MyCheckBox label="На кассе" value={ parseInt(this.state.editItem.show_program) == 1 ? true : false } func={ this.changeItem.bind(this, 'show_program') } style={{ justifyContent: 'center' }} />
                                 </Grid>
                               </Grid>
@@ -1829,7 +1991,11 @@ class SiteItems_ extends React.Component {
                           <Grid container spacing={3}>
 
                             { !this.state.item_pf ? null :
-                              <Grid item xs={12} sm={4}>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  sm: 4
+                                }}>
                                 <Table size='small'>
                                   <TableHead>
                                     <TableRow>
@@ -1859,7 +2025,11 @@ class SiteItems_ extends React.Component {
                             }
 
                             { !this.state.item_rec ? null :
-                              <Grid item xs={12} sm={8}>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  sm: 8
+                                }}>
                                 <TableStages title={'1 этап'} type={'pf'} arr={'pf_stage_1'} data={this.state.pf_stage_1} changeData={this.changeData.bind(this)} delItem={this.delItem.bind(this)} />
                                 <TableStages title={'2 этап'} type={'pf'} arr={'pf_stage_2'} data={this.state.pf_stage_2} changeData={this.changeData.bind(this)} delItem={this.delItem.bind(this)} />
                                 <TableStages title={'3 этап'} type={'pf'} arr={'pf_stage_3'} data={this.state.pf_stage_3} changeData={this.changeData.bind(this)} delItem={this.delItem.bind(this)} />
@@ -1875,7 +2045,11 @@ class SiteItems_ extends React.Component {
                           <Grid container spacing={3}>
 
                             { !this.state.item_pf ? null :
-                              <Grid item xs={12} sm={4}>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  sm: 4
+                                }}>
                                 <Table size='small'>
                                   <TableHead>
                                     <TableRow>
@@ -1905,7 +2079,11 @@ class SiteItems_ extends React.Component {
                             }
 
                             { !this.state.item_rec ? null :
-                              <Grid item xs={12} sm={8}>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  sm: 8
+                                }}>
                                 <Table size='small'>
                                   <TableHead>
                                     <TableRow>
@@ -1974,7 +2152,6 @@ class SiteItems_ extends React.Component {
             }
           </DialogActions>
         </Dialog>
-        
         <Dialog
           open={this.state.modalNew}
           fullWidth={true}
@@ -1987,11 +2164,17 @@ class SiteItems_ extends React.Component {
             <Grid container spacing={3}>
                 
                 {this.state.editItem && this.state.modalNew ?
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
 
                     <Grid container spacing={3}>
 
-                      <Grid item xs={12}>
+                      <Grid
+                        size={{
+                          xs: 12
+                        }}>
                         <TabContext value={this.state.ItemTab}>
                           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                             <TabList onChange={ this.changeTab.bind(this) } variant="fullWidth">
@@ -2005,59 +2188,115 @@ class SiteItems_ extends React.Component {
 
                             <Grid container spacing={3}>
 
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                                 <Grid container spacing={3}>
-                                  <Grid item xs={12} sm={6}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 6
+                                    }}>
                                     <MyTextInput label="Название" value={ this.state.editItem.name } func={ this.changeItem.bind(this, 'name') } />
                                   </Grid>
-                                  <Grid item xs={12} sm={6}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 6
+                                    }}>
                                     <MyTextInput label="Короткое название (20 сим.)" value={ this.state.editItem.short_name } func={ this.changeItem.bind(this, 'short_name') } />
                                   </Grid>
                                 </Grid>
                               </Grid>
 
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                                 <Grid container spacing={3}>
-                                  <Grid item xs={12} sm={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 4
+                                    }}>
                                     <MySelect data={this.state.types} value={this.state.editItem.type} func={ this.changeItem.bind(this, 'type') } disabled={true} label='Тип' />
                                   </Grid>
-                                  <Grid item xs={12} sm={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 4
+                                    }}>
                                     <MySelect data={this.state.cat_list} value={this.state.editItem.category_id} func={ this.changeItem.bind(this, 'category_id') } label='Категория' />
                                   </Grid>
-                                  <Grid item xs={12} sm={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 4
+                                    }}>
                                     <MyTextInput label="Код из 1с" value={ this.state.editItem.art } func={ this.changeItem.bind(this, 'art') } />
                                   </Grid>
                                 </Grid>
                               </Grid>
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                               <Grid container spacing={3}>
-                                <Grid item xs={12} sm={4}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 4
+                                  }}>
                                   <MySelect data={this.state.cat_list_new} value={this.state.editItem.category_id2} func={ this.changeItem.bind(this, 'category_id2') } label='Категория для нового сайта' />
                                 </Grid>
                               </Grid>
                             </Grid>
 
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                                 <Grid container spacing={3}>
-                                  <Grid item xs={12} sm={3}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 3
+                                    }}>
                                     <MyTextInput label="Стол" value={ this.state.editItem.stol } func={ this.changeItem.bind(this, 'stol') } />
                                   </Grid>
 
                                   { parseInt(this.state.editItem.category_id) == 6 ?
-                                    <Grid item xs={12} sm={3}>
+                                    <Grid
+                                      size={{
+                                        xs: 12,
+                                        sm: 3
+                                      }}>
                                       <MyTextInput label="Объем" value={ this.state.editItem.weight } func={ this.changeItem.bind(this, 'weight') } />
                                     </Grid>
                                       :
-                                    <Grid item xs={12} sm={3}>
+                                    <Grid
+                                      size={{
+                                        xs: 12,
+                                        sm: 3
+                                      }}>
                                       <MyTextInput label="Вес" value={ this.state.editItem.weight } func={ this.changeItem.bind(this, 'weight') } />
                                     </Grid>
                                   }
                                   
-                                  <Grid item xs={12} sm={3}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 3
+                                    }}>
                                     <MyTextInput label="Кол-во кусочков" value={ this.state.editItem.count_part } func={ this.changeItem.bind(this, 'count_part') } />
                                   </Grid>
                                     
-                                  <Grid item xs={12} sm={3}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 3
+                                    }}>
                                     <MyTextInput label="Размер" value={ this.state.editItem.size_pizza } func={ this.changeItem.bind(this, 'size_pizza') } />
                                   </Grid>
                                   
@@ -2067,15 +2306,30 @@ class SiteItems_ extends React.Component {
                               
 
                               { parseInt( this.state.editItem.type ) != 2 ?
-                                <Grid item xs={12}>
+                                <Grid
+                                  size={{
+                                    xs: 12
+                                  }}>
                                   <Grid container spacing={3}>
-                                    <Grid item xs={12} sm={4}>
+                                    <Grid
+                                      size={{
+                                        xs: 12,
+                                        sm: 4
+                                      }}>
                                       <MyTextInput label="Белки" value={ this.state.editItem.protein } func={ this.changeItem.bind(this, 'protein') } />
                                     </Grid>
-                                    <Grid item xs={12} sm={4}>
+                                    <Grid
+                                      size={{
+                                        xs: 12,
+                                        sm: 4
+                                      }}>
                                       <MyTextInput label="Жиры" value={ this.state.editItem.fat } func={ this.changeItem.bind(this, 'fat') } />
                                     </Grid>
-                                    <Grid item xs={12} sm={4}>
+                                    <Grid
+                                      size={{
+                                        xs: 12,
+                                        sm: 4
+                                      }}>
                                       <MyTextInput label="Углеводы" value={ this.state.editItem.carbohydrates } func={ this.changeItem.bind(this, 'carbohydrates') } />
                                     </Grid>
                                     
@@ -2086,15 +2340,30 @@ class SiteItems_ extends React.Component {
                               }
 
                               { parseInt( this.state.editItem.type ) != 2 ?
-                                <Grid item xs={12}>
+                                <Grid
+                                  size={{
+                                    xs: 12
+                                  }}>
                                   <Grid container spacing={3}>
-                                    <Grid item xs={12} sm={4}>
+                                    <Grid
+                                      size={{
+                                        xs: 12,
+                                        sm: 4
+                                      }}>
                                       <MyTextInput label="Время на 1 этап (ММ:СС)" value={ this.state.editItem.time_stage_1 } func={ this.changeItem.bind(this, 'time_stage_1') } />
                                     </Grid>
-                                    <Grid item xs={12} sm={4}>
+                                    <Grid
+                                      size={{
+                                        xs: 12,
+                                        sm: 4
+                                      }}>
                                       <MyTextInput label="Время на 2 этап (ММ:СС)" value={ this.state.editItem.time_stage_2 } func={ this.changeItem.bind(this, 'time_stage_2') } />
                                     </Grid>
-                                    <Grid item xs={12} sm={4}>
+                                    <Grid
+                                      size={{
+                                        xs: 12,
+                                        sm: 4
+                                      }}>
                                       <MyTextInput label="Время на 3 этап (ММ:СС)" value={ this.state.editItem.time_stage_3 } func={ this.changeItem.bind(this, 'time_stage_3') } />
                                     </Grid>
                                   </Grid>
@@ -2103,14 +2372,24 @@ class SiteItems_ extends React.Component {
                                 null
                               }
 
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                                 <Grid container spacing={3}>
-                                  <Grid item xs={12}>
+                                  <Grid
+                                    size={{
+                                      xs: 12
+                                    }}>
                                     <Typography>Картинка соотношением сторон (1:1) (пример: 2000х2000) только JPG</Typography>
                                   </Grid>
                                 
 
-                                  <Grid item xs={12} sm={6}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 6
+                                    }}>
                                     { this.state.editItem.img_app.length > 0 ?
                                       <picture>
                                         <source srcSet={`
@@ -2130,27 +2409,46 @@ class SiteItems_ extends React.Component {
                                       <div style={{maxWidth: 300, maxHeight: 300}}/>
                                     }
                                   </Grid>
-                                  <Grid item xs={12} sm={6}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 6
+                                    }}>
                                     <div className="dropzone" id="for_img_edit_new" style={{ width: '100%', minHeight: 150 }} />
                                   </Grid>
                                 </Grid>
                               </Grid>
 
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                                 <Grid container spacing={3}>
-                                  <Grid item xs={12}>
+                                  <Grid
+                                    size={{
+                                      xs: 12
+                                    }}>
                                     <MyTextInput label="Состав" value={ this.state.editItem.tmp_desc } func={ this.changeItem.bind(this, 'tmp_desc') } />
                                   </Grid>
-                                  <Grid item xs={12}>
+                                  <Grid
+                                    size={{
+                                      xs: 12
+                                    }}>
                                     <MyTextInput label="Короткое описание (в карточке)" value={ this.state.editItem.marc_desc } func={ this.changeItem.bind(this, 'marc_desc') } />
                                   </Grid>
-                                  <Grid item xs={12}>
+                                  <Grid
+                                    size={{
+                                      xs: 12
+                                    }}>
                                     <MyTextInput label="Полное описание (в карточке)" value={ this.state.editItem.marc_desc_full } func={ this.changeItem.bind(this, 'marc_desc_full') } />
                                   </Grid>
                                 </Grid>
                               </Grid>
 
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                                 <MyAutocomplite
                                   label="Теги"
                                   multiple={true}
@@ -2160,15 +2458,30 @@ class SiteItems_ extends React.Component {
                                 />
                               </Grid>
 
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                                 <Grid container spacing={3}>
-                                  <Grid item xs={12} sm={6}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 6
+                                    }}>
                                     <MyCheckBox label="Новинка" value={ parseInt(this.state.editItem.is_new) == 1 ? true : false } func={ this.changeItem.bind(this, 'is_new') } style={{ justifyContent: 'center' }} />
                                   </Grid>
-                                  <Grid item xs={12} sm={6}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 6
+                                    }}>
                                     <MyCheckBox label="Хит" value={ parseInt(this.state.editItem.is_hit) == 1 ? true : false } func={ this.changeItem.bind(this, 'is_hit') } style={{ justifyContent: 'center' }} />
                                   </Grid>
-                                  <Grid item xs={12} sm={6}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 6
+                                    }}>
                                     <MyCheckBox label="Обновлено" value={ parseInt(this.state.editItem.is_updated) == 1 ? true : false } func={ this.changeItem.bind(this, 'is_updated') } style={{ justifyContent: 'center' }} />
                                   </Grid>
 
@@ -2176,15 +2489,30 @@ class SiteItems_ extends React.Component {
                                 </Grid>
                               </Grid>
 
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                                 <Grid container spacing={3}>
-                                  <Grid item xs={12} sm={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 4
+                                    }}>
                                     <MyCheckBox label="Активность" value={ parseInt(this.state.editItem.is_show) == 1 ? true : false } func={ this.changeItem.bind(this, 'is_show') } style={{ justifyContent: 'center' }} />
                                   </Grid>
-                                  <Grid item xs={12} sm={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 4
+                                    }}>
                                     <MyCheckBox label="На сайте" value={ parseInt(this.state.editItem.show_site) == 1 ? true : false } func={ this.changeItem.bind(this, 'show_site') } style={{ justifyContent: 'center' }} />
                                   </Grid>
-                                  <Grid item xs={12} sm={4}>
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      sm: 4
+                                    }}>
                                     <MyCheckBox label="На складе" value={ parseInt(this.state.editItem.show_program) == 1 ? true : false } func={ this.changeItem.bind(this, 'show_program') } style={{ justifyContent: 'center' }} />
                                   </Grid>
                                 </Grid>
@@ -2198,7 +2526,11 @@ class SiteItems_ extends React.Component {
                             <Grid container spacing={3}>
 
                               { !this.state.item_pf ? null :
-                                <Grid item xs={12} sm={4}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 4
+                                  }}>
                                   <Table size='small'>
                                     <TableHead>
                                       <TableRow>
@@ -2228,7 +2560,11 @@ class SiteItems_ extends React.Component {
                               }
 
                               { !this.state.item_rec ? null :
-                                <Grid item xs={12} sm={8}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 8
+                                  }}>
                                   <TableStages title={'1 этап'} type={'pf'} arr={'pf_stage_1'} data={this.state.pf_stage_1} changeData={this.changeData.bind(this)} delItem={this.delItem.bind(this)} />
                                   <TableStages title={'2 этап'} type={'pf'} arr={'pf_stage_2'} data={this.state.pf_stage_2} changeData={this.changeData.bind(this)} delItem={this.delItem.bind(this)} />
                                   <TableStages title={'3 этап'} type={'pf'} arr={'pf_stage_3'} data={this.state.pf_stage_3} changeData={this.changeData.bind(this)} delItem={this.delItem.bind(this)} />
@@ -2243,7 +2579,11 @@ class SiteItems_ extends React.Component {
                             <Grid container spacing={3}>
 
                               { !this.state.item_pf ? null :
-                                <Grid item xs={12} sm={4}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 4
+                                  }}>
                                   <Table size='small'>
                                     <TableHead>
                                       <TableRow>
@@ -2273,7 +2613,11 @@ class SiteItems_ extends React.Component {
                               }
 
                               { !this.state.item_rec ? null :
-                                <Grid item xs={12} sm={8}>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    sm: 8
+                                  }}>
                                   <Table size='small'>
                                     <TableHead>
                                       <TableRow>
@@ -2335,18 +2679,28 @@ class SiteItems_ extends React.Component {
             <Button onClick={this.saveNewItem.bind(this)} color="primary">Сохранить</Button>
           </DialogActions>
         </Dialog>
-        
-        
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
           
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button onClick={this.openNew.bind(this)} color="primary" variant='contained'>Новый товар</Button>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button onClick={this.updateVK.bind(this)} color="primary" variant='contained'>Обновить товары VK</Button>
           </Grid>
 
@@ -2356,7 +2710,7 @@ class SiteItems_ extends React.Component {
 
         </Grid>
       </>
-    )
+    );
   }
 }
 

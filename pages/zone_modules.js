@@ -189,15 +189,22 @@ class ZoneModules_Modal_History extends React.Component {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Typography style={{ alignSelf: 'center', fontWeight: 'bold' }}>
                 Дата начала изменений: {date_edit}
               </Typography>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Точка"
                 value={this.state.itemView ? this.state.itemView.point_id?.color ? this.state.itemView.point_id.key : this.state.itemView.point_id : ''}
@@ -205,7 +212,11 @@ class ZoneModules_Modal_History extends React.Component {
                 className={this.state.itemView ? this.state.itemView.point_id?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Название зоны"
                 value={this.state.itemView ? this.state.itemView.name?.color ? this.state.itemView.name.key : this.state.itemView.name : ''}
@@ -213,7 +224,11 @@ class ZoneModules_Modal_History extends React.Component {
                 className={this.state.itemView ? this.state.itemView.name?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Сумма для клиента"
                 value={this.state.itemView ? this.state.itemView.sum_div?.color ? this.state.itemView.sum_div.key : this.state.itemView.sum_div : ''}
@@ -221,7 +236,11 @@ class ZoneModules_Modal_History extends React.Component {
                 className={this.state.itemView ? this.state.itemView.sum_div?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Сумма для курьера"
                 value={this.state.itemView ? this.state.itemView.sum_div_driver?.color ? this.state.itemView.sum_div_driver.key : this.state.itemView.sum_div_driver : ''}
@@ -229,7 +248,11 @@ class ZoneModules_Modal_History extends React.Component {
                 className={this.state.itemView ? this.state.itemView.sum_div_driver?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Бесплатная доставка"
                 value={this.state.itemView ? this.state.itemView.free_drive?.color ? this.state.itemView.free_drive.key : this.state.itemView.free_drive : ''}
@@ -237,7 +260,11 @@ class ZoneModules_Modal_History extends React.Component {
                 className={this.state.itemView ? this.state.itemView.free_drive?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Активность"
                 value={this.state.itemView ? this.state.itemView.is_active?.color ? this.state.itemView.is_active.key : this.state.itemView.is_active : ''}
@@ -246,13 +273,22 @@ class ZoneModules_Modal_History extends React.Component {
               />
             </Grid>
             {zone_data?.coordinates_old === 'last' ? null :
-              <Grid item xs={12} sm={12} mb={2}>
+              <Grid
+                mb={2}
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <Typography align="center" style={{ backgroundColor: '#ef5350', color: '#fff', padding: '10px 15px', fontWeight: 700 }}>
                   {zone_data?.coordinates_old ? 'Красным цветом выделены границы прежней зоны, синим цветом выделены новые границы зоны' : 'Изменений в границах зоны не было'}
                 </Typography>
               </Grid>
             }
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <div id="map_zone" name="map_zone" style={{ width: '100%', height: 300, paddingTop: 10 }} />
             </Grid>
           </Grid>
@@ -803,7 +839,6 @@ class ZoneModules_Modal extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="sm"
@@ -817,7 +852,6 @@ class ZoneModules_Modal extends React.Component {
             <Button onClick={this.onClose.bind(this)}>Закрыть</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="sm"
@@ -832,7 +866,12 @@ class ZoneModules_Modal extends React.Component {
           </DialogTitle>
           <DialogContent sx={{ fontWeight: 'bold' }}>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={12} mt={2}>
+              <Grid
+                mt={2}
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MySelect
                   label="Вариант сохранения данных"
                   is_none={false}
@@ -842,7 +881,11 @@ class ZoneModules_Modal extends React.Component {
                 />
               </Grid>
               {!this.state.date_edit ? null :
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyDatePickerNew
                     label="Дата начала изменений"
                     value={dayjs(this.state.date_start)}
@@ -856,7 +899,6 @@ class ZoneModules_Modal extends React.Component {
             <Button variant="contained" onClick={this.save_variant.bind(this)}>Выбрать</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.props.open}
           onClose={() => this.setState({ confirmDialog: true, text: 'Закрыть без сохранения изменений?'})}
@@ -874,7 +916,11 @@ class ZoneModules_Modal extends React.Component {
             <Grid container spacing={3}>
 
               {this.props.mark === 'editZone_future' ? (
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyDatePickerNew
                     label="Дата начала изменений"
                     value={dayjs(this.state.item ? this.state.item.zone.date_start : '')}
@@ -883,7 +929,11 @@ class ZoneModules_Modal extends React.Component {
                 </Grid>
               ) : null}
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MySelect
                   label="Точка"
                   is_none={false}
@@ -893,7 +943,11 @@ class ZoneModules_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyTextInput
                   label="Название зоны"
                   value={this.state.item ? this.state.item.zone.zone_name : ''}
@@ -901,7 +955,11 @@ class ZoneModules_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyTextInput
                   label="Сумма для клиента"
                   value={this.state.item ? this.state.item.zone.sum_div : ''}
@@ -909,7 +967,11 @@ class ZoneModules_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyTextInput
                   label="Сумма для курьера"
                   value={this.state.item ? this.state.item.zone.sum_div_driver : ''}
@@ -917,7 +979,11 @@ class ZoneModules_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyCheckBox
                   label="Бесплатная доставка"
                   value={this.state.item ? parseInt(this.state.item.zone.free_drive) == 1 ? true : false : false}
@@ -925,7 +991,11 @@ class ZoneModules_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyCheckBox
                   label="Активность"
                   value={this.state.item ? parseInt(this.state.item.zone.is_active) == 1 ? true : false : false}
@@ -933,7 +1003,11 @@ class ZoneModules_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <Button
                   variant="contained"
                   onClick={this.state.isDrawing ? this.startDrawing.bind(this) : this.stopDrawing.bind(this)}
@@ -943,7 +1017,11 @@ class ZoneModules_Modal extends React.Component {
                 </Button>
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <div id="map" name="map" style={{ width: '100%', height: 700, paddingTop: 10 }} >
                   {!this.state.zones.length || this.props.fullScreen ? null :
                     <List className='list_zones'>
@@ -1517,11 +1595,9 @@ class ZoneModules_ extends React.Component {
     return (
       <>
         <Script src="https://api-maps.yandex.ru/2.1/?apikey=665f5b53-8905-4934-9502-4a6a7b06a900&lang=ru_RU" />
-
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false, zone_id_delete: null, text_dialog_delete: '' })}>
           <DialogTitle>Подтвердите действие</DialogTitle>
           <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
@@ -1532,14 +1608,12 @@ class ZoneModules_ extends React.Component {
             <Button onClick={this.deleteZone.bind(this)}>Удалить</Button>
           </DialogActions>
         </Dialog>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false }) }
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <ZoneModules_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false, itemName: '' })}
@@ -1551,7 +1625,6 @@ class ZoneModules_ extends React.Component {
           fullScreen={this.state.fullScreen}
           zones={this.state.zones}
         />
-
         <ZoneModules_Modal_History
           open={this.state.modalDialogView}
           onClose={() => this.setState({ modalDialogView: false, itemView: null, date_edit: null })}
@@ -1560,13 +1633,20 @@ class ZoneModules_ extends React.Component {
           date_edit={this.state.date_edit}
           zone_data={this.state.zone_data}
         />
-
         <Grid container spacing={3} mb={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect
               label="Город"
               is_none={false}
@@ -1576,13 +1656,22 @@ class ZoneModules_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.openModal.bind(this, 'newZone', 'Новая зона')} variant="contained">
               Добавить зону
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12} mb={this.state.zones_future.length ? 2 : 10}>
+          <Grid
+            mb={this.state.zones_future.length ? 2 : 10}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer>
               <Table>
                 <TableHead>
@@ -1683,7 +1772,12 @@ class ZoneModules_ extends React.Component {
           </Grid>
 
           {!this.state.zones_future.length ? null :
-            <Grid item xs={12} sm={12} mb={5}>
+            <Grid
+              mb={5}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -1730,7 +1824,12 @@ class ZoneModules_ extends React.Component {
           }
 
           {!this.state.zones_hist.length ? null :
-            <Grid item xs={12} sm={12} mb={5}>
+            <Grid
+              mb={5}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Accordion style={{ width: '100%' }}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>

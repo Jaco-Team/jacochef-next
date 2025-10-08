@@ -217,15 +217,14 @@ export default class SiteClients_Modal_Client extends React.Component {
 		} = this.props;
 
 		return (
-			<>
-				<MyAlert
+            <>
+                <MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
-				<Dialog sx={{
+                <Dialog sx={{
 					'& .MuiDialog-paper': {
 						width: '80%',
 						maxHeight: 435
@@ -241,8 +240,7 @@ export default class SiteClients_Modal_Client extends React.Component {
 						<Button onClick={this.send_code.bind(this)}>Ok</Button>
 					</DialogActions>
 				</Dialog>
-
-				<Dialog
+                <Dialog
 					open={open}
 					onClose={this.onClose.bind(this)}
 					fullScreen={fullScreen}
@@ -265,7 +263,11 @@ export default class SiteClients_Modal_Client extends React.Component {
 
 					<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
 
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<Paper>
 								<Tabs value={this.state.activeTab} onChange={this.changeTab.bind(this)} centered variant='fullWidth'>
 									<Tab label="О клиенте" {...a11yProps(0)} />
@@ -278,11 +280,21 @@ export default class SiteClients_Modal_Client extends React.Component {
 						</Grid>
 
 						{/* О клиенте */}
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<TabPanel value={this.state.activeTab} index={0} id='client'>
 								<Paper style={{padding: 24}}>
 
-									<Grid item xs={12} sm={12} style={{display: 'flex'}} mb={3}>
+									<Grid
+                                        style={{display: 'flex'}}
+                                        mb={3}
+                                        size={{
+                                            xs: 12,
+                                            sm: 12
+                                        }}>
 										<Typography style={{fontWeight: 'bold'}}>
 											Имя: &nbsp;
 										</Typography>
@@ -291,7 +303,13 @@ export default class SiteClients_Modal_Client extends React.Component {
 										</Typography>
 									</Grid>
 
-									<Grid item xs={12} sm={12} style={{display: 'flex'}} mb={3}>
+									<Grid
+                                        style={{display: 'flex'}}
+                                        mb={3}
+                                        size={{
+                                            xs: 12,
+                                            sm: 12
+                                        }}>
 										<Typography style={{fontWeight: 'bold'}}>
 											Телефон: &nbsp;
 										</Typography>
@@ -301,7 +319,13 @@ export default class SiteClients_Modal_Client extends React.Component {
 									</Grid>
 
 									{parseInt(acces?.edit_mail_access) ?
-										<Grid item xs={12} sm={12} mb={3} className='mail_box'>
+										<Grid
+                                            mb={3}
+                                            className='mail_box'
+                                            size={{
+                                                xs: 12,
+                                                sm: 12
+                                            }}>
 											<Typography style={{fontWeight: 'bold', whiteSpace: 'nowrap'}}>
 												Эл почта:
 											</Typography>
@@ -313,7 +337,13 @@ export default class SiteClients_Modal_Client extends React.Component {
 											/>
 										</Grid>
 										:
-										<Grid item xs={12} sm={12} style={{display: 'flex'}} mb={3}>
+										<Grid
+                                            style={{display: 'flex'}}
+                                            mb={3}
+                                            size={{
+                                                xs: 12,
+                                                sm: 12
+                                            }}>
 											<Typography style={{fontWeight: 'bold'}}>
 												Эл почта: &nbsp;
 											</Typography>
@@ -323,7 +353,13 @@ export default class SiteClients_Modal_Client extends React.Component {
 										</Grid>
 									}
 
-									<Grid item xs={12} sm={12} style={{display: 'flex'}} mb={3}>
+									<Grid
+                                        style={{display: 'flex'}}
+                                        mb={3}
+                                        size={{
+                                            xs: 12,
+                                            sm: 12
+                                        }}>
 										<Typography style={{fontWeight: 'bold'}}>
 											Регистрация: &nbsp;
 										</Typography>
@@ -333,7 +369,13 @@ export default class SiteClients_Modal_Client extends React.Component {
 									</Grid>
 
 									{parseInt(acces?.edit_bir_access) ?
-										<Grid item xs={12} sm={12} mb={3} className='select_box'>
+										<Grid
+                                            mb={3}
+                                            className='select_box'
+                                            size={{
+                                                xs: 12,
+                                                sm: 12
+                                            }}>
 											<Typography style={{fontWeight: 'bold', whiteSpace: 'nowrap'}}>
 												Дата рождения:
 											</Typography>
@@ -354,7 +396,13 @@ export default class SiteClients_Modal_Client extends React.Component {
 											</Button>
 										</Grid>
 										:
-										<Grid item xs={12} sm={12} style={{display: 'flex'}} mb={3}>
+										<Grid
+                                            style={{display: 'flex'}}
+                                            mb={3}
+                                            size={{
+                                                xs: 12,
+                                                sm: 12
+                                            }}>
 											<Typography style={{fontWeight: 'bold'}}>
 												Дата рождения: &nbsp;
 											</Typography>
@@ -364,7 +412,13 @@ export default class SiteClients_Modal_Client extends React.Component {
 										</Grid>
 									}
 
-									<Grid item xs={12} sm={12} style={{display: 'flex'}} mb={3}>
+									<Grid
+                                        style={{display: 'flex'}}
+                                        mb={3}
+                                        size={{
+                                            xs: 12,
+                                            sm: 12
+                                        }}>
 										<Typography style={{fontWeight: 'bold'}}>
 											Заказов: &nbsp;
 										</Typography>
@@ -373,7 +427,13 @@ export default class SiteClients_Modal_Client extends React.Component {
 										</Typography>
 									</Grid>
 
-									<Grid item xs={12} sm={12} style={{display: 'flex'}} mb={3}>
+									<Grid
+                                        style={{display: 'flex'}}
+                                        mb={3}
+                                        size={{
+                                            xs: 12,
+                                            sm: 12
+                                        }}>
 										<Typography style={{fontWeight: 'bold'}}>
 											Доставок: &nbsp;
 										</Typography>
@@ -382,7 +442,13 @@ export default class SiteClients_Modal_Client extends React.Component {
 										</Typography>
 									</Grid>
 
-									<Grid item xs={12} sm={12} style={{display: 'flex'}} mb={3}>
+									<Grid
+                                        style={{display: 'flex'}}
+                                        mb={3}
+                                        size={{
+                                            xs: 12,
+                                            sm: 12
+                                        }}>
 										<Typography style={{fontWeight: 'bold'}}>
 											Самовывозов: &nbsp;
 										</Typography>
@@ -391,7 +457,11 @@ export default class SiteClients_Modal_Client extends React.Component {
 										</Typography>
 									</Grid>
 
-									<Grid item xs={12} sm={12}>
+									<Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 12
+                                        }}>
 										{!parseInt(acces?.edit_bir_access) && !parseInt(acces?.edit_mail_access) ? null :
 											<Button variant="contained" color='success' onClick={this.saveEdit.bind(this)}>
 												Сохранить
@@ -406,7 +476,11 @@ export default class SiteClients_Modal_Client extends React.Component {
 
 						{/* Заказы */}
 						{parseInt(acces?.view_orders_access) ? null :
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<TabPanel value={this.state.activeTab} index={1} id='client'>
 									<TableContainer sx={{maxHeight: {xs: 'none', sm: 607}}} component={Paper}>
 										<Table size='small' stickyHeader>
@@ -450,7 +524,11 @@ export default class SiteClients_Modal_Client extends React.Component {
 
 						{/* Оформленные ошибки */}
 						{!parseInt(acces?.view_err_access) ? null :
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<TabPanel value={this.state.activeTab} index={2} id='client'>
 									<TableContainer sx={{maxHeight: {xs: 'none', sm: 607}}} component={Paper}>
 										<Table size='small' stickyHeader>
@@ -485,7 +563,11 @@ export default class SiteClients_Modal_Client extends React.Component {
 
 						{/* Обращения */}
 						{!parseInt(acces?.view_comment_access) ? null :
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<TabPanel value={this.state.activeTab} index={3} id='client'>
 									{!comments.length ? null :
 										<Accordion style={{marginBottom: 24}}>
@@ -563,11 +645,19 @@ export default class SiteClients_Modal_Client extends React.Component {
 
 						{/* Авторизации */}
 						{!parseInt(acces?.view_auth_access) ? null :
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<TabPanel value={this.state.activeTab} index={4} id='client'>
 
 									{parseInt(acces?.send_code_access) ?
-										<Grid item xs={12} sm={12}>
+										<Grid
+                                            size={{
+                                                xs: 12,
+                                                sm: 12
+                                            }}>
 											<Button variant="contained" color='success' onClick={() => this.setState({confirmDialog: true})}>
 												Выслать новый код
 											</Button>
@@ -652,7 +742,7 @@ export default class SiteClients_Modal_Client extends React.Component {
 					</DialogActions>
 
 				</Dialog>
-			</>
-		);
+            </>
+        );
 	}
 }

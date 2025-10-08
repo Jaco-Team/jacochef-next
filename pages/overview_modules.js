@@ -52,12 +52,10 @@ class OverviewModules_Modal_View extends React.Component {
         onClose={onClose} 
         fullScreen={fullScreen}
       >
-
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="h6">{method}{item_name && `: ${item_name}`}</Typography>
           <IconButton onClick={onClose}><CloseIcon/></IconButton>
         </DialogTitle>
-
         <DialogContent sx={{ minHeight: 200, position: 'relative' }}>
           {loading ? (
             <Box sx={{ display:'flex', justifyContent:'center', alignItems:'center', height:200 }}>
@@ -65,7 +63,12 @@ class OverviewModules_Modal_View extends React.Component {
             </Box>
           ) : (
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={6} sx={{ mt: 1 }}>
+              <Grid
+                sx={{ mt: 1 }}
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Название"
                   value={itemView?.name || ''}
@@ -73,7 +76,12 @@ class OverviewModules_Modal_View extends React.Component {
                   className="disabled_input"
                 />
               </Grid>
-              <Grid item xs={12} sm={6} sx={{ mt: 1}}>
+              <Grid
+                sx={{ mt: 1}}
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Тэги"
                   value={itemView?.tags || ''}
@@ -81,7 +89,11 @@ class OverviewModules_Modal_View extends React.Component {
                   className="disabled_input"
                 />
               </Grid>
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <Typography gutterBottom>Описание модуля</Typography>
                 <Box
                   sx={{
@@ -101,7 +113,6 @@ class OverviewModules_Modal_View extends React.Component {
             </Grid>
           )}
         </DialogContent>
-
         <DialogActions>
           <Button variant="contained" onClick={onClose}>Закрыть</Button>
         </DialogActions>
@@ -279,14 +290,22 @@ class OverviewModules_Modal extends React.Component {
           {item && (
             <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput 
                     label="Название" 
                     value={item.name} 
                     func={this.changeItem('name')} 
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyAutocomplite
                     label="Тэги"
                     multiple
@@ -295,7 +314,11 @@ class OverviewModules_Modal extends React.Component {
                     func={this.onTagsChange}
                   />
                 </Grid>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <Typography gutterBottom>Описание модуля</Typography>
                   <TextEditor22 
                     id="EditorNew" 
@@ -307,7 +330,11 @@ class OverviewModules_Modal extends React.Component {
                   />
                 </Grid>
                 {isEditing && item?.hist && parseInt(acces?.edit) && (
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <Accordion style={{ width: '100%' }}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}> 
                         <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
@@ -345,7 +372,6 @@ class OverviewModules_Modal extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Dialog 
           open={openTagModal} 
           onClose={this.handleCancelNewTag} 
@@ -354,7 +380,12 @@ class OverviewModules_Modal extends React.Component {
         >
           <DialogTitle>Добавить новый тег</DialogTitle>
           <DialogContent>
-            <Grid item xs={12} sm={12} mt={2}>
+            <Grid
+              mt={2}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput 
                 label="Название тега" 
                 value={newTagName} 
@@ -367,7 +398,6 @@ class OverviewModules_Modal extends React.Component {
             <Button variant="contained" onClick={this.handleSaveNewTag}>Сохранить</Button>
           </DialogActions>
         </Dialog>
-        
       </>
     );
   }
@@ -708,14 +738,12 @@ class OverviewModules_ extends React.Component {
         <Backdrop style={{ zIndex: 999 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={err_status}
           text={err_text}
         />
-
         <OverviewModules_Modal
           open={modalDialog}
           onClose={() => this.setState({ modalDialog: false, item: null, item_name: '' })}
@@ -730,7 +758,6 @@ class OverviewModules_ extends React.Component {
           acces={acces}
           openHistoryView={this.openHistoryView}
         />
-
         <OverviewModules_Modal_View
           open={modalDialogView}
           onClose={this.closeModal}
@@ -740,7 +767,6 @@ class OverviewModules_ extends React.Component {
           item_name={item_name}
           loading={viewLoading}
         />
-
         <OverviewModules_Modal_View
           open={modalDialogHist}
           onClose={this.closeHistoryView}
@@ -750,13 +776,20 @@ class OverviewModules_ extends React.Component {
           item_name={item_name}
           loading={false}
         />
-        
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Box sx={{ bgcolor: '#F5F5F5', borderRadius: 2, p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
 
               <OverviewModules_SearchBar
@@ -839,14 +872,23 @@ class OverviewModules_ extends React.Component {
 
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button onClick={this.handleSearchClick} variant="contained" sx={{ whiteSpace: 'nowrap' }}>
               Поиск по тэгам и описанию в модулях
             </Button>
           </Grid>
 
           {category.length ? 
-            <Grid item xs={12} sm={12} sx={{ pb: 5 }}>
+            <Grid
+              sx={{ pb: 5 }}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               {category.map((item, key) => (
                 <Accordion key={key}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>

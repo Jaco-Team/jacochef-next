@@ -606,15 +606,14 @@ class Write_off_journal_modal extends React.Component {
 		const {open, method, fullScreen} = this.props;
 
 		return (
-			<>
-				<MyAlert
+            <>
+                <MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
-				<Dialog sx={{
+                <Dialog sx={{
 					'& .MuiDialog-paper': {
 						width: '80%',
 						maxHeight: 435
@@ -627,8 +626,7 @@ class Write_off_journal_modal extends React.Component {
 						<Button onClick={this.delete.bind(this)}>Ok</Button>
 					</DialogActions>
 				</Dialog>
-
-				<Dialog
+                <Dialog
 					open={open}
 					fullWidth={true}
 					maxWidth={'lg'}
@@ -644,7 +642,11 @@ class Write_off_journal_modal extends React.Component {
 
 					<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
 						<Grid container spacing={3} mb={3}>
-							<Grid item xs={12} sm={4}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 4
+                                }}>
 								{method === 'Новое списание' ?
 									<MySelect
 										is_none={false}
@@ -662,8 +664,16 @@ class Write_off_journal_modal extends React.Component {
 									/>
 								}
 							</Grid>
-							<Grid item xs={12} sm={8}/>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 8
+                                }} />
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MySelect
 									is_none={false}
 									data={this.state.types}
@@ -672,7 +682,11 @@ class Write_off_journal_modal extends React.Component {
 									label="Тип"
 								/>
 							</Grid>
-							<Grid item xs={12} sm={4}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 4
+                                }}>
 								<MyAutocomplite
 									label="Наименование"
 									multiple={false}
@@ -681,7 +695,11 @@ class Write_off_journal_modal extends React.Component {
 									func={this.changeItemData.bind(this, 'item')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyTextInput
 									type="number"
 									label="Количество"
@@ -689,7 +707,11 @@ class Write_off_journal_modal extends React.Component {
 									func={this.changeItem.bind(this, 'count')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={2}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 2
+                                }}>
 								<MyTextInput
 									label="Ед измерения"
 									value={this.state.ed_izmer}
@@ -697,13 +719,26 @@ class Write_off_journal_modal extends React.Component {
 									className="disabled_input"
 								/>
 							</Grid>
-							<Grid item xs={12} sm={9}/>
-							<Grid item xs={12} sm={3} style={{display: 'flex', justifyContent: 'flex-end'}}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 9
+                                }} />
+							<Grid
+                                style={{display: 'flex', justifyContent: 'flex-end'}}
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<Button onClick={this.addItems.bind(this)} variant="contained" color="success">
 									Добавить
 								</Button>
 							</Grid>
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<Divider/>
 							</Grid>
 						</Grid>
@@ -757,8 +792,8 @@ class Write_off_journal_modal extends React.Component {
 						</Button>
 					</DialogActions>
 				</Dialog>
-			</>
-		);
+            </>
+        );
 	}
 }
 
@@ -1305,26 +1340,23 @@ class Write_off_journal_ extends React.Component {
 
 	render() {
 		return (
-			<>
-				<Backdrop style={{zIndex: 99}} open={this.state.is_load}>
+            <>
+                <Backdrop style={{zIndex: 99}} open={this.state.is_load}>
 					<CircularProgress color="inherit"/>
 				</Backdrop>
-
-				<MyAlert
+                <MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
-				<Write_off_journal_modal_view
+                <Write_off_journal_modal_view
 					open={this.state.modalDialogView}
 					onClose={() => this.setState({modalDialogView: false, itemView: null})}
 					item={this.state.itemView}
 					fullScreen={this.state.fullScreen}
 				/>
-
-				<Write_off_journal_modal
+                <Write_off_journal_modal
 					open={this.state.modalDialog}
 					onClose={() => this.setState({modalDialog: false, modalDialogView: false, modalDialogHist: false, modalDialogViewHist: false, itemEdit: null})}
 					itemEdit={this.state.itemEdit}
@@ -1336,8 +1368,7 @@ class Write_off_journal_ extends React.Component {
 					save={this.saveItem.bind(this)}
 					deleteItem={this.deleteItem.bind(this)}
 				/>
-
-				<Write_off_journal_History
+                <Write_off_journal_History
 					open={this.state.modalDialogHist}
 					onClose={() => this.setState({modalDialogHist: false, itemHist: null})}
 					item={this.state.itemHist}
@@ -1345,7 +1376,7 @@ class Write_off_journal_ extends React.Component {
 					fullScreen={this.state.fullScreen}
 					openModalHistoryView={this.openModalHistoryView.bind(this)}
 				/>
-				{this.state.modalDialogViewHist && (
+                {this.state.modalDialogViewHist && (
 					<Write_off_journal_View
 					open={this.state.modalDialogViewHist}
 					onClose={() => this.setState({modalDialogViewHist: false, itemViewHist: null})}
@@ -1360,8 +1391,7 @@ class Write_off_journal_ extends React.Component {
           points={this.state.points}
 				/>
 				)}
-
-				{this.state.modalDialogViewHistDisabled && (
+                {this.state.modalDialogViewHistDisabled && (
 					<Write_off_journal_View_Disabled
 					open={this.state.modalDialogViewHistDisabled}
 					onClose={() => this.setState({modalDialogViewHistDisabled: false, itemViewHistDisabled: null})}
@@ -1374,23 +1404,38 @@ class Write_off_journal_ extends React.Component {
           points={this.state.points}
 				/>
 				)}
-
-				<Grid container spacing={3} className='container_first_child'>
-					<Grid item xs={12} sm={12}>
+                <Grid container spacing={3} className='container_first_child'>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<h1>{this.state.module_name}</h1>
 					</Grid>
 
 					{parseInt(this.state.acces?.create_write_off_access) == 1 && (
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<Button onClick={this.openNewItem.bind(this, 'Новое списание')} variant="contained">
 								Новое списание
 							</Button>
 						</Grid>
 					)}
 
-					<Grid item xs={12} sm={9}/>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 9
+                        }} />
 
-					<Grid item xs={12} sm={4}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
 						<MySelect
 							is_none={false}
 							label="Точка"
@@ -1400,9 +1445,17 @@ class Write_off_journal_ extends React.Component {
 						/>
 					</Grid>
 
-					<Grid item xs={12} sm={8}/>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 8
+                        }} />
 
-					<Grid item xs={12} sm={2}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 2
+                        }}>
 						<MyDatePickerNew
 							label="Дата от"
 							value={this.state.date_start}
@@ -1410,7 +1463,11 @@ class Write_off_journal_ extends React.Component {
 						/>
 					</Grid>
 
-					<Grid item xs={12} sm={2}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 2
+                        }}>
 						<MyDatePickerNew
 							label="Дата до"
 							value={this.state.date_end}
@@ -1418,7 +1475,11 @@ class Write_off_journal_ extends React.Component {
 						/>
 					</Grid>
 
-					<Grid item xs={12} sm={6}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 6
+                        }}>
 						<MyAutocomplite
 							label="Поиск позиции списания"
 							multiple={true}
@@ -1428,13 +1489,21 @@ class Write_off_journal_ extends React.Component {
 						/>
 					</Grid>
 
-					<Grid item xs={12} sm={2}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 2
+                        }}>
 						<Button onClick={this.getPointData.bind(this)} variant="contained">
 							Посмотреть
 						</Button>
 					</Grid>
 
-					<Grid item xs={12} sm={4}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
 						<Accordion>
 							<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
 								<Typography sx={{fontWeight: 'bold'}}>Количество по материалам</Typography>
@@ -1469,7 +1538,11 @@ class Write_off_journal_ extends React.Component {
 						</Accordion>
 					</Grid>
 
-					<Grid item xs={12} sm={4}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
 						<Accordion>
 							<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
 								<Typography sx={{fontWeight: 'bold'}}>Количество по блюдам</Typography>
@@ -1504,7 +1577,11 @@ class Write_off_journal_ extends React.Component {
 						</Accordion>
 					</Grid>
 
-					<Grid item xs={12} sm={4}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
 						<Accordion>
 							<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
 								<Typography sx={{fontWeight: 'bold'}}>Количество по создателям</Typography>
@@ -1533,7 +1610,12 @@ class Write_off_journal_ extends React.Component {
 						</Accordion>
 					</Grid>
 
-					<Grid item xs={12} sm={12} mb={5}>
+					<Grid
+                        mb={5}
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<TableContainer
 							component={Paper}
 							sx={{
@@ -1570,8 +1652,8 @@ class Write_off_journal_ extends React.Component {
 						</TableContainer>
 					</Grid>
 				</Grid>
-			</>
-		);
+            </>
+        );
 	}
 }
 

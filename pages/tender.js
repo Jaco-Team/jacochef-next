@@ -405,25 +405,29 @@ class Tender_ extends React.Component {
         <Backdrop open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         {/* <TestAccess access={this.state.access} setAccess={(access) => this.setState({access})} /> */}
-
         <MyAlert
           isOpen={this.state.alertOpened}
           onClose={() => this.setState({alertOpened: false, alertText: ''})}
           status={this.state.alertStatus}
           text={this.state.alertText}
         />
-
         <Grid container spacing={3} mb={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid> 
         </Grid>
-
         <Grid container spacing={3} mb={3} mt={1}>
 
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <MySelect
               data={this.state.cities}
               value={this.state.city}
@@ -431,7 +435,11 @@ class Tender_ extends React.Component {
               label="Город"
             />
           </Grid>
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <MyAutocomplite
               label="Тендер"
               multiple={false}
@@ -442,7 +450,11 @@ class Tender_ extends React.Component {
             />
           </Grid>
           
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyAutocomplite
               label="Поставщик"
               multiple={true}
@@ -451,7 +463,11 @@ class Tender_ extends React.Component {
               func={this.changeVendor.bind(this)}
             />
           </Grid>
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <MyAutocomplite
               label="Категория"
               disableCloseOnSelect={false}
@@ -463,7 +479,11 @@ class Tender_ extends React.Component {
           </Grid>
 
 
-          <Grid item xs={12} sm={1}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 1
+            }}>
             <Button
               variant="contained"
               style={{ whiteSpace: 'nowrap' }}
@@ -473,7 +493,11 @@ class Tender_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={1}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 1
+            }}>
             <Button
               style={{
                 whiteSpace: 'nowrap',
@@ -486,7 +510,11 @@ class Tender_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={1}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 1
+            }}>
             {this.state.city && this.canAccess('export') && (
               <Button
                 style={{
@@ -502,10 +530,13 @@ class Tender_ extends React.Component {
             )}
           </Grid>  
         </Grid>
-
         {!this.state.cats.length ? null : (
           <Grid container spacing={3} className='tender'>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TableContainer sx={{ maxHeight: { xs: 'none', sm: 1000 } }}>
                 <Table stickyHeader size="small">
                   <TableHead style={{ position: 'sticky', top: 0, zIndex: 7 }}>

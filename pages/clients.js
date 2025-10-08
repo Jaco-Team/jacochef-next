@@ -35,7 +35,7 @@ import MyAlert from '@/components/shared/MyAlert';
 
 const DialogUser = ({open, onClose, user, openOrder}) => {
 	return (
-		<Dialog
+        <Dialog
 			open={open}
 			onClose={onClose}
 			fullWidth={true}
@@ -44,53 +44,93 @@ const DialogUser = ({open, onClose, user, openOrder}) => {
 			aria-labelledby="alert-dialog-title"
 			aria-describedby="alert-dialog-description"
 		>
-
-			<DialogTitle className="button">
+            <DialogTitle className="button">
 				<Typography style={{fontWeight: 'bold', alignSelf: 'center'}}>Информация о клиенте</Typography>
 				<IconButton onClick={onClose} style={{cursor: 'pointer'}}>
 					<CloseIcon/>
 				</IconButton>
 			</DialogTitle>
-
-			<DialogContent style={{paddingTop: 10}}>
+            <DialogContent style={{paddingTop: 10}}>
 
 				<Grid container spacing={3}>
 
-					<Grid item xs={12} sm={4}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
 
 						<Grid container>
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>Телефон: </span>
 								<span>{user?.info?.login}</span>
 							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
+							<Grid
+                                style={{paddingTop: 12}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>Имя: </span>
 								<span>{user?.info?.name}</span>
 							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
+							<Grid
+                                style={{paddingTop: 12}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>Регистрация: </span>
 								<span>{user?.info?.date_reg}</span>
 							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
+							<Grid
+                                style={{paddingTop: 12}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>День рождения: </span>
 								<span>{user?.info?.date_bir}</span>
 							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
+							<Grid
+                                style={{paddingTop: 12}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>Заказов: </span>
 								<span>{user?.info?.all_count_order} / {user?.info?.summ} р.</span>
 							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
+							<Grid
+                                style={{paddingTop: 12}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>Доставок: </span>
 								<span>{user?.info?.count_dev} / {user?.info?.summ_dev} р.</span>
 							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
+							<Grid
+                                style={{paddingTop: 12}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>Самовывозов: </span>
 								<span>{user?.info?.count_pic} / {user?.info?.summ_pic} р.</span>
 							</Grid>
 						</Grid>
 					</Grid>
 
-					<Grid item xs={12} sm={8}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 8
+                        }}>
 						<Accordion style={{width: '100%'}}>
 							<AccordionSummary
 								expandIcon={<ExpandMoreIcon/>}
@@ -118,8 +158,8 @@ const DialogUser = ({open, onClose, user, openOrder}) => {
 				</Grid>
 
 			</DialogContent>
-		</Dialog>
-	);
+        </Dialog>
+    );
 }
 
 const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_forms, getData, openOrder}) => {
@@ -383,7 +423,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 	const hasFormFeed = order_items?.some(item => item.form_feed.length);
 	const [openAccept, setOpenAccept] = useState(false);
 	return (
-		<Dialog
+        <Dialog
 			open={open}
 			onClose={onClose}
 			aria-labelledby="alert-dialog-title"
@@ -392,7 +432,7 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 			maxWidth={'md'}
 			fullScreen={false}
 		>
-			<DialogTitle className="button">
+            <DialogTitle className="button">
 				<Typography style={{
 					fontWeight: 'bold',
 					alignSelf: 'center'
@@ -401,33 +441,47 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 					<CloseIcon/>
 				</IconButton>
 			</DialogTitle>
-			{openAccept && <ModalAccept open={openAccept} onClose={() => setOpenAccept(false)} save={() => {saveFeedback(); setOpenAccept(false)}}/>}
-
-			<DialogContent>
+            {openAccept && <ModalAccept open={openAccept} onClose={() => setOpenAccept(false)} save={() => {saveFeedback(); setOpenAccept(false)}}/>}
+            <DialogContent>
 
 				<Grid container spacing={0}>
-					<Grid item xs={12}>
+					<Grid
+                        size={{
+                            xs: 12
+                        }}>
 						<span>{order?.type_order}: {order?.type_order_addr_new}</span>
 					</Grid>
 
 					{parseInt(order?.type_order_) == 1 ?
 						parseInt(order?.fake_dom) == 0 ?
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<b style={{color: 'red', fontWeight: 900}}>Домофон не работает</b>
 							</Grid>
 							:
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<b style={{color: 'green', fontWeight: 900}}>Домофон работает</b>
 							</Grid>
 						:
 						null
 					}
-					<Grid item xs={12}>
+					<Grid
+                        size={{
+                            xs: 12
+                        }}>
 						<span>{order?.time_order_name}: {order?.time_order}</span>
 					</Grid>
 
 					{order?.number?.length > 1 ?
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<b>Телефон: </b>
 							<span>{order?.number}</span>
 						</Grid>
@@ -436,53 +490,83 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 					}
 
 					{order?.delete_reason?.length > 0 ?
-						<Grid item xs={12}><span style={{color: 'red'}}>Удален: {order?.date_time_delete}</span></Grid> : null}
+						<Grid
+                            size={{
+                                xs: 12
+                            }}><span style={{color: 'red'}}>Удален: {order?.date_time_delete}</span></Grid> : null}
 					{order?.delete_reason?.length > 0 ?
-						<Grid item xs={12}><span style={{color: 'red'}}>{order?.delete_reason}</span></Grid> : null}
+						<Grid
+                            size={{
+                                xs: 12
+                            }}><span style={{color: 'red'}}>{order?.delete_reason}</span></Grid> : null}
 
 					{parseInt(order?.is_preorder) == 1 ? null :
-						<Grid item xs={12}><span>{'Обещали: ' + order?.time_to_client + ' / '}{order?.text_time}{order?.time}</span></Grid>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}><span>{'Обещали: ' + order?.time_to_client + ' / '}{order?.text_time}{order?.time}</span></Grid>
 					}
 
 					{order?.promo_name == null || order?.promo_name?.length == 0 ? null :
 						<>
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<b>Промокод: </b>
 								<span>{order?.promo_name}</span>
 							</Grid>
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<span className="noSpace">{order?.promo_text}</span>
 							</Grid>
 						</>
 					}
 
 					{order?.comment == null || order?.comment.length == 0 ? null :
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<b>Комментарий: </b>
 							<span>{order?.comment}</span>
 						</Grid>
 					}
 
 					{order?.sdacha == null || parseInt(order?.sdacha) == 0 ? null :
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<b>Сдача: </b>
 							<span>{order?.sdacha}</span>
 						</Grid>
 					}
 
-					<Grid item xs={12}>
+					<Grid
+                        size={{
+                            xs: 12
+                        }}>
 						<b>Сумма заказа: </b>
 						<span>{order?.sum_order} р</span>
 					</Grid>
 
 					{order?.check_pos_drive == null || !order?.check_pos_drive ? null :
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<b>Довоз оформлен: </b>
 							<span>{order?.check_pos_drive?.comment}</span>
 						</Grid>
 					}
 
-					<Grid item xs={12}>
+					<Grid
+                        size={{
+                            xs: 12
+                        }}>
 						<Table size={'small'} style={{marginTop: 15}}>
 							<TableBody>
 								{order_items ? order_items.map((item, key) =>
@@ -594,7 +678,11 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 					</Grid>
 
 					{!err_order ? null :
-						<Grid item xs={12} mt={3}>
+						<Grid
+                            mt={3}
+                            size={{
+                                xs: 12
+                            }}>
 							<Accordion>
 								<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
 									<Typography style={{fontWeight: 'bold'}}>Ошибка</Typography>
@@ -623,8 +711,8 @@ const ModalOrder = ({open, onClose, order, order_items, err_order, feedback_form
 
 				</Grid>
 			</DialogContent>
-		</Dialog>
-	);
+        </Dialog>
+    );
 }
 
 function ClientPage() {
@@ -754,33 +842,44 @@ function ClientPage() {
 	};
 
 	return (
-		<>
-			<Backdrop style={{zIndex: 99}} open={isLoad}>
+        <>
+            <Backdrop style={{zIndex: 99}} open={isLoad}>
 				<CircularProgress color="inherit"/>
 			</Backdrop>
-			<MyAlert
+            <MyAlert
 				isOpen={openAlert}
 				onClose={() => setOpenAlert(false)}
 				status={errStatus}
 				text={errText}
 			/>
-			<DialogUser open={openModalUser} onClose={() => setOpenModalUser(false)} user={user} openOrder={openOrder}/>
-			<ModalOrder getData={getData} openOrder={openOrder} open={openModalOrder} onClose={() => setOpenModalOrder(false)} order={order.order} order_items={order.order_items} err_order={order.err_order} feedback_forms={order.feedback_forms}/>
-			<Grid item container spacing={3} justifyContent="center" sx={{
-				flexDirection: {
-					sm: 'row',
-					xs: 'column-reverse'
-				}
-			}}
-						style={{marginTop: '64px', marginBottom: '24px'}}
-			>
+            <DialogUser open={openModalUser} onClose={() => setOpenModalUser(false)} user={user} openOrder={openOrder}/>
+            <ModalOrder getData={getData} openOrder={openOrder} open={openModalOrder} onClose={() => setOpenModalOrder(false)} order={order.order} order_items={order.order_items} err_order={order.err_order} feedback_forms={order.feedback_forms}/>
+            <Grid
+                container
+                spacing={3}
+                justifyContent="center"
+                sx={{
+                    flexDirection: {
+                        sm: 'row',
+                        xs: 'column-reverse'
+                    }
+                }}
+                style={{marginTop: '64px', marginBottom: '24px'}}>
 
-				<Grid item xs={12} mb={3}>
+				<Grid
+                    mb={3}
+                    size={{
+                        xs: 12
+                    }}>
 					<h1>{module.name}</h1>
 				</Grid>
 
 				<Grid container spacing={2} justifyContent="center" mb={3}>
-					<Grid item xs={12} sm={9}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 9
+                        }}>
 						<Button
 							variant="contained"
 							style={{marginLeft: '20px', whiteSpace: 'nowrap'}}
@@ -812,7 +911,12 @@ function ClientPage() {
 					</Grid>
 				</Grid>
 
-				<Grid item xs={12} sm={3} sx={{order: {sm: 0, xs: 1}}}>
+				<Grid
+                    sx={{order: {sm: 0, xs: 1}}}
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyDatePickerNew
 						label="Делал заказ от"
 						value={formData.date_start_true}
@@ -820,7 +924,12 @@ function ClientPage() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3} sx={{order: {sm: 1, xs: 0}}}>
+				<Grid
+                    sx={{order: {sm: 1, xs: 0}}}
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyDatePickerNew
 						label="Делал заказ до"
 						value={formData.date_end_true}
@@ -828,7 +937,14 @@ function ClientPage() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3} sx={{order: {sm: 2, xs: 2}}} display="flex" flexDirection="row">
+				<Grid
+                    sx={{order: {sm: 2, xs: 2}}}
+                    display="flex"
+                    flexDirection="row"
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 
 					<Grid>
 						<Button variant="contained" style={{whiteSpace: 'nowrap'}} onClick={getUsers}>
@@ -849,9 +965,12 @@ function ClientPage() {
 
 				</Grid>
 			</Grid>
-
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyDatePickerNew
 						label="Не заказывал от"
 						value={formData.date_start_false}
@@ -860,7 +979,11 @@ function ClientPage() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyDatePickerNew
 						label="Не заказывал до"
 						disabled={formData.param.id === 'new'}
@@ -869,7 +992,11 @@ function ClientPage() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyCheckBox
 						label="Была оформлена ошибка на заказ"
 						value={formData.is_show_claim}
@@ -877,9 +1004,12 @@ function ClientPage() {
 					/>
 				</Grid>
 			</Grid>
-
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="Количество заказов от"
 						value={formData.count_orders_min}
@@ -887,7 +1017,11 @@ function ClientPage() {
 						func={(e) => handleChange(e, 'count_orders_min')}
 					/>
 				</Grid>
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="Количество заказов до"
 						value={formData.count_orders_max}
@@ -896,7 +1030,11 @@ function ClientPage() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyCheckBox
 						label="Была оформлена ошибка на последний заказ"
 						value={formData.is_show_claim_last}
@@ -904,9 +1042,12 @@ function ClientPage() {
 					/>
 				</Grid>
 			</Grid>
-
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="От суммы"
 						value={formData.min_summ}
@@ -915,7 +1056,11 @@ function ClientPage() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="До суммы"
 						value={formData.max_summ}
@@ -924,7 +1069,11 @@ function ClientPage() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyCheckBox
 						label="Подписка на рекламную рассылку"
 						value={formData.is_show_marketing}
@@ -932,8 +1081,12 @@ function ClientPage() {
 					/>
 				</Grid>
 			</Grid>
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyAutocomplite
 						label="Точки"
 						multiple={true}
@@ -943,7 +1096,11 @@ function ClientPage() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyAutocomplite
 						label="Позиции в заказе"
 						multiple={true}
@@ -953,7 +1110,11 @@ function ClientPage() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyAutocomplite
 						label="Пользователи"
 						data={typeParam}
@@ -964,7 +1125,11 @@ function ClientPage() {
 				{!users.length ? null : (
 					<>
 						<Grid container justifyContent="center">
-							<Grid item xs={12} sm={9}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 9
+                                }}>
 								<TableContainer>
 									<Table>
 										<TableHead>
@@ -1016,14 +1181,22 @@ function ClientPage() {
 					</>
 				)}
 			</Grid>
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={1}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 1
+                    }}>
 				</Grid>
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 				</Grid>
 			</Grid>
-		</>
-	);
+        </>
+    );
 }
 
 export default function FeedBack() {

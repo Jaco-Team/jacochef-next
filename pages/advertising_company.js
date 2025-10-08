@@ -276,7 +276,6 @@ class AdvertisingCompany_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
         { !this.state.showItem ? null :
           <Dialog
             open={this.state.modalDialog}
@@ -287,30 +286,58 @@ class AdvertisingCompany_ extends React.Component {
               
               <Grid container spacing={3}>
                 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                     <MyTextInput value={this.state.name} func={(event) => { this.setState({ name: event.target.value }) }} label='Название акции' />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDateRange.bind(this, 'date_start') } />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyDatePickerNew label="Дата от" value={ this.state.date_end } func={ this.changeDateRange.bind(this, 'date_end') } />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                     <MyAutocomplite data={this.state.points} value={this.state.choosePoint} func={(event, data) => { this.setState({ choosePoint: data }) }} multiple={true} label='Точка' />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                      <MyTextInput value={this.state.description} func={(event) => { this.setState({ description: event.target.value }) }} label='Описание' />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                      <MyTextInput value={this.state.promo} func={(event) => { this.setState({ promo: event.target.value }) }} label='Промокод' />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                     <MyCheckBox label='Показать акцию' value={this.state.is_active == 1 ? true : false} func={this.changeChekBox.bind(this, 'is_active')} />
                 </Grid>
                  
@@ -322,7 +349,6 @@ class AdvertisingCompany_ extends React.Component {
             </DialogActions>
           </Dialog>
         }
-
         <Dialog
           open={this.state.modalDialogNew}
           onClose={() => { this.setState({ modalDialogNew: false, description: '', name: '', promo: '', choosePoint: [], date_start: formatDate(new Date()), date_end: formatDate(new Date()) }) } }
@@ -332,30 +358,58 @@ class AdvertisingCompany_ extends React.Component {
             
             <Grid container spacing={3}>
               
-               <Grid item xs={12} sm={12}>
+               <Grid
+                 size={{
+                   xs: 12,
+                   sm: 12
+                 }}>
                   <MyTextInput value={this.state.name} func={(event) => { this.setState({ name: event.target.value }) } } label='Название компании' />
                </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDateRange.bind(this, 'date_start') } />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyDatePickerNew label="Дата от" value={ this.state.date_end } func={ this.changeDateRange.bind(this, 'date_end') } />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                     <MyAutocomplite data={this.state.points} value={this.state.choosePoint} func={(event, data) => { this.setState({ choosePoint: data }) }} multiple={true} label='Точка' />
                 </Grid>
                
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                      <MyTextInput value={this.state.description} func={(event) => { this.setState({ description: event.target.value }) }} label='Описание'  />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                     <MyTextInput value={this.state.promo} func={(event) => { this.setState({ promo: event.target.value }) }} label='Промокод' />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                      <MyCheckBox label='Показать акцию' value={this.state.is_active == 1 ? true : false} func={this.changeChekBox.bind(this, 'is_active')} />
                 </Grid>
             </Grid>
@@ -365,22 +419,41 @@ class AdvertisingCompany_ extends React.Component {
             <Button color="primary" onClick={this.saveNew.bind(this)}>Сохранить</Button>
           </DialogActions>
         </Dialog>
-        
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button variant="contained" color="primary" onClick={ () => { this.setState({ modalDialogNew: true }) } }>Добавить акцию</Button>
           </Grid>
 
-           <Grid item xs={12} sm={6}>
+           <Grid
+             size={{
+               xs: 12,
+               sm: 6
+             }}>
                <MySelect data={this.state.points_filter} value={this.state.point_id} func={this.changePoint.bind(this)} label='Точка' />
             </Grid>
 
-                <Grid item xs={12} sm={12}>
-                    <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 12
+                      }}>
                         <h2 style={{ textAlign: 'center' }}>Актвные</h2>
                     </Grid>
                     
@@ -416,12 +489,24 @@ class AdvertisingCompany_ extends React.Component {
                     </TableContainer>
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                     <Grid container>
-                        <Grid item xs={12} sm={12}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 12
+                          }}>
                           <h2 style={{ textAlign: 'center' }}>Не Актвные</h2>
                         </Grid>
-                        <Grid item xs={12} sm={12}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 12
+                          }}>
                           <TableContainer component={Paper} style={{ marginTop: 10 }}>
                             <Table>
                               <TableHead>
@@ -457,7 +542,7 @@ class AdvertisingCompany_ extends React.Component {
                 </Grid>
         </Grid>
       </>
-    )
+    );
   }
 }
 

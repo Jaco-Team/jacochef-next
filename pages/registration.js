@@ -182,16 +182,21 @@ export default function Registration() {
       <Backdrop style={{ zIndex: 99 }} open={isLoad}>
         <CircularProgress color="inherit" />
       </Backdrop>
-
       <MyAlert
         isOpen={openAlert}
         onClose={() => setOpenAlert(false)}
         status={false}
         text={errText}
       />
-
       <Grid container spacing={3} direction="row" justifyContent="center" alignItems="center">
-        <Grid item xs={12} sm={6} md={6} lg={4} xl={3}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 6,
+            lg: 4,
+            xl: 3
+          }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Avatar
               style={{
@@ -350,7 +355,7 @@ export default function Registration() {
               </Button>
 
               <Grid container style={{ marginTop: 10 }}>
-                <Grid item>
+                <Grid>
                   <Link href="/auth" style={{ color: '#c03' }}>
                     Вернуться к авторизации
                   </Link>

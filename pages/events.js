@@ -357,14 +357,12 @@ class Events_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false, del_id: null, text_delete: '' })}>
           <DialogTitle>Подтвердите действие</DialogTitle>
           <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
@@ -375,7 +373,6 @@ class Events_ extends React.Component {
             <Button onClick={this.delEvent.bind(this)}>Удалить</Button>
           </DialogActions>
         </Dialog>
-        
         <Dialog
           open={this.state.modalDialog}
           onClose={ () => { this.setState({ modalDialog: false }) } }
@@ -394,31 +391,55 @@ class Events_ extends React.Component {
               <Grid container spacing={3}>
                 
                 {this.state.chooseDayHoly.length == 0 ? null :
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <Typography component="span">{this.state.chooseDayHoly}</Typography>
                   </Grid>
                 }
                 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MySelect data={this.state.events} value={this.state.chooseEvent} func={ this.changeEvent.bind(this) } label='Событие' is_none={false} />
                 </Grid>
                 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MySelect data={this.state.points} value={ this.state.eventPoint1 } func={ this.changePoint1.bind(this) } label='Точка' is_none={false} />
                 </Grid>
                 
                 { parseInt(this.state.chooseEvent) !== 2 ? null :
                   <>
-                    <Grid item xs={6} sm={6}>
+                    <Grid
+                      size={{
+                        xs: 6,
+                        sm: 6
+                      }}>
                       <MyTimePicker value={ this.state.timeStart2 } func={ this.changeTimeStart2.bind(this) } label='Время начала работы' />
                     </Grid>
-                    <Grid item xs={6} sm={6}>
+                    <Grid
+                      size={{
+                        xs: 6,
+                        sm: 6
+                      }}>
                       <MyTimePicker value={ this.state.timeEnd2 } func={ this.changeTimeEnd2.bind(this) } label='Время окончания работы' />
                     </Grid>
                   </>
                 }
                 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyCheckBox value={ this.state.everyYear1 } func={ this.changeEveryYear1.bind(this) } label='Каждый год' />
                 </Grid>
                 
@@ -463,22 +484,41 @@ class Events_ extends React.Component {
             <Button onClick={ this.save.bind(this) } color="primary">Сохранить</Button>
           </DialogActions>
         </Dialog>
-        
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
           
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect  data={this.state.points} value={this.state.point} func={ this.changePoint.bind(this) } label='Точка' is_none={false} />
           </Grid>
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect  data={this.state.mounths} value={this.state.mounth} func={ this.changeMounth.bind(this) } label='Месяц' is_none={false} />
           </Grid>
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect  data={this.state.years} value={this.state.year} func={ this.changeYear.bind(this) } label='Год' is_none={false} />
           </Grid>
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button variant="contained" onClick={this.updateData.bind(this)}>Обновить данные</Button>
           </Grid>
         
@@ -486,7 +526,12 @@ class Events_ extends React.Component {
             
             { this.state.calendar.map( (item, key) =>
             
-              <Grid item sm={6} key={key} style={{ padding: 20 }} >
+              <Grid
+                key={key}
+                style={{ padding: 20 }}
+                size={{
+                  sm: 6
+                }}>
                 <h1 style={{ textAlign: 'center' }}>{ item[0][0].mounth }</h1>
                 <TableContainer component={Paper}>
                   <Table aria-label="a dense table" style={{ overflow: 'hidden' }}>
@@ -538,7 +583,7 @@ class Events_ extends React.Component {
           </Grid>
         </Grid>
       </>
-    )
+    );
   }
 }
 

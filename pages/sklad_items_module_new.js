@@ -75,14 +75,14 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 
 	render() {
 		return (
-			<Dialog
+            <Dialog
 				open={this.props.open}
 				fullWidth={true}
 				maxWidth={'xl'}
 				onClose={this.onClose.bind(this)}
 				fullScreen={this.props.fullScreen}
 			>
-				<DialogTitle className="button">
+                <DialogTitle className="button">
 					<Typography style={{alignSelf: 'center'}}>
 						Изменения в{this.props.itemName ? `: ${this.props.itemName}` : ''}
 					</Typography>
@@ -90,10 +90,13 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 						<CloseIcon/>
 					</IconButton>
 				</DialogTitle>
-
-				<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
+                <DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
 					<Grid container spacing={3}>
-						<Grid item xs={12} sm={3.5}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3.5
+                            }}>
 							<MyTextInput
 								label="Название товара"
 								value={this.state.itemView ? this.state.itemView.name?.color ? this.state.itemView.name.key : this.state.itemView.name : ''}
@@ -101,7 +104,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.name?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3.5}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3.5
+                            }}>
 							<MyTextInput
 								label="Категория"
 								value={this.state.itemView ? this.state.itemView.cat_id?.color ? this.state.itemView.cat_id.key : this.state.itemView.cat_id : ''}
@@ -109,7 +116,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.cat_id?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={1.5}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 1.5
+                            }}>
 							<MyTextInput
 								label="Ед измер"
 								value={this.state.itemView ? this.state.itemView.ed_izmer_id?.color ? this.state.itemView.ed_izmer_id.key : this.state.itemView.ed_izmer_id : ''}
@@ -117,7 +128,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.ed_izmer_id?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3.5}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3.5
+                            }}>
 							<MyTextInput
 								label="Максимальное количество заказов в месяц (0 - без ограничений)"
 								value={this.state.itemView ? this.state.itemView.max_count_in_m?.color ? this.state.itemView.max_count_in_m.key : this.state.itemView.max_count_in_m : ''}
@@ -125,7 +140,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.max_count_in_m?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3.5}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3.5
+                            }}>
 							<MyTextInput
 								label="Название товара для поставщика"
 								value={this.state.itemView ? this.state.itemView.name_for_vendor?.color ? this.state.itemView.name_for_vendor.key : this.state.itemView.name_for_vendor : ''}
@@ -133,7 +152,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.name_for_vendor?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3.5}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3.5
+                            }}>
 							<MyTextInput
 								label="Количество в упаковке"
 								value={this.state.itemView ? this.state.itemView.pq?.color ? this.state.itemView.pq.key : this.state.itemView.pq : ''}
@@ -141,7 +164,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.pq?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={1.5}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 1.5
+                            }}>
 							<MyTextInput
 								label="% заявки"
 								value={this.state.itemView ? this.state.itemView.percent?.color ? this.state.itemView.percent.key : this.state.itemView.percent : ''}
@@ -149,7 +176,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.percent?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3.5}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3.5
+                            }}>
 							<MyTextInput
 								label="Разрешенный % повышения ценника"
 								value={this.state.itemView ? this.state.itemView.vend_percent?.color ? this.state.itemView.vend_percent.key : this.state.itemView.vend_percent : ''}
@@ -157,7 +188,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.vend_percent?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3.5}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3.5
+                            }}>
 							<MyTextInput
 								label="Код для 1с"
 								value={this.state.itemView ? this.state.itemView.art?.color ? this.state.itemView.art.key : this.state.itemView.art : ''}
@@ -165,7 +200,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.art?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3.5}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3.5
+                            }}>
 							<MyTextInput
 								label="Минимальный остаток"
 								value={this.state.itemView ? this.state.itemView.min_count?.color ? this.state.itemView.min_count.key : this.state.itemView.min_count : ''}
@@ -174,7 +213,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 							/>
 						</Grid>
 
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<MyTextInput
 								label="Состав"
 								value={this.state.itemView ? this.state.itemView.pf_id?.color ? this.state.itemView.pf_id.key : this.state.itemView.pf_id : ''}
@@ -183,7 +226,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 							/>
 						</Grid>
 
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<MyTextInput
 								label="Аллергены"
 								value={this.state.itemView ? this.state.itemView.my_allergens?.color ? this.state.itemView.my_allergens.key : this.state.itemView.my_allergens : ''}
@@ -192,7 +239,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 							/>
 						</Grid>
 
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<MyTextInput
 								label="Возможные аллергены"
 								value={this.state.itemView ? this.state.itemView.my_allergens_other?.color ? this.state.itemView.my_allergens_other.key : this.state.itemView.my_allergens_other : ''}
@@ -201,12 +252,20 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 							/>
 						</Grid>
 
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<h4>Места хранения</h4>
 							<Divider/>
 						</Grid>
 
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<MyTextInput
 								label="Места хранения"
 								value={this.state.itemView ? this.state.itemView.this_storages?.color ? this.state.itemView.this_storages.key : this.state.itemView.this_storages : ''}
@@ -215,7 +274,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 							/>
 						</Grid>
 
-						<Grid item xs={12} sm={4}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 4
+                            }}>
 							<MyTextInput
 								label="Активность"
 								value={this.state.itemView ? this.state.itemView.is_show?.color ? this.state.itemView.is_show.key : this.state.itemView.is_show : ''}
@@ -224,7 +287,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 							/>
 						</Grid>
 
-						<Grid item xs={12} sm={4}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 4
+                            }}>
 							<MyTextInput
 								label="Заявка"
 								value={this.state.itemView ? this.state.itemView.show_in_order?.color ? this.state.itemView.show_in_order.key : this.state.itemView.show_in_order : ''}
@@ -233,7 +300,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 							/>
 						</Grid>
 
-						<Grid item xs={12} sm={4}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 4
+                            }}>
 							<MyTextInput
 								label="Ревизия"
 								value={this.state.itemView ? this.state.itemView.show_in_rev?.color ? this.state.itemView.show_in_rev.key : this.state.itemView.show_in_rev : ''}
@@ -242,12 +313,20 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 							/>
 						</Grid>
 
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<h4>Разгрузка</h4>
 							<Divider/>
 						</Grid>
 
-						<Grid item xs={12} sm={3.5}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3.5
+                            }}>
 							<MyTextInput
 								label="Должность в кафе"
 								value={this.state.itemView ? this.state.itemView.app_id?.color ? this.state.itemView.app_id.key : this.state.itemView.app_id : ''}
@@ -255,7 +334,11 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.app_id?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3.5}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3.5
+                            }}>
 							<MyTextInput
 								label="Время ММ:SS (15:20)"
 								value={this.state.itemView ? this.state.itemView.time_min_other?.color ? this.state.itemView.time_min_other.key : this.state.itemView.time_min_other : ''}
@@ -266,13 +349,13 @@ class SkladItemsModule_Modal_History_View extends React.Component {
 
 					</Grid>
 				</DialogContent>
-				<DialogActions>
+                <DialogActions>
 					<Button onClick={this.onClose.bind(this)} variant="contained">
 						Закрыть
 					</Button>
 				</DialogActions>
-			</Dialog>
-		);
+            </Dialog>
+        );
 	}
 }
 
@@ -452,15 +535,14 @@ class SkladItemsModule_Modal extends React.Component {
 
 	render() {
 		return (
-			<>
-				<MyAlert
+            <>
+                <MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
-				<Dialog
+                <Dialog
 					open={this.props.open}
 					fullWidth={true}
 					maxWidth={'xl'}
@@ -479,7 +561,11 @@ class SkladItemsModule_Modal extends React.Component {
 
 					<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
 						<Grid container spacing={3}>
-							<Grid item xs={12} sm={3.5}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3.5
+                                }}>
 								<MyTextInput
 									label="Название товара"
 									value={this.state.itemEdit ? this.state.itemEdit.item.name : ''}
@@ -487,7 +573,11 @@ class SkladItemsModule_Modal extends React.Component {
 									func={this.changeItem.bind(this, 'name')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3.5}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3.5
+                                }}>
 								<MyAutocomplite
 									label="Категория"
 									multiple={false}
@@ -501,7 +591,11 @@ class SkladItemsModule_Modal extends React.Component {
 									}}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={1.5}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 1.5
+                                }}>
 								<MySelect
 									data={this.state.itemEdit ? this.state.itemEdit.ed_izmer : []}
 									value={this.state.itemEdit ? this.state.itemEdit.item.ed_izmer_id === '0' ? '' : this.state.itemEdit.item.ed_izmer_id : ''}
@@ -511,7 +605,11 @@ class SkladItemsModule_Modal extends React.Component {
 									is_none={false}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3.5}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3.5
+                                }}>
 								<MyTextInput
 									label="Максимальное количество заказов в месяц (0 - без ограничений)"
 									value={this.state.itemEdit ? this.state.itemEdit.item.max_count_in_m : ''}
@@ -519,7 +617,11 @@ class SkladItemsModule_Modal extends React.Component {
 									func={this.changeItem.bind(this, 'max_count_in_m')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3.5}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3.5
+                                }}>
 								<MyTextInput
 									label="Маркетинговое название"
 									value={this.state.itemEdit ? this.state.itemEdit.item.mark_name : ''}
@@ -527,7 +629,11 @@ class SkladItemsModule_Modal extends React.Component {
 									func={this.changeItem.bind(this, 'mark_name')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3.5}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3.5
+                                }}>
 								<MyTextInput
 									label="Название товара для поставщика"
 									value={this.state.itemEdit ? this.state.itemEdit.item.name_for_vendor : ''}
@@ -535,7 +641,11 @@ class SkladItemsModule_Modal extends React.Component {
 									func={this.changeItem.bind(this, 'name_for_vendor')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3.5}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3.5
+                                }}>
 								<MyTextInput
 									label="Количество в упаковке"
 									value={this.state.itemEdit ? this.state.itemEdit.item.pq : ''}
@@ -543,7 +653,11 @@ class SkladItemsModule_Modal extends React.Component {
 									func={this.changeItem.bind(this, 'pq')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={1.5}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 1.5
+                                }}>
 								<MyTextInput
 									label="% заявки"
 									value={this.state.itemEdit ? this.state.itemEdit.item.percent : ''}
@@ -551,7 +665,11 @@ class SkladItemsModule_Modal extends React.Component {
 									func={this.changeItem.bind(this, 'percent')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3.5}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3.5
+                                }}>
 								<MyTextInput
 									label="Разрешенный % повышения ценника"
 									value={this.state.itemEdit ? this.state.itemEdit.item.vend_percent : ''}
@@ -559,7 +677,11 @@ class SkladItemsModule_Modal extends React.Component {
 									func={this.changeItem.bind(this, 'vend_percent')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3.5}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3.5
+                                }}>
 								<MyTextInput
 									label="Код для 1с"
 									value={this.state.itemEdit ? this.state.itemEdit.item.art : ''}
@@ -567,7 +689,11 @@ class SkladItemsModule_Modal extends React.Component {
 									func={this.changeItem.bind(this, 'art')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3.5}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3.5
+                                }}>
 								<MyTextInput
 									label="Минимальный остаток"
 									value={this.state.itemEdit ? this.state.itemEdit.item.min_count : ''}
@@ -576,7 +702,11 @@ class SkladItemsModule_Modal extends React.Component {
 								/>
 							</Grid>
 
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<MyAutocomplite
 									label="Состав"
 									multiple={false}
@@ -591,7 +721,11 @@ class SkladItemsModule_Modal extends React.Component {
 								/>
 							</Grid>
 
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<MyAutocomplite
 									label="Аллергены"
 									multiple={true}
@@ -606,7 +740,11 @@ class SkladItemsModule_Modal extends React.Component {
 								/>
 							</Grid>
 
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<MyAutocomplite
 									label="Возможные аллергены"
 									multiple={true}
@@ -621,7 +759,11 @@ class SkladItemsModule_Modal extends React.Component {
 								/>
 							</Grid>
 							<Grid container spacing={2} sx={{marginTop: 2}}>
-								<Grid item xs={12} md={6}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        md: 6
+                                    }}>
 									<Box sx={{paddingLeft: '24px'}}>
 										<Typography variant="h6">Места хранения</Typography>
 										<Divider sx={{my: 1}}/>
@@ -640,13 +782,21 @@ class SkladItemsModule_Modal extends React.Component {
 									</Box>
 								</Grid>
 
-								<Grid item xs={12} md={6}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        md: 6
+                                    }}>
 									<Box>
 										<Typography variant="h6">Разгрузка</Typography>
 										<Divider sx={{my: 1}}/>
 
 										<Grid container spacing={2}>
-											<Grid item xs={12} sm={6}>
+											<Grid
+                                                size={{
+                                                    xs: 12,
+                                                    sm: 6
+                                                }}>
 												<MySelect
 													label="Должность в кафе"
 													data={this.state.itemEdit ? this.state.itemEdit.apps : []}
@@ -656,7 +806,11 @@ class SkladItemsModule_Modal extends React.Component {
 													is_none={false}
 												/>
 											</Grid>
-											<Grid item xs={12} sm={6}>
+											<Grid
+                                                size={{
+                                                    xs: 12,
+                                                    sm: 6
+                                                }}>
 												<MyTextInput
 													label="Время ММ:SS (15:20)"
 													value={this.state.itemEdit ? this.state.itemEdit.item.time_min_other : ''}
@@ -681,8 +835,8 @@ class SkladItemsModule_Modal extends React.Component {
 						</Button>
 					</DialogActions>
 				</Dialog>
-			</>
-		);
+            </>
+        );
 	}
 }
 
@@ -726,13 +880,17 @@ class SkladItemsModule_input_search extends React.Component {
     const { label } = this.props;
 
     return (
-      <Grid item xs={12} md={4}>
-        <MyTextInput
-          label={label}
-          value={this.state.item}
-          func={this.changeItem.bind(this)}
-        />
-      </Grid>
+        <Grid
+            size={{
+                xs: 12,
+                md: 4
+            }}>
+            <MyTextInput
+              label={label}
+              value={this.state.item}
+              func={this.changeItem.bind(this)}
+            />
+        </Grid>
     );
   }
 }
@@ -1181,12 +1339,11 @@ class SkladItemsModule_ extends React.Component {
 
 	render() {
 		return (
-			<>
-				<Backdrop style={{zIndex: 99}} open={this.state.is_load}>
+            <>
+                <Backdrop style={{zIndex: 99}} open={this.state.is_load}>
 					<CircularProgress color="inherit"/>
 				</Backdrop>
-
-				<Dialog
+                <Dialog
 					onClose={() => this.setState({checkArtDialog: false, checkArtList: []})}
 					open={this.state.checkArtDialog}
 				>
@@ -1199,15 +1356,13 @@ class SkladItemsModule_ extends React.Component {
 						))}
 					</List>
 				</Dialog>
-
-				<MyAlert
+                <MyAlert
 					isOpen={this.state.operAlert}
 					onClose={() => this.setState({operAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
-				<SkladItemsModule_Modal
+                <SkladItemsModule_Modal
 					open={this.state.modalDialog}
 					onClose={() => this.setState({modalDialog: false, itemEdit: null})}
 					checkArtNew={this.checkArtNew.bind(this)}
@@ -1218,8 +1373,7 @@ class SkladItemsModule_ extends React.Component {
 					itemName={this.state.itemName}
 					fullScreen={this.state.fullScreen}
 				/>
-
-				<SkladItemsModule_Modal_History
+                <SkladItemsModule_Modal_History
 					open={this.state.modalDialogHistory}
 					onClose={() => this.setState({modalDialogHistory: false})}
 					item={this.state.item}
@@ -1228,21 +1382,27 @@ class SkladItemsModule_ extends React.Component {
 					fullScreen={this.state.fullScreen}
 					openModalHistoryView={this.openModalHistoryView.bind(this)}
 				/>
-
-				<SkladItemsModule_Modal_History_View
+                <SkladItemsModule_Modal_History_View
 					open={this.state.modalDialogView}
 					onClose={() => this.setState({modalDialogView: false, itemView: null})}
 					itemView={this.state.itemView}
 					itemName={this.state.itemName}
 					fullScreen={this.state.fullScreen}
 				/>
-
-				<Grid container spacing={3} className='container_first_child'>
-					<Grid item xs={12} sm={12}>
+                <Grid container spacing={3} className='container_first_child'>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<h1>{this.state.module_name}</h1>
 					</Grid>
 
-					<Grid item xs={12} sm={3}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 3
+                        }}>
 						<Button onClick={this.openModalItemNew.bind(this, 'Новый товар')} variant="contained">
 							Добавить товар
 						</Button>
@@ -1254,7 +1414,11 @@ class SkladItemsModule_ extends React.Component {
 						label='Поиск'
 					/>
 
-					<Grid item xs={12} style={{paddingBottom: '50px'}}>
+					<Grid
+                        style={{paddingBottom: '50px'}}
+                        size={{
+                            xs: 12
+                        }}>
 						{this.state.cats?.length && (
 							<>
 								{this.state.cats.map((item, key) => (
@@ -1478,8 +1642,8 @@ class SkladItemsModule_ extends React.Component {
 						)}
 					</Grid>
 				</Grid>
-			</>
-		);
+            </>
+        );
 	}
 }
 

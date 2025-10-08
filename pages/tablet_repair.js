@@ -161,28 +161,44 @@ class TabletRepair_Modal extends React.Component {
           <Grid container spacing={3}>
             {this.props.type === 'addTablet' || this.props.type === 'updateTablet' ? (
               <>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="Порядковый номер планшета"
                     value={this.state.number}
                     func={this.changeItem.bind(this, 'number')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="Название марки и модель, например Dexp K48"
                     value={this.state.name}
                     func={this.changeItem.bind(this, 'name')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="IMIE"
                     value={this.state.imei}
                     func={this.changeItem.bind(this, 'imei')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyDatePickerNew
                     label="Дата ввода в эксплуатацию"
                     value={this.state.date}
@@ -192,7 +208,11 @@ class TabletRepair_Modal extends React.Component {
               </>
             ) : this.props.type === 'addRepair' ? (
               <>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MySelect
                     is_none={false}
                     data={this.props.tablets}
@@ -202,14 +222,22 @@ class TabletRepair_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="Наименование ремонта"
                     value={this.state.name}
                     func={this.changeItem.bind(this, 'name')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="Стоимость"
                     type={'number'}
@@ -217,7 +245,11 @@ class TabletRepair_Modal extends React.Component {
                     func={this.changeItem.bind(this, 'number')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyDatePickerNew
                     label="Дата ремонта"
                     value={this.state.date}
@@ -226,7 +258,12 @@ class TabletRepair_Modal extends React.Component {
                 </Grid>
               </>
             ) : (
-              <Grid item xs={12} sm={12} mb={5}>
+              <Grid
+                mb={5}
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TableContainer>
                   <Table>
                     <TableHead>
@@ -556,14 +593,12 @@ class TabletRepair_ extends React.Component {
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <TabletRepair_Modal
           type={this.state.type}
           open={this.state.modalDialog}
@@ -576,13 +611,20 @@ class TabletRepair_ extends React.Component {
           closeTablet={this.closeTablet.bind(this)}
           updateTablet={this.updateTablet.bind(this)}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MySelect
               is_none={false}
               data={this.state.points}
@@ -592,23 +634,41 @@ class TabletRepair_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button variant="contained" onClick={this.getTablets.bind(this)}>
               Обновить данные
             </Button>
           </Grid>
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <Button variant="contained" style={{ whiteSpace: 'nowrap' }} onClick={this.openModal.bind(this, 'addTablet')}>
               Добавить планшет
             </Button>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <Button variant="contained" onClick={this.openModal.bind(this, 'addRepair')}>
               Добавить ремонт
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12} mt={3} mb={5}>
+          <Grid
+            mt={3}
+            mb={5}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer>
               <Table>
                 <TableHead>

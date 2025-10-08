@@ -12,7 +12,7 @@ import Stat_buy_Table_ from "./StatBuyTable_";
 import dayjs from "dayjs";
 import { api_laravel } from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
-import {formatNumber} from "@/src/helpers/utils/i18n";
+import { formatNumber } from "@/src/helpers/utils/i18n";
 import MyAlert from "@/components/shared/MyAlert";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 
@@ -166,10 +166,14 @@ export default class Stat_buy_ extends React.Component {
     const ItemTab = this.state.ItemTab;
 
     const item = items.find((item) => item.item_id === id && item.date === date);
-    const values = [item?.count, item?.price, item?.avg_price]
-    const value = values[ItemTab - 1] ?? null
+    const values = [item?.count, item?.price, item?.avg_price];
+    const value = values[ItemTab - 1] ?? null;
 
-    return item ? <TableCell key={key}>{formatNumber(value)}</TableCell> : <TableCell key={key}></TableCell>;
+    return item ? (
+      <TableCell key={key}>{formatNumber(value)}</TableCell>
+    ) : (
+      <TableCell key={key}></TableCell>
+    );
   }
 
   onDownload() {
@@ -203,19 +207,22 @@ export default class Stat_buy_ extends React.Component {
           container
           spacing={3}
           style={{ marginTop: "64px", marginBottom: "24px" }}
+          className="container_first_child"
         >
           <Grid
-            item
-            xs={12}
-            sm={12}
+            size={{
+              xs: 12,
+              sm: 12,
+            }}
           >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={6}
+            size={{
+              xs: 12,
+              sm: 6,
+            }}
           >
             <MyAutocomplite
               label="Кафе"
@@ -227,9 +234,10 @@ export default class Stat_buy_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={6}
+            size={{
+              xs: 12,
+              sm: 6,
+            }}
           >
             <MyAutocomplite
               label="Категория"
@@ -242,9 +250,10 @@ export default class Stat_buy_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={3}
+            size={{
+              xs: 12,
+              sm: 3,
+            }}
           >
             <MyDatePickerNew
               label="Дата от"
@@ -254,9 +263,10 @@ export default class Stat_buy_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={3}
+            size={{
+              xs: 12,
+              sm: 3,
+            }}
           >
             <MyDatePickerNew
               label="Дата до"
@@ -266,9 +276,10 @@ export default class Stat_buy_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={2}
+            size={{
+              xs: 12,
+              sm: 2,
+            }}
           >
             <Button
               onClick={this.getItems.bind(this)}
@@ -279,9 +290,10 @@ export default class Stat_buy_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={2}
+            size={{
+              xs: 12,
+              sm: 2,
+            }}
           >
             <Button
               color="success"
@@ -296,8 +308,10 @@ export default class Stat_buy_ extends React.Component {
 
         <Grid
           item
-          xs={12}
-          sm={12}
+          size={{
+            xs: 12,
+            sm: 12,
+          }}
           style={{ padding: "0 24px" }}
         >
           <TabContext value={this.state.ItemTab}>

@@ -1504,29 +1504,76 @@ function FormBuilder() {
 	};
 
 	return (
-		<Grid item xs={12} sm={12} container spacing={3} mb={3} className="container_first_child">
-			<Backdrop style={{zIndex: 99}} open={isLoad}>
+        <Grid
+            container
+            spacing={3}
+            mb={3}
+            className="container_first_child"
+            size={{
+                xs: 12,
+                sm: 12
+            }}>
+            <Backdrop style={{zIndex: 99}} open={isLoad}>
 				<CircularProgress color="inherit"/>
 			</Backdrop>
-			<MyAlert
+            <MyAlert
 				isOpen={openAlert}
 				onClose={() => setOpenAlert(false)}
 				status={errStatus}
 				text={errText}
 			/>
-			<Grid item xs={12} sm={4}>
+            <Grid
+                size={{
+                    xs: 12,
+                    sm: 4
+                }}>
 				<h1>Создание новой формы</h1>
 			</Grid>
-			<Grid item xs={12} sm={6}>
+            <Grid
+                size={{
+                    xs: 12,
+                    sm: 6
+                }}>
 				<Button variant="contained" onClick={saveForm}>Создать форму</Button>
 			</Grid>
-			<Grid item xs={12} sm={12} container spacing={2} mb={3} sx={{height: '92vh'}}>
-				<Grid item container spacing={2} xs={12} sm={4} sx={{width: '100%', p: 2, height: '520px'}}>
-					<Grid container item xs={12} spacing={2}>
-						<Grid item xs={12}><Typography variant="h6">Элементы формы</Typography></Grid>
+            <Grid
+                container
+                spacing={2}
+                mb={3}
+                sx={{height: '92vh'}}
+                size={{
+                    xs: 12,
+                    sm: 12
+                }}>
+				<Grid
+                    container
+                    spacing={2}
+                    sx={{width: '100%', p: 2, height: '520px'}}
+                    size={{
+                        xs: 12,
+                        sm: 4
+                    }}>
+					<Grid
+                        container
+                        spacing={2}
+                        size={{
+                            xs: 12
+                        }}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}><Typography variant="h6">Элементы формы</Typography></Grid>
 					</Grid>
-					<Grid container item xs={12} spacing={2}>
-						<Grid item xs={6}>
+					<Grid
+                        container
+                        spacing={2}
+                        size={{
+                            xs: 12
+                        }}>
+						<Grid
+                            size={{
+                                xs: 6
+                            }}>
 							<Button
 								variant="contained"
 								fullWidth
@@ -1548,7 +1595,10 @@ function FormBuilder() {
 								Рейтинг (5 звезд)
 							</Button>
 						</Grid>
-						<Grid item xs={6}>
+						<Grid
+                            size={{
+                                xs: 6
+                            }}>
 							<Button
 								variant="contained"
 								fullWidth
@@ -1572,8 +1622,16 @@ function FormBuilder() {
 						</Grid>
 					</Grid>
 
-					<Grid container item xs={12} spacing={2}>
-						<Grid item xs={6}>
+					<Grid
+                        container
+                        spacing={2}
+                        size={{
+                            xs: 12
+                        }}>
+						<Grid
+                            size={{
+                                xs: 6
+                            }}>
 							<Button
 								variant="contained"
 								fullWidth
@@ -1595,7 +1653,10 @@ function FormBuilder() {
 								Многострочный текст
 							</Button>
 						</Grid>
-						<Grid item xs={6}>
+						<Grid
+                            size={{
+                                xs: 6
+                            }}>
 							<Button
 								variant="contained"
 								fullWidth
@@ -1619,8 +1680,16 @@ function FormBuilder() {
 						</Grid>
 					</Grid>
 
-					<Grid container item xs={12} spacing={2}>
-						<Grid item xs={6}>
+					<Grid
+                        container
+                        spacing={2}
+                        size={{
+                            xs: 12
+                        }}>
+						<Grid
+                            size={{
+                                xs: 6
+                            }}>
 							<Button
 								variant="contained"
 								fullWidth
@@ -1642,7 +1711,10 @@ function FormBuilder() {
 								Чекбокс
 							</Button>
 						</Grid>
-						<Grid item xs={6}>
+						<Grid
+                            size={{
+                                xs: 6
+                            }}>
 							<Button
 								variant="contained"
 								fullWidth
@@ -1665,8 +1737,16 @@ function FormBuilder() {
 							</Button>
 						</Grid>
 					</Grid>
-					<Grid container item xs={12} spacing={2}>
-						<Grid item xs={6}>
+					<Grid
+                        container
+                        spacing={2}
+                        size={{
+                            xs: 12
+                        }}>
+						<Grid
+                            size={{
+                                xs: 6
+                            }}>
 							<Button
 								variant="contained"
 								fullWidth
@@ -1688,7 +1768,10 @@ function FormBuilder() {
 								Облако тегов
 							</Button>
 						</Grid>
-						<Grid item xs={6}>
+						<Grid
+                            size={{
+                                xs: 6
+                            }}>
 							<Button
 								variant="contained"
 								fullWidth
@@ -1710,7 +1793,10 @@ function FormBuilder() {
 								Блок элементов
 							</Button>
 						</Grid>
-						<Grid item xs={6}>
+						<Grid
+                            size={{
+                                xs: 6
+                            }}>
 							<Button
 								variant="contained"
 								fullWidth
@@ -1807,7 +1893,10 @@ function FormBuilder() {
 							Добавить элемент в блок
 						</Typography>
 						<Grid container spacing={2}>
-							<Grid item xs={6}>
+							<Grid
+                                size={{
+                                    xs: 6
+                                }}>
 								<Button
 									fullWidth
 									variant="outlined"
@@ -1817,7 +1906,10 @@ function FormBuilder() {
 									Текст
 								</Button>
 							</Grid>
-							<Grid item xs={6}>
+							<Grid
+                                size={{
+                                    xs: 6
+                                }}>
 								<Button
 									fullWidth
 									variant="outlined"
@@ -1827,7 +1919,10 @@ function FormBuilder() {
 									Текст. область
 								</Button>
 							</Grid>
-							<Grid item xs={6}>
+							<Grid
+                                size={{
+                                    xs: 6
+                                }}>
 								<Button
 									fullWidth
 									variant="outlined"
@@ -1837,7 +1932,10 @@ function FormBuilder() {
 									Чекбокс
 								</Button>
 							</Grid>
-							<Grid item xs={6}>
+							<Grid
+                                size={{
+                                    xs: 6
+                                }}>
 								<Button
 									fullWidth
 									variant="outlined"
@@ -1847,7 +1945,10 @@ function FormBuilder() {
 									Рейтинг
 								</Button>
 							</Grid>
-							<Grid item xs={6}>
+							<Grid
+                                size={{
+                                    xs: 6
+                                }}>
 								<Button
 									fullWidth
 									variant="outlined"
@@ -1857,7 +1958,10 @@ function FormBuilder() {
 									Заголовок
 								</Button>
 							</Grid>
-							<Grid item xs={6}>
+							<Grid
+                                size={{
+                                    xs: 6
+                                }}>
 								<Button
 									fullWidth
 									variant="outlined"
@@ -1867,7 +1971,10 @@ function FormBuilder() {
 									Группа чек-ов
 								</Button>
 							</Grid>
-							<Grid item xs={6}>
+							<Grid
+                                size={{
+                                    xs: 6
+                                }}>
 								<Button
 									fullWidth
 									variant="outlined"
@@ -1975,8 +2082,8 @@ function FormBuilder() {
 					</Box>
 				</Modal>
 			</Grid>
-		</Grid>
-	);
+        </Grid>
+    );
 }
 
 export default function Settings() {

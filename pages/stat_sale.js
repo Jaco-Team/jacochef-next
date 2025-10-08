@@ -695,24 +695,24 @@ class StatSale_Modal_Graph extends React.Component {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container direction="column" spacing={2}>
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <Box sx={{ width: '100%' }}>
                 <div id={id} style={{ width: '100%', height: '700px' }} />
               </Box>
             </Grid>
           </Grid>
         </DialogContent>
-
         <DialogActions>
           <Button color="primary" onClick={onClose.bind(this)}>
             Закрыть
           </Button>
         </DialogActions>
       </Dialog>
-
     );
   }
 }
@@ -893,12 +893,16 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent>
 
           <Grid container spacing={10}>
 
-            <Grid item xs={12} sm={6} mt={3}>
+            <Grid
+              mt={3}
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <TextField
                 type="number"
                 value={value}
@@ -928,14 +932,18 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6} mt={3}>
+            <Grid
+              mt={3}
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <CustomColorPicker hsvaConvertHex={this.hsvaConvertHex.bind(this)} initialColor={color}/>
             </Grid>
 
           </Grid>
 
         </DialogContent>
-
         <DialogActions sx={{ display: 'flex', justifyContent: type_modal === 'edit' ? 'space-between' : 'flex-end' }}>
 
           {type_modal === 'edit' && (
@@ -949,7 +957,6 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
           </Button>
 
         </DialogActions>
-
       </Dialog>
     );
   }
@@ -1112,12 +1119,16 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent>
 
           <Grid container spacing={10}>
 
-            <Grid item xs={12} sm={8} mt={3}>
+            <Grid
+              mt={3}
+              size={{
+                xs: 12,
+                sm: 8
+              }}>
               <TableContainer component={Paper}>
                 <Table size='small'>
                   <TableBody>
@@ -1170,14 +1181,18 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
               </TableContainer>
             </Grid>
 
-            <Grid item xs={12} sm={4} mt={3}>
+            <Grid
+              mt={3}
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <CustomColorPicker hsvaConvertHex={this.hsvaConvertHex.bind(this)} initialColor={color}/>
             </Grid>
 
           </Grid>
 
         </DialogContent>
-
         <DialogActions sx={{ display: 'flex', justifyContent: type_modal === 'edit' ? 'space-between' : 'flex-end' }}>
 
           {type_modal === 'edit' && (
@@ -1535,7 +1550,6 @@ class StatSale_Tab_Sett extends React.Component {
 
     return (
       <>
-
         <StatSale_Tab_Sett_Modal_Rate
           open={this.state.modalDialogRate}
           onClose={() => this.setState({ modalDialogRate: false })}
@@ -1547,7 +1561,6 @@ class StatSale_Tab_Sett extends React.Component {
           openAlert={openAlert}
           delete={this.delete_sett_rate.bind(this)}
         />
-
         <StatSale_Tab_Sett_Modal_Rate_Clients
           open={this.state.modalDialogRate_clients}
           onClose={() => this.setState({ modalDialogRate_clients: false, value_edit: 0, type_modal: null, color_edit: null, name_row: '' })}
@@ -1560,8 +1573,12 @@ class StatSale_Tab_Sett extends React.Component {
           name_row={this.state.name_row}
           delete={this.delete_sett_rate_clients.bind(this)}
         />
-
-        <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+        <Grid
+          style={{ paddingTop: 0 }}
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <TabPanel
             value={activeTab}
             index={2}
@@ -1569,7 +1586,11 @@ class StatSale_Tab_Sett extends React.Component {
           >
             <Grid container spacing={3}>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <Paper>
                   <Tabs
                     value={active_tab}
@@ -1585,14 +1606,25 @@ class StatSale_Tab_Sett extends React.Component {
               </Grid>
 
               {/* Коэффициенты (Продажи) */}
-              <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+              <Grid
+                style={{ paddingTop: 0 }}
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TabPanel
                   value={active_tab}
                   index={0}
                   id='clients'
                 >
                   <Grid container spacing={3}>
-                    <Grid item xs={12} sm={12} mt={3} mb={5}>
+                    <Grid
+                      mt={3}
+                      mb={5}
+                      size={{
+                        xs: 12,
+                        sm: 12
+                      }}>
                       <TableContainer style={{ overflowX: 'auto', maxWidth: '100%', paddingBottom: 20, width: tableWidth }}>
                         <Table size='small'>
                           <TableBody>
@@ -1665,14 +1697,25 @@ class StatSale_Tab_Sett extends React.Component {
               {/* Коэффициенты (Продажи) */}
 
               {/* Коэффициенты (Клиенты) */}
-              <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+              <Grid
+                style={{ paddingTop: 0 }}
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TabPanel
                   value={active_tab}
                   index={1}
                   id='clients'
                 >
                   <Grid container spacing={3}>
-                    <Grid item xs={12} sm={12} mt={3} mb={5}>
+                    <Grid
+                      mt={3}
+                      mb={5}
+                      size={{
+                        xs: 12,
+                        sm: 12
+                      }}>
                       <TableContainer style={{ overflowX: 'auto', maxWidth: '100%', paddingBottom: 20, width: tableWidth_clietns }}>
                         <Table size='small'>
                           <TableBody>
@@ -1732,7 +1775,12 @@ class StatSale_Tab_Sett extends React.Component {
               {/* Коэффициенты (Клиенты) */}
 
               {/* Жители (Клиенты) */}
-              <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+              <Grid
+                style={{ paddingTop: 0 }}
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TabPanel
                   value={active_tab}
                   index={2}
@@ -1740,7 +1788,12 @@ class StatSale_Tab_Sett extends React.Component {
                 >
                   <Grid container spacing={3}>
 
-                    <Grid item xs={12} sm={12} mt={3}>
+                    <Grid
+                      mt={3}
+                      size={{
+                        xs: 12,
+                        sm: 12
+                      }}>
                         <TableContainer>
                           <Table>
                             <TableHead>
@@ -1771,7 +1824,13 @@ class StatSale_Tab_Sett extends React.Component {
                         </TableContainer>
                     </Grid>
 
-                    <Grid item xs={12} sm={12} mb={5} display='grid'>
+                    <Grid
+                      mb={5}
+                      display='grid'
+                      size={{
+                        xs: 12,
+                        sm: 12
+                      }}>
                       <Button
                         variant="contained"
                         color='success'
@@ -1790,7 +1849,6 @@ class StatSale_Tab_Sett extends React.Component {
             </Grid>
           </TabPanel>
         </Grid>
-
       </>
     );
   }
@@ -2014,7 +2072,12 @@ class StatSale_Tab_Clients extends React.Component {
     );
 
     return (
-      <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+      <Grid
+        style={{ paddingTop: 0 }}
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <TabPanel
           value={activeTab}
           index={1}
@@ -2022,7 +2085,11 @@ class StatSale_Tab_Clients extends React.Component {
         >
           <Grid container spacing={3}>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNewViews
               label="Дата от"
               views={['month', 'year']}
@@ -2031,7 +2098,12 @@ class StatSale_Tab_Clients extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} style={{ paddingLeft: 12 }}>
+          <Grid
+            style={{ paddingLeft: 12 }}
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNewViews
               label="Дата до"
               views={['month', 'year']}
@@ -2040,7 +2112,11 @@ class StatSale_Tab_Clients extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={10}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 10
+            }}>
             <MyAutocomplite
               label="Точка"
               multiple={true}
@@ -2050,14 +2126,25 @@ class StatSale_Tab_Clients extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <Button variant="contained" onClick={this.get_data_clients}>
               Показать
             </Button>
           </Grid>
 
           {!data_clients_list.length ? null : (
-            <Grid item xs={12} sm={12} mt={3} mb={5} sx={{ position: 'relative', overflow: 'hidden' }}>
+            <Grid
+              mt={3}
+              mb={5}
+              sx={{ position: 'relative', overflow: 'hidden' }}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TableContainer sx={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', overflowY: 'hidden', paddingBottom: 5 }}>
                 {data_clients_list.map((table, index) => (
 
@@ -2487,7 +2574,12 @@ class StatSale_Tab_Sale extends React.Component {
     const { data_sale_list } = this.state;
 
     return (
-      <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+      <Grid
+        style={{ paddingTop: 0 }}
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <TabPanel
           value={activeTab}
           index={0}
@@ -2495,7 +2587,11 @@ class StatSale_Tab_Sale extends React.Component {
         >
           <Grid container spacing={3}>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNewViews
                 label="Дата от"
                 views={['month', 'year']}
@@ -2504,7 +2600,12 @@ class StatSale_Tab_Sale extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6} style={{ paddingLeft: 12 }}>
+            <Grid
+              style={{ paddingLeft: 12 }}
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNewViews
                 label="Дата до"
                 views={['month', 'year']}
@@ -2513,7 +2614,11 @@ class StatSale_Tab_Sale extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={10}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 10
+              }}>
               <MyAutocomplite
                 label="Точка"
                 multiple={true}
@@ -2523,14 +2628,25 @@ class StatSale_Tab_Sale extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={2}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 2
+              }}>
               <Button variant="contained" onClick={this.get_data_sale}>
                 Показать
               </Button>
             </Grid>
 
             {data_sale_list && data_sale_list.columns && data_sale_list.columns.months.length ? (
-              <Grid item xs={12} sm={12} mt={3} mb={5} sx={{ position: 'relative', overflow: 'hidden' }}>
+              <Grid
+                mt={3}
+                mb={5}
+                sx={{ position: 'relative', overflow: 'hidden' }}
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <DataTable tableData={data_sale_list} openGraphModal={openGraphModal} />
               </Grid>
             ) : null}
@@ -2865,18 +2981,15 @@ class StatSale_ extends React.Component {
         <Backdrop style={{ zIndex: 9999 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Script src="https://cdn.amcharts.com/lib/5/index.js"></Script>
         <Script src="https://cdn.amcharts.com/lib/5/xy.js"></Script>
         <Script src="//cdn.amcharts.com/lib/5/themes/Animated.js"></Script>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <StatSale_Modal_Graph
           onClose={() => this.setState({ modalDialog: false })}
           fullScreen={this.state.fullScreen}
@@ -2884,14 +2997,22 @@ class StatSale_ extends React.Component {
           id={this.state.id}
           name={this.state.name}
         />
-
         <Grid container spacing={3} mb={3} className='container_first_child'>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12} style={{ paddingBottom: 24 }}>
+          <Grid
+            style={{ paddingBottom: 24 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Paper>
               <Tabs
                 value={this.state.activeTab}

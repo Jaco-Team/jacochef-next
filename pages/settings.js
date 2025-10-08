@@ -120,27 +120,27 @@ function SettingsPage() {
         />
       ) : null}
       <Grid
-        item
-        xs={12}
-        sm={12}
         container
         spacing={3}
         mb={3}
         className="container_first_child"
-      >
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <h1>{module.name}</h1>
         </Grid>
         <Grid
-          item
-          xs={12}
-          sm={12}
           style={{ paddingBottom: 24 }}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <Paper>
             <TabContext value={value}>
               <Tabs
@@ -161,11 +161,11 @@ function SettingsPage() {
           </Paper>
         </Grid>
         <Grid
-          item
-          xs={12}
-          sm={12}
           style={{ paddingTop: 0 }}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <TabContext value={value}>
             {parseInt(access.birth_promo_access) == 1 &&
               <TabPanel value="birth_promo">
@@ -187,10 +187,10 @@ function SettingsPage() {
                   style={{ marginBottom: 16 }}
                 >
                   <Grid
-                    item
-                    xs={12}
-                    sm={3}
-                  >
+                    size={{
+                      xs: 12,
+                      sm: 3
+                    }}>
                     <MyAutocomplite
                       label="Точки"
                       data={points}
@@ -202,10 +202,10 @@ function SettingsPage() {
                     />
                   </Grid>
                   <Grid
-                    item
-                    xs={12}
-                    sm={2}
-                  >
+                    size={{
+                      xs: 12,
+                      sm: 2
+                    }}>
                     <MyDatePickerNew
                       label="Дата начала"
                       value={dateStart}
@@ -213,10 +213,10 @@ function SettingsPage() {
                     />
                   </Grid>
                   <Grid
-                    item
-                    xs={12}
-                    sm={2}
-                  >
+                    size={{
+                      xs: 12,
+                      sm: 2
+                    }}>
                     <MyDatePickerNew
                       label="Дата окончания"
                       value={dateEnd}
@@ -224,10 +224,10 @@ function SettingsPage() {
                     />
                   </Grid>
                   <Grid
-                    item
-                    xs={12}
-                    sm={3}
-                  >
+                    size={{
+                      xs: 12,
+                      sm: 3
+                    }}>
                     <Button
                       variant="contained"
                       color="primary"
@@ -237,10 +237,10 @@ function SettingsPage() {
                     </Button>
                   </Grid>
                   <Grid
-                    item
-                    xs={12}
-                    sm={2}
-                  >
+                    size={{
+                      xs: 12,
+                      sm: 2
+                    }}>
                     <Button
                       variant="contained"
                       color="primary"
@@ -252,10 +252,10 @@ function SettingsPage() {
                 </Grid>
                 {activeAder.length ? (
                   <Grid
-                    item
-                    xs={12}
                     style={{ marginBottom: "24px" }}
-                  >
+                    size={{
+                      xs: 12
+                    }}>
                     <Card elevation={3}>
                       <CardHeader
                         title="Активные"
@@ -307,10 +307,10 @@ function SettingsPage() {
 
                 {disableAder.length ? (
                   <Grid
-                    item
-                    xs={12}
                     style={{ marginBottom: "24px" }}
-                  >
+                    size={{
+                      xs: 12
+                    }}>
                     <Card elevation={3}>
                       <CardHeader
                         title="Не активные"

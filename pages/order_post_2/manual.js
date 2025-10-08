@@ -104,7 +104,11 @@ class OrderPost2Manual_Modal extends React.Component {
           </DialogTitle>
 
           <DialogContent style={{ paddingTop: 10, paddingBottom: 10 }}>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TableContainer>
                 <Table>
                   <TableBody>
@@ -312,7 +316,11 @@ class OrderPost2Manual_List extends React.Component {
 
     return (
       <>
-        <Grid item xs={12} sm={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 4
+          }}>
           <MyAutocomplite2
             label="Поиск"
             freeSolo={true}
@@ -323,14 +331,20 @@ class OrderPost2Manual_List extends React.Component {
             onBlur={this.search.bind(this)}
           />
         </Grid>
-
-        <Grid item xs={12} sm={2}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 2
+          }}>
           <Button variant="contained" onClick={this.props.sortOrderPost.bind(this)} sx={{ whiteSpace: 'nowrap' }}>
             Сохранить заявку
           </Button>
         </Grid>
-
-        <Grid item xs={12} sm={12}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <TableContainer>
             <Table>
               <TableBody>
@@ -765,14 +779,12 @@ class OrderPost2Manual_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <OrderPost2Manual_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false })}
@@ -783,7 +795,6 @@ class OrderPost2Manual_ extends React.Component {
           allPriceOrder={this.state.allPriceOrder}
           saveOrderPost={this.saveOrderPost.bind(this)}
         />
-
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="sm"
@@ -798,13 +809,20 @@ class OrderPost2Manual_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>Ручная заявка поставщикам New</h1>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect
               label="Точка"
               is_none={false}

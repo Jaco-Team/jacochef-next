@@ -888,24 +888,21 @@ class SiteClients_ extends React.Component {
 
 	render() {
 		return (
-			<>
-				<Backdrop style={{zIndex: 99}} open={this.state.is_load}>
+            <>
+                <Backdrop style={{zIndex: 99}} open={this.state.is_load}>
 					<CircularProgress color="inherit"/>
 				</Backdrop>
-
-				{/* <TestAccess
+                {/* <TestAccess
           access={this.state.access}
           setAccess={(access) => this.setState({ access })}
         /> */}
-
-				<MyAlert
+                <MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
-				<SiteClients_Modal_Client
+                <SiteClients_Modal_Client
 					open={this.state.modalDialog}
 					onClose={() => this.setState({modalDialog: false, client: null, client_login: ''})}
 					item={this.state.client}
@@ -925,15 +922,13 @@ class SiteClients_ extends React.Component {
 					login_yandex={this.state.login_yandex}
 					sendCode={this.sendCode.bind(this)}
 				/>
-
-				<SiteClients_Modal_Client_Order
+                <SiteClients_Modal_Client_Order
 					open={this.state.modalDialog_order}
 					onClose={() => this.setState({modalDialog_order: false})}
 					showOrder={this.state.showOrder}
 					fullScreen={this.state.fullScreen}
 				/>
-
-				<SiteClients_Modal_Comment_Action
+                <SiteClients_Modal_Comment_Action
 					open={this.state.modalDialogAction}
 					onClose={() => this.setState({modalDialogAction: false, comment_id: null})}
 					comment_id={this.state.comment_id}
@@ -942,14 +937,22 @@ class SiteClients_ extends React.Component {
 					saveCommentAction={this.saveCommentAction.bind(this)}
 					client_login={this.state.client_login}
 				/>
+                <Grid container spacing={3} mb={3} className='container_first_child'>
 
-				<Grid container spacing={3} mb={3} className='container_first_child'>
-
-					<Grid item xs={12} sm={12}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<h1>{this.state.module_name}</h1>
 					</Grid>
 
-					<Grid item xs={12} sm={12} style={{paddingBottom: 24}}>
+					<Grid
+                        style={{paddingBottom: 24}}
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<Paper>
 							<Tabs
 								value={this.state.activeTab}
@@ -969,7 +972,12 @@ class SiteClients_ extends React.Component {
 					</Grid>
 
 					{/* Поиск клиента */}
-					<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
+					<Grid
+                        style={{paddingTop: 0}}
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<TabPanel
 							value={this.state.activeTab}
 							index={this.state.index_clients}
@@ -978,7 +986,11 @@ class SiteClients_ extends React.Component {
 
 							<Grid container spacing={3}>
 
-								<Grid item xs={12} sm={6}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
 									<MyTextInput
 										type='number'
 										className="input_login"
@@ -1001,13 +1013,22 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<Button onClick={this.getClients.bind(this)} variant="contained">
 										Показать
 									</Button>
 								</Grid>
 
-								<Grid item xs={12} sm={12} mt={5}>
+								<Grid
+                                    mt={5}
+                                    size={{
+                                        xs: 12,
+                                        sm: 12
+                                    }}>
 									<TableContainer sx={{maxHeight: {xs: 'none', sm: 570}}} component={Paper}>
 										<Table stickyHeader size="small">
 											<TableHead>
@@ -1040,7 +1061,12 @@ class SiteClients_ extends React.Component {
 					{/* Поиск клиента */}
 
 					{/* Поиск заказов */}
-					<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
+					<Grid
+                        style={{paddingTop: 0}}
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<TabPanel
 							value={this.state.activeTab}
 							index={this.state.index_orders}
@@ -1049,7 +1075,11 @@ class SiteClients_ extends React.Component {
 
 							<Grid container spacing={3}>
 
-								<Grid item xs={12} sm={12}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 12
+                                    }}>
 									<ToggleButtonGroup
 										value={this.state.select_toggle}
 										exclusive
@@ -1085,7 +1115,11 @@ class SiteClients_ extends React.Component {
 									</ToggleButtonGroup>
 								</Grid>
 
-								<Grid item xs={12} sm={12}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 12
+                                    }}>
 									{this.state.select_toggle === 'city' ?
 										<MyAutocomplite
 											label="Город"
@@ -1105,7 +1139,11 @@ class SiteClients_ extends React.Component {
 									}
 								</Grid>
 
-								<Grid item xs={12} sm={6}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
 									<MyDatePickerNew
 										label="Дата от"
 										customActions={true}
@@ -1114,7 +1152,11 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={6}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
 									<MyDatePickerNew
 										label="Дата до"
 										customActions={true}
@@ -1123,7 +1165,11 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<MyTextInput
 										type='number'
 										className="input_login"
@@ -1146,7 +1192,11 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<MyTextInput
 										type='number'
 										className="input_login"
@@ -1169,7 +1219,11 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={2}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 2
+                                    }}>
 									<MyTextInput
 										type='text'
 										className="input_promo"
@@ -1192,11 +1246,18 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={2}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 2
+                                    }}>
 									<MyCheckBox value={this.state.promo_dr} func={this.changeDataCheck.bind(this, 'promo_dr')} label='Промик на ДР'/>
 								</Grid>
 
-								<Grid item xs={12}>
+								<Grid
+                                    size={{
+                                        xs: 12
+                                    }}>
 									<MyTextInput
 										className="input_login"
 										label="Адрес клиента"
@@ -1218,7 +1279,11 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyAutocomplite
 										label="Кто оформил"
 										multiple={true}
@@ -1228,7 +1293,11 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={5}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 5
+                                    }}>
 									<MyAutocomplite
 										label="Товары в заказе"
 										multiple={true}
@@ -1239,7 +1308,11 @@ class SiteClients_ extends React.Component {
 								</Grid>
 
 
-								<Grid item xs={12} sm={2}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 2
+                                    }}>
 									<Button onClick={this.getOrders.bind(this)} variant="contained">
 										Показать
 									</Button>
@@ -1247,7 +1320,12 @@ class SiteClients_ extends React.Component {
 
 								{this.canAccess('download_file') &&
 									this.state.search_orders?.length > 0 &&
-										<Grid item xs={12} sm={2} x={{display: 'flex', alignItems: 'center'}}>
+										<Grid
+                                            x={{display: 'flex', alignItems: 'center'}}
+                                            size={{
+                                                xs: 12,
+                                                sm: 2
+                                            }}>
 											<Tooltip title={<Typography color="inherit">{'Скачать таблицу в Excel'}</Typography>}>
 												<IconButton disableRipple sx={{padding: 0}} onClick={this.downLoad.bind(this)}>
 													<ExlIcon/>
@@ -1258,7 +1336,12 @@ class SiteClients_ extends React.Component {
 
 							</Grid>
 
-							<Grid item xs={12} sm={12} mt={5}>
+							<Grid
+                                mt={5}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<TableContainer sx={{maxHeight: {xs: 'none', sm: 570}}} component={Paper}>
 									<Table size={'small'} stickyHeader>
 										<TableHead>
@@ -1381,7 +1464,12 @@ class SiteClients_ extends React.Component {
 					{/* Поиск заказов */}
 
 					{/* Заказы по адресам */}
-					<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
+					<Grid
+                        style={{paddingTop: 0}}
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<TabPanel
 							value={this.state.activeTab}
 							index={this.state.index_address}
@@ -1389,7 +1477,11 @@ class SiteClients_ extends React.Component {
 						>
 							<Grid container spacing={3}>
 
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<MyAutocomplite
 										label="Город"
 										multiple={true}
@@ -1399,7 +1491,11 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<MyDatePickerNew
 										label="Дата от"
 										customActions={true}
@@ -1408,7 +1504,11 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<MyDatePickerNew
 										label="Дата до"
 										customActions={true}
@@ -1417,7 +1517,12 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={8} style={{paddingRight: '20px'}}>
+								<Grid
+                                    style={{paddingRight: '20px'}}
+                                    size={{
+                                        xs: 12,
+                                        sm: 8
+                                    }}>
 									<TextareaAutosize
 										aria-label="empty textarea"
 										placeholder=""
@@ -1438,13 +1543,21 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={2}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 2
+                                    }}>
 									<Button onClick={this.getDataAddress.bind(this)} variant="contained">
 										Показать
 									</Button>
 								</Grid>
 
-								<Grid item xs={12} sm={12}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 12
+                                    }}>
 									<Paper>
 										<Tabs value={this.state.activeTab_address} onChange={this.changeTab_address.bind(this)} centered variant='fullWidth'>
 											<Tab label="Список заказов" {...a11yProps(0)} />
@@ -1454,14 +1567,25 @@ class SiteClients_ extends React.Component {
 								</Grid>
 
 								{/* Список заказов */}
-								<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
+								<Grid
+                                    style={{paddingTop: 0}}
+                                    size={{
+                                        xs: 12,
+                                        sm: 12
+                                    }}>
 									<TabPanel
 										value={this.state.activeTab_address}
 										index={0}
 										id='clients'
 									>
 										<Grid container spacing={3}>
-											<Grid item xs={12} sm={12} mt={3} mb={5}>
+											<Grid
+                                                mt={3}
+                                                mb={5}
+                                                size={{
+                                                    xs: 12,
+                                                    sm: 12
+                                                }}>
 												<TableContainer sx={{maxHeight: {xs: 'none', sm: 570}}} component={Paper}>
 													<Table size={'small'} stickyHeader>
 														<TableHead>
@@ -1501,14 +1625,25 @@ class SiteClients_ extends React.Component {
 								{/* Список заказов */}
 
 								{/* Список адресов */}
-								<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
+								<Grid
+                                    style={{paddingTop: 0}}
+                                    size={{
+                                        xs: 12,
+                                        sm: 12
+                                    }}>
 									<TabPanel
 										value={this.state.activeTab_address}
 										index={1}
 										id='clients'
 									>
 										<Grid container spacing={3}>
-											<Grid item xs={12} sm={12} mt={3} mb={5}>
+											<Grid
+                                                mt={3}
+                                                mb={5}
+                                                size={{
+                                                    xs: 12,
+                                                    sm: 12
+                                                }}>
 												<TableContainer>
 													<Table>
 														<TableHead>
@@ -1599,7 +1734,12 @@ class SiteClients_ extends React.Component {
 					{/* Заказы по адресам */}
 
 					{/* Поиск клиентов */}
-					<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
+					<Grid
+                        style={{paddingTop: 0}}
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<TabPanel
 							value={this.state.activeTab}
 							index={this.state.index_search_clients}
@@ -1611,7 +1751,12 @@ class SiteClients_ extends React.Component {
 					{/* Поиск клиентов */}
 
 					{/* Поиск заказов расширенный */}
-					<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
+					<Grid
+                        style={{paddingTop: 0}}
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<TabPanel
 							value={this.state.activeTab}
 							index={this.state.index_order_more}
@@ -1623,7 +1768,12 @@ class SiteClients_ extends React.Component {
 					{/* Поиск заказов расширенный */}
 
 					{/* Аналитика по заказам */}
-					<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
+					<Grid
+                        style={{paddingTop: 0}}
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<TabPanel
 							value={this.state.activeTab}
 							index={this.state.index_traffic}
@@ -1631,7 +1781,11 @@ class SiteClients_ extends React.Component {
 						>
 							<Grid container spacing={3}>
 
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<MyAutocomplite
 										label="Город"
 										multiple={true}
@@ -1641,7 +1795,11 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyDatePickerNew
 										label="Дата от"
 										customActions={true}
@@ -1650,7 +1808,11 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyDatePickerNew
 										label="Дата до"
 										customActions={true}
@@ -1659,7 +1821,11 @@ class SiteClients_ extends React.Component {
 									/>
 								</Grid>
 
-								<Grid item xs={12} sm={2}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 2
+                                    }}>
 									<Button onClick={this.getDataTraffic.bind(this)} variant="contained">
 										Показать
 									</Button>
@@ -1667,7 +1833,13 @@ class SiteClients_ extends React.Component {
 
 								{/* Визиты статистика */}
 								{this.state.traffic_stats?.length > 0 && (
-									<Grid item xs={12} sm={6} mt={3} mb={5}>
+									<Grid
+                                        mt={3}
+                                        mb={5}
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
 										<Typography variant="h4">Визиты все</Typography>
 										<SiteClientsTrafficSummaryTable data={this.state.traffic_stats[0]}/>
 									</Grid>
@@ -1676,7 +1848,13 @@ class SiteClients_ extends React.Component {
 
 								{/* Визиты по источнику */}
 								{this.state.traffic_sources?.length > 0 && (
-									<Grid item xs={12} sm={6} mt={3} mb={5}>
+									<Grid
+                                        mt={3}
+                                        mb={5}
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
 										<Typography variant="h4">Источники трафика</Typography>
 										<SiteClientsTrafficBySourceTable rows={this.state.traffic_sources}/>
 									</Grid>
@@ -1685,7 +1863,13 @@ class SiteClients_ extends React.Component {
 
 								{/* Заказы по источнику */}
 								{this.state.orders_by_source?.length > 0 && (
-									<Grid item xs={12} sm={6} mt={3} mb={5}>
+									<Grid
+                                        mt={3}
+                                        mb={5}
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
 										<Typography variant="h4">Источники заказов</Typography>
 										<SiteClientsOrdersBySourceTable rows={this.state.orders_by_source}/>
 									</Grid>
@@ -1694,7 +1878,13 @@ class SiteClients_ extends React.Component {
 
 								{/* Заказы по utm */}
 								{this.state.orders_by_utm?.length > 0 && (
-									<Grid item xs={12} sm={6} mt={3} mb={5}>
+									<Grid
+                                        mt={3}
+                                        mb={5}
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
 										<Typography variant="h4">Заказы по UTM</Typography>
 										<SiteClientsOrdersByUtmTable rows={this.state.orders_by_utm}/>
 									</Grid>
@@ -1707,7 +1897,12 @@ class SiteClients_ extends React.Component {
 					{/* Аналитика по заказам */}
 
 					{/* Маркетинговая Аналитика */}
-					<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
+					<Grid
+                        style={{paddingTop: 0}}
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<TabPanel
 							value={this.state.activeTab}
 							index={this.state.index_marketing}
@@ -1726,8 +1921,8 @@ class SiteClients_ extends React.Component {
 					{/* Маркетинговая Аналитика */}
 
 				</Grid>
-			</>
-		);
+            </>
+        );
 	}
 }
 

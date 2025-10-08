@@ -29,10 +29,12 @@ class CatWork_Modal extends React.PureComponent {
         onClose={onClose}
       >
         <DialogTitle>{title}</DialogTitle>
-
         <DialogContent style={{ paddingTop: 10 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <MyTextInput
                 value={name}
                 func={e => onNameChange(e.target.value)}
@@ -40,16 +42,17 @@ class CatWork_Modal extends React.PureComponent {
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <TextEditor value={text} func={onTextChange} />
             </Grid>
           </Grid>
         </DialogContent>
-
         <DialogActions>
           <Button color="primary" onClick={onSave}>Сохранить</Button>
         </DialogActions>
-
       </Dialog>
     );
   }
@@ -261,14 +264,12 @@ class CatWork_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <CatWork_Modal
           open={this.state.modalDialog}
           title={`Категория уборки "${this.state.showCat?.name}"`}
@@ -279,7 +280,6 @@ class CatWork_ extends React.Component {
           onSave={this.save.bind(this)}
           onClose={this.closeEdit.bind(this)}
         />
-
         <CatWork_Modal
           open={this.state.modalDialogNew}
           title="Новая категория уборки"
@@ -289,18 +289,30 @@ class CatWork_ extends React.Component {
           onTextChange={this.changeText.bind(this, 'new')}
           onSave={this.saveNew.bind(this)}
           onClose={this.closeNew.bind(this)}
-        />       
-        
+        />
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button variant="contained" color="primary" onClick={ () => { this.setState({ modalDialogNew: true }) } }>Добавить категорию</Button>
           </Grid>
           
-          <Grid item xs={12} sm={12} mb={5}>
+          <Grid
+            mb={5}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <List style={{ width: '100%' }}>
               {this.state.cats.map( (item, key) =>
                 <ListItem button key={key} onClick={ this.openCat.bind(this, item) }>
@@ -312,7 +324,7 @@ class CatWork_ extends React.Component {
         
         </Grid>
       </>
-    )
+    );
   }
 }
 

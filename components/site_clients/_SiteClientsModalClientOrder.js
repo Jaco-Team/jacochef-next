@@ -55,7 +55,7 @@ export default class SiteClients_Modal_Client_Order extends React.Component {
 		const {open, fullScreen} = this.props;
 
 		return (
-			<Dialog
+            <Dialog
 				open={open}
 				onClose={this.onClose.bind(this)}
 				aria-labelledby="alert-dialog-title"
@@ -64,7 +64,7 @@ export default class SiteClients_Modal_Client_Order extends React.Component {
 				maxWidth={'md'}
 				fullScreen={fullScreen}
 			>
-				<DialogTitle className="button">
+                <DialogTitle className="button">
 					<Typography style={{
 						fontWeight: 'bold',
 						alignSelf: 'center'
@@ -73,32 +73,46 @@ export default class SiteClients_Modal_Client_Order extends React.Component {
 						<CloseIcon/>
 					</IconButton>
 				</DialogTitle>
-
-				<DialogContent>
+                <DialogContent>
 
 					<Grid container spacing={0}>
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<span>{this.state.showOrder?.order?.type_order}: {this.state.showOrder?.order?.type_order_addr_new}</span>
 						</Grid>
 
 						{parseInt(this.state.showOrder?.order?.type_order_) == 1 ?
 							parseInt(this.state.showOrder?.order?.fake_dom) == 0 ?
-								<Grid item xs={12}>
+								<Grid
+                                    size={{
+                                        xs: 12
+                                    }}>
 									<b style={{color: 'red', fontWeight: 900}}>Домофон не работает</b>
 								</Grid>
 								:
-								<Grid item xs={12}>
+								<Grid
+                                    size={{
+                                        xs: 12
+                                    }}>
 									<b style={{color: 'green', fontWeight: 900}}>Домофон работает</b>
 								</Grid>
 							:
 							null
 						}
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<span>{this.state.showOrder?.order?.time_order_name}: {this.state.showOrder?.order?.time_order}</span>
 						</Grid>
 
 						{this.state.showOrder?.order?.number?.length > 1 ?
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<b>Телефон: </b>
 								<span>{this.state.showOrder?.order?.number}</span>
 							</Grid>
@@ -107,53 +121,83 @@ export default class SiteClients_Modal_Client_Order extends React.Component {
 						}
 
 						{this.state.showOrder?.order?.delete_reason?.length > 0 ?
-							<Grid item xs={12}><span style={{color: 'red'}}>Удален: {this.state.showOrder?.order?.date_time_delete}</span></Grid> : null}
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}><span style={{color: 'red'}}>Удален: {this.state.showOrder?.order?.date_time_delete}</span></Grid> : null}
 						{this.state.showOrder?.order?.delete_reason?.length > 0 ?
-							<Grid item xs={12}><span style={{color: 'red'}}>{this.state.showOrder?.order?.delete_reason}</span></Grid> : null}
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}><span style={{color: 'red'}}>{this.state.showOrder?.order?.delete_reason}</span></Grid> : null}
 
 						{parseInt(this.state.showOrder?.order?.is_preorder) == 1 ? null :
-							<Grid item xs={12}><span>{'Обещали: ' + this.state.showOrder?.order?.time_to_client + ' / '}{this.state.showOrder?.order?.text_time}{this.state.showOrder?.order?.time}</span></Grid>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}><span>{'Обещали: ' + this.state.showOrder?.order?.time_to_client + ' / '}{this.state.showOrder?.order?.text_time}{this.state.showOrder?.order?.time}</span></Grid>
 						}
 
 						{this.state.showOrder?.order?.promo_name == null || this.state.showOrder?.order?.promo_name?.length == 0 ? null :
 							<>
-								<Grid item xs={12}>
+								<Grid
+                                    size={{
+                                        xs: 12
+                                    }}>
 									<b>Промокод: </b>
 									<span>{this.state.showOrder?.order?.promo_name}</span>
 								</Grid>
-								<Grid item xs={12}>
+								<Grid
+                                    size={{
+                                        xs: 12
+                                    }}>
 									<span className="noSpace">{this.state.showOrder?.order?.promo_text}</span>
 								</Grid>
 							</>
 						}
 
 						{this.state.showOrder?.order?.comment == null || this.state.showOrder?.order?.comment.length == 0 ? null :
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<b>Комментарий: </b>
 								<span>{this.state.showOrder?.order?.comment}</span>
 							</Grid>
 						}
 
 						{this.state.showOrder?.order?.sdacha == null || parseInt(this.state.showOrder?.order?.sdacha) == 0 ? null :
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<b>Сдача: </b>
 								<span>{this.state.showOrder?.order?.sdacha}</span>
 							</Grid>
 						}
 
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<b>Сумма заказа: </b>
 							<span>{this.state.showOrder?.order?.sum_order} р</span>
 						</Grid>
 
 						{this.state.showOrder?.order?.check_pos_drive == null || !this.state.showOrder?.order?.check_pos_drive ? null :
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<b>Довоз оформлен: </b>
 								<span>{this.state.showOrder?.order?.check_pos_drive?.comment}</span>
 							</Grid>
 						}
 
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<Table size={'small'} style={{marginTop: 15}}>
 								<TableBody>
 									{this.state.showOrder?.order_items.map((item, key) =>
@@ -178,7 +222,11 @@ export default class SiteClients_Modal_Client_Order extends React.Component {
 						</Grid>
 
 						{!this.state.showOrder?.err_order ? null :
-							<Grid item xs={12} mt={3}>
+							<Grid
+                                mt={3}
+                                size={{
+                                    xs: 12
+                                }}>
 								<Accordion>
 									<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
 										<Typography style={{fontWeight: 'bold'}}>Ошибка</Typography>
@@ -207,12 +255,12 @@ export default class SiteClients_Modal_Client_Order extends React.Component {
 
 					</Grid>
 				</DialogContent>
-				<DialogActions>
+                <DialogActions>
 					<Button variant="contained" onClick={this.onClose.bind(this)}>
 						Закрыть
 					</Button>
 				</DialogActions>
-			</Dialog>
-		);
+            </Dialog>
+        );
 	}
 }

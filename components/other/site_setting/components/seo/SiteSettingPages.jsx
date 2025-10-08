@@ -102,8 +102,6 @@ export function SiteSettingPages() {
       spacing={3}
     >
       <Grid
-        item
-        xs={12}
         sx={{
           display: "flex",
           flexDirection: {
@@ -114,7 +112,9 @@ export function SiteSettingPages() {
           alignItems: "flex-start",
           justifyContent: "space-between",
         }}
-      >
+        size={{
+          xs: 12
+        }}>
         <Typography variant="h5">{moduleName}</Typography>
 
         <Button
@@ -124,13 +124,12 @@ export function SiteSettingPages() {
           Добавить новую страницу
         </Button>
       </Grid>
-
       <Grid
-        item
-        xs={12}
-        sm={12}
         sx={{ p: 3 }}
-      >
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <MySelect
           data={cities}
           value={cityId}
@@ -139,12 +138,11 @@ export function SiteSettingPages() {
           is_none={false}
         />
       </Grid>
-
       <Grid
-        item
-        xs={12}
-        sm={12}
-      >
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <TableContainer>
           <Table>
             <TableHead>

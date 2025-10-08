@@ -215,20 +215,26 @@ class CitySiteItems_ extends React.Component {
         <Backdrop style={{ zIndex: 999 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={err_status}
           text={err_text}
         />
-        
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{module_name}</h1>
           </Grid>
           
-           <Grid item xs={12} mb={5}>
+           <Grid
+             mb={5}
+             size={{
+               xs: 12
+             }}>
             <TableContainer component={Paper}>
               <Table size="small">
                 <TableHead>

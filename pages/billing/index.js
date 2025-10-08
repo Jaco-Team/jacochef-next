@@ -565,14 +565,12 @@ class Billing_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.operAlert}
           onClose={() => this.setState({ operAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog
           open={this.state.modelCheckPay}
           onClose={ () => { this.setState({ modelCheckPay: false }) } }
@@ -589,13 +587,20 @@ class Billing_ extends React.Component {
             <Button variant="contained" onClick={ this.multiPayBill.bind(this) } color="success">Оплатить</Button>
           </DialogActions>
         </Dialog>
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button variant="contained">
               <Link style={{ color: '#fff', textDecoration: 'none' }} href="/billing/new">
                 Новый документ
@@ -603,7 +608,11 @@ class Billing_ extends React.Component {
             </Button>
           </Grid> 
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyDatePickerNew
               label="Дата от"
               format="DD-MM-YYYY"
@@ -614,7 +623,11 @@ class Billing_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyDatePickerNew
               label="Дата до"
               format="DD-MM-YYYY"
@@ -625,7 +638,11 @@ class Billing_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect
               data={this.state.types}
               value={this.state.type}
@@ -636,7 +653,11 @@ class Billing_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyAutocomplite2
               label="Поставщик"
               freeSolo={true}
@@ -648,7 +669,11 @@ class Billing_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect
               data={this.state.bill_list}
               value={this.state.status}
@@ -659,7 +684,11 @@ class Billing_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyTextInput
               label="Номер накладной"
               value={this.state.number}
@@ -667,7 +696,11 @@ class Billing_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyAutocomplite
               data={this.state.points}
               multiple={true}
@@ -677,7 +710,11 @@ class Billing_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite
               data={this.state.all_items}
               multiple={true}
@@ -687,13 +724,22 @@ class Billing_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <Button variant="contained" onClick={this.getBillingList.bind(this)}>
               Показать
             </Button>
           </Grid>
 
-          <Grid item xs={12} style={{ marginBottom: 20 }} sm={6}>
+          <Grid
+            style={{ marginBottom: 20 }}
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <TableContainer component={Paper}>
               <Table aria-label="a dense table" size='small'>
                 <TableHead>
@@ -716,7 +762,10 @@ class Billing_ extends React.Component {
             </TableContainer>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             { this.state.acces_bux_pay === true ?
               <Button variant="contained" color="success" disabled={ this.state.count_true > 0 ? false : true } onClick={ () => { this.setState({ modelCheckPay: true }) } }>
                 Оплатить выбранные
@@ -726,7 +775,12 @@ class Billing_ extends React.Component {
             }
           </Grid>
 
-          <Grid item xs={12} style={{ marginBottom: 40 }} sm={12}>
+          <Grid
+            style={{ marginBottom: 40 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer component={Paper}>
               <Table aria-label="a dense table" size='small'>
                 <TableHead>

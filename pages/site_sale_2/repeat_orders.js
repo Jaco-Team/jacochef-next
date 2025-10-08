@@ -147,30 +147,44 @@ class SiteSale2_RepeatOrders_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Grid container style={{ marginTop: '80px', paddingLeft: '24px' }}>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid container direction="row" style={{ paddingTop: 20 }} spacing={4}>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDateRange.bind(this, 'date_start') } />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew label="Дата до" value={ this.state.date_end } func={ this.changeDateRange.bind(this, 'date_end') } />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyAutocomplite
                 label="Город"
                 multiple={true}
@@ -180,7 +194,11 @@ class SiteSale2_RepeatOrders_ extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 value={this.state.promoName}
                 func={(event) => this.setState({ promoName: event.target.value })}
@@ -188,14 +206,26 @@ class SiteSale2_RepeatOrders_ extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Button variant="contained" onClick={this.getDataPromo.bind(this)}>Показать</Button>
             </Grid>
 
           </Grid>
 
-          <Grid item xs={12} sm={5.9} style={{ marginTop: 20 }} >
-            <Grid item xs={12}>
+          <Grid
+            style={{ marginTop: 20 }}
+            size={{
+              xs: 12,
+              sm: 5.9
+            }}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <TableContainer component={Paper}>
                 <Table size='small'>
 
@@ -243,10 +273,22 @@ class SiteSale2_RepeatOrders_ extends React.Component {
             </Grid>
           </Grid>
 
-          <Grid item xs={12} sm={0.2} />
+          <Grid
+            size={{
+              xs: 12,
+              sm: 0.2
+            }} />
 
-          <Grid item xs={12} sm={5.9} style={{ marginTop: 20, marginBottom: 20}}>
-            <Grid item xs={12}>
+          <Grid
+            style={{ marginTop: 20, marginBottom: 20}}
+            size={{
+              xs: 12,
+              sm: 5.9
+            }}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <TableContainer component={Paper}>
                 <Table size='small'>
 
@@ -296,7 +338,7 @@ class SiteSale2_RepeatOrders_ extends React.Component {
 
         </Grid>
       </>
-    )
+    );
   }
 }
 

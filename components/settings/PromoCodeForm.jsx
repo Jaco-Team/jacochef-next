@@ -185,10 +185,10 @@ export default function PromoCodeForm({
         spacing={3}
       >
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <FormControl
             fullWidth
             size="small"
@@ -211,10 +211,10 @@ export default function PromoCodeForm({
 
         {formData.type && formData.type !== "product" && (
           <Grid
-            item
-            xs={12}
-            sm={6}
-          >
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Autocomplete
               options={discountOptions}
               size="small"
@@ -250,10 +250,10 @@ export default function PromoCodeForm({
               spacing={3}
             >
               <Grid
-                item
-                xs={12}
-                sm={3}
-              >
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyAutocomplite
                   data={mockItems}
                   value={position}
@@ -264,10 +264,10 @@ export default function PromoCodeForm({
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={3}
-              >
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyTextInput
                   value={count}
                   func={(e) => setCount(e.target.value)}
@@ -275,10 +275,10 @@ export default function PromoCodeForm({
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={3}
-              >
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyTextInput
                   value={price}
                   func={(e) => setPrice(e.target.value)}
@@ -286,10 +286,10 @@ export default function PromoCodeForm({
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={3}
-              >
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <Button
                   variant="contained"
                   onClick={addItem}
@@ -306,10 +306,10 @@ export default function PromoCodeForm({
               spacing={3}
             >
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -351,10 +351,10 @@ export default function PromoCodeForm({
         )}
 
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <TextField
             fullWidth
             label="Минимальная сумма заказа"
@@ -368,10 +368,10 @@ export default function PromoCodeForm({
           />
         </Grid>
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <TextField
             fullWidth
             label="Максимальная сумма заказа"
@@ -385,10 +385,10 @@ export default function PromoCodeForm({
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <TextField
             fullWidth
             size="small"
@@ -403,10 +403,10 @@ export default function PromoCodeForm({
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <TextField
             fullWidth
             label="За сколько дней выписан промокод"
@@ -421,10 +421,10 @@ export default function PromoCodeForm({
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <TextField
             fullWidth
             size="small"
@@ -439,9 +439,9 @@ export default function PromoCodeForm({
         </Grid>
 
         <Grid
-          item
-          xs={12}
-        >
+          size={{
+            xs: 12
+          }}>
           <TextField
             fullWidth
             label="Описание промокода"
@@ -454,11 +454,11 @@ export default function PromoCodeForm({
           />
         </Grid>
         <Grid
-          item
-          xs={12}
-          sm={12}
           display="grid"
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <Button
             color="success"
             variant="contained"
@@ -473,11 +473,11 @@ export default function PromoCodeForm({
           </Button>
         </Grid>
         <Grid
-          item
-          xs={12}
-          sm={12}
           display="grid"
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <Accordion style={{ marginTop: "24px", display: history.length ? "inherit" : "none" }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography sx={{ fontWeight: "bold" }}>История изменений</Typography>

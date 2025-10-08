@@ -382,7 +382,6 @@ class Appointment_ extends React.Component {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Grid
           container
           spacing={3}
@@ -390,10 +389,10 @@ class Appointment_ extends React.Component {
           mt={10}
         >
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
@@ -434,11 +433,11 @@ class Appointment_ extends React.Component {
           />
 
           <Grid
-            item
-            xs={12}
             mb={1}
             style={{ display: "flex", gap: "1em" }}
-          >
+            size={{
+              xs: 12
+            }}>
             {this.canEdit("app") && this.canEdit("app_create") &&  (
               <Button
                 variant="outlined"
@@ -457,10 +456,10 @@ class Appointment_ extends React.Component {
             )}
           </Grid>
           <Grid
-            item
-            xs={12}
             mb={1}
-          >
+            size={{
+              xs: 12
+            }}>
             {unitsWithItems?.map((unit) => (
               <Accordion
                 defaultExpanded={unit.id !== null}
@@ -536,10 +535,10 @@ class Appointment_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
             mb={1}
-          >
+            size={{
+              xs: 12
+            }}>
             <Button
               color="primary"
               variant="contained"

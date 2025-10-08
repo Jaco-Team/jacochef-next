@@ -116,7 +116,6 @@ export default function SiteSetting() {
       >
         <CircularProgress color="inherit" />
       </Backdrop>
-
       <MyAlert
         isOpen={openAlert}
         onClose={() => setOpenAlert(false)}
@@ -135,25 +134,24 @@ export default function SiteSetting() {
       >
         {typeof modalContent === "function" ? modalContent() : modalContent}
       </SiteSettingModal>
-
       <Grid
         container
         spacing={3}
         className="container_first_child"
       >
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <h1>{module_name}</h1>
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <Tabs
             value={activeTab}
             onChange={setActiveTab}
@@ -170,10 +168,10 @@ export default function SiteSetting() {
           </Tabs>
         </Grid>
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           {subList.map((subm, i) => {
             const MyComponent = subMap[subm.key];
             return (

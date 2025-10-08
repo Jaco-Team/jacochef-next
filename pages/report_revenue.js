@@ -468,22 +468,27 @@ class ReportRevenue_ extends React.Component {
         <Backdrop style={{ zIndex: 999 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         {/* <TestAccess access={this.state.access} setAccess={(access) => this.setState({access})} /> */}
-
         <MyAlert
           isOpen={openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={err_status}
           text={err_text}
         />
-        
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{module_name}</h1>
           </Grid>
           
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={date_start}
@@ -491,7 +496,11 @@ class ReportRevenue_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={date_end}
@@ -499,7 +508,11 @@ class ReportRevenue_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite
               label="Точка"
               multiple={true}
@@ -509,7 +522,11 @@ class ReportRevenue_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite
               label="Категории"
               multiple={true}
@@ -519,13 +536,21 @@ class ReportRevenue_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button variant="contained" onClick={this.get_report}>
               Показать
             </Button>
           </Grid>
           {this.canAccess('export_items') && (
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Button variant={!(months.length && reportCats.length) ? "outlined" : "contained"} onClick={this.downLoad} disabled={!(months.length && reportCats.length)}>
                 Скачать таблицу в XLS
               </Button>
@@ -533,7 +558,12 @@ class ReportRevenue_ extends React.Component {
           )}
 
           {months.length && reportCats.length ? (
-            <Grid item xs={12} sm={12} mt={3}>
+            <Grid
+              mt={3}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <ReportRevenue_Table 
                 months={months} 
                 cats={reportCats} 

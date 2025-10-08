@@ -37,17 +37,16 @@ export default function CookItemModal({ isOpened, onClose, itemsEdit, stage_1, s
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <DialogContent>
         <Grid
           container
           spacing={0}
         >
           <Grid
-            item
-            xs={12}
             style={{ display: "flex", justifyContent: "center" }}
-          >
+            size={{
+              xs: 12
+            }}>
             {itemsEdit.img_app.length == 0 && itemsEdit.img_new.length > 0 ? (
               <img
                 src={
@@ -89,9 +88,9 @@ export default function CookItemModal({ isOpened, onClose, itemsEdit, stage_1, s
 
           {stage_1?.length > 0 ? (
             <Grid
-              item
-              xs={12}
-            >
+              size={{
+                xs: 12
+              }}>
               <h3 style={{ textAlign: "center" }}>Этап 1</h3>
               <List>
                 {stage_1?.map((item, key) => (
@@ -117,9 +116,9 @@ export default function CookItemModal({ isOpened, onClose, itemsEdit, stage_1, s
 
           {stage_2?.length > 0 ? (
             <Grid
-              item
-              xs={12}
-            >
+              size={{
+                xs: 12
+              }}>
               <h3 style={{ textAlign: "center" }}>Этап 2</h3>
               <List>
                 {stage_2?.map((item, key) => (
@@ -145,9 +144,9 @@ export default function CookItemModal({ isOpened, onClose, itemsEdit, stage_1, s
 
           {stage_3?.length > 0 ? (
             <Grid
-              item
-              xs={12}
-            >
+              size={{
+                xs: 12
+              }}>
               <h3 style={{ textAlign: "center" }}>Этап 3</h3>
               <List>
                 {stage_3?.map((item, key) => (

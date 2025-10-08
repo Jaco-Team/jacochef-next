@@ -96,14 +96,14 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 		const {open, itemName, fullScreen} = this.props;
 
 		return (
-			<Dialog
+            <Dialog
 				open={open}
 				fullWidth={true}
 				maxWidth={'lg'}
 				onClose={this.onClose.bind(this)}
 				fullScreen={fullScreen}
 			>
-				<DialogTitle className="button">
+                <DialogTitle className="button">
 					<Typography style={{alignSelf: 'center'}}>
 						Изменения в{itemName ? `: ${itemName}` : ''}
 					</Typography>
@@ -111,9 +111,13 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 						<CloseIcon/>
 					</IconButton>
 				</DialogTitle>
-				<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
+                <DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
 					<Grid container spacing={3}>
-						<Grid item xs={12} sm={4}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 4
+                            }}>
 							<MyTextInput
 								label="Наименование"
 								value={this.state.itemView ? this.state.itemView.name?.color ? this.state.itemView.name.key : this.state.itemView.name : ''}
@@ -121,7 +125,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.name?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={2}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 2
+                            }}>
 							<MyTextInput
 								label="Действует с"
 								value={this.state.itemView ? this.state.itemView.date_start?.color ? this.state.itemView.date_start.key : this.state.itemView.date_start : ''}
@@ -129,7 +137,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.date_start?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={2}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 2
+                            }}>
 							<MyTextInput
 								label="по"
 								value={this.state.itemView ? this.state.itemView.date_end?.color ? this.state.itemView.date_end.key : this.state.itemView.date_end : ''}
@@ -137,7 +149,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.date_end?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={4}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 4
+                            }}>
 							<MyTextInput
 								label="Код 1С"
 								value={this.state.itemView ? this.state.itemView.art?.color ? this.state.itemView.art.key : this.state.itemView.art : ''}
@@ -145,7 +161,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.art?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={4}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 4
+                            }}>
 							<MyTextInput
 								label="Категория"
 								value={this.state.itemView ? this.state.itemView.category_name?.color ? this.state.itemView.category_name.key : this.state.itemView.category_name : ''}
@@ -153,7 +173,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.category_name?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={2}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 2
+                            }}>
 							<MyTextInput
 								label="Кусочков или размер"
 								value={this.state.itemView ? this.state.itemView.count_part?.color ? this.state.itemView.count_part.key : this.state.itemView.count_part : ''}
@@ -161,7 +185,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.count_part?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={2}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 2
+                            }}>
 							<MyTextInput
 								label="Стол"
 								value={this.state.itemView ? this.state.itemView.stol?.color ? this.state.itemView.stol.key : this.state.itemView.stol : ''}
@@ -169,7 +197,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.stol?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={4}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 4
+                            }}>
 							<MyTextInput
 								label="Вес"
 								value={this.state.itemView ? this.state.itemView.weight?.color ? this.state.itemView.weight.key : this.state.itemView.weight : ''}
@@ -177,7 +209,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.weight?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Установить цену"
 								value={this.state.itemView ? this.state.itemView.is_price?.color ? this.state.itemView.is_price.key : this.state.itemView.is_price : ''}
@@ -185,7 +221,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.is_price?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Активность"
 								value={this.state.itemView ? this.state.itemView.is_show?.color ? this.state.itemView.is_show.key : this.state.itemView.is_show : ''}
@@ -193,8 +233,16 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.is_show?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={6}/>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 6
+                            }} />
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Белки"
 								value={this.state.itemView ? this.state.itemView.protein?.color ? this.state.itemView.protein.key : this.state.itemView.protein : ''}
@@ -202,7 +250,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.protein?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Жиры"
 								value={this.state.itemView ? this.state.itemView.fat?.color ? this.state.itemView.fat.key : this.state.itemView.fat : ''}
@@ -210,7 +262,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.fat?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Углеводы"
 								value={this.state.itemView ? this.state.itemView.carbohydrates?.color ? this.state.itemView.carbohydrates.key : this.state.itemView.carbohydrates : ''}
@@ -218,8 +274,16 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.carbohydrates?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}/>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }} />
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Время на 1 этап"
 								value={this.state.itemView ? this.state.itemView.time_stage_1?.color ? this.state.itemView.time_stage_1.key : this.state.itemView.time_stage_1 : ''}
@@ -227,7 +291,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.time_stage_1?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Время на 2 этап"
 								value={this.state.itemView ? this.state.itemView.time_stage_2?.color ? this.state.itemView.time_stage_2.key : this.state.itemView.time_stage_2 : ''}
@@ -235,7 +303,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.time_stage_2?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Время на 3 этап"
 								value={this.state.itemView ? this.state.itemView.time_stage_3?.color ? this.state.itemView.time_stage_3.key : this.state.itemView.time_stage_3 : ''}
@@ -243,7 +315,11 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 								className={this.state.itemView ? this.state.itemView.time_stage_3?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<Table>
 								<TableHead>
 									<TableRow sx={{'& th': {fontWeight: 'bold'}}}>
@@ -525,13 +601,13 @@ class SiteItems_Modal_History_View_Tech extends React.Component {
 
 					</Grid>
 				</DialogContent>
-				<DialogActions>
+                <DialogActions>
 					<Button variant="contained" onClick={this.onClose.bind(this)}>
 						Закрыть
 					</Button>
 				</DialogActions>
-			</Dialog>
-		);
+            </Dialog>
+        );
 	}
 }
 
@@ -570,14 +646,14 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 		const {open, itemName, fullScreen} = this.props;
 
 		return (
-			<Dialog
+            <Dialog
 				open={open}
 				fullWidth={true}
 				maxWidth={'lg'}
 				onClose={this.onClose.bind(this)}
 				fullScreen={fullScreen}
 			>
-				<DialogTitle className="button">
+                <DialogTitle className="button">
 					<Typography style={{alignSelf: 'center'}}>
 						Изменения в{itemName ? `: ${itemName}` : ''}
 					</Typography>
@@ -585,9 +661,13 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 						<CloseIcon/>
 					</IconButton>
 				</DialogTitle>
-				<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
+                <DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
 					<Grid container spacing={3}>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Действует с"
 								value={this.state.itemView ? this.state.itemView.date_start?.color ? this.state.itemView.date_start.key : this.state.itemView.date_start : ''}
@@ -595,7 +675,11 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 								className={this.state.itemView ? this.state.itemView.date_start?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<MyTextInput
 								label="Состав"
 								value={this.state.itemView ? this.state.itemView.tmp_desc?.color ? this.state.itemView.tmp_desc.key : this.state.itemView.tmp_desc : ''}
@@ -603,7 +687,10 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 								className={this.state.itemView ? this.state.itemView.tmp_desc?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<MyAutocomplite
 								label="Теги"
 								multiple={true}
@@ -613,7 +700,11 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 								className={this.state.itemView ? this.state.itemView.tags?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<MyTextInput
 								label="Короткое описание (в карточке)"
 								value={this.state.itemView ? this.state.itemView.marc_desc?.color ? this.state.itemView.marc_desc.key : this.state.itemView.marc_desc : ''}
@@ -621,7 +712,11 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 								className={this.state.itemView ? this.state.itemView.marc_desc?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<MyTextInput
 								label="Полное описание (в карточке)"
 								value={this.state.itemView ? this.state.itemView.marc_desc_full?.color ? this.state.itemView.marc_desc_full.key : this.state.itemView.marc_desc_full : ''}
@@ -629,7 +724,11 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 								className={this.state.itemView ? this.state.itemView.marc_desc_full?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={4}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 4
+                            }}>
 							<MyTextInput
 								label="На кассе"
 								value={this.state.itemView ? this.state.itemView.show_program?.color ? this.state.itemView.show_program.key : this.state.itemView.show_program : ''}
@@ -637,7 +736,11 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 								className={this.state.itemView ? this.state.itemView.show_program?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={4}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 4
+                            }}>
 							<MyTextInput
 								label="Новинка"
 								value={this.state.itemView ? this.state.itemView.is_new?.color ? this.state.itemView.is_new.key : this.state.itemView.is_new : ''}
@@ -645,7 +748,11 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 								className={this.state.itemView ? this.state.itemView.is_new?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={4}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 4
+                            }}>
 							<MyTextInput
 								label="Сортировка"
 								value={this.state.itemView ? this.state.itemView.sort?.color ? this.state.itemView.sort.key : this.state.itemView.sort : ''}
@@ -653,7 +760,11 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 								className={this.state.itemView ? this.state.itemView.sort?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={4}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 4
+                            }}>
 							<MyTextInput
 								label="На сайте и КЦ"
 								value={this.state.itemView ? this.state.itemView.show_site?.color ? this.state.itemView.show_site.key : this.state.itemView.show_site : ''}
@@ -661,7 +772,11 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 								className={this.state.itemView ? this.state.itemView.show_site?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={4}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 4
+                            }}>
 							<MyTextInput
 								label="Хит"
 								value={this.state.itemView ? this.state.itemView.is_hit?.color ? this.state.itemView.is_hit.key : this.state.itemView.is_hit : ''}
@@ -670,16 +785,26 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 							/>
 						</Grid>
 
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<Grid container spacing={3}>
-								<Grid item xs={12}>
+								<Grid
+                                    size={{
+                                        xs: 12
+                                    }}>
 									<Typography style={{backgroundColor: this.state.itemView ? this.state.itemView?.img_app.length > 0 ? this.state.itemView?.img_new_update?.color ? '#fadadd' : '#fff' : '#fff' : '#fff'}}>
 										{this.state.itemView ? this.state.itemView?.img_app.length > 0 ? this.state.itemView?.img_new_update?.color ? 'Картинка была изменена на:' : 'Картинка не была изменена' : 'Картинка отсутствует' : 'Картинка отсутствует'}
 									</Typography>
 								</Grid>
 
 								{this.state.itemView ? this.state.itemView?.img_app.length > 0 ? (
-									<Grid item xs={12} sm={6}>
+									<Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
 										<picture>
 											<source
 												srcSet={`https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_276x276.jpg 138w, 
@@ -704,13 +829,13 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
 						</Grid>
 					</Grid>
 				</DialogContent>
-				<DialogActions>
+                <DialogActions>
 					<Button variant="contained" onClick={this.onClose.bind(this)}>
 						Закрыть
 					</Button>
 				</DialogActions>
-			</Dialog>
-		);
+            </Dialog>
+        );
 	}
 }
 
@@ -1051,15 +1176,14 @@ class SiteItems_Modal_Mark extends React.Component {
 		const {open, method, fullScreen} = this.props;
 
 		return (
-			<>
-				<MyAlert
+            <>
+                <MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
-				{this.state.modalNewTag ? (
+                {this.state.modalNewTag ? (
 					<Dialog
           maxWidth={'sm'}
           fullWidth={true}
@@ -1069,7 +1193,10 @@ class SiteItems_Modal_Mark extends React.Component {
           <DialogTitle>Новый тег</DialogTitle>
           <DialogContent>
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid
+                  size={{
+                      xs: 12
+                  }}>
                 <MyTextInput label="" value={ this.state.tag_name_new } func={this.changeItem.bind(this, 'tag_name_new')} />
               </Grid>
             </Grid>
@@ -1080,8 +1207,7 @@ class SiteItems_Modal_Mark extends React.Component {
           </DialogActions>
         </Dialog>
 				) : null}
-
-				<Dialog
+                <Dialog
 					open={open}
 					fullWidth={true}
 					maxWidth={'lg'}
@@ -1096,10 +1222,18 @@ class SiteItems_Modal_Mark extends React.Component {
 					</DialogTitle>
 					<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
 						<Grid container spacing={3}>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<Typography>{method}</Typography>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyDatePickerNew
 									label="Действует с"
 									value={this.state.date_start}
@@ -1108,7 +1242,11 @@ class SiteItems_Modal_Mark extends React.Component {
 									func={this.changeDateRange.bind(this, 'date_start')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<MyTextInput
 									label="Состав"
 									value={this.state.tmp_desc}
@@ -1118,7 +1256,10 @@ class SiteItems_Modal_Mark extends React.Component {
 									maxRows={3}
 								/>
 							</Grid>
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<MyAutocomplite
 									label="Теги"
 									multiple={true}
@@ -1127,7 +1268,11 @@ class SiteItems_Modal_Mark extends React.Component {
 									func={this.changeAutocomplite.bind(this, 'tags_my')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<MyTextInput
 									label="Короткое описание (в карточке)"
 									value={this.state.marc_desc}
@@ -1137,7 +1282,11 @@ class SiteItems_Modal_Mark extends React.Component {
 									maxRows={3}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<MyTextInput
 									label="Полное описание (в карточке)"
 									value={this.state.marc_desc_full}
@@ -1147,7 +1296,11 @@ class SiteItems_Modal_Mark extends React.Component {
 									maxRows={3}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={4}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 4
+                                }}>
 								<MyCheckBox
 									label="На кассе"
 									value={parseInt(this.state.show_program) == 1 ? true : false}
@@ -1155,7 +1308,11 @@ class SiteItems_Modal_Mark extends React.Component {
 									func={this.changeItemChecked.bind(this, 'show_program')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={4}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 4
+                                }}>
 								<MyCheckBox
 									label="Новинка"
 									value={parseInt(this.state.is_new) == 1 ? true : false}
@@ -1163,8 +1320,16 @@ class SiteItems_Modal_Mark extends React.Component {
 									func={this.changeItemChecked.bind(this, 'is_new')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={4}/>
-							<Grid item xs={12} sm={4}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 4
+                                }} />
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 4
+                                }}>
 								<MyCheckBox
 									label="На сайте и КЦ"
 									value={parseInt(this.state.show_site) == 1 ? true : false}
@@ -1172,7 +1337,11 @@ class SiteItems_Modal_Mark extends React.Component {
 									func={this.changeItemChecked.bind(this, 'show_site')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={4}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 4
+                                }}>
 								<MyCheckBox
 									label="Хит"
 									value={parseInt(this.state.is_hit) == 1 ? true : false}
@@ -1181,20 +1350,34 @@ class SiteItems_Modal_Mark extends React.Component {
 								/>
 							</Grid>
 
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<Grid container spacing={3}>
-									<Grid item xs={12}>
+									<Grid
+                                        size={{
+                                            xs: 12
+                                        }}>
 										<Typography>Картинка соотношением сторон 600х400 или 300х200 только JPG</Typography>
 									</Grid>
 									{this.state.img_app.length > 0 ? (
-										<Grid item xs={12} sm={6}>
+										<Grid
+                                            size={{
+                                                xs: 12,
+                                                sm: 6
+                                            }}>
 											<img
 												style={{maxHeight: 300, maxWidth: 400}}
 												src={`https://storage.yandexcloud.net/site-home-img/${this.state.img_app}site_items_600x400.jpg?date_update=${this.props.item.img_new_update}`}
 											/>
 										</Grid>
 									) : null}
-									<Grid item xs={12} sm={6}>
+									<Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
 										<div
 											className="dropzone"
 											id="for_img_edit_new"
@@ -1219,8 +1402,8 @@ class SiteItems_Modal_Mark extends React.Component {
 						</Button>
 					</DialogActions>
 				</Dialog>
-			</>
-		);
+            </>
+        );
 	}
 }
 
@@ -1750,15 +1933,14 @@ class SiteItems_Modal_Tech extends React.Component {
 		const {open, method, fullScreen, category, stages} = this.props;
 
 		return (
-			<>
-				<MyAlert
+            <>
+                <MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
-				<Dialog
+                <Dialog
 					open={open}
 					fullWidth={true}
 					maxWidth={'xl'}
@@ -1773,7 +1955,11 @@ class SiteItems_Modal_Tech extends React.Component {
 					</DialogTitle>
 					<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
 						<Grid container spacing={3}>
-							<Grid item xs={12} sm={4}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 4
+                                }}>
 								<MyTextInput
 									label="Наименование"
 									disabled={method !== 'Новое блюдо' && !this.props.acces?.name_edit}
@@ -1781,7 +1967,11 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeItem.bind(this, 'name')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={2}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 2
+                                }}>
 								<MyDatePickerNew
 									label="Действует с"
 									value={this.state.date_start}
@@ -1789,7 +1979,11 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeDateRange.bind(this, 'date_start')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={4}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 4
+                                }}>
 								<MyTextInput
 									label="Код 1С"
 									value={this.state.art}
@@ -1797,7 +1991,11 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeItem.bind(this, 'art')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={4}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 4
+                                }}>
 								<MySelect
 									is_none={false}
 									data={category}
@@ -1807,7 +2005,11 @@ class SiteItems_Modal_Tech extends React.Component {
 									label="Категория"
 								/>
 							</Grid>
-							<Grid item xs={12} sm={2}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 2
+                                }}>
 								<MyTextInput
 									label="Кусочков или размер"
 									disabled={method !== 'Новое блюдо' && !this.props.acces?.count_part_edit}
@@ -1815,7 +2017,11 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeItem.bind(this, 'count_part')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={2}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 2
+                                }}>
 								<MyTextInput
 									label="Стол"
 									value={this.state.stol}
@@ -1823,7 +2029,11 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeItem.bind(this, 'stol')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={4}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 4
+                                }}>
 								<MyTextInput
 									label="Вес"
 									value={this.state.weight}
@@ -1831,7 +2041,11 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeItem.bind(this, 'weight')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyCheckBox
 									label="Установить цену"
 									disabled={method !== 'Новое блюдо' && !this.props.acces?.is_price_edit}
@@ -1839,7 +2053,11 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeItemChecked.bind(this, 'is_price')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyCheckBox
 									label="Активность"
 									disabled={method !== 'Новое блюдо' && !this.props.acces?.is_show_edit}
@@ -1847,8 +2065,16 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeItemChecked.bind(this, 'is_show')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={6}/>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 6
+                                }} />
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyTextInput
 									label="Белки"
 									value={this.state.protein}
@@ -1856,7 +2082,11 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeItem.bind(this, 'protein')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyTextInput
 									label="Жиры"
 									value={this.state.fat}
@@ -1864,7 +2094,11 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeItem.bind(this, 'fat')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyTextInput
 									label="Углеводы"
 									value={this.state.carbohydrates}
@@ -1872,8 +2106,16 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeItem.bind(this, 'carbohydrates')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}/>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }} />
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyTextInput
 									label="Время на 1 этап"
 									value={this.state.time_stage_1}
@@ -1881,7 +2123,11 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeItem.bind(this, 'time_stage_1')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyTextInput
 									label="Время на 2 этап"
 									value={this.state.time_stage_2}
@@ -1889,7 +2135,11 @@ class SiteItems_Modal_Tech extends React.Component {
 									func={this.changeItem.bind(this, 'time_stage_2')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyTextInput
 									label="Время на 3 этап"
 									value={this.state.time_stage_3}
@@ -1898,7 +2148,11 @@ class SiteItems_Modal_Tech extends React.Component {
 								/>
 							</Grid>
 
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<Table>
 									<TableHead>
 										<TableRow sx={{'& th': {fontWeight: 'bold'}}}>
@@ -2337,8 +2591,8 @@ class SiteItems_Modal_Tech extends React.Component {
 						</Button>
 					</DialogActions>
 				</Dialog>
-			</>
-		);
+            </>
+        );
 	}
 }
 
@@ -2350,8 +2604,13 @@ class SiteItems_Table extends React.Component {
 	render() {
 		const {cats, user_app, changeSort, saveSort, changeTableCheck, openItem, openHistoryItem} = this.props;
 		return (
-			<Grid item xs={12} sm={12} style={{paddingBottom: '50px'}}>
-				{cats.map((cat, key) => (
+            <Grid
+                style={{paddingBottom: '50px'}}
+                size={{
+                    xs: 12,
+                    sm: 12
+                }}>
+                {cats.map((cat, key) => (
 					<Accordion key={key}>
 						<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
 							<Typography>{cat.name}</Typography>
@@ -2427,8 +2686,8 @@ class SiteItems_Table extends React.Component {
 						</AccordionDetails>
 					</Accordion>
 				))}
-			</Grid>
-		);
+            </Grid>
+        );
 	}
 }
 
@@ -3159,19 +3418,18 @@ class SiteItems_ extends React.Component {
 
 	render() {
 		return (
-			<>
-				<Backdrop open={this.state.is_load} style={{zIndex: 99999}}>
+            <>
+                <Backdrop open={this.state.is_load} style={{zIndex: 99999}}>
 					<CircularProgress color="inherit"/>
 				</Backdrop>
-
-				<MyAlert
+                <MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-				{this.state.modalEditTags ? <ModalEditTags tags={this.state.tags} onClose={() => this.setState({modalEditTags: false})} open={this.state.modalEditTags} save={this.changeTags.bind(this)} /> : null}
-				<SiteItems_Modal_Tech
+                {this.state.modalEditTags ? <ModalEditTags tags={this.state.tags} onClose={() => this.setState({modalEditTags: false})} open={this.state.modalEditTags} save={this.changeTags.bind(this)} /> : null}
+                <SiteItems_Modal_Tech
 					open={this.state.modalDialogTech}
 					onClose={() => this.setState({modalDialogTech: false, itemTech: null})}
 					item={this.state.itemTech}
@@ -3184,8 +3442,7 @@ class SiteItems_ extends React.Component {
 					items_stage={this.state.items_stage}
 					stages={this.state.stages}
 				/>
-
-				<SiteItems_Modal_Mark
+                <SiteItems_Modal_Mark
 					open={this.state.modalDialogMark}
 					onClose={() => this.setState({modalDialogMark: false})}
 					item={this.state.itemMark}
@@ -3195,8 +3452,7 @@ class SiteItems_ extends React.Component {
 					getData={this.getData.bind(this)}
 					update={this.update.bind(this)}
 				/>
-
-				<SiteItems_Modal_History
+                <SiteItems_Modal_History
 					open={this.state.modalDialogHist}
 					onClose={() => this.setState({modalDialogHist: false, itemHist: null})}
 					item={this.state.itemHist}
@@ -3205,24 +3461,21 @@ class SiteItems_ extends React.Component {
 					openModalHistoryView={this.state.user_app === 'technologist' ? this.openModalHistoryView_Tech.bind(this) : this.openModalHistoryView_Mark.bind(this)}
 					itemName={this.state.itemName}
 				/>
-
-				<SiteItems_Modal_History_View_Mark
+                <SiteItems_Modal_History_View_Mark
 					open={this.state.modalDialogView_Mark}
 					onClose={() => this.setState({modalDialogView_Mark: false, itemView_Mark: null})}
 					itemView={this.state.itemView_Mark}
 					itemName={this.state.itemName}
 					fullScreen={this.state.fullScreen}
 				/>
-
-				<SiteItems_Modal_History_View_Tech
+                <SiteItems_Modal_History_View_Tech
 					open={this.state.modalDialogView}
 					onClose={() => this.setState({modalDialogView: false, itemView: null})}
 					itemView={this.state.itemView}
 					itemName={this.state.itemName}
 					fullScreen={this.state.fullScreen}
 				/>
-
-				<Dialog sx={{
+                <Dialog sx={{
 					'& .MuiDialog-paper': {
 						width: '80%',
 						maxHeight: 435
@@ -3235,19 +3488,30 @@ class SiteItems_ extends React.Component {
 						<Button onClick={this.updateVK.bind(this)}>Ok</Button>
 					</DialogActions>
 				</Dialog>
-
-				<Grid container spacing={3} className='container_first_child'>
-					<Grid item xs={12} sm={12}>
+                <Grid container spacing={3} className='container_first_child'>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<h1>{this.state.module_name}</h1>
 					</Grid>
 
-					<Grid item xs={12} sm={3}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 3
+                        }}>
 						<Button onClick={this.state.user_app === 'technologist' ? this.openItemNew.bind(this, 'Новое блюдо') : () => this.setState({confirmDialog: true})} color="primary" variant="contained">
 							{this.state.user_app === 'technologist' ? 'Новый товар' : 'Обновить товары VK'}
 						</Button>
 					</Grid>
 					{this.state.acces?.change_tag_edit ? (
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 						<Button onClick={() => this.setState({modalEditTags: true})} color="primary" variant="contained">
 							Редактировать тэги
 						</Button>
@@ -3267,8 +3531,8 @@ class SiteItems_ extends React.Component {
 						/>
 					)}
 				</Grid>
-			</>
-		);
+            </>
+        );
 	}
 }
 

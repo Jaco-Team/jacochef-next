@@ -169,10 +169,10 @@ const AppointmentModal = (props) => {
               type="short_name"
             />
             <Grid
-              item
-              xs={6}
-              md={4}
-            >
+              size={{
+                xs: 6,
+                md: 4
+              }}>
               <MyTextInput
                 label="Норма бонусов"
                 type="number"
@@ -182,10 +182,10 @@ const AppointmentModal = (props) => {
               />
             </Grid>
             <Grid
-              item
-              xs={6}
-              md={4}
-            >
+              size={{
+                xs: 6,
+                md: 4
+              }}>
               <MyAutocomplite
                 data={units}
                 disabled={!canEdit("app") || !canEdit("units")}
@@ -197,10 +197,10 @@ const AppointmentModal = (props) => {
               />
             </Grid>
             <Grid
-              item
-              xs={12}
-              md={4}
-            >
+              size={{
+                xs: 12,
+                md: 4
+              }}>
               <MyCheckBox
                 func={(e) => changeItemChecked("is_graph", e)}
                 value={parseInt(item?.is_graph) == 1 ? true : false}
@@ -211,11 +211,11 @@ const AppointmentModal = (props) => {
 
             {fullMenuFiltered?.length > 0 && (
               <Grid
-                item
-                xs={12}
-                sm={12}
                 mb={10}
-              >
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TableContainer sx={{ maxHeight: { xs: "none", sm: 630 } }}>
                   <Table
                     size="small"

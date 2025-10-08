@@ -110,10 +110,18 @@ class CafeDirEdit_Modal extends React.Component {
         </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Typography>Информация о точке:</Typography>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MySelect
                 label="Город"
                 is_none={false}
@@ -122,7 +130,11 @@ class CafeDirEdit_Modal extends React.Component {
                 func={this.changeItem.bind(this, 'city_id')}
               />
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput
                 label="Адрес"
                 value={this.state.item ? this.state.item.addr : ''}
@@ -130,7 +142,11 @@ class CafeDirEdit_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput
                 label="Район"
                 value={this.state.item ? this.state.item.raion : ''}
@@ -138,7 +154,11 @@ class CafeDirEdit_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput
                 label="Сортировка"
                 value={this.state.item ? this.state.item.sort : ''}
@@ -146,7 +166,11 @@ class CafeDirEdit_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput
                 label="Организация"
                 value={this.state.item ? this.state.item.organization : ''}
@@ -154,7 +178,11 @@ class CafeDirEdit_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput
                 label="ИНН"
                 value={this.state.item ? this.state.item.inn : ''}
@@ -162,7 +190,11 @@ class CafeDirEdit_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput
                 label="ОГРН"
                 value={this.state.item ? this.state.item.ogrn : ''}
@@ -170,14 +202,22 @@ class CafeDirEdit_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput
                 label="КПП"
                 value={this.state.item ? this.state.item.kpp : ''}
                 func={this.changeItem.bind(this, 'kpp')}
               />
             </Grid>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput
                 label="Полный адрес"
                 value={this.state.item ? this.state.item.full_addr : ''}
@@ -185,7 +225,11 @@ class CafeDirEdit_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MySelect 
                 is_none={false} 
                 data={this.state.count_orders} 
@@ -194,10 +238,18 @@ class CafeDirEdit_Modal extends React.Component {
                 label='Количество заказов на руках у курьеров' />
             </Grid> 
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Typography>Коэффициенты:</Typography>
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyTextInput
                 label="Коэффициент количества пиццы в час"
                 value={this.state.item ? this.state.item.k_pizza : ''}
@@ -205,7 +257,11 @@ class CafeDirEdit_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyTextInput
                 label="Коэффициент мойки посуды для пиццы (кух раб)"
                 value={this.state.item ? this.state.item.k_pizza_kux : ''}
@@ -213,14 +269,22 @@ class CafeDirEdit_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyTextInput
                 label="Коэффициент мойки посуды для роллов (кух раб)"
                 value={this.state.item ? this.state.item.k_rolls_kux : ''}
                 func={this.changeItem.bind(this, 'k_rolls_kux')}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyTextInput
                 label="Оклад директора на 2 недели (с тек. периода)"
                 value={this.state.item ? this.state.item.dir_price : ''}
@@ -228,7 +292,11 @@ class CafeDirEdit_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyTextInput
                 label="Бонус от уровня директору (с тек. периода)"
                 value={this.state.item ? this.state.item.price_per_lv : ''}
@@ -236,7 +304,11 @@ class CafeDirEdit_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyTextInput
                 label="Часовая ставка курьера (применяется со следующего дня)"
                 value={this.state.item ? this.state.item.driver_price : ''}
@@ -522,14 +594,12 @@ class CafeDirEdit_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <CafeDirEdit_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false, mark: '' })}
@@ -537,14 +607,21 @@ class CafeDirEdit_ extends React.Component {
           save={this.save.bind(this)}
           fullScreen={this.state.fullScreen}
         />
-
         {/* кнопки и выбор точки */}
         <Grid container spacing={3} mb={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyAutocomplite
               label="Точка"
               multiple={false}
@@ -554,16 +631,25 @@ class CafeDirEdit_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.openModal.bind(this, 'new')} variant="contained">
               Добавить точку
             </Button>
           </Grid>
 
         </Grid>
-
         {/* табы */}
-        <Grid item xs={12} sm={12} mt={3} mb={5}>
+        <Grid
+          mt={3}
+          mb={5}
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <TabContext value={this.state.ItemTab}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
               <TabList onChange={this.changeTab.bind(this)} variant="fullWidth">
@@ -574,7 +660,11 @@ class CafeDirEdit_ extends React.Component {
 
             <TabPanel value="1">
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MySelect
                     label="Город"
                     is_none={false}
@@ -583,7 +673,11 @@ class CafeDirEdit_ extends React.Component {
                     func={this.changeData.bind(this, 'city_id')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MyTextInput
                     label="Адрес"
                     value={this.state.data ? this.state.data.addr : ''}
@@ -591,7 +685,11 @@ class CafeDirEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MyTextInput
                     label="Район"
                     value={this.state.data ? this.state.data.raion : ''}
@@ -599,7 +697,11 @@ class CafeDirEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MyTextInput
                     label="Сортировка"
                     value={this.state.data ? this.state.data.sort : ''}
@@ -607,7 +709,11 @@ class CafeDirEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MyTextInput
                     label="Организация"
                     value={this.state.data ? this.state.data.organization : ''}
@@ -615,7 +721,11 @@ class CafeDirEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MyTextInput
                     label="ИНН"
                     value={this.state.data ? this.state.data.inn : ''}
@@ -623,7 +733,11 @@ class CafeDirEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MyTextInput
                     label="ОГРН"
                     value={this.state.data ? this.state.data.ogrn : ''}
@@ -631,14 +745,22 @@ class CafeDirEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MyTextInput
                     label="КПП"
                     value={this.state.data ? this.state.data.kpp : ''}
                     func={this.changeData.bind(this, 'kpp')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={9}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 9
+                  }}>
                   <MyTextInput
                     label="Полный адрес"
                     value={this.state.data ? this.state.data.full_addr : ''}
@@ -646,7 +768,11 @@ class CafeDirEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MyCheckBox
                     label="Активность"
                     value={this.state.data ? parseInt(this.state.data.is_active) == 1 ? true : false : false}
@@ -654,7 +780,11 @@ class CafeDirEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MySelect 
                     is_none={false} 
                     data={this.state.count_orders} 
@@ -662,7 +792,11 @@ class CafeDirEdit_ extends React.Component {
                     func={ this.changeData.bind(this, 'count_driver') } 
                     label='Количество заказов на руках у курьеров' />
                 </Grid> 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MySelect 
                     is_none={false} 
                     data={this.state.count_tables} 
@@ -675,7 +809,11 @@ class CafeDirEdit_ extends React.Component {
 
             <TabPanel value="2">
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     label="Коэффициент количества пиццы в час"
                     value={this.state.data ? this.state.data.k_pizza : ''}
@@ -683,7 +821,11 @@ class CafeDirEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     label="Коэффициент мойки посуды для пиццы (кух раб)"
                     value={this.state.data ? this.state.data.k_pizza_kux : ''}
@@ -691,14 +833,22 @@ class CafeDirEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     label="Коэффициент мойки посуды для роллов (кух раб)"
                     value={this.state.data ? this.state.data.k_rolls_kux : ''}
                     func={this.changeData.bind(this, 'k_rolls_kux')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     label="Оклад директора на 2 недели (с тек. периода)"
                     value={this.state.data ? this.state.data.dir_price : ''}
@@ -706,7 +856,11 @@ class CafeDirEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     label="Бонус от уровня директору (с тек. периода)"
                     value={this.state.data ? this.state.data.price_per_lv : ''}
@@ -714,7 +868,11 @@ class CafeDirEdit_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     label="Часовая ставка курьера (применяется со следующего дня)"
                     value={this.state.data ? this.state.data.driver_price : ''}

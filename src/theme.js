@@ -26,6 +26,29 @@ const theme = createTheme({
     fontFamily: roboto.style.fontFamily,
     // fontFamily: 'var(--inter-font), ' + roboto.style.fontFamily,
   },
+  components: {
+    MuiGrid: {
+      styleOverrides: {
+        root: {
+          boxSizing: "border-box",
+        },
+        container: {
+          // paddingLeft: "24px",
+          // paddingRight: "24px",
+          marginLeft: "auto",
+          marginRight: "auto",
+          width: "100%",
+          //  [theme.breakpoints.up("md")]: {
+          //     paddingInline: "24px",
+          //   },
+        },
+        item: {
+          paddingLeft: "12px",
+          paddingRight: "12px",
+        },
+      },
+    },
+  },
 });
 
 export const font = roboto;
