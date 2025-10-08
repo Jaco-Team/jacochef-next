@@ -1,8 +1,7 @@
 import * as React from "react";
 import * as Sentry from "@sentry/react";
 import PropTypes from "prop-types";
-import { AppCacheProvider } from "@mui/material-nextjs/v15-pagesRouter";
-import { ThemeProvider } from "@mui/material/styles";
+import { StyledEngineProvider, ThemeProvider, CssBaseline } from "@mui/material";
 
 import dynamic from "next/dynamic";
 
@@ -32,15 +31,11 @@ export default function MyApp(props) {
   }
 
   return (
-    <AppCacheProvider
-      {...props}
-      options={{ enableCssLayer: false }}
-    >
+    <StyledEngineProvider injectFirst>
       <ThemeProvider theme={theme}>
-        <Header
-          isHeader={isHeader}
-          suppressHydrationWarning
-        />
+        <CssBaseline />
+
+        {isHeader && <Header suppressHydrationWarning />}
 
         <div className={font.className}>
           <Component
@@ -49,7 +44,7 @@ export default function MyApp(props) {
           />
         </div>
       </ThemeProvider>
-    </AppCacheProvider>
+    </StyledEngineProvider>
   );
 }
 

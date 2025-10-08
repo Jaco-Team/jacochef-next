@@ -18,7 +18,7 @@ import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
 import Table from "@mui/material/Table";
 import Stack from "@mui/material/Stack";
-import {Pagination} from "@mui/lab";
+import {Pagination} from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import ClearIcon from "@mui/icons-material/Clear";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
