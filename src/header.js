@@ -361,7 +361,7 @@ export default function Header() {
 
 								{item.chaild.map((it, k) =>
 									<Link href={`/${it.key_query}`} key={k} onClick={closeMenu}>
-										<ListItem button>
+										<ListItem component="button">
 											{it.name}
 										</ListItem>
 									</Link>
