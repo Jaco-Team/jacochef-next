@@ -625,10 +625,10 @@ export default class SiteClients_Modal_Client extends React.Component {
                       <Typography style={{ fontWeight: 'bold' }}>Новое обращение</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                      <Grid item xs={12} sm={12} mb={3}>
+                      <Grid size={{xs: 12, sm: 12}} sx={{ mb: 3 }}>
                         <TextEditor22 id="EditorNew" value={''} refs_={this.myRef} toolbar={true} menubar={true} />
                       </Grid>
-                      <Grid item xs={12} sm={12}>
+                      <Grid size={{xs: 12, sm: 12}}>
                         {!parseInt(acces?.edit) ? null :
                           <Button variant="contained"  onClick={this.saveComment.bind(this)}>
                             Добавить новый комментарий

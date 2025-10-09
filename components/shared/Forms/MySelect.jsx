@@ -10,7 +10,7 @@ export function MySelect(props) {
     >
       <InputLabel>{props.label}</InputLabel>
       <Select
-        value={props.value}
+        value={props.data?.length > 0 ? props.value || '' : ''}
         label={props.label}
         disabled={props.disabled || props.disabled === true ? true : false}
         onChange={props.func}

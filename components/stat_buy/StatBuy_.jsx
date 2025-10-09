@@ -131,6 +131,10 @@ export default class Stat_buy_ extends React.Component {
       this.showAlert("Выберите точку!");
       return;
     }
+    if (!this.state.cat) {
+      this.showAlert("Выберите категорию!");
+      return;
+    }
 
     const data = {
       cat: this.state.cat,
@@ -307,7 +311,6 @@ export default class Stat_buy_ extends React.Component {
         </Grid>
 
         <Grid
-          item
           size={{
             xs: 12,
             sm: 12,

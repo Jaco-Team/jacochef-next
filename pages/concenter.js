@@ -72,9 +72,10 @@ class Concenter_ extends React.Component {
       modalDialogDriver: false,
       modalDialogDelDriver: false,
       confirmDialog: false,
+      confirmDialogDel: false,
 
       cities: [],
-      city_id: 1,
+      city_id: '',
       text: '',
       date: formatDate(new Date()),
       point_list: [],
@@ -424,7 +425,7 @@ class Concenter_ extends React.Component {
         </Backdrop>
         { !this.state.showOrder ? null :
           <Dialog
-            open={this.state.modalDialog}
+            open={!!this.state.modalDialog}
             onClose={ () => { this.setState({ modalDialog: false }) } }
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
@@ -688,7 +689,7 @@ class Concenter_ extends React.Component {
         }
         {!this.state.showOrder ? null :
           <Dialog
-            open={this.state.modalDialogDel}
+            open={!!this.state.modalDialogDel}
             onClose={ () => { this.setState({ modalDialogDel: false }) } }
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
@@ -735,7 +736,7 @@ class Concenter_ extends React.Component {
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="xs"
-          open={this.state.confirmDialog}
+          open={!!this.state.confirmDialog}
           onClose={() => this.setState({ confirmDialog: false })}
         >
           <DialogTitle>Подтвердите действие</DialogTitle>
@@ -760,7 +761,7 @@ class Concenter_ extends React.Component {
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="xs"
-          open={this.state.confirmDialogDel}
+          open={!!this.state.confirmDialogDel}
           onClose={() => this.setState({ confirmDialogDel: false })}
         >
           <DialogTitle>Подтвердите действие</DialogTitle>

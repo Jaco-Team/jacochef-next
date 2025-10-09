@@ -1,0 +1,3 @@
+- [x] fix Select warnings on empty set when default is not '' (added props.data.length check)
+- [ ] run npx prettier --write ./pages...
+- [ ] add dictionary (centralize tooltip, general error text etc.)
