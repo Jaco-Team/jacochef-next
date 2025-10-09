@@ -47,6 +47,7 @@ function IndicatorsPage() {
 	const [tableData, setTableData] = useState([]);
 	const [tableDataYear, setTableDataYear] = useState([]);
 	const [openModal, setOpenModal] = useState(false);
+	const [openModalDriver, setOpenModalDriver] = useState(false);
 	const [typeModal, setTypeModal] = useState(null);
 	const [colorEdit, setColorEdit] = useState(null);
 	const [valueEdit, setValueEdit] = useState(null);
@@ -58,6 +59,7 @@ function IndicatorsPage() {
 	const [errStatus, setErrStatus] = useState(false);
 	const [errText, setErrText] = useState('');
 	const [openModalDelete, setOpenModalDelete] = useState(false);
+	const [openModalDeleteDriver, setOpenModalDeleteDriver] = useState(false);
 	const [itemId, setItemId] = useState(0);
 	const [ball, setBall] = useState(0);
 	dayjs.extend(utc);
@@ -85,6 +87,7 @@ function IndicatorsPage() {
 	const router = useRouter();
 	const tabsData = {
 		average_time: 'Время приготовленя',
+		driver_time: 'Скорость доставки'
 	};
 
 	useEffect(() => {
@@ -115,8 +118,29 @@ function IndicatorsPage() {
 		})
 	}
 
+	const getSettingsDriver = () => {
+		getData('get_settings_driver', {point_id: pointSettings.id}).then((data) => {
+			const rowCl = [...rowClients];
+			rowCl[0].data = data.stat_times.map((item) => {
+				if (item.type === 'times') {
+					return {
+						id: item.id,
+						value: item.value,
+						value_range: `${item.max_value} - ${item.min_value}`,
+						backgroundColor: item.value_color,
+						ball: item.ball,
+					};
+				}
+			});
+			setStatFutureTimes(data.stat_future_times);
+			setRowClients(rowCl)
+		})
+	}
+
 	useEffect(() => {
-		if (activeTab === 'settings') {
+		if (activeTab === 'settings' && value === 'driver_time') {
+			getSettingsDriver();
+		} else if (activeTab === 'settings' && value === 'average_time') {
 			getSettings();
 		}
 
@@ -148,6 +172,17 @@ function IndicatorsPage() {
 		});
 	}
 
+	const getTableDataDriver = () => {
+		const res = {
+			date_start: dateStart,
+			date_end: dateEnd,
+			point: point
+		};
+		getData('get_data_driver', res).then((data) => {
+			setTableData(data.result);
+		});
+	}
+
 	const getTableDataYear = () => {
 		const res = {
 			date_start: dateStart,
@@ -155,6 +190,17 @@ function IndicatorsPage() {
 			point: point
 		};
 		getData('get_data_year', res).then((data) => {
+			setTableDataYear(data.result);
+		});
+	}
+
+	const getTableDataYearDriver = () => {
+		const res = {
+			date_start: dateStart,
+			date_end: dateEnd,
+			point: point
+		};
+		getData('get_data_year_driver', res).then((data) => {
 			setTableDataYear(data.result);
 		});
 	}
@@ -203,6 +249,32 @@ function IndicatorsPage() {
 		}
 	}
 
+	const save_sett_rate_clients_driver = async (data) => {
+		if (typeModal === 'edit') {
+			data.id = itemIdEdit;
+		}
+
+		data.type = typeModal;
+		data.item_type = itemType;
+		data.date_start = dayjs(data.date_start).local().format('YYYY-MM-DD');
+
+		if (data.item_type === 'orders') {
+			const numericValue = Number(data.value);
+			if (numericValue > 0 && numericValue < 1) {
+				data.value = Math.round(numericValue * 100);
+			}
+		}
+
+		const res = await getData('save_sett_driver', data);
+		if (res.st) {
+			getSettingsDriver();
+		} else {
+			setOpenAlert(true);
+			setErrStatus(res.st);
+			setErrText(res.text);
+		}
+	}
+
 	const delete_sett_rate_clients = async () => {
 
 		const data = {
@@ -210,6 +282,15 @@ function IndicatorsPage() {
 		}
 
 		const res = await getData('delete_sett', data);
+	}
+
+	const delete_sett_rate_clients_driver = async () => {
+
+		const data = {
+			id: itemIdEdit,
+		}
+
+		const res = await getData('delete_sett_driver', data);
 	}
 
 	const openModalRate_clients = (type_modal, name_row, item_type, id, value_edit, color_edit, balls) => {
@@ -223,6 +304,17 @@ function IndicatorsPage() {
 		setOpenModal(true);
 	}
 
+	const openModalRate_clients_driver = (type_modal, name_row, item_type, id, value_edit, color_edit, balls) => {
+		setValueEdit(value_edit);
+		setColorEdit(color_edit);
+		setBall(balls);
+		setItemIdEdit(id);
+		setTypeModal(type_modal);
+		setItemType(item_type);
+		setNameRow(name_row.replace(/^\d+\./, '').toLowerCase().replace(/^./, char => char.toUpperCase()));
+		setOpenModalDriver(true);
+	}
+
 	const deleteFuture = async () => {
 		const data = {
 			id: itemId,
@@ -234,14 +326,34 @@ function IndicatorsPage() {
 		}
 	}
 
+	const deleteFutureDriver = async () => {
+		const data = {
+			id: itemId,
+		}
+
+		const res = await getData('delete_fut_driver', data);
+		if (res) {
+			getSettingsDriver();
+		}
+	}
+
 	const openModalDeleteFut = (id) => {
 		setItemId(id);
 		setOpenModalDelete(true);
 	}
 
+	const openModalDeleteFutDelete = (id) => {
+		setItemId(id);
+		setOpenModalDeleteDriver(true);
+	}
+
 	useEffect(() => {
 		if (pointSettings.id) {
-			getSettings();
+			if (activeTab === 'settings' && value === 'driver_time') {
+				getSettingsDriver();
+			} else if (activeTab === 'settings' && value === 'average_time') {
+				getSettings();
+			}
 		}
 	}, [pointSettings]);
 
@@ -280,12 +392,44 @@ function IndicatorsPage() {
 				/>
 			)}
 
+			{openModalDriver && (
+				<ModalSettings
+					open={openModalDriver}
+					onClose={() => setOpenModalDriver(false)}
+					fullScreen={false}
+					save={save_sett_rate_clients_driver}
+					point_chose={pointSettings}
+					value={valueEdit}
+					balls={ball}
+					type_modal={typeModal}
+					color_edit={colorEdit}
+					itemIdEdit={itemIdEdit}
+					points={points}
+					openAlert={(status, text) => {
+						setOpenAlert(true);
+						setErrStatus(status);
+						setErrText(text);
+					}}
+					name_row={nameRow}
+					delete={delete_sett_rate_clients_driver}
+				/>
+			)}
+
 			{openModalDelete && (
 				<ModalDelete
 					open={openModalDelete}
 					onClose={() => setOpenModalDelete(false)}
 					id={itemId}
 					onDelete={deleteFuture}
+				/>
+			)}
+
+			{openModalDeleteDriver && (
+				<ModalDelete
+					open={openModalDeleteDriver}
+					onClose={() => setOpenModalDeleteDriver(false)}
+					id={itemId}
+					onDelete={deleteFutureDriver}
 				/>
 			)}
 			<Grid item xs={12} sm={6}>
@@ -588,6 +732,299 @@ function IndicatorsPage() {
 
 											<Grid item xs={12} sm={6}>
 												<Button variant="contained" onClick={getTableDataYear}>
+													Показать
+												</Button>
+											</Grid>
+										</Grid>
+										<Grid item xs={12} sm={12} paddingTop={4}>
+											{tableDataYear.rows && <PerformanceTableYears dataTable={tableDataYear}/>}
+										</Grid>
+									</>
+								)}
+							</Grid>
+						</Grid>
+					</TabPanel>
+					<TabPanel value="driver_time">
+						<Grid container spacing={3}>
+							<Grid item xs={12} sm={12} style={{paddingBottom: 10, paddingTop: 0}}>
+								<Paper>
+									<Tabs
+										value={activeTab}
+										onChange={handleChangeTab}
+										centered
+										variant='fullWidth'
+									>
+										<Tab label="Таблица по месяцам" value="table_month"/>
+										<Tab label="Таблица по годам" value="table_year"/>
+										<Tab label="Настройки" value="settings"/>
+									</Tabs>
+								</Paper>
+							</Grid>
+
+							<Grid item xs={12} sm={12} style={{paddingBottom: 10}}>
+								{activeTab === 'settings' && (
+									<Grid container spacing={3}>
+											<Grid item xs={12} sm={6}>
+												<MyAutocomplite label="Точки" data={points} value={pointSettings} func={(event, data) => {
+													setPointSettings(data);
+												}}/>
+											</Grid>
+										<Grid item xs={12} sm={12} mt={3} mb={5}>
+											<TableContainer style={{
+												overflowX: 'auto',
+												maxWidth: '100%',
+												paddingBottom: 20,
+												width: tableWidth_clietns
+											}}>
+												<Table size='small'>
+													<TableBody>
+														{rowClients.map((item, key) => (
+															<TableRow key={key}>
+																<TableCell
+																	style={{
+																		...cellStyles.name,
+																		backgroundColor: item.backgroundColor_name || '#fff',
+																		fontWeight: item.fontWeight_name,
+																		color: item.color_name,
+																		border: item?.name ? '1px solid #ccc' : 'none',
+																	}}
+																>
+																	{item?.name ?? '\u00A0'}
+																</TableCell>
+																{item?.data.map((it, k) => (
+																	<Tooltip
+																		key={k}
+																		title={<Typography color="inherit">Редактировать данные в ячейке</Typography>}
+																	>
+																		<TableCell
+																			style={{
+																				...cellStyles.default,
+																				backgroundColor: it?.backgroundColor || '#fff',
+																				textAlign: 'center',
+																				fontWeight: '900',
+																				cursor: 'pointer',
+																				border: '1px solid #ccc'
+																			}}
+																			onClick={() => openModalRate_clients_driver('edit', item.name, item.type, it.id, it.value, it.backgroundColor, it.ball)}
+																		>
+																			<div style={{
+																				display: 'flex',
+																				flexDirection: 'column',
+																				alignItems: 'center',
+																				justifyContent: 'center',
+																				minHeight: '50px'
+																			}}>
+        															<span style={{fontSize: '16px', fontWeight: 'bold',}}>{it?.value_range ?? 0}</span>
+																				<div style={{
+																					display: 'flex',
+																					alignItems: 'center',
+																					gap: '4px',
+																					marginTop: '4px',
+																					padding: '2px 6px',
+																					backgroundColor: 'rgba(255, 255, 255, 0.9)',
+																					borderRadius: '12px',
+																					border: '1px solid #e0e0e0',
+																					fontSize: '10px',
+																					fontWeight: '600',
+																					color: '#666'
+																				}}>
+																					<span style={{color: '#ff6b6b'}}>{it.ball}</span>
+																				</div>
+																			</div>
+																		</TableCell>
+																	</Tooltip>
+																))}
+																{item?.name && (
+																	<TableCell style={{border: 'none'}} onClick={() => openModalRate_clients_driver('new', item.name, item.type, null, 0, null)}>
+																		<Button variant='contained'>+</Button>
+																	</TableCell>
+																)}
+															</TableRow>
+														))}
+													</TableBody>
+												</Table>
+											</TableContainer>
+										</Grid>
+										{!statFutureTimes.length ? null : (
+											<Grid item xs={12} sm={12}>
+												<Accordion>
+													<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+														<Typography>История изменений</Typography>
+													</AccordionSummary>
+													<AccordionDetails>
+														<TableContainer>
+															<Table>
+																<TableHead>
+																	<TableRow>
+																		<TableCell style={{width: '10%'}}>#</TableCell>
+																		<TableCell style={{width: '20%'}}>Тип</TableCell>
+																		<TableCell style={{width: '20%'}}>Дата</TableCell>
+																		<TableCell style={{width: '50%'}}></TableCell>
+																		<TableCell></TableCell>
+																	</TableRow>
+																</TableHead>
+
+																<TableBody>
+																	{statFutureTimes.map((it, k) => (
+																		<TableRow key={k}>
+																			<TableCell>{k + 1}</TableCell>
+																			<TableCell>{it.type}</TableCell>
+																			<TableCell>{it.date_start}</TableCell>
+																			<TableCell>{it.update_list.map((item, index) => {
+																				if (item.type === 'times') {
+																					const prevItem = index > 0 ? it.update_list[index + 1] : null;
+    																			const prevBall = prevItem ? prevItem.ball : null;
+																					return {
+																						id: item.id,
+																						value: item.value,
+																						value_range: `${item.max_value} - ${item.min_value}`,
+																						backgroundColor: item.value_color,
+																						ball: item['ball'],
+																						prevBall,
+																					};
+																				}
+																			}).map((value, ind) => {
+																				return (
+																					<TableCell
+																						style={{
+																							...cellStyles.default,
+																							backgroundColor: value?.backgroundColor || '#fff',
+																							textAlign: 'center',
+																							fontWeight: '900',
+																							border: value?.value === it.value ? '4px dashed #1976d2' : '1px solid #e0e0e0',
+																							position: 'relative',
+																							transition: 'all 0.3s ease',
+																						}}
+																						sx={{
+																							'&:hover': {
+																								boxShadow: value?.value === it.value ? '0 0 8px rgba(25, 118, 210, 0.4)' : '0 0 4px rgba(0, 0, 0, 0.1)',
+																							}
+																						}}
+																					>
+																						<div style={{
+																							display: 'flex',
+																							flexDirection: 'column',
+																							alignItems: 'center',
+																							justifyContent: 'center',
+																							minHeight: '50px'
+																						}}>
+        																		<span style={{
+																							fontSize: '16px',
+																							fontWeight: 'bold',
+																						}}>
+            																	{value?.value_range ?? 0}
+																							</span>
+																							<div style={{
+																								display: 'flex',
+																								alignItems: 'center',
+																								gap: '4px',
+																								marginTop: '4px',
+																								padding: '2px 6px',
+																								backgroundColor: 'rgba(255, 255, 255, 0.9)',
+																								borderRadius: '12px',
+																								border: '1px solid #e0e0e0',
+																								fontSize: '10px',
+																								fontWeight: '600',
+																								color: '#666'
+																							}}>
+																								{value?.value === it.value ? (
+																									<>
+																										<span style={{color: '#ff6b6b'}}>{statFutureTimes[k + 1]?.update_list[ind]?.ball ?? 0}</span>
+																										<span style={{color: '#4ecdc4'}}>→ {it?.ball}</span>
+																									</>
+																								) : (<span style={{color: '#ff6b6b'}}>{value?.ball}</span>)}
+																							</div>
+																						</div>
+																					</TableCell>
+																				)
+																			})}</TableCell>
+																			<TableCell>
+																			<IconButton
+																					onClick={() => openModalDeleteFutDelete(it.id)}
+																				>
+																					<DeleteIcon/>
+																				</IconButton>
+																			</TableCell>
+																		</TableRow>
+																	))}
+																</TableBody>
+															</Table>
+														</TableContainer>
+													</AccordionDetails>
+												</Accordion>
+											</Grid>
+										)}
+									</Grid>
+								)}
+								{activeTab === 'table_month' && (
+									<>
+										<Grid container spacing={3} xs={12} sm={6}>
+
+											<Grid item xs={12} sm={6}>
+												<MyDatePickerNewViews
+													label="Дата от"
+													views={['month', 'year']}
+													value={dateStart}
+													func={(e) => setDateStart(formatDate(e))}
+												/>
+											</Grid>
+
+											<Grid item xs={12} sm={6} style={{paddingLeft: 12}}>
+												<MyDatePickerNewViews
+													label="Дата до"
+													views={['month', 'year']}
+													value={dateEnd}
+													func={(e) => setDateEnd(formatDate(e))}
+												/>
+											</Grid>
+
+											<Grid item xs={12} sm={6}>
+												<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
+													setPoint(data)
+												}}/>
+											</Grid>
+
+											<Grid item xs={12} sm={6}>
+												<Button variant="contained" onClick={getTableDataDriver}>
+													Показать
+												</Button>
+											</Grid>
+										</Grid>
+										<Grid item xs={12} sm={12} paddingTop={4}>
+											{tableData.rows && <PerformanceTable dataTable={tableData}/>}
+										</Grid>
+									</>
+								)}
+								{activeTab === 'table_year' && (
+									<>
+										<Grid container spacing={3} xs={12} sm={6}>
+
+											<Grid item xs={12} sm={6}>
+												<MyDatePickerNewViews
+													label="Дата от"
+													views={['year']}
+													value={dateStart}
+													func={(e) => setDateStart(formatDate(e))}
+												/>
+											</Grid>
+
+											<Grid item xs={12} sm={6} style={{paddingLeft: 12}}>
+												<MyDatePickerNewViews
+													label="Дата до"
+													views={['year']}
+													value={dateEnd}
+													func={(e) => setDateEnd(formatDate(e))}
+												/>
+											</Grid>
+
+											<Grid item xs={12} sm={6}>
+												<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
+													setPoint(data)
+												}}/>
+											</Grid>
+
+											<Grid item xs={12} sm={6}>
+												<Button variant="contained" onClick={getTableDataYearDriver}>
 													Показать
 												</Button>
 											</Grid>
