@@ -162,6 +162,9 @@ class SiteUserManager_ extends React.Component {
       modalUserEdit: false,
       modalVacation: false,
       modalUserNew: false,
+      chooseVacation: {},
+      commentDifVacation: '',
+      dataVacation: [{id: 1, name: 'Отпуск'},{id: 2, name: 'Больничный'},{id: 3, name: 'Декрет'},{id: 4, name: 'Другое'}],
 
       textDel: '',
       textSearch: '',
@@ -548,6 +551,8 @@ class SiteUserManager_ extends React.Component {
 
       let data = {
         user,
+        typeVacation: this.state.chooseVacation,
+        commentVacation: this.state.commentDifVacation
       };
       let res = await this.getData('saveVacationUser', data);
 
@@ -878,7 +883,7 @@ class SiteUserManager_ extends React.Component {
             maxWidth={'md'}
             onClose={() => this.setState({modalVacation: false})}
         >
-          <DialogTitle>Добавление отпуска сотруднику</DialogTitle>
+          <DialogTitle>Добавление отсутстствия сотрудника</DialogTitle>
           <DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
             {this.state.editUser && this.state.modalUserEdit ? (
                 <Grid item xs={12}>
@@ -897,6 +902,24 @@ class SiteUserManager_ extends React.Component {
                           func={this.changeItem.bind(this, 'vacationEnd')}
                       />
                     </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <MyAutocomplite
+                        data={this.state.dataVacation}
+                        value={this.state.chooseVacation}
+                        func={(event, data) => this.setState({chooseVacation: data})}
+                        multiple={false}
+                        label="Причина"
+                      />
+                    </Grid>
+                    {this.state.chooseVacation?.id === 4 ? (
+                      <Grid item xs={12} sm={6}>
+                      <MyTextInput
+                        label="Объяснение"
+                        value={this.state.commentDifVacation}
+                        func={(e) => this.setState({commentDifVacation: e.target.value})}
+                      />
+                    </Grid>
+                    ) : null}
                   </Grid>
                 </Grid>
             ) : null}
@@ -1042,7 +1065,7 @@ class SiteUserManager_ extends React.Component {
                         </Grid>
                         <Grid item xs={12} sm={6}>
                           <Button onClick={() => this.setState({ modalVacation: true })} color="primary" variant="contained">
-                            Отпуск
+                            Отсутствие
                           </Button>
                         </Grid>
                       </Grid>
@@ -1052,43 +1075,60 @@ class SiteUserManager_ extends React.Component {
                       <Box>
                         <Accordion>
                           <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-                            <Typography sx={{fontWeight: 'bold'}}>История измненений</Typography>
+                            <Typography sx={{fontWeight: 'bold'}}>История изменений</Typography>
                           </AccordionSummary>
                           <AccordionDetails>
-                            <TableContainer component={Paper}>
-                              <Table size={'small'}>
-                                <TableHead>
-                                  <TableRow>
-                                    <TableCell style={{minWidth: 125}}>Дата</TableCell>
-                                    <TableCell>Кто обновлял</TableCell>
-                                    <TableCell>Имя</TableCell>
-                                    <TableCell>Телефон</TableCell>
-                                    <TableCell>Код авторизации</TableCell>
-                                    <TableCell>ИНН</TableCell>
-                                    <TableCell>Должность</TableCell>
-                                    <TableCell>Город</TableCell>
-                                    <TableCell>Точка</TableCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {this.state.editUser.user.history.map(
-                                    (item, key) => (
-                                      <TableRow key={key}>
-                                        <TableCell style={{minWidth: 125}}>{item.date_time_update}</TableCell>
-                                        <TableCell>{item.update_name}</TableCell>
-                                        <TableCell>{item.name}</TableCell>
-                                        <TableCell>{item.login}</TableCell>
-                                        <TableCell>{item.auth_code}</TableCell>
-                                        <TableCell>{item.inn}</TableCell>
-                                        <TableCell>{item.app_name}</TableCell>
-                                        <TableCell>{item.city_name}</TableCell>
-                                        <TableCell>{item.point_name}</TableCell>
-                                      </TableRow>
-                                    )
-                                  )}
-                                </TableBody>
-                              </Table>
-                            </TableContainer>
+                            <Box>
+                              <TableContainer component={Paper} sx={{minWidth: 800}} sx={{
+                                overflowX: 'auto',
+                                maxHeight: 400
+                              }}>
+                                <Table size={'small'} sx={{minWidth: '100%'}}>
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell style={{
+                                        minWidth: 125,
+                                        position: 'sticky',
+                                        left: 0,
+                                        backgroundColor: 'white',
+                                        zIndex: 1
+                                      }}>Дата</TableCell>
+                                      <TableCell style={{minWidth: 120}}>Кто обновлял</TableCell>
+                                      <TableCell style={{minWidth: 120}}>Имя</TableCell>
+                                      <TableCell style={{minWidth: 120}}>Телефон</TableCell>
+                                      <TableCell style={{minWidth: 120}}>Код авторизации</TableCell>
+                                      <TableCell style={{minWidth: 100}}>ИНН</TableCell>
+                                      <TableCell style={{minWidth: 120}}>Должность</TableCell>
+                                      <TableCell style={{minWidth: 120}}>Город</TableCell>
+                                      <TableCell style={{minWidth: 120}}>Точка</TableCell>
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                                    {this.state.editUser.user.history.map(
+                                      (item, key) => (
+                                        <TableRow key={key}>
+                                          <TableCell style={{
+                                            minWidth: 125,
+                                            position: 'sticky',
+                                            left: 0,
+                                            backgroundColor: 'white',
+                                            zIndex: 1
+                                          }}>{item.date_time_update}</TableCell>
+                                          <TableCell style={{minWidth: 120}}>{item.update_name}</TableCell>
+                                          <TableCell style={{minWidth: 120}}>{item.name}</TableCell>
+                                          <TableCell style={{minWidth: 120}}>{item.login}</TableCell>
+                                          <TableCell style={{minWidth: 120}}>{item.auth_code}</TableCell>
+                                          <TableCell style={{minWidth: 100}}>{item.inn}</TableCell>
+                                          <TableCell style={{minWidth: 120}}>{item.app_name}</TableCell>
+                                          <TableCell style={{minWidth: 120}}>{item.city_name}</TableCell>
+                                          <TableCell style={{minWidth: 120}}>{item.point_name}</TableCell>
+                                        </TableRow>
+                                      )
+                                    )}
+                                  </TableBody>
+                                </Table>
+                              </TableContainer>
+                            </Box>
                           </AccordionDetails>
                         </Accordion>
                       </Box>
@@ -1104,9 +1144,12 @@ class SiteUserManager_ extends React.Component {
                               <Table size={'small'}>
                                 <TableHead>
                                   <TableRow>
-                                    <TableCell style={{minWidth: 125}}>№</TableCell>
-                                    <TableCell style={{minWidth: 125}}>Дата начала</TableCell>
+                                    <TableCell >№</TableCell>
+                                    <TableCell>Тип</TableCell>
+                                    <TableCell>Дата начала</TableCell>
                                     <TableCell>Дата окончания</TableCell>
+                                    <TableCell>Создатель</TableCell>
+                                    <TableCell>Дата создания</TableCell>
                                   </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -1114,8 +1157,11 @@ class SiteUserManager_ extends React.Component {
                                     (item, key) => (
                                       <TableRow key={key}>
                                         <TableCell>{key + 1}</TableCell>
+                                        <TableCell style={{minWidth: 125}}>{item.absence_type}</TableCell>
                                         <TableCell>{item.date_start}</TableCell>
                                         <TableCell>{item.date_end}</TableCell>
+                                        <TableCell>{item.user_name}</TableCell>
+                                        <TableCell>{item.date_create}</TableCell>
                                       </TableRow>
                                     )
                                   )}
