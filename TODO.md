@@ -1,3 +1,4 @@
 - [x] fix Select warnings on empty set when default is not '' (added props.data.length check)
 - [ ] run npx prettier --write ./pages...
 - [ ] add dictionary (centralize tooltip, general error text etc.)
+- [ ] move MUI components global styling to theme.js (partially done)

@@ -27,27 +27,27 @@ header > div {
   padding: 24px;
 }
 
-.LeftMenu > .MuiDrawer-paper.MuiDrawer-paperAnchorLeft {
-  width: 350px;
-}
+// .LeftMenu > .MuiDrawer-paper.MuiDrawer-paperAnchorLeft {
+//   width: 350px;
+// }
 
-.MuiAccordion-root.Mui-expanded {
-  margin: 0 !important;
-}
+// .MuiAccordion-root.Mui-expanded {
+//   margin: 0 !important;
+// }
 
-.MuiAccordionSummary-content.Mui-expanded {
-  margin: 12px 0 !important;
-}
+// .MuiAccordionSummary-content.Mui-expanded {
+//   margin: 12px 0 !important;
+// }
 
-.MuiList-root {
-  & a {
-    text-decoration: none;
-    color: rgba(0, 0, 0, 0.87);
-  }
-  .MuiListItem-root {
-    height: 50px;
-  }
-}
+// .MuiList-root {
+//   & a {
+//     text-decoration: none;
+//     color: rgba(0, 0, 0, 0.87);
+//   }
+//   .MuiListItem-root {
+//     height: 50px;
+//   }
+// }
 
 td[class*='customCel'] {
   text-align: center !important;
