@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as Sentry from "@sentry/react";
 import PropTypes from "prop-types";
-import { StyledEngineProvider, ThemeProvider, CssBaseline } from "@mui/material";
+import { ThemeProvider, CssBaseline } from "@mui/material";
 
 import dynamic from "next/dynamic";
 
@@ -31,20 +31,18 @@ export default function MyApp(props) {
   }
 
   return (
-    <StyledEngineProvider injectFirst>
-      <ThemeProvider theme={theme}>
-        {/* <CssBaseline /> */}
+    <ThemeProvider theme={theme}>
+      {/* <CssBaseline /> */}
 
-        {isHeader && <Header suppressHydrationWarning />}
+      {isHeader && <Header suppressHydrationWarning />}
 
-        <div className={font.className}>
-          <Component
-            {...pageProps}
-            router={router}
-          />
-        </div>
-      </ThemeProvider>
-    </StyledEngineProvider>
+      <div className={font.className}>
+        <Component
+          {...pageProps}
+          router={router}
+        />
+      </div>
+    </ThemeProvider>
   );
 }
 

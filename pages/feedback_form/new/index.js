@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {DragDropContext, Droppable, Draggable} from 'react-beautiful-dnd';
 import {
-	Rating, TextField, Checkbox, FormControlLabel, Button, Chip, Typography, Modal, Box, Autocomplete, useTheme, styled,
+	Rating, TextField, Checkbox, FormControlLabel, Button, Chip, Typography, Modal, Box, Autocomplete,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DragHandleIcon from '@mui/icons-material/DragHandle';
@@ -31,16 +31,25 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import MyAlert from '@/components/shared/MyAlert';
 
-const FormElementCard = styled(Paper)(({theme}) => ({
-	marginBottom: theme.spacing(3),
-	padding: theme.spacing(3),
-	borderLeft: `4px solid ${theme.palette.primary.main}`,
-	transition: 'all 0.3s ease',
-	'&:hover': {
-		boxShadow: theme.shadows[4],
-		transform: 'translateY(-2px)',
-	},
-}));
+function FormElementCard({ children, ...props }) {
+  return (
+    <Paper
+      {...props}
+      sx={(theme) => ({
+        marginBottom: theme.spacing(3),
+        padding: theme.spacing(3),
+        borderLeft: `4px solid ${theme.palette.primary.main}`,
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          boxShadow: theme.shadows[4],
+          transform: 'translateY(-2px)',
+        },
+      })}
+    >
+      {children}
+    </Paper>
+  );
+}
 
 const PresetModal = ({open, onClose, onSave}) => {
 	const [newPreset, setNewPreset] = useState({
