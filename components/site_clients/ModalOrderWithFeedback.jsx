@@ -554,6 +554,28 @@ const ModalOrderWithFeedback = ({
               style={{ marginTop: 15 }}
             >
               <TableBody>
+                {order_items?.some((item) => item.form_data.length) ? (
+                  <>
+                    <TableRow>
+                      <TableCell>Заказов</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell><b>{order?.stat_order?.all_count} шт</b></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Доставок</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell><b>{order?.stat_order?.count_dev} шт</b></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Самовывозов</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell><b>{order?.stat_order?.count_pic} шт</b></TableCell>
+                    </TableRow>
+                  </>
+                ) : null}
                 {order_items
                   ? order_items.map((item, key) => (
                       <TableRow key={key}>
