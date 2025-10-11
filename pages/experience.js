@@ -30,12 +30,13 @@ import TabPanel from '@mui/lab/TabPanel';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyAutocomplite, MyAlert, MyDatePickerNew, MyTextInput } from '@/ui/elements';
+import { MySelect, MyAutocomplite, MyDatePickerNew, MyTextInput } from '@/components/shared/Forms';
 
 import moment from 'moment';
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 const formatter = new Intl.NumberFormat('ru', {
   style: 'unit',
@@ -121,12 +122,16 @@ class Experience_Modal_Cloth extends React.Component {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent style={{ paddingTop: 10, paddingBottom: 10 }}>
           <Grid container spacing={3}>
             {!this.state.listCloth ? null :
               this.state.listCloth.map((it, key) => (
-                <Grid item xs={12} sm={12} key={key}>
+                <Grid
+                  key={key}
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="Наименование"
                     value={it.name}
@@ -136,7 +141,6 @@ class Experience_Modal_Cloth extends React.Component {
             ))}
           </Grid>
         </DialogContent>
-
         <DialogActions>
           <Button color="success" variant="contained" onClick={this.saveClothList.bind(this)}>
             Coxранить
@@ -378,7 +382,6 @@ class Experience_Modal_User extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog
           open={this.props.open}
           onClose={this.onClose.bind(this)}
@@ -414,14 +417,26 @@ class Experience_Modal_User extends React.Component {
               {/* Информация */}
               <TabPanel value={'1'} style={{ padding: '24px 0' }}>
                 <Grid container spacing={3}>
-                  <Grid item xs={12} sm={4} display="flex" justifyContent="center">
+                  <Grid
+                    display="flex"
+                    justifyContent="center"
+                    size={{
+                      xs: 12,
+                      sm: 4
+                    }}>
                     {this.state.item ?
                       this.state.item.photo ?
                         <img src={this.state.item.photo} style={{ width: '100%', height: 'auto' }}/>
                         : 'Фото отсутствует' : 'Фото отсутствует'}
                   </Grid>
 
-                  <Grid item xs={12} sm={6} display="flex" flexDirection="column">
+                  <Grid
+                    display="flex"
+                    flexDirection="column"
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <Grid display="flex" flexDirection="row" mb={2}>
                       <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', marginRight: 2 }}>ФИО:</Typography>
                       <Typography sx={{ whiteSpace: 'nowrap' }}>{this.state.item?.name ?? 'Не указано'}</Typography>
@@ -962,14 +977,12 @@ class Experience_ extends React.Component {
         <Backdrop style={{ zIndex: 999 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Experience_Modal_User
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false })}
@@ -983,7 +996,6 @@ class Experience_ extends React.Component {
           listClothUserNonActive={this.state.listClothUserNonActive}
           saveListClothUser={this.saveListClothUser.bind(this)}
         />
-
         <Experience_Modal_Cloth
           open={this.state.modalDialogCloth}
           onClose={() => this.setState({ modalDialogCloth: false })}
@@ -991,14 +1003,20 @@ class Experience_ extends React.Component {
           listCloth={this.state.listCloth}
           saveClothList={this.saveClothList.bind(this)}
         />
-
         <Grid container spacing={3} className='container_first_child'>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect
               label="Город"
               is_none={false}
@@ -1008,7 +1026,11 @@ class Experience_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyAutocomplite
               label="Точки"
               multiple={true}
@@ -1018,7 +1040,11 @@ class Experience_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyAutocomplite
               label="Должность"
               multiple={false}
@@ -1028,14 +1054,22 @@ class Experience_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <Button variant="contained" onClick={this.getInfo.bind(this)} sx={{ whiteSpace: 'nowrap' }}>
               Обновить данные
             </Button>
           </Grid>
 
           {this.state.user_kind === '1' || this.state.user_kind === '0' ?
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Button variant="contained" onClick={this.getDataСloth.bind(this)} sx={{ whiteSpace: 'nowrap' }}>
                 Предметы одежды
               </Button>
@@ -1045,7 +1079,11 @@ class Experience_ extends React.Component {
 
           {/* статистика */}
           {!this.state.stat ? null : (
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <TableContainer>
                 <Table>
                   <TableBody>
@@ -1067,7 +1105,11 @@ class Experience_ extends React.Component {
 
           {/* официально трудоустроенных */}
           {!this.state.stat_of ? null : (
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <TableContainer>
                 <Table>
                   <TableBody>
@@ -1092,7 +1134,12 @@ class Experience_ extends React.Component {
 
           {/* таблица */}
           {!this.state.users ? null : (
-            <Grid item xs={12} sm={12} mb={5}>
+            <Grid
+              mb={5}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -1132,7 +1179,6 @@ class Experience_ extends React.Component {
           )}
 
         </Grid>
-
       </>
     );
   }

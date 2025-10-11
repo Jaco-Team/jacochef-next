@@ -133,17 +133,16 @@ class ShowCook_ extends React.Component {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Grid
           container
           spacing={3}
           className="container_first_child"
         >
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
@@ -159,11 +158,11 @@ class ShowCook_ extends React.Component {
           )}
 
           <Grid
-            item
-            xs={12}
-            sm={12}
             style={{ marginBottom: 24 }}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Paper>
               <Tabs
                 value={this.state.activeTab}
@@ -188,11 +187,10 @@ class ShowCook_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={12}
-            style={{ paddingTop: 0, paddingBottom: "40px" }}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TabPanel
               value={this.state.activeTab}
               index={0}
@@ -204,11 +202,10 @@ class ShowCook_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={12}
-            style={{ paddingTop: 0, paddingBottom: "40px" }}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TabPanel
               value={this.state.activeTab}
               index={1}
@@ -219,11 +216,10 @@ class ShowCook_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={12}
-            style={{ paddingTop: 0, paddingBottom: "40px" }}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TabPanel
               value={this.state.activeTab}
               index={2}

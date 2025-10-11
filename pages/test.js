@@ -61,28 +61,44 @@ export default class Test extends React.Component {
   render() {
     return (
       <>
-        
-
         <Grid container spacing={3} className='test_container'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>Test page</h1>
           </Grid>
 
           
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button variant="contained" >
               Обновить данные
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <Button variant="contained" style={{ whiteSpace: 'nowrap' }} >
               Добавить кассу
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12} mt={3} mb={5}>
+          <Grid
+            mt={3}
+            mb={5}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer>
               <Table>
                 <TableHead>

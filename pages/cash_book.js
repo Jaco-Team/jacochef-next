@@ -31,12 +31,13 @@ import Collapse from '@mui/material/Collapse';
 
 import HelpIcon from '@mui/icons-material/Help';
 
-import { MySelect, MyTextInput, MyDatePickerNew, formatDate } from '@/ui/elements';
+import { MySelect, MyTextInput, MyDatePickerNew } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 const text = {
   'virycka_fiz': 'Выручка проставляется автоматически на основании Z-отчетов после закрытия кассовой смены',
@@ -878,7 +879,6 @@ class CashBook_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Dialog
           fullWidth={true}
           maxWidth={'md'}
@@ -891,24 +891,40 @@ class CashBook_ extends React.Component {
             <Grid container spacing={3}>
 
               { this.state.openModalType_edit === false ? false :
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput label="Сумма" value={this.state.summ} type={'number'} func={this.changeSumm.bind(this)} />
                 </Grid>
               }
 
               { this.state.openModalType_edit === false ? false :
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyDatePickerNew label="Дата" value={ this.state.date } func={ this.changeDate.bind(this, 'date') } />
                 </Grid>
               }
 
               { this.state.openModalType_edit === false ? false :
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput label="Комментарий" value={this.state.comment} multiline={true} maxRows={3} type={'text'} func={this.changeComment.bind(this, 'comment')} />
                 </Grid>
               }
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TableContainer component={Paper}>
 
                   <Table>
@@ -952,7 +968,6 @@ class CashBook_ extends React.Component {
             </DialogActions>
           }
         </Dialog>
-
         <Dialog
           fullWidth={true}
           maxWidth={'md'}
@@ -964,15 +979,27 @@ class CashBook_ extends React.Component {
 
             <Grid container spacing={3}>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput label="Сумма" value={this.state.summ} type={'number'} func={this.changeSumm.bind(this)} />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyDatePickerNew label="Дата" value={ this.state.date } func={ this.changeDate.bind(this, 'date') } />
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput label="Комментарий" value={this.state.comment} multiline={true} maxRows={3} type={'text'} func={this.changeComment.bind(this, 'comment')} />
               </Grid>
 
@@ -988,7 +1015,6 @@ class CashBook_ extends React.Component {
           </DialogActions>
 
         </Dialog>
-
         <Dialog
           open={this.state.is_open_action}
           onClose={this.closeAction.bind(this)}
@@ -1014,29 +1040,51 @@ class CashBook_ extends React.Component {
             <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={this.closeAction.bind(this)}>Отмена</Button>
           </DialogActions>
         </Dialog>
-
         <Grid container spacing={3} style={{ paddingBottom: 100 }} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MySelect data={this.state.points} value={this.state.point} func={ this.changePoint.bind(this) } label='Точка' />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDate.bind(this, 'date_start') } />
           </Grid>
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew label="Дата до" value={ this.state.date_end } func={ this.changeDate.bind(this, 'date_end') } />
           </Grid>
 
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Button variant="contained" onClick={this.updateData.bind(this)}>Обновить данные</Button>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MainTable
               table={'fiz'}
               addData={this.addData.bind(this)}
@@ -1091,7 +1139,11 @@ class CashBook_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MainTable
               table={'driver_cash'}
               addData={this.addData.bind(this)}
@@ -1150,7 +1202,7 @@ class CashBook_ extends React.Component {
 
         </Grid>
       </>
-    )
+    );
   }
 }
 

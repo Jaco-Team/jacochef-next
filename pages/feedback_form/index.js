@@ -45,17 +45,37 @@ function FeedbackPage() {
 	};
 
 	return (
-		<Grid item xs={12} sm={12} container spacing={3} mb={3} className="container_first_child">
-			<Backdrop style={{zIndex: 99}} open={isLoad}>
+        <Grid
+            container
+            spacing={3}
+            mb={3}
+            className="container_first_child"
+            size={{
+                xs: 12,
+                sm: 12
+            }}>
+            <Backdrop style={{zIndex: 99}} open={isLoad}>
 				<CircularProgress color="inherit"/>
 			</Backdrop>
-			<Grid item xs={12} sm={6}>
+            <Grid
+                size={{
+                    xs: 12,
+                    sm: 6
+                }}>
 				<h1>{module.name}</h1>
 			</Grid>
-			{active.add_feedback ? (<Grid item xs={12} sm={12}>
+            {active.add_feedback ? (<Grid
+                size={{
+                    xs: 12,
+                    sm: 12
+                }}>
 				<Button variant="contained" onClick={() => router.push('/feedback_form/new')}>Добавить новую форму</Button>
 			</Grid>) : null}
-			<Grid item xs={12} sm={12}>
+            <Grid
+                size={{
+                    xs: 12,
+                    sm: 12
+                }}>
 				<h3>Активные формы</h3>
 				<Table>
 					<TableHead>
@@ -78,7 +98,11 @@ function FeedbackPage() {
 					</TableBody>
 				</Table>
 			</Grid>
-			<Grid item xs={12} sm={12}>
+            <Grid
+                size={{
+                    xs: 12,
+                    sm: 12
+                }}>
 				<h3>Не активные формы</h3>
 				<Table>
 					<TableHead>
@@ -101,8 +125,8 @@ function FeedbackPage() {
 					</TableBody>
 				</Table>
 			</Grid>
-		</Grid>
-	);
+        </Grid>
+    );
 }
 
 export default function FeedBack() {

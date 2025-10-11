@@ -18,11 +18,12 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyDatePickerNew, formatDate } from '@/ui/elements';
+import { MySelect, MyDatePickerNew } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class RasBillAndCook_ extends React.Component {
   click = false;
@@ -156,29 +157,51 @@ class RasBillAndCook_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
           
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect data={this.state.points} value={this.state.point} func={ this.changePoint.bind(this) } label='Точка' />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect data={this.state.rev_list} value={this.state.rev} func={ this.changeRev.bind(this) } label='Ревизия' />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyDatePickerNew label='Дата до' value={this.state.date_end} func={ this.changeDate.bind(this) } />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button variant="contained" onClick={this.updateData.bind(this)}>Обновить данные</Button>
           </Grid>
         
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             
             { this.state.cats.map( (item, key) =>
               <Accordion key={key}>
@@ -243,7 +266,7 @@ class RasBillAndCook_ extends React.Component {
           </Grid>
         </Grid>
       </>
-    )
+    );
   }
 }
 

@@ -45,11 +45,12 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 
-import { MySelect, MyDatePickerNew, MyTextInput, MyAlert } from '@/ui/elements';
+import { MySelect, MyDatePickerNew, MyTextInput } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 class CheckWorks_Confirm extends React.Component {
   constructor(props) {
@@ -267,7 +268,15 @@ class CheckWorks_Modal_Edit extends React.Component {
 
           <Grid container spacing={3} justifyContent="center" mb={3}>
 
-            <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center" mb={2}>
+            <Grid
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              mb={2}
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                 Уборку начал
               </Typography>
@@ -276,7 +285,15 @@ class CheckWorks_Modal_Edit extends React.Component {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center" mb={2}>
+            <Grid
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              mb={2}
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 'bold' }}>
                 Уборку подтвердил
               </Typography>
@@ -285,9 +302,21 @@ class CheckWorks_Modal_Edit extends React.Component {
               </Typography>
             </Grid>
             
-            <Grid item xs={12} sm={12} display="flex" justifyContent="space-around" sx={{ flexDirection: {xs: 'column', sm: 'row'} }}>
+            <Grid
+              display="flex"
+              justifyContent="space-around"
+              sx={{ flexDirection: {xs: 'column', sm: 'row'} }}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
 
-            <Grid item xs={12} sm={3} sx={{ marginBottom: {xs: 3, sm: 0} }}>
+            <Grid
+              sx={{ marginBottom: {xs: 3, sm: 0} }}
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput
                 label="Объем заготовки"
                 value={this.state.item ? this.state.item.count_pf : ''}
@@ -295,7 +324,11 @@ class CheckWorks_Modal_Edit extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput
                 label="Объем отходов"
                 value={this.state.item ? this.state.item.count_trash : ''}
@@ -306,7 +339,11 @@ class CheckWorks_Modal_Edit extends React.Component {
 
             {/* аккордион */}
             {this.state.item ? this.state.item.hist.length === 0 ? null : (
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <Accordion>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Typography>История изменений</Typography>
@@ -346,7 +383,6 @@ class CheckWorks_Modal_Edit extends React.Component {
 
           </Grid>
         </DialogContent>
-
         <DialogActions className="button">
           <Button color="success" variant="contained" onClick={this.save.bind(this)}>Сохранить</Button>
           <Button onClick={this.onClose.bind(this)} variant="contained">Отмена</Button>
@@ -689,13 +725,11 @@ class Checkworks_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.openAlert} 
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 
           text={this.state.err_text} />
-
         <CheckWorks_Confirm
           open={this.state.confirmDialog}
           onClose={() => this.setState({ confirmDialog: false })}
@@ -703,7 +737,6 @@ class Checkworks_ extends React.Component {
           delete={this.deleteItem.bind(this)}
           save={this.saveItem.bind(this)}
         />
-
         <CheckWorks_Modal_New
           open={this.state.modalDialogNew}
           onClose={() => this.setState({ modalDialogNew: false })}
@@ -711,7 +744,6 @@ class Checkworks_ extends React.Component {
           event={this.state.works}
           save={this.saveWork.bind(this)}
         />
-
         <CheckWorks_Modal_Edit
           open={this.state.modalDialogEdit}
           onClose={() => this.setState({ modalDialogEdit: false })}
@@ -720,22 +752,33 @@ class Checkworks_ extends React.Component {
           save={this.saveWork.bind(this)}
           fullScreen={this.state.fullScreen}
         />
-
         {/* кнопки и выбор дат */}
         <Grid container spacing={3} mb={5} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           {this.state.check_cook ? null : (
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Button onClick={this.openModal.bind(this, 'newItem', 'Добавление уборки')} variant="contained">
                 Добавить уборку
               </Button>
             </Grid>
           )}
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect
               is_none={false}
               data={this.state.points}
@@ -745,7 +788,11 @@ class Checkworks_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -753,7 +800,11 @@ class Checkworks_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -761,14 +812,22 @@ class Checkworks_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.getItems.bind(this)} variant="contained">
               Обновить
             </Button>
           </Grid>
 
           {/* таблицы */}
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TabContext value={this.state.ItemTab}>
               <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <TabList onChange={this.changeTab.bind(this)} variant="fullWidth">
@@ -779,7 +838,12 @@ class Checkworks_ extends React.Component {
               </Box>
 
               <TabPanel value="1" sx={{ p: 0 }}>
-                <Grid item xs={12} sm={12} mb={5}>
+                <Grid
+                  mb={5}
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <TableContainer>
                     <Grid mb={5} mt={5}>
                       <Button 
@@ -841,7 +905,13 @@ class Checkworks_ extends React.Component {
               </TabPanel>
 
               <TabPanel value="2" sx={{ p: 0 }}>
-                <Grid item xs={12} sm={12} mt={5} mb={5}>
+                <Grid
+                  mt={5}
+                  mb={5}
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <TableContainer>
                     <Table>
                       <TableHead>
@@ -875,7 +945,13 @@ class Checkworks_ extends React.Component {
               </TabPanel>
 
               <TabPanel value="3" sx={{ p: 0 }}>
-                <Grid item xs={12} sm={12} mt={5} mb={5}>
+                <Grid
+                  mt={5}
+                  mb={5}
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <TableContainer>
                     <Table>
                       <TableHead>
@@ -936,7 +1012,6 @@ class Checkworks_ extends React.Component {
           </Grid>
 
         </Grid>
-
       </>
     );
   }

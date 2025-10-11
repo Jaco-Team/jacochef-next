@@ -20,9 +20,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyAlert, MyTextInput, MyAutocomplite } from '@/ui/elements';
+import { MySelect, MyTextInput, MyAutocomplite } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class VendorItemPrice_ extends React.Component {
   constructor(props) {
@@ -170,9 +171,7 @@ class VendorItemPrice_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
         <MyAlert isOpen={this.state.operAlert} onClose={() => { this.setState({ operAlert: false }); }} status={this.state.err_status} text={this.state.err_text} />
-
         <Dialog
           open={this.state.modalDialog}
           onClose={ () => { this.setState({ modalDialog: false }) } }
@@ -189,7 +188,6 @@ class VendorItemPrice_ extends React.Component {
             <Button color="primary">Сохранить</Button>
           </DialogActions>
         </Dialog>
-        
         <Dialog
           open={this.state.modalDialogCity}
           onClose={() => { this.setState({ modalDialogCity: false }); }}
@@ -199,7 +197,11 @@ class VendorItemPrice_ extends React.Component {
           <DialogTitle>Где применить</DialogTitle>
 
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyAutocomplite
                 label="Города"
                 multiple={true}
@@ -216,26 +218,43 @@ class VendorItemPrice_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-        
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
           
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect data={this.state.cities} value={this.state.city} func={ this.changeCity.bind(this) } is_none={false} label='Город' />
           </Grid>
-          <Grid item xs={12} sm={3}>
-            <MyAutocomplite data={this.state.vendors} value={this.state.vendor} func={ this.changeVendor.bind(this) } multiple={false} label='Поставщик' />
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
+            <MyAutocomplite data={this.state.vendors} value={this.state.vendor} func={ this.changeVendor.bind(this) } multiple={false} label='Поставщик' disableCloseOnSelect={false} />
           </Grid>
           
           
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Button onClick={ () => { this.setState({ modalDialogCity: true }) } } variant="contained">Сохранить</Button>
           </Grid>
           
           
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
               
             <TableContainer component={Paper}>
               <Table>
@@ -275,7 +294,7 @@ class VendorItemPrice_ extends React.Component {
           
         </Grid>
       </>
-    )
+    );
   }
 }
 

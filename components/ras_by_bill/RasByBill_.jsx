@@ -18,7 +18,7 @@ import {
   Button,
 } from "@mui/material";
 
-import { MySelect, MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from "@/ui/elements";
+import { MyAutocomplite, MyDatePickerNew } from "@/components/shared/Forms";
 
 import dayjs from "dayjs";
 
@@ -28,6 +28,8 @@ import { formatNumber } from "@/src/helpers/utils/i18n";
 
 import { Component } from "react";
 import { ExpandMore } from "@mui/icons-material";
+import { formatDate } from "@/src/helpers/ui/formatDate";
+import MyAlert from "@/components/shared/MyAlert";
 
 export default class RasByBill_ extends Component {
   constructor(props) {
@@ -55,7 +57,7 @@ export default class RasByBill_ extends Component {
       items: data?.items || [],
       cats: data?.cats || [],
       items_cat: data?.items_cat || [],
-      item_cat: 0,
+      item_cat: null,
 
       myItems: [],
 
@@ -215,32 +217,30 @@ export default class RasByBill_ extends Component {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Grid
           container
           spacing={3}
           className="container_first_child"
         >
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             {/* <MySelect
               data={this.state.points}
               multiple={true}
@@ -248,19 +248,20 @@ export default class RasByBill_ extends Component {
               func={this.changePoint.bind(this)}
               label="Точка"
             /> */}
-            <MyAutocomplite 
-              data={this.state.points}
+            <MyAutocomplite
+              data={this.state.points || []}
               multiple={true}
-              value={this.state.point}
-              func = {this.changePoint.bind(this)} 
-              />
+              value={this.state.point || []}
+              func={this.changePoint.bind(this)}
+              label="Кафе"
+            />
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -268,10 +269,10 @@ export default class RasByBill_ extends Component {
             />
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -280,15 +281,15 @@ export default class RasByBill_ extends Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyAutocomplite
-              data={this.state.items_cat}
+              data={this.state.items_cat || []}
               multiple={false}
               disableCloseOnSelect={false}
-              value={this.state.item_cat}
+              value={this.state.item_cat || null}
               func={(_, value) => {
                 this.setState({ item_cat: value });
               }}
@@ -297,10 +298,10 @@ export default class RasByBill_ extends Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <MyAutocomplite
               data={this.state.items}
               multiple={true}
@@ -310,10 +311,10 @@ export default class RasByBill_ extends Component {
             />
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button
               variant="contained"
               onClick={this.getItems.bind(this)}
@@ -322,10 +323,10 @@ export default class RasByBill_ extends Component {
             </Button>
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button
               variant="contained"
               onClick={this.getCats.bind(this)}
@@ -337,9 +338,9 @@ export default class RasByBill_ extends Component {
           {this.state.resItems && this.state.resItems.items_ras ? (
             <>
               <Grid
-                item
-                xs={12}
-              >
+                size={{
+                  xs: 12
+                }}>
                 <h1>Куплено по накладным</h1>
                 <TableContainer component={Paper}>
                   <Table aria-label="a dense table">
@@ -382,9 +383,9 @@ export default class RasByBill_ extends Component {
               </Grid>
 
               <Grid
-                item
-                xs={12}
-              >
+                size={{
+                  xs: 12
+                }}>
                 <h1>Расход заготовок (включая рецепты)</h1>
                 <TableContainer component={Paper}>
                   <Table aria-label="a dense table">
@@ -414,9 +415,9 @@ export default class RasByBill_ extends Component {
               </Grid>
 
               <Grid
-                item
-                xs={12}
-              >
+                size={{
+                  xs: 12
+                }}>
                 <h1>Расход рецептов</h1>
                 <TableContainer component={Paper}>
                   <Table aria-label="a dense table">
@@ -447,10 +448,10 @@ export default class RasByBill_ extends Component {
 
           {this.state.catItems && this.state.catItems.rec_ras ? (
             <Grid
-              item
-              xs={12}
               style={{ marginBottom: "40px" }}
-            >
+              size={{
+                xs: 12
+              }}>
               <Accordion
                 disabled
                 style={{ backgroundColor: "#fff", opacity: 1 }}

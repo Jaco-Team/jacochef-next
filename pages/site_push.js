@@ -27,11 +27,13 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyAutocomplite, MyDatePickerNew, MySelect, MyTimePicker, MyTextInput, MyCheckBox, MyAlert, formatDate } from '@/ui/elements';
+import { MyAutocomplite, MyDatePickerNew, MySelect, MyTimePicker, MyTextInput, MyCheckBox } from '@/components/shared/Forms';
 
 import dayjs from 'dayjs';
 
 import { api_laravel, api_laravel_local } from '@/src/api_new';
+import { formatDate } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 class SitePush_Modal extends React.Component {
 
@@ -325,7 +327,6 @@ class SitePush_Modal extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog
           open={open}
           onClose={this.onClose.bind(this)}
@@ -345,7 +346,11 @@ class SitePush_Modal extends React.Component {
           {!this.state.push ? null : (
             <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="Название"
                     value={this.state.push.this_push.name}
@@ -353,7 +358,11 @@ class SitePush_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyDatePickerNew
                     label="Дата рассылки"
                     value={dayjs(this.state.push.this_push.date_start)}
@@ -361,7 +370,11 @@ class SitePush_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTimePicker
                     label='Время начала рассылки'
                     value={this.state.push.this_push.time_start}
@@ -369,7 +382,11 @@ class SitePush_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="Заголовок"
                     value={this.state.push.this_push.title}
@@ -377,7 +394,11 @@ class SitePush_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="Текст"
                     value={this.state.push.this_push.text}
@@ -385,7 +406,11 @@ class SitePush_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyAutocomplite
                     label="Город"
                     multiple={true}
@@ -395,7 +420,11 @@ class SitePush_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MySelect
                     is_none={false}
                     label="Тип"
@@ -406,7 +435,11 @@ class SitePush_Modal extends React.Component {
                 </Grid>
 
                 {parseInt(this.state.push.this_push.type) === 2 || parseInt(this.state.push.this_push.type) === 3 ?
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyAutocomplite
                       label="Товар / Акция"
                       multiple={false}
@@ -416,10 +449,18 @@ class SitePush_Modal extends React.Component {
                     />
                   </Grid>
                   : 
-                  <Grid item xs={6} sm={6} />
+                  <Grid
+                    size={{
+                      xs: 6,
+                      sm: 6
+                    }} />
                 }
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyCheckBox
                     label="Активность"
                     value={parseInt(this.state.push.this_push.is_active) == 1 ? true : false}
@@ -427,7 +468,11 @@ class SitePush_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyCheckBox
                     label="Разрешил рассылку"
                     value={parseInt(this.state.push.this_push.is_send) == 1 ? true : false}
@@ -435,7 +480,11 @@ class SitePush_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyCheckBox
                     label="Авторизован в приложении"
                     value={parseInt(this.state.push.this_push.is_auth) == 1 ? true : false}
@@ -764,14 +813,12 @@ class SitePush_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <SitePush_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false })}
@@ -782,11 +829,18 @@ class SitePush_ extends React.Component {
           fullScreen={this.state.fullScreen}
           save={this.state.mark === 'push_new' ? this.saveNew.bind(this) : this.saveEdit.bind(this)}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}><h1>{this.state.module_name}</h1></Grid>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}><h1>{this.state.module_name}</h1></Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect
               is_none={false}
               label="Город"
@@ -796,7 +850,11 @@ class SitePush_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.openModal.bind(this, 'push_new', 'Новая рассылка')} variant="contained">
               Добавить рассылку
             </Button>
@@ -804,7 +862,11 @@ class SitePush_ extends React.Component {
 
           {/* таблица активных рассылок */}
           {!this.state.active.length ? null : (
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -847,7 +909,11 @@ class SitePush_ extends React.Component {
 
           {/* таблица неактивных рассылок */}
           {!this.state.non_active.length ? null : (
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Accordion pb={10}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography sx={{ fontWeight: 'bold' }}>Не активные</Typography>

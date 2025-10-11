@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
 import { Grid, Backdrop, Box, CircularProgress, Tabs, Tab } from "@mui/material";
-import { MyAlert } from "@/ui/elements";
 
 import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingStore";
 import { SiteSettingBanners } from "@/components/site_setting/banners/SiteSettingBanners";
@@ -10,6 +9,9 @@ import { SiteSettingModal } from "@/components/site_setting/SiteSettingModal";
 import { SiteSettingPages } from "@/components/site_setting/seo/SiteSettingPages";
 import { SiteSettingSocial } from "@/components/site_setting/social/SiteSettingSocial";
 import { SiteSettingCategory } from "@/components/site_setting/category/SiteSettingCategory";
+import MyAlert from "@/components/shared/MyAlert";
+import TabPanel from "@/components/shared/TabPanel/TabPanel";
+import a11yProps from "@/components/shared/TabPanel/a11yProps";
 
 const subMap = {
   social: SiteSettingSocial,
@@ -17,35 +19,6 @@ const subMap = {
   seo: SiteSettingPages,
   category: SiteSettingCategory,
 };
-
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-TabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.number.isRequired,
-  value: PropTypes.number.isRequired,
-};
-
-function a11yProps(index) {
-  return {
-    id: `simple-tab-${index}`,
-    "aria-controls": `simple-tabpanel-${index}`,
-  };
-}
 
 export default function SiteSetting() {
   const {
@@ -96,7 +69,11 @@ export default function SiteSetting() {
       setData(data);
       setCities(data?.cities);
       setModuleName(data.module_info.name);
-      setSubList(subModules.filter((sub) => data.access[`${sub.key}_view`] === 1 || data.access[`${sub.key}_edit`] === 1));
+      setSubList(
+        subModules.filter(
+          (sub) => data.access[`${sub.key}_view`] === 1 || data.access[`${sub.key}_edit`] === 1
+        )
+      );
       setAcces(data.access);
       document.title = data.module_info.name;
     } catch (error) {
@@ -116,7 +93,6 @@ export default function SiteSetting() {
       >
         <CircularProgress color="inherit" />
       </Backdrop>
-
       <MyAlert
         isOpen={openAlert}
         onClose={() => setOpenAlert(false)}
@@ -135,25 +111,16 @@ export default function SiteSetting() {
       >
         {typeof modalContent === "function" ? modalContent() : modalContent}
       </SiteSettingModal>
-
       <Grid
         container
         spacing={3}
         className="container_first_child"
       >
-        <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+        <Grid size={12}>
           <h1>{module_name}</h1>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+        <Grid size={12}>
           <Tabs
             value={activeTab}
             onChange={setActiveTab}
@@ -170,9 +137,8 @@ export default function SiteSetting() {
           </Tabs>
         </Grid>
         <Grid
-          item
-          xs={12}
-          sm={12}
+          size={12}
+          sx={{ p: 3 }}
         >
           {subList.map((subm, i) => {
             const MyComponent = subMap[subm.key];

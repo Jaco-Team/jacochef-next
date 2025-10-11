@@ -28,7 +28,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from '@/ui/elements';
+import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from '@/components/shared/Forms';
 import Typography from '@mui/material/Typography';
 
 import queryString from 'query-string';
@@ -412,7 +412,6 @@ class VendorModule_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Dialog
           open={this.state.modalItems}
           fullWidth={true}
@@ -426,7 +425,12 @@ class VendorModule_ extends React.Component {
 
             <Grid container style={{ paddingTop: 20 }}>
 
-              <Grid item xs={12} sm={5} style={{ paddingRight: 10 }}>
+              <Grid
+                style={{ paddingRight: 10 }}
+                size={{
+                  xs: 12,
+                  sm: 5
+                }}>
 
                 <Table>
                   <TableBody>
@@ -452,7 +456,11 @@ class VendorModule_ extends React.Component {
                 </Table>
 
               </Grid>
-              <Grid item xs={12} sm={7}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 7
+                }}>
 
                 <Table>
                   <TableBody>
@@ -477,7 +485,6 @@ class VendorModule_ extends React.Component {
             <Button onClick={this.saveVendorItems.bind(this)} color="primary">Сохранить</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.state.modalVendor}
           fullWidth={true}
@@ -493,91 +500,178 @@ class VendorModule_ extends React.Component {
 
               {this.state.openVendor ?
                 <>
-                  <Grid item xs={12} sm={5}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 5
+                    }}>
                     <MyTextInput label="Наименование" value={ this.state.openVendor.name } func={ this.testChange.bind(this, 'name') } />
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 4
+                    }}>
                     <MyTextInput label="Описание" value={ this.state.openVendor.text } func={ this.testChange.bind(this, 'text') } />
                   </Grid>
-                  <Grid item xs={12} sm={3}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 3
+                    }}>
                     <MyTextInput label="Мин. сумма заявки" value={ this.state.openVendor.min_price } func={ this.testChange.bind(this, 'min_price') } />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyTextInput label="ИНН" value={ this.state.openVendor.inn } func={ this.testChange.bind(this, 'inn') } disabled={true} />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyTextInput label="ОГРН" value={ this.state.openVendor.ogrn } func={ this.testChange.bind(this, 'ogrn') } />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyTextInput label="БИК" value={ this.state.openVendor.bik } func={ this.testChange.bind(this, 'bik') } />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyTextInput label="РС" value={ this.state.openVendor.rc } func={ this.testChange.bind(this, 'rc') } />
                   </Grid>
 
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <MyTextInput label="Адрес компании" value={ this.state.openVendor.addr } func={ this.testChange.bind(this, 'addr') } />
                   </Grid>
 
 
-                  <Grid item xs={12} sm={4}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 4
+                    }}>
                     <MyCheckBox label="Активность" value={ parseInt(this.state.openVendor.is_show) == 1 ? true : false } func={ this.testChange.bind(this, 'is_show') } />
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 4
+                    }}>
                     <MyCheckBox label="Работа по счетам" value={ parseInt(this.state.openVendor.bill_ex) == 1 ? true : false } func={ this.testChange.bind(this, 'bill_ex') } />
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 4
+                    }}>
                     <MyCheckBox label="Необходима картинка" value={ parseInt(this.state.openVendor.need_img_bill_ex) == 1 ? true : false } func={ this.testChange.bind(this, 'need_img_bill_ex') } />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyAutocomplite multiple={true} label='Города' data={this.state.allCities} value={this.state.vendorCities} func={ (event, value) => { console.log(value); this.setState({ vendorCities: value }); setTimeout( () => { this.changeCityPoint(); }, 300 ) } } />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyCheckBox label="Приоритетный поставщик" value={ parseInt(this.state.openVendor.is_priority) == 1 ? true : false } func={ this.testChange.bind(this, 'is_priority') } />
                   </Grid>
 
-                  <Grid item xs={12} sm={10}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 10
+                    }}>
 
                     <Typography>Почта поставщика</Typography>
                     <Divider style={{ marginBottom: 15 }} />
 
                     <Grid container spacing={3}>
                       {this.state.mails.map( (mail, key) =>
-                        <Grid item xs={12} key={key}>
+                        <Grid
+                          key={key}
+                          size={{
+                            xs: 12
+                          }}>
                           <Grid container spacing={3} >
-                            <Grid item xs={5}>
+                            <Grid
+                              size={{
+                                xs: 5
+                              }}>
                               <MyAutocomplite multiple={false} label='Точка' data={this.state.need_points} value={mail.point_id} func={ this.changeMail.bind(this, 'point_id', key) } />
                             </Grid>
-                            <Grid item xs={5}>
+                            <Grid
+                              size={{
+                                xs: 5
+                              }}>
                               <MyTextInput label="Почта" value={ mail.mail } func={ this.changeMail.bind(this, 'mail', key) } />
                             </Grid>
-                            <Grid item xs={1}>
+                            <Grid
+                              size={{
+                                xs: 1
+                              }}>
                               <Button variant="contained" color='primary' style={{ width: '100%' }} onClick={this.delMail.bind(this, key)}>
                                 <CloseIcon />
                               </Button>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <MyTextInput label="Контактные данные" value={ mail.comment } func={ this.changeMail.bind(this, 'comment', key) } multiline={true} maxRows={5} />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <Divider />
                             </Grid>
                           </Grid>
                         </Grid>
                       )}
 
-                      <Grid item xs={12}>
+                      <Grid
+                        size={{
+                          xs: 12
+                        }}>
                         <Grid container spacing={3}>
-                          <Grid item xs={5}>
+                          <Grid
+                            size={{
+                              xs: 5
+                            }}>
                             <MyAutocomplite multiple={false} label='Точка' data={this.state.need_points} value={this.state.mailPoint} func={ this.changeMailNew.bind(this, 'mailPoint', 0) } onBlur={this.checkAddMail.bind(this)} />
                           </Grid>
-                          <Grid item xs={5}>
+                          <Grid
+                            size={{
+                              xs: 5
+                            }}>
                             <MyTextInput label="Почта" value={ this.state.mailMail } func={ this.changeMailNew.bind(this, 'mailMail', 0) } onBlur={this.checkAddMail.bind(this)} />
                           </Grid>
-                          <Grid item xs={12}>
+                          <Grid
+                            size={{
+                              xs: 12
+                            }}>
                             <MyTextInput label="Контактные данные" value={ this.state.mailComment } func={ this.changeMailNew.bind(this, 'mailComment', 0) } onBlur={this.checkAddMail.bind(this)} multiline={true} maxRows={5} />
                           </Grid>
                         </Grid>
@@ -598,7 +692,6 @@ class VendorModule_ extends React.Component {
             <Button onClick={this.saveVendor.bind(this)} color="primary">Сохранить</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.state.modalVendorNew}
           fullWidth={true}
@@ -614,84 +707,163 @@ class VendorModule_ extends React.Component {
 
               {this.state.openVendor ?
                 <>
-                  <Grid item xs={12} sm={5}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 5
+                    }}>
                     <MyTextInput label="Наименование" value={ this.state.openVendor.name } func={ this.testChange.bind(this, 'name') } />
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 4
+                    }}>
                     <MyTextInput label="Описание" value={ this.state.openVendor.text } func={ this.testChange.bind(this, 'text') } />
                   </Grid>
-                  <Grid item xs={12} sm={3}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 3
+                    }}>
                     <MyTextInput label="Мин. сумма заявки" value={ this.state.openVendor.min_price } func={ this.testChange.bind(this, 'min_price') } />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyTextInput label="ИНН" value={ this.state.openVendor.inn } func={ this.testChange.bind(this, 'inn') } />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyTextInput label="ОГРН" value={ this.state.openVendor.ogrn } func={ this.testChange.bind(this, 'ogrn') } />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyTextInput label="БИК" value={ this.state.openVendor.bik } func={ this.testChange.bind(this, 'bik') } />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyTextInput label="РС" value={ this.state.openVendor.rc } func={ this.testChange.bind(this, 'rc') } />
                   </Grid>
 
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <MyTextInput label="Адрес компании" value={ this.state.openVendor.addr } func={ this.testChange.bind(this, 'addr') } />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyCheckBox label="Работа по счетам" value={ parseInt(this.state.openVendor.bill_ex) == 1 ? true : false } func={ this.testChange.bind(this, 'bill_ex') } />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyCheckBox label="Необходима картинка" value={ parseInt(this.state.openVendor.need_img_bill_ex) == 1 ? true : false } func={ this.testChange.bind(this, 'need_img_bill_ex') } />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyAutocomplite multiple={true} label='Города' data={this.state.allCities} value={this.state.vendorCities} func={ (event, value) => { this.setState({ vendorCities: value }); setTimeout( () => { this.changeCityPoint(); }, 300 ) } } />
                   </Grid>
 
-                  <Grid item xs={12} sm={10}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 10
+                    }}>
 
                     <Typography>Почта поставщика</Typography>
                     <Divider style={{ marginBottom: 15 }} />
 
                     <Grid container spacing={3}>
                       {this.state.mails.map( (mail, key) =>
-                        <Grid item xs={12} key={key}>
+                        <Grid
+                          key={key}
+                          size={{
+                            xs: 12
+                          }}>
                           <Grid container spacing={3} >
-                            <Grid item xs={5}>
+                            <Grid
+                              size={{
+                                xs: 5
+                              }}>
                               <MyAutocomplite multiple={false} label='Точка' data={this.state.need_points} value={mail.point_id} func={ this.changeMail.bind(this, 'point_id', key) } />
                             </Grid>
-                            <Grid item xs={5}>
+                            <Grid
+                              size={{
+                                xs: 5
+                              }}>
                               <MyTextInput label="Почта" value={ mail.mail } func={ this.changeMail.bind(this, 'mail', key) } />
                             </Grid>
-                            <Grid item xs={1}>
+                            <Grid
+                              size={{
+                                xs: 1
+                              }}>
                               <Button variant="contained" color='primary' style={{ width: '100%' }} onClick={this.delMail.bind(this, key)}>
                                 <CloseIcon />
                               </Button>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <MyTextInput label="Контактные данные" value={ mail.comment } func={ this.changeMail.bind(this, 'comment', key) } multiline={true} maxRows={5} />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <Divider />
                             </Grid>
                           </Grid>
                         </Grid>
                       )}
 
-                      <Grid item xs={12}>
+                      <Grid
+                        size={{
+                          xs: 12
+                        }}>
                         <Grid container spacing={3}>
-                          <Grid item xs={5}>
+                          <Grid
+                            size={{
+                              xs: 5
+                            }}>
                             <MyAutocomplite multiple={false} label='Точка' data={this.state.need_points} value={this.state.mailPoint} func={ this.changeMailNew.bind(this, 'mailPoint', 0) } onBlur={this.checkAddMail.bind(this)} />
                           </Grid>
-                          <Grid item xs={5}>
+                          <Grid
+                            size={{
+                              xs: 5
+                            }}>
                             <MyTextInput label="Почта" value={ this.state.mailMail } func={ this.changeMailNew.bind(this, 'mailMail', 0) } onBlur={this.checkAddMail.bind(this)} />
                           </Grid>
-                          <Grid item xs={12}>
+                          <Grid
+                            size={{
+                              xs: 12
+                            }}>
                             <MyTextInput label="Контактные данные" value={ this.state.mailComment } func={ this.changeMailNew.bind(this, 'mailComment', 0) } onBlur={this.checkAddMail.bind(this)} multiline={true} maxRows={5} />
                           </Grid>
                         </Grid>
@@ -711,22 +883,35 @@ class VendorModule_ extends React.Component {
             <Button onClick={this.addVendor.bind(this)} color="primary">Сохранить</Button>
           </DialogActions>
         </Dialog>
-
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect data={this.state.cities} value={this.state.city} func={ this.changeCity.bind(this) } label='Город' />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.openModalVendorNew.bind(this)} variant="contained">Добавить поставщика</Button>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
 
             <TableContainer component={Paper}>
               <Table>
@@ -755,7 +940,7 @@ class VendorModule_ extends React.Component {
 
         </Grid>
       </>
-    )
+    );
   }
 }
 

@@ -26,11 +26,13 @@ import Dropzone from 'dropzone';
 
 import ModalImage from "react-modal-image";
 
-import {MyDatePickerNew, MySelect, MyAutocomplite, MyTimePicker, MyCheckBox, MyTextInput, MyAlert, formatDate} from '@/ui/elements';
+import {MyDatePickerNew, MySelect, MyAutocomplite, MyTimePicker, MyCheckBox, MyTextInput} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class Fines_err_Modal_item extends React.Component {
   constructor(props) {
@@ -192,12 +194,11 @@ class Fines_err_Modal_item extends React.Component {
   render() {
     return (
       <>
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.openAlert} 
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 
           text={this.state.err_text} />
-      
         <Dialog
           open={this.props.open}
           onClose={this.onClose.bind(this)}
@@ -214,35 +215,70 @@ class Fines_err_Modal_item extends React.Component {
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3} justifyContent="center" mb={3}>
 
-              <Grid item xs={12} sm={4} display="flex" flexDirection="column" alignItems="center">
+              <Grid
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Точка</Typography>
                 <Typography sx={{ fontWeight: 'normal', whiteSpace: 'nowrap'}}>
                   {this.state.item ? this.state.item.point_info.name : 'не указана'}
                 </Typography>
               </Grid>
 
-              <Grid item xs={12} sm={4} display="flex" flexDirection="column" alignItems="center">
+              <Grid
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 'bold' }}>Дата ошибки</Typography>
                 <Typography sx={{ fontWeight: 'normal', whiteSpace: 'nowrap'}}>
                   {this.state.item ? this.state.item.err.date : 'не указана'}
                 </Typography>
               </Grid>
 
-              <Grid item xs={12} sm={4} display="flex" flexDirection="column" alignItems="center">
+              <Grid
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Время совершения ошибки</Typography>
                 <Typography sx={{ fontWeight: 'normal', whiteSpace: 'nowrap' }}>
                   {this.state.item ? this.state.item.err.time : 'не указано'}
                 </Typography>
               </Grid>
 
-              <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center">
+              <Grid
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 'bold' }}>Комментарии</Typography>
                 <Typography sx={{ fontWeight: 'normal', textAlign: 'center' }}>
                   {this.state.item ? this.state.item.err.comment ? this.state.item.err.comment : 'не указаны' : 'не указаны'}
                 </Typography>
               </Grid>
 
-              <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center">
+              <Grid
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Ошибка</Typography>
                 <Typography sx={{ fontWeight: 'normal', textAlign: 'center' }}>
                   {this.state.item ? this.state.item.err.fine_name : 'не указана'}
@@ -251,10 +287,18 @@ class Fines_err_Modal_item extends React.Component {
 
               { this.state.item && parseInt(this.state.item.err.manager_create) == 1 && parseInt(this.state.item.err.status) == 2 && parseInt(this.state.item.err.for_dir) == 1 ?
                 <>
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <Button color="primary" onClick={this.saveErr_.bind(this, 'true')}>Подтвердить ошибку</Button>
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <Button color="primary" onClick={this.saveErr_.bind(this, 'false')}>Отменить ошибку</Button>
                   </Grid>
                 </>
@@ -263,7 +307,14 @@ class Fines_err_Modal_item extends React.Component {
               }
 
               { this.state.item && this.state.item.err.text_one.length > 0 ?
-                <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center">
+                <Grid
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Причина обжалования</Typography>
                   <Typography sx={{ fontWeight: 'normal', textAlign: 'center' }}>{this.state.item.err.text_one}</Typography>
                 </Grid>
@@ -273,12 +324,23 @@ class Fines_err_Modal_item extends React.Component {
 
               { this.state.item && this.state.item.err.text_one.length > 0 ?
                 this.state.item.err.text_two.length > 0 ?
-                  <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center">
+                  <Grid
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="center"
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Описание решения</Typography>
                     <Typography sx={{ fontWeight: 'normal', textAlign: 'center' }}>{this.state.item.err.text_two}</Typography>
                   </Grid>
                     :
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyTextInput 
                       label="Описание решения" 
                       value={this.state.text} 
@@ -291,7 +353,14 @@ class Fines_err_Modal_item extends React.Component {
                 null
               }
 
-              <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center">
+              <Grid
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Фото ошибки</Typography>
                 <Grid sx={{ fontWeight: 'normal', whiteSpace: 'nowrap' }} display="flex" flexDirection="column" justifyContent="center">
                   {this.state.item ? !this.state.item.imgs.length ? 'Фото отсутствует' : (
@@ -311,7 +380,14 @@ class Fines_err_Modal_item extends React.Component {
               </Grid>
 
               {this.state.item ? this.state.item.user.name ? (
-                  <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center">
+                  <Grid
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="center"
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Сотрудник</Typography>
                     <Typography sx={{ fontWeight: 'normal', whiteSpace: 'nowrap' }}>
                       {this.state.item.user.name}
@@ -324,9 +400,19 @@ class Fines_err_Modal_item extends React.Component {
                   </Grid>
                 ) : (
                   <>
-                    <Grid item xs={12} sm={12} sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }} align="center">Указать сотрудника</Grid>
+                    <Grid
+                      sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}
+                      align="center"
+                      size={{
+                        xs: 12,
+                        sm: 12
+                      }}>Указать сотрудника</Grid>
 
-                    <Grid item xs={12} sm={6}>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
                       <MyAutocomplite
                         multiple={false}
                         data={this.state.apps}
@@ -336,7 +422,11 @@ class Fines_err_Modal_item extends React.Component {
                       />
                     </Grid>
 
-                    <Grid item xs={12} sm={6}>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
                       <MyAutocomplite
                         label="Сотрудник"
                         multiple={false}
@@ -346,7 +436,14 @@ class Fines_err_Modal_item extends React.Component {
                       />
                     </Grid>
 
-                    <Grid item xs={12} sm={12} display="flex" flexWrap="wrap" justifyContent="center">
+                    <Grid
+                      display="flex"
+                      flexWrap="wrap"
+                      justifyContent="center"
+                      size={{
+                        xs: 12,
+                        sm: 12
+                      }}>
                       {this.state.users
                       .filter(user => this.state.app_for_search ? user.app_id === this.state.app_for_search || user.new_app === this.state.app_for_search : user)
                       .map((user, key) => (
@@ -737,7 +834,6 @@ class Fines_err_Modal_NewItem extends React.Component {
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 
           text={this.state.err_text} />
-
         <Dialog
           open={this.props.open}
           onClose={this.onClose.bind(this)}
@@ -755,7 +851,11 @@ class Fines_err_Modal_NewItem extends React.Component {
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3}>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MySelect
                   is_none={false}
                   data={this.state.points}
@@ -765,7 +865,11 @@ class Fines_err_Modal_NewItem extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyDatePickerNew
                   label="Дата"
                   value={this.state.date}
@@ -775,7 +879,11 @@ class Fines_err_Modal_NewItem extends React.Component {
 
               {!this.state.fines.length ? null : (
                 <>
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyAutocomplite
                       label="Ошибка"
                       multiple={false}
@@ -785,7 +893,11 @@ class Fines_err_Modal_NewItem extends React.Component {
                     />
                   </Grid>
 
-                  <Grid item xs={12} sm={3}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 3
+                    }}>
                     <MyTimePicker
                       value={this.state.time}
                       func={this.changeItem.bind(this, 'time')}
@@ -793,7 +905,11 @@ class Fines_err_Modal_NewItem extends React.Component {
                     />
                   </Grid>
 
-                  <Grid item xs={12} sm={3}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 3
+                    }}>
                     <MyCheckBox
                       label="Не могу определиться с виновником"
                       value={this.state.is_active == 1 ? true : false}
@@ -801,7 +917,11 @@ class Fines_err_Modal_NewItem extends React.Component {
                     />
                   </Grid>
 
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <MyTextInput
                       label="Комментарии"
                       multiline={true}
@@ -811,7 +931,11 @@ class Fines_err_Modal_NewItem extends React.Component {
                     />
                   </Grid>
 
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <div
                       className="dropzone"
                       id="for_img_new"
@@ -819,7 +943,11 @@ class Fines_err_Modal_NewItem extends React.Component {
                     />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyAutocomplite
                       multiple={false}
                       data={this.state.apps}
@@ -829,7 +957,11 @@ class Fines_err_Modal_NewItem extends React.Component {
                     />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <MyAutocomplite
                       label="Сотрудник"
                       multiple={false}
@@ -839,7 +971,14 @@ class Fines_err_Modal_NewItem extends React.Component {
                     />
                   </Grid>
 
-                  <Grid item xs={12} sm={12} display="flex" flexWrap="wrap" justifyContent="center">
+                  <Grid
+                    display="flex"
+                    flexWrap="wrap"
+                    justifyContent="center"
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     {this.state.users
                     .filter(user => this.state.app_for_search ? user.app_id === this.state.app_for_search || user.new_app === this.state.app_for_search : user)
                     .map((user, key) => (
@@ -1196,13 +1335,11 @@ class Fines_err_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert 
           isOpen={this.state.openAlert} 
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 
           text={this.state.err_text} />
-
         <Fines_err_Modal_NewItem
           open={this.state.modalDialogNew}
           onClose={this.closeDialog.bind(this)}
@@ -1215,7 +1352,6 @@ class Fines_err_ extends React.Component {
           save={this.saveNewItem.bind(this)}
           fullScreen={this.state.fullScreen}
         />
-
         <Fines_err_Modal_item
           open={this.state.modalDialog}
           onClose={this.closeDialog.bind(this)}
@@ -1227,13 +1363,20 @@ class Fines_err_ extends React.Component {
           fullScreen={this.state.fullScreen}
           saveErr={this.saveErr.bind(this)}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button
               onClick={this.openModal.bind(this, 'newItem', 'Новая ошибка')}
               variant="contained"
@@ -1242,7 +1385,11 @@ class Fines_err_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect
               is_none={false}
               data={this.state.points}
@@ -1252,7 +1399,11 @@ class Fines_err_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -1260,7 +1411,11 @@ class Fines_err_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -1268,13 +1423,21 @@ class Fines_err_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.getItems.bind(this)} variant="contained">
               Показать ошибки
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Fines_err_Table
               all_list={this.state.all_list}
               ret_list={this.state.ret_list}

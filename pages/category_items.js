@@ -24,7 +24,7 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyAutocomplite } from '@/ui/elements';
+import { MySelect, MyAutocomplite } from '@/components/shared/Forms';
 import Typography from '@mui/material/Typography';
 
 import queryString from 'query-string';
@@ -110,7 +110,11 @@ class ModalCategoryItems extends React.Component {
         <DialogTitle id="alert-dialog-title">{this.props.method}</DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MySelect
                 label="Главная категория"
                 data={this.props.data}
@@ -126,7 +130,11 @@ class ModalCategoryItems extends React.Component {
                 }
               />
             </Grid>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TextField
                 label="Название категории"
                 size="small"
@@ -315,7 +323,6 @@ class CategoryItems_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <ModalCategoryItems
           open={this.state.modalDialog}
           onClose={() => {
@@ -329,7 +336,6 @@ class CategoryItems_ extends React.Component {
           method={this.state.method}
           event={this.state.data}
         />
-
         <Dialog
           open={this.state.modalDialog2}
           onClose={() => {
@@ -341,7 +347,11 @@ class CategoryItems_ extends React.Component {
           <DialogTitle>Позиции категории</DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyAutocomplite
                   label="Выбранные позиции"
                   multiple={true}
@@ -360,13 +370,20 @@ class CategoryItems_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button
               onClick={ () => this.setState({
                     modalDialog: true,
@@ -377,7 +394,12 @@ class CategoryItems_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12} style={{ paddingBottom: '10px' }}>
+          <Grid
+            style={{ paddingBottom: '10px' }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             {this.state.allCats.map((main_cat, main_key) =>
               parseInt(main_cat.parent_id) != -1 ? null : (
                 <Accordion key={main_key}>

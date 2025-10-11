@@ -17,7 +17,7 @@ import TableRow from '@mui/material/TableRow';
 
 import CloseIcon from '@mui/icons-material/Close';
 
-import {MyTextInput, TextEditor, MyAutocomplite} from '@/ui/elements';
+import {MyTextInput, TextEditor, MyAutocomplite} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
@@ -348,7 +348,6 @@ class JobDescriptions_ extends React.Component {
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         {!this.state.itemsEdit ? null : (
           <Dialog
             open={this.state.modalDialog}
@@ -364,7 +363,11 @@ class JobDescriptions_ extends React.Component {
             <DialogTitle>{this.state.nameWork}</DialogTitle>
             <DialogContent style={{ paddingTop: 10 }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     value={this.state.itemsEdit.item.name}
                     func={this.chengeItem.bind(this, 'name')}
@@ -372,7 +375,11 @@ class JobDescriptions_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     value={this.state.itemsEdit.item.link}
                     func={this.chengeItem.bind(this, 'link')}
@@ -380,7 +387,11 @@ class JobDescriptions_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                    <MyAutocomplite
                     label='Должности'
                     multiple={true}
@@ -402,7 +413,6 @@ class JobDescriptions_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         {!this.state.itemsNew ? null : (
           <Dialog
             open={this.state.modalDialogNew}
@@ -414,7 +424,11 @@ class JobDescriptions_ extends React.Component {
             <DialogTitle>Новая инструкция</DialogTitle>
             <DialogContent style={{ paddingTop: 10 }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     value={this.state.itemsNew.item.name}
                     func={this.chengeItemNew.bind(this, 'name')}
@@ -422,7 +436,11 @@ class JobDescriptions_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     value={this.state.itemsNew.item.link}
                     func={this.chengeItemNew.bind(this, 'link')}
@@ -430,7 +448,11 @@ class JobDescriptions_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                    <MyAutocomplite
                     label='Должности'
                     multiple={true}
@@ -457,7 +479,6 @@ class JobDescriptions_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         <Dialog
           open={this.state.modalDialogNews}
           maxWidth={'md'}
@@ -468,7 +489,11 @@ class JobDescriptions_ extends React.Component {
           <DialogTitle>Новая новость</DialogTitle>
           <DialogContent style={{ paddingTop: 10 }}>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TextEditor
                   value={this.state.newText}
                   func={ (text) => { this.setState({ newText: text }); } }
@@ -484,14 +509,21 @@ class JobDescriptions_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           { parseInt(this.state.kind) >= 3 || this.state.user?.app_type == 'dir' ? null :
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Button
                 variant="contained"
                 color="primary"
@@ -503,7 +535,11 @@ class JobDescriptions_ extends React.Component {
           }
 
           { parseInt(this.state.kind) >= 3 || this.state.user?.app_type == 'dir' ? null :
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Button
                 variant="contained"
                 color="primary"
@@ -514,7 +550,11 @@ class JobDescriptions_ extends React.Component {
             </Grid>
           }
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
 
             { this.state.items.length > 0 ?
               <AppWorkTable
@@ -525,7 +565,11 @@ class JobDescriptions_ extends React.Component {
             }
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
 
             { this.state.news.length > 0 ?
               <AppWorkTableNews

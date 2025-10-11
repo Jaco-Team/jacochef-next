@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MyAutocomplite, MyDatePickerNew } from "@/ui/elements";
+import { MyAutocomplite, MyDatePickerNew } from "@/components/shared/Forms";
 import { Button, Grid, Stack, Tab, Tabs } from "@mui/material";
 import dayjs from "dayjs";
 import useMarketingTabStore from "./useMarketingTabStore";
@@ -92,7 +92,6 @@ export default function SiteClientsMarketingTab(props) {
           />
         </>
       </SiteClientsMarketingOrdersModal>
-
       <ModalOrder
         open={isOrderModalOpen}
         onClose={() => setIsOrderModalOpen(false)}
@@ -101,7 +100,6 @@ export default function SiteClientsMarketingTab(props) {
         err_order={order?.err_order}
         feedback_forms={order?.feedback_forms}
       />
-
       {clientModalOpened && (
         <SiteClientsClientModal
           canAccess={canAccess}
@@ -109,16 +107,15 @@ export default function SiteClientsMarketingTab(props) {
           openOrder={openOrder}
         />
       )}
-
       <Grid
         container
         spacing={3}
       >
         <Grid
-          item
-          xs={12}
-          sm={4}
-        >
+          size={{
+            xs: 12,
+            sm: 4
+          }}>
           <MyAutocomplite
             label="Кафе"
             multiple={true}
@@ -130,19 +127,19 @@ export default function SiteClientsMarketingTab(props) {
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <Grid
             container
             spacing={1}
           >
             <Grid
-              item
-              xs={12}
-              sm={6}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew
                 label="Дата от"
                 customActions={true}
@@ -152,10 +149,10 @@ export default function SiteClientsMarketingTab(props) {
             </Grid>
 
             <Grid
-              item
-              xs={12}
-              sm={6}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew
                 label="Дата до"
                 customActions={true}
@@ -167,11 +164,10 @@ export default function SiteClientsMarketingTab(props) {
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={2}
-        >
-          {" "}
+          size={{
+            xs: 12,
+            sm: 2
+          }}>
           <Stack
             spacing={1}
             alignContent={"stretch"}
@@ -187,11 +183,11 @@ export default function SiteClientsMarketingTab(props) {
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={12}
           style={{ paddingBottom: 24 }}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <Tabs
             value={activeTab}
             onChange={(_, val) => setActiveTab(val)}
@@ -222,16 +218,15 @@ export default function SiteClientsMarketingTab(props) {
           </Tabs>
         </Grid>
       </Grid>
-
       <Grid
         container
         spacing={0}
       >
         {/* статистика */}
         <Grid
-          item
-          xs={12}
-        >
+          size={{
+            xs: 12
+          }}>
           <TabPanel
             value={activeTab}
             index={0}
@@ -246,9 +241,9 @@ export default function SiteClientsMarketingTab(props) {
 
         {/* источники */}
         <Grid
-          item
-          xs={12}
-        >
+          size={{
+            xs: 12
+          }}>
           <TabPanel
             value={activeTab}
             index={1}
@@ -264,9 +259,9 @@ export default function SiteClientsMarketingTab(props) {
 
         {/* utm */}
         <Grid
-          item
-          xs={12}
-        >
+          size={{
+            xs: 12
+          }}>
           <TabPanel
             value={activeTab}
             index={2}
@@ -282,9 +277,9 @@ export default function SiteClientsMarketingTab(props) {
 
         {/* промокоды */}
         <Grid
-          item
-          xs={12}
-        >
+          size={{
+            xs: 12
+          }}>
           <TabPanel
             value={activeTab}
             index={3}

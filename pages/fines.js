@@ -21,7 +21,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyTextInput, MyCheckBox } from '@/ui/elements';
+import { MyTextInput, MyCheckBox } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
@@ -230,9 +230,17 @@ class Fines_Modal extends React.Component {
         </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={8} mb={2}>
+                <Grid
+                  mb={2}
+                  size={{
+                    xs: 12,
+                    sm: 8
+                  }}>
                   <MyTextInput
                     label="Наименование штрафа"
                     value={this.state.item.name}
@@ -243,21 +251,36 @@ class Fines_Modal extends React.Component {
               {this.props.method === 'Новый штраф по отзывам' ||
               this.props.method === 'Штраф по отзывам' ? (
                 <Grid container spacing={3}>
-                  <Grid item xs={12} sm={4} mb={2}>
+                  <Grid
+                    mb={2}
+                    size={{
+                      xs: 12,
+                      sm: 4
+                    }}>
                     <MyTextInput
                       label="Процент за первый раз"
                       value={this.state.item.percent_one}
                       func={this.changeItem.bind(this, 'percent_one')}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={4} mb={2}>
+                  <Grid
+                    mb={2}
+                    size={{
+                      xs: 12,
+                      sm: 4
+                    }}>
                     <MyTextInput
                       label="Процент за второй раз"
                       value={this.state.item.percent_two}
                       func={this.changeItem.bind(this, 'percent_two')}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={4} mb={2}>
+                  <Grid
+                    mb={2}
+                    size={{
+                      xs: 12,
+                      sm: 4
+                    }}>
                     <MyTextInput
                       label="Процент за третий и последующие"
                       value={this.state.item.percent_tree}
@@ -268,21 +291,36 @@ class Fines_Modal extends React.Component {
               ) : null}
 
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={4} mb={2}>
+                <Grid
+                  mb={2}
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     label="Размер штрафа за первый раз"
                     value={this.state.item.price_one}
                     func={this.changeItem.bind(this, 'price_one')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={4} mb={2}>
+                <Grid
+                  mb={2}
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     label="Размер штрафа за второй раз"
                     value={this.state.item.price_two}
                     func={this.changeItem.bind(this, 'price_two')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={4} mb={2}>
+                <Grid
+                  mb={2}
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     label="Размер штрафа за третий и последующие"
                     value={this.state.item.price_tree}
@@ -295,7 +333,11 @@ class Fines_Modal extends React.Component {
                 {this.props.method === 'Новый штраф по камерам' ||
                 this.props.method === 'Штраф по камерам' ? (
                
-                  <Grid item xs={12} sm={3}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 3
+                    }}>
                     <MyCheckBox
                       label="Картинка"
                       value={
@@ -310,7 +352,11 @@ class Fines_Modal extends React.Component {
                 {this.props.method === 'Штраф по отзывам' ||
                 this.props.method === 'Штраф по камерам' ? (
 
-                  <Grid item xs={12} sm={3}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 3
+                    }}>
                     <MyCheckBox
                       label="Активность"
                       value={parseInt(this.state.item.is_active) == 1 ? true : false}
@@ -525,13 +571,20 @@ class Fines_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button
               onClick={this.openModal.bind(this, 'Новый штраф по камерам')}
               variant="contained"
@@ -540,7 +593,11 @@ class Fines_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button
               onClick={this.openModal.bind(this, 'Новый штраф по отзывам')}
               variant="contained"
@@ -549,7 +606,11 @@ class Fines_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Fines_Table_Сameras
               cameras={this.state.cameras}
               openModal={this.openModal.bind(this)}
@@ -557,14 +618,17 @@ class Fines_ extends React.Component {
           </Grid>
 
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Fines_Table_Reviews
               reviews={this.state.reviews}
               openModal={this.openModal.bind(this)}
             />
           </Grid>
         </Grid>
-
         <Fines_Modal
           open={this.state.modalDialog}
           onClose={() => {

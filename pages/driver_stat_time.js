@@ -30,10 +30,12 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 
-import { MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
+import { MyAutocomplite, MyDatePickerNew } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class DriverStatTime_Modal extends React.Component {
   map = null;
@@ -156,17 +158,19 @@ class DriverStatTime_Modal extends React.Component {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <div id="map" name="map" style={{ width: '100%', height: 700, paddingTop: 10 }} />
             </Grid>
 
           </Grid>
         </DialogContent>
-
         <DialogActions>
           <Button variant="contained" onClick={this.onClose.bind(this)}>
             Закрыть
@@ -311,30 +315,34 @@ class DriverStatTime_ extends React.Component {
     return (
       <>
         <Script src="https://api-maps.yandex.ru/2.1/?apikey=665f5b53-8905-4934-9502-4a6a7b06a900&lang=ru_RU" />
-
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <DriverStatTime_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false, order: null })}
           order={this.state.order}
         />
-        
         <MyAlert
           isOpen={this.state.operAlert}
           onClose={() => this.setState({ operAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyAutocomplite
               data={this.state.points}
               multiple={true}
@@ -344,7 +352,11 @@ class DriverStatTime_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -354,7 +366,11 @@ class DriverStatTime_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -364,11 +380,19 @@ class DriverStatTime_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button variant="contained" color="primary" onClick={ this.showData.bind(this) }>Показать</Button>
           </Grid>
           
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer component={Paper}>
               <Table>
                 <TableHead>
@@ -403,7 +427,12 @@ class DriverStatTime_ extends React.Component {
             </TableContainer>
           </Grid>
 
-          <Grid item xs={12} sm={12} style={{ marginBottom: 100 }}>
+          <Grid
+            style={{ marginBottom: 100 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />} style={{ fontWeight: 'bold' }}>
                 Детализация заказов
@@ -435,7 +464,7 @@ class DriverStatTime_ extends React.Component {
 
         </Grid>
       </>
-    )
+    );
   }
 }
 

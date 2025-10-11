@@ -37,13 +37,14 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyDatePickerNew, MyTextInput, MyAlert } from '@/ui/elements';
+import { MyDatePickerNew, MyTextInput } from '@/components/shared/Forms';
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import {api_laravel} from "@/src/api_new";
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
+import MyAlert from '@/components/shared/MyAlert';
 dayjs.locale('ru');
 
 function TabPanel(props) {
@@ -196,17 +197,20 @@ class EventTime_Tab_Kassir_Registr_Modal_Edit extends React.Component {
         fullWidth
         maxWidth="sm"
       >
-
         <DialogTitle>
           Укажите дату с которой будут действовать изменения
           <IconButton onClick={this.close} sx={{ position: 'absolute', top: 8, right: 8 }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent sx={{ pt: 2, pb: 2 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={12} sx={{ mt: 1 }}>
+            <Grid
+              sx={{ mt: 1 }}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyDatePickerNew
                 label="Дата изменений"
                 value={date_start}
@@ -215,7 +219,6 @@ class EventTime_Tab_Kassir_Registr_Modal_Edit extends React.Component {
             </Grid>
           </Grid>
         </DialogContent>
-
         <DialogActions>
           <Button variant="contained" color='success' onClick={this.save}>Сохранить изменения</Button>
         </DialogActions>
@@ -309,17 +312,25 @@ class EventTime_Tab_Kassir_Registr_Modal extends React.Component {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent sx={{ pt: 4, pb: 1 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={12} sx={{ mt: 1 }}>
+            <Grid
+              sx={{ mt: 1 }}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyDatePickerNew
                 label="Дата изменений"
                 value={date_start}
                 func={this.changeDate}
               />
             </Grid>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TableContainer component={Paper}>
                 <Table size="small">
                   <TableHead>
@@ -442,8 +453,11 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
     const { acces } = this.props;
 
     return (
-      <Grid item xs={12} mb={5}>
-
+      <Grid
+        mb={5}
+        size={{
+          xs: 12
+        }}>
         <Dialog
           open={confirmDialog}
           onClose={() => this.setState({ confirmDialog: false })}
@@ -460,7 +474,6 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
             <Button onClick={this.handleDelete}>Удалить</Button>
           </DialogActions>
         </Dialog>
-
         <Box sx={{ display: 'flex', mb: 2 }}>
           {acces.kassir_registr_edit ? (
             <Button variant="contained" onClick={this.handleModalOpen}>
@@ -468,7 +481,6 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
             </Button>
           ) : null}
         </Box>
-
         <TableContainer component={Paper}>
           <Table>
 
@@ -567,15 +579,13 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
             </TableBody>
           </Table>
         </TableContainer>
-
-       {/* Модалка Добавить */}
+        {/* Модалка Добавить */}
         <EventTime_Tab_Kassir_Registr_Modal
           open={addModalOpen}
           onClose={this.handleModalClose}
           onSave={this.props.onSave}
           openAlert={this.props.openAlert}
         />
-
         {/* Модалка Выбора даты */}
         <EventTime_Tab_Kassir_Registr_Modal_Edit
           open={dateModalOpen}
@@ -584,7 +594,6 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
           onSave={this.props.onSave}
           openAlert={this.props.openAlert}
         />
-
       </Grid>
     );
   }
@@ -632,7 +641,12 @@ class EventTime_Tab_Cur extends React.PureComponent {
     };
 
     return (
-      <Grid item xs={12} sm={12} mb={5}>
+      <Grid
+        mb={5}
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <TabPanel value={activeTab} index={index_cur}>
 
           <TableContainer component={Paper}>
@@ -758,7 +772,10 @@ class EventTime_Tab_TableLv extends React.PureComponent {
     };
 
     return (
-      <Grid item xs={12}>
+      <Grid
+        size={{
+          xs: 12
+        }}>
         <TabPanel value={activeTab} index={index_table_lv}>
 
           <TableContainer component={Paper}>
@@ -906,7 +923,12 @@ class EventTime_Tab_Kassir_Time extends React.PureComponent {
     const editCheck = (key, val) => update('time_check', { ...time_check, [key]: val });
 
     return (
-      <Grid item xs={12} sm={12} mb={5}>
+      <Grid
+        mb={5}
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <TabPanel value={activeTab} index={index_kassir_time}>
           {[
             { title: 'на принятие заказа', data: time_order, h: orderH },
@@ -1064,14 +1086,23 @@ class EventTime_Tab_Rate extends React.PureComponent {
     const update = (field, val) => onRateChange({ ...rate, [field]: val });
 
     return (
-      <Grid item xs={12} sm={12} mb={5}>
+      <Grid
+        mb={5}
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <TabPanel value={activeTab} index={index_rate}>
           <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
             Коэффициенты заготовок
           </Typography>
           <Grid container spacing={2} alignItems="flex-end">
             {sortedDow.map(row => (
-              <Grid item xs={12/7} key={row.dow}>
+              <Grid
+                key={row.dow}
+                size={{
+                  xs: 12/7
+                }}>
                 <Typography
                   align="center"
                   variant="subtitle2"
@@ -1172,7 +1203,12 @@ class EventTime_Tab_Time_Smena extends React.PureComponent {
     const handleDeleteRow = id => onTimeChange('time_close_smena', time_close_smena.filter(r=>r.id!==id));
 
     return (
-      <Grid item xs={12} sm={12} mb={5}>
+      <Grid
+        mb={5}
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <TabPanel value={activeTab} index={index_time_smena}>
           <Box mb={2}>
             <Typography variant="subtitle1" gutterBottom sx={{fontWeight:'bold'}}>
@@ -1297,11 +1333,20 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
     };
 
     return (
-      <Grid item xs={12} sm={12} mb={5}>
+      <Grid
+        mb={5}
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <TabPanel value={activeTab} index={index_time_manager}>
 
           <Grid container spacing={2} mb={3}>
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
                 Время списания (чч:мм:сс)
               </Typography>
@@ -1312,7 +1357,11 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
                 Время подтверждения уборок / заготовок (чч:мм:сс)
               </Typography>
@@ -1324,7 +1373,11 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
               />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
             <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
               Время менеджеру за мотивирующие разговоры за сотрудника (чч:мм:сс)
             </Typography>
@@ -1432,7 +1485,12 @@ class EventTime_Tab_Time_Cook extends React.PureComponent {
     ];
 
     return (
-      <Grid item xs={12} sm={12} mb={5}>
+      <Grid
+        mb={5}
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <TabPanel value={activeTab} index={index_time_cook}>
           <TableContainer component={Paper}>
             <Table size="small">
@@ -1755,7 +1813,6 @@ class EventTime2_ extends React.Component {
         <Backdrop style={{ zIndex: 999 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Dialog
           open={confirmDialog}
           onClose={() => this.setState({ confirmDialog: false })}
@@ -1772,20 +1829,27 @@ class EventTime2_ extends React.Component {
             <Button onClick={this.confirmTabChange}>Перейти</Button>
           </DialogActions>
         </Dialog>
-
         <MyAlert
           isOpen={openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={err_status}
           text={err_text}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12} style={{ paddingBottom: 24 }}>
+          <Grid
+            style={{ paddingBottom: 24 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Paper>
               <Tabs
                 value={activeTab}

@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
-import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/ui/elements";
+import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/components/shared/Forms";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -17,6 +17,7 @@ import TablePagination from "@mui/material/TablePagination";
 import CheckIcon from "@mui/icons-material/Check";
 import ModalOrderWithFeedback from "./ModalOrderWithFeedback";
 import ModalOrder from "./ModalOrder";
+import MyAlert from "@/components/shared/MyAlert";
 
 export default function OrdersMore() {
 	const [isLoad, setIsLoad] = useState(false);
@@ -191,17 +192,17 @@ export default function OrdersMore() {
 	};
 
 	return (
-		<>
-			<Backdrop style={{zIndex: 99}} open={isLoad}>
+        <>
+            <Backdrop style={{zIndex: 99}} open={isLoad}>
 				<CircularProgress color="inherit"/>
 			</Backdrop>
-			<MyAlert
+            <MyAlert
 				isOpen={openAlert}
 				onClose={() => setOpenAlert(false)}
 				status={errStatus}
 				text={errText}
 			/>
-			{parseInt(acces.send_feedback_access) === 1 ?
+            {parseInt(acces.send_feedback_access) === 1 ?
 				(<ModalOrderWithFeedback
 					getData={getData}
 					openOrder={openOrder}
@@ -222,18 +223,24 @@ export default function OrdersMore() {
 					err_order={order.err_order}
 					feedback_forms={order.feedback_forms}/>
 				)}
-
-			<Grid item container spacing={3} justifyContent="center" sx={{
-				flexDirection: {
-					sm: 'row',
-					xs: 'column-reverse'
-				}
-			}}
-						style={{marginBottom: '24px'}}
-			>
+            <Grid
+                container
+                spacing={3}
+                justifyContent="center"
+                sx={{
+                    flexDirection: {
+                        sm: 'row',
+                        xs: 'column-reverse'
+                    }
+                }}
+                style={{marginBottom: '24px'}}>
 
 				<Grid container spacing={2} justifyContent="center" mb={3} mt={0}>
-					<Grid item xs={12} sm={9}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 9
+                        }}>
 						<Button
 							variant="contained"
 							style={{marginLeft: '20px', whiteSpace: 'nowrap'}}
@@ -280,7 +287,12 @@ export default function OrdersMore() {
 					</Grid>
 				</Grid>
 
-				<Grid item xs={12} sm={3} sx={{order: {sm: 0, xs: 1}}}>
+				<Grid
+                    sx={{order: {sm: 0, xs: 1}}}
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyDatePickerNew
 						label="Делал заказ от"
 						value={formData.date_start_true}
@@ -288,7 +300,12 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3} sx={{order: {sm: 1, xs: 0}}}>
+				<Grid
+                    sx={{order: {sm: 1, xs: 0}}}
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyDatePickerNew
 						label="Делал заказ до"
 						value={formData.date_end_true}
@@ -296,7 +313,14 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3} sx={{order: {sm: 2, xs: 2}}} display="flex" flexDirection="row">
+				<Grid
+                    sx={{order: {sm: 2, xs: 2}}}
+                    display="flex"
+                    flexDirection="row"
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 
 					<Grid>
 						<Button variant="contained" style={{whiteSpace: 'nowrap'}} onClick={getOrders}>
@@ -317,9 +341,12 @@ export default function OrdersMore() {
 
 				</Grid>
 			</Grid>
-
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyDatePickerNew
 						label="Не заказывал от"
 						value={formData.date_start_false}
@@ -328,7 +355,11 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyDatePickerNew
 						label="Не заказывал до"
 						disabled={formData.param.id === 'new'}
@@ -337,7 +368,11 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyCheckBox
 						label="Была оформлена ошибка на заказ"
 						value={formData.is_show_claim}
@@ -345,9 +380,12 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 			</Grid>
-
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="Количество заказов от"
 						value={formData.count_orders_min}
@@ -355,7 +393,11 @@ export default function OrdersMore() {
 						func={(e) => handleChange(e, 'count_orders_min')}
 					/>
 				</Grid>
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="Количество заказов до"
 						value={formData.count_orders_max}
@@ -364,7 +406,11 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyCheckBox
 						label="Была оформлена ошибка на последний заказ"
 						value={formData.is_show_claim_last}
@@ -372,9 +418,12 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 			</Grid>
-
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="От суммы"
 						value={formData.min_summ}
@@ -383,7 +432,11 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="До суммы"
 						value={formData.max_summ}
@@ -392,7 +445,11 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyCheckBox
 						label="Подписка на рекламную рассылку"
 						value={formData.is_show_marketing}
@@ -400,8 +457,12 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 			</Grid>
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyAutocomplite
 						label="Точки"
 						multiple={true}
@@ -411,7 +472,11 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyAutocomplite
 						label="Позиции в заказе"
 						multiple={true}
@@ -421,7 +486,11 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyAutocomplite
 						label="Пользователи"
 						disableClearable={true}
@@ -431,8 +500,12 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 			</Grid>
-			<Grid container spacing={2} justifyContent="center" mt={2}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={2} justifyContent="center" mt={2}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="Промокод"
 						value={formData.promo}
@@ -440,7 +513,11 @@ export default function OrdersMore() {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={6}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 6
+                    }}>
 					<MyCheckBox
 						label="Заказ без промокода"
 						value={formData.no_promo}
@@ -450,7 +527,11 @@ export default function OrdersMore() {
 				{!orders.length ? null : (
 					<>
 						<Grid container justifyContent="center">
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<TableContainer>
 									<Table>
 										<TableHead>
@@ -560,12 +641,20 @@ export default function OrdersMore() {
 					</>
 				)}
 			</Grid>
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={1}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 1
+                    }}>
 				</Grid>
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 				</Grid>
 			</Grid>
-		</>
-	);
+        </>
+    );
 }

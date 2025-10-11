@@ -42,10 +42,11 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 
-import {MySelect, MyTextInput, MyAlert} from '@/ui/elements';
+import {MySelect, MyTextInput} from '@/components/shared/Forms';
 
 import { evaluate } from 'mathjs';
 import queryString from 'query-string';
+import MyAlert from '@/components/shared/MyAlert';
 
 function formatDate(date) {
   var d = new Date(date),
@@ -187,8 +188,17 @@ class Revizion_Table_Row extends React.Component {
       <TableRow>
         <TableCell>
           <Grid container spacing={2}>
-            <Grid item xs={5} sm={4} sx={{ wordWrap: 'break-word' }}>{item.name}</Grid>
-            <Grid item xs={7} sm={8}>
+            <Grid
+              sx={{ wordWrap: 'break-word' }}
+              size={{
+                xs: 5,
+                sm: 4
+              }}>{item.name}</Grid>
+            <Grid
+              size={{
+                xs: 7,
+                sm: 8
+              }}>
               <MyTextInput
                 label="Количество"
                 tabindex={{ tabIndex: index }}
@@ -220,7 +230,11 @@ class Revizion_Table_Row_Item extends React.Component {
       <TableRow>
         <TableCell style={{ borderBottom: 'none', borderTop: 'none' }}>
           <Grid container spacing={2}>
-            <Grid item xs={4} sm={4}>
+            <Grid
+              size={{
+                xs: 4,
+                sm: 4
+              }}>
               <MySelect
                 is_none={false}
                 label="Объем упаковки"
@@ -230,7 +244,11 @@ class Revizion_Table_Row_Item extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={i === 0 ? 8 : 5} sm={i === 0 ? 8 : 7}>
+            <Grid
+              size={{
+                xs: i === 0 ? 8 : 5,
+                sm: i === 0 ? 8 : 7
+              }}>
               <MyTextInput
                 label={fullScreen ? i === 0 ? 'Количество' : 'Кол-во' : 'Количество'}
                 id={item.id}
@@ -244,7 +262,11 @@ class Revizion_Table_Row_Item extends React.Component {
             </Grid>
 
             {i === 0 ? null : (
-              <Grid item xs={1} sm={1}>
+              <Grid
+                size={{
+                  xs: 1,
+                  sm: 1
+                }}>
                 <Button variant="contained" onClick={() => clearData(item.id, i)}>
                   <CloseIcon />
                 </Button>
@@ -276,8 +298,16 @@ class Revizion_Table_Item extends React.Component {
             ) : (
               <TableCell>
                 <Grid container spacing={2}>
-                  <Grid item xs={4} sm={4}>{item.name}</Grid>
-                  <Grid item xs={8} sm={8}>{item.value} {item.value === '' ? '' : item.ei_name}</Grid>
+                  <Grid
+                    size={{
+                      xs: 4,
+                      sm: 4
+                    }}>{item.name}</Grid>
+                  <Grid
+                    size={{
+                      xs: 8,
+                      sm: 8
+                    }}>{item.value} {item.value === '' ? '' : item.ei_name}</Grid>
                 </Grid>
               </TableCell>
             )}
@@ -391,8 +421,16 @@ class Revizion_Table extends React.Component {
                 <TableRow style={{ backgroundColor: '#ADD8E6' }}>
                   <TableCell>
                     <Grid container spacing={2}>
-                      <Grid item xs={4} sm={4}>Товар</Grid>
-                      <Grid item xs={8} sm={8}>Количество</Grid>
+                      <Grid
+                        size={{
+                          xs: 4,
+                          sm: 4
+                        }}>Товар</Grid>
+                      <Grid
+                        size={{
+                          xs: 8,
+                          sm: 8
+                        }}>Количество</Grid>
                     </Grid>
                   </TableCell>
                 </TableRow>
@@ -418,8 +456,16 @@ class Revizion_Table extends React.Component {
                   <TableRow style={{ backgroundColor: '#ADD8E6' }}>
                     <TableCell>
                       <Grid container spacing={2}>
-                        <Grid item xs={5} sm={4}>Заготовка</Grid>
-                        <Grid item xs={7} sm={8}>Количество</Grid>
+                        <Grid
+                          size={{
+                            xs: 5,
+                            sm: 4
+                          }}>Заготовка</Grid>
+                        <Grid
+                          size={{
+                            xs: 7,
+                            sm: 8
+                          }}>Количество</Grid>
                       </Grid>
                     </TableCell>
                   </TableRow>
@@ -446,8 +492,16 @@ class Revizion_Table extends React.Component {
                   <TableRow style={{ backgroundColor: '#ADD8E6' }}>
                     <TableCell>
                       <Grid container spacing={2}>
-                        <Grid item xs={5} sm={4}>Рецепт</Grid>
-                        <Grid item xs={7} sm={8}>Количество</Grid>
+                        <Grid
+                          size={{
+                            xs: 5,
+                            sm: 4
+                          }}>Рецепт</Grid>
+                        <Grid
+                          size={{
+                            xs: 7,
+                            sm: 8
+                          }}>Количество</Grid>
                       </Grid>
                     </TableCell>
                   </TableRow>
@@ -468,7 +522,6 @@ class Revizion_Table extends React.Component {
             )}
           </Table>
         </TableContainer>
-
         {/* Боковая панель с выбором мест хранения */}
         <React.Fragment>
           <SwipeableDrawer
@@ -1062,20 +1115,26 @@ class RevizionNew_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>Новая ревизия</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button
               variant="contained"
               onClick={this.checkData.bind(this)}
@@ -1085,7 +1144,11 @@ class RevizionNew_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MySelect
               data={this.state.points}
               value={this.state.point}
@@ -1094,7 +1157,11 @@ class RevizionNew_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Autocomplete
               freeSolo={true}
               size="small"
@@ -1114,7 +1181,11 @@ class RevizionNew_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Revizion_Table
               items={this.state.items}
               rec={this.state.rec}
@@ -1131,7 +1202,6 @@ class RevizionNew_ extends React.Component {
             />
           </Grid>
         </Grid>
-
         <Revizion_Button_Group 
           items={this.state.items}
           pf={this.state.pf}
@@ -1140,7 +1210,6 @@ class RevizionNew_ extends React.Component {
           checkData={this.checkData.bind(this)}
           open={() => this.setState({ open: true })}
         />
-
         <Revizion_Modal 
           pf_list={this.state.pf_list}
           modalDialog={this.state.modalDialog}
@@ -1154,7 +1223,6 @@ class RevizionNew_ extends React.Component {
           notRestoreData={this.notRestoreData.bind(this)}
           getDataRev={this.getDataRev.bind(this)}
         />
-
       </>
     );
   }

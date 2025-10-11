@@ -16,7 +16,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 
-import { MyTextInput, MySelect, MyAutocomplite, MyCheckBox, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
+import { MyTextInput, MySelect, MyAutocomplite, MyCheckBox, MyDatePickerNew } from '@/components/shared/Forms';
 
 import { api_laravel, api_laravel_local } from '@/src/api_new';
 
@@ -25,6 +25,8 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Chip from "@mui/material/Chip";
+import { formatDate } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 class SiteStatMarc_ extends React.Component {
   chartnewusers = null;
@@ -1624,13 +1626,15 @@ class SiteStatMarc_ extends React.Component {
         <Script src="https://cdn.amcharts.com/lib/5/index.js"></Script>
         <Script src="https://cdn.amcharts.com/lib/5/xy.js"></Script>
         <Script src="//cdn.amcharts.com/lib/5/themes/Animated.js"></Script>
-
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
@@ -1641,34 +1645,65 @@ class SiteStatMarc_ extends React.Component {
             text={this.state.err_text}
           />
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDateRange.bind(this, 'date_start') } />
           </Grid>
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew label="Дата от" value={ this.state.date_end } func={ this.changeDateRange.bind(this, 'date_end') } />
           </Grid>
 
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyAutocomplite data={this.state.points} value={this.state.choosePoint} func={ (event, data) => { this.setState({ choosePoint: data }) } } multiple={true} label='Точка' />
           </Grid>
-          <Grid item xs={6} sm={3}>
+          <Grid
+            size={{
+              xs: 6,
+              sm: 3
+            }}>
             <MyTextInput value={this.state.promoName} func={ (event) => { this.setState({ promoName: event.target.value }) } } label='Промокод' />
           </Grid>
-          <Grid item xs={6} sm={3}>
+          <Grid
+            size={{
+              xs: 6,
+              sm: 3
+            }}>
             <MySelect data={this.state.typesShow} value={this.state.typeShow} func={ (event) => { this.setState({ typeShow: event.target.value }) } } label='Как показать' />
           </Grid>
-          <Grid item xs={12} sm={1}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 1
+            }}>
             <MyCheckBox label='Показать акции' value={this.state.is_show_adv} func={this.changeChekBox.bind(this, 'is_show_adv') }   />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button variant="contained" onClick={this.show.bind(this)}>Обновить данные</Button>
           </Grid>
 
 
           { this.state.typeShow != 1 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' }}>Новые клиенты итог</h2>
               <TableContainer component={Paper}>
                 <Table>
@@ -1697,7 +1732,10 @@ class SiteStatMarc_ extends React.Component {
           }
 
           { this.state.typeShow != 1 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' }}>Заказы итог</h2>
               <TableContainer component={Paper}>
                 <Table>
@@ -1726,7 +1764,10 @@ class SiteStatMarc_ extends React.Component {
           }
 
           { this.state.typeShow != 1 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' }}>Средний чек итог</h2>
               <TableContainer component={Paper}>
                 <Table>
@@ -1755,7 +1796,10 @@ class SiteStatMarc_ extends React.Component {
           }
 
           { this.state.typeShow != 1 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' } }>Позиций итог</h2>
               <TableContainer component={Paper}>
                 <Table>
@@ -1780,7 +1824,10 @@ class SiteStatMarc_ extends React.Component {
           }
 
           { this.state.typeShow != 1 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' }}>Ушедшие клиенты</h2>
               <h5 style={{ textAlign: 'center' }}>ушли - заказывали за 90 дней до указанного периода и больше не заказывали</h5>
               <h5 style={{ textAlign: 'center' }}>вернулись - не заказывали 90 дней до указанного периода, сделали заказ в указанный период</h5>
@@ -1843,7 +1890,12 @@ class SiteStatMarc_ extends React.Component {
 
                  <Grid container spacing={3}>
 
-                    <Grid style={{ marginTop: 20, marginBottom: 200}} item xs={12} sm={4}>
+                    <Grid
+                      style={{ marginTop: 20, marginBottom: 200}}
+                      size={{
+                        xs: 12,
+                        sm: 4
+                      }}>
                         <h2 style={{ textAlign: 'center' }}>Рейтинг роллов </h2>
                         <h5 style={{ textAlign: 'center', cursor: 'pointer' }} onClick={this.showStat.bind(this, 'roll')} >Показать/Скрыть</h5>
                         {this.state.show_stat_roll != true ? null :
@@ -1864,7 +1916,12 @@ class SiteStatMarc_ extends React.Component {
                         }
                     </Grid>
 
-                    <Grid style={{ marginTop: 20, marginBottom: 200 }} item xs={12} sm={4}>
+                    <Grid
+                      style={{ marginTop: 20, marginBottom: 200 }}
+                      size={{
+                        xs: 12,
+                        sm: 4
+                      }}>
                         <h2 style={{ textAlign: 'center' }}>Рейтинг сетов</h2>
                         <h5 style={{ textAlign: 'center', cursor: 'pointer' }} onClick={this.showStat.bind(this, 'set')} >Показать/Скрыть</h5>
                         {this.state.show_stat_set != true ? null :
@@ -1885,7 +1942,12 @@ class SiteStatMarc_ extends React.Component {
                         }
                     </Grid>
 
-                     <Grid style={{ marginTop: 20, marginBottom: 200 }} item  xs={12} sm={4}>
+                     <Grid
+                       style={{ marginTop: 20, marginBottom: 200 }}
+                       size={{
+                         xs: 12,
+                         sm: 4
+                       }}>
                         <h2 style={{ textAlign: 'center' }}>Рейтинг Пиццы</h2>
                         <h5 style={{ textAlign: 'center', cursor: 'pointer' }} onClick={this.showStat.bind(this, 'pizza')}>Показать/Скрыть</h5>
                         {this.state.show_stat_pizza != true ? null :
@@ -1910,28 +1972,40 @@ class SiteStatMarc_ extends React.Component {
             }
 
           { this.state.typeShow != 2 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' }}>Новые клиенты по месяцам</h2>
               <div id="chartnewusers" style={{ width: "100%", height: "500px" }} />
             </Grid>
           }
 
           { this.state.typeShow != 2 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' }}>Заказы по месяцам</h2>
               <div id="chartorders" style={{ width: "100%", height: "500px" }} />
             </Grid>
           }
 
           { this.state.typeShow != 2 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' }}>Средний чек по месяцам</h2>
               <div id="chartavgsumm" style={{ width: "100%", height: "500px" }} />
             </Grid>
           }
 
           { this.state.typeShow != 2 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' }}>Позиций по месяцам</h2>
               <div id="chartcountpos" style={{ width: "100%", height: "500px" }} />
             </Grid>
@@ -1939,28 +2013,40 @@ class SiteStatMarc_ extends React.Component {
 
 
           { this.state.typeShow != 3 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' }}>Новые клиенты по дням</h2>
               <div id="chartnewusersD" style={{ width: "100%", height: "500px" }} />
             </Grid>
           }
 
           { this.state.typeShow != 3 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' }}>Заказы по дням</h2>
               <div id="chartordersD" style={{ width: "100%", height: "500px" }} />
             </Grid>
           }
 
           { this.state.typeShow != 3 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' }}>Средний чек по дням</h2>
               <div id="chartavgsummD" style={{ width: "100%", height: "500px" }} />
             </Grid>
           }
 
           { this.state.typeShow != 3 ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <h2 style={{ textAlign: 'center' }}>Позиций по дням</h2>
               <div id="chartcountposD" style={{ width: "100%", height: "500px" }} />
             </Grid>
@@ -1969,7 +2055,7 @@ class SiteStatMarc_ extends React.Component {
 
         </Grid>
       </>
-    )
+    );
   }
 }
 

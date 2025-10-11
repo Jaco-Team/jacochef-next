@@ -29,13 +29,15 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import Dropzone from 'dropzone';
 
-import { MyAutocomplite, MyDatePickerNew, MySelect, TextEditor, MyTextInput, MyCheckBox, MyAlert, formatDate } from '@/ui/elements';
+import { MyAutocomplite, MyDatePickerNew, MySelect, TextEditor, MyTextInput, MyCheckBox } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 import TextField from "@mui/material/TextField";
+import { formatDate } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 class SiteBaners_Modal extends React.Component {
   dropzoneOptions = {
@@ -531,7 +533,6 @@ class SiteBaners_Modal extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog
           open={this.props.open}
           onClose={this.onClose.bind(this, false)}
@@ -551,14 +552,22 @@ class SiteBaners_Modal extends React.Component {
           {!this.state.banner ? null : (
             <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="Название банера (внутреннее)"
                     value={ this.state.banner ? this.state.banner.this_ban.name : '' }
                     func={this.changeItem.bind(this, 'name')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="Заголовок"
                     value={ this.state.banner ? this.state.banner.this_ban.title : '' }
@@ -566,7 +575,11 @@ class SiteBaners_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MySelect
                     is_none={false}
                     label="Город"
@@ -576,9 +589,17 @@ class SiteBaners_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}></Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}></Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyDatePickerNew
                     label="Дата старта"
                     value={this.state.banner ? dayjs(this.state.banner.this_ban.date_start) : ''}
@@ -586,7 +607,11 @@ class SiteBaners_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyDatePickerNew
                     label="Дата окончания"
                     value={this.state.banner ? dayjs(this.state.banner.this_ban.date_end) : ''}
@@ -594,7 +619,11 @@ class SiteBaners_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyAutocomplite
                     label="Позиции (вместо промика)"
                     multiple={true}
@@ -604,7 +633,11 @@ class SiteBaners_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyAutocomplite
                     label="Промокод (вместо позиций)"
                     multiple={false}
@@ -614,35 +647,55 @@ class SiteBaners_Modal extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={6} sm={2}>
+                <Grid
+                  size={{
+                    xs: 6,
+                    sm: 2
+                  }}>
                   <MyCheckBox
                     label="Активность"
                     value={this.state.banner ? parseInt(this.state.banner.this_ban.is_active) == 1 ? true : false : false}
                     func={this.changeItemChecked.bind(this, 'is_active')}
                   />
                 </Grid>
-                <Grid item xs={6} sm={2}>
+                <Grid
+                  size={{
+                    xs: 6,
+                    sm: 2
+                  }}>
                   <MyCheckBox
                     label="Показывать в акциях"
                     value={this.state.banner ? parseInt(this.state.banner.this_ban.is_active_actii) == 1 ? true : false : false}
                     func={this.changeItemChecked.bind(this, 'is_active_actii')}
                   />
                 </Grid>
-                <Grid item xs={6} sm={2}>
+                <Grid
+                  size={{
+                    xs: 6,
+                    sm: 2
+                  }}>
                   <MyCheckBox
                     label="Показывать на главной"
                     value={this.state.banner ? parseInt(this.state.banner.this_ban.is_active_home) == 1 ? true : false : false}
                     func={this.changeItemChecked.bind(this, 'is_active_home')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="Заголовок SEO"
                     value={ this.state.banner ? this.state.banner.this_ban.seo_title : '' }
                     func={this.changeItem.bind(this, 'seo_title')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <TextField
                     label="Описание SEO"
                     value={ this.state.banner ? this.state.banner.this_ban.seo_desc : '' }
@@ -656,7 +709,11 @@ class SiteBaners_Modal extends React.Component {
                 </Grid>
 
 
-                <Grid item xs={12} sm={6} >
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Typography>Картинка на ПК разрешением 3700x1000 только JPG</Typography>
 
                   {!this.state.banner || this.state.banner.this_ban.img.length == 0 ? null : (
@@ -668,7 +725,11 @@ class SiteBaners_Modal extends React.Component {
                   <div className="dropzone" id="for_img_edit" style={{ width: '100%', minHeight: 150 }}/>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Typography>Картинка мобильная соотношением 2:1 (например: 1000x500) только JPG</Typography>
 
                   {!this.state.banner || this.state.banner.this_ban.img.length == 0 ? null : (
@@ -680,7 +741,11 @@ class SiteBaners_Modal extends React.Component {
                   <div className="dropzone" id="for_img_edit_" style={{ width: '100%', minHeight: 150 }}/>
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <TextEditor
                     value={this.state.banner ? this.state.banner.this_ban.text : ''}
                     func={this.changeItemText.bind(this, 'text')}
@@ -915,7 +980,6 @@ class SiteBaners_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <SiteBaners_Modal
           open={this.state.modalDialog}
           onClose={this.onCloseModal.bind(this)}
@@ -927,11 +991,18 @@ class SiteBaners_ extends React.Component {
           fullScreen={this.state.fullScreen}
           getData={this.getData.bind(this)}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}><h1>{this.state.module_name}</h1></Grid>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}><h1>{this.state.module_name}</h1></Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect
               is_none={false}
               label="Город"
@@ -941,7 +1012,11 @@ class SiteBaners_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.openModal.bind(this, 'bannerNew', 'Новый банер')} variant="contained">
               Добавить банер
             </Button>
@@ -949,7 +1024,11 @@ class SiteBaners_ extends React.Component {
 
           {/* таблица активных баннеров */}
           {!this.state.active.length ? null : (
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -977,7 +1056,11 @@ class SiteBaners_ extends React.Component {
                         </TableCell>
                         <TableCell>{item?.link}</TableCell>
                         <TableCell>
-                          <Grid item xs={12} sm={6}>
+                          <Grid
+                            size={{
+                              xs: 12,
+                              sm: 6
+                            }}>
                             <MyTextInput
                               value={item.sort}
                               func={this.changeSort.bind(this, item.id)}
@@ -1004,7 +1087,11 @@ class SiteBaners_ extends React.Component {
 
           {/* таблица законченные баннеров */}
           {!this.state.non_active.length ? null : (
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography sx={{ fontWeight: 'bold' }}>Законченные</Typography>

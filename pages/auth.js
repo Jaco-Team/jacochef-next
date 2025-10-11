@@ -16,8 +16,8 @@ import api from '@/src/api';
 import Cookies from 'js-cookie';
 
 import { EyeShow, EyeHide } from '@/ui/icons';
-import { MyAlert} from '@/ui/elements';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
+import MyAlert from '@/components/shared/MyAlert';
 
 export default function Auth() {
 
@@ -93,16 +93,21 @@ export default function Auth() {
       <Backdrop style={{ zIndex: 99 }} open={isLoad}>
         <CircularProgress color="inherit" />
       </Backdrop>
-
       <MyAlert
         isOpen={openAlert}
         onClose={() => setOpenAlert(false)}
         status={false}
         text={errText}
       />
-
       <Grid container spacing={3} direction="row" justifyContent="center" alignItems="center">
-        <Grid item xs={12} sm={6} md={6} lg={4} xl={3}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+            md: 6,
+            lg: 4,
+            xl: 3
+          }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', }}>
             <Avatar style={{ borderRadius: 0, width: '100%', height: 150, margin: 0, backgroundColor: '#fff' }}>
               <img alt="Жако доставка роллов и пиццы" src="/Favikon.png" style={{ height: '100%' }} />
@@ -160,7 +165,7 @@ export default function Auth() {
               </Button>
 
               <Grid container style={{ marginTop: 10 }}>
-                <Grid item>
+                <Grid>
                   <Link href={`/registration`} style={{ color: '#c03' }}>Восстановить пароль</Link>
                 </Grid>
               </Grid>
@@ -170,7 +175,7 @@ export default function Auth() {
         </Grid>
       </Grid>
     </>
-  )
+  );
 }
 
 export async function getServerSideProps({ req, res, query }) {

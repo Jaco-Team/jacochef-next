@@ -28,10 +28,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 
-import { formatDateMin, MyDatePickerNewViews, MyDatePickerNew, formatDate } from '@/ui/elements';
+import { MyDatePickerNewViews, MyDatePickerNew } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
+import { formatDate, formatDateMin } from '@/src/helpers/ui/formatDate';
 
 var am5locales_ru_RU = {
   Jan: 'Янв',
@@ -101,7 +102,10 @@ class StatByClients_Modal extends React.Component {
         maxWidth="calc(95% - 32px)"
       >
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <h2 style={{ textAlign: 'center' }}>
               Итого {this.props.city}: {this.props.name}
             </h2>
@@ -728,11 +732,9 @@ class StatByClients_ extends React.Component {
         <Script src="https://cdn.amcharts.com/lib/5/index.js"></Script>
         <Script src="https://cdn.amcharts.com/lib/5/xy.js"></Script>
         <Script src="//cdn.amcharts.com/lib/5/themes/Animated.js"></Script>
-
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <StatByClients_Modal
           onClose={() => this.setState({ modalDialog: false })}
           fullScreen={this.state.fullScreen}
@@ -741,14 +743,22 @@ class StatByClients_ extends React.Component {
           name={this.state.name}
           id={this.state.id}
         />
-
         <Grid container spacing={3} mb={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
 
-          <Grid item xs={12} sm={12} style={{ paddingBottom: 24 }}>
+          <Grid
+            style={{ paddingBottom: 24 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Paper>
               <Tabs value={this.state.activeTab} onChange={ this.changeTab.bind(this) } centered variant='fullWidth'>
                 <Tab label="Дни" {...a11yProps(0)} />
@@ -758,27 +768,48 @@ class StatByClients_ extends React.Component {
           </Grid>
 
           {/* по дням */}
-          <Grid item xs={12} sm={12} style={{ paddingTop: 0, paddingBottom: '40px' }}>
+          {this.state.activeTab === 0 && (
+          <Grid
+            style={{ paddingTop: 0, paddingBottom: '40px' }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TabPanel value={this.state.activeTab} index={0} id='stat'>
+              <Grid container spacing={3} sx={{ p: 0, mb: 2 }}>
+                <Grid
+                  style={{ paddingRight: 12 }}
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
+                  <MyDatePickerNew
+                    label="Дата от"
+                    value={this.state.date_start_day}
+                    func={this.changeDateRange_days.bind(this, 'date_start_day')}
+                  />
+                </Grid>
 
-              <Grid item xs={12} sm={6} style={{ paddingRight: 12 }}>
-                <MyDatePickerNew
-                  label="Дата от"
-                  value={this.state.date_start_day}
-                  func={this.changeDateRange_days.bind(this, 'date_start_day')}
-                />
+
+                <Grid
+                  style={{ paddingLeft: 12 }}
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
+                  <MyDatePickerNew
+                    label="Дата до"
+                    value={this.state.date_end_day}
+                    func={this.changeDateRange_days.bind(this, 'date_end_day')}
+                  />
+                </Grid>
               </Grid>
 
-
-              <Grid item xs={12} sm={6} style={{ paddingLeft: 12 }}>
-                <MyDatePickerNew
-                  label="Дата до"
-                  value={this.state.date_end_day}
-                  func={this.changeDateRange_days.bind(this, 'date_end_day')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <Button onClick={this.update_days.bind(this)} variant="contained">
                 {/* для тестов получениt данных по дням для Ушедших и Вернувшихся */}
                 {/* <Button onClick={this.test_stat.bind(this)} variant="contained"> */}
@@ -786,8 +817,12 @@ class StatByClients_ extends React.Component {
                 </Button>
               </Grid>
 
-              <Grid item xs={12} sm={12}>
-                <TableContainer sx={{ maxHeight: { xs: 'none', sm: 600 } }}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
+                <TableContainer sx={{ maxHeight: { xs: 'none', sm: 600 }, overflowX: 'auto' }}>
                   <Table stickyHeader size="small" style={{ borderCollapse: 'collapse' }}>
                     <TableHead sx={{ position: 'sticky', top: 0, zIndex: 7 }}>
                       <TableRow>
@@ -986,8 +1021,9 @@ class StatByClients_ extends React.Component {
                               )}
                             </TableRow>
                           </React.Fragment>
-
-                          <TableCell colSpan={this.state.dataDates_days.length + 3} style={{borderBottom: '10px solid #e5e5e5 !important', height: 100}}></TableCell>
+                          <TableRow>
+                            <TableCell colSpan={this.state.dataDates_days.length + 3} style={{borderBottom: '10px solid #e5e5e5 !important', height: 100}}></TableCell>
+                          </TableRow>
                         </React.Fragment>
                       ))}
 
@@ -1115,38 +1151,63 @@ class StatByClients_ extends React.Component {
 
             </TabPanel>
           </Grid>
+          )}
           {/* по дням */}
 
           {/* по месяцам */}
-          <Grid item xs={12} sm={12} style={{ paddingTop: 0, paddingBottom: '40px' }}>
+          {this.state.activeTab === 1 && (
+          <Grid
+            style={{ paddingTop: 0, paddingBottom: '40px' }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TabPanel value={this.state.activeTab} index={1} id='stat'>
+              <Grid container spacing={3} sx={{ p: 0, mb: 2 }}>
+                <Grid
+                  style={{ paddingRight: 12 }}
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
+                  <MyDatePickerNewViews
+                    label="Дата от"
+                    views={['month', 'year']}
+                    value={this.state.date_start}
+                    func={this.changeDateRange.bind(this, 'date_start')}
+                  />
+                </Grid>
 
-              <Grid item xs={12} sm={6} style={{ paddingRight: 12 }}>
-                <MyDatePickerNewViews
-                  label="Дата от"
-                  views={['month', 'year']}
-                  value={this.state.date_start}
-                  func={this.changeDateRange.bind(this, 'date_start')}
-                />
-              </Grid>
+                <Grid
+                  style={{ paddingLeft: 12 }}
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
+                  <MyDatePickerNewViews
+                    label="Дата до"
+                    views={['month', 'year']}
+                    value={this.state.date_end}
+                    func={this.changeDateRange.bind(this, 'date_end')}
+                  />
+                </Grid>
+              </Grid> 
 
-
-              <Grid item xs={12} sm={6} style={{ paddingLeft: 12 }}>
-                <MyDatePickerNewViews
-                  label="Дата до"
-                  views={['month', 'year']}
-                  value={this.state.date_end}
-                  func={this.changeDateRange.bind(this, 'date_end')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <Button onClick={this.update_months.bind(this)} variant="contained">
                   Обновить
                 </Button>
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TableContainer sx={{ maxHeight: { xs: 'none', sm: 600 } }}>
                   <Table stickyHeader size="small" style={{ borderCollapse: 'collapse' }}>
                     <TableHead sx={{ position: 'sticky', top: 0, zIndex: 7 }}>
@@ -1472,6 +1533,7 @@ class StatByClients_ extends React.Component {
 
             </TabPanel>
           </Grid>
+          )}
           {/* по месяцам */}
 
         </Grid>

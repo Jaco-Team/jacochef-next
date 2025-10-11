@@ -24,10 +24,12 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MyAlert, MySelect, MyTextInput, MyDatePickerNew, formatDate, MyCheckBox} from '@/ui/elements';
+import {MySelect, MyTextInput, MyDatePickerNew, MyCheckBox} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class Kkt_Info_Modal extends React.Component {
   constructor(props) {
@@ -158,10 +160,13 @@ class Kkt_Info_Modal extends React.Component {
           <Typography>Точка:{' '}<span style={{ fontWeight: 'bold' }}>{this.props.pointModal}</span></Typography>
           <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', marginLeft: 'auto' }}><CloseIcon /></IconButton>
         </DialogTitle>
-
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MySelect
                 is_none={false}
                 data={this.state.kass}
@@ -170,7 +175,11 @@ class Kkt_Info_Modal extends React.Component {
                 label="Номер кассы"
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MySelect
                 is_none={false}
                 data={this.state.dop_kass}
@@ -179,42 +188,66 @@ class Kkt_Info_Modal extends React.Component {
                 label="Доп касса"
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="РН ККТ"
                 value={this.state.rn_kkt}
                 func={this.changeItem.bind(this, 'rn_kkt')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="ФН"
                 value={this.state.fn}
                 func={this.changeItem.bind(this, 'fn')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew
                 label="Дата регистрации"
                 value={this.state.date_start}
                 func={this.changeDateRange.bind(this, 'date_start')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew
                 label="Дата окончания"
                 value={this.state.date_end}
                 func={this.changeDateRange.bind(this, 'date_end')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="База"
                 value={this.state.base}
                 func={this.changeItem.bind(this, 'base')}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyCheckBox
                 value={parseInt(this.state.is_active) === 1 ? true : false}
                 func={this.changeItemChecked.bind(this, 'is_active')}
@@ -438,14 +471,12 @@ class Kkt_Info_ extends React.Component {
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Kkt_Info_Modal
           type={this.state.type}
           open={this.state.modalDialog}
@@ -456,13 +487,20 @@ class Kkt_Info_ extends React.Component {
           add_kkt={this.add_kkt.bind(this)}
           update_kkt={this.update_kkt.bind(this)}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MySelect
               is_none={false}
               data={this.state.points}
@@ -472,19 +510,33 @@ class Kkt_Info_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button variant="contained" onClick={this.get_kkt.bind(this)}>
               Обновить данные
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <Button variant="contained" style={{ whiteSpace: 'nowrap' }} onClick={this.openModal.bind(this, 'add_kkt')}>
               Добавить кассу
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12} mt={3} mb={5}>
+          <Grid
+            mt={3}
+            mb={5}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer>
               <Table>
                 <TableHead>

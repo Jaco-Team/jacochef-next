@@ -11,7 +11,7 @@ import {
   Button,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/components/shared/Forms";
 
 const ModalNewTagNav = ({open, onClose, save}) => {
   const [newTagName, setNewTagName] = useState('');
@@ -24,7 +24,12 @@ const ModalNewTagNav = ({open, onClose, save}) => {
     >
       <DialogTitle>Добавить новый тег навигации</DialogTitle>
       <DialogContent>
-        <Grid item xs={12} sm={12} mt={2}>
+        <Grid
+          mt={2}
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <MyTextInput
             label="Название"
             value={newTagName}
@@ -37,7 +42,7 @@ const ModalNewTagNav = ({open, onClose, save}) => {
         <Button variant="contained" onClick={() => save(newTagName)}>Сохранить</Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }
 
 const ModalNewTagCont = ({open, onClose, save}) => {
@@ -51,7 +56,12 @@ const ModalNewTagCont = ({open, onClose, save}) => {
     >
       <DialogTitle>Добавить новое название контента</DialogTitle>
       <DialogContent>
-        <Grid item xs={12} sm={12} mt={2}>
+        <Grid
+          mt={2}
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <MyTextInput
             label="Название"
             value={newTagName}
@@ -64,7 +74,7 @@ const ModalNewTagCont = ({open, onClose, save}) => {
         <Button variant="contained" onClick={() => save(newTagName)}>Сохранить</Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }
 
 export default function JModal({
@@ -229,7 +239,6 @@ export default function JModal({
       </DialogTitle>
       {openNewTagNavModal && <ModalNewTagNav open={openNewTagNavModal} onClose={() => setOpenNewNavTagModal(false)} save={handleSaveNav}/>}
       {openNewContTagModal && <ModalNewTagCont open={openNewContTagModal} onClose={() => setOpenNewContTagModal(false)} save={handleSaveCont}/>}
-
       <IconButton
         onClick={handleClose}
         sx={{
@@ -242,10 +251,12 @@ export default function JModal({
       >
         <CloseIcon />
       </IconButton>
-
       <DialogContent sx={{ pb: 1, pt: 1 }}>
         <Grid container spacing={3}>
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <MyTextInput
               label="Название"
               value={item?.name || ""}
@@ -253,7 +264,10 @@ export default function JModal({
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <MyTextInput
               label="Адрес модуля (URL)"
               value={item?.link ?? ""}
@@ -262,7 +276,10 @@ export default function JModal({
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <MyAutocomplite
               label="Категория"
               multiple={false}
@@ -272,7 +289,10 @@ export default function JModal({
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <MyAutocomplite
               label="Внутренняя навигация"
               multiple={true}
@@ -282,7 +302,10 @@ export default function JModal({
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <MyAutocomplite
               label="Контент"
               multiple={true}
@@ -293,7 +316,10 @@ export default function JModal({
           </Grid>
 
           {mark === "edit" && (
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <MyCheckBox
                 label="Активность"
                 value={parseInt(item?.is_show) === 1}
@@ -303,7 +329,6 @@ export default function JModal({
           )}
         </Grid>
       </DialogContent>
-
       <DialogActions>
         <Button variant="contained" onClick={handleSave}>
           Сохранить

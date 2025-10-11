@@ -35,7 +35,7 @@ import TextField from '@mui/material/TextField';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyDatePickerNew, MyTextInput, formatDate } from '@/ui/elements';
+import { MySelect, MyDatePickerNew, MyTextInput } from '@/components/shared/Forms';
 import Typography from '@mui/material/Typography';
 
 import { api, api_laravel, api_laravel_local } from '@/src/api_new';
@@ -46,6 +46,7 @@ import Paper from "@mui/material/Paper";
 import TableContainer from "@mui/material/TableContainer";
 import Checkbox from "@mui/material/Checkbox";
 import DriversMap from '@/components/shared/DriversMap/DriversMap';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 function a11yProps(index) {
   return {
@@ -71,9 +72,10 @@ class Concenter_ extends React.Component {
       modalDialogDriver: false,
       modalDialogDelDriver: false,
       confirmDialog: false,
+      confirmDialogDel: false,
 
       cities: [],
-      city_id: 1,
+      city_id: '',
       text: '',
       date: formatDate(new Date()),
       point_list: [],
@@ -421,10 +423,9 @@ class Concenter_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         { !this.state.showOrder ? null :
           <Dialog
-            open={this.state.modalDialog}
+            open={!!this.state.modalDialog}
             onClose={ () => { this.setState({ modalDialog: false }) } }
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
@@ -433,27 +434,42 @@ class Concenter_ extends React.Component {
             <DialogContent>
 
               <Grid container spacing={0}>
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <span>{this.state.showOrder.order.type_order}: {this.state.showOrder.order.type_order_addr_new}</span>
                 </Grid>
                 { parseInt(this.state.showOrder.order.type_order_) == 1 ?
                   parseInt(this.state.showOrder.order.fake_dom) == 0 ?
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <b style={{ color: 'red', fontWeight: 900 }}>Домофон не работает</b>
                     </Grid>
                       :
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <b style={{ color: 'green', fontWeight: 900 }}>Домофон работает</b>
                     </Grid>
                     :
                   null
                 }
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <span>{this.state.showOrder.order.time_order_name}: {this.state.showOrder.order.time_order}</span>
                 </Grid>
 
                 { this.state.showOrder.order.number.length > 1 && this.hasAccess(acces?.tel) ?
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <b>Телефон: </b>
                     <span>{this.state.showOrder.order.number}</span>
                   </Grid>
@@ -461,76 +477,118 @@ class Concenter_ extends React.Component {
                   null
                 }
 
-                { this.state.showOrder.order.delete_reason.length > 0 ? <Grid item xs={12}><span style={{ color: 'red' }}>Удален: {this.state.showOrder.order.date_time_delete}</span></Grid> : null}
-                { this.state.showOrder.order.delete_reason.length > 0 ? <Grid item xs={12}><span style={{ color: 'red' }}>{this.state.showOrder.order.delete_reason}</span></Grid> : null}
+                { this.state.showOrder.order.delete_reason.length > 0 ? <Grid
+                  size={{
+                    xs: 12
+                  }}><span style={{ color: 'red' }}>Удален: {this.state.showOrder.order.date_time_delete}</span></Grid> : null}
+                { this.state.showOrder.order.delete_reason.length > 0 ? <Grid
+                  size={{
+                    xs: 12
+                  }}><span style={{ color: 'red' }}>{this.state.showOrder.order.delete_reason}</span></Grid> : null}
 
                 { parseInt(this.state.showOrder.order.is_preorder) == 1 ? null :
-                  <Grid item xs={12}><span>{this.state.showOrder.order.text_time}{this.state.showOrder.order.time_to_client}</span></Grid>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}><span>{this.state.showOrder.order.text_time}{this.state.showOrder.order.time_to_client}</span></Grid>
                 }
 
-                <Grid item xs={12}><span>{this.state.showOrder.order.textTime}</span></Grid>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}><span>{this.state.showOrder.order.textTime}</span></Grid>
 
 
                 { this.state.showOrder.order.promo_name == null || this.state.showOrder.order.promo_name.length == 0 ? null :
                   <>
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <b>Промокод: </b>
                       <span>{this.state.showOrder.order.promo_name}</span>
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <span className="noSpace">{this.state.showOrder.order.promo_text}</span>
                     </Grid>
                   </>
                 }
 
                 { this.state.showOrder.order.comment == null || this.state.showOrder.order.comment.length == 0 ? null :
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <b>Комментарий: </b>
                     <span>{this.state.showOrder.order.comment}</span>
                   </Grid>
                 }
 
                 { this.state.showOrder.order.sdacha == null || parseInt(this.state.showOrder.order.sdacha) == 0 ? null :
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <b>Сдача: </b>
                     <span>{this.state.showOrder.order.sdacha}</span>
                   </Grid>
                 }
 
                 { this.state.showOrder.order.client_name &&
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     Клиент:
                     <span> {this.state.showOrder.order.client_name}</span>
                   </Grid>
                 }
 
                 { this.state.showOrder.order.driver_name &&
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     Курьер:
                     <span> {this.state.showOrder.order.driver_name}</span>
                   </Grid>
                 }
 
                 { (this.state.showOrder.order.type_pay && this.hasAccess(acces?.type_order)) &&
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     Тип оплаты:
                     <span> {this.state.showOrder.order.type_pay}</span>
                   </Grid>
                 }
 
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <b>Сумма заказа: </b>
                   <span>{this.state.showOrder.order.sum_order} р</span>
                 </Grid>
 
                 { this.state.showOrder.order.check_pos_drive == null || !this.state.showOrder.order.check_pos_drive ? null :
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <b>Довоз оформлен: </b>
                     <span>{this.state.showOrder.order.check_pos_drive.comment}</span>
                   </Grid>
                 }
 
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <Table size={'small'} style={{ marginTop: 15 }}>
                     <TableBody>
                       { this.state.showOrder.order_items.map( (item, key) =>
@@ -629,10 +687,9 @@ class Concenter_ extends React.Component {
             }
           </Dialog>
         }
-
         {!this.state.showOrder ? null :
           <Dialog
-            open={this.state.modalDialogDel}
+            open={!!this.state.modalDialogDel}
             onClose={ () => { this.setState({ modalDialogDel: false }) } }
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
@@ -676,11 +733,10 @@ class Concenter_ extends React.Component {
 
           </Dialog>
         }
-
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="xs"
-          open={this.state.confirmDialog}
+          open={!!this.state.confirmDialog}
           onClose={() => this.setState({ confirmDialog: false })}
         >
           <DialogTitle>Подтвердите действие</DialogTitle>
@@ -702,11 +758,10 @@ class Concenter_ extends React.Component {
             <Button onClick={this.fakeUser.bind(this)}>Подтвердить</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="xs"
-          open={this.state.confirmDialogDel}
+          open={!!this.state.confirmDialogDel}
           onClose={() => this.setState({ confirmDialogDel: false })}
         >
           <DialogTitle>Подтвердите действие</DialogTitle>
@@ -720,7 +775,6 @@ class Concenter_ extends React.Component {
             <Button onClick={this.closeOrderTrue.bind(this)}>Подтвердить</Button>
           </DialogActions>
         </Dialog>
-
         { !this.state.showOrder ? null :
           <Dialog
             open={this.state.modalDialogDelDriver}
@@ -747,31 +801,54 @@ class Concenter_ extends React.Component {
 
           </Dialog>
         }
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect data={this.state.cities} value={this.state.city_id} func={ this.changeCity.bind(this) } label='Город' />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew label={'Дата'} value={this.state.date} func={ this.changeDate.bind(this) } />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTextInput label={'Номер телефона'} value={this.state.number} func={ this.changeNumber.bind(this) } />
           </Grid>
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTextInput label={'Адрес'} value={this.state.addr} func={ this.changeAddrSt.bind(this) } />
           </Grid>
 
 
 
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <FormControlLabel
                 control={
                   <Checkbox
@@ -787,7 +864,11 @@ class Concenter_ extends React.Component {
             <Button variant="contained" onClick={this.btnGetOrders.bind(this)}>Обновить данные</Button>
           </Grid>
 
-          <Grid item xs={12} lg={6}>
+          <Grid
+            size={{
+              xs: 12,
+              lg: 6
+            }}>
             {err_info.all_green ? (
             <TableContainer component={Paper}>
               <Table>
@@ -828,7 +909,11 @@ class Concenter_ extends React.Component {
           </Grid>
 
           {this.hasAccess(acces?.show_map) && this.state.orders.length > 0 &&
-          <Grid item xs={12} lg={6}>
+          <Grid
+            size={{
+              xs: 12,
+              lg: 6
+            }}>
             <Accordion>
               <AccordionSummary>
                 <Typography>Курьеры на карте</Typography>
@@ -840,7 +925,10 @@ class Concenter_ extends React.Component {
           </Grid>
           }
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Tabs value={this.state.indexTab}>
               {this.state.need_point_list.map( (item, key) =>
                 <Tab key={key} label={item.name} onClick={this.changePoint.bind(this, item.id, key)} {...a11yProps(parseInt(item.id))} />
@@ -848,7 +936,10 @@ class Concenter_ extends React.Component {
             </Tabs>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             {this.state.ordersRender.length ? (
                 <Table size={'small'}>
               <TableHead>
@@ -917,7 +1008,7 @@ class Concenter_ extends React.Component {
 
         </Grid>
       </>
-    )
+    );
   }
 }
 

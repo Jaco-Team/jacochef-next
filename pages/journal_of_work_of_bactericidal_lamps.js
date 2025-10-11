@@ -26,7 +26,7 @@ import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import TextField from '@mui/material/TextField';
 
-import {MyAlert, MySelect, MyTextInput, formatDateMin, MyDatePickerNewViews, MyDateTimePickerNew} from '@/ui/elements';
+import {MySelect, MyTextInput, MyDatePickerNewViews, MyDateTimePickerNew} from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
@@ -34,6 +34,8 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ru'; // импортируем русскую локаль
 import handleUserAccess from '@/src/helpers/access/handleUserAccess';
 import TestAccess from '@/components/shared/TestAccess';
+import MyAlert from '@/components/shared/MyAlert';
+import { formatDateMin } from '@/src/helpers/ui/formatDate';
 
 // для редактирования времени (при этом дату нельзя редактировать)
 class DateWithEditableTimePicker extends React.PureComponent {
@@ -163,21 +165,33 @@ class Lamps_Modal_Add extends React.Component {
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
            
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput
                 label="Порядковый номер"
                 value={this.state.number}
                 func={this.changeItem.bind(this, 'number')}
               />
             </Grid>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput
                 label="Модель"
                 value={this.state.name}
                 func={this.changeItem.bind(this, 'name')}
               />
             </Grid>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput
                 label="Ресурс (часов)"
                 value={this.state.resource}
@@ -185,7 +199,11 @@ class Lamps_Modal_Add extends React.Component {
                 func={this.changeItem.bind(this, 'resource')}
               />
             </Grid>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput
                 label="Где размещена"
                 value={this.state.place}
@@ -351,14 +369,12 @@ class Lamps_Modal_Add_Active extends React.Component {
 
     return (
       <>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false })}>
           <DialogTitle>Подтвердите действие</DialogTitle>
           <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
@@ -369,7 +385,6 @@ class Lamps_Modal_Add_Active extends React.Component {
             <Button onClick={this.changeLamp.bind(this)}>Заменить</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.props.open}
           onClose={this.onClose.bind(this)}
@@ -384,7 +399,11 @@ class Lamps_Modal_Add_Active extends React.Component {
           </DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput
                   label="Лампа"
                   value={this.state.name_lamp}
@@ -392,7 +411,11 @@ class Lamps_Modal_Add_Active extends React.Component {
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 {typeActive === 'new' ?
                   <MyDateTimePickerNew
                     value={this.state.time_start}
@@ -408,7 +431,11 @@ class Lamps_Modal_Add_Active extends React.Component {
                   />
                 }
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 {typeActive === 'new' ?
                   <MyDateTimePickerNew
                     value={this.state.time_end}
@@ -724,19 +751,16 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         {/* <TestAccess 
           access={this.state.access} 
           setAccess={(access) => this.setState({access})} 
         /> */}
-
         <Lamps_Modal_Add
           open={this.state.modalAddLamp}
           add={this.add.bind(this)}
@@ -744,7 +768,6 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
           fullScreen={this.state.fullScreen}
           lampEdit={this.state.lampEdit}
         />
-
         <Lamps_Modal_Add_Active
           open={this.state.modalAddActiveLamp}
           add={this.addActive.bind(this)}
@@ -755,13 +778,20 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
           changeLamp={this.changeLamp.bind(this)}
           typeActive={this.state.typeActive}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNewViews
               label="Дата от"
               views={['month', 'year']}
@@ -769,7 +799,11 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
               func={this.changeDateRange.bind(this, 'date_start')}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNewViews
               label="Дата до"
               views={['month', 'year']}
@@ -777,7 +811,11 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
               func={this.changeDateRange.bind(this, 'date_end')}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MySelect
               is_none={false}
               data={this.state.points}
@@ -787,17 +825,29 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button variant="contained" onClick={this.getLamps.bind(this)}>
               Обновить данные
             </Button>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button variant="contained" onClick={this.openModalAddLamp.bind(this)}>
               Добавить лампу
             </Button>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             {this.canAccess('export_excel') && (
               <Button variant="contained" onClick={this.download.bind(this)}>
                 Скачать файл XLS
@@ -805,7 +855,13 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
             )}
           </Grid>
 
-          <Grid item xs={12} sm={12} mt={3} mb={5}>
+          <Grid
+            mt={3}
+            mb={5}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer>
               <Table style={{whiteSpace: 'nowrap'}}>
                 <TableHead>

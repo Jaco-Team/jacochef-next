@@ -14,10 +14,12 @@ import Box from '@mui/material/Box';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MyCheckBox, MyDatePickerNew, formatDate, MyAutocomplite, MyAlert} from '@/ui/elements';
+import {MyCheckBox, MyDatePickerNew, MyAutocomplite} from '@/components/shared/Forms';
 
 import { api_laravel, api_laravel_local } from '@/src/api_new';
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 var am5locales_ru_RU = {
   Jan: 'Янв',
@@ -795,24 +797,29 @@ class StatOrder_ extends React.Component {
         <Script src="https://cdn.amcharts.com/lib/5/index.js"></Script>
         <Script src="https://cdn.amcharts.com/lib/5/xy.js"></Script>
         <Script src="//cdn.amcharts.com/lib/5/themes/Animated.js"></Script>
-
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Grid container spacing={3} mb={3} className="container_first_child">
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -820,7 +827,11 @@ class StatOrder_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -828,7 +839,11 @@ class StatOrder_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite
               label="Точка"
               multiple={true}
@@ -838,7 +853,11 @@ class StatOrder_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite
               label="Метрика"
               multiple={true}
@@ -848,7 +867,11 @@ class StatOrder_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite
               label="Тип оформления"
               multiple={true}
@@ -858,7 +881,11 @@ class StatOrder_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite
               label="Наличие промокода в заказе"
               multiple={false}
@@ -868,7 +895,11 @@ class StatOrder_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyCheckBox
               label="Показывать акции"
               value={parseInt(this.state.is_akcii) == 1 ? true : false}
@@ -876,13 +907,22 @@ class StatOrder_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button onClick={this.get_stat_orders.bind(this)} variant="contained">
               Показать
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12} style={{ paddingBottom: 24 }}>
+          <Grid
+            style={{ paddingBottom: 24 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Paper>
               <Tabs value={this.state.activeTab} onChange={this.changeTab.bind(this)} centered variant="fullWidth">
                 <Tab label="Дни" {...a11yProps(0)} />
@@ -892,25 +932,42 @@ class StatOrder_ extends React.Component {
           </Grid>
 
           {/* по дням */}
-          <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+          <Grid
+            style={{ paddingTop: 0 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TabPanel value={this.state.activeTab} index={0} id="stat">
               <Grid container spacing={3}>
                 {!this.state.avg_graph ? null : (
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <h2 style={{ textAlign: 'center' }}>Средний чек по дням</h2>
                     <div id={this.state.avg_graph} style={{ width: '100%', height: '500px' }}/>
                   </Grid>
                 )}
 
                 {!this.state.summ_graph ? null : (
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <h2 style={{ textAlign: 'center' }}>Выручка по дням</h2>
                     <div id={this.state.summ_graph} style={{ width: '100%', height: '500px' }}/>
                   </Grid>
                 )}
 
                 {!this.state.count_graph ? null : (
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <h2 style={{ textAlign: 'center' }}>
                       Кол-во заказов по дням
                     </h2>
@@ -923,11 +980,20 @@ class StatOrder_ extends React.Component {
           {/* по дням */}
 
           {/* по месяцам */}
-          <Grid item xs={12} sm={12} style={{ paddingTop: 0, paddingBottom: '40px' }}>
+          <Grid
+            style={{ paddingTop: 0, paddingBottom: '40px' }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TabPanel value={this.state.activeTab} index={1} id="stat">
               <Grid container spacing={3}>
                 {!this.state.avg_graph ? null : (
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <h2 style={{ textAlign: 'center' }}>
                       Средний чек по месяцам
                     </h2>
@@ -936,14 +1002,22 @@ class StatOrder_ extends React.Component {
                 )}
 
                 {!this.state.summ_graph ? null : (
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <h2 style={{ textAlign: 'center' }}>Выручка по месяцам</h2>
                     <div id={this.state.summ_graph} style={{ width: '100%', height: '500px' }}/>
                   </Grid>
                 )}
 
                 {!this.state.count_graph ? null : (
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <h2 style={{ textAlign: 'center' }}>
                       Кол-во заказов по месяцам
                     </h2>

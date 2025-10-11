@@ -12,11 +12,12 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyDatePickerNew, MyTextInput, MyAutocomplite, formatDate } from '@/ui/elements';
+import { MyDatePickerNew, MyTextInput, MyAutocomplite } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class PromoItemsStat_ extends React.Component {
   constructor(props) {
@@ -148,37 +149,68 @@ class PromoItemsStat_ extends React.Component {
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
           
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyAutocomplite data={this.state.point_list} value={this.state.choosePoint} func={ this.choosePoint.bind(this) } multiple={true} label='Точка' />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyDatePickerNew label={'Дата от'} value={this.state.date_start} func={ this.chooseData.bind(this, 'date_start') } />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyDatePickerNew label={'Дата до'} value={this.state.date_end} func={ this.chooseData.bind(this, 'date_end') } />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyTextInput value={this.state.promoName} func={ this.chooseDataNew.bind(this, 'promoName') } label='Промокод' />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite data={this.state.items_list} value={this.state.chooseItem} func={ this.chooseDataNew.bind(this, 'chooseItem') } multiple={false} label='Товар' />
           </Grid>
           
           
           
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button variant="contained" onClick={this.getStat.bind(this)}>Обновить</Button>
           </Grid>
           
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             
             <Table size={'small'}>
               <TableHead>
@@ -203,7 +235,7 @@ class PromoItemsStat_ extends React.Component {
           </Grid>
         </Grid>
       </>
-    )
+    );
   }
 }
 

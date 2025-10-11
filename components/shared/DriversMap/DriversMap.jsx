@@ -245,9 +245,9 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
         </Backdrop>
 
         <Grid
-          item
-          xs={12}
-        >
+          size={{
+            xs: 12
+          }}>
           {drivers.map((item, key) => (
             <div
               key={key}
@@ -262,10 +262,10 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <div
             id="map"
             name="map"

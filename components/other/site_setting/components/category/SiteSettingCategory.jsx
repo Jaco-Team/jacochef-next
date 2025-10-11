@@ -15,7 +15,7 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import useSaveCategory from "../hooks/useSaveCategory";
 import { useCategoryStore } from "./useCategoryStore";
 import { useSiteSettingStore } from "../useSiteSettingStore";
-import { MyTextInput } from "@/ui/elements";
+import { MyTextInput } from "@/components/shared/Forms";
 import { CategoryModal } from "./CategoryModal";
 import { useDebounce } from "../hooks/useDebounce";
 
@@ -117,8 +117,6 @@ export function SiteSettingCategory() {
       spacing={3}
     >
       <Grid
-        item
-        xs={12}
         sx={{
           display: "flex",
           flexDirection: {
@@ -129,7 +127,9 @@ export function SiteSettingCategory() {
           alignItems: "flex-start",
           justifyContent: "space-between",
         }}
-      >
+        size={{
+          xs: 12
+        }}>
         <Typography variant="h5">{moduleName}</Typography>
 
         <Button
@@ -140,11 +140,11 @@ export function SiteSettingCategory() {
         </Button>
       </Grid>
       <Grid
-        item
-        xs={12}
-        sm={12}
         mb={10}
-      >
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <TableContainer>
           <Table size="small">
             <TableHead>

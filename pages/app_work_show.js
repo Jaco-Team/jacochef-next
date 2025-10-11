@@ -22,7 +22,7 @@ import Box from '@mui/material/Box';
 
 import Typography from '@mui/material/Typography';
 
-import { MySelect } from '@/ui/elements';
+import { MySelect } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
@@ -198,13 +198,20 @@ class AppWorkShow_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect 
               is_none={false} 
               data={this.state.points} 
@@ -225,21 +232,33 @@ class AppWorkShow_ extends React.Component {
                 
                 <Grid container spacing={0}>
 
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <Typography>{this.state.itemsEdit.item.cat_name}</Typography>
                   </Grid>
 
                   {this.state.itemsEdit.item?.show_time == false ? null :
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Typography>Время за уборку: {this.state.itemsEdit.item.time_min} мин.</Typography>
                     </Grid>
                   }
 
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <Typography>Описание процесса уборки: </Typography>
                   </Grid>
 
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <Typography dangerouslySetInnerHTML={{__html: this.state.itemsEdit.item.text_work}}></Typography>
                   </Grid>
                   
@@ -249,7 +268,11 @@ class AppWorkShow_ extends React.Component {
             </Dialog>
           }
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Paper>
               <Tabs value={this.state.activeTab} onChange={ this.changeTab.bind(this) }>
                 <Tab label="Повар" {...a11yProps(0)} />
@@ -259,7 +282,11 @@ class AppWorkShow_ extends React.Component {
             </Paper>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Table>
               <TableHead>
                 <TableRow>
@@ -288,7 +315,7 @@ class AppWorkShow_ extends React.Component {
         
         </Grid>
       </>
-    )
+    );
   }
 }
 

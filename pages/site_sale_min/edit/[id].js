@@ -15,10 +15,11 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyTimePicker, MyTextInput, MyDatePickerNew, formatDate } from '@/ui/elements';
+import { MySelect, MyTimePicker, MyTextInput, MyDatePickerNew } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import dayjs from 'dayjs';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 function formatDateDot(date) {
   var d = new Date(date),
@@ -688,7 +689,6 @@ class SiteSaleMin_edit_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
         <Dialog
           open={this.state.modalDialog}
           onClose={ () => { this.setState({ modalDialog: false, modalLink: '' }) } }
@@ -707,19 +707,30 @@ class SiteSaleMin_edit_ extends React.Component {
             <Button color="primary" onClick={ () => { this.setState({ modalDialog: false }) } }>Хорошо</Button>
           </DialogActions>
         </Dialog>
-        
         <Grid container style={{ marginTop: '80px', paddingLeft: '24px' }}>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>Редактирование промокода</h1>
           </Grid>
           
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
             
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <Typography>Промокод: {this.state.promo_name}</Typography>
             </Grid>
             
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput value={this.state.count_action} func={ this.changeData.bind(this, 'count_action') } label='Количество активаций' />
             </Grid>
             
@@ -729,18 +740,34 @@ class SiteSaleMin_edit_ extends React.Component {
           
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
             
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDateRange.bind(this, 'date_start') } />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew label="Дата до" value={ this.state.date_end } func={ this.changeDateRange.bind(this, 'date_end') } />
             </Grid>
            
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTimePicker label="Время от" value={this.state.time_start} func={ this.changeData.bind(this, 'time_start') } />
             </Grid>
             
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTimePicker label="Время до" value={this.state.time_end} func={ this.changeData.bind(this, 'time_end') } />
             </Grid>
               
@@ -748,11 +775,19 @@ class SiteSaleMin_edit_ extends React.Component {
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
             
-              <Grid item xs={12} sm={4}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MySelect data={this.state.cities} value={this.state.city} func={ this.changeData.bind(this, 'city') } label='Город' />
               </Grid>
             
-              <Grid item xs={12} sm={4}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MySelect data={this.state.points} value={this.state.point} func={ this.changeData.bind(this, 'point') } label='Точка' />
               </Grid>
             
@@ -764,7 +799,7 @@ class SiteSaleMin_edit_ extends React.Component {
           
         </Grid>
       </>
-    )
+    );
   }
 }
 

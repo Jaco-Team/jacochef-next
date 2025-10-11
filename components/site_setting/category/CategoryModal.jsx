@@ -2,7 +2,7 @@
 
 import { Grid } from "@mui/material";
 import { useCategoryStore } from "./useCategoryStore";
-import { MyAutocomplite, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyTextInput } from "@/components/shared/Forms";
 import {useSiteSettingStore} from "@/components/site_setting/useSiteSettingStore";
 
 export function CategoryModal() {
@@ -21,10 +21,10 @@ export function CategoryModal() {
         spacing={3}
       >
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <MyTextInput
             label="Название категории"
             disabled={acces.category_view && !acces.category_edit}
@@ -34,10 +34,10 @@ export function CategoryModal() {
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <MyTextInput
             label="Сроки хранения"
             multiline={true}
@@ -49,10 +49,10 @@ export function CategoryModal() {
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           {/* <MySelect
             label="Родительская категория"
             data={listCat ? listCat : []}

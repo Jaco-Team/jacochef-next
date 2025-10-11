@@ -14,10 +14,11 @@ import Paper from '@mui/material/Paper';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MySelect, MyDatePickerNew, MyTextInput, MyAlert} from '@/ui/elements';
+import {MySelect, MyDatePickerNew, MyTextInput} from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 class SitePriceLevelEdit_input_level_name extends React.Component {
   constructor(props) {
@@ -50,7 +51,11 @@ class SitePriceLevelEdit_input_level_name extends React.Component {
 
   render() {
     return (
-      <Grid item xs={12} sm={4}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 4
+        }}>
         <MyTextInput
           label="Название"
           value={this.state.item}
@@ -419,21 +424,22 @@ class SitePriceLevelEdit_ extends React.Component {
 
     return (
       <>
-
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Grid container spacing={3} mb={3} className='container_first_child'>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
@@ -443,7 +449,11 @@ class SitePriceLevelEdit_ extends React.Component {
               changeInput={this.changeItem.bind(this)}
             />
             :
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyTextInput
                 label="Название"
                 value={this.state.level_name}
@@ -453,7 +463,11 @@ class SitePriceLevelEdit_ extends React.Component {
             </Grid>
           }
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             {isEdit ?
               <MySelect
                 is_none={false}
@@ -472,7 +486,11 @@ class SitePriceLevelEdit_ extends React.Component {
             }
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             {isEdit ?
               <MyDatePickerNew
                 label="Дата старта"
@@ -489,7 +507,11 @@ class SitePriceLevelEdit_ extends React.Component {
             }
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer  sx={{ maxHeight: { xs: 'none', sm: 652 } }} component={Paper}>
               <Table size='small' stickyHeader>
                 <TableHead>
@@ -544,7 +566,11 @@ class SitePriceLevelEdit_ extends React.Component {
           </Grid>
 
           {isEdit ?
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <Button variant="contained" onClick={this.handleSave.bind(this)}>
                 Сохранить
               </Button>
@@ -552,7 +578,6 @@ class SitePriceLevelEdit_ extends React.Component {
           : null}
 
         </Grid>
-
       </>
     );
   }

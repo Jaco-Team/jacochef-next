@@ -11,10 +11,9 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 
-import { MyAlert } from "@/ui/elements";
-
 import { api_laravel } from "@/src/api_new";
 import AllergensModal from "@/components/allergens/AllergensModal";
+import MyAlert from "@/components/shared/MyAlert";
 
 class Allergens_ extends React.Component {
   constructor(props) {
@@ -151,14 +150,12 @@ class Allergens_ extends React.Component {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <AllergensModal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false, itemName: "", method: "" })}
@@ -169,25 +166,24 @@ class Allergens_ extends React.Component {
           fullScreen={this.state.fullScreen}
           save={this.save.bind(this)}
         />
-
         <Grid
           container
           spacing={3}
           className="container_first_child"
         >
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button
               variant="contained"
               color="primary"
@@ -199,11 +195,11 @@ class Allergens_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={12}
             mb={5}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             {!this.state.allergens ? null : (
               <Table>
                 <TableHead>

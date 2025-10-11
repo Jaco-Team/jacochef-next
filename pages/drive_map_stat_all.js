@@ -8,7 +8,7 @@ import Button from '@mui/material/Button';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect } from '@/ui/elements';
+import { MySelect } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
@@ -259,24 +259,38 @@ class DriveMapStatAll_ extends React.Component {
     return (
       <>
         <Script src="https://api-maps.yandex.ru/2.1/?apikey=665f5b53-8905-4934-9502-4a6a7b06a900&lang=ru_RU" />
-
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={6} sm={6}>
+          <Grid
+            size={{
+              xs: 6,
+              sm: 6
+            }}>
             <MySelect data={this.state.points} value={this.state.point} func={ this.changePoint.bind(this) } label='Точка' />
           </Grid>
-          <Grid item xs={6} sm={6}>
+          <Grid
+            size={{
+              xs: 6,
+              sm: 6
+            }}>
             <Button variant="contained" onClick={this.updateData.bind(this)}>Обновить данные</Button>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             { this.state.drivers.map( (item, key) =>
               <div key={key} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
                 <div style={{ width: 50, height: 20, backgroundColor: item.color }}></div>
@@ -285,12 +299,16 @@ class DriveMapStatAll_ extends React.Component {
             ) }
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <div id="map" name="map" style={{ width: '100%', height: 700, paddingTop: 10 }} />
           </Grid>
         </Grid>
       </>
-    )
+    );
   }
 }
 

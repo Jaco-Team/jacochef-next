@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
-import {MyAlert, MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/ui/elements";
+import {MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/components/shared/Forms";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -26,11 +26,12 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import TableFooter from "@mui/material/TableFooter";
 import ModalOrder from "./ModalOrder";
+import MyAlert from "@/components/shared/MyAlert";
 
 
 const DialogUser = ({open, onClose, user, openOrder}) => {
 	return (
-		<Dialog
+        <Dialog
 			open={open}
 			onClose={onClose}
 			fullWidth={true}
@@ -39,53 +40,93 @@ const DialogUser = ({open, onClose, user, openOrder}) => {
 			aria-labelledby="alert-dialog-title"
 			aria-describedby="alert-dialog-description"
 		>
-
-			<DialogTitle className="button">
+            <DialogTitle className="button">
 				<Typography style={{fontWeight: 'bold', alignSelf: 'center'}}>Информация о клиенте</Typography>
 				<IconButton onClick={onClose} style={{cursor: 'pointer'}}>
 					<CloseIcon/>
 				</IconButton>
 			</DialogTitle>
-
-			<DialogContent style={{paddingTop: 10}}>
+            <DialogContent style={{paddingTop: 10}}>
 
 				<Grid container spacing={3}>
 
-					<Grid item xs={12} sm={4}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
 
 						<Grid container>
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>Телефон: </span>
 								<span>{user?.info?.login}</span>
 							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
+							<Grid
+                                style={{paddingTop: 12}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>Имя: </span>
 								<span>{user?.info?.name}</span>
 							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
+							<Grid
+                                style={{paddingTop: 12}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>Регистрация: </span>
 								<span>{user?.info?.date_reg}</span>
 							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
+							<Grid
+                                style={{paddingTop: 12}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>День рождения: </span>
 								<span>{user?.info?.date_bir}</span>
 							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
+							<Grid
+                                style={{paddingTop: 12}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>Заказов: </span>
 								<span>{user?.info?.all_count_order} / {user?.info?.summ} р.</span>
 							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
+							<Grid
+                                style={{paddingTop: 12}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>Доставок: </span>
 								<span>{user?.info?.count_dev} / {user?.info?.summ_dev} р.</span>
 							</Grid>
-							<Grid item xs={12} sm={12} style={{paddingTop: 12}}>
+							<Grid
+                                style={{paddingTop: 12}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<span>Самовывозов: </span>
 								<span>{user?.info?.count_pic} / {user?.info?.summ_pic} р.</span>
 							</Grid>
 						</Grid>
 					</Grid>
 
-					<Grid item xs={12} sm={8}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 8
+                        }}>
 						<Accordion style={{width: '100%'}}>
 							<AccordionSummary
 								expandIcon={<ExpandMoreIcon/>}
@@ -113,8 +154,8 @@ const DialogUser = ({open, onClose, user, openOrder}) => {
 				</Grid>
 
 			</DialogContent>
-		</Dialog>
-	);
+        </Dialog>
+    );
 }
 
 
@@ -332,29 +373,36 @@ export default function Clients({canAccess}) {
 	}, [formData.param]);
 
 	return (
-		<>
-			<Backdrop style={{zIndex: 99}} open={isLoad}>
+        <>
+            <Backdrop style={{zIndex: 99}} open={isLoad}>
 				<CircularProgress color="inherit"/>
 			</Backdrop>
-			<MyAlert
+            <MyAlert
 				isOpen={openAlert}
 				onClose={() => setOpenAlert(false)}
 				status={errStatus}
 				text={errText}
 			/>
-			<DialogUser open={openModalUser} onClose={() => setOpenModalUser(false)} user={user} openOrder={openOrder}/>
-			<ModalOrder getData={getData} openOrder={openOrder} open={openModalOrder} onClose={() => setOpenModalOrder(false)} order={order.order} order_items={order.order_items} err_order={order.err_order} feedback_forms={order.feedback_forms}/>
-			<Grid item container spacing={3} justifyContent="center" sx={{
-				flexDirection: {
-					sm: 'row',
-					xs: 'column-reverse'
-				}
-			}}
-						style={{marginTop: '64px', marginBottom: '24px'}}
-			>
+            <DialogUser open={openModalUser} onClose={() => setOpenModalUser(false)} user={user} openOrder={openOrder}/>
+            <ModalOrder getData={getData} openOrder={openOrder} open={openModalOrder} onClose={() => setOpenModalOrder(false)} order={order.order} order_items={order.order_items} err_order={order.err_order} feedback_forms={order.feedback_forms}/>
+            <Grid
+                container
+                spacing={3}
+                justifyContent="center"
+                sx={{
+                    flexDirection: {
+                        sm: 'row',
+                        xs: 'column-reverse'
+                    }
+                }}
+                style={{marginTop: '64px', marginBottom: '24px'}}>
 
 				<Grid container spacing={2} justifyContent="center" mb={3} mt={0}>
-					<Grid item xs={12} sm={9}>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 9
+                        }}>
 						<Button
 							variant="contained"
 							style={{marginLeft: '20px', whiteSpace: 'nowrap'}}
@@ -386,7 +434,12 @@ export default function Clients({canAccess}) {
 					</Grid>
 				</Grid>
 
-				<Grid item xs={12} sm={3} sx={{order: {sm: 0, xs: 1}}}>
+				<Grid
+                    sx={{order: {sm: 0, xs: 1}}}
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyDatePickerNew
 						label="Делал заказ от"
 						value={formData.date_start_true}
@@ -394,7 +447,12 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3} sx={{order: {sm: 1, xs: 0}}}>
+				<Grid
+                    sx={{order: {sm: 1, xs: 0}}}
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyDatePickerNew
 						label="Делал заказ до"
 						value={formData.date_end_true}
@@ -402,7 +460,14 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3} sx={{order: {sm: 2, xs: 2}}} display="flex" flexDirection="row">
+				<Grid
+                    sx={{order: {sm: 2, xs: 2}}}
+                    display="flex"
+                    flexDirection="row"
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 
 					<Grid>
 						<Button variant="contained" style={{whiteSpace: 'nowrap'}} onClick={() => getUsers()}>
@@ -435,9 +500,12 @@ export default function Clients({canAccess}) {
 
 				</Grid>
 			</Grid>
-
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyDatePickerNew
 						label="Не заказывал от"
 						value={formData.date_start_false}
@@ -446,7 +514,11 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyDatePickerNew
 						label="Не заказывал до"
 						disabled={formData.param.id === 'new'}
@@ -455,7 +527,11 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyCheckBox
 						label="Была оформлена ошибка на заказ"
 						value={formData.is_show_claim}
@@ -463,9 +539,12 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 			</Grid>
-
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="Количество заказов от"
 						value={formData.count_orders_min}
@@ -473,7 +552,11 @@ export default function Clients({canAccess}) {
 						func={(e) => handleChange(e, 'count_orders_min')}
 					/>
 				</Grid>
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="Количество заказов до"
 						value={formData.count_orders_max}
@@ -482,7 +565,11 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyCheckBox
 						label="Была оформлена ошибка на последний заказ"
 						value={formData.is_show_claim_last}
@@ -490,9 +577,12 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 			</Grid>
-
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="От суммы"
 						value={formData.min_summ}
@@ -501,7 +591,11 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="До суммы"
 						value={formData.max_summ}
@@ -510,7 +604,11 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyCheckBox
 						label="Подписка на рекламную рассылку"
 						value={formData.is_show_marketing}
@@ -518,8 +616,12 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 			</Grid>
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={3}>
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyAutocomplite
 						label="Точки"
 						multiple={true}
@@ -529,7 +631,11 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyAutocomplite
 						label="Позиции в заказе"
 						multiple={true}
@@ -539,7 +645,11 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 					<MyAutocomplite
 						label="Пользователи"
 						disableClearable={true}
@@ -549,8 +659,12 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 			</Grid>
-			<Grid container spacing={3} justifyContent="center">
-				<Grid item xs={7} sm={3}>
+            <Grid container spacing={3} justifyContent="center">
+				<Grid
+                    size={{
+                        xs: 7,
+                        sm: 3
+                    }}>
 					<MyTextInput
 						label="Промокод"
 						value={formData.promo}
@@ -558,7 +672,11 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 
-				<Grid item xs={5} sm={6}>
+				<Grid
+                    size={{
+                        xs: 5,
+                        sm: 6
+                    }}>
 					<MyCheckBox
 						label="Заказ без промокода"
 						value={formData.no_promo}
@@ -566,69 +684,80 @@ export default function Clients({canAccess}) {
 					/>
 				</Grid>
 			</Grid>
-				{!users.length ? null : (
-					<Grid container justifyContent="center" mt={3}>
-						<Grid item xs={12}>
-							<TableContainer>
-								<Table>
-									<TableHead>
-										<TableRow>
-											<TableCell>#</TableCell>
-											<TableCell>Имя</TableCell>
-											<TableCell>Телефон</TableCell>
-											<TableCell>Последний комментарий</TableCell>
-										</TableRow>
-									</TableHead>
+            {!users.length ? null : (
+                <Grid container justifyContent="center" mt={3}>
+                    <Grid
+                        size={{
+                            xs: 12
+                        }}>
+                        <TableContainer>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>#</TableCell>
+                                        <TableCell>Имя</TableCell>
+                                        <TableCell>Телефон</TableCell>
+                                        <TableCell>Последний комментарий</TableCell>
+                                    </TableRow>
+                                </TableHead>
 
-									<TableBody>
-										{users.map((item, i) => (
-											<TableRow
-												key={i + 1}
-												style={{cursor: 'pointer'}}
-												onClick={() => openUser(item.login)}
-											>
-												<TableCell>{page * rowsPerPage + i + 1}</TableCell>
-												<TableCell>
-													{item.name}
-													{item.number_new_active ? (
-														<span style={{color: 'red', fontWeight: 'bold'}}> Новый!</span>
-													) : ''}
-												</TableCell>
-												<TableCell>{item.login}</TableCell>
-												<TableCell dangerouslySetInnerHTML={{__html: item?.last_comment}}></TableCell>
-											</TableRow>
-										))}
-									</TableBody>
-								</Table>
-							</TableContainer>
-							<TablePagination
-								rowsPerPageOptions={[10, 50, 100]}
-								labelDisplayedRows={({from, to, count}) => `${from}-${to} из ${count}`}
-								labelRowsPerPage="Записей на странице:"
-								component="div"
-								count={total}
-								rowsPerPage={rowsPerPage}
-								page={page}
-								onPageChange={(_, newPage) => {
-									setPage(newPage);
-									getUsers(newPage);
-								}}
-								onRowsPerPageChange={(event) => {
-									const newPerPage = parseInt(event.target.value, 10);
-									setRowsPerPage(newPerPage);
-									setPage(0);
-									getUsers(0, newPerPage);
-								}}
-							/>
-						</Grid>
-					</Grid>
-				)}
-			<Grid container spacing={3} justifyContent="center" mb={3}>
-				<Grid item xs={12} sm={1}>
+                                <TableBody>
+                                    {users.map((item, i) => (
+                                        <TableRow
+                                            key={i + 1}
+                                            style={{cursor: 'pointer'}}
+                                            onClick={() => openUser(item.login)}
+                                        >
+                                            <TableCell>{page * rowsPerPage + i + 1}</TableCell>
+                                            <TableCell>
+                                                {item.name}
+                                                {item.number_new_active ? (
+                                                    <span style={{color: 'red', fontWeight: 'bold'}}> Новый!</span>
+                                                ) : ''}
+                                            </TableCell>
+                                            <TableCell>{item.login}</TableCell>
+                                            <TableCell dangerouslySetInnerHTML={{__html: item?.last_comment}}></TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <TablePagination
+                            rowsPerPageOptions={[10, 50, 100]}
+                            labelDisplayedRows={({from, to, count}) => `${from}-${to} из ${count}`}
+                            labelRowsPerPage="Записей на странице:"
+                            component="div"
+                            count={total}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={(_, newPage) => {
+                                setPage(newPage);
+                                getUsers(newPage);
+                            }}
+                            onRowsPerPageChange={(event) => {
+                                const newPerPage = parseInt(event.target.value, 10);
+                                setRowsPerPage(newPerPage);
+                                setPage(0);
+                                getUsers(0, newPerPage);
+                            }}
+                        />
+                    </Grid>
+                </Grid>
+            )}
+            <Grid container spacing={3} justifyContent="center" mb={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 1
+                    }}>
 				</Grid>
-				<Grid item xs={12} sm={3}>
+				<Grid
+                    size={{
+                        xs: 12,
+                        sm: 3
+                    }}>
 				</Grid>
 			</Grid>
-		</>
-	);
+        </>
+    );
 }

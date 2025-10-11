@@ -36,11 +36,12 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 
-import {MySelect, MyAutocomplite2, MyTimePicker, MyDatePickerNew, MyAlert} from '@/ui/elements';
+import {MySelect, MyAutocomplite2, MyTimePicker, MyDatePickerNew} from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -94,9 +95,13 @@ class EventTime1_Modal_Map extends React.Component {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3} item xs={12}>
+          <Grid
+            container
+            spacing={3}
+            size={{
+              xs: 12
+            }}>
 
             <EventTime1_Data
               item={item_one}
@@ -108,7 +113,6 @@ class EventTime1_Modal_Map extends React.Component {
             
           </Grid>
         </DialogContent>
-
         <DialogActions>
           <Button onClick={onClose.bind(this)}>Закрыть</Button>
         </DialogActions>
@@ -238,12 +242,11 @@ class EventTime1_Modal extends React.Component {
   render() {
     return (
       <>
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.openAlert} 
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 
           text={this.state.err_text} />
-
         <Dialog
           open={this.props.open}
           onClose={this.onClose.bind(this)}
@@ -261,9 +264,19 @@ class EventTime1_Modal extends React.Component {
           </DialogTitle>
 
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3} mb={3} item xs={12}>
+            <Grid
+              container
+              spacing={3}
+              mb={3}
+              size={{
+                xs: 12
+              }}>
               {this.props.mark !== 'newDay' ? null : (
-                <Grid item sm={3} xs={12}>
+                <Grid
+                  size={{
+                    sm: 3,
+                    xs: 12
+                  }}>
                   <MyDatePickerNew
                     label="Дата"
                     value={this.state.item?.date ? dayjs(this.state.item.date) : null}
@@ -272,7 +285,11 @@ class EventTime1_Modal extends React.Component {
                 </Grid>
               )}
 
-              <Grid item sm={this.props.mark !== 'newDay' ? 4 : 3} xs={6}>
+              <Grid
+                size={{
+                  sm: this.props.mark !== 'newDay' ? 4 : 3,
+                  xs: 6
+                }}>
                 <MyTimePicker
                   value={this.state.item ? this.state.item.time_start : ''}
                   func={this.changeTime.bind(this, 'time_start')}
@@ -280,7 +297,11 @@ class EventTime1_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item sm={this.props.mark !== 'newDay' ? 4 : 3} xs={6}>
+              <Grid
+                size={{
+                  sm: this.props.mark !== 'newDay' ? 4 : 3,
+                  xs: 6
+                }}>
                 <MyTimePicker
                   value={this.state.item ? this.state.item.time_end : ''}
                   func={this.changeTime.bind(this, 'time_end')}
@@ -288,7 +309,11 @@ class EventTime1_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item sm={this.props.mark !== 'newDay' ? 4 : 3} xs={12}>
+              <Grid
+                size={{
+                  sm: this.props.mark !== 'newDay' ? 4 : 3,
+                  xs: 12
+                }}>
                 <MyAutocomplite2
                   label="Время на доставку"
                   multiple={false}
@@ -326,16 +351,22 @@ class EventTime1_Data extends React.Component {
 
     return (
       <>
-
         {type === 'zone' ? null :
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button variant="contained" style={{ whiteSpace: 'nowrap' }} onClick={openModal.bind(this, 'Особый день', 'newDay')}>
               Добавить особый день
             </Button>
           </Grid>
         }
-
-        <Grid item sm={6} xs={12}>
+        <Grid
+          size={{
+            sm: 6,
+            xs: 12
+          }}>
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content">
               <Typography style={{ whiteSpace: 'nowrap', fontWeight: 'bold ' }}> Особые дни </Typography>
@@ -368,11 +399,18 @@ class EventTime1_Data extends React.Component {
             </AccordionDetails>
           </Accordion>
         </Grid>
-
-        <Grid item xs={12} sm={6} />
-
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6
+          }} />
         {itemData.map((item, key) => (
-          <Grid item sm={3} xs={12} key={key}>
+          <Grid
+            key={key}
+            size={{
+              sm: 3,
+              xs: 12
+            }}>
             <Card variant="outlined" sx={{ border: 1, boxShadow: 1, borderRadius: 2, p: 2, mb: '12px' }}>
               <Grid align="center">{item.day_week}</Grid>
               <Divider />
@@ -868,14 +906,12 @@ class EventTime1_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <EventTime1_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false })}
@@ -885,7 +921,6 @@ class EventTime1_ extends React.Component {
           mark={this.state.mark}
           fullScreen={this.state.fullScreen}
         />
-
         <EventTime1_Modal_Map
           open={this.state.modalDialog_one}
           onClose={() => this.setState({ modalDialog_one: false })}
@@ -896,14 +931,21 @@ class EventTime1_ extends React.Component {
           openModal={this.openModal.bind(this)}
           zone_name={this.state.zone_name}
         />
-
         <Grid container spacing={3} className='container_first_child'>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Paper>
               <Tabs value={this.state.activeTab} onChange={ this.changeTab.bind(this) } centered variant='fullWidth'>
                 <Tab label="По зонам" {...a11yProps(0)} />
@@ -913,7 +955,11 @@ class EventTime1_ extends React.Component {
           </Grid>
 
           {/* По зонам */}
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TabPanel 
               value={this.state.activeTab} 
               index={0} 
@@ -921,7 +967,11 @@ class EventTime1_ extends React.Component {
             >
               <Grid container spacing={3}>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MySelect
                     is_none={false}
                     data={this.state.points}
@@ -931,7 +981,11 @@ class EventTime1_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Button variant="contained" style={{ whiteSpace: 'nowrap' }} onClick={this.openModal.bind(this, 'Особый день', 'newDay')}>
                     Добавить особый день
                   </Button>
@@ -946,7 +1000,12 @@ class EventTime1_ extends React.Component {
                 />
 
                 {!this.state.itemData_hist.length ? null : (
-                  <Grid item xs={12} sm={12} mb={5}>
+                  <Grid
+                    mb={5}
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <Accordion>
 
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}  aria-controls="main-accordion-content" id="main-accordion-header">
@@ -998,7 +1057,12 @@ class EventTime1_ extends React.Component {
           {/* По зонам */}
 
           {/* На карте */}
-          <Grid item xs={12} sm={12} style={{ paddingTop: 0 }}>
+          <Grid
+            style={{ paddingTop: 0 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TabPanel 
               value={this.state.activeTab} 
               index={1} 
@@ -1006,7 +1070,11 @@ class EventTime1_ extends React.Component {
             >
               <Grid container spacing={3}>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MySelect
                     label="Город"
                     is_none={false}
@@ -1016,7 +1084,12 @@ class EventTime1_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12} mb={5}>
+                <Grid
+                  mb={5}
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <div id="map" name="map" style={{ width: '100%', height: 700, paddingTop: 10 }} />
                 </Grid>
 

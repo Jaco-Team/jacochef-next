@@ -1,13 +1,12 @@
 import React from "react";
 import {
-	formatDate,
 	MyAutocomplite,
 	MyCheckBox,
 	MyDatePickerNew,
 	MySelect,
 	MyTextInput,
 	MyTimePicker
-} from "@/ui/elements";
+} from "@/components/shared/Forms";
 import dayjs from "dayjs";
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 import Backdrop from "@mui/material/Backdrop";
@@ -21,6 +20,7 @@ import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Divider from "@mui/material/Divider";
 import DatePicker from "react-multi-date-picker";
+import { formatDate } from "@/src/helpers/ui/formatDate";
 
 class MyDatePicker extends React.PureComponent {
 	constructor(props) {
@@ -784,15 +784,15 @@ export class PromoEdit extends React.Component {
 
 	render() {
 		return (
-			<Dialog
+            <Dialog
 				open={this.props.modalDialogEdit}
 				onClose={this.props.onClose}
 				aria-labelledby="alert-dialog-title"
 				aria-describedby="alert-dialog-description"
 				maxWidth={'xl'}
 			>
-				<DialogTitle id="alert-dialog-title">Редактирование {this.props.promoName}</DialogTitle>
-				<DialogContent>
+                <DialogTitle id="alert-dialog-title">Редактирование {this.props.promoName}</DialogTitle>
+                <DialogContent>
 					<>
 						<Backdrop style={{zIndex: 99}} open={this.state.is_load}>
 							<CircularProgress color="inherit"/>
@@ -824,20 +824,35 @@ export class PromoEdit extends React.Component {
 						<Grid container style={{marginTop: '80px', paddingLeft: '24px'}}>
 
 							<Grid container direction="row" justifyContent="start" style={{paddingTop: 20}} spacing={3}>
-								<Grid item xs={12}>
+								<Grid
+                                    size={{
+                                        xs: 12
+                                    }}>
 									<Typography>Был создан: {this.state.created}</Typography>
 								</Grid>
 							</Grid>
 
 							<Grid container direction="row" justifyContent="start" style={{paddingTop: 20}} spacing={3}>
 
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<Typography>Промокод: {this.state.promo_name}</Typography>
 								</Grid>
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyTextInput value={this.state.count_action} disabled={this.state.access?.count_action_edit === 0} func={this.changeData.bind(this, 'count_action')} label='Количество активаций'/>
 								</Grid>
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyTextInput value={this.state.promo_count} disabled={this.state.access?.promo_count_edit === 0} func={this.changeData.bind(this, 'promo_count')} label='Количество промокодов'/>
 								</Grid>
 
@@ -845,16 +860,32 @@ export class PromoEdit extends React.Component {
 
 							<Grid container direction="column" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyCheckBox value={this.state.for_new} disabled={this.state.access?.for_new_edit === 0} func={this.changeDataCheck.bind(this, 'for_new')} label='Для новых клиентов ( на первый заказ )'/>
 								</Grid>
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyCheckBox value={this.state.once_number} disabled={this.state.access?.once_number_edit === 0} func={this.changeDataCheck.bind(this, 'once_number')} label='1 раз на номер телефона'/>
 								</Grid>
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyCheckBox value={this.state.for_registred}  disabled={this.state.access?.for_registred_edit === 0} func={this.changeDataCheck.bind(this, 'for_registred')} label='Только для зарегистрированных клиентов'/>
 								</Grid>
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyCheckBox value={this.state.for_number} disabled={this.state.access?.for_number_edit === 0} func={this.changeDataCheck.bind(this, 'for_number')} label='Привязан к номеру телефона'/>
 								</Grid>
 
@@ -862,7 +893,10 @@ export class PromoEdit extends React.Component {
 
 							<Grid container style={{paddingTop: 20}} spacing={3}>
 
-								{this.state.for_number && <Grid item xs={3}>
+								{this.state.for_number && <Grid
+                                    size={{
+                                        xs: 3
+                                    }}>
 									<MyTextInput value={this.state.for_number_text} disabled={this.state.access?.for_number_text_edit === 0} func={this.changeData.bind(this, 'for_number_text')} label='Номер телефона'/>
 								</Grid>}
 
@@ -872,7 +906,11 @@ export class PromoEdit extends React.Component {
 
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MySelect data={this.state.promo_action_list} disabled={this.state.access?.promo_action_list_edit === 0} value={this.state.promo_action} func={this.changeData.bind(this, 'promo_action')} label='Промокод дает:'/>
 								</Grid>
 
@@ -881,12 +919,20 @@ export class PromoEdit extends React.Component {
 							{parseInt(this.state.promo_action) !== 1 ? null :
 								<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
-									<Grid item xs={12} sm={3}>
+									<Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 3
+                                        }}>
 										<MySelect data={this.state.sale_list} disabled={this.state.access?.sale_list_edit === 0} value={this.state.type_sale} func={this.changeData.bind(this, 'type_sale')} label='Скидка'/>
 									</Grid>
 
 									{parseInt(this.state.type_sale) !== 1 ? null :
-										<Grid item xs={12} sm={9}>
+										<Grid
+                                            size={{
+                                                xs: 12,
+                                                sm: 9
+                                            }}>
 											<MyAutocomplite data={this.state.items} disabled={this.state.access?.items_edit === 0} value={this.state.saleItem} func={(event, data) => {
 												this.changeDataData('saleItem', data)
 											}} multiple={true} label='Товары'/>
@@ -894,7 +940,11 @@ export class PromoEdit extends React.Component {
 									}
 
 									{parseInt(this.state.type_sale) !== 2 ? null :
-										<Grid item xs={12} sm={9}>
+										<Grid
+                                            size={{
+                                                xs: 12,
+                                                sm: 9
+                                            }}>
 											<MyAutocomplite data={this.state.cats}  disabled={this.state.access?.cats_edit === 0} value={this.state.saleCat} func={(event, data) => {
 												this.changeDataData('saleCat', data)
 											}} multiple={true} label='Категории'/>
@@ -902,16 +952,28 @@ export class PromoEdit extends React.Component {
 									}
 
 									{parseInt(this.state.sale_type) == 1 ?
-										<Grid item xs={12} sm={3}>
+										<Grid
+                                            size={{
+                                                xs: 12,
+                                                sm: 3
+                                            }}>
 											<MyTextInput value={this.state.promo_sale} disabled={this.state.access?.promo_sale_edit === 0} func={this.changeData.bind(this, 'promo_sale')} label='Размер скидки'/>
 										</Grid>
 										:
-										<Grid item xs={12} sm={3}>
+										<Grid
+                                            size={{
+                                                xs: 12,
+                                                sm: 3
+                                            }}>
 											<MySelect data={this.state.promo_sale_list}  disabled={this.state.access?.promo_sale_edit === 0} value={this.state.promo_sale} func={this.changeData.bind(this, 'promo_sale')} label='Размер скидки'/>
 										</Grid>
 									}
 
-									<Grid item xs={12} sm={3}>
+									<Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 3
+                                        }}>
 										<MySelect data={this.state.type_sale_list}  disabled={this.state.access?.sale_type_edit === 0} value={this.state.sale_type} func={this.changeData.bind(this, 'sale_type')} label='Какая скидка'/>
 									</Grid>
 
@@ -920,12 +982,20 @@ export class PromoEdit extends React.Component {
 
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<MySelect data={this.state.promo_conditions_list} disabled={this.state.access?.promo_conditions_edit === 0}  value={this.state.promo_conditions} func={this.changeData.bind(this, 'promo_conditions')} label='Условие'/>
 								</Grid>
 
 								{parseInt(this.state.promo_conditions) !== 1 ? null :
-									<Grid item xs={12} sm={8}>
+									<Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 8
+                                        }}>
 										<MyAutocomplite data={this.state.items} disabled={this.state.access?.conditionItems_edit === 0} value={this.state.conditionItems} func={(event, data) => {
 											this.changeDataData('conditionItems', data)
 										}} multiple={true} label='Товары'/>
@@ -934,11 +1004,19 @@ export class PromoEdit extends React.Component {
 
 								{parseInt(this.state.promo_conditions) !== 2 ? null :
 									<>
-										<Grid item xs={12} sm={4}>
+										<Grid
+                                            size={{
+                                                xs: 12,
+                                                sm: 4
+                                            }}>
 											<MyTextInput value={this.state.price_start} disabled={this.state.access?.price_start_edit === 0} func={this.changeData.bind(this, 'price_start')} label='Сумма от'/>
 										</Grid>
 
-										<Grid item xs={12} sm={4}>
+										<Grid
+                                            size={{
+                                                xs: 12,
+                                                sm: 4
+                                            }}>
 											<MyTextInput value={this.state.price_end} disabled={this.state.access?.price_end_edit === 0} func={this.changeData.bind(this, 'price_end')} label='Сумма до'/>
 										</Grid>
 									</>
@@ -950,7 +1028,11 @@ export class PromoEdit extends React.Component {
 
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MySelect data={this.state.date_promo_list} disabled={this.state.access?.date_promo_edit === 0} value={this.state.date_promo} func={this.changeData.bind(this, 'date_promo')} label='Когда работает промокод'/>
 								</Grid>
 
@@ -958,25 +1040,45 @@ export class PromoEdit extends React.Component {
 
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyDatePickerNew label="Дата от" value={this.state.date_start} disabled={this.state.access?.date_start_edit === 0} func={this.changeDateRange.bind(this, 'date_start')}/>
 								</Grid>
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyDatePickerNew label="Дата до" value={this.state.date_end} disabled={this.state.access?.date_end_edit === 0} func={this.changeDateRange.bind(this, 'date_end')}/>
 								</Grid>
 
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyTimePicker label="Время от" value={this.state.time_start} disabled={this.state.access?.time_start_edit === 0} func={this.changeData.bind(this, 'time_start')}/>
 								</Grid>
 
-								<Grid item xs={12} sm={3}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 3
+                                    }}>
 									<MyTimePicker label="Время до" value={this.state.time_end} disabled={this.state.access?.time_end_edit === 0} func={this.changeData.bind(this, 'time_end')}/>
 								</Grid>
 
 							</Grid>
 
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
-								<Grid item xs={12} sm={12}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 12
+                                    }}>
 									<MyDatePicker multiple={false} label={'Кроме дат'} disabled={this.state.access?.testDate_edit === 0} value={this.state.testDate} func={this.changeDataData.bind(this, 'testDate')}/>
 								</Grid>
 							</Grid>
@@ -1003,19 +1105,35 @@ export class PromoEdit extends React.Component {
 
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<MySelect data={this.state.type_order_list} disabled={this.state.access?.type_order_edit === 0} value={this.state.type_order} func={this.changeData.bind(this, 'type_order')} label='Тип заказа'/>
 								</Grid>
-								<Grid item xs={12} sm={4}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 4
+                                    }}>
 									<MySelect data={this.state.where_order_list} disabled={this.state.access?.where_order_edit === 0} value={this.state.where_order} func={this.changeData.bind(this, 'where_order')} label='Где работает'/>
 								</Grid>
 								{parseInt(this.state.where_order) !== 1 ? null :
-									<Grid item xs={12} sm={4}>
+									<Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 4
+                                        }}>
 										<MySelect data={this.state.cities} disabled={this.state.access?.city_edit === 0} value={this.state.city} func={this.changeData.bind(this, 'city')} label='Город'/>
 									</Grid>
 								}
 								{parseInt(this.state.where_order) !== 2 ? null :
-									<Grid item xs={12} sm={4}>
+									<Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 4
+                                        }}>
 										<MySelect data={this.state.points} disabled={this.state.access?.point_edit === 0} value={this.state.point} func={this.changeData.bind(this, 'point')} label='Точка'/>
 									</Grid>
 								}
@@ -1026,15 +1144,27 @@ export class PromoEdit extends React.Component {
 
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
-								<Grid item xs={12} sm={12}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 12
+                                    }}>
 									<MyCheckBox value={this.state.auto_text} disabled={this.state.access?.auto_text_edit === 0} func={this.changeDataCheck.bind(this, 'auto_text')} label='Авто-текст'/>
 								</Grid>
 
-								<Grid item xs={12} sm={12}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 12
+                                    }}>
 									<MyTextInput value={this.state.promo_desc_true} disabled={this.state.access?.promo_desc_true_edit === 0} func={this.changeData.bind(this, 'promo_desc_true')} label='Описание промокода после активации (Промокод дает: )'/>
 								</Grid>
 
-								<Grid item xs={12} sm={12}>
+								<Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 12
+                                    }}>
 									<MyTextInput value={this.state.promo_desc_false} disabled={this.state.access?.promo_desc_false_edit === 0} func={this.changeData.bind(this, 'promo_desc_false')} label='Условие промокода, когда условия не соблюдены'/>
 								</Grid>
 
@@ -1048,12 +1178,12 @@ export class PromoEdit extends React.Component {
 						</Grid>
 					</>
 				</DialogContent>
-				<DialogActions>
+                <DialogActions>
 					<Button color="primary" onClick={() => {
 						this.setState({modalDialog: false})
 					}}>Хорошо</Button>
 				</DialogActions>
-			</Dialog>
-		)
+            </Dialog>
+        );
 	}
 }

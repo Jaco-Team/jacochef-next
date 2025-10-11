@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MyCheckBox, MyDatePickerNew, formatDate, MyAutocomplite, MyAlert} from '@/ui/elements';
+import {MyCheckBox, MyDatePickerNew, MyAutocomplite} from '@/components/shared/Forms';
 
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
@@ -53,6 +53,8 @@ const SvgIconInfo = (props) => (
 
 import { api_laravel, api_laravel_local } from '@/src/api_new';
 import dayjs from 'dayjs';
+import MyAlert from '@/components/shared/MyAlert';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 function Row(props) {
   const { row, open, onToggle } = props;
@@ -472,20 +474,26 @@ class CompositionOfOrders_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Grid container spacing={3} mb={3} className="container_first_child">
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyAutocomplite
               label="Точка"
               multiple={true}
@@ -495,7 +503,11 @@ class CompositionOfOrders_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -503,7 +515,11 @@ class CompositionOfOrders_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -511,7 +527,11 @@ class CompositionOfOrders_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite
               label="День недели"
               multiple={true}
@@ -521,7 +541,11 @@ class CompositionOfOrders_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite
               label="Способ оплаты"
               multiple={true}
@@ -531,7 +555,11 @@ class CompositionOfOrders_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <MyCheckBox
               label="Оформлен на ближайшее время"
               value={parseInt(this.state.now_time) == 1 ? true : false}
@@ -539,7 +567,11 @@ class CompositionOfOrders_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <MyCheckBox
               label="Оформлен предзаказ"
               value={parseInt(this.state.pred_time) == 1 ? true : false}
@@ -547,14 +579,23 @@ class CompositionOfOrders_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button onClick={this.get_stat_orders.bind(this)} variant="contained" disableElevation>
               Показать
             </Button>
           </Grid>
 
           
-          <Grid item xs={12} sm={12} style={{ marginBottom: 100 }}>
+          <Grid
+            style={{ marginBottom: 100 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             
             <Table aria-label="collapsible table">
               <TableHead style={{ backgroundColor: '#e6e6e6' }}>

@@ -26,7 +26,7 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 
-import {MySelect, MyTimePicker, MyDatePickerNew, MyTextInput} from '@/ui/elements';
+import {MySelect, MyTimePicker, MyDatePickerNew, MyTextInput} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
@@ -235,10 +235,13 @@ class CountUsers_Modal extends React.Component {
             </IconButton>
           ) : null}
         </DialogTitle>
-
         <DialogContent style={{ paddingTop: 10, paddingBottom: 10 }}>
           <Grid container spacing={3} mb={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew
                 label="Дата"
                 value={this.state?.item[0]?.date ? dayjs(this.state?.item[0]?.date) : null}
@@ -249,7 +252,12 @@ class CountUsers_Modal extends React.Component {
           {this.state.item.map((item, key) => (
             <React.Fragment key={key}>
               <Grid container spacing={3}>
-                <Grid item xs={8} sm={3} mt={2}>
+                <Grid
+                  mt={2}
+                  size={{
+                    xs: 8,
+                    sm: 3
+                  }}>
                   <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'space-around', height: '100%', minHeight: 120}}>
                     <MyTimePicker
                       value={item.time_start}
@@ -263,11 +271,19 @@ class CountUsers_Modal extends React.Component {
                     />
                   </div>
                 </Grid>
-                <Grid item xs={4} sm={0} sx={{ display: { xs: 'flex', sm: 'none' }, justifyContent: 'center', alignItems: 'center'}}>
+                <Grid
+                  sx={{ display: { xs: 'flex', sm: 'none' }, justifyContent: 'center', alignItems: 'center'}}
+                  size={{
+                    xs: 4,
+                    sm: 0
+                  }}>
                   <CloseIcon fontSize="large" onClick={this.deleteItem.bind(this, item.id)} style={{ cursor: 'pointer' }}/>
                 </Grid>
 
-                <Grid item sm={8}>
+                <Grid
+                  size={{
+                    sm: 8
+                  }}>
                   <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%'}}>
                     {item.apps.map((el, i) => (
                       <div key={i + 10} style={{display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: 20, marginTop: i === 0 ? 20 : 0}}>
@@ -282,7 +298,12 @@ class CountUsers_Modal extends React.Component {
                   </div>
                 </Grid>
 
-                <Grid item xs={4} sm={1} sx={{display: { xs: 'none', sm: 'flex' }, justifyContent: 'center', alignItems: 'center'}}>
+                <Grid
+                  sx={{display: { xs: 'none', sm: 'flex' }, justifyContent: 'center', alignItems: 'center'}}
+                  size={{
+                    xs: 4,
+                    sm: 1
+                  }}>
                   <CloseIcon fontSize="large" onClick={this.deleteItem.bind(this, item.id)} style={{ cursor: 'pointer' }}/>
                 </Grid>
               </Grid>
@@ -290,7 +311,6 @@ class CountUsers_Modal extends React.Component {
             </React.Fragment>
           ))}
         </DialogContent>
-
         <DialogActions className="button">
           <Button style={{ whiteSpace: 'nowrap' }} onClick={this.addItem.bind(this)}>
             Добавить
@@ -481,10 +501,15 @@ class CountUsers_TablePanel extends React.Component {
               spacing={3}
               key={key}
               sx={{ borderBottom: 1, borderColor: 'divider' }}
-              item
-              sm={8}
-            >
-              <Grid item xs={8} sm={3} mt={2}>
+              size={{
+                sm: 8
+              }}>
+              <Grid
+                mt={2}
+                size={{
+                  xs: 8,
+                  sm: 3
+                }}>
                 <div
                   style={{
                     display: 'flex',
@@ -507,15 +532,15 @@ class CountUsers_TablePanel extends React.Component {
                 </div>
               </Grid>
               <Grid
-                item
-                xs={4}
-                sm={0}
                 sx={{
                   display: { xs: 'flex', sm: 'none' },
                   justifyContent: 'center',
                   alignItems: 'center',
                 }}
-              >
+                size={{
+                  xs: 4,
+                  sm: 0
+                }}>
                 <CloseIcon
                   fontSize="large"
                   onClick={this.deleteItem.bind(this, item.id)}
@@ -523,7 +548,10 @@ class CountUsers_TablePanel extends React.Component {
                 />
               </Grid>
 
-              <Grid item sm={6}>
+              <Grid
+                size={{
+                  sm: 6
+                }}>
                 <div
                   style={{
                     display: 'flex',
@@ -555,15 +583,15 @@ class CountUsers_TablePanel extends React.Component {
               </Grid>
 
               <Grid
-                item
-                xs={4}
-                sm={3}
                 sx={{
                   display: { xs: 'none', sm: 'flex' },
                   justifyContent: 'center',
                   alignItems: 'center',
                 }}
-              >
+                size={{
+                  xs: 4,
+                  sm: 3
+                }}>
                 <CloseIcon
                   fontSize="large"
                   onClick={this.deleteItem.bind(this, item.id)}
@@ -574,13 +602,17 @@ class CountUsers_TablePanel extends React.Component {
           ))}
 
           <Grid
-            item
-            sm={8}
             container
             spacing={3}
             sx={{ marginBottom: { xs: 0, sm: 3 }, marginTop: 1 }}
-          >
-            <Grid item xs={6} sm={9}>
+            size={{
+              sm: 8
+            }}>
+            <Grid
+              size={{
+                xs: 6,
+                sm: 9
+              }}>
               <Button
                 variant="contained"
                 style={{ whiteSpace: 'nowrap' }}
@@ -590,7 +622,11 @@ class CountUsers_TablePanel extends React.Component {
               </Button>
             </Grid>
 
-            <Grid item xs={6} sm={3}>
+            <Grid
+              size={{
+                xs: 6,
+                sm: 3
+              }}>
               <Button
                 variant="contained"
                 onClick={this.save.bind(this)}
@@ -975,7 +1011,6 @@ class CountUsers_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         {/* модалка */}
         <CountUsers_Modal
           open={this.state.modalDialog}
@@ -985,14 +1020,20 @@ class CountUsers_ extends React.Component {
           save={this.save.bind(this)}
           fullScreen={this.state.fullScreen}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           {/* выбор и кнопка */}
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MySelect
               data={this.state.points}
               value={this.state.point}
@@ -1001,7 +1042,11 @@ class CountUsers_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button variant="contained" style={{ whiteSpace: 'nowrap' }} onClick={this.openModal.bind(this, 'Особый день')}>
               Добавить особый день
             </Button>
@@ -1009,7 +1054,11 @@ class CountUsers_ extends React.Component {
 
           {/* таблица */}
           {this.state.point < 1 ? null : (
-            <Grid item xs={12} sm={8}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 8
+              }}>
               <TabContext value={this.state.ItemTab}>
                 <Box sx={{borderBottom: 1, borderColor: 'divider'}}>
                   <TabList
@@ -1038,7 +1087,12 @@ class CountUsers_ extends React.Component {
 
           {/* аккордион */}
           {!this.state.other_days.length ? null : (
-            <Grid item xs={12} sm={4} mb={3}>
+            <Grid
+              mb={3}
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content">
                   <Typography>Даты</Typography>

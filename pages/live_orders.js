@@ -14,7 +14,7 @@ import Paper from '@mui/material/Paper';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox } from '@/ui/elements';
+import { MySelect, MyCheckBox } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
@@ -136,24 +136,43 @@ class LiveOrders_ extends React.Component {
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
           
             
-          <Grid item xs={6} sm={6}>
+          <Grid
+            size={{
+              xs: 6,
+              sm: 6
+            }}>
             <MySelect data={this.state.points} value={this.state.point} func={ this.changePoint.bind(this) } label='Точка' />
           </Grid>
-          <Grid item xs={6} sm={6}>
+          <Grid
+            size={{
+              xs: 6,
+              sm: 6
+            }}>
             <Button variant="contained" onClick={this.updateData.bind(this)}>Обновить данные</Button>
           </Grid>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <MyCheckBox value={this.state.showReady} func={ this.changeCheckOrders.bind(this) } label='Показывать готовые' />
           </Grid>
             
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             
             <TableContainer component={Paper}>
               <Table aria-label="a dense table">
@@ -255,7 +274,7 @@ class LiveOrders_ extends React.Component {
           </Grid>
         </Grid>
       </>
-    )
+    );
   }
 }
 

@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyTextInput } from '@/ui/elements';
+import { MySelect, MyTextInput } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
@@ -161,37 +161,71 @@ class SocialNetwork_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
           
-          <Grid item xs={6} sm={6}>
+          <Grid
+            size={{
+              xs: 6,
+              sm: 6
+            }}>
             <MySelect data={this.state.cityList} value={this.state.city_id} func={ this.changeCity.bind(this) } label='Город' is_none={false}/>
           </Grid>
           
           {this.state.dataInfo == null ? null :
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput label="Вконтакте" value={this.state.dataInfo ? this.state.dataInfo.vk : ''} func={this.changeData.bind(this, 'vk')} />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput label="Инстаграм" value={this.state.dataInfo ? this.state.dataInfo.inst : ''} func={this.changeData.bind(this, 'inst')} />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput label="Одноклассники" value={this.state.dataInfo ? this.state.dataInfo.ok : ''} func={this.changeData.bind(this, 'ok')} />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput label="Телеграм" value={this.state.dataInfo ? this.state.dataInfo.tg : ''} func={this.changeData.bind(this, 'tg')} />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput label="Facebook" value={this.state.dataInfo ? this.state.dataInfo.fb : ''} func={this.changeData.bind(this, 'fb')} />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <Button variant="contained" onClick={this.saveData.bind(this)}>Обновить данные</Button>
                 </Grid>
 
@@ -202,7 +236,7 @@ class SocialNetwork_ extends React.Component {
           
         </Grid>
       </>
-    )
+    );
   }
 }
 

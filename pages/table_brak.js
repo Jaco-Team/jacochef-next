@@ -13,12 +13,13 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyDatePickerNew, MyAlert, MyTextInput } from '@/ui/elements';
+import { MySelect, MyDatePickerNew, MyTextInput } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import dayjs from 'dayjs';
 import TestAccess from '@/components/shared/TestAccess';
 import handleUserAccess from '@/src/helpers/access/handleUserAccess';
+import MyAlert from '@/components/shared/MyAlert';
 
 class TableBrak_ extends React.Component {
   constructor(props) {
@@ -238,13 +239,20 @@ class TableBrak_ extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Grid container spacing={3} mb={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect
               is_none={false}
               label="Точка"
@@ -254,7 +262,11 @@ class TableBrak_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -262,7 +274,11 @@ class TableBrak_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -270,13 +286,21 @@ class TableBrak_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.getStat.bind(this)} variant="contained">
               Обновить
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyTextInput
               type="number"
               label="Поиск по номеру заказа"
@@ -286,7 +310,11 @@ class TableBrak_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             {this.canAccess('export') && (
               <Button
                 variant={this.state.items.length ? 'contained' : 'outlined'}
@@ -301,7 +329,13 @@ class TableBrak_ extends React.Component {
 
           {/* таблица */}
           {!this.state.items.length ? null : (
-            <Grid item xs={12} sm={12} mt={5} mb={5}>
+            <Grid
+              mt={5}
+              mb={5}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TableContainer>
                 <Table size="small">
                   <TableHead>
