@@ -909,43 +909,228 @@ const ModalOrder = ({
             </Table>
           </Grid>
 
-          {!err_order ? null : (
-            <Grid
-              mt={3}
-              size={{
-                xs: 12,
-              }}
-            >
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography style={{ fontWeight: "bold" }}>Ошибка</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell style={{ width: "20%" }}>Дата создания</TableCell>
-                        <TableCell style={{ width: "30%" }}>Проблема</TableCell>
-                        <TableCell style={{ width: "30%" }}>Решение</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      <TableRow hover>
-                        <TableCell>{err_order?.date_time_desc}</TableCell>
-                        <TableCell>{err_order?.order_desc}</TableCell>
-                        <TableCell>{err_order?.text_win}</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </AccordionDetails>
-              </Accordion>
-            </Grid>
-          )}
-        </Grid>
-      </DialogContent>
-    </Dialog>
-  );
-};
+					{order?.number?.length > 1 ?
+						<Grid size={12}>
+							<b>Телефон: </b>
+							<span>{order?.number}</span>
+						</Grid>
+						:
+						null
+					}
+
+					{order?.delete_reason?.length > 0 ?
+						<Grid size={12}><span style={{color: 'red'}}>Удален: {order?.date_time_delete}</span></Grid> : null}
+					{order?.delete_reason?.length > 0 ?
+						<Grid size={12}><span style={{color: 'red'}}>{order?.delete_reason}</span></Grid> : null}
+
+					{parseInt(order?.is_preorder) == 1 ? null :
+						<Grid size={12}><span>{'Обещали: ' + order?.time_to_client + ' / '}{order?.text_time}{order?.time}</span></Grid>
+					}
+
+					{order?.promo_name == null || order?.promo_name?.length == 0 ? null :
+						<>
+							<Grid size={12}>
+								<b>Промокод: </b>
+								<span>{order?.promo_name}</span>
+							</Grid>
+							<Grid size={12}>
+								<span className="noSpace">{order?.promo_text}</span>
+							</Grid>
+						</>
+					}
+
+					{order?.comment == null || order?.comment.length == 0 ? null :
+						<Grid size={12}>
+							<b>Комментарий: </b>
+							<span>{order?.comment}</span>
+						</Grid>
+					}
+
+					{order?.sdacha == null || parseInt(order?.sdacha) == 0 ? null :
+						<Grid size={12}>
+							<b>Сдача: </b>
+							<span>{order?.sdacha}</span>
+						</Grid>
+					}
+
+					<Grid size={12}>
+						<b>Сумма заказа: </b>
+						<span>{order?.sum_order} р</span>
+					</Grid>
+
+					{order?.check_pos_drive == null || !order?.check_pos_drive ? null :
+						<Grid size={12}>
+							<b>Довоз оформлен: </b>
+							<span>{order?.check_pos_drive?.comment}</span>
+						</Grid>
+					}
+
+					<Grid size={12}>
+						<Table size={'small'} style={{marginTop: 15}}>
+							<TableBody>
+								{order_items?.some((item) => item.form_data.length) ? (
+                  <>
+                    <TableRow>
+                      <TableCell>Заказов</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell><b>{order?.stat_order?.all_count} шт</b></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Доставок</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell><b>{order?.stat_order?.count_dev} шт</b></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Самовывозов</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell><b>{order?.stat_order?.count_pic} шт</b></TableCell>
+                    </TableRow>
+                  </>
+                ) : null}
+								{order_items ? order_items.map((item, key) =>
+									<TableRow key={key}>
+										<TableCell>{item.name}</TableCell>
+										<TableCell>{item.count ? `${item.count} шт` : ''}</TableCell>
+										<TableCell>{item.price ? `${item.price} р` : ''}</TableCell>
+										<TableCell><Box sx={{
+											p: 1,
+											bgcolor: item.form_feed?.length ? 'grey.100' : '',
+											display: item.form_feed?.length || item.form_data.length ? '' : 'none',
+											borderRadius: 1,
+											border: '1px solid',
+											borderColor: 'grey.300',
+										}}
+										>
+											{item.form_feed?.length ? Object.entries(item.form_feed).map((data) => data.map((element) => (<div key={element.id}>{renderElementFeed(element, item)}</div>))) : Object.entries(item.form_data).map((data) => data.map((element) => (<div key={element.id}>{renderElement(element, key, item)}</div>)))}
+										</Box></TableCell>
+									</TableRow>
+								) : null}
+							</TableBody>
+							<TableFooter>
+								{order_items?.some(item => item.form_data.length) && (
+									<TableRow>
+										<TableCell style={{fontWeight: 'bold', color: '#000'}}>Тип клиента</TableCell>
+										<TableCell></TableCell>
+										<TableCell style={{
+											fontWeight: 'bold',
+											color: '#000'
+										}}></TableCell>
+										<TableCell>
+											<div className="form-element" style={order.feedback_data?.user_active || order.feedback_data?.user_active === 0 ? {pointerEvents: 'none', opacity: 0.4} : {}}>
+												<ToggleButtonGroup
+													value={userActive}
+													exclusive
+													size="small"
+													onChange={(event, data) => setUserActive(data)}
+												>
+													<ToggleButton value={0} style={{
+														backgroundColor: parseInt(userActive) == 0 ? '#dd1a32' : '#fff',
+														borderRightWidth: 2
+													}}>
+														<span style={{
+															color: parseInt(userActive) == 0 ? '#fff' : '#333',
+															padding: '0 20px'
+														}}>Текущий</span>
+													</ToggleButton>
+													<ToggleButton value={1} style={{backgroundColor: parseInt(userActive) == 1 ? '#dd1a32' : '#fff'}}>
+														<span style={{
+															color: parseInt(userActive) == 1 ? '#fff' : '#333',
+															padding: '0 20px'
+														}}>Новый</span>
+													</ToggleButton>
+													<ToggleButton value={2} style={{backgroundColor: parseInt(userActive) == 2 ? '#dd1a32' : '#fff'}}>
+														<span style={{
+															color: parseInt(userActive) == 2 ? '#fff' : '#333',
+															padding: '0 20px'
+														}}>Ушедший</span>
+													</ToggleButton>
+												</ToggleButtonGroup>
+											</div>
+										</TableCell>
+									</TableRow>
+								)}
+								{hasDiscount && (
+									<TableRow>
+										<TableCell style={{fontWeight: 'bold', color: '#000'}}>Выписать скидку</TableCell>
+										<TableCell></TableCell>
+										<TableCell style={{
+											fontWeight: 'bold',
+											color: '#000'
+										}}></TableCell>
+										<TableCell>
+											<div className="form-element" style={order.feedback_data?.discount_id ? {pointerEvents: 'none', opacity: 0.4} : {}}>
+												<ToggleButtonGroup
+													value={discountValue}
+													exclusive
+													size="small"
+													onChange={(event, data) => {
+														setDiscountValue(data)
+													}}
+												>
+													{[10, 20].map((discount) => {
+														return (
+															<ToggleButton value={discount} style={{backgroundColor: parseInt(discountValue) == discount ? '#dd1a32' : '#fff'}}>
+										<span style={{
+											color: parseInt(discountValue) == discount ? '#fff' : '#333',
+											padding: '0 20px'
+										}}>Скидка {discount}%</span>
+															</ToggleButton>
+														);
+													})}
+												</ToggleButtonGroup>
+											</div>
+										</TableCell>
+									</TableRow>
+								)}
+								<TableRow>
+									<TableCell style={{fontWeight: 'bold', color: '#000'}}>Сумма заказа</TableCell>
+									<TableCell></TableCell>
+									<TableCell style={{
+										fontWeight: 'bold',
+										color: '#000'
+									}}>{`${order?.sum_order}`} р</TableCell>
+									<TableCell><Button variant="contained" onClick={() => setOpenAccept(true)} sx={{display: order_items?.some(item => item.form_data.length) ? '' : 'none'}}>Сохранить отзывы</Button></TableCell>
+								</TableRow>
+							</TableFooter>
+						</Table>
+					</Grid>
+
+					{!err_order ? null :
+						<Grid size={12} mt={3}>
+							<Accordion>
+								<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+									<Typography style={{fontWeight: 'bold'}}>Ошибка</Typography>
+								</AccordionSummary>
+								<AccordionDetails>
+									<Table>
+										<TableHead>
+											<TableRow>
+												<TableCell style={{width: '20%'}}>Дата создания</TableCell>
+												<TableCell style={{width: '30%'}}>Проблема</TableCell>
+												<TableCell style={{width: '30%'}}>Решение</TableCell>
+											</TableRow>
+										</TableHead>
+										<TableBody>
+											<TableRow hover>
+												<TableCell>{err_order?.date_time_desc}</TableCell>
+												<TableCell>{err_order?.order_desc}</TableCell>
+												<TableCell>{err_order?.text_win}</TableCell>
+											</TableRow>
+										</TableBody>
+									</Table>
+								</AccordionDetails>
+							</Accordion>
+						</Grid>
+					}
+
+				</Grid>
+			</DialogContent>
+		</Dialog>
+	);
+}
 
 function ClientPage() {
   const [isLoad, setIsLoad] = useState(false);

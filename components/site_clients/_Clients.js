@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import dayjs from "dayjs";
-import {api_laravel} from "@/src/api_new";
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import {MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput} from "@/components/shared/Forms";
@@ -246,7 +246,7 @@ export default function Clients({canAccess}) {
 		} else if (checkedFields.includes(name)) {
 			value = e.target.checked;
 		} else {
-			value = e.target.value; 
+			value = e.target.value;
 		}
 		setFormData((prev) => {
 			if (name === 'promo') {
