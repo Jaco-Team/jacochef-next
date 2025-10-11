@@ -860,7 +860,7 @@ class OrderPostRec_TableItemNew extends React.Component {
       }
     }
 
-    console.log( 'render_item' )
+    // console.log( 'render_item' )
 
     return(
       <TableRow
@@ -970,7 +970,7 @@ class OrderPostRecNew_ extends React.Component {
 
     let res = await this.getData('get_data', data);
 
-    console.log( res );
+    // console.log( res );
 
     this.setState({
       point: value,

@@ -124,10 +124,7 @@ function SettingsPage() {
         spacing={3}
         mb={3}
         className="container_first_child"
-        size={{
-          xs: 12,
-          sm: 12
-        }}>
+      >
         <Grid
           size={{
             xs: 12,
@@ -136,11 +133,7 @@ function SettingsPage() {
           <h1>{module.name}</h1>
         </Grid>
         <Grid
-          style={{ paddingBottom: 24 }}
-          size={{
-            xs: 12,
-            sm: 12
-          }}>
+          size={12}>
           <Paper>
             <TabContext value={value}>
               <Tabs

@@ -554,7 +554,7 @@ class CitiesModules_Modal extends React.Component {
                                                 }}>
 												<MyTextInput
 													type="number"
-													label="Сумма вознагрождения курьеру за завершенный заказ в радиусе"
+													label="Сумма вознаграждения курьеру за завершенный заказ в радиусе"
 													value={this.state.item?.city?.driver_dop_price || ''}
 													func={this.changeItem.bind(this, 'driver_dop_price')}
 													InputProps={{
@@ -571,7 +571,7 @@ class CitiesModules_Modal extends React.Component {
                                                 }}>
 												<MyTextInput
 													type="number"
-													label="Радиус в метрах в пределах которого положено вознагрождение"
+													label="Радиус в метрах в пределах которого положено вознаграждение"
 													value={this.state.item?.city?.driver_dop_price_radius || ''}
 													func={this.changeItem.bind(this, 'driver_dop_price_radius')}
 													InputProps={{

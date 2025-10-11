@@ -1,3 +1,5 @@
+"use client";
+
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import { LocalizationProvider, StaticDatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";

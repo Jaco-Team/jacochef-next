@@ -1,3 +1,5 @@
+"use client";
+
 import { Autocomplete, createFilterOptions, Stack, TextField } from "@mui/material";
 
 const filter = createFilterOptions();

@@ -1,3 +1,5 @@
+"use client";
+
 //q3skq93mjg9kb2pusut1jjvqd15b8wncykg7tj0ke02dbipj - новый
 //r0ihgs4ukfpmudzw7aexxgb88tnx5jw26h1xx9x6409ji3gx - старый
 //q3skq93mjg9kb2pusut1jjvqd15b8wncykg7tj0ke02dbipj - еще более новый

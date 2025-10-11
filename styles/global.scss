@@ -24,7 +24,7 @@ header > div {
 .container_first_child {
   margin-top: 88px !important;
   margin-bottom: 0 !important;
-  padding: 24px;
+  padding-inline: 24px;
 }
 
 // .LeftMenu > .MuiDrawer-paper.MuiDrawer-paperAnchorLeft {
@@ -451,16 +451,6 @@ div.css-19kzrtu {
   margin-right: 10px;
 }
 
-
-body{
-  margin: 0px!important;
-}
-p, span, b, th, td, label{
-  font-size: 1rem!important;
-}
-h1, h2, h3, h4, h5{
-  margin: 0;
-}
 .MuiAccordion-root.Mui-expanded{
   margin: 0!important;
 }

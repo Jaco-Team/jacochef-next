@@ -406,11 +406,7 @@ class StatSale_Tab_Dynamic extends React.Component {
 
     return (
       <Grid
-        style={{ paddingTop: '24px' }}
-        size={{
-          xs: 12,
-          sm: 12
-        }}>
+        size={12}>
         <TabPanel 
           value={activeTab} 
           index={1} 
@@ -830,12 +826,8 @@ class SitePriceLevel_Tab_Level extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
         <Grid
-          style={{ paddingTop: '24px' }}
           mb={10}
-          size={{
-            xs: 12,
-            sm: 12
-          }}>
+          size={12}>
           <TabPanel value={activeTab} index={0} id="clients">
             <Grid container spacing={3}>
 
@@ -1065,17 +1057,13 @@ class SitePriceLevel_ extends React.Component {
         <Grid container spacing={3} mb={3} className="container_first_child">
 
           <Grid
-            size={{
-              xs: 12
-            }}>
+            size={12}>
             <h1>{module_name}</h1>
           </Grid>
 
           <Grid
             style={{ paddingBottom: 24 }}
-            size={{
-              xs: 12
-            }}>
+            size={12}>
             <Paper>
               <Tabs
                 value={activeTab}

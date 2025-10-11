@@ -412,16 +412,13 @@ class Tender_ extends React.Component {
           status={this.state.alertStatus}
           text={this.state.alertText}
         />
-        <Grid container spacing={3} mb={3} className='container_first_child'>
+        <Grid container spacing={3} className='container_first_child'>
           <Grid
-            size={{
-              xs: 12,
-              sm: 12
-            }}>
+            size={12}
+            sx={{ mb: 2 }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid> 
-        </Grid>
-        <Grid container spacing={3} mb={3} mt={1}>
 
           <Grid
             size={{
@@ -531,12 +528,9 @@ class Tender_ extends React.Component {
           </Grid>  
         </Grid>
         {!this.state.cats.length ? null : (
-          <Grid container spacing={3} className='tender'>
+          <Grid container spacing={3} className='tender' sx={{ paddingInline: 2, mt: 3}} >
             <Grid
-              size={{
-                xs: 12,
-                sm: 12
-              }}>
+              size={12}>
               <TableContainer sx={{ maxHeight: { xs: 'none', sm: 1000 } }}>
                 <Table stickyHeader size="small">
                   <TableHead style={{ position: 'sticky', top: 0, zIndex: 7 }}>

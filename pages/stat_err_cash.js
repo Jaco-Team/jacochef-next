@@ -896,7 +896,7 @@ class StatErrCash_ extends React.Component {
         </Grid>
         {/* клиенты */}
         {!this.state.stat_false && !this.state.stat_true ? null : (
-          <Grid container spacing={3} justifyContent="center" mt={3} mb={3}>
+          <Grid container spacing={3} justifyContent="center" sx={{ p: 3, mt: 3 }}>
             <Grid
               size={{
                 xs: 12,
@@ -925,7 +925,7 @@ class StatErrCash_ extends React.Component {
         )}
         {/* аккордионы */}
         {!this.state.svod.length && !this.state.svod_new.length ? null : (
-          <Grid container spacing={3} sx={{ marginBottom: 3 }}>
+          <Grid container spacing={3} sx={{ p: 3 }}>
             {!this.state.svod.length ? null : (
               <Grid
                 size={{
@@ -1003,7 +1003,7 @@ class StatErrCash_ extends React.Component {
         )}
         {/* таблицы */}
         {!this.state.all_data.length && !this.state.all_data_new.length ? null : (
-          <Grid container mt={3} spacing={3}>
+          <Grid container spacing={3} sx={{ p: 3 }}>
           {!this.state.all_data_new.length ? null : (
           <Grid
             sx={{ marginBottom: 5 }}

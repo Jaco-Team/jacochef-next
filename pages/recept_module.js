@@ -64,11 +64,9 @@ class ReceptModule_Modal_Container extends React.Component {
     const { rec, allCount, storages, apps, pf_list, all_pf_list, changeItem, changeItemData, changeItemChecked, addIngredientsRecipe, dellIngredientsRecipe } = this.props;
 
     return (
-      <Grid container spacing={3}>
+      <Grid container spacing={3} mt={3}>
         <Grid
-          size={{
-            xs: 12
-          }}>
+          size={12}>
           <Grid container spacing={3} mb={2}>
             <Grid
               size={{

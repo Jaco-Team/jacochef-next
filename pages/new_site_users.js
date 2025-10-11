@@ -9,7 +9,7 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 
 import Typography from '@mui/material/Typography';
@@ -1160,10 +1160,10 @@ class CatWork_ extends React.Component {
                 <AccordionDetails>
                   <List style={{ width: '100%' }}>
                     { item.users.map( (it, k) =>
-                      <ListItem button key={k} onClick={ this.get_user_info.bind(this, it.number) } style={{ backgroundColor: parseInt(it.check_comment) == 1 ? '#fff' : parseInt(it.count) == 1 ? '#ffba00' : '#90ee90' }}>
+                      <ListItemButton key={k} onClick={ this.get_user_info.bind(this, it.number) } style={{ backgroundColor: parseInt(it.check_comment) == 1 ? '#fff' : parseInt(it.count) == 1 ? '#ffba00' : '#90ee90' }}>
                         <ListItemText primary={ it.number + ' / заказов - ' + it.count } />
                         <span style={{ maxWidth: '50%' }} dangerouslySetInnerHTML={{__html: it.last_comment}} />
-                      </ListItem>
+                      </ListItemButton>
                     ) }
                   </List>
                 </AccordionDetails>

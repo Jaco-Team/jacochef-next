@@ -105,9 +105,7 @@ class SiteItemsTable extends React.Component {
   render(){
     return (
       <Grid
-        size={{
-          xs: 12
-        }}>
+        size={12}>
         {this.props.cats.map( (cat, key) =>
           <Accordion key={key}>
             <AccordionSummary
@@ -2679,7 +2677,7 @@ class SiteItems_ extends React.Component {
             <Button onClick={this.saveNewItem.bind(this)} color="primary">Сохранить</Button>
           </DialogActions>
         </Dialog>
-        <Grid container spacing={3}>
+        <Grid container spacing={3} className="container_first_child">
           <Grid
             size={{
               xs: 12,

@@ -183,6 +183,7 @@ export default function PromoCodeForm({
       <Grid
         container
         spacing={3}
+        sx={{padding: 0}}
       >
         <Grid
           size={{
@@ -243,11 +244,8 @@ export default function PromoCodeForm({
               container
               direction="row"
               justifyContent="center"
-              style={{
-                paddingTop: 20,
-                paddingLeft: 24,
-              }}
               spacing={3}
+              sx={{ paddingTop: 0 }}
             >
               <Grid
                 size={{
@@ -302,7 +300,6 @@ export default function PromoCodeForm({
               container
               direction="row"
               justifyContent="center"
-              style={{ paddingTop: 20 }}
               spacing={3}
             >
               <Grid

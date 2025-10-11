@@ -175,7 +175,7 @@ class ZoneModules_Modal_History extends React.Component {
 
     return (
       <Dialog
-        open={open}
+        open={this.props.open ?? false}
         fullWidth={true}
         maxWidth={'md'}
         onClose={this.onClose.bind(this)}
@@ -1104,6 +1104,8 @@ class ZoneModules_ extends React.Component {
 
       modalDialogMap: false,
       zone_data: null,
+
+      confirmDialog: false,
 
       points: []
     };

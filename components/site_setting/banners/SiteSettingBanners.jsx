@@ -151,10 +151,7 @@ export function SiteSettingBanners(props) {
           alignItems: "flex-start", // or 'center' based on your taste
           justifyContent: "space-between", // optional
         }}
-        size={{
-          xs: 12,
-          sm: 12
-        }}>
+        size={12}>
         <Typography variant="h5">{moduleName}</Typography>
 
         {acces.banners_edit ? (
@@ -167,11 +164,7 @@ export function SiteSettingBanners(props) {
         ) : null}
       </Grid>
       <Grid
-        sx={{ p: 3 }}
-        size={{
-          xs: 12,
-          sm: 12
-        }}>
+        size={12}>
         <MySelect
           data={cities}
           value={cityId}

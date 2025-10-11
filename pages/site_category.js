@@ -438,6 +438,7 @@ class SiteCategory_ extends React.Component {
                             </TableCell>
                             <TableCell>
                               <MyTextInput
+                                type="number"
                                 label=""
                                 value={item.sort}
                                 func={this.changeSort.bind(this, index, 'cat', null)}
@@ -454,6 +455,7 @@ class SiteCategory_ extends React.Component {
                               </TableCell>
                               <TableCell>
                                 <MyTextInput
+                                  type="number"
                                   label=""
                                   value={it.sort}
                                   func={this.changeSort.bind(this, key, 'subCat', item.id)}

@@ -241,7 +241,7 @@ class CloseBuy_ extends React.Component {
                   <CheckBoxIcon style={{ marginRight: 30, color: '#c03' }} onClick={this.openConfirm.bind(this, cat)}/>
                   <Typography>{cat.name}</Typography>
                 </AccordionSummary>
-                <AccordionDetails style={{ width: '100%', overflow: 'scroll' }}>
+                <AccordionDetails sx={{ maxWidth: '100%', overflowY: 'auto' }}>
                   <TableContainer>
                     <Table>
                       <TableHead>

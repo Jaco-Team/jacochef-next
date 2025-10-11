@@ -239,7 +239,7 @@ class VendorItemPrice_ extends React.Component {
               xs: 12,
               sm: 3
             }}>
-            <MyAutocomplite data={this.state.vendors} value={this.state.vendor} func={ this.changeVendor.bind(this) } multiple={false} label='Поставщик' />
+            <MyAutocomplite data={this.state.vendors} value={this.state.vendor} func={ this.changeVendor.bind(this) } multiple={false} label='Поставщик' disableCloseOnSelect={false} />
           </Grid>
           
           

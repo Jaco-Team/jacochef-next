@@ -390,7 +390,7 @@ class Events_ extends React.Component {
               
               <Grid container spacing={3}>
                 
-                {this.state.chooseDayHoly.length == 0 ? null :
+                {this.state.chooseDayHoly?.length > 0 &&
                   <Grid
                     size={{
                       xs: 12,
@@ -447,16 +447,16 @@ class Events_ extends React.Component {
               
               <List component="nav">
                 { this.state.dayEvents.map( (item, key) => 
-                  <ListItem key={key}>
+                  <ListItem key={item.id || `d${key}`}>
                     <ListItemText primary={item.title} />
-                    { ( parseInt(item.type) == 4 ||  parseInt(item.type) == 6) ? null :
+                    { !( parseInt(item.type) === 4 ||  parseInt(item.type) === 6) &&
                       <CloseIcon color="primary" onClick={this.openConfigDialog.bind(this, item)} style={{ cursor: 'pointer' }} />
                     }
                   </ListItem>
                 )}
               </List>
               
-              {!this.state.events_hist.length ? null :
+              {this.state.events_hist?.length > 0 &&
                 <Accordion>
                   <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
@@ -468,7 +468,7 @@ class Events_ extends React.Component {
                   <AccordionDetails>
                     <List component="nav">
                       { this.state.events_hist.map( (item, key) => 
-                        <ListItem key={key}>
+                        <ListItem key={item.id || `eh${key}`}>
                           <ListItemText primary={item.title} />
                         </ListItem>
                       )}
@@ -522,13 +522,12 @@ class Events_ extends React.Component {
             <Button variant="contained" onClick={this.updateData.bind(this)}>Обновить данные</Button>
           </Grid>
         
-          <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20, margin: '0 auto' }} >
+          <Grid container direction="row" justifyContent="center" >
             
             { this.state.calendar.map( (item, key) =>
             
               <Grid
-                key={key}
-                style={{ padding: 20 }}
+                key={`y${key}`}
                 size={{
                   sm: 6
                 }}>
@@ -548,12 +547,11 @@ class Events_ extends React.Component {
                     </TableHead>
                     <TableBody>
                       
-                      { item.map( (mounth, m_key) =>
-                        <TableRow key={m_key}>
-                          { mounth.map( (day, k) =>
-                          <>
+                      { item.map( (month, m_key) =>
+                        <TableRow key={`y${key}-${m_key}`}>
+                          { month.map( (day, k) =>
                             <TableCell 
-                              key={k} 
+                              key={day.full_day || `${key}-${m_key}-${k}`} 
                               onClick={ this.chooseDay.bind(this, day) } 
                               
                               style={{ color: day.dir ? 'yellow' : day.holy ? '#c03' : '#000', height: '6vw', position: 'relative' }}
@@ -562,14 +560,13 @@ class Events_ extends React.Component {
                             >
                             {day.day}
 
-                            {!day.event?.length ? null :
+                            {day.event?.length > 0 &&
                              <Tooltip title={<Typography color="inherit">Кол-во событий дня</Typography>}> 
                               <span style={{ position: 'absolute', right: 5, top: 5, color: '#c03' }}>{day.event.length}</span>
                              </Tooltip>
                             }
 
                             </TableCell>
-                          </>
                           ) }
                         </TableRow>
                       ) }

@@ -173,7 +173,6 @@ class Appointment_ extends React.Component {
   }
 
   async openModal(id) {
-    
     this.handleResize();
     const data = {
       app_id: id,
@@ -190,7 +189,6 @@ class Appointment_ extends React.Component {
   }
 
   async saveEdit(app, full_menu) {
-
     const data = {
       app,
       full_menu,
@@ -219,7 +217,6 @@ class Appointment_ extends React.Component {
   }
 
   async saveNew(app, full_menu) {
-    
     const data = {
       app,
       full_menu,
@@ -279,8 +276,7 @@ class Appointment_ extends React.Component {
   }
 
   async openUnitModal(unit_id = null, e) {
-
-    if(!this.canView('units')) return;
+    if (!this.canView("units")) return;
 
     e.stopPropagation();
     this.handleResize();
@@ -387,12 +383,15 @@ class Appointment_ extends React.Component {
           spacing={3}
           mb={3}
           mt={10}
+          className="container_first_child"
         >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+            sx={{ paddingTop: "16px" }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
@@ -436,9 +435,10 @@ class Appointment_ extends React.Component {
             mb={1}
             style={{ display: "flex", gap: "1em" }}
             size={{
-              xs: 12
-            }}>
-            {this.canEdit("app") && this.canEdit("app_create") &&  (
+              xs: 12,
+            }}
+          >
+            {this.canEdit("app") && this.canEdit("app_create") && (
               <Button
                 variant="outlined"
                 onClick={this.openNewApp.bind(this)}
@@ -458,8 +458,9 @@ class Appointment_ extends React.Component {
           <Grid
             mb={1}
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             {unitsWithItems?.map((unit) => (
               <Accordion
                 defaultExpanded={unit.id !== null}
@@ -497,7 +498,9 @@ class Appointment_ extends React.Component {
                             >
                               <TableCell style={{ width: "1%" }}>{key + 1}</TableCell>
                               <TableCell
-                                onClick={this.canView('app') ? this.openModal.bind(this, item.id) : null}
+                                onClick={
+                                  this.canView("app") ? this.openModal.bind(this, item.id) : null
+                                }
                                 style={{ cursor: "pointer", fontWeight: "bold" }}
                               >
                                 {item.name}
@@ -507,7 +510,7 @@ class Appointment_ extends React.Component {
                                   type="number"
                                   label=""
                                   value={item.kind}
-                                  disabled={!this.canEdit('app')}
+                                  disabled={!this.canEdit("app")}
                                   func={this.changeItem.bind(this, "kind", item.id)}
                                   onBlur={() => this.applyAppsSortingChangeUI()}
                                 />
@@ -518,7 +521,7 @@ class Appointment_ extends React.Component {
                                   inputProps={{ min: 0 }}
                                   label=""
                                   value={item.sort}
-                                  disabled={!this.canEdit('app')}
+                                  disabled={!this.canEdit("app")}
                                   func={this.changeItem.bind(this, "sort", item.id)}
                                   onBlur={() => this.applyAppsSortingChangeUI()}
                                 />
@@ -537,13 +540,14 @@ class Appointment_ extends React.Component {
           <Grid
             mb={1}
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <Button
               color="primary"
               variant="contained"
               onClick={this.saveSort.bind(this)}
-              disabled={!this.canEdit('app')}
+              disabled={!this.canEdit("app")}
             >
               Сохранить сортировку
             </Button>

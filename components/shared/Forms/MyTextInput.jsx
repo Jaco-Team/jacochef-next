@@ -1,3 +1,5 @@
+"use client";
+
 import { TextField } from "@mui/material";
 
 export function MyTextInput(props) {

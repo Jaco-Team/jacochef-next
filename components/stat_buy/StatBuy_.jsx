@@ -315,7 +315,7 @@ export default class Stat_buy_ extends React.Component {
             xs: 12,
             sm: 12,
           }}
-          style={{ padding: "0 24px" }}
+          style={{ padding: "0 24px", marginTop: "24px" }}
         >
           <TabContext value={this.state.ItemTab}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>

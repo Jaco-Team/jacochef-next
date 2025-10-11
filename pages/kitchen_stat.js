@@ -403,6 +403,7 @@ class KitchenStat_ extends React.Component {
           container
           pt={1}
           spacing={3}
+          sx={{paddingInline: "24px"}}
         >
 
           {/* таблица Оформленные заказы по часам */}

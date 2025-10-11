@@ -593,10 +593,7 @@ class SitePageText_ extends React.Component {
         />
         <Grid container spacing={3} className='container_first_child'>
           <Grid
-            size={{
-              xs: 12,
-              sm: 12
-            }}>
+            size={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
@@ -628,12 +625,7 @@ class SitePageText_ extends React.Component {
           </Grid>
         </Grid>
         <Grid container mt={3} spacing={3} mb={5}>
-
-        <Grid
-          size={{
-            xs: 12,
-            sm: 12
-          }}>
+          <Grid size={12} sx={{ paddingInline: 3 }}>
             <TableContainer>
               <Table>
                 <TableHead>

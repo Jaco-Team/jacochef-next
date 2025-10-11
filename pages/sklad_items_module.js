@@ -15,7 +15,7 @@ import TableRow from '@mui/material/TableRow';
 import TableContainer from '@mui/material/TableContainer';
 
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 
 import Dialog from '@mui/material/Dialog';
@@ -894,9 +894,9 @@ class SkladItemsModule_ extends React.Component {
           <DialogTitle>Такой код 1с уже задан у следующих позиций:</DialogTitle>
           <List sx={{ pt: 0 }}>
             {this.state.checkArtList.map((item, key) => (
-              <ListItem button onClick={this.chooseArt.bind(this, item.id)} key={key}>
+              <ListItemButton onClick={this.chooseArt.bind(this, item.id)} key={key}>
                 <ListItemText primary={item.name} />
-              </ListItem>
+              </ListItemButton>
             ))}
           </List>
         </Dialog>

@@ -6,7 +6,7 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 
 import Dialog from '@mui/material/Dialog';
@@ -315,9 +315,9 @@ class CatWork_ extends React.Component {
             }}>
             <List style={{ width: '100%' }}>
               {this.state.cats.map( (item, key) =>
-                <ListItem button key={key} onClick={ this.openCat.bind(this, item) }>
+                <ListItemButton key={key} onClick={ this.openCat.bind(this, item) }>
                   <ListItemText primary={ item.name } />
-                </ListItem>
+                </ListItemButton>
               )}
             </List>
           </Grid>

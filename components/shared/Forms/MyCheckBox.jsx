@@ -1,3 +1,5 @@
+"use client";
+
 import { Checkbox, FormControlLabel, FormGroup } from "@mui/material";
 
 export function MyCheckBox(props) {

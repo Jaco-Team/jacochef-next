@@ -187,7 +187,6 @@ class ShowCook_ extends React.Component {
           </Grid>
 
           <Grid
-            style={{ paddingTop: 0, paddingBottom: "40px" }}
             size={{
               xs: 12,
               sm: 12
@@ -203,7 +202,6 @@ class ShowCook_ extends React.Component {
           </Grid>
 
           <Grid
-            style={{ paddingTop: 0, paddingBottom: "40px" }}
             size={{
               xs: 12,
               sm: 12
@@ -218,7 +216,6 @@ class ShowCook_ extends React.Component {
           </Grid>
 
           <Grid
-            style={{ paddingTop: 0, paddingBottom: "40px" }}
             size={{
               xs: 12,
               sm: 12

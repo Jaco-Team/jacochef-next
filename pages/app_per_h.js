@@ -36,7 +36,6 @@ class AppPerH_ extends React.Component {
       const currentDate = today.date();
 
       const getPeriodName = (start, end) => {
-        console.log(dayjs.locale());
         if (start.date() === 1 && end.date() === 15) {
           return `с 1 по 15 ${end.format("D MMMM YYYY").replace(/^\d+\s/, "")} г.`; // no D makes nominative
         } else {

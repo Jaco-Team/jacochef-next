@@ -1,3 +1,5 @@
+"use client";
+
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
 export function MySelect(props) {
