@@ -55,7 +55,7 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
         <MyCheckBox
           label="Необходима геолокация для завершения заказа"
           disabled={!canEdit("settings_driver")}
-          value={parseInt(point_info?.driver_need_gps)}
+          value={Boolean(point_info?.driver_need_gps)}
           func={(e) => changeItemChecked("driver_need_gps", e)}
         />
       </Grid>

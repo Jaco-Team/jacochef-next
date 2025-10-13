@@ -6,6 +6,7 @@ import { MySelect, MyTextInput } from "@/components/shared/Forms";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import MyAlert from "@/components/shared/MyAlert";
+import useCafeEditModalsStore from "./useCafeEditModalsStore";
 
 const CafeEdit_Modal_New = (props) => {
   const { open, fullScreen } = props;

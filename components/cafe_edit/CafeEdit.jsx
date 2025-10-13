@@ -1027,8 +1027,7 @@ export default function CafeEdit({ initialData, initialPointData }) {
         )}
         {activeTab === index_sett && (
           <Grid
-            item
-            xs={12}
+            size={12}
             style={{ paddingTop: 0 }}
           >
             <TabPanel
@@ -1080,7 +1079,6 @@ export default function CafeEdit({ initialData, initialPointData }) {
         )}
         {activeTab === index_driver && (
           <Grid
-            item
             size={12}
           >
             <TabPanel
