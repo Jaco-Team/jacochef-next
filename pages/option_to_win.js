@@ -21,7 +21,7 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyTextInput, MyAutocomplite, MyCheckBox } from '@/ui/elements';
+import { MyTextInput, MyAutocomplite, MyCheckBox } from '@/components/shared/Forms';
 
 import { api, api_laravel, api_laravel_local } from '@/src/api_new';
 
@@ -129,7 +129,11 @@ class OptionToWin_Modal extends React.Component {
         </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Наименование"
                 value={this.state.item ? this.state.item.err.name : ''}
@@ -137,7 +141,11 @@ class OptionToWin_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyAutocomplite
                 label="Варианты решения"
                 multiple={true}
@@ -147,7 +155,11 @@ class OptionToWin_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyAutocomplite
                 label="Этапы ошибки роллы"
                 multiple={true}
@@ -157,7 +169,11 @@ class OptionToWin_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyAutocomplite
                 label="Этапы ошибки пицца"
                 multiple={true}
@@ -167,7 +183,11 @@ class OptionToWin_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyAutocomplite
                 label="Этапы ошибки напитки / допы"
                 multiple={true}
@@ -177,7 +197,11 @@ class OptionToWin_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyCheckBox
                 label="Картинка"
                 value={this.state.item ? parseInt(this.state.item.err.need_photo) == 1 ? true : false : false}
@@ -186,7 +210,11 @@ class OptionToWin_Modal extends React.Component {
             </Grid>
 
             {this.props.mark === 'editItem' ? (
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyCheckBox
                   label="Активность"
                   value={this.state.item ? parseInt(this.state.item.err.is_active) == 1 ? true : false : false}
@@ -389,7 +417,6 @@ class OptionToWin_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <OptionToWin_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false, itemName: '' })}
@@ -400,19 +427,30 @@ class OptionToWin_ extends React.Component {
           save={this.save.bind(this)}
           fullScreen={this.state.fullScreen}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.openModal.bind(this, 'newItem', 'Новый вариант жалобы')} variant="contained">
               Новая жалоба
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer>
               <Table>
                 <TableHead>

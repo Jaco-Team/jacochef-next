@@ -22,9 +22,10 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyTextInput, MyAlert, TextEditor, MyAutocomplite } from '@/ui/elements';
+import { MySelect, MyTextInput, TextEditor, MyAutocomplite } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class SitePageText_Modal extends React.Component {
   constructor(props) {
@@ -223,7 +224,6 @@ class SitePageText_Modal extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog
           disableEnforceFocus
           open={this.props.open}
@@ -240,7 +240,11 @@ class SitePageText_Modal extends React.Component {
           </DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MySelect
                   is_none={false}
                   label="Город"
@@ -250,7 +254,11 @@ class SitePageText_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyAutocomplite
                   label="Категория"
                   multiple={false}
@@ -260,7 +268,11 @@ class SitePageText_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Страница"
                   value={this.state.item ? this.state.item.page.page_name : ''}
@@ -268,7 +280,11 @@ class SitePageText_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Ссылка"
                   value={this.state.item ? this.state.item.page.link : ''}
@@ -276,7 +292,11 @@ class SitePageText_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Заголовок (H1-H2)"
                   value={this.state.item ? this.state.item.page.page_h : ''}
@@ -284,7 +304,11 @@ class SitePageText_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Заголовок (title)"
                   value={this.state.item ? this.state.item.page.title : ''}
@@ -292,7 +316,11 @@ class SitePageText_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput
                   label="Описание (description)"
                   multiline={true}
@@ -302,7 +330,11 @@ class SitePageText_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <Typography gutterBottom>
                   Текст на сайте
                 </Typography>
@@ -543,14 +575,12 @@ class SitePageText_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <SitePageText_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false, itemName: '' })}
@@ -561,13 +591,17 @@ class SitePageText_ extends React.Component {
           save={this.save.bind(this)}
           fullScreen={this.state.fullScreen}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect
               is_none={false}
               data={this.state.cities}
@@ -577,7 +611,11 @@ class SitePageText_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button
               onClick={this.openModal.bind(this, 'newPage', 'Новая страница')}
               variant="contained"
@@ -586,10 +624,8 @@ class SitePageText_ extends React.Component {
             </Button>
           </Grid>
         </Grid>
-
         <Grid container mt={3} spacing={3} mb={5}>
-
-        <Grid item xs={12} sm={12}>
+          <Grid size={12} sx={{ paddingInline: 3 }}>
             <TableContainer>
               <Table>
                 <TableHead>

@@ -6,7 +6,6 @@ const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
   subsets: ['latin'],
   display: 'swap',
-  //variable: '--inter-font',
 });
 
 // Create a theme instance.
@@ -24,7 +23,42 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: roboto.style.fontFamily,
-    // fontFamily: 'var(--inter-font), ' + roboto.style.fontFamily,
+  },
+  components: {
+    MuiGrid: {
+      styleOverrides: {
+        root: {
+          boxSizing: 'border-box',
+        },
+        container: {
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          width: '100%',
+        },
+        item: {
+          paddingLeft: '12px',
+          paddingRight: '12px',
+        },
+      },
+    },
+    MuiList: {
+      styleOverrides: {
+        root: {
+          // target links inside List
+          '& a': {
+            textDecoration: 'none',
+            color: 'rgba(0, 0, 0, 0.87)',
+          },
+        },
+      },
+    },
+    MuiListItem: {
+      styleOverrides: {
+        root: {
+          height: 50,
+        },
+      },
+    },
   },
 });
 

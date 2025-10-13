@@ -12,7 +12,7 @@ import TableRow from '@mui/material/TableRow';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect } from '@/ui/elements';
+import { MySelect } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import {api_laravel_local} from "@/src/api_new";
@@ -102,19 +102,30 @@ class SiteSale2_Stat_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Grid container style={{ marginTop: '80px', paddingLeft: '24px' }}>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid container direction="row" style={{ paddingTop: 20 }} spacing={3}>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MySelect data={this.state.spam_list} value={this.state.spam_id} func={ this.changeSpam.bind(this) } label='Рассылка' />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <Button variant="contained" onClick={this.show.bind(this)}>Обновить</Button>
             </Grid>
 
@@ -122,7 +133,10 @@ class SiteSale2_Stat_ extends React.Component {
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
-            <Grid item xs={6}>
+            <Grid
+              size={{
+                xs: 6
+              }}>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -143,7 +157,10 @@ class SiteSale2_Stat_ extends React.Component {
               </Table>
             </Grid>
 
-            <Grid item xs={6}>
+            <Grid
+              size={{
+                xs: 6
+              }}>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -171,7 +188,7 @@ class SiteSale2_Stat_ extends React.Component {
 
         </Grid>
       </>
-    )
+    );
   }
 }
 

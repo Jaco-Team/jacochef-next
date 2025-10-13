@@ -29,7 +29,7 @@ import { useEffect, useState } from "react";
 import DialogPromoHistory from "./DialogPromoHistory";
 import ModalDelete from "./ModalDelete";
 import DateModal from "./DateModal";
-import { MyAutocomplite, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyTextInput } from "@/components/shared/Forms";
 
 export default function PromoCodeForm({
   mockItems,
@@ -183,12 +183,13 @@ export default function PromoCodeForm({
       <Grid
         container
         spacing={3}
+        sx={{padding: 0}}
       >
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <FormControl
             fullWidth
             size="small"
@@ -211,10 +212,10 @@ export default function PromoCodeForm({
 
         {formData.type && formData.type !== "product" && (
           <Grid
-            item
-            xs={12}
-            sm={6}
-          >
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Autocomplete
               options={discountOptions}
               size="small"
@@ -243,17 +244,14 @@ export default function PromoCodeForm({
               container
               direction="row"
               justifyContent="center"
-              style={{
-                paddingTop: 20,
-                paddingLeft: 24,
-              }}
               spacing={3}
+              sx={{ paddingTop: 0 }}
             >
               <Grid
-                item
-                xs={12}
-                sm={3}
-              >
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyAutocomplite
                   data={mockItems}
                   value={position}
@@ -264,10 +262,10 @@ export default function PromoCodeForm({
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={3}
-              >
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyTextInput
                   value={count}
                   func={(e) => setCount(e.target.value)}
@@ -275,10 +273,10 @@ export default function PromoCodeForm({
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={3}
-              >
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyTextInput
                   value={price}
                   func={(e) => setPrice(e.target.value)}
@@ -286,10 +284,10 @@ export default function PromoCodeForm({
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={3}
-              >
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <Button
                   variant="contained"
                   onClick={addItem}
@@ -302,14 +300,13 @@ export default function PromoCodeForm({
               container
               direction="row"
               justifyContent="center"
-              style={{ paddingTop: 20 }}
               spacing={3}
             >
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -351,10 +348,10 @@ export default function PromoCodeForm({
         )}
 
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <TextField
             fullWidth
             label="Минимальная сумма заказа"
@@ -368,10 +365,10 @@ export default function PromoCodeForm({
           />
         </Grid>
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <TextField
             fullWidth
             label="Максимальная сумма заказа"
@@ -385,10 +382,10 @@ export default function PromoCodeForm({
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <TextField
             fullWidth
             size="small"
@@ -403,10 +400,10 @@ export default function PromoCodeForm({
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <TextField
             fullWidth
             label="За сколько дней выписан промокод"
@@ -421,10 +418,10 @@ export default function PromoCodeForm({
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <TextField
             fullWidth
             size="small"
@@ -439,9 +436,9 @@ export default function PromoCodeForm({
         </Grid>
 
         <Grid
-          item
-          xs={12}
-        >
+          size={{
+            xs: 12
+          }}>
           <TextField
             fullWidth
             label="Описание промокода"
@@ -454,11 +451,11 @@ export default function PromoCodeForm({
           />
         </Grid>
         <Grid
-          item
-          xs={12}
-          sm={12}
           display="grid"
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <Button
             color="success"
             variant="contained"
@@ -473,11 +470,11 @@ export default function PromoCodeForm({
           </Button>
         </Grid>
         <Grid
-          item
-          xs={12}
-          sm={12}
           display="grid"
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <Accordion style={{ marginTop: "24px", display: history.length ? "inherit" : "none" }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography sx={{ fontWeight: "bold" }}>История изменений</Typography>

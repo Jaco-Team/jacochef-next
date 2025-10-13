@@ -32,7 +32,7 @@ import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 
 import ModalImage from "react-modal-image";
 
-import { MySelect, MyDatePickerNew, MyAlert, MyTextInput, formatDate } from '@/ui/elements';
+import { MySelect, MyDatePickerNew, MyTextInput } from '@/components/shared/Forms';
 
 import dayjs from 'dayjs';
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
@@ -42,6 +42,8 @@ import EditIcon from "@mui/icons-material/Edit";
 //import VisibilityIcon from "@mui/icons-material/Visibility";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
+import MyAlert from '@/components/shared/MyAlert';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class StatErrCash_Modal extends React.Component {
   constructor(props) {
@@ -287,7 +289,6 @@ class StatErrCash_Modal extends React.Component {
           onClose={() => this.setState({ openAlert: false }) }
           status={this.state.err_status}
           text={this.state.err_text} />
-
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="xs"
@@ -313,7 +314,6 @@ class StatErrCash_Modal extends React.Component {
             <Button onClick={this.clearItem.bind(this)}>Снять</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="xs"
@@ -339,7 +339,6 @@ class StatErrCash_Modal extends React.Component {
             <Button onClick={this.delItem.bind(this)}>Снять</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '100%', maxHeight: 435 } }}
           maxWidth="sm"
@@ -389,7 +388,6 @@ class StatErrCash_Modal extends React.Component {
             <Button onClick={this.changeStaffs}>Сохранить</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.props.open}
           onClose={this.onClose.bind(this)}
@@ -409,7 +407,14 @@ class StatErrCash_Modal extends React.Component {
 
             <Grid container spacing={3} justifyContent="center" mb={3}>
 
-              <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center">
+              <Grid
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Сотрудник</Typography>
                 <Typography sx={{ fontWeight: 'normal', whiteSpace: 'nowrap' }}>
                   {this.props.mark === 'errOrder' ? this.state.item ? this.state.item.full_user_name : 'Не указан' : this.state.item ? this.state.item.user_name : 'Не указан'}
@@ -422,7 +427,14 @@ class StatErrCash_Modal extends React.Component {
                 </Typography>
               </Grid>
 
-              <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center">
+              <Grid
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 'bold' }}>
                   {this.props.mark === 'errOrder' ? 'Дата заказа' : 'Дата время ошибки'}
                 </Typography>
@@ -432,7 +444,14 @@ class StatErrCash_Modal extends React.Component {
                 </Typography>
               </Grid>
 
-              <Grid item xs={12} sm={12} display="flex" flexDirection="column" alignItems="center">
+              <Grid
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                   {this.props.mark === 'errOrder' ? 'Комментарий оператора' : 'Ошибка'}
                 </Typography>
@@ -442,7 +461,14 @@ class StatErrCash_Modal extends React.Component {
               </Grid>
 
               {this.props.mark !== 'errCam' ? null : (
-              <Grid item xs={12} sm={12} display="flex" flexDirection="column" alignItems="center">
+              <Grid
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Комментарий</Typography>
                 <Typography sx={{ fontWeight: 'normal', textAlign: 'center' }}>
                   {this.state.item ? this.state.item.comment ?? 'Не указан' : 'Не указан'}
@@ -451,7 +477,14 @@ class StatErrCash_Modal extends React.Component {
               )}
 
               {this.props.mark !== 'errOrder' ? null : (
-                <Grid item xs={12} sm={3} display="flex" flexDirection="column" alignItems="center">
+                <Grid
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 'bold' }}>Позиция</Typography>
                   <Typography sx={{ fontWeight: 'normal', textAlign: 'center' }}>
                     {this.state.item ? this.state.item.item_name : 'Не указана'}
@@ -460,7 +493,14 @@ class StatErrCash_Modal extends React.Component {
               )}
 
               {this.props.mark !== 'errOrder' ? null : (
-                <Grid item xs={12} sm={3} display="flex" flexDirection="column" alignItems="center">
+                <Grid
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Этап</Typography>
                   <Typography sx={{ fontWeight: 'normal', textAlign: 'center' }}>
                     {this.state.item ? this.state.item.stage_name : 'Не указан'}
@@ -469,7 +509,14 @@ class StatErrCash_Modal extends React.Component {
               )}
 
               {this.props.mark !== 'errOrder' ? null : (
-                <Grid item xs={12} sm={3} display="flex" flexDirection="column" alignItems="center">
+                <Grid
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Ошибка</Typography>
                   <Typography sx={{ fontWeight: 'normal', textAlign: 'center' }}>
                     {this.state.item ? this.state.item.pr_name : 'Не указана'}
@@ -478,7 +525,14 @@ class StatErrCash_Modal extends React.Component {
               )}
 
               {this.props.mark !== 'errOrder' ? null : (
-                <Grid item xs={12} sm={3} display="flex" flexDirection="column" alignItems="center">
+                <Grid
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Сумма</Typography>
                   <Typography sx={{ fontWeight: 'normal', textAlign: 'center' }}>
                     {this.state.item ? this.state.item.my_price : 'Не указана'}
@@ -486,7 +540,14 @@ class StatErrCash_Modal extends React.Component {
                 </Grid>
               )}
 
-              <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center">
+              <Grid
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Фото ошибки</Typography>
                 <Grid sx={{ fontWeight: 'normal', whiteSpace: 'nowrap' }}>
                   {this.props.mark === 'errOrder' ? this.state.item ? !this.state.item.imgs.length ? 'Фото отсутствует' : (
@@ -511,7 +572,15 @@ class StatErrCash_Modal extends React.Component {
                 </Grid>
               </Grid>
               {parseInt(acces?.close_err_access) ? (
-                <Grid item xs={12} sm={6} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+                <Grid
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  justifyContent="center"
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                 <Grid mb={5}>
                   <Button variant="contained" onClick={this.openConfirm.bind(this, '50')} style={{ minWidth: '130px' }}>Снять 50%</Button>
                 </Grid>
@@ -523,7 +592,10 @@ class StatErrCash_Modal extends React.Component {
                 </Grid>
               </Grid>
               ) : null}
-              <Grid item xs={12}>
+              <Grid
+                size={{
+                  xs: 12
+                }}>
                 {this.state.item?.history?.length ? (
                     <Accordion>
                       <AccordionSummary
@@ -755,7 +827,6 @@ class StatErrCash_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <StatErrCash_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false })}
@@ -767,13 +838,20 @@ class StatErrCash_ extends React.Component {
           fullScreen={this.state.fullScreen}
           acces={this.state.acces}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MySelect
               data={this.state.points}
               value={this.state.point}
@@ -782,7 +860,11 @@ class StatErrCash_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -790,7 +872,11 @@ class StatErrCash_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -798,17 +884,24 @@ class StatErrCash_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.getItems.bind(this)} variant="contained">
               Показать ошибки
             </Button>
           </Grid>
         </Grid>
-
         {/* клиенты */}
         {!this.state.stat_false && !this.state.stat_true ? null : (
-          <Grid container spacing={3} justifyContent="center" mt={3} mb={3}>
-            <Grid item xs={12} sm={4}>
+          <Grid container spacing={3} justifyContent="center" sx={{ p: 3, mt: 3 }}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <TableContainer>
                 <Typography sx={{ fontWeight: 'bold' }} align="center">Клиенты</Typography>
                 <Table>
@@ -830,12 +923,15 @@ class StatErrCash_ extends React.Component {
             </Grid>
           </Grid>
         )}
-
         {/* аккордионы */}
         {!this.state.svod.length && !this.state.svod_new.length ? null : (
-          <Grid container spacing={3} sx={{ marginBottom: 3 }}>
+          <Grid container spacing={3} sx={{ p: 3 }}>
             {!this.state.svod.length ? null : (
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Accordion>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content">
                     <Typography style={{ fontWeight: 'bold' }}>Общие данные (заказы)</Typography>
@@ -868,7 +964,11 @@ class StatErrCash_ extends React.Component {
             )}
 
             {!this.state.svod_new.length ? null : (
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Accordion>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content">
                     <Typography style={{ fontWeight: 'bold' }}>Общие данные (камеры)</Typography>
@@ -901,12 +1001,16 @@ class StatErrCash_ extends React.Component {
             )}
           </Grid>
         )}
-
         {/* таблицы */}
         {!this.state.all_data.length && !this.state.all_data_new.length ? null : (
-          <Grid container mt={3} spacing={3}>
+          <Grid container spacing={3} sx={{ p: 3 }}>
           {!this.state.all_data_new.length ? null : (
-          <Grid item xs={12} sm={12} sx={{ marginBottom: 5 }}>
+          <Grid
+            sx={{ marginBottom: 5 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer>
               <Table>
                 <TableHead>
@@ -948,7 +1052,12 @@ class StatErrCash_ extends React.Component {
           )}
 
             {!this.state.all_data.length ? null : (
-              <Grid item xs={12} sm={12} sx={{ marginBottom: 5 }}>
+              <Grid
+                sx={{ marginBottom: 5 }}
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TableContainer>
                   <Table>
                     <TableHead>

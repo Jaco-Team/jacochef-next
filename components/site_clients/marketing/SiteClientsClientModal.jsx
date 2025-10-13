@@ -141,10 +141,10 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
             mb={3}
           >
             <Grid
-              item
-              xs={12}
               mb={2}
-            >
+              size={{
+                xs: 12
+              }}>
               Информация о клиенте с номером телефона
               {!!clientLogin && `: ${clientLogin}`}
               <IconButton
@@ -163,28 +163,28 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
             {!!client && (
               <>
                 <Grid
-                  item
-                  xs={12}
-                  sm={3}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <Typography variant="body2">Имя:</Typography>
                   <Typography variant="h5">{clientInfo?.name ?? "Не указано"}</Typography>
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={3}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <Typography variant="body2">Зарегистрировался:</Typography>
                   <Typography variant="body1">
                     {dayjs(clientInfo?.date_reg)?.format("DD MMMM YYYY в HH:mm") ?? "Неизвестно"}
                   </Typography>
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={3}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <Typography variant="body2">Источник (первого заказа):</Typography>
                   <Typography variant="body1">
                     {clientInfo?.source || clientInfo?.medium
@@ -195,10 +195,10 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                   </Typography>
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={3}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <Typography variant="body2">Сумма заказов:</Typography>
                   <Typography variant="h5">
                     {formatPrice(clientInfo?.summ) ?? 0} {"\u20bd"}
@@ -214,10 +214,10 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
         ) : (
           <DialogContent style={{ paddingBottom: 10 }}>
             <Grid
-              item
-              xs={12}
-              sm={12}
-            >
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Paper>
                 <Tabs
                   value={activeTab}
@@ -247,10 +247,10 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
 
             {/* О клиенте */}
             <Grid
-              item
-              xs={12}
-              sm={12}
-            >
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TabPanel
                 value={activeTab}
                 index={0}
@@ -258,21 +258,21 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
               >
                 <Paper style={{ padding: 24 }}>
                   <Grid
-                    item
-                    xs={12}
                     style={{ display: "flex" }}
                     mb={3}
-                  >
+                    size={{
+                      xs: 12
+                    }}>
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>Имя:</Typography>
                     <Typography>{clientInfo?.name || "Не указано"}</Typography>
                   </Grid>
 
                   <Grid
-                    item
-                    xs={12}
                     style={{ display: "flex" }}
                     mb={3}
-                  >
+                    size={{
+                      xs: 12
+                    }}>
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
                       Телефон:
                     </Typography>
@@ -282,11 +282,11 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                   </Grid>
 
                   <Grid
-                    item
-                    xs={12}
                     mb={3}
                     className="mail_box"
-                  >
+                    size={{
+                      xs: 12
+                    }}>
                     <Typography
                       style={{ fontWeight: "bold", paddingRight: 10, whiteSpace: "nowrap" }}
                     >
@@ -296,11 +296,11 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                   </Grid>
 
                   <Grid
-                    item
-                    xs={12}
                     style={{ display: "flex" }}
                     mb={3}
-                  >
+                    size={{
+                      xs: 12
+                    }}>
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
                       Зарегистрирован:
                     </Typography>
@@ -312,11 +312,11 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                   </Grid>
 
                   <Grid
-                    item
-                    xs={12}
                     mb={3}
                     className="select_box"
-                  >
+                    size={{
+                      xs: 12
+                    }}>
                     <Typography
                       style={{ fontWeight: "bold", paddingRight: 10, whiteSpace: "nowrap" }}
                     >
@@ -329,11 +329,11 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                   </Grid>
 
                   <Grid
-                    item
-                    xs={12}
                     style={{ display: "flex" }}
                     mb={3}
-                  >
+                    size={{
+                      xs: 12
+                    }}>
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
                       Заказов:
                     </Typography>
@@ -343,11 +343,11 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                   </Grid>
 
                   <Grid
-                    item
-                    xs={12}
                     style={{ display: "flex" }}
                     mb={3}
-                  >
+                    size={{
+                      xs: 12
+                    }}>
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
                       Доставок:
                     </Typography>
@@ -358,11 +358,11 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                   </Grid>
 
                   <Grid
-                    item
-                    xs={12}
                     style={{ display: "flex" }}
                     mb={3}
-                  >
+                    size={{
+                      xs: 12
+                    }}>
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
                       Самовывозов:
                     </Typography>
@@ -378,10 +378,10 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
 
             {/* История */}
             <Grid
-              item
-              xs={12}
-              sm={12}
-            >
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TabPanel
                 value={activeTab}
                 index={1}
@@ -481,10 +481,10 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
             {/* Заказы */}
             {canAccess("view_orders") && (
               <Grid
-                item
-                xs={12}
-                sm={12}
-              >
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TabPanel
                   value={activeTab}
                   index={2}
@@ -539,10 +539,10 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
             {/* Оформленные ошибки */}
             {canAccess("view_err") && (
               <Grid
-                item
-                xs={12}
-                sm={12}
-              >
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TabPanel
                   value={activeTab}
                   index={3}

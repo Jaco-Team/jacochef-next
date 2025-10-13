@@ -1,7 +1,7 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
 // import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
-import { MyTextInput } from "@/ui/elements";
+import { MyTextInput } from "@/components/shared/Forms";
 import { useEffect, useState } from "react";
 
 export default function AllergensModal(props) {
@@ -44,24 +44,22 @@ export default function AllergensModal(props) {
         {props.method}
         {props.itemName ? `: ${props.itemName}` : null}
       </DialogTitle>
-
       <IconButton
         onClick={onClose}
         style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
       >
         <CloseIcon />
       </IconButton>
-
       <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
         <Grid
           container
           spacing={3}
         >
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <MyTextInput
               label="Название"
               value={item?.name || ""}
@@ -70,10 +68,10 @@ export default function AllergensModal(props) {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <MyTextInput
               label="Доп. название"
               value={item?.dop_name || ""}

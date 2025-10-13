@@ -32,7 +32,7 @@ const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
-import {MySelect, MyAutocomplite2, MyAutocomplite } from '@/ui/elements';
+import {MySelect, MyAutocomplite2, MyAutocomplite } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
@@ -95,9 +95,12 @@ class OrderPostRec_Modal extends React.Component {
         maxWidth={'xs'}
       >
         <DialogTitle>Где применить</DialogTitle>
-
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyAutocomplite
               label="Точки"
               multiple={true}
@@ -107,7 +110,6 @@ class OrderPostRec_Modal extends React.Component {
             />
           </Grid>
         </DialogContent>
-
         <DialogActions>
           <Button onClick={this.save.bind(this)}>
             Сохранить
@@ -326,7 +328,11 @@ class OrderPostRec_Table extends React.Component {
 
     return (
       <>
-        <Grid item xs={12} sm={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 4
+          }}>
           <MyAutocomplite2
             label="Поиск"
             freeSolo={true}
@@ -337,14 +343,21 @@ class OrderPostRec_Table extends React.Component {
             onBlur={this.search.bind(this)}
           />
         </Grid>
-
-        <Grid item xs={12} sm={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 4
+          }}>
           <Button variant="contained" onClick={this.props.openModal.bind(this)}>
             Сохранить изменения
           </Button>
         </Grid>
-
-        <Grid item xs={12} sm={12} mb={6}>
+        <Grid
+          mb={6}
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           {this.state.cats
             .filter((it) => it.all !== 0)
             .map((item, key) => (
@@ -646,7 +659,6 @@ class OrderPostRec_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Snackbar
           open={this.state.snackbar}
           autoHideDuration={30000}
@@ -666,7 +678,6 @@ class OrderPostRec_ extends React.Component {
              { this.state.st ? 'Данные успешно сохранены!' : `${this.state.error}` }
           </Alert>
         </Snackbar>
-
         <OrderPostRec_Modal
           open={this.state.modalDialog}
           onClose={() => {
@@ -675,13 +686,20 @@ class OrderPostRec_ extends React.Component {
           points={this.state.points}
           save={this.save.bind(this)}
         />
-
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect
               data={this.state.points}
               value={this.state.point}
@@ -700,7 +718,11 @@ class OrderPostRec_ extends React.Component {
 
           {!this.state.hist.length ? null : (
             <Grid pb={1} container justifyContent="center">
-              <Grid item xs={10} sm={6}>
+              <Grid
+                size={{
+                  xs: 10,
+                  sm: 6
+                }}>
                 <Accordion>
                   <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
@@ -838,7 +860,7 @@ class OrderPostRec_TableItemNew extends React.Component {
       }
     }
 
-    console.log( 'render_item' )
+    // console.log( 'render_item' )
 
     return(
       <TableRow
@@ -948,7 +970,7 @@ class OrderPostRecNew_ extends React.Component {
 
     let res = await this.getData('get_data', data);
 
-    console.log( res );
+    // console.log( res );
 
     this.setState({
       point: value,
@@ -1131,7 +1153,6 @@ class OrderPostRecNew_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Snackbar
           open={this.state.snackbar}
           autoHideDuration={30000}
@@ -1149,7 +1170,6 @@ class OrderPostRecNew_ extends React.Component {
             { this.state.st ? 'Данные успешно сохранены!' : `${this.state.error}` }
           </Alert>
         </Snackbar>
-
         <Dialog
           open={this.state.modalDialog}
           onClose={() => { this.setState({ modalDialog: false }); }}
@@ -1159,7 +1179,11 @@ class OrderPostRecNew_ extends React.Component {
           <DialogTitle>Где применить</DialogTitle>
 
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyAutocomplite
                 label="Точки"
                 multiple={true}
@@ -1176,14 +1200,20 @@ class OrderPostRecNew_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
-
         <Grid container spacing={3} style={{ paddingBottom: 50 }} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyAutocomplite
               label="Точка"
               data={this.state.points}
@@ -1192,13 +1222,20 @@ class OrderPostRecNew_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <Button variant="contained" onClick={this.openModal.bind(this)}>
               Сохранить изменения
             </Button>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             {this.state.mainCats.length ? this.state.mainCats.map((mainCat, key) => (
               <Accordion key={key}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -1296,7 +1333,10 @@ class OrderPostRecNew_ extends React.Component {
 
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <OrderPostRec_TableHist hist={this.state.hist} />
           </Grid>
 

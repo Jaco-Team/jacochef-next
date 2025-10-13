@@ -30,7 +30,7 @@ import ListItemText from '@mui/material/ListItemText';
 
 import CloseIcon from '@mui/icons-material/Close';
 
-import { MyTextInput, MyTimePicker, MySelect, MyAutocomplite2, MyCheckBox } from '@/ui/elements';
+import { MyTextInput, MyTimePicker, MySelect, MyAutocomplite2, MyCheckBox } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
@@ -543,7 +543,6 @@ class СafeUprEdit_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-    
         <Dialog
           open={this.state.modalStopReason }
                 onClose={this.closeModalCafe.bind(this)  }
@@ -551,15 +550,27 @@ class СafeUprEdit_ extends React.Component {
           <DialogTitle>Причина закрытия кафе</DialogTitle>
           <DialogContent style={{ paddingTop: 10 }}>
             <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                      <MyCheckBox label='Закрыто из-за большого количества заказов' value={this.state.is_сlosed_overload == 1 ? true : false} func={this.changeChekBox.bind(this, 'is_сlosed_overload')} />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                      <MyCheckBox label='Закрыто по техническим причинам'          value={this.state.is_сlosed_technic == 1 ? true : false}  func={this.changeChekBox.bind(this, 'is_сlosed_technic')} />
                 </Grid>
                {this.state.showComment ? 
-                  <Grid item xs={12} sm={12} >
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                       <MyAutocomplite2 id="cafe_upr_edit" data={this.state.reason_list} value={this.state.chooseReason} func={(event, data) => { this.setState({ chooseReason: data }) }} multiple={false} label='Причина'  freeSolo={true} />
                   </Grid>
                 : null} 
@@ -570,7 +581,6 @@ class СafeUprEdit_ extends React.Component {
             <Button color="primary" onClick={this.stopCafe.bind(this)}  >Сохранить</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.state.modalStopZone}
                onClose={() => { this.setState({ modalStopZone: false }) } }
@@ -595,8 +605,6 @@ class СafeUprEdit_ extends React.Component {
             <Button color="primary" onClick={this.saveZone.bind(this)} >Сохранить</Button>
           </DialogActions>
         </Dialog>
-
-
         <Dialog
           open={this.state.modalAddTime}
           onClose={this.closeAddTime.bind(this)  }   
@@ -604,17 +612,33 @@ class СafeUprEdit_ extends React.Component {
           <DialogTitle>Доп время для курьера</DialogTitle>
           <DialogContent style={{ paddingTop: 10 }}>
             <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MySelect is_none={false} data={this.state.zone_list} value={this.state.nal_zone_id} func={(event) => { this.setState({ nal_zone_id: event.target.value }) }} label='Зона' />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MySelect is_none={false} data={this.state.add_time_list} value={this.state.add_time_id} func={(event) => { this.setState({ add_time_id: event.target.value }) }} label='Доп время, мин' />
                 </Grid>
-                <Grid item xs={6} sm={6}>
+                <Grid
+                  size={{
+                    xs: 6,
+                    sm: 6
+                  }}>
                     <MyTimePicker label="Время начала" value={this.state.time_start}   func={this.changeTime.bind(this, 'time_start')}   />
                 </Grid>
-                  <Grid item xs={6} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 6,
+                      sm: 6
+                    }}>
                     <MyTimePicker label="Время окончания" value={this.state.time_end}  func={this.changeTime.bind(this, 'time_end')}    />
                 </Grid>
             </Grid>
@@ -624,29 +648,44 @@ class СafeUprEdit_ extends React.Component {
             <Button color="primary" onClick={this.saveAddTime.bind(this)}  >Поставить</Button>
           </DialogActions>
         </Dialog>
- 
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item>
+          <Grid>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                   <h1>{this.state.module_name}</h1>
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MySelect is_none={false} data={this.state.points_list} value={this.state.point_id} func={this.changePoint.bind(this)} label='Точка' />
               </Grid>
             </Grid>
           </Grid> 
 
-          <Grid item>
+          <Grid>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={4} style={{ display:  'none'  }}>
+              <Grid
+                style={{ display:  'none'  }}
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MySelect is_none={false}  data={this.state.tables} value={this.state.count_tables} func={(event) => { this.setState({ count_tables: event.target.value }) } }  label='Количество столов сборки' />
               </Grid> 
 
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyCheckBox 
                   label='Если в заказе только пицца, она выйдет на сборку после начала ее приготовления (напитки, допы и закуски не учитываются)' 
                   value={this.state.priority_pizza} 
@@ -654,53 +693,102 @@ class СafeUprEdit_ extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyCheckBox label='Если заказ приготовить зарнее - он выйдет в приоритете на сборку, кроме предов (напитки, допы и закуски не учитываются)' value={this.state.priority_order}  func={this.changeChekBoxSimple.bind(this, 'priority_order')} />
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyCheckBox label='Пицца у повара будет отображаться, если более 50% роллов в заказе начнут готовить' value={this.state.rolls_pizza_dif}  func={this.changeChekBoxSimple.bind(this, 'rolls_pizza_dif')} />
               </Grid>
 
 
-              <Grid item xs={12} sm={8}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 8
+                }}>
                 <MyCheckBox label='Общий стол' value={this.state.cook_common_stol == 1 ? true : false} func={this.changeChekBox.bind(this, 'cook_common_stol')} />
               </Grid>
 
-              <Grid item xs={12} sm={4}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyCheckBox  label='Кафе работает' value={this.state.is_active == 1 ? true : false}  func={this.changeChekBox.bind(this, 'is_active')} />
               </Grid>
 
-              <Grid item xs={12} sm={8}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 8
+                }}>
                 <Button color="primary" onClick={this.stopZone.bind(this)}>Зоны доставки</Button>
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput value={this.state.phone_upr} func={(event) => { this.setState({ phone_upr: event.target.value }) } } label='Телефон управляющего' />
               </Grid>   
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput value={this.state.phone_man} func={(event) => { this.setState({ phone_man: event.target.value }) } } label='Телефон менеджера' />
               </Grid> 
 
-              <Grid item xs={12} sm={4}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyTextInput value={this.state.summ_driver} func={(event) => { this.setState({ summ_driver: event.target.value }) } } label='Максимальная сумма нала для курьера' />
               </Grid> 
 
-              <Grid item xs={12} sm={4}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyTextInput value={this.state.summ_driver_min} func={(event) => { this.setState({ summ_driver_min: event.target.value }) } } label='Максимальная сумма нала для курьера стажера' />
               </Grid> 
               
-              <Grid item xs={12} sm={4} style={{ display: 'none' }}>
+              <Grid
+                style={{ display: 'none' }}
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <Button color="primary" onClick={this.addTimeDelivery.bind(this)}>Добавить время на доставку</Button>
               </Grid> 
               
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Button color="primary" variant="contained" onClick={this.save.bind(this)}>Сохранить</Button>
               </Grid> 
 
-              <Grid item xs={12} style={{marginBottom:'50px' }} >
+              <Grid
+                style={{marginBottom:'50px' }}
+                size={{
+                  xs: 12
+                }}>
 
                 <Accordion>
                   <AccordionSummary
@@ -773,7 +861,7 @@ class СafeUprEdit_ extends React.Component {
           </Grid>
         </Grid>
       </>
-    )
+    );
   }
 }
 

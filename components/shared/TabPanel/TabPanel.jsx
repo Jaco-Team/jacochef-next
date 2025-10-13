@@ -1,20 +1,16 @@
-import { Box } from '@mui/material';
-import PropTypes from 'prop-types';
+import { Box } from "@mui/material";
+import PropTypes from "prop-types";
 
-export default function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-
+export default function TabPanel({ children, value, index, ...restProps }) {
   return (
     <div
       role="tabpanel"
       hidden={value !== index}
       id={`simple-tabpanel-${index}`}
       aria-labelledby={`simple-tab-${index}`}
-      {...other}
+      {...restProps}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>{children}</Box>
-      )}
+      {value === index && <Box sx={{ width: "100%" }}>{children}</Box>}
     </div>
   );
 }

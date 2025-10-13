@@ -29,7 +29,6 @@ const InnerTabStats = ({ getData, showAlert }) => {
 
   const getStats = async () => {
     if (!points.length || !dateStart || !dateEnd) {
-      // showAlert("Пожалуйста, выберите кафе и даты", false);
       return;
     }
     const resData = await getData("get_marketing_stats", {
@@ -59,10 +58,10 @@ const InnerTabStats = ({ getData, showAlert }) => {
           sx={{ justifyContent: "center" }}
         >
           <Grid
-            item
-            xs={12}
-            sm={4}
-          >
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <SiteClientsMarketingStatCard
               title="Всего заказов"
               value={stats?.total_orders}
@@ -76,10 +75,10 @@ const InnerTabStats = ({ getData, showAlert }) => {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={4}
-          >
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <SiteClientsMarketingStatCard
               title="Онлайн"
               value={stats?.online_orders}
@@ -93,10 +92,10 @@ const InnerTabStats = ({ getData, showAlert }) => {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={4}
-          >
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <SiteClientsMarketingStatCard
               title="Офлайн"
               value={stats?.offline_orders}
@@ -110,10 +109,10 @@ const InnerTabStats = ({ getData, showAlert }) => {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={4}
-          >
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <SiteClientsMarketingStatCard
               title="Активаций промокодов"
               value={stats?.promo_orders}
@@ -127,10 +126,10 @@ const InnerTabStats = ({ getData, showAlert }) => {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={4}
-          >
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <SiteClientsMarketingStatCard
               title="Заказали новые клиенты"
               value={stats?.new_clients}
@@ -144,10 +143,10 @@ const InnerTabStats = ({ getData, showAlert }) => {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={4}
-          >
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <SiteClientsMarketingStatCard
               title="Заказали постоянные клиенты"
               value={stats?.old_clients}
@@ -161,10 +160,10 @@ const InnerTabStats = ({ getData, showAlert }) => {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={4}
-          >
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <SiteClientsMarketingStatCard
               title="Средний чек"
               value={`${Number(stats?.avg_order_value || 0).toFixed(2)} ₽`}

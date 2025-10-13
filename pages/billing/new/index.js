@@ -34,7 +34,7 @@ import IconButton from '@mui/material/IconButton';
 
 import Dropzone from 'dropzone';
 
-import { MySelect, MyAutocomplite, MyAutocomplite2, MyDatePickerNew, MyTextInput, MyCheckBox, MyAlert} from '@/ui/elements';
+import { MySelect, MyAutocomplite, MyAutocomplite2, MyDatePickerNew, MyTextInput, MyCheckBox } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import dayjs from 'dayjs';
@@ -53,6 +53,7 @@ import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import Draggable from 'react-draggable';
 
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import MyAlert from '@/components/shared/MyAlert';
 
 const types = [
   {
@@ -1286,12 +1287,19 @@ function FormVendorItems(){
 
   return (
     <>
-      <Grid item xs={12} sm={12}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <h2>Товары поставщика</h2>
         <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
       </Grid>
-
-      <Grid item xs={12} sm={4}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 4
+        }}>
         <MyAutocomplite2
           label="Товар поставщика"
           freeSolo={true}
@@ -1302,8 +1310,11 @@ function FormVendorItems(){
           onBlur={ (event, name) => search_vendor_items(event, name) }
         />
       </Grid>
-
-      <Grid item xs={12} sm={3}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 3
+        }}>
         <MyAutocomplite
           label="Объем упаковки"
           freeSolo={false}
@@ -1322,8 +1333,11 @@ function FormVendorItems(){
         />
 
       </Grid>
-
-      <Grid item xs={12} sm={3}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 3
+        }}>
         <MyTextInput
           type="number"
           label="Кол-во упаковок"
@@ -1331,12 +1345,18 @@ function FormVendorItems(){
           func={changeCount}
         />
       </Grid>
-        
-      <Grid item xs={12} sm={2}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 2
+        }}>
         <MyTextInput label="Кол-вo" disabled={true} value={fact_unit} className='disabled_input' />
       </Grid>
-
-      <Grid item xs={12} sm={4}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 4
+        }}>
         <MyTextInput
           type="number"
           label="Сумма без НДС"
@@ -1344,7 +1364,11 @@ function FormVendorItems(){
           func={ event => changeData('summ', event) }
         />
       </Grid>
-      <Grid item xs={12} sm={4}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 4
+        }}>
         <MyTextInput
           type="number"
           label="Сумма c НДС"
@@ -1352,14 +1376,17 @@ function FormVendorItems(){
           func={ event => changeData('sum_w_nds', event) }
         />
       </Grid>
-
-      <Grid item xs={12} sm={4}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 4
+        }}>
         <Button variant="contained" fullWidth  onClick={addItem}>
           <AddIcon />
         </Button>
       </Grid>
     </>
-  )
+  );
 }
 
 function VendorItemsTableEdit(){
@@ -1375,12 +1402,20 @@ function VendorItemsTableEdit(){
 
   return (
     <>
-      <Grid item xs={12} sm={12}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <h2>Товары в документе</h2>
         <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
       </Grid>
-
-      <Grid item xs={12} style={{ marginBottom: 20 }} sm={12}>
+      <Grid
+        style={{ marginBottom: 20 }}
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <TableContainer component={Paper}>
           <Table aria-label="a dense table">
             <TableHead>
@@ -1527,7 +1562,7 @@ function VendorItemsTableEdit(){
         </TableContainer>
       </Grid>
     </>
-  )
+  );
 }
 
 function VendorItemsTableView(){
@@ -1543,12 +1578,20 @@ function VendorItemsTableView(){
 
   return (
     <>
-      <Grid item xs={12} sm={12}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <h2>Товары в документе</h2>
         <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
       </Grid>
-
-      <Grid item xs={12} style={{ marginBottom: 20 }} sm={12}>
+      <Grid
+        style={{ marginBottom: 20 }}
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <TableContainer component={Paper}>
           <Table aria-label="a dense table">
             <TableHead>
@@ -1630,7 +1673,7 @@ function VendorItemsTableView(){
         </TableContainer>
       </Grid>
     </>
-  )
+  );
 }
 
 function VendorItemsTableView_min(){
@@ -1722,7 +1765,11 @@ function FormHeader_new({ page, type_edit }){
   return (
     <>
       {page === 'new' ? 
-        <Grid item xs={12} sm={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 4
+          }}>
           <MyAutocomplite2
             data={points}
             value={point_name}
@@ -1734,12 +1781,19 @@ function FormHeader_new({ page, type_edit }){
           />
         </Grid>
         :
-        <Grid item xs={12} sm={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 4
+          }}>
           <MyTextInput label="Точка" disabled={ type_edit === 'edit' ? false : true } value={point_name} className='disabled_input'/>
         </Grid>
       }
-
-      <Grid item xs={12} sm={4}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 4
+        }}>
         <MySelect
           data={types}
           value={type}
@@ -1750,9 +1804,12 @@ function FormHeader_new({ page, type_edit }){
           label="Тип"
         />
       </Grid>
-
       {page === 'new' ? 
-        <Grid item xs={12} sm={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 4
+          }}>
           <MyAutocomplite2
             label="Поставщик"
             freeSolo={true}
@@ -1765,14 +1822,21 @@ function FormHeader_new({ page, type_edit }){
           />
         </Grid>
         :
-        <Grid item xs={12} sm={4}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 4
+          }}>
           <MyTextInput label="Поставщик" disabled={ type_edit === 'edit' ? false : true } value={vendor_name} className='disabled_input'/>
         </Grid>
       }
-
       {parseInt(type) === 2 || parseInt(type) === 3 ? (
         <>
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect
               data={kinds}
               value={doc_base_id}
@@ -1783,13 +1847,20 @@ function FormHeader_new({ page, type_edit }){
               label="Документ"
             />
           </Grid>
-          {parseInt(type) === 2 ?  <Grid item xs={12} sm={4}></Grid> : null}
+          {parseInt(type) === 2 ?  <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}></Grid> : null}
         </>
       ) : null}
-
       {parseInt(type) === 3 || parseInt(type) === 4 ? (
         <>
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyAutocomplite2
               data={docs}
               multiple={false}
@@ -1800,11 +1871,18 @@ function FormHeader_new({ page, type_edit }){
               label="Документ основание"
             />
           </Grid>
-          {parseInt(type) === 4 ?  <Grid item xs={12} sm={4}></Grid> : null}
+          {parseInt(type) === 4 ?  <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}></Grid> : null}
         </>
       ) : null}
-
-      <Grid item xs={12} sm={6}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 6
+        }}>
         <MyTextInput
           label="Номер документа"
           disabled={ type_edit === 'edit' ? false : true }
@@ -1812,9 +1890,12 @@ function FormHeader_new({ page, type_edit }){
           func={ (event) => changeInput(event, 'number') }
         />
       </Grid>
-
       {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? 
-        <Grid item xs={12} sm={6}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <MyTextInput
             label="Номер счет-фактуры"
             disabled={ type_edit === 'edit' ? false : true }
@@ -1824,8 +1905,11 @@ function FormHeader_new({ page, type_edit }){
         </Grid>
         : null
       }
-
-      <Grid item xs={12} sm={6}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 6
+        }}>
         <MyDatePickerNew
           label="Дата документа"
           format="DD-MM-YYYY"
@@ -1834,9 +1918,12 @@ function FormHeader_new({ page, type_edit }){
           func={ (event) => changeDateRange(event, 'date') }
         />
       </Grid>
-
       {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? 
-        <Grid item xs={12} sm={6}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           <MyDatePickerNew
             label="Дата счет-фактуры"
             format="DD-MM-YYYY"
@@ -1848,7 +1935,7 @@ function FormHeader_new({ page, type_edit }){
         : null
       }
     </>
-  )
+  );
 }
 
 function FormImage_new({ type_edit }){
@@ -1859,7 +1946,11 @@ function FormImage_new({ type_edit }){
   
   return (
     <>
-      <Grid item xs={12} sm={parseInt(type) === 2 && parseInt(doc_base_id) == 5 ? 6 : 12}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: parseInt(type) === 2 && parseInt(doc_base_id) == 5 ? 6 : 12
+        }}>
         <TableContainer>
           <Grid 
             display="flex" 
@@ -1883,17 +1974,16 @@ function FormImage_new({ type_edit }){
           </Grid>
         </TableContainer>
       </Grid>
-
       {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
-        <Grid 
-          item 
-          xs={12} 
-          sm={6} 
-          display="flex" 
-          flexDirection="row" 
+        <Grid
+          display="flex"
+          flexDirection="row"
           flexWrap="wrap"
           style={{ fontWeight: 'bold', gap: '10px' }}
-        >
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           {!imgs_factur.length ? '' :
             <>
               {imgs_factur.map((img, key) => (
@@ -1909,9 +1999,12 @@ function FormImage_new({ type_edit }){
           }
         </Grid>
       ) : null}
-
       { type_edit === 'edit' ?
-        <Grid item xs={12} sm={parseInt(type) === 2 ? 6 : 12}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: parseInt(type) === 2 ? 6 : 12
+          }}>
           <div
             className="dropzone"
             id="img_bill"
@@ -1921,10 +2014,12 @@ function FormImage_new({ type_edit }){
           :
         null
       }
-
-
       {type_edit === 'edit' && parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
-        <Grid item xs={12} sm={6}>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6
+          }}>
           
           <div
             className="dropzone"
@@ -1933,10 +2028,12 @@ function FormImage_new({ type_edit }){
           />
         </Grid>
       ) : null}
-
       {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && fullScreen ? 
         <>
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <MyTextInput
               label="Номер счет-фактуры"
               disabled={ type_edit === 'edit' ? false : true }
@@ -1945,7 +2042,10 @@ function FormImage_new({ type_edit }){
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <MyDatePickerNew
               label="Дата счет-фактуры"
               format="DD-MM-YYYY"
@@ -1955,7 +2055,10 @@ function FormImage_new({ type_edit }){
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <TableContainer>
               <Grid 
                 display="flex" 
@@ -1981,7 +2084,10 @@ function FormImage_new({ type_edit }){
           </Grid>
 
           { type_edit === 'edit' ?
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <div
                 className="dropzone"
                 id="img_bill_type"
@@ -1995,7 +2101,7 @@ function FormImage_new({ type_edit }){
         : null
       }
     </>
-  )
+  );
 }
 
 function FormOther_new({ page, type_edit }){
@@ -2006,7 +2112,11 @@ function FormOther_new({ page, type_edit }){
     <>
       {parseInt(type) === 1 ? null :
         <>
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNew
               label="Дата разгрузки"
               format="DD-MM-YYYY"
@@ -2016,7 +2126,11 @@ function FormOther_new({ page, type_edit }){
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite
               data={users}
               multiple={true}
@@ -2028,8 +2142,11 @@ function FormOther_new({ page, type_edit }){
           </Grid>
         </>
       }
-
-      <Grid item xs={12} sm={12}>
+      <Grid
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <MyTextInput
           label="Комментарии"
           multiline={true}
@@ -2039,25 +2156,38 @@ function FormOther_new({ page, type_edit }){
           func={ (event) => changeInput(event, 'comment') }
         />
       </Grid>
-
       {page === 'new' ? null :
         <>
-          <Grid item xs={12} sm={6} style={{ display: 'flex', marginBottom: 20 }}>
+          <Grid
+            style={{ display: 'flex', marginBottom: 20 }}
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Typography style={{ fontWeight: 'bold', color: '#9e9e9e' }}>
               Причина удаления:&nbsp;
             </Typography>
             <Typography></Typography>
           </Grid>
 
-          <Grid item xs={12} sm={6} style={{ display: 'flex', marginBottom: 20 }}>
+          <Grid
+            style={{ display: 'flex', marginBottom: 20 }}
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Typography style={{ fontWeight: 'bold', color: '#9e9e9e' }}>Комментарий бухгалтера:&nbsp;</Typography>
             <Typography>Переделать фото</Typography>
           </Grid>
         </>
       }
-
-
-      <Grid item xs={12} sm={12} display="flex" alignItems="center">
+      <Grid
+        display="flex"
+        alignItems="center"
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <MyCheckBox
           disabled={ type_edit === 'edit' ? false : true }
           value={parseInt(is_new_doc) === 1 ? true : false}
@@ -2066,9 +2196,8 @@ function FormOther_new({ page, type_edit }){
         />
         
       </Grid>
-
     </>
-  )
+  );
 }
 
 function MyTooltip(props) {
@@ -2110,11 +2239,15 @@ class Billing_Accordion extends React.Component {
     const { bill_list, bill_items, type } = this.props;
 
     return (
-      <Grid item xs={12} sm={12} mb={5}>
-        
+      <Grid
+        mb={5}
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <AccordionDetails>
           <AccordionSummary style={{ cursor: 'default' }} expandIcon={<ExpandMoreIcon sx={{ opacity: 0 }} />} aria-controls="panel1a-content">
-            <Grid item xs display="flex" flexDirection="row">
+            <Grid display="flex" flexDirection="row">
               <Typography style={{ width: '1%' }}></Typography>
               <Typography style={{ width: '4%', minWidth: '210px' }}>Тип {type === 'edit' ? ' документа' : ' накладной'}</Typography>
               <Typography style={{ width: '12%' }}>Бумажный носитель</Typography>
@@ -2137,7 +2270,7 @@ class Billing_Accordion extends React.Component {
             <Accordion key={i}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" className="accordion_summary" style={{ paddingRight: '1%' }}>
 
-                <Grid item xs display="flex" flexDirection='row'>
+                <Grid display="flex" flexDirection='row'>
 
                   <Typography component="div" style={{ width: '1%', backgroundColor: item.color, marginRight: '1%' }}></Typography>
                   
@@ -2213,7 +2346,6 @@ class Billing_Accordion extends React.Component {
             </Accordion>
           ))}
         </AccordionDetails>
-        
       </Grid>
     );
   }
@@ -2756,7 +2888,6 @@ class Billing_Edit_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load || is_load_store}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         {!modalDialog ? null :
           <Billing_Modal
             onClose={closeDialog}
@@ -2765,14 +2896,12 @@ class Billing_Edit_ extends React.Component {
             store={this.props.store}
           />
         }
-
         <MyAlert
           isOpen={openAlert}
           onClose={closeAlert}
           status={err_status}
           text={err_text}
         />
-
         <Dialog
           open={this.state.modelCheckErrItems}
           onClose={ () => { this.setState({ modelCheckErrItems: false }) } }
@@ -2793,10 +2922,14 @@ class Billing_Edit_ extends React.Component {
             <Button variant="contained" onClick={ this.saveNewBill.bind(this, 'type', false) } color="success">Сохранить</Button>
           </DialogActions>
         </Dialog>
-
         <Grid container spacing={3} mb={10} style={{ marginTop: '64px', maxWidth: is_vertical ? '50%' : '100%', marginBottom: is_horizontal ? 700 : 30 }}>
 
-          <Grid item xs={12} sm={12} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+          <Grid
+            style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             
             <ArrowBackIosNewIcon style={{ width: 50, height: 30, cursor: 'pointer' }} onClick={this.returnFN.bind(this)} />
             
@@ -2804,7 +2937,11 @@ class Billing_Edit_ extends React.Component {
             
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
           </Grid>
 
@@ -2832,7 +2969,11 @@ class Billing_Edit_ extends React.Component {
           }
 
           { parseInt(this.state.acces?.only_save) === 0 ? false :
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <Button variant="contained" fullWidth color="success"  onClick={this.saveNewBill.bind(this, 'current', true)}>
                 Сохранить
               </Button>
@@ -2840,7 +2981,11 @@ class Billing_Edit_ extends React.Component {
           }
          
           { parseInt(this.state.acces?.save_send) === 0 ? false :
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <Button variant="contained" fullWidth color="info" 
                 onClick={this.saveNewBill.bind(this, 'next', true)}
               >

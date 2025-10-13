@@ -15,7 +15,7 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Paper from '@mui/material/Paper';
 
-import {MySelect, MyAutocomplite2} from '@/ui/elements';
+import {MySelect, MyAutocomplite2} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
@@ -224,13 +224,20 @@ class Revizion_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <Button variant="contained" style={{ whiteSpace: 'nowrap' }}>
               <Link style={{ color: '#fff', textDecoration: 'none' }} href="/revizion/new">
                 Новая ревизия
@@ -238,7 +245,11 @@ class Revizion_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={8}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 8
+            }}>
             <MyAutocomplite2
               label="Поиск"
               freeSolo={true}
@@ -250,7 +261,11 @@ class Revizion_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect
               is_none={false}
               data={this.state.points}
@@ -259,7 +274,11 @@ class Revizion_ extends React.Component {
               label="Точка"
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MySelect
               is_none={false}
               data={this.state.revList}
@@ -268,7 +287,11 @@ class Revizion_ extends React.Component {
               label="Ревизия"
             />
           </Grid>
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <Button
               variant="contained"
               onClick={this.getDataRev.bind(this)}
@@ -277,7 +300,11 @@ class Revizion_ extends React.Component {
               Обновить данные
             </Button>
           </Grid>
-          <Grid item xs={12} sm={2}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <Button
               variant="contained"
               style={{ whiteSpace: 'nowrap' }}
@@ -288,7 +315,11 @@ class Revizion_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer component={Paper}>
               <Table>
                 {!this.state.items.length ? null : (

@@ -1,7 +1,9 @@
 "use server";
 
-import Stat_buy_ from "@/components/stat_buy/StatBuy_";
+import dynamic from 'next/dynamic'
 import { getDataSSR } from "@/backend/api";
+
+const Stat_buy_ = dynamic(() => import("@/components/stat_buy/StatBuy_"), { ssr: false });
 
 export default function StatBuy({ initialData }) {
   return <Stat_buy_ initialData={initialData} />;

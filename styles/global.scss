@@ -22,43 +22,32 @@ header > div {
 }
 
 .container_first_child {
-  margin-top: 64px !important;
+  margin-top: 88px !important;
   margin-bottom: 0 !important;
+  padding-inline: 24px;
 }
 
-div#__next > div > div.MuiGrid-root.MuiGrid-container {
-  padding-right: 24px;
-  margin-left: 0px;
-  width: 100%;
-}
+// .LeftMenu > .MuiDrawer-paper.MuiDrawer-paperAnchorLeft {
+//   width: 350px;
+// }
 
-div#__next > div.MuiGrid-root.MuiGrid-container {
-  padding-right: 24px;
-  margin-left: 0px;
-  width: 100%;
-}
+// .MuiAccordion-root.Mui-expanded {
+//   margin: 0 !important;
+// }
 
-.LeftMenu > .MuiDrawer-paper.MuiDrawer-paperAnchorLeft {
-  width: 350px;
-}
+// .MuiAccordionSummary-content.Mui-expanded {
+//   margin: 12px 0 !important;
+// }
 
-.MuiAccordion-root.Mui-expanded {
-  margin: 0 !important;
-}
-
-.MuiAccordionSummary-content.Mui-expanded {
-  margin: 12px 0 !important;
-}
-
-.MuiList-root {
-  & a {
-    text-decoration: none;
-    color: rgba(0, 0, 0, 0.87);
-  }
-  .MuiListItem-root {
-    height: 50px;
-  }
-}
+// .MuiList-root {
+//   & a {
+//     text-decoration: none;
+//     color: rgba(0, 0, 0, 0.87);
+//   }
+//   .MuiListItem-root {
+//     height: 50px;
+//   }
+// }
 
 td[class*='customCel'] {
   text-align: center !important;
@@ -462,16 +451,6 @@ div.css-19kzrtu {
   margin-right: 10px;
 }
 
-
-body{
-  margin: 0px!important;
-}
-p, span, b, th, td, label{
-  font-size: 1rem!important;
-}
-h1, h2, h3, h4, h5{
-  margin: 0;
-}
 .MuiAccordion-root.Mui-expanded{
   margin: 0!important;
 }

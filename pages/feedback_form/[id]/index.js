@@ -9,7 +9,7 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
 import {api_laravel, api_laravel_local} from '@/src/api_new';
-import {formatDate, MyAlert, MyAutocomplite, MyDatePicker, MyDatePickerNew} from "@/ui/elements";
+import {MyAutocomplite, MyDatePicker, MyDatePickerNew} from "@/components/shared/Forms";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
@@ -37,6 +37,8 @@ import Divider from "@mui/material/Divider";
 import Card from "@mui/material/Card";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
+import { formatDate } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 const ModalOrder = ({open, onClose, getData, pointId, orderId}) => {
 	const [order, setOrder] = useState({});
@@ -146,7 +148,7 @@ const ModalOrder = ({open, onClose, getData, pointId, orderId}) => {
 	};
 
 	return (
-		<Dialog
+        <Dialog
 			open={open}
 			onClose={onClose}
 			aria-labelledby="alert-dialog-title"
@@ -155,7 +157,7 @@ const ModalOrder = ({open, onClose, getData, pointId, orderId}) => {
 			maxWidth={'md'}
 			fullScreen={false}
 		>
-			<DialogTitle className="button">
+            <DialogTitle className="button">
 				<Typography style={{
 					fontWeight: 'bold',
 					alignSelf: 'center'
@@ -164,32 +166,46 @@ const ModalOrder = ({open, onClose, getData, pointId, orderId}) => {
 					<CloseIcon/>
 				</IconButton>
 			</DialogTitle>
-
-			<DialogContent>
+            <DialogContent>
 
 				<Grid container spacing={0}>
-					<Grid item xs={12}>
+					<Grid
+                        size={{
+                            xs: 12
+                        }}>
 						<span>{order?.type_order}: {order?.type_order_addr_new}</span>
 					</Grid>
 
 					{parseInt(order?.type_order_) == 1 ?
 						parseInt(order?.fake_dom) == 0 ?
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<b style={{color: 'red', fontWeight: 900}}>Домофон не работает</b>
 							</Grid>
 							:
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<b style={{color: 'green', fontWeight: 900}}>Домофон работает</b>
 							</Grid>
 						:
 						null
 					}
-					<Grid item xs={12}>
+					<Grid
+                        size={{
+                            xs: 12
+                        }}>
 						<span>{order?.time_order_name}: {order?.time_order}</span>
 					</Grid>
 
 					{order?.number?.length > 1 ?
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<b>Телефон: </b>
 							<span>{order?.number}</span>
 						</Grid>
@@ -198,53 +214,83 @@ const ModalOrder = ({open, onClose, getData, pointId, orderId}) => {
 					}
 
 					{order?.delete_reason?.length > 0 ?
-						<Grid item xs={12}><span style={{color: 'red'}}>Удален: {order?.date_time_delete}</span></Grid> : null}
+						<Grid
+                            size={{
+                                xs: 12
+                            }}><span style={{color: 'red'}}>Удален: {order?.date_time_delete}</span></Grid> : null}
 					{order?.delete_reason?.length > 0 ?
-						<Grid item xs={12}><span style={{color: 'red'}}>{order?.delete_reason}</span></Grid> : null}
+						<Grid
+                            size={{
+                                xs: 12
+                            }}><span style={{color: 'red'}}>{order?.delete_reason}</span></Grid> : null}
 
 					{parseInt(order?.is_preorder) == 1 ? null :
-						<Grid item xs={12}><span>{'Обещали: ' + order?.time_to_client + ' / '}{order?.text_time}{order?.time}</span></Grid>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}><span>{'Обещали: ' + order?.time_to_client + ' / '}{order?.text_time}{order?.time}</span></Grid>
 					}
 
 					{order?.promo_name == null || order?.promo_name?.length == 0 ? null :
 						<>
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<b>Промокод: </b>
 								<span>{order?.promo_name}</span>
 							</Grid>
-							<Grid item xs={12}>
+							<Grid
+                                size={{
+                                    xs: 12
+                                }}>
 								<span className="noSpace">{order?.promo_text}</span>
 							</Grid>
 						</>
 					}
 
 					{order?.comment == null || order?.comment.length == 0 ? null :
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<b>Комментарий: </b>
 							<span>{order?.comment}</span>
 						</Grid>
 					}
 
 					{order?.sdacha == null || parseInt(order?.sdacha) == 0 ? null :
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<b>Сдача: </b>
 							<span>{order?.sdacha}</span>
 						</Grid>
 					}
 
-					<Grid item xs={12}>
+					<Grid
+                        size={{
+                            xs: 12
+                        }}>
 						<b>Сумма заказа: </b>
 						<span>{order?.sum_order} р</span>
 					</Grid>
 
 					{order?.check_pos_drive == null || !order?.check_pos_drive ? null :
-						<Grid item xs={12}>
+						<Grid
+                            size={{
+                                xs: 12
+                            }}>
 							<b>Довоз оформлен: </b>
 							<span>{order?.check_pos_drive?.comment}</span>
 						</Grid>
 					}
 
-					<Grid item xs={12}>
+					<Grid
+                        size={{
+                            xs: 12
+                        }}>
 						<Table size={'small'} style={{marginTop: 15}}>
 							<TableBody>
 								{order_items ? order_items.map((item, key) =>
@@ -283,13 +329,13 @@ const ModalOrder = ({open, onClose, getData, pointId, orderId}) => {
 
 				</Grid>
 			</DialogContent>
-		</Dialog>
-	);
+        </Dialog>
+    );
 }
 
 const ModalItem = ({open, onClose, params}) => {
 	return (
-		<Dialog
+        <Dialog
 			open={open}
 			onClose={onClose}
 			aria-labelledby="alert-dialog-title"
@@ -298,7 +344,7 @@ const ModalItem = ({open, onClose, params}) => {
 			maxWidth={'md'}
 			fullScreen={false}
 		>
-			<DialogTitle className="button">
+            <DialogTitle className="button">
 				<Typography style={{
 					fontWeight: 'bold',
 					alignSelf: 'center'
@@ -307,10 +353,13 @@ const ModalItem = ({open, onClose, params}) => {
 					<CloseIcon/>
 				</IconButton>
 			</DialogTitle>
-
-			<DialogContent>
+            <DialogContent>
 				{params.length ? (
-					<Grid item xs={12} style={{marginBottom: '24px'}}>
+					<Grid
+                        style={{marginBottom: '24px'}}
+                        size={{
+                            xs: 12
+                        }}>
 						<Card elevation={3}>
 							<CardHeader
 								title="Список параметров"
@@ -343,8 +392,8 @@ const ModalItem = ({open, onClose, params}) => {
 					</Grid>
 				) : null}
 			</DialogContent>
-		</Dialog>
-	);
+        </Dialog>
+    );
 }
 
 function FeedbackPage() {
@@ -602,24 +651,41 @@ function FeedbackPage() {
 	};
 
 	return (
-		<Grid item xs={12} sm={12} container spacing={3} mb={3} className="container_first_child">
-			<Backdrop style={{zIndex: 99}} open={isLoad}>
+        <Grid
+            container
+            spacing={3}
+            mb={3}
+            className="container_first_child"
+            size={{
+                xs: 12,
+                sm: 12
+            }}>
+            <Backdrop style={{zIndex: 99}} open={isLoad}>
 				<CircularProgress color="inherit"/>
 			</Backdrop>
-			<MyAlert
+            <MyAlert
 				isOpen={openAlert}
 				onClose={() => setOpenAlert(false)}
 				status={errStatus}
 				text={errText}
 			/>
-			{openOrder ? (
+            {openOrder ? (
 				<ModalOrder open={openOrder} onClose={() => setOpenOrder(false)} getData={getData} orderId={orderId} pointId={pointId}/>) : null}
-			{openModalItem ? (
+            {openModalItem ? (
 				<ModalItem open={openModalItem} onClose={() => setOpenModalItem(false)} params={params}/>) : null}
-			<Grid item xs={12} sm={12}>
+            <Grid
+                size={{
+                    xs: 12,
+                    sm: 12
+                }}>
 				<h1>{title}</h1>
 			</Grid>
-			<Grid item xs={12} sm={12} style={{paddingBottom: 24}}>
+            <Grid
+                style={{paddingBottom: 24}}
+                size={{
+                    xs: 12,
+                    sm: 12
+                }}>
 				<Paper>
 					<TabContext value={value}>
 						<Tabs
@@ -633,35 +699,60 @@ function FeedbackPage() {
 					</TabContext>
 				</Paper>
 			</Grid>
-			<Grid xs={12} sm={12} style={{paddingTop: 0}}>
+            <Grid
+                style={{paddingTop: 0}}
+                size={{
+                    xs: 12,
+                    sm: 12
+                }}>
 				<TabContext value={value}>
 					<TabPanel value="view_feed">
 						<Grid container spacing={2} style={{marginBottom: 16}}>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
 									setPoint(data)
 								}}/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyAutocomplite label="Позиции" data={items} multiple={true} value={item} func={(event, data) => {
 									setItem(data)
 								}}/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyDatePickerNew
 									label="Дата начала"
 									value={dateStart}
 									func={(e) => setDateStart(formatDate(e))}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyDatePickerNew
 									label="Дата окончания"
 									value={dateEnd}
 									func={(e) => setDateEnd(formatDate(e))}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<Button
 									variant="contained"
 									color="primary"
@@ -672,10 +763,20 @@ function FeedbackPage() {
 							</Grid>
 						</Grid>
 						{rows.length ? (
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<Grid container spacing={3} sx={{marginBottom: '12px'}}>
 									{rows.map((item, index) => (
-										<Grid item xs={12} sm={6} md={4} key={item.order_id}>
+										<Grid
+                                            key={item.order_id}
+                                            size={{
+                                                xs: 12,
+                                                sm: 6,
+                                                md: 4
+                                            }}>
 											<Card
 												sx={{
 													cursor: 'pointer',
@@ -701,7 +802,10 @@ function FeedbackPage() {
 													<Divider sx={{my: 1}}/>
 
 													<Grid container spacing={2}>
-														<Grid item xs={6}>
+														<Grid
+                                                            size={{
+                                                                xs: 6
+                                                            }}>
 															<Typography variant="body2" color="text.secondary">
 																Всего отзывов:
 															</Typography>
@@ -709,7 +813,10 @@ function FeedbackPage() {
 																{item.total_count}
 															</Typography>
 														</Grid>
-														<Grid item xs={6}>
+														<Grid
+                                                            size={{
+                                                                xs: 6
+                                                            }}>
 															<Typography variant="body2" color="text.secondary">
 																Высоких оценок:
 															</Typography>
@@ -717,7 +824,10 @@ function FeedbackPage() {
 																{item.positive_percentage}%
 															</Typography>
 														</Grid>
-														<Grid item xs={6}>
+														<Grid
+                                                            size={{
+                                                                xs: 6
+                                                            }}>
 															<Typography variant="body2" color="text.secondary">
 																Низких оценок:
 															</Typography>
@@ -768,7 +878,11 @@ function FeedbackPage() {
 							</Grid>
 						) : null}
 						{leaderLow.length ? (
-							<Grid item xs={12} style={{marginBottom: '24px'}}>
+							<Grid
+                                style={{marginBottom: '24px'}}
+                                size={{
+                                    xs: 12
+                                }}>
 								<Card elevation={3}>
 									<CardHeader
 										title="Лидеры проблем"
@@ -815,7 +929,11 @@ function FeedbackPage() {
 							</Grid>
 						) : null}
 						{leaderUp.length ? (
-							<Grid item xs={12} style={{marginBottom: '24px'}}>
+							<Grid
+                                style={{marginBottom: '24px'}}
+                                size={{
+                                    xs: 12
+                                }}>
 								<Card elevation={3}>
 									<CardHeader
 										title="Топ положительных оценок"
@@ -862,7 +980,11 @@ function FeedbackPage() {
 							</Grid>
 						) : null}
 						{feedbacks.length ? (
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<Accordion>
 									<AccordionSummary expandIcon={<ExpandMoreIcon/>} aria-controls="panel1a-content">
 										<Typography style={{
@@ -907,7 +1029,11 @@ function FeedbackPage() {
 						) : null}
 					</TabPanel>
 					<TabPanel value="view_form">
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<FormControlLabel
 								sx={{pt: 0}}
 								control={<Checkbox checked={active} onChange={changeActive}/>}
@@ -916,7 +1042,14 @@ function FeedbackPage() {
 								size="small"
 							/>
 						</Grid>
-						<Grid item xs={12} sm={12} display="flex" flexDirection="column" alignItems="center">
+						<Grid
+                            display="flex"
+                            flexDirection="column"
+                            alignItems="center"
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<div style={{
 								width: 500, boxShadow: '0 2px 12px 0 rgba(0, 0, 0, .10)', padding: 20, borderRadius: 10,
 							}}
@@ -928,8 +1061,8 @@ function FeedbackPage() {
 					</TabPanel>
 				</TabContext>
 			</Grid>
-		</Grid>
-	);
+        </Grid>
+    );
 }
 
 export default function SettingsId() {

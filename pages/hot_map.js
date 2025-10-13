@@ -13,7 +13,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material
 
 import HelpIcon from '@mui/icons-material/Help';
 
-import {MySelect, MyDatePickerNew, MyTimePicker, MyCheckBox } from '@/ui/elements';
+import {MySelect, MyDatePickerNew, MyTimePicker, MyCheckBox } from '@/components/shared/Forms';
 
 import { api_laravel, api_laravel_local } from '@/src/api_new';
 
@@ -35,25 +35,37 @@ const HotMap_Modal = ({ open, onClose, stats }) => {
       <DialogTitle>Статистика заказов</DialogTitle>
       <DialogContent dividers>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Typography variant="body1">
               <span style={{ fontWeight: 'bold' }}>Заказов в зоне: </span>
               {formatNumber(stats.statTrueCount)} ( {stats.statTruePercent}% )
             </Typography>
           </Grid>
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Typography variant="body1">
               <span style={{ fontWeight: 'bold' }}>Сумма заказов в зоне: </span>
               {formatCurrency(stats.statTrueAllSumm)}
             </Typography>
           </Grid>
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Typography variant="body1">
               <span style={{ fontWeight: 'bold' }}>Средний чек в зоне: </span>
               {formatCurrency(stats.statTrueAvgSumm)}
             </Typography>
           </Grid>
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Typography variant="body1">
               <span style={{ fontWeight: 'bold' }}>Всего заказов в городе: </span>
               {formatNumber(stats.statAllCount)}
@@ -543,10 +555,13 @@ export default class HotMap extends React.PureComponent {
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Grid container spacing={3} className="container_first_child">
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
@@ -556,7 +571,11 @@ export default class HotMap extends React.PureComponent {
             stats={this.state.stats}
           />
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MySelect
               is_none={false}
               data={this.state.cities}
@@ -566,7 +585,11 @@ export default class HotMap extends React.PureComponent {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Tooltip
               title={
                 <span style={{ fontSize: '18px', lineHeight: '1.5' }}>
@@ -600,7 +623,11 @@ export default class HotMap extends React.PureComponent {
             </Tooltip>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <div style={{display: 'flex', flexDirection: 'row'}}>
             <MyCheckBox
               value={this.state.is_new === 1}
@@ -615,7 +642,11 @@ export default class HotMap extends React.PureComponent {
             </div>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -623,7 +654,11 @@ export default class HotMap extends React.PureComponent {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTimePicker
               label="Время от"
               value={this.state.time_start}
@@ -631,7 +666,11 @@ export default class HotMap extends React.PureComponent {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -639,7 +678,11 @@ export default class HotMap extends React.PureComponent {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTimePicker
               label="Время до"
               value={this.state.time_end}
@@ -647,13 +690,21 @@ export default class HotMap extends React.PureComponent {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button variant="contained" onClick={this.updateData}>
               Обновить данные
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button
               variant={this.map ? "contained" : "outlined"}
               onClick={this.state.isDrawing ? this.stopDrawing : this.startDrawing}
@@ -663,7 +714,11 @@ export default class HotMap extends React.PureComponent {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button
               variant={this.map && this.myGeoObject ? "contained" : "outlined"}
               onClick={this.removeDrawing}
@@ -673,7 +728,12 @@ export default class HotMap extends React.PureComponent {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12} mb={10}>
+          <Grid
+            mb={10}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <div
               id="map"
               name="map"

@@ -17,7 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { MyAutocomplite, MyAlert } from "@/ui/elements";
+import { MyAutocomplite } from "@/components/shared/Forms";
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import { api_laravel } from "@/src/api_new";
@@ -39,6 +39,7 @@ import useCafeEditStore from "@/components/cafe_edit/useCafeEditStore";
 import useCafeEditModalsStore from "@/components/cafe_edit/useCafeEditModalsStore";
 import useFullScreen from "@/src/hooks/useFullScreen";
 import CafeEditTabInfo from "@/components/cafe_edit/tabs/CafeEditTabInfo";
+import MyAlert from "@/components/shared/MyAlert";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import CafeEditTabRates from "@/components/cafe_edit/tabs/CafeEditTabRates";
 import CafeEditTabPay from "@/components/cafe_edit/tabs/CafeEditTabPay";
@@ -342,7 +343,7 @@ export default function CafeEdit({ initialData, initialPointData }) {
     });
     setModalsState({
       reason_list: pointData.reason_list,
-    })
+    });
   };
 
   const changeItemChecked = (key, event) => {
@@ -829,10 +830,10 @@ export default function CafeEdit({ initialData, initialPointData }) {
       >
         <CircularProgress />
       </Backdrop>
-      <TestAccess
+      {/* <TestAccess
         access={acces}
         setAccess={(acces) => setStateKey("acces", { ...acces })}
-      />
+      /> */}
       <Dialog
         open={confirmDialog}
         onClose={() => setState({ confirmDialog: false })}
@@ -929,18 +930,11 @@ export default function CafeEdit({ initialData, initialPointData }) {
         mb={3}
         className="container_first_child"
       >
-        <Grid
-          item
-          xs={12}
-        >
+        <Grid size={12}>
           <h1>{module_name}</h1>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          sm={6}
-        >
+        <Grid size={{ xs: 12, sm: 6 }}>
           <MyAutocomplite
             label="Кафе"
             multiple={false}
@@ -952,11 +946,7 @@ export default function CafeEdit({ initialData, initialPointData }) {
         </Grid>
 
         {canEdit("organization_point") && (
-          <Grid
-            item
-            xs={12}
-            sm={4}
-          >
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Button
               onClick={open_new_point}
               variant="contained"
@@ -967,9 +957,7 @@ export default function CafeEdit({ initialData, initialPointData }) {
         )}
 
         <Grid // tabs
-          item
-          xs={12}
-          style={{ paddingBottom: 24 }}
+          size={12}
         >
           <Paper>
             <Tabs
@@ -991,156 +979,140 @@ export default function CafeEdit({ initialData, initialPointData }) {
             </Tabs>
           </Paper>
         </Grid>
-
-        <Grid
-          item
-          xs={12}
-          style={{ paddingTop: 0 }}
-        >
-          <TabPanel
-            value={activeTab}
-            index={index_info}
-            id="info"
-          >
-            <CafeEditTabInfo
-              saveData={save_edit_point_info}
-              openHistModal={(index) => open_hist_view(index, "info")}
-              canView={canView}
-              canEdit={canEdit}
-            />
-          </TabPanel>
-        </Grid>
-
-        <Grid
-          item
-          xs={12}
-          style={{ paddingTop: 0 }}
-        >
-          <TabPanel
-            value={activeTab}
-            index={index_rate}
-            id="rate"
-          >
-            <CafeEditTabRates
-              openHistModal={(index) => open_hist_view(index, "rate")}
-              canView={canView}
-              canEdit={canEdit}
-            />
-          </TabPanel>
-        </Grid>
-
-        <Grid
-          item
-          xs={12}
-          style={{ paddingTop: 0 }}
-        >
-          <TabPanel
-            value={activeTab}
-            index={index_pay}
-            id="pay"
-          >
-            <CafeEditTabPay
-              openHistModal={(index) => open_hist_view(index, "pay")}
-              canView={canView}
-              canEdit={canEdit}
-            />
-          </TabPanel>
-        </Grid>
-
-        <Grid
-          item
-          xs={12}
-          style={{ paddingTop: 0 }}
-        >
-          <TabPanel
-            value={activeTab}
-            index={index_sett}
-            id="sett"
-          >
-            <CafeEditTabSettings
-              canView={canView}
-              canEdit={canEdit}
-              openHistModal={(index) => open_hist_view(index, "sett")}
-              saveSettings={save_edit_point_sett}
-            />
-          </TabPanel>
-        </Grid>
-
-        <Grid
-          item
-          xs={12}
-          style={{ paddingTop: 0 }}
-        >
-          <TabPanel
-            value={activeTab}
-            index={index_zone}
-            id="zone"
-          >
-            <Grid
-              item
-              xs={12}
-              mb={3}
+        {activeTab === index_info && (
+          <Grid size={12}>
+            <TabPanel
+              value={activeTab}
+              index={index_info}
+              id="info"
             >
-              <CafeEdit_ZonesMap
-                zones={zone}
-                otherZones={other_zones}
-                clickCallback={openZone}
-                readonly={!canAccess("zone_point")}
+              <CafeEditTabInfo
+                saveData={save_edit_point_info}
+                openHistModal={(index) => open_hist_view(index, "info")}
+                canView={canView}
+                canEdit={canEdit}
               />
-            </Grid>
-
-            {point_zone_hist.length > 0 && (
+            </TabPanel>
+          </Grid>
+        )}
+        {activeTab === index_rate && (
+          <Grid size={12}>
+            <TabPanel
+              value={activeTab}
+              index={index_rate}
+              id="rate"
+            >
+              <CafeEditTabRates
+                openHistModal={(index) => open_hist_view(index, "rate")}
+                canView={canView}
+                canEdit={canEdit}
+              />
+            </TabPanel>
+          </Grid>
+        )}
+        {activeTab === index_pay && (
+          <Grid size={12}>
+            <TabPanel
+              value={activeTab}
+              index={index_pay}
+              id="pay"
+            >
+              <CafeEditTabPay
+                openHistModal={(index) => open_hist_view(index, "pay")}
+                canView={canView}
+                canEdit={canEdit}
+              />
+            </TabPanel>
+          </Grid>
+        )}
+        {activeTab === index_sett && (
+          <Grid
+            item
+            xs={12}
+            style={{ paddingTop: 0 }}
+          >
+            <TabPanel
+              value={activeTab}
+              index={index_sett}
+              id="sett"
+            >
+              <CafeEditTabSettings
+                canView={canView}
+                canEdit={canEdit}
+                openHistModal={(index) => open_hist_view(index, "sett")}
+                saveSettings={save_edit_point_sett}
+              />
+            </TabPanel>
+          </Grid>
+        )}
+        {activeTab === index_zone && (
+          <Grid size={12}>
+            <TabPanel
+              value={activeTab}
+              index={index_zone}
+              id="zone"
+            >
               <Grid
-                item
-                xs={12}
-                mb={5}
+                size={12}
+                mb={3}
               >
-                <HistDropDownTable
-                  histData={point_zone_hist}
-                  openHistModal={(index) => open_hist_view_zone(index, "zone")}
+                <CafeEdit_ZonesMap
+                  zones={zone}
+                  otherZones={other_zones}
+                  clickCallback={openZone}
+                  readonly={!canAccess("zone_point")}
                 />
               </Grid>
-            )}
-          </TabPanel>
-        </Grid>
 
-        <Grid
-          item
-          xs={12}
-          style={{ paddingTop: 0 }}
-        >
-          <TabPanel
-            value={activeTab}
-            index={index_driver}
-            id="driver"
+              {point_zone_hist.length > 0 && (
+                <Grid
+                  size={12}
+                  mb={5}
+                >
+                  <HistDropDownTable
+                    histData={point_zone_hist}
+                    openHistModal={(index) => open_hist_view_zone(index, "zone")}
+                  />
+                </Grid>
+              )}
+            </TabPanel>
+          </Grid>
+        )}
+        {activeTab === index_driver && (
+          <Grid
+            item
+            size={12}
           >
-            <CafeEditTabDrivers
-              canView={canView}
-              canEdit={canEdit}
-              openHistModal={(index) => open_hist_view(index, "sett")}
-              saveSettings={save_edit_point_sett_driver}
-            />
-          </TabPanel>
-        </Grid>
-
-        <Grid
-          item
-          xs={12}
-          style={{ paddingTop: 0 }}
-        >
-          <TabPanel
-            value={activeTab}
-            index={index_kkt}
-            id="kkt"
-          >
-            <CafeEditTabKKT
-              openHistModal={(itemId, kktId) => open_hist_kkt(itemId, kktId, "kkt")}
-              canAccess={canAccess}
-              canView={canView}
-              canEdit={canEdit}
-            />
-          </TabPanel>
-        </Grid>
+            <TabPanel
+              value={activeTab}
+              index={index_driver}
+              id="driver"
+            >
+              <CafeEditTabDrivers
+                canView={canView}
+                canEdit={canEdit}
+                openHistModal={(index) => open_hist_view(index, "sett")}
+                saveSettings={save_edit_point_sett_driver}
+              />
+            </TabPanel>
+          </Grid>
+        )}
+        {activeTab === index_kkt && (
+          <Grid size={12}>
+            <TabPanel
+              value={activeTab}
+              index={index_kkt}
+              id="kkt"
+            >
+              <CafeEditTabKKT
+                openHistModal={(itemId, kktId) => open_hist_kkt(itemId, kktId, "kkt")}
+                canAccess={canAccess}
+                canView={canView}
+                canEdit={canEdit}
+              />
+            </TabPanel>
+          </Grid>
+        )}
       </Grid>
     </>
   );

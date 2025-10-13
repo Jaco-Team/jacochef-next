@@ -17,11 +17,12 @@ import EditIcon from "@mui/icons-material/Edit";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
-import {MyAlert, MyTextInput} from "@/ui/elements";
+import {MyTextInput} from "@/components/shared/Forms";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Cookies from "js-cookie";
+import MyAlert from '@/components/shared/MyAlert';
 const ModalEdit = ({open, onClose, save, title = 'Смена кода доступа', content = '', auth_code = 0}) => {
 	const [authCode, setAuthCode] = useState(0);
 	useEffect(() => {
@@ -163,22 +164,38 @@ function LkPage() {
 	}
 
 	return (
-		<Grid item xs={12} sm={12} container spacing={3} mb={3} className="container_first_child">
-			<Backdrop style={{zIndex: 99}} open={isLoad}>
+        <Grid
+            container
+            spacing={3}
+            mb={3}
+            className="container_first_child"
+            size={{
+                xs: 12,
+                sm: 12
+            }}>
+            <Backdrop style={{zIndex: 99}} open={isLoad}>
 				<CircularProgress color="inherit"/>
 			</Backdrop>
-			<MyAlert
+            <MyAlert
 				isOpen={openAlert}
 				onClose={() => setOpenAlert(false)}
 				status={errStatus}
 				text={errText}
 			/>
-			{open ? <ModalEdit open={open} onClose={() => setOpen(false)} save={save} auth_code={my.auth_code} /> : null}
-			{openPassword ? <ModalChangePassword open={openPassword} onClose={() => setOpenPassword(false)} save={savePassword} /> : null}
-			<Grid item xs={12} sm={6}>
+            {open ? <ModalEdit open={open} onClose={() => setOpen(false)} save={save} auth_code={my.auth_code} /> : null}
+            {openPassword ? <ModalChangePassword open={openPassword} onClose={() => setOpenPassword(false)} save={savePassword} /> : null}
+            <Grid
+                size={{
+                    xs: 12,
+                    sm: 6
+                }}>
 				<h1>{module.name}</h1>
 			</Grid>
-			<Grid item xs={12} sm={12}>
+            <Grid
+                size={{
+                    xs: 12,
+                    sm: 12
+                }}>
 				<Card
 					elevation={3}
 					sx={{
@@ -189,7 +206,12 @@ function LkPage() {
 					<CardContent sx={{p: 3}}>
 
 						<Grid container spacing={3}>
-							<Grid item xs={12} md={4} sx={{display: 'flex', justifyContent: 'center'}}>
+							<Grid
+                                sx={{display: 'flex', justifyContent: 'center'}}
+                                size={{
+                                    xs: 12,
+                                    md: 4
+                                }}>
 								<Paper
 									sx={{
 										p: 1,
@@ -221,7 +243,11 @@ function LkPage() {
 								</Paper>
 							</Grid>
 
-							<Grid item xs={12} md={8}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    md: 8
+                                }}>
 								<Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
 									<Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
 										<Box>
@@ -269,7 +295,11 @@ function LkPage() {
 
 									{/* Даты */}
 									<Grid container spacing={2}>
-										<Grid item xs={12} sm={6}>
+										<Grid
+                                            size={{
+                                                xs: 12,
+                                                sm: 6
+                                            }}>
 											<Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
 												<Box>
 													<Typography variant="body2" color="text.secondary">
@@ -282,7 +312,11 @@ function LkPage() {
 											</Box>
 										</Grid>
 
-										<Grid item xs={12} sm={6}>
+										<Grid
+                                            size={{
+                                                xs: 12,
+                                                sm: 6
+                                            }}>
 											<Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
 												<Box>
 													<Typography variant="body2" color="text.secondary">
@@ -301,8 +335,8 @@ function LkPage() {
 					</CardContent>
 				</Card>
 			</Grid>
-		</Grid>
-	);
+        </Grid>
+    );
 }
 
 export default function FeedBack() {

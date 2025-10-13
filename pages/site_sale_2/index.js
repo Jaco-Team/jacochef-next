@@ -21,7 +21,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyTextInput } from '@/ui/elements';
+import { MySelect, MyTextInput } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
@@ -151,15 +151,22 @@ class SiteSale2_ extends React.Component {
             <Button color="primary" onClick={ () => { this.setState({ modalDialog: false }) } }>Хорошо</Button>
           </DialogActions>
         </Dialog>
-
         <Grid container style={{ marginTop: '80px', paddingLeft: '24px' }}>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
 
               <Link href={"/site_sale_2/new"} style={{ zIndex: 10 }}>
                 <Button variant="contained">Новый промокод</Button>
@@ -183,22 +190,37 @@ class SiteSale2_ extends React.Component {
 
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MySelect data={this.state.city_list} value={this.state.city_id} func={ (event) => { this.setState({city_id: event.target.value}) } } label='Город' />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MyTextInput value={this.state.promoName} func={ (event) => { this.setState({promoName: event.target.value}) } } label='Промокод' />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <Button variant="contained" onClick={this.showPromoList.bind(this)}>Найти</Button>
             </Grid>
 
           </Grid>
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-            <Grid item xs={12}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -237,7 +259,7 @@ class SiteSale2_ extends React.Component {
 
         </Grid>
       </>
-    )
+    );
   }
 }
 

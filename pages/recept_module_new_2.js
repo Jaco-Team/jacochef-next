@@ -31,10 +31,12 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MyCheckBox, MyTextInput, MyAutocomplite, MyDatePickerNew, MyAlert, formatDate, MySelect} from '@/ui/elements';
+import {MyCheckBox, MyTextInput, MyAutocomplite, MyDatePickerNew, MySelect} from '@/components/shared/Forms';
 
 import {api_laravel_local, api_laravel} from '@/src/api_new';
 import dayjs from 'dayjs';
+import { formatDate } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 function roundTo(n, digits) {
 	if (n.length == 0) {
@@ -93,14 +95,14 @@ class ReceptModule_Modal_History_View extends React.Component {
 		const {open, itemName} = this.props;
 
 		return (
-			<Dialog
+            <Dialog
 				open={open}
 				fullWidth={true}
 				maxWidth={'xl'}
 				onClose={this.onClose.bind(this)}
 				fullScreen={this.props.fullScreen}
 			>
-				<DialogTitle className="button">
+                <DialogTitle className="button">
 					<Typography style={{alignSelf: 'center'}}>
 						Изменения в{itemName ? `: ${itemName}` : ''}
 					</Typography>
@@ -108,9 +110,13 @@ class ReceptModule_Modal_History_View extends React.Component {
 						<CloseIcon/>
 					</IconButton>
 				</DialogTitle>
-				<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
+                <DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
 					<Grid container spacing={4}>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Наименование"
 								value={this.state.itemView ? this.state.itemView.name?.color ? this.state.itemView.name.key : this.state.itemView.name : ''}
@@ -118,7 +124,11 @@ class ReceptModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.name?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Срок годности"
 								value={this.state.itemView ? this.state.itemView.shelf_life?.color ? this.state.itemView.shelf_life.key : this.state.itemView.shelf_life : ''}
@@ -126,7 +136,11 @@ class ReceptModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.shelf_life?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Количество сотрудников"
 								value={this.state.itemView ? this.state.itemView.two_user?.color ? this.state.itemView.two_user.key : this.state.itemView.two_user : ''}
@@ -134,7 +148,11 @@ class ReceptModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.two_user?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Ревизия"
 								value={this.state.itemView ? this.state.itemView.show_in_rev?.color ? this.state.itemView.show_in_rev.key : this.state.itemView.show_in_rev : ''}
@@ -142,7 +160,11 @@ class ReceptModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.show_in_rev?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Действует с"
 								value={this.state.itemView ? this.state.itemView.date_start?.color ? this.state.itemView.date_start.key : this.state.itemView.date_start : ''}
@@ -150,7 +172,11 @@ class ReceptModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.date_start?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="по"
 								value={this.state.itemView ? this.state.itemView.date_end?.color ? this.state.itemView.date_end.key : this.state.itemView.date_end : ''}
@@ -158,7 +184,11 @@ class ReceptModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.date_end?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Время приготовления 1 кг ММ:SS (15:20)"
 								value={this.state.itemView ? this.state.itemView.time_min?.color ? this.state.itemView.time_min.key : this.state.itemView.time_min : ''}
@@ -166,7 +196,11 @@ class ReceptModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.time_min?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={3}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 3
+                            }}>
 							<MyTextInput
 								label="Дополнительное время (уборка рабочего места)"
 								value={this.state.itemView ? this.state.itemView.time_min_dop?.color ? this.state.itemView.time_min_dop.key : this.state.itemView.time_min_dop : ''}
@@ -174,7 +208,11 @@ class ReceptModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.time_min_dop?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={6}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 6
+                            }}>
 							<MyTextInput
 								label="Должность в кафе (кто будет готовить)"
 								value={this.state.itemView ? this.state.itemView.rec_apps?.color ? this.state.itemView.rec_apps.key : this.state.itemView.rec_apps : ''}
@@ -182,7 +220,11 @@ class ReceptModule_Modal_History_View extends React.Component {
 								className={this.state.itemView ? this.state.itemView.rec_apps?.color ? "disabled_input disabled_input_color" : "disabled_input" : "disabled_input"}
 							/>
 						</Grid>
-						<Grid item xs={12} sm={6}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 6
+                            }}>
 							<MyTextInput
 								label="Места хранения"
 								value={this.state.itemView ? this.state.itemView.storages?.color ? this.state.itemView.storages.key : this.state.itemView.storages : ''}
@@ -191,7 +233,11 @@ class ReceptModule_Modal_History_View extends React.Component {
 							/>
 						</Grid>
 
-						<Grid item xs={12} sm={12}>
+						<Grid
+                            size={{
+                                xs: 12,
+                                sm: 12
+                            }}>
 							<Table>
 								<TableHead>
 									<TableRow sx={{'& th': {fontWeight: 'bold'}}}>
@@ -289,13 +335,13 @@ class ReceptModule_Modal_History_View extends React.Component {
 						</Grid>
 					</Grid>
 				</DialogContent>
-				<DialogActions>
+                <DialogActions>
 					<Button variant="contained" onClick={this.onClose.bind(this)}>
 						Закрыть
 					</Button>
 				</DialogActions>
-			</Dialog>
-		);
+            </Dialog>
+        );
 	}
 }
 
@@ -661,15 +707,14 @@ class ReceptModule_Modal extends React.Component {
 		const {open, method, apps, storages, all_pf_list} = this.props;
 
 		return (
-			<>
-				<MyAlert
+            <>
+                <MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
-				<Dialog
+                <Dialog
 					open={open}
 					fullWidth={true}
 					maxWidth={'xl'}
@@ -684,7 +729,11 @@ class ReceptModule_Modal extends React.Component {
 					</DialogTitle>
 					<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
 						<Grid container spacing={4}>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyTextInput
 									label="Наименование"
 									value={this.state.name}
@@ -692,7 +741,11 @@ class ReceptModule_Modal extends React.Component {
 									func={this.changeItem.bind(this, 'name')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyTextInput
 									label="Срок годности"
 									value={this.state.shelf_life}
@@ -700,7 +753,11 @@ class ReceptModule_Modal extends React.Component {
 									func={this.changeItem.bind(this, 'shelf_life')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MySelect
 									is_none={false}
 									data={this.state.rec_users}
@@ -710,7 +767,11 @@ class ReceptModule_Modal extends React.Component {
 									label="Количество сотрудников"
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyCheckBox
 									label="Ревизия"
 									value={parseInt(this.state.show_in_rev) == 1 ? true : false}
@@ -718,7 +779,11 @@ class ReceptModule_Modal extends React.Component {
 									func={this.changeItemChecked.bind(this, 'show_in_rev')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyDatePickerNew
 									label="Действует с"
 									minDate={dayjs(new Date()).add(1, 'day')}
@@ -727,7 +792,11 @@ class ReceptModule_Modal extends React.Component {
 									func={this.changeDateRange.bind(this, 'date_start')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyTextInput
 									label="Время приготовления 1 кг ММ:SS (15:20)"
 									value={this.state.time}
@@ -735,7 +804,11 @@ class ReceptModule_Modal extends React.Component {
 									func={this.changeItem.bind(this, 'time')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={3}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 3
+                                }}>
 								<MyTextInput
 									label="Дополнительное время (уборка рабочего места)"
 									value={this.state.dop_time}
@@ -743,7 +816,11 @@ class ReceptModule_Modal extends React.Component {
 									func={this.changeItem.bind(this, 'dop_time')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={6}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 6
+                                }}>
 								<MyAutocomplite
 									label="Должность в кафе (кто будет готовить)"
 									multiple={true}
@@ -753,7 +830,11 @@ class ReceptModule_Modal extends React.Component {
 									func={this.changeComplite.bind(this, 'rec_apps')}
 								/>
 							</Grid>
-							<Grid item xs={12} sm={6}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 6
+                                }}>
 								<MyAutocomplite
 									label="Места хранения"
 									multiple={true}
@@ -764,7 +845,11 @@ class ReceptModule_Modal extends React.Component {
 								/>
 							</Grid>
 
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<Table>
 									<TableHead>
 										<TableRow sx={{'& th': {fontWeight: 'bold'}}}>
@@ -917,8 +1002,8 @@ class ReceptModule_Modal extends React.Component {
 						</Button>
 					</DialogActions>
 				</Dialog>
-			</>
-		);
+            </>
+        );
 	}
 }
 
@@ -927,9 +1012,14 @@ class ReceptModule_Table extends React.Component {
 		const {data, method, openItemEdit, checkTable, openHistoryItem, type} = this.props;
 
 		return (
-			<>
-				{!data.length ? null : (
-					<Grid item xs={12} sm={12} style={{paddingBottom: type === 'rec' ? '40px' : '0px'}}>
+            <>
+                {!data.length ? null : (
+					<Grid
+                        style={{paddingBottom: type === 'rec' ? '40px' : '0px'}}
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<Accordion>
 							<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
 								<Typography style={{fontWeight: 'bold'}}>{method}</Typography>
@@ -979,8 +1069,8 @@ class ReceptModule_Table extends React.Component {
 						</Accordion>
 					</Grid>
 				)}
-			</>
-		);
+            </>
+        );
 	}
 }
 
@@ -1437,19 +1527,17 @@ class ReceptModule_ extends React.Component {
 
 	render() {
 		return (
-			<>
-				<Backdrop style={{zIndex: 99}} open={this.state.is_load}>
+            <>
+                <Backdrop style={{zIndex: 99}} open={this.state.is_load}>
 					<CircularProgress color="inherit"/>
 				</Backdrop>
-
-				<MyAlert
+                <MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
-				<ReceptModule_Modal
+                <ReceptModule_Modal
 					open={this.state.modalDialog}
 					onClose={() => this.setState({modalDialog: false})}
 					all_pf_list={this.state.all_pf_list}
@@ -1464,8 +1552,7 @@ class ReceptModule_ extends React.Component {
 					list={this.state.rec_pf_list}
 					type={this.state.type}
 				/>
-
-				<ReceptModule_Modal_History
+                <ReceptModule_Modal_History
 					open={this.state.modalDialogHist}
 					onClose={() => this.setState({modalDialogHist: false})}
 					item={this.state.item}
@@ -1474,27 +1561,39 @@ class ReceptModule_ extends React.Component {
 					openModalHistoryView={this.openModalHistoryView.bind(this)}
 					itemName={this.state.itemName}
 				/>
-
-				<ReceptModule_Modal_History_View
+                <ReceptModule_Modal_History_View
 					open={this.state.modalDialogView}
 					onClose={() => this.setState({modalDialogView: false, itemView: null})}
 					itemView={this.state.itemView}
 					itemName={this.state.itemName}
 					fullScreen={this.state.fullScreen}
 				/>
-
-				<Grid container spacing={3} className='container_first_child'>
-					<Grid item xs={12} sm={12}>
+                <Grid container spacing={3} className='container_first_child'>
+					<Grid
+                        size={{
+                            xs: 12,
+                            sm: 12
+                        }}>
 						<h1>{this.state.module_name}</h1>
 					</Grid>
 
-					<Grid item xs={12} sm={4} mb={3}>
+					<Grid
+                        mb={3}
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
 						<Button onClick={this.openItemNew.bind(this, 'Новый рецепт', 'rec')} variant="contained">
 							Добавить рецепт
 						</Button>
 					</Grid>
 
-					<Grid item xs={12} sm={4} mb={3}>
+					<Grid
+                        mb={3}
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
 						<Button onClick={this.openItemNew.bind(this, 'Новый полуфабрикат', 'pf')} variant="contained">
 							Добавить полуфабрикат
 						</Button>
@@ -1518,8 +1617,8 @@ class ReceptModule_ extends React.Component {
 						type={'rec'}
 					/>
 				</Grid>
-			</>
-		);
+            </>
+        );
 	}
 }
 

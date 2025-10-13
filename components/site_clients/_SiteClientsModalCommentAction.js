@@ -1,5 +1,5 @@
 import React from "react";
-import {MyAlert, TextEditor22} from "@/ui/elements";
+import {TextEditor22} from "@/components/shared/Forms";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
@@ -11,6 +11,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
+import MyAlert from "@/components/shared/MyAlert";
 
 export default class SiteClients_Modal_Comment_Action extends React.Component {
 	click = false;
@@ -103,15 +104,14 @@ export default class SiteClients_Modal_Comment_Action extends React.Component {
 		const {open, fullScreen} = this.props;
 
 		return (
-			<>
-				<MyAlert
+            <>
+                <MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-
-				<Dialog
+                <Dialog
 					open={open}
 					onClose={this.onClose.bind(this)}
 					aria-labelledby="alert-dialog-title"
@@ -130,7 +130,12 @@ export default class SiteClients_Modal_Comment_Action extends React.Component {
 					<DialogContent>
 
 						<Grid container spacing={0}>
-							<Grid item xs={12} sm={12} style={{justifyContent: 'center', display: 'flex', marginBottom: 20}}>
+							<Grid
+                                style={{justifyContent: 'center', display: 'flex', marginBottom: 20}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<ToggleButtonGroup
 									value={this.state.raiting}
 									exclusive
@@ -166,7 +171,12 @@ export default class SiteClients_Modal_Comment_Action extends React.Component {
 								</ToggleButtonGroup>
 							</Grid>
 
-							<Grid item xs={12} sm={12} style={{justifyContent: 'center', display: 'flex', marginBottom: 20}}>
+							<Grid
+                                style={{justifyContent: 'center', display: 'flex', marginBottom: 20}}
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<ToggleButtonGroup
 									value={this.state.type_sale}
 									exclusive
@@ -193,7 +203,11 @@ export default class SiteClients_Modal_Comment_Action extends React.Component {
 								</ToggleButtonGroup>
 							</Grid>
 
-							<Grid item xs={12} sm={12}>
+							<Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 12
+                                }}>
 								<TextEditor22 id="EditorNew" value={''} refs_={this.myRef_action} toolbar={true} menubar={true}/>
 							</Grid>
 
@@ -205,7 +219,7 @@ export default class SiteClients_Modal_Comment_Action extends React.Component {
 						</Button>
 					</DialogActions>
 				</Dialog>
-			</>
-		);
+            </>
+        );
 	}
 }

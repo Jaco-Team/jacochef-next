@@ -30,11 +30,12 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import Dropzone from 'dropzone';
 
-import { MyAutocomplite, MyDatePickerNew, MySelect, TextEditor, MyTextInput, MyCheckBox, MyAlert, formatDate } from '@/ui/elements';
+import { MyAutocomplite, MyDatePickerNew, MySelect, TextEditor, MyTextInput, MyCheckBox } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
 import dayjs from 'dayjs';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class SiteAktii_Modal extends React.Component {
   dropzoneOptions = {
@@ -284,128 +285,167 @@ class SiteAktii_Modal extends React.Component {
   render() {
     return (
       <>
-      <MyAlert
-        isOpen={this.state.openAlert}
-        onClose={() => this.setState({ openAlert: false })}
-        status={this.state.err_status}
-        text={this.state.err_text}
-      />
-      
-      <Dialog
-        open={this.props.open}
-        onClose={this.onClose.bind(this, false)}
-        fullScreen={this.props.fullScreen}
-        fullWidth={true}
-        maxWidth={'xl'}
-      >
-        <DialogTitle className="button">{this.props.method}{this.props.itemName ? `: ${this.props.itemName}` : null}</DialogTitle>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+        <Dialog
+          open={this.props.open}
+          onClose={this.onClose.bind(this, false)}
+          fullScreen={this.props.fullScreen}
+          fullWidth={true}
+          maxWidth={'xl'}
+        >
+          <DialogTitle className="button">{this.props.method}{this.props.itemName ? `: ${this.props.itemName}` : null}</DialogTitle>
 
-        <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
-          <CloseIcon />
-        </IconButton>
+          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+            <CloseIcon />
+          </IconButton>
 
-        { !this.state.item ? null :
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <MyTextInput
-                  label="Название акции"
-                  value={this.state.item ? this.state.item.akcia.name : ''}
-                  func={this.changeItem.bind(this, 'name')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <MySelect
-                  is_none={false}
-                  label="Город"
-                  data={this.state.item ? this.state.item.cities : []}
-                  value={this.state.item ? this.state.item.akcia.city_id : ''}
-                  func={this.changeItem.bind(this, 'city_id')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <MyDatePickerNew
-                  label="Дата старта"
-                  value={this.state.item ? dayjs(this.state.item.akcia.start_date) : ''}
-                  func={this.changeDateRange.bind(this, 'start_date')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <MyDatePickerNew
-                  label="Дата окончания"
-                  value={this.state.item ? dayjs(this.state.item.akcia.end_date) : ''}
-                  func={this.changeDateRange.bind(this, 'end_date')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={this.props.mark === 'editAction' ? 10 : 12}>
-                <MyAutocomplite
-                  label="Товары участвующие в акции"
-                  multiple={true}
-                  data={this.state.item ? this.state.item.all_items ? this.state.item.all_items : this.state.item.items : []}
-                  value={this.state.item ? this.state.item.akcia_items : []}
-                  func={this.changeAutocomplite.bind(this, 'akcia_items')}
-                />
-              </Grid>
-
-              {this.props.mark === 'editAction' ? (
-                <Grid item xs={12} sm={2}>
-                  <MyCheckBox
-                    label="Активность"
-                    value={this.state.item ? parseInt(this.state.item.akcia.is_show) == 1 ? true : false : false}
-                    func={this.changeItemChecked.bind(this, 'is_show')}
+          { !this.state.item ? null :
+            <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+              <Grid container spacing={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
+                  <MyTextInput
+                    label="Название акции"
+                    value={this.state.item ? this.state.item.akcia.name : ''}
+                    func={this.changeItem.bind(this, 'name')}
                   />
                 </Grid>
-              ) : null}
 
-              <Grid item xs={12} sm={12}>
-                <Typography variant="h6" component="h6">Картинка соотношением 1:1 (например: 750x750) только JPG</Typography>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
+                  <MySelect
+                    is_none={false}
+                    label="Город"
+                    data={this.state.item ? this.state.item.cities : []}
+                    value={this.state.item ? this.state.item.akcia.city_id : ''}
+                    func={this.changeItem.bind(this, 'city_id')}
+                  />
+                </Grid>
 
-                { !this.state.item || this.state.item.akcia.img_new.length == 0 ? null :
-                  <img style={{ maxHeight: 150 }} src={`https://storage.yandexcloud.net/site-aktii/${this.state.item.akcia.img_new}750х750.jpg`} />
-                }
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
+                  <MyDatePickerNew
+                    label="Дата старта"
+                    value={this.state.item ? dayjs(this.state.item.akcia.start_date) : ''}
+                    func={this.changeDateRange.bind(this, 'start_date')}
+                  />
+                </Grid>
 
-                <div
-                  className="dropzone"
-                  id="for_img_edit"
-                  style={{ width: '100%', minHeight: 150 }}
-                />
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
+                  <MyDatePickerNew
+                    label="Дата окончания"
+                    value={this.state.item ? dayjs(this.state.item.akcia.end_date) : ''}
+                    func={this.changeDateRange.bind(this, 'end_date')}
+                  />
+                </Grid>
+
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: this.props.mark === 'editAction' ? 10 : 12
+                  }}>
+                  <MyAutocomplite
+                    label="Товары участвующие в акции"
+                    multiple={true}
+                    data={this.state.item ? this.state.item.all_items ? this.state.item.all_items : this.state.item.items : []}
+                    value={this.state.item ? this.state.item.akcia_items : []}
+                    func={this.changeAutocomplite.bind(this, 'akcia_items')}
+                  />
+                </Grid>
+
+                {this.props.mark === 'editAction' ? (
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 2
+                    }}>
+                    <MyCheckBox
+                      label="Активность"
+                      value={this.state.item ? parseInt(this.state.item.akcia.is_show) == 1 ? true : false : false}
+                      func={this.changeItemChecked.bind(this, 'is_show')}
+                    />
+                  </Grid>
+                ) : null}
+
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
+                  <Typography variant="h6" component="h6">Картинка соотношением 1:1 (например: 750x750) только JPG</Typography>
+
+                  { !this.state.item || this.state.item.akcia.img_new.length == 0 ? null :
+                    <img style={{ maxHeight: 150 }} src={`https://storage.yandexcloud.net/site-aktii/${this.state.item.akcia.img_new}750х750.jpg`} />
+                  }
+
+                  <div
+                    className="dropzone"
+                    id="for_img_edit"
+                    style={{ width: '100%', minHeight: 150 }}
+                  />
+                </Grid>
+
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
+                  <MyTextInput
+                    label="Заголовок акции"
+                    value={this.state.item ? this.state.item.akcia.promo_title : ''}
+                    func={this.changeItem.bind(this, 'promo_title')}
+                  />
+                </Grid>
+
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
+                  <MyTextInput
+                    label="Промокод"
+                    value={this.state.item ? this.state.item.akcia.promo : ''}
+                    func={this.changeItem.bind(this, 'promo')}
+                  />
+                </Grid>
+
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
+                  <TextEditor
+                    value={this.state.item ? this.state.item.akcia.text : ''}
+                    func={this.changeItemText.bind(this, 'text')}
+                  />
+                </Grid>
               </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <MyTextInput
-                  label="Заголовок акции"
-                  value={this.state.item ? this.state.item.akcia.promo_title : ''}
-                  func={this.changeItem.bind(this, 'promo_title')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <MyTextInput
-                  label="Промокод"
-                  value={this.state.item ? this.state.item.akcia.promo : ''}
-                  func={this.changeItem.bind(this, 'promo')}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={12}>
-                <TextEditor
-                  value={this.state.item ? this.state.item.akcia.text : ''}
-                  func={this.changeItemText.bind(this, 'text')}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-        }
-        <DialogActions>
-          <Button variant="contained" onClick={ this.props.mark == 'editAction' ? this.saveEdit.bind(this) : this.saveNew.bind(this) }>
-            Сохранить
-          </Button>
-        </DialogActions>
-      </Dialog>
+            </DialogContent>
+          }
+          <DialogActions>
+            <Button variant="contained" onClick={ this.props.mark == 'editAction' ? this.saveEdit.bind(this) : this.saveNew.bind(this) }>
+              Сохранить
+            </Button>
+          </DialogActions>
+        </Dialog>
       </>
     );
   }
@@ -705,14 +745,12 @@ class SiteAktii_ extends React.Component {
         <Backdrop style={{ zIndex: 999 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <SiteAktii_Modal
           open={this.state.modalDialog}
           onClose={ this.onCloseModal.bind(this) }
@@ -723,13 +761,20 @@ class SiteAktii_ extends React.Component {
           fullScreen={this.state.fullScreen}
           getData={this.getData.bind(this)}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyAutocomplite
               label="Город"
               multiple={false}
@@ -739,13 +784,21 @@ class SiteAktii_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.openModal.bind(this, 'newAсtion', 'Новая акция')} variant="contained">
               Добавить акцию
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer>
               <Table>
                 <TableHead>
@@ -772,7 +825,11 @@ class SiteAktii_ extends React.Component {
                         <ContentCopyIcon onClick={this.copyLink.bind(this, item)} style={{ cursor: 'pointer' }}/>
                       </TableCell>
                       <TableCell>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 6
+                          }}>
                           <MyTextInput
                             value={item.sort}
                             func={this.changeSort.bind(this, 'sort', 'active', item)}
@@ -795,7 +852,12 @@ class SiteAktii_ extends React.Component {
             </TableContainer>
           </Grid>
 
-          <Grid item xs={12} sm={12} style={{ marginBottom: '40px' }}>
+          <Grid
+            style={{ marginBottom: '40px' }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography style={{ fontWeight: 700 }}>Законченные</Typography>
@@ -826,7 +888,11 @@ class SiteAktii_ extends React.Component {
                           <ContentCopyIcon onClick={this.copyLink.bind(this, item)} style={{ cursor: 'pointer' }}/>
                         </TableCell>
                         <TableCell>
-                          <Grid item xs={12} sm={6}>
+                          <Grid
+                            size={{
+                              xs: 12,
+                              sm: 6
+                            }}>
                             <MyTextInput
                               value={item.sort}
                               func={this.changeSort.bind(this, 'sort', 'nonActive', item)}

@@ -2,18 +2,10 @@
 
 import { memo, useEffect, useState } from "react";
 import useMyAlert from "@/src/hooks/useMyAlert";
-import { MyAlert, MySelect, MyTextInput } from "@/ui/elements";
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  IconButton,
-} from "@mui/material";
+import { MySelect, MyTextInput } from "@/components/shared/Forms";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import useCafeEditModalsStore from "./useCafeEditModalsStore";
+import MyAlert from "@/components/shared/MyAlert";
 
 const CafeEdit_Modal_New = (props) => {
   const { open, fullScreen } = props;
@@ -60,7 +52,6 @@ const CafeEdit_Modal_New = (props) => {
         status={alertStatus}
         text={alertMessage}
       />
-
       <Dialog
         open={open}
         onClose={onClose}
@@ -84,10 +75,10 @@ const CafeEdit_Modal_New = (props) => {
             spacing={3}
           >
             <Grid
-              item
-              xs={12}
-              sm={6}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MySelect
                 label="Город"
                 is_none={false}
@@ -98,10 +89,10 @@ const CafeEdit_Modal_New = (props) => {
             </Grid>
 
             <Grid
-              item
-              xs={12}
-              sm={6}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Адрес"
                 value={item?.addr || ""}

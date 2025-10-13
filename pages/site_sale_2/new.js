@@ -21,16 +21,16 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox, MyTimePicker, MyTextInput, MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from '@/ui/elements';
+import { MySelect, MyCheckBox, MyTimePicker, MyTextInput, MyAutocomplite, MyDatePickerNew } from '@/components/shared/Forms';
 import Typography from '@mui/material/Typography';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 
 import DatePicker from "react-multi-date-picker"
 
-import queryString from 'query-string';
-
 import dayjs from 'dayjs';
-import {api_laravel_local} from "@/src/api_new";
+import {api_laravel} from "@/src/api_new";
+import { formatDate } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 class MyDatePicker extends React.PureComponent {
   constructor(props) {
@@ -944,14 +944,12 @@ class SiteSale2_new_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog
           open={this.state.modalDialog}
           onClose={ () => { this.setState({ modalDialog: false, modalLink: '' }) } }
@@ -975,53 +973,99 @@ class SiteSale2_new_ extends React.Component {
             <Button color="primary" onClick={ () => { this.setState({ modalDialog: false }) } }>Хорошо</Button>
           </DialogActions>
         </Dialog>
-
         <Grid container style={{ marginTop: '80px', paddingLeft: '24px' }}>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
             { this.state.generate_new === true ? null :
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyTextInput value={this.state.promo_name} func={ this.changeData.bind(this, 'promo_name') } label='Название промокода' />
               </Grid>
             }
             { this.state.generate_new === false ? null :
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyTextInput value={this.state.promo_length} func={ this.changeData.bind(this, 'promo_length') } label='Длина промокода' />
               </Grid>
             }
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyCheckBox value={this.state.generate_new} func={ this.changeDataCheck.bind(this, 'generate_new') } label='Сгенерировать' />
             </Grid>
 
-            <Grid item xs={12}>
-              <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12
+              }}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyCheckBox value={this.state.for_new} func={ this.changeDataCheck.bind(this, 'for_new') } label='Для новых клиентов ( на первый заказ )' />
               </Grid>
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyCheckBox value={this.state.once_number} func={ this.changeDataCheck.bind(this, 'once_number') } label='1 раз на номер телефона' />
               </Grid>
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyCheckBox value={this.state.for_registred} func={ this.changeDataCheck.bind(this, 'for_registred') } label='Только для зарегистрированных клиентов' />
               </Grid>
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyCheckBox value={this.state.for_number} func={ this.changeDataCheck.bind(this, 'for_number') } label='Привязан к номеру телефона' />
               </Grid>
             </Grid>
 
-            {this.state.for_number && <Grid item xs={12} sm={3}>
+            {this.state.for_number && <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput value={this.state.for_number_text} func={ this.changeData.bind(this, 'for_number_text') } label='Номер телефона' />
             </Grid>}
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput value={this.state.count_action} func={ this.changeData.bind(this, 'count_action') } label='Количество активаций' />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTextInput value={this.state.promo_count} func={ this.changeData.bind(this, 'promo_count') } label='Количество промокодов' />
             </Grid>
 
@@ -1031,7 +1075,11 @@ class SiteSale2_new_ extends React.Component {
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MySelect data={this.state.promo_action_list} value={this.state.promo_action} func={ this.changeData.bind(this, 'promo_action') } label='Промокод дает:' />
             </Grid>
 
@@ -1040,33 +1088,57 @@ class SiteSale2_new_ extends React.Component {
           { parseInt(this.state.promo_action) !== 1 ? null :
             <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MySelect data={this.state.sale_list} value={this.state.type_sale} func={ this.changeData.bind(this, 'type_sale') } label='Скидка' />
               </Grid>
 
               { parseInt(this.state.type_sale) !== 1 ? null :
-                <Grid item xs={12} sm={9}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 9
+                  }}>
                   <MyAutocomplite data={this.state.items} value={this.state.saleItem} func={ (event, data) => { this.changeDataData('saleItem', data) } } multiple={true} label='Товары' />
                 </Grid>
               }
 
               { parseInt(this.state.type_sale) !== 2 ? null :
-                <Grid item xs={12} sm={9}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 9
+                  }}>
                   <MyAutocomplite data={this.state.cats} value={this.state.saleCat} func={ (event, data) => { this.changeDataData('saleCat', data) } } multiple={true} label='Категории' />
                 </Grid>
               }
 
               { parseInt( this.state.sale_type ) == 1 ?
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MyTextInput value={this.state.promo_sale} func={ this.changeData.bind(this, 'promo_sale') } label='Размер скидки' />
                 </Grid>
                   :
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MySelect data={this.state.promo_sale_list} value={this.state.promo_sale} func={ this.changeData.bind(this, 'promo_sale') } label='Размер скидки' />
                 </Grid>
               }
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MySelect data={this.state.type_sale_list} value={this.state.sale_type} func={ this.changeData.bind(this, 'sale_type') } label='Какая скидка' />
               </Grid>
 
@@ -1076,19 +1148,35 @@ class SiteSale2_new_ extends React.Component {
           { parseInt(this.state.promo_action) !== 2 ? null :
             <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyAutocomplite data={this.state.items} value={this.state.addItem} func={ (event, data) => { this.changeDataData('addItem', data) } } label='Позиция' />
               </Grid>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyTextInput value={this.state.addItemCount} func={ this.changeData.bind(this, 'addItemCount') } label='Количество' />
               </Grid>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyTextInput value={this.state.addItemPrice} func={ this.changeData.bind(this, 'addItemPrice') } label='Цена за все' />
               </Grid>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <Button variant="contained" onClick={this.addItemAdd.bind(this)}>Добавить</Button>
               </Grid>
 
@@ -1097,7 +1185,11 @@ class SiteSale2_new_ extends React.Component {
 
           { parseInt(this.state.promo_action) !== 2 ? null :
             <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -1139,15 +1231,27 @@ class SiteSale2_new_ extends React.Component {
           { parseInt(this.state.promo_action) !== 3 ? null :
             <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyAutocomplite data={this.state.items} value={this.state.priceItem} func={ (event, data) => { this.changeDataData('priceItem', data) } } label='Позиция' />
               </Grid>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <MyTextInput value={this.state.addItemCount} func={ this.changeData.bind(this, 'addItemCount') } label='Цена за 1 ед' />
               </Grid>
 
-              <Grid item xs={12} sm={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
                 <Button variant="contained" onClick={this.priceItemAdd.bind(this)}>Добавить</Button>
               </Grid>
 
@@ -1156,7 +1260,11 @@ class SiteSale2_new_ extends React.Component {
 
           { parseInt(this.state.promo_action) !== 3 ? null :
             <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -1187,18 +1295,30 @@ class SiteSale2_new_ extends React.Component {
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MySelect data={this.state.promo_conditions_list} value={this.state.promo_conditions} func={ this.changeData.bind(this, 'promo_conditions') } label='Условие' />
             </Grid>
 
             { parseInt(this.state.promo_conditions) == 1 &&
-              <Grid item xs={12} sm={8}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 8
+                }}>
                 <MyAutocomplite data={this.state.items} value={this.state.conditionItems} func={ (event, data) => { this.changeDataData('conditionItems', data) } } multiple={true} label='Товары' />
               </Grid>
             }
 
             { parseInt(this.state.promo_conditions) == 3 &&
-              <Grid item xs={12} sm={9}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 9
+                }}>
                 <MyAutocomplite data={this.state.cats} value={this.state.conditionCat} func={ (event, data) => { this.changeDataData('conditionCat', data) } } multiple={true} label='Категории' />
               </Grid>
 
@@ -1206,11 +1326,19 @@ class SiteSale2_new_ extends React.Component {
 
             { parseInt(this.state.promo_conditions) == 2 &&
               <>
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput value={this.state.price_start} func={ this.changeData.bind(this, 'price_start') } label='Сумма от' />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput value={this.state.price_end} func={ this.changeData.bind(this, 'price_end') } label='Сумма до' />
                 </Grid>
               </>
@@ -1222,7 +1350,11 @@ class SiteSale2_new_ extends React.Component {
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MySelect data={this.state.date_promo_list} value={this.state.date_promo} func={ this.changeData.bind(this, 'date_promo') } label='Когда работает промокод' />
             </Grid>
 
@@ -1230,18 +1362,34 @@ class SiteSale2_new_ extends React.Component {
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDateRange.bind(this, 'date_start') } />
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyDatePickerNew label="Дата до" value={ this.state.date_end } func={ this.changeDateRange.bind(this, 'date_end') } />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTimePicker label="Время от" value={this.state.time_start} func={ this.changeData.bind(this, 'time_start') } />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyTimePicker label="Время до" value={this.state.time_end} func={ this.changeData.bind(this, 'time_end') } />
             </Grid>
 
@@ -1249,7 +1397,11 @@ class SiteSale2_new_ extends React.Component {
           </Grid>
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyDatePicker multiple={false} label={'Кроме дат'} value={this.state.testDate} func={ this.changeDataData.bind(this, 'testDate') } />
             </Grid>
           </Grid>
@@ -1276,19 +1428,35 @@ class SiteSale2_new_ extends React.Component {
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MySelect data={this.state.type_order_list} value={this.state.type_order} func={ this.changeData.bind(this, 'type_order') } label='Тип заказа' />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MySelect data={this.state.where_order_list} value={this.state.where_order} func={ this.changeData.bind(this, 'where_order') } label='Где работает' />
             </Grid>
             { parseInt(this.state.where_order) !== 1 ? null :
-              <Grid item xs={12} sm={4}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MySelect data={this.state.cities} value={this.state.city} func={ this.changeData.bind(this, 'city') } label='Город' />
               </Grid>
             }
             { parseInt(this.state.where_order) !== 2 ? null :
-              <Grid item xs={12} sm={4}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MySelect data={this.state.points} value={this.state.point} func={ this.changeData.bind(this, 'point') } label='Точка' />
               </Grid>
             }
@@ -1299,14 +1467,22 @@ class SiteSale2_new_ extends React.Component {
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <MySelect data={this.state.where_promo_list} value={this.state.where_promo} func={ this.changeData.bind(this, 'where_promo') } label='Что сделать с промокодом' />
             </Grid>
 
             { parseInt(this.state.where_promo) == 1 || parseInt(this.state.where_promo) == 2 ? null :
               parseInt(this.state.where_promo) == 5 ?
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <span>Список номеров для рассылки</span>
                   <TextareaAutosize
                     aria-label="empty textarea"
@@ -1319,7 +1495,11 @@ class SiteSale2_new_ extends React.Component {
                   />
                 </Grid>
                   :
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput value={this.state.numberList} func={ this.changeData.bind(this, 'numberList') } label='Куда отправить' />
                 </Grid>
 
@@ -1333,7 +1513,11 @@ class SiteSale2_new_ extends React.Component {
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
             { parseInt(this.state.where_promo) !== 8 ? null :
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <span>Текст расссылки</span>
                 <TextareaAutosize
                   aria-label="empty textarea"
@@ -1347,7 +1531,11 @@ class SiteSale2_new_ extends React.Component {
             }
 
             { parseInt(this.state.where_promo) == 5 ?
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput value={this.state.spamNameSMS} func={ this.changeData.bind(this, 'spamNameSMS') } label='Наименование рассылки' />
               </Grid>
                 :
@@ -1355,7 +1543,11 @@ class SiteSale2_new_ extends React.Component {
             }
 
             { parseInt(this.state.where_promo) == 4 || parseInt(this.state.where_promo) == 5 ?
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput value={this.state.textSMS} func={ this.changeData.bind(this, 'textSMS') } label='Текст СМС ( --promo_name-- )' />
               </Grid>
                 :
@@ -1363,22 +1555,38 @@ class SiteSale2_new_ extends React.Component {
             }
 
             { parseInt(this.state.where_promo) == 7 || parseInt(this.state.where_promo) == 9 ?
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput value={this.state.cert_text} func={ this.changeData.bind(this, 'cert_text') } label='Текст для описания сертификата' />
               </Grid>
                 :
               null
             }
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyCheckBox value={this.state.auto_text} func={ this.changeDataCheck.bind(this, 'auto_text') } label='Авто-текст' />
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput value={this.state.promo_desc_true} func={ this.changeData.bind(this, 'promo_desc_true') } label='Описание промокода после активации (Промокод дает: )' />
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput value={this.state.promo_desc_false} func={ this.changeData.bind(this, 'promo_desc_false') } label='Условие промокода, когда условия не соблюдены' />
             </Grid>
 
@@ -1392,7 +1600,7 @@ class SiteSale2_new_ extends React.Component {
 
         </Grid>
       </>
-    )
+    );
   }
 }
 

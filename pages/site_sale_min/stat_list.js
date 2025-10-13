@@ -19,11 +19,12 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyDatePickerNew, formatDate } from '@/ui/elements';
+import { MyDatePickerNew } from '@/components/shared/Forms';
 import Typography from '@mui/material/Typography';
 
 import queryString from 'query-string';
 import dayjs from 'dayjs';
+import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class SiteSaleMin_StatList_ extends React.Component {
   click = false;
@@ -148,9 +149,12 @@ class SiteSaleMin_StatList_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
         <Grid container style={{ marginTop: '80px', paddingLeft: '24px' }}>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>Выписанные промокоды контакт-центр</h1>
           </Grid>
           
@@ -158,20 +162,37 @@ class SiteSaleMin_StatList_ extends React.Component {
           
           <Grid container direction="row" style={{ paddingTop: 20 }} spacing={3}>
             
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDateRange.bind(this, 'date_start') } />
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyDatePickerNew label="Дата до" value={ this.state.date_end } func={ this.changeDateRange.bind(this, 'date_end') } />
             </Grid>
 
-            <Grid item xs={12} sm={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <Button variant="contained" onClick={this.getUsers.bind(this)}>Обновить</Button>
             </Grid>
 
           </Grid>  
           
-          <Grid item xs={12} sm={12} style={{ marginTop: 20 }}>
+          <Grid
+            style={{ marginTop: 20 }}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             
             { this.state.promo_list.map( (item, key) => 
               <Accordion key={key} style={{ width: '100%' }}>
@@ -202,11 +223,10 @@ class SiteSaleMin_StatList_ extends React.Component {
         
         </Grid>
       </>
-    )
+    );
   }
 }
 
 export default function SiteSaleMin_StatList () {
   return <SiteSaleMin_StatList_ />;
 }
-

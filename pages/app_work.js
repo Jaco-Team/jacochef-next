@@ -23,9 +23,10 @@ import ListItemText from '@mui/material/ListItemText';
 import CloseIcon from '@mui/icons-material/Close';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
-import {MyTextInput, MyCheckBox, MySelect, MyTimePicker, MyAutocomplite, MyAlert} from '@/ui/elements';
+import {MyTextInput, MyCheckBox, MySelect, MyTimePicker, MyAutocomplite} from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class AppWorkTable extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -605,7 +606,6 @@ class AppWork_ extends React.Component {
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         {!this.state.itemsEdit ? null : (
           <Dialog
             open={this.state.modalDialog}
@@ -621,7 +621,11 @@ class AppWork_ extends React.Component {
             <DialogTitle>Уборка "{this.state.nameWork}"</DialogTitle>
             <DialogContent style={{ paddingTop: 10 }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     value={this.state.itemsEdit.item.name}
                     func={this.chengeItem.bind(this, 'name')}
@@ -629,7 +633,11 @@ class AppWork_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                    <MyAutocomplite 
                     label='Категория уборки' 
                     multiple={false} 
@@ -642,7 +650,11 @@ class AppWork_ extends React.Component {
                     />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     value={this.state.itemsEdit.item.time_min}
                     func={this.chengeItem.bind(this, 'time_min')}
@@ -650,7 +662,11 @@ class AppWork_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MyTextInput
                     value={this.state.itemsEdit.item.max_count}
                     func={this.chengeItem.bind(this, 'max_count')}
@@ -658,7 +674,11 @@ class AppWork_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={9}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 9
+                  }}>
                   <MyTextInput
                     multiline={true}
                     maxRows={2}
@@ -668,7 +688,11 @@ class AppWork_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyAutocomplite 
                     label='Должность' 
                     multiple={false} 
@@ -681,7 +705,11 @@ class AppWork_ extends React.Component {
                     />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MySelect
                     data={this.state.dows}
                     value={this.state.itemsEdit.item.dow}
@@ -691,7 +719,11 @@ class AppWork_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MySelect
                     data={this.state.types}
                     value={this.state.itemsEdit.item.type_time}
@@ -702,9 +734,16 @@ class AppWork_ extends React.Component {
                 </Grid>
 
                 {parseInt(this.state.itemsEdit.item.dow) != 14 ? null : (
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <Grid container spacing={3}>
-                      <Grid item xs={12} sm={6}>
+                      <Grid
+                        size={{
+                          xs: 12,
+                          sm: 6
+                        }}>
                         <MyAutocomplite
                           data={this.state.items_min}
                           value={this.state.chengeItem1 === 0 ? null : this.state.chengeItem1}
@@ -717,7 +756,11 @@ class AppWork_ extends React.Component {
                   </Grid>
                 )}
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <List>
                     <ListItem style={{ borderBottom: '1px solid #e5e5e5' }}>
                       <ListItemText primary={'Время добавления уборки'} />
@@ -751,7 +794,11 @@ class AppWork_ extends React.Component {
                   </List>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <List>
                     <ListItem style={{ borderBottom: '1px solid #e5e5e5' }}>
                       <ListItemText
@@ -777,7 +824,6 @@ class AppWork_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         {!this.state.itemsNew ? null : (
           <Dialog
             open={this.state.modalDialogNew}
@@ -789,7 +835,11 @@ class AppWork_ extends React.Component {
             <DialogTitle>Новая уборка</DialogTitle>
             <DialogContent style={{ paddingTop: 10 }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     value={this.state.itemsNew.item.name}
                     func={this.chengeItemNew.bind(this, 'name')}
@@ -797,7 +847,11 @@ class AppWork_ extends React.Component {
                   />
                 </Grid>
         
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                    <MyAutocomplite 
                     label='Категория уборки' 
                     multiple={false} 
@@ -810,7 +864,11 @@ class AppWork_ extends React.Component {
                     />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     value={this.state.itemsNew.item.time_min}
                     func={this.chengeItemNew.bind(this, 'time_min')}
@@ -818,7 +876,11 @@ class AppWork_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={3}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
                   <MyTextInput
                     value={this.state.itemsNew.item.max_count}
                     func={this.chengeItemNew.bind(this, 'max_count')}
@@ -826,7 +888,11 @@ class AppWork_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={9}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 9
+                  }}>
                   <MyTextInput
                     multiline={true}
                     maxRows={2}
@@ -836,7 +902,11 @@ class AppWork_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyAutocomplite 
                     label='Должность' 
                     multiple={false} 
@@ -849,7 +919,11 @@ class AppWork_ extends React.Component {
                     />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MySelect
                     data={this.state.dows}
                     value={this.state.itemsNew.item.dow === 0 ? '' : this.state.itemsNew.item.dow}
@@ -859,7 +933,11 @@ class AppWork_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MySelect
                     data={this.state.types}
                     value={this.state.itemsNew.item.type_time === 0 ? '' : this.state.itemsNew.item.type_time}
@@ -870,9 +948,16 @@ class AppWork_ extends React.Component {
                 </Grid>
 
                 {parseInt(this.state.itemsNew.item.dow) != 14 ? null : (
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <Grid container spacing={3}>
-                      <Grid item xs={12} sm={6}>
+                      <Grid
+                        size={{
+                          xs: 12,
+                          sm: 6
+                        }}>
                         <MyAutocomplite
                           data={this.state.items_min}
                           value={this.state.chengeItemNew1 === 0 ? null : this.state.chengeItemNew1}
@@ -885,7 +970,11 @@ class AppWork_ extends React.Component {
                   </Grid>
                 )}
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <List>
                     <ListItem style={{ borderBottom: '1px solid #e5e5e5' }}>
                       <ListItemText primary={'Время добавления уборки'} />
@@ -919,7 +1008,11 @@ class AppWork_ extends React.Component {
                   </List>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <List>
                     <ListItem style={{ borderBottom: '1px solid #e5e5e5' }}>
                       <ListItemText
@@ -945,9 +1038,12 @@ class AppWork_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
@@ -958,7 +1054,11 @@ class AppWork_ extends React.Component {
             text={this.state.err_text} 
           />
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button
               variant="contained"
               color="primary"
@@ -968,7 +1068,11 @@ class AppWork_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
 
           {this.state.items.length > 0 ?
             <AppWorkTable 
