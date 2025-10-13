@@ -1178,9 +1178,10 @@ class SiteUserManager_ extends React.Component {
                           </AccordionSummary>
                           <AccordionDetails>
                             <Box>
-                              <TableContainer component={Paper} sx={{minWidth: 800}} sx={{
+                              <TableContainer component={Paper} sx={{
                                 overflowX: 'auto',
-                                maxHeight: 400
+                                maxHeight: 400,
+                                minWidth: 800
                               }}>
                                 <Table size={'small'} sx={{minWidth: '100%'}}>
                                   <TableHead>
