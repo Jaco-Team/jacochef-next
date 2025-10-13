@@ -197,7 +197,7 @@ class SiteSaleMin_ extends React.Component {
                 xs: 12,
                 sm: 4
               }}>
-              <MySelect data={this.state.city_list} value={this.state.city_id} func={ (event) => { this.setState({city_id: event.target.value}) } } label='Город' />
+              <MySelect is_none data={this.state.city_list} value={this.state.city_id} func={ (event) => { this.setState({city_id: event.target.value}) } } label='Город' />
             </Grid>
             
             <Grid

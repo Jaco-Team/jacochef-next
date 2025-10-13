@@ -55,6 +55,7 @@ export default class RasBillAndCook_ extends Component {
   }
 
   async componentDidMount() {
+    // console.log(this.props.initialData);
     if (!this.props.initialData) {
       // console.log(`SSR failed, fetching`);
       const data = await this.getData("get_all");
@@ -64,7 +65,6 @@ export default class RasBillAndCook_ extends Component {
       }
       this.setState({
         points: data?.points,
-        point: data?.points?.[0].id,
         module_name: data?.module_info?.name,
       });
 
@@ -119,7 +119,7 @@ export default class RasBillAndCook_ extends Component {
       this.showAlert(res?.text || "Ошибка получения данных");
       return;
     }
-    console.log(res);
+    // console.log(res);
 
     this.setState({
       cats: res.cats,
@@ -192,7 +192,7 @@ export default class RasBillAndCook_ extends Component {
               data={this.state.points}
               value={this.state.point || ''}
               func={this.changePoint.bind(this)}
-              label="Точка"
+              label="Кафе"
             />
           </Grid>
 
