@@ -179,17 +179,13 @@ export default class RasBillAndCook_ extends Component {
           className="container_first_child"
         >
           <Grid
-            item
-            xs={12}
-            sm={12}
+            size={12}
           >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={4}
+           size={{ xs: 12, sm: 4 }}
           >
             <MySelect
               is_none={false}
@@ -201,9 +197,7 @@ export default class RasBillAndCook_ extends Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={4}
+            size={{ xs: 12, sm: 4 }}
           >
             <MySelect
               is_none={false}
@@ -215,9 +209,7 @@ export default class RasBillAndCook_ extends Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={4}
+            size={{ xs: 12, sm: 4 }}
           >
             <MyDatePickerNew
               label="Дата до"
@@ -227,9 +219,7 @@ export default class RasBillAndCook_ extends Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={6}
+            size={{ xs: 12, sm: 6 }}
           >
             <Button
               variant="contained"
@@ -240,8 +230,7 @@ export default class RasBillAndCook_ extends Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
+            size={12}
           >
             {this.state.cats.map((item, key) => (
               <Accordion key={key}>
