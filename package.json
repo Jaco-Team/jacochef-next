@@ -45,7 +45,7 @@
     "react-multi-date-picker": "^4.5.2",
     "tinymce": "^7.9.1",
     "tr46": "^5.1.1",
-    "xlsx": "^0.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz",
     "zustand": "^4.5.7"
   },
   "devDependencies": {
