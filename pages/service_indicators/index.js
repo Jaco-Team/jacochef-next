@@ -359,6 +359,11 @@ function IndicatorsPage() {
 		}
 	}, [pointSettings]);
 
+	useEffect(() => {
+		setTableData([]);
+		setTableDataYear([]);
+	}, [value])
+
 
 	return (
 		<Grid size={12} container spacing={3} mb={3} className="container_first_child">
