@@ -26,9 +26,10 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MySelect, MyCheckBox, MyTextInput, MyAutocomplite, MyAlert} from '@/ui/elements';
+import {MySelect, MyCheckBox, MyTextInput, MyAutocomplite} from '@/components/shared/Forms';
 
 import queryString from 'query-string';
+import MyAlert from '@/components/shared/MyAlert';
 
 class PolufabricatModule_Modal extends React.Component {
   constructor(props) {
@@ -113,7 +114,11 @@ class PolufabricatModule_Modal extends React.Component {
         </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Название заготовки"
                 value={this.state.item ? this.state.item.item.name : ''}
@@ -121,7 +126,11 @@ class PolufabricatModule_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MySelect
                 is_none={false}
                 label="Категория"
@@ -131,7 +140,11 @@ class PolufabricatModule_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MySelect
                 is_none={false}
                 label="Ед измерения"
@@ -141,7 +154,11 @@ class PolufabricatModule_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Минимальный остаток"
                 value={this.state.item ? this.state.item.item.min_count : ''}
@@ -149,7 +166,11 @@ class PolufabricatModule_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput
                 label="Срок годности"
                 value={this.state.item ? this.state.item.item.shelf_life : ''}
@@ -157,7 +178,11 @@ class PolufabricatModule_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyAutocomplite
                 label="Место хранения"
                 multiple={true}
@@ -171,7 +196,11 @@ class PolufabricatModule_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput
                 label="Состав"
                 value={this.state.item ? this.state.item.item.structure : ''}
@@ -179,7 +208,11 @@ class PolufabricatModule_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyAutocomplite
                 label="Аллергены"
                 multiple={true}
@@ -193,7 +226,11 @@ class PolufabricatModule_Modal extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyAutocomplite
                 label="Возможные аллергены"
                 multiple={true}
@@ -208,7 +245,10 @@ class PolufabricatModule_Modal extends React.Component {
             </Grid>
 
             {this.props.mark === 'itemEdit' ? (
-              <Grid item xs={12}>
+              <Grid
+                size={{
+                  xs: 12
+                }}>
                 <MyCheckBox
                   label="Активность"
                   value={this.state.item ? parseInt(this.state.item.item.is_show) == 1 ? true : false : false}
@@ -218,7 +258,6 @@ class PolufabricatModule_Modal extends React.Component {
             ) : null}
           </Grid>
         </DialogContent>
-
         <DialogActions>
           <Button variant="contained" style={{ whiteSpace: 'nowrap' }} onClick={this.save.bind(this)}>
             Сохранить
@@ -478,13 +517,11 @@ class PolufabricatModule_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
-        <MyAlert 
+        <MyAlert
           isOpen={this.state.openAlert} 
           onClose={() => this.setState({ openAlert: false }) } 
           status={this.state.err_status} 
           text={this.state.err_text} />
-
         <PolufabricatModule_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false, itemName: '' })}
@@ -495,19 +532,30 @@ class PolufabricatModule_ extends React.Component {
           itemName={this.state.itemName}
           fullScreen={this.state.fullScreen}
         />
-
         <Grid container spacing={3} mb={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.openModal.bind(this, 'newItem', 'Новая заготовка')} variant="contained">
               Добавить заготовку
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTextInput
               label="Поиск"
               value={this.state.searchItem}
@@ -516,7 +564,11 @@ class PolufabricatModule_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} style={{ paddingBottom: '10px' }}>
+          <Grid
+            style={{ paddingBottom: '10px' }}
+            size={{
+              xs: 12
+            }}>
             {this.state.cats.map((item, key) => (
               <Accordion key={key}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>

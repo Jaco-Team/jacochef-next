@@ -121,7 +121,6 @@ class VendorMini_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-        
         <Dialog
           open={this.state.modalVendor}
           fullWidth={true}
@@ -142,44 +141,80 @@ class VendorMini_ extends React.Component {
               
               {this.state.openVendor ?
                 <>
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <Typography variant="h5" component="h5">ИНН</Typography>
                     <Typography variant="h6" component="h6">{ this.state.openVendor.inn }</Typography>
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <Typography variant="h5" component="h5">ОГРН</Typography>
                     <Typography variant="h6" component="h6">{ this.state.openVendor.ogrn }</Typography>
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6
+                    }}>
                     <Typography variant="h5" component="h5">Мин. сумма заявки</Typography>
                     <Typography variant="h6" component="h6">{ this.state.openVendor.min_price }</Typography>
                   </Grid>
 
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <Typography variant="h5" component="h5">Адрес компании</Typography>
                     <Typography variant="h6" component="h6">{ this.state.openVendor.addr }</Typography>
                   </Grid>
 
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <Grid container spacing={3}>
                       {this.state.mails.map( (mail, key) => 
-                        <Grid item xs={12} key={key}>
+                        <Grid
+                          key={key}
+                          size={{
+                            xs: 12
+                          }}>
                           <Grid container spacing={3} >
-                            <Grid item xs={12} sm={6}>
+                            <Grid
+                              size={{
+                                xs: 12,
+                                sm: 6
+                              }}>
                               <Typography variant="h5" component="h5">Точка</Typography>
                               <Typography variant="h6" component="h6">{ mail.point_id.name }</Typography>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid
+                              size={{
+                                xs: 12,
+                                sm: 6
+                              }}>
                               <Typography variant="h5" component="h5">Почта</Typography>
                               <Typography variant="h6" component="h6">{ mail.mail }</Typography>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid
+                              size={{
+                                xs: 12
+                              }}>
                               <Typography variant="h5" component="h5">Контактные данные</Typography>
                               <Typography variant="h6" component="h6">{ mail.comment }</Typography>
                             </Grid>
                             { this.state.mails.length-1 == key ? null :
-                              <Grid item xs={12}>
+                              <Grid
+                                size={{
+                                  xs: 12
+                                }}>
                                 <Divider />
                               </Grid>
                             }
@@ -189,7 +224,10 @@ class VendorMini_ extends React.Component {
                     </Grid>
                   </Grid>
                   
-                  <Grid item xs={12}>
+                  <Grid
+                    size={{
+                      xs: 12
+                    }}>
                     <List>
                       <ListItem disablePadding>
                         <ListItemButton>
@@ -221,13 +259,19 @@ class VendorMini_ extends React.Component {
           </DialogContent>
           
         </Dialog>
-        
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
           
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
           
             <TableContainer component={Paper}>
               <Table>
@@ -246,7 +290,7 @@ class VendorMini_ extends React.Component {
           
         </Grid>
       </>
-    )
+    );
   }
 }
 

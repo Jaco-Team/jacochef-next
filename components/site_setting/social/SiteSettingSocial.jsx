@@ -1,6 +1,6 @@
 "use client";
 
-import { MySelect, MyTextInput } from "@/ui/elements";
+import { MySelect, MyTextInput } from "@/components/shared/Forms";
 import { Button, Grid, Typography } from "@mui/material";
 import { useCallback, useEffect } from "react";
 import { useSocialStore } from "./useSocialStore";
@@ -68,12 +68,11 @@ export function SiteSettingSocial() {
       container
       spacing={3}
     >
-
       <Grid
-        item
-        xs={12}
         sx={{ pb: 3 }}
-      >
+        size={{
+          xs: 12
+        }}>
         <MySelect
           data={cities.filter((city) => city.id !== -1)}
           value={cityId}
@@ -82,13 +81,9 @@ export function SiteSettingSocial() {
           is_none={false}
         />
       </Grid>
-
       {cityId === -1 && (
         <>
-          <Grid
-            item
-            style={{ display: "flex", justifyContent: "center", padding: "1em" }}
-          >
+          <Grid style={{ display: "flex", justifyContent: "center", padding: "1em" }}>
             <Typography>Выберите город.</Typography>
           </Grid>
         </>
@@ -96,26 +91,26 @@ export function SiteSettingSocial() {
       {cityId >= 0 && (
         <>
           <Grid
-            item
-            xs={12}
             sx={{ pb: 3 }}
-          >
+            size={{
+              xs: 12
+            }}>
             <Typography variant="h5">{moduleName}</Typography>
           </Grid>
           {!!dataInfo && (
             <Grid
-              item
-              xs={12}
-            >
+              size={{
+                xs: 12
+              }}>
               <Grid
                 container
                 spacing={3}
               >
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="Вконтакте"
                     disabled={acces.social_view && !acces.social_edit}
@@ -124,10 +119,10 @@ export function SiteSettingSocial() {
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="Инстаграм"
                     disabled={acces.social_view && !acces.social_edit}
@@ -137,10 +132,10 @@ export function SiteSettingSocial() {
                 </Grid>
 
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="Одноклассники"
                     value={dataInfo?.ok || ""}
@@ -149,10 +144,10 @@ export function SiteSettingSocial() {
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="Телеграм"
                     value={dataInfo?.tg || ""}
@@ -161,10 +156,10 @@ export function SiteSettingSocial() {
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="Facebook"
                     value={dataInfo?.fb || ""}
@@ -174,10 +169,10 @@ export function SiteSettingSocial() {
                 </Grid>
 
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   {acces.social_edit ? (
                     <Button
                       variant="contained"

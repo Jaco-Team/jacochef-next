@@ -29,12 +29,13 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MyCheckBox, MyTextInput, MyAutocomplite, MyAlert} from '@/ui/elements';
+import {MyCheckBox, MyTextInput, MyAutocomplite} from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
+import MyAlert from '@/components/shared/MyAlert';
 dayjs.locale('ru');
 
 class OrderReturn_Modal_Order extends React.Component {
@@ -651,7 +652,6 @@ class OrderReturn_Modal_Order extends React.Component {
 
     return (
       <>
-
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="sm"
@@ -667,7 +667,6 @@ class OrderReturn_Modal_Order extends React.Component {
             <Button onClick={this.save}>Сохранить</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={open}
           onClose={this.onClose.bind(this)}
@@ -686,24 +685,36 @@ class OrderReturn_Modal_Order extends React.Component {
 
           <DialogContent>
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid
+                size={{
+                  xs: 12
+                }}>
                 <b>Точка: </b>
                 <span>{order.point_addr}</span>
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid
+                size={{
+                  xs: 12
+                }}>
                 <b>Дата и время заказа: </b>
                 <span>{formattedDate}</span>
               </Grid>
 
               {order.number?.length > 1 && (
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <b>Телефон: </b>
                   <span>{order.number}</span>
                 </Grid>
               )}
 
-              <Grid item xs={12}>
+              <Grid
+                size={{
+                  xs: 12
+                }}>
                 <Table size="small" style={{ marginTop: 15 }}>
                   <TableHead>
                     <TableRow>
@@ -1156,14 +1167,12 @@ class OrderReturn_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={err_status}
           text={err_text}
         />
-
         <OrderReturn_Modal_Order
           open={modalDialog_order}
           onClose={() => this.setState({ modalDialog_order: false })}
@@ -1172,13 +1181,20 @@ class OrderReturn_ extends React.Component {
           openAlert={this.openAlert}
           save={this.save_return}
         />
-
         <Grid container spacing={3} className="container_first_child">
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyAutocomplite
               label="Точка"
               multiple={false}
@@ -1188,7 +1204,11 @@ class OrderReturn_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyTextInput
               type="number"
               className="input_login"
@@ -1211,13 +1231,23 @@ class OrderReturn_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <Button onClick={this.getOrders} variant="contained">
               Показать
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12} mt={3} mb={5}>
+          <Grid
+            mt={3}
+            mb={5}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <TableContainer>
               <Table stickyHeader>
                 <TableHead>

@@ -1,24 +1,28 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import useMyAlert from "@/src/hooks/useMyAlert";
-import { MyAlert, MySelect, MyTextInput } from "@/ui/elements";
+import { MySelect, MyTextInput } from "@/components/shared/Forms";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import MyAlert from "@/components/shared/MyAlert";
+import useCafeEditModalsStore from "./useCafeEditModalsStore";
 
 const CafeEdit_Modal_New = (props) => {
   const { open, fullScreen } = props;
 
-  const [item, setItem] = useState(props.item);
+  const activePoint = useCafeEditModalsStore((s) => s.activePoint);
 
-  const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
+  const [item, setItem] = useState(activePoint);
 
   const changeItem = (key, event) => {
-    setItem({
-      ...item,
+    setItem((prev) => ({
+      ...prev,
       [key]: event.target.value,
-    });
+    }));
   };
+
+  const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
   const save = () => {
     if (!item?.city_id) {
@@ -29,20 +33,17 @@ const CafeEdit_Modal_New = (props) => {
       showAlert("Необходимо указать адрес");
       return;
     }
-    if (!item?.addr) {
-      showAlert("Необходимо указать адрес");
-      return;
-    }
-
     props.save(item);
     onClose();
   };
 
   const onClose = () => {
-    setItem(null);
+    useCafeEditModalsStore.setState({ activeItem: null });
     closeAlert();
     props.onClose();
   };
+
+  useEffect(() => setItem(activePoint), [activePoint])
 
   return (
     <>
@@ -52,7 +53,6 @@ const CafeEdit_Modal_New = (props) => {
         status={alertStatus}
         text={alertMessage}
       />
-
       <Dialog
         open={open}
         onClose={onClose}
@@ -76,10 +76,10 @@ const CafeEdit_Modal_New = (props) => {
             spacing={3}
           >
             <Grid
-              item
-              xs={12}
-              sm={6}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MySelect
                 label="Город"
                 is_none={false}
@@ -90,10 +90,10 @@ const CafeEdit_Modal_New = (props) => {
             </Grid>
 
             <Grid
-              item
-              xs={12}
-              sm={6}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Адрес"
                 value={item?.addr || ""}

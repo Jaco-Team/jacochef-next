@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
 import { Grid, Backdrop, Box, CircularProgress, Tabs, Tab } from "@mui/material";
-import { MyAlert } from "@/ui/elements";
 
 import { useSiteSettingStore } from "@/pages/site_setting/components/useSiteSettingStore";
 import { SiteSettingBanners } from "@/pages/site_setting/components/banners/SiteSettingBanners";
@@ -10,6 +9,7 @@ import { SiteSettingModal } from "@/pages/site_setting/components/SiteSettingMod
 import { SiteSettingPages } from "@/pages/site_setting/components/seo/SiteSettingPages";
 import { SiteSettingSocial } from "@/pages/site_setting/components/social/SiteSettingSocial";
 import { SiteSettingCategory } from "@/pages/site_setting/components/category/SiteSettingCategory";
+import MyAlert from "@/components/shared/MyAlert";
 
 const subMap = {
   social: SiteSettingSocial,
@@ -114,7 +114,6 @@ export default function SiteSetting() {
       >
         <CircularProgress color="inherit" />
       </Backdrop>
-
       <MyAlert
         isOpen={openAlert}
         onClose={() => setOpenAlert(false)}
@@ -133,25 +132,24 @@ export default function SiteSetting() {
       >
         {typeof modalContent === "function" ? modalContent() : modalContent}
       </SiteSettingModal>
-
       <Grid
         container
         spacing={3}
         className="container_first_child"
       >
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <h1>{module_name}</h1>
         </Grid>
 
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <Tabs
             value={activeTab}
             onChange={setActiveTab}
@@ -168,10 +166,10 @@ export default function SiteSetting() {
           </Tabs>
         </Grid>
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           {subList.map((subm, i) => {
             const MyComponent = subMap[subm.key];
             return (

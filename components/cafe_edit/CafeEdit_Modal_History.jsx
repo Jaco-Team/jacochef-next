@@ -1,10 +1,10 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 import cn from "@/src/helpers/ui/classnames";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { MyTextInput } from "@/ui/elements";
+import { MyTextInput } from "@/components/shared/Forms";
 
 const CafeEdit_Modal_History = (props) => {
   const { itemView, open, fullScreen, type_modal, date_edit } = props;
@@ -32,7 +32,6 @@ const CafeEdit_Modal_History = (props) => {
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
         <Grid
           container
@@ -41,10 +40,10 @@ const CafeEdit_Modal_History = (props) => {
           {type_modal === "info" && (
             <>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Город"
                   value={
@@ -59,10 +58,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Адрес"
                   value={
@@ -76,10 +75,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={4}
-              >
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyTextInput
                   label="Район"
                   value={
@@ -93,10 +92,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={4}
-              >
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyTextInput
                   label="Сортировка"
                   value={
@@ -110,10 +109,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={4}
-              >
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyTextInput
                   label="Организация"
                   value={
@@ -130,10 +129,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={4}
-              >
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyTextInput
                   label="ИНН"
                   value={itemView?.inn && (itemView.inn.color ? itemView.inn.key : itemView.inn)}
@@ -145,10 +144,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={4}
-              >
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyTextInput
                   label="ОГРН"
                   value={
@@ -162,10 +161,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={4}
-              >
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyTextInput
                   label="КПП"
                   value={itemView?.kpp && (itemView.kpp.color ? itemView.kpp.key : itemView.kpp)}
@@ -177,10 +176,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={4}
-              >
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyTextInput
                   label="Телефон управляющего"
                   value={
@@ -195,10 +194,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={4}
-              >
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyTextInput
                   label="Почта управляющего"
                   value={
@@ -212,10 +211,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={4}
-              >
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyTextInput
                   label="Телефон менеджера"
                   value={
@@ -230,10 +229,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={4}
-              >
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MyTextInput
                   label="Активность"
                   value={
@@ -248,10 +247,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={12}
-              >
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput
                   label="Полный адрес"
                   value={
@@ -272,20 +271,20 @@ const CafeEdit_Modal_History = (props) => {
             <>
               {!date_edit ? null : (
                 <Grid
-                  item
-                  xs={12}
-                  sm={12}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <Typography style={{ alignSelf: "center", fontWeight: "bold" }}>
                     Дата начала изменений: {date_edit ?? ""}
                   </Typography>
                 </Grid>
               )}
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Коэффициент количества пиццы в час"
                   value={
@@ -300,10 +299,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Коэффициент мойки посуды для пиццы (кух раб)"
                   value={
@@ -318,10 +317,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Коэффициент мойки посуды для роллов (кух раб)"
                   value={
@@ -342,20 +341,20 @@ const CafeEdit_Modal_History = (props) => {
             <>
               {!date_edit ? null : (
                 <Grid
-                  item
-                  xs={12}
-                  sm={12}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <Typography style={{ alignSelf: "center", fontWeight: "bold" }}>
                     Дата начала изменений: {date_edit ?? ""}
                   </Typography>
                 </Grid>
               )}
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Оклад директора на 2 недели"
                   value={
@@ -370,10 +369,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Бонус от уровня директору"
                   value={
@@ -390,10 +389,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Часовая ставка курьера"
                   value={
@@ -415,10 +414,10 @@ const CafeEdit_Modal_History = (props) => {
           {type_modal === "sett" ? (
             <>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Если в заказе только пицца, она выйдет на сборку после начала ее приготовления (напитки, допы и закуски не учитываются)"
                   value={
@@ -435,10 +434,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Если заказ приготовить зарнее - он выйдет в приоритете на сборку, кроме предов (напитки, допы и закуски не учитываются)"
                   value={
@@ -455,10 +454,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Пицца у повара будет отображаться, если более 50% роллов в заказе начнут готовить"
                   value={
@@ -475,10 +474,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Общий стол"
                   value={
@@ -495,10 +494,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Кафе"
                   value={
@@ -515,10 +514,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Управляющий"
                   value={
@@ -533,10 +532,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Количество столов сборки"
                   value={
@@ -557,10 +556,10 @@ const CafeEdit_Modal_History = (props) => {
 
           {type_modal === "zone" ? (
             <Grid
-              item
-              xs={12}
-              sm={12}
-            >
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Typography style={{ alignSelf: "center", fontWeight: "bold" }}>
                 {`${itemView?.zone_name} ${itemView?.is_active}: ${itemView?.date_time_update}`}
               </Typography>
@@ -570,10 +569,10 @@ const CafeEdit_Modal_History = (props) => {
           {type_modal === "driver" ? (
             <>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Количество заказов на руках (0 - без ограничений)"
                   value={
@@ -590,10 +589,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Максимальная сумма нала для курьера"
                   value={
@@ -608,10 +607,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Максимальная сумма нала для курьера стажера"
                   value={
@@ -633,10 +632,10 @@ const CafeEdit_Modal_History = (props) => {
           {type_modal === "kkt" ? (
             <>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Номер кассы"
                   value={
@@ -650,10 +649,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Доп касса"
                   value={
@@ -668,10 +667,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="РН ККТ"
                   value={
@@ -686,10 +685,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="База"
                   value={
@@ -703,10 +702,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={12}
-              >
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput
                   label="ФН"
                   value={itemView?.fn && (itemView.fn.color ? itemView.fn.key : itemView.fn)}
@@ -718,10 +717,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Дата регистрации"
                   value={
@@ -736,10 +735,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Дата окончания"
                   value={
@@ -754,10 +753,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Лицензия ОФД дата завершения"
                   value={
@@ -774,10 +773,10 @@ const CafeEdit_Modal_History = (props) => {
                 />
               </Grid>
               <Grid
-                item
-                xs={12}
-                sm={6}
-              >
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyTextInput
                   label="Активность"
                   value={

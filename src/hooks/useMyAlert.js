@@ -8,9 +8,9 @@ export default function useMyAlert(delay = defaultDelay) {
   const [alertStatus, setAlertStatus] = useState(true);
   const [alertTimeout, setAlertTimeout] = useState(null);
 
-  const showAlert = (message, isError = false) => {
+  const showAlert = (message, isSuccess = false) => {
     setAlertMessage(message);
-    setAlertStatus(isError);
+    setAlertStatus(isSuccess);
     setIsAlert(true);
     if (alertTimeout) clearTimeout(alertTimeout);
     setAlertTimeout(setTimeout(() => {

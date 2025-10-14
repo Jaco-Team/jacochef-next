@@ -8,7 +8,7 @@ import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 
 
-import {formatDate, MyAlert, MyDatePickerNew, MyTextInput} from '@/ui/elements';
+import {MyDatePickerNew, MyTextInput} from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
 import Button from "@mui/material/Button";
@@ -18,7 +18,7 @@ import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
 import Table from "@mui/material/Table";
 import Stack from "@mui/material/Stack";
-import {Pagination} from "@mui/lab";
+import {Pagination} from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import ClearIcon from "@mui/icons-material/Clear";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -28,6 +28,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Dialog from "@mui/material/Dialog";
+import { formatDate } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -92,7 +94,11 @@ const DebouncedInput = ({ onChange, delay = 300, ...props }) => {
   //   />
 
   return (
-    <Grid item xs={12} sm={4}>
+    <Grid
+      size={{
+        xs: 12,
+        sm: 4
+      }}>
       <MyTextInput
         {...props}
         label={props.label}
@@ -246,14 +252,12 @@ class VkPrizeList_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false })}>
           <DialogTitle>Подтвердите действие</DialogTitle>
           <DialogContent align="center" sx={{ fontWeight: 'bold' }}>Точно удалить данный приз?</DialogContent>
@@ -262,30 +266,49 @@ class VkPrizeList_ extends React.Component {
             <Button onClick={() => this.delete(item)}>Ok</Button>
           </DialogActions>
         </Dialog>
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={this.state.dateFrom}
               func={(e) => this.changeDate(e, 'dateFrom')}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.dateTo}
               func={(e) => this.changeDate(e, 'dateTo')}
             />
           </Grid>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button variant="contained" onClick={this.getList}>Показать</Button>
           </Grid>
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <DebouncedInput
                     label="Поиск по имени"
                     variant="outlined"
@@ -294,7 +317,10 @@ class VkPrizeList_ extends React.Component {
                     
                 />
               </Grid>
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Table>
               <TableHead>
                 <TableRow>
@@ -343,7 +369,7 @@ class VkPrizeList_ extends React.Component {
           </Grid>
         </Grid>
       </>
-    )
+    );
   }
 }
 

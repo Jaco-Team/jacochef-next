@@ -31,13 +31,15 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import { ExlIcon } from '@/ui/icons';
 
-import { MySelect, MyAlert, formatDate, MyTextInput, MyDatePickerNew } from '@/ui/elements';
+import { MySelect, MyTextInput, MyDatePickerNew } from '@/components/shared/Forms';
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import {api_laravel} from "@/src/api_new";
 
 import axios from 'axios';
 import dayjs from 'dayjs';
+import { formatDate } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 // ---------- Вспомогательные функции для переключения Табов ----------
 
@@ -96,7 +98,12 @@ class SitePriceLevel_Modal_XLS extends React.Component {
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3} style={{ display: 'flex', justifyContent: 'space-evenly' }}>
 
-            <Grid item xs={12} sm={4} x={{ display: 'flex', alignItems: 'center' }}>
+            <Grid
+              x={{ display: 'flex', alignItems: 'center' }}
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <Tooltip title={<Typography color="inherit">{'Скачать шаблон таблицы в Excel'}</Typography>}> 
                 <IconButton disableRipple sx={{ padding: 0 }} onClick={downLoad}>
                   <ExlIcon />
@@ -104,7 +111,12 @@ class SitePriceLevel_Modal_XLS extends React.Component {
               </Tooltip>
             </Grid>
 
-            <Grid item xs={12} sm={4} className='button_import'>
+            <Grid
+              className='button_import'
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <Button variant="contained" component="label" style={{ whiteSpace: 'nowrap' }}>
                 Загрузить файл xls
                 <input type="file" hidden onChange={uploadFile} value={input_value} />
@@ -236,7 +248,11 @@ class SitePriceLevel_Modal_New extends React.Component {
         </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MySelect
                 is_none={false}
                 label="Город"
@@ -246,7 +262,11 @@ class SitePriceLevel_Modal_New extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput
                 label="Название"
                 value={this.state.item ? this.state.item?.level?.name : ''}
@@ -254,7 +274,11 @@ class SitePriceLevel_Modal_New extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyDatePickerNew
                 label="Дата старта"
                 value={dayjs(this.state.item?.level?.date_start)}
@@ -381,7 +405,8 @@ class StatSale_Tab_Dynamic extends React.Component {
     const totalCols = 2 + columnsCount;
 
     return (
-      <Grid item xs={12} sm={12} style={{ paddingTop: '24px' }}>
+      <Grid
+        size={12}>
         <TabPanel 
           value={activeTab} 
           index={1} 
@@ -389,7 +414,11 @@ class StatSale_Tab_Dynamic extends React.Component {
         >
           <Grid container spacing={3}>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew
                 label="Дата от"
                 value={date_start}
@@ -397,7 +426,11 @@ class StatSale_Tab_Dynamic extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyDatePickerNew
                 label="Дата до"
                 value={date_end}
@@ -405,7 +438,11 @@ class StatSale_Tab_Dynamic extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MySelect
                 is_none={false}
                 data={cities}
@@ -415,20 +452,34 @@ class StatSale_Tab_Dynamic extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={2}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 2
+              }}>
               <Button variant="contained" onClick={this.get_data_dynamic}>
                 Показать
               </Button>
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4
+              }}>
               <Button variant={!(columns.length && cats.length) ? "outlined" : "contained"} onClick={this.downLoad} disabled={!(columns.length && cats.length)}>
                 Скачать таблицу в XLS
               </Button>
             </Grid>
 
             {columns.length && cats.length ?
-              <Grid item xs={12} sm={12} mt={3} mb={5}>
+              <Grid
+                mt={3}
+                mb={5}
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TableContainer sx={{ maxHeight: 650, maxWidth: '100%', overflow: 'auto', p: 0, m: 0 }}>
                   <Table size="small" sx={{ borderCollapse: 'separate', borderSpacing: 0, '& .MuiTableCell-root': { textAlign: 'center', whiteSpace: 'nowrap' } }}>
                     <TableHead>
@@ -739,7 +790,6 @@ class SitePriceLevel_Tab_Level extends React.Component {
 
     return (
       <>
-
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="sm"
@@ -755,7 +805,6 @@ class SitePriceLevel_Tab_Level extends React.Component {
             <Button onClick={this.delete_level}>Удалить</Button>
           </DialogActions>
         </Dialog>
-
         <SitePriceLevel_Modal_New
           open={modalDialog}
           onClose={() => this.setState({ modalDialog: false })}
@@ -765,7 +814,6 @@ class SitePriceLevel_Tab_Level extends React.Component {
           fullScreen={fullScreen}
           openAlert={openAlert}
         />
-
         <SitePriceLevel_Modal_XLS
           open={modalDialog_XLS}
           onClose={() => this.setState({ modalDialog_XLS: false })}
@@ -774,16 +822,20 @@ class SitePriceLevel_Tab_Level extends React.Component {
           fullScreen={fullScreen}
           input_value={input_value}
         />
-
         <Backdrop style={{ zIndex: 999 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
-        <Grid item xs={12} sm={12} style={{ paddingTop: '24px' }} mb={10}>
+        <Grid
+          mb={10}
+          size={12}>
           <TabPanel value={activeTab} index={0} id="clients">
             <Grid container spacing={3}>
 
-              <Grid item xs={12} sm={4}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4
+                }}>
                 <MySelect
                   is_none={false}
                   data={cities}
@@ -794,7 +846,11 @@ class SitePriceLevel_Tab_Level extends React.Component {
               </Grid>
 
               {parseInt(acces?.add_level_access) ? (
-                <Grid item xs={12} sm={2}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 2
+                  }}>
                   <Button onClick={() => this.openModal('Новый уровень цен')} variant="contained">
                     Добавить
                   </Button>
@@ -802,14 +858,22 @@ class SitePriceLevel_Tab_Level extends React.Component {
               ) : null}
 
               {parseInt(acces?.get_excel_access) ? (
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <Button onClick={() => this.setState({ modalDialog_XLS: true })} variant="contained">
                     Скачать/Загрузить файл XLS
                   </Button>
                 </Grid>
               ) : null}
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <TableContainer>
                   <Table>
                     <TableHead>
@@ -984,21 +1048,22 @@ class SitePriceLevel_ extends React.Component {
         <Backdrop style={{ zIndex: 999 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={err_status}
           text={err_text}
         />
-
         <Grid container spacing={3} mb={3} className="container_first_child">
 
-          <Grid item xs={12}>
+          <Grid
+            size={12}>
             <h1>{module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} style={{ paddingBottom: 24 }}>
+          <Grid
+            style={{ paddingBottom: 24 }}
+            size={12}>
             <Paper>
               <Tabs
                 value={activeTab}

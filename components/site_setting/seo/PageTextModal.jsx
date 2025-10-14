@@ -1,6 +1,6 @@
 "use client";
 
-import { MyAutocomplite, MySelect, MyTextInput, TextEditor } from "@/ui/elements";
+import { MyAutocomplite, MySelect, MyTextInput, TextEditor } from "@/components/shared/Forms";
 import { usePagesStore } from "./usePagesStore";
 import { Grid, Typography } from "@mui/material";
 import {useSiteSettingStore} from "@/components/site_setting/useSiteSettingStore";
@@ -18,10 +18,10 @@ export function PageTextModal({ cities }) {
       spacing={3}
     >
       <Grid
-        item
-        xs={12}
-        sm={6}
-      >
+        size={{
+          xs: 12,
+          sm: 6
+        }}>
         <MySelect
           is_none={false}
           label="Город"
@@ -31,12 +31,11 @@ export function PageTextModal({ cities }) {
           func={(e) => changeItemProp("city_id", e)}
         />
       </Grid>
-
       <Grid
-        item
-        xs={12}
-        sm={6}
-      >
+        size={{
+          xs: 12,
+          sm: 6
+        }}>
         <MyAutocomplite
           label="Категория"
           multiple={false}
@@ -47,12 +46,11 @@ export function PageTextModal({ cities }) {
           func={(...params) => changeAutoComplete("category_id", ...params)}
         />
       </Grid>
-
       <Grid
-        item
-        xs={12}
-        sm={6}
-      >
+        size={{
+          xs: 12,
+          sm: 6
+        }}>
         <MyTextInput
           label="Страница"
           disabled={acces.seo_view && !acces.seo_edit}
@@ -60,12 +58,11 @@ export function PageTextModal({ cities }) {
           func={(e) => changeItemProp("page_name", e)}
         />
       </Grid>
-
       <Grid
-        item
-        xs={12}
-        sm={6}
-      >
+        size={{
+          xs: 12,
+          sm: 6
+        }}>
         <MyTextInput
           label="Ссылка"
           disabled={acces.seo_view && !acces.seo_edit}
@@ -73,12 +70,11 @@ export function PageTextModal({ cities }) {
           func={(e) => changeItemProp("link", e)}
         />
       </Grid>
-
       <Grid
-        item
-        xs={12}
-        sm={6}
-      >
+        size={{
+          xs: 12,
+          sm: 6
+        }}>
         <MyTextInput
           label="Заголовок (H1-H2)"
           disabled={acces.seo_view && !acces.seo_edit}
@@ -86,12 +82,11 @@ export function PageTextModal({ cities }) {
           func={(e) => changeItemProp("page_h", e)}
         />
       </Grid>
-
       <Grid
-        item
-        xs={12}
-        sm={6}
-      >
+        size={{
+          xs: 12,
+          sm: 6
+        }}>
         <MyTextInput
           label="Заголовок (title)"
           disabled={acces.seo_view && !acces.seo_edit}
@@ -99,12 +94,11 @@ export function PageTextModal({ cities }) {
           func={(e) => changeItemProp("title", e)}
         />
       </Grid>
-
       <Grid
-        item
-        xs={12}
-        sm={12}
-      >
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <MyTextInput
           label="Описание (description)"
           multiline={true}
@@ -114,12 +108,11 @@ export function PageTextModal({ cities }) {
           func={(e) => changeItemProp("description", e)}
         />
       </Grid>
-
       <Grid
-        item
-        xs={12}
-        sm={12}
-      >
+        size={{
+          xs: 12,
+          sm: 12
+        }}>
         <Typography gutterBottom>Текст на сайте</Typography>
         <TextEditor
           disabled={acces.seo_view && !acces.seo_edit || (!acces.edit_spec_text_access && currentItem?.rule_edit_text)}

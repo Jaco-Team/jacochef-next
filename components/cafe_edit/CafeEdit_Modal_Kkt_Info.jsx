@@ -2,14 +2,12 @@
 
 import { memo, useEffect, useState } from "react";
 import {
-  formatDate,
-  MyAlert,
   MyAutocomplite,
   MyCheckBox,
   MyDatePickerNew,
   MySelect,
   MyTextInput,
-} from "@/ui/elements";
+} from "@/components/shared/Forms";
 import {
   Dialog,
   DialogTitle,
@@ -24,6 +22,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import dayjs from "dayjs";
 import CafeEdit_Modal_Kkt_Info_Add from "./CafeEdit_Modal_Kkt_Info_Add";
+import MyAlert from "@/components/shared/MyAlert";
+import { formatDate } from "@/src/helpers/ui/formatDate";
 
 const defaultKassRange = [
   { id: "1", name: "1" },
@@ -168,14 +168,12 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
         status={alertStatus}
         text={alertMessage}
       />
-
       <CafeEdit_Modal_Kkt_Info_Add
         open={addDialog}
         onClose={() => setAddDialog(false)}
         fullScreen={fullScreen}
         addFN={addFN}
       />
-
       <Dialog
         open={open}
         onClose={onClose}
@@ -203,58 +201,58 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
             {type === "view_kkt" && (
               <>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="Номер кассы"
-                    value={kassa}
+                    value={kassa ?? ""}
                     disabled={true}
                     className="disabled_input"
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="Доп касса"
-                    value={dopKassa}
+                    value={dopKassa ?? ""}
                     disabled={true}
                     className="disabled_input"
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="РН ККТ"
-                    value={rnKkt}
+                    value={rnKkt ?? ""}
                     disabled={true}
                     className="disabled_input"
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="База"
-                    value={base}
+                    value={base ?? ""}
                     disabled={true}
                     className="disabled_input"
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={12}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="ФН"
                     value={fn?.name ?? ""}
@@ -263,22 +261,22 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="Лицензия ОФД дата завершения"
-                    value={dateLicense}
+                    value={dateLicense ?? ""}
                     disabled={true}
                     className="disabled_input"
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={4}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     label="Активность"
                     value={parseInt(isActive) === 1 ? "Активна" : "Не активна"}
@@ -292,62 +290,62 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
             {(type === "update_kkt" || type === "add_kkt") && (
               <>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MySelect
                     is_none={false}
                     data={defaultKassRange}
-                    value={kassa}
+                    value={kassa ?? ""}
                     disabled={!canEdit("edit_kkt")}
                     func={(e) => canEdit("edit_kkt") && setKassa(e.target.value)}
                     label="Номер кассы"
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MySelect
                     is_none={false}
                     data={defaultKassRange}
-                    value={dopKassa}
+                    value={dopKassa ?? ""}
                     disabled={!canEdit("edit_dop_kassa")}
                     func={(e) => canEdit("edit_dop_kassa") && setDopKassa(e.target.value)}
                     label="Доп касса"
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="РН ККТ"
-                    value={rnKkt}
+                    value={rnKkt ?? ""}
                     disabled={!canEdit("edit_rn_kkt")}
                     func={(e) => canEdit("edit_rn_kkt") && setRnKkt(e.target.value)}
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     label="База"
-                    value={base}
+                    value={base ?? ""}
                     disabled={!canEdit("edit_base")}
                     func={(e) => canEdit("edit_base") && setBase(e.target.value)}
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={12}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyAutocomplite
                     label="ФН"
                     multiple={false}
@@ -359,26 +357,26 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyDatePickerNew
                     label="Лицензия ОФД дата завершения"
-                    value={dateLicense}
+                    value={dateLicense ?? ""}
                     disabled={!canEdit("edit_license")}
                     func={(date) => canEdit("edit_license") && setDateLicense(date)}
                   />
                 </Grid>
                 <Grid
-                  item
-                  xs={12}
-                  sm={4}
-                >
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyCheckBox
                     value={parseInt(isActive) === 1 ? true : false}
                     disabled={!canEdit("edit_active")}
-                    func={(e) => canEdit("edit_active") && setIsActive(e.target.checked)}
+                    func={(e) => canEdit("edit_active") && setIsActive(e.target.checked ? 1 : 0)}
                     label="Активность"
                   />
                 </Grid>

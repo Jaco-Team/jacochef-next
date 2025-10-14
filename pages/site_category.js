@@ -19,9 +19,10 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import { MyTextInput, MySelect, MyAlert } from '@/ui/elements';
+import { MyTextInput, MySelect } from '@/components/shared/Forms';
 
 import { api_laravel_local, api_laravel } from '@/src/api_new';
+import MyAlert from '@/components/shared/MyAlert';
 
 class SiteCategory_Modal extends React.Component {
   constructor(props) {
@@ -101,7 +102,6 @@ class SiteCategory_Modal extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog
           open={this.props.open}
           onClose={this.onClose.bind(this)}
@@ -120,7 +120,11 @@ class SiteCategory_Modal extends React.Component {
 
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput
                   label="Название категории"
                   value={this.state.item ? this.state.item.name : ''}
@@ -128,7 +132,11 @@ class SiteCategory_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput
                   label="Сроки хранения"
                   multiline={true}
@@ -138,7 +146,11 @@ class SiteCategory_Modal extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MySelect
                   label="Дочерняя категория"
                   data={this.state.listCat ? this.state.listCat : []}
@@ -357,14 +369,12 @@ class SiteCategory_ extends React.Component {
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <SiteCategory_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false, itemName: '', method: '' })}
@@ -376,13 +386,20 @@ class SiteCategory_ extends React.Component {
           fullScreen={this.state.fullScreen}
           save={this.save.bind(this)}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button
               variant="contained"
               color="primary"
@@ -394,7 +411,12 @@ class SiteCategory_ extends React.Component {
           </Grid>
 
           {!this.state.main ? null : (
-            <Grid item xs={12} sm={12} mb={10}>
+            <Grid
+              mb={10}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -416,6 +438,7 @@ class SiteCategory_ extends React.Component {
                             </TableCell>
                             <TableCell>
                               <MyTextInput
+                                type="number"
                                 label=""
                                 value={item.sort}
                                 func={this.changeSort.bind(this, index, 'cat', null)}
@@ -432,6 +455,7 @@ class SiteCategory_ extends React.Component {
                               </TableCell>
                               <TableCell>
                                 <MyTextInput
+                                  type="number"
                                   label=""
                                   value={it.sort}
                                   func={this.changeSort.bind(this, key, 'subCat', item.id)}

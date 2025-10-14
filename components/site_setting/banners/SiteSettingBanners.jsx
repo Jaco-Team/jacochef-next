@@ -1,6 +1,6 @@
 "use client";
 
-import { MyCheckBox, MySelect, MyTextInput } from "@/ui/elements";
+import { MyCheckBox, MySelect, MyTextInput } from "@/components/shared/Forms";
 import {
   Accordion,
   AccordionDetails,
@@ -141,9 +141,6 @@ export function SiteSettingBanners(props) {
       spacing={3}
     >
       <Grid
-        item
-        xs={12}
-        sm={12}
         sx={{
           display: "flex",
           flexDirection: {
@@ -154,7 +151,7 @@ export function SiteSettingBanners(props) {
           alignItems: "flex-start", // or 'center' based on your taste
           justifyContent: "space-between", // optional
         }}
-      >
+        size={12}>
         <Typography variant="h5">{moduleName}</Typography>
 
         {acces.banners_edit ? (
@@ -166,13 +163,8 @@ export function SiteSettingBanners(props) {
           </Button>
         ) : null}
       </Grid>
-
       <Grid
-        item
-        xs={12}
-        sm={12}
-        sx={{ p: 3 }}
-      >
+        size={12}>
         <MySelect
           data={cities}
           value={cityId}
@@ -181,14 +173,13 @@ export function SiteSettingBanners(props) {
           is_none={false}
         />
       </Grid>
-
       {/* таблица активных баннеров */}
       {active.length > 0 && (
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <TableContainer>
             <Table>
               <TableHead>
@@ -227,10 +218,10 @@ export function SiteSettingBanners(props) {
                     <TableCell>{item?.link}</TableCell>
                     <TableCell>
                       <Grid
-                        item
-                        xs={12}
-                        sm={6}
-                      >
+                        size={{
+                          xs: 12,
+                          sm: 6
+                        }}>
                         <MyTextInput
                           value={item.sort}
                           disabled={acces.banners_view && !acces.banners_edit}
@@ -256,14 +247,13 @@ export function SiteSettingBanners(props) {
           </TableContainer>
         </Grid>
       )}
-
       {/* таблица законченные баннеров */}
       {non_active.length > 0 && (
         <Grid
-          item
-          xs={12}
-          sm={12}
-        >
+          size={{
+            xs: 12,
+            sm: 12
+          }}>
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography sx={{ fontWeight: "bold" }}>Законченные</Typography>

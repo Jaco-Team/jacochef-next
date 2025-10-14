@@ -19,11 +19,13 @@ import {
   TableRow,
 } from "@mui/material";
 
-import { MySelect, MyTextInput, MyDatePickerNew, formatDate, MyAlert } from "@/ui/elements";
+import { MySelect, MyTextInput, MyDatePickerNew } from "@/components/shared/Forms";
 
 import dayjs from "dayjs";
 import { api_laravel } from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import MyAlert from "@/components/shared/MyAlert";
+import { formatDate } from "@/src/helpers/ui/formatDate";
 
 class DriverStat_ extends React.Component {
   click = false;
@@ -344,7 +346,6 @@ class DriverStat_ extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog
           open={this.state.modalGetCash}
           onClose={() => {
@@ -370,7 +371,6 @@ class DriverStat_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.state.modalGiveCash}
           onClose={() => {
@@ -389,10 +389,10 @@ class DriverStat_ extends React.Component {
               spacing={3}
             >
               <Grid
-                item
-                xs={12}
-                sm={12}
-              >
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput
                   type="number"
                   value={this.state.giveSumm}
@@ -404,10 +404,10 @@ class DriverStat_ extends React.Component {
               </Grid>
 
               <Grid
-                item
-                xs={12}
-                sm={12}
-              >
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput
                   maxRows={2}
                   value={this.state.giveCashComment}
@@ -428,7 +428,6 @@ class DriverStat_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.state.modalDialogStatSumm}
           onClose={() => {
@@ -466,7 +465,6 @@ class DriverStat_ extends React.Component {
             </Table>
           </DialogContent>
         </Dialog>
-
         <Dialog
           open={this.state.modalDialogStatSummMain}
           onClose={() => {
@@ -506,25 +504,24 @@ class DriverStat_ extends React.Component {
             </Table>
           </DialogContent>
         </Dialog>
-
         <Grid
           container
           spacing={3}
           className="container_first_child"
         >
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -532,10 +529,10 @@ class DriverStat_ extends React.Component {
             />
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -544,10 +541,10 @@ class DriverStat_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={6}
-          >
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MySelect
               data={this.state.points}
               value={this.state.point}
@@ -556,10 +553,10 @@ class DriverStat_ extends React.Component {
             />
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={6}
-          >
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button
               variant="contained"
               onClick={this.updateData.bind(this)}
@@ -569,9 +566,9 @@ class DriverStat_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-          >
+            size={{
+              xs: 12
+            }}>
             <TableContainer component={Paper}>
               <Table>
                 <TableHead>
@@ -672,9 +669,9 @@ class DriverStat_ extends React.Component {
 
           {this.state.drive_stat_date == null ? null : (
             <Grid
-              item
-              xs={12}
-            >
+              size={{
+                xs: 12
+              }}>
               <TableContainer component={Paper} >
                 <Table>
                   <TableHead>

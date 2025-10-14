@@ -18,7 +18,7 @@ import TableRow from '@mui/material/TableRow';
 
 import Dropzone from "dropzone";
 
-import { MyTextInput, MySelect } from '@/ui/elements';
+import { MyTextInput, MySelect } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
@@ -349,7 +349,6 @@ class ItemsPr_ extends React.Component {
         <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         {!this.state.itemsEdit ? null : (
           <Dialog
             open={this.state.modalDialog}
@@ -365,7 +364,11 @@ class ItemsPr_ extends React.Component {
             <DialogTitle>{ parseInt(this.state.itemsEdit.item.id) == 0 ? "Создание приза" : "Приз "+this.state.nameWork }</DialogTitle>
             <DialogContent style={{ paddingTop: 10 }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     value={this.state.itemsEdit.item.name}
                     func={this.chengeItem.bind(this, 'name')}
@@ -373,7 +376,11 @@ class ItemsPr_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     value={this.state.itemsEdit.item.about}
                     func={this.chengeItem.bind(this, 'about')}
@@ -381,14 +388,22 @@ class ItemsPr_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyTextInput
                     value={this.state.itemsEdit.item.company}
                     func={this.chengeItem.bind(this, 'company')}
                     label="Название компании"
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MySelect
                     is_none={false}
                     data={this.state.itemsEdit.city_list}
@@ -398,7 +413,11 @@ class ItemsPr_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     value={this.state.itemsEdit.item.date_end}
                     func={this.chengeItem.bind(this, 'date_end')}
@@ -406,7 +425,11 @@ class ItemsPr_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     value={this.state.itemsEdit.item.promo}
                     func={this.chengeItem.bind(this, 'promo')}
@@ -414,7 +437,11 @@ class ItemsPr_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <MyTextInput
                     type="number"
                     value={this.state.itemsEdit.item.percent}
@@ -424,14 +451,24 @@ class ItemsPr_ extends React.Component {
                 </Grid>
 
 
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <Grid container spacing={3}>
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <span>Картинка соотношением сторон (1:1) (пример: 512х512) только JPG</span>
                     </Grid>
                   
 
-                    <Grid item xs={12} sm={6}>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
                       { this.state.itemsEdit.item.logo_src.length > 0 ?
                         <img 
                           src={"https://storage.yandexcloud.net/site-other-data/"+this.state.itemsEdit.item.logo_src+"_512x512.jpg"} 
@@ -441,7 +478,11 @@ class ItemsPr_ extends React.Component {
                         <div style={{maxWidth: 300, maxHeight: 300}}/>
                       }
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
                       <div className="dropzone" id="for_img_edit_new" style={{ width: '100%', minHeight: 150 }} />
                     </Grid>
                   </Grid>
@@ -457,13 +498,20 @@ class ItemsPr_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Button
               variant="contained"
               color="primary"
@@ -474,7 +522,12 @@ class ItemsPr_ extends React.Component {
           </Grid>
 
           {/* таблица_статистика */}
-          <Grid item xs={12} sm={12} mb={5}>
+          <Grid
+            mb={5}
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             {!this.state.stat ? null :
               <ItemsPr_TableStat 
                 stat={this.state.stat} 
@@ -483,7 +536,11 @@ class ItemsPr_ extends React.Component {
           </Grid>
 
           {/* таблица_призы */}
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
           { this.state.items.length > 0 ?
             <AppWorkTable 
               items={this.state.items} 

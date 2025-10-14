@@ -30,9 +30,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MyAutocomplite, TextEditor22, MyAlert, MyTextInput } from '@/ui/elements';
+import { MyAutocomplite, TextEditor22, MyTextInput } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
+import MyAlert from '@/components/shared/MyAlert';
 
 class FAQ_Modal_View extends React.Component {
   constructor(props) {
@@ -88,7 +89,11 @@ class FAQ_Modal_View extends React.Component {
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <MyTextInput
                 label="Название"
                 value={this.state.itemView?.name}
@@ -97,7 +102,11 @@ class FAQ_Modal_View extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Раздел"
                 value={this.state.itemView?.faq_id?.name}
@@ -106,7 +115,11 @@ class FAQ_Modal_View extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <MyTextInput
                 label="Должности"
                 value={this.state.itemView?.apps}
@@ -115,12 +128,20 @@ class FAQ_Modal_View extends React.Component {
               />
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TextEditor22 id="EditorNew" value={this.state.itemView?.text} refs_={this.myRef_view} toolbar={false} menubar={false}/>
             </Grid>
 
             {this.state.itemView?.hist && parseInt(acces?.show_hist) ? 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <Accordion style={{ width: '100%' }}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
@@ -152,13 +173,11 @@ class FAQ_Modal_View extends React.Component {
           </Grid>
 
         </DialogContent>
-
         <DialogActions>
           <Button variant="contained" onClick={this.onClose.bind(this)}>
             Закрыть
           </Button>
         </DialogActions>
-
       </Dialog>
     );
   }
@@ -340,7 +359,6 @@ class FAQ_Modal extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({ confirmDialog: false })}>
           <DialogTitle>Подтвердите действие</DialogTitle>
           <DialogContent align="center" sx={{ fontWeight: 'bold' }}>Точно удалить {type === 'section_edit' ?  'данный раздел ?' : 'данную статью ?'}</DialogContent>
@@ -349,7 +367,6 @@ class FAQ_Modal extends React.Component {
             <Button onClick={this.delete.bind(this)}>Ok</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={open}
           onClose={this.onClose.bind(this)}
@@ -368,7 +385,11 @@ class FAQ_Modal extends React.Component {
           {!this.state.item ? null : (
             <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="Название"
                     value={this.state.item.name}
@@ -377,7 +398,11 @@ class FAQ_Modal extends React.Component {
                 </Grid>
 
                 {type === 'section' || type === 'section_edit' ? 
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <MyAutocomplite
                       label="Статьи"
                       multiple={true}
@@ -388,7 +413,11 @@ class FAQ_Modal extends React.Component {
                   </Grid>
                   :
                   <>
-                    <Grid item xs={12} sm={6}>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
                       <MyAutocomplite
                         label="Раздел"
                         multiple={false}
@@ -397,7 +426,11 @@ class FAQ_Modal extends React.Component {
                         func={this.changeAutocomplite.bind(this, 'faq_id')}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
                       <MyAutocomplite
                         label=" Должности"
                         multiple={true}
@@ -410,14 +443,22 @@ class FAQ_Modal extends React.Component {
                 }
 
                 {type === 'art' || type === 'art_edit' ? 
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <TextEditor22 id="EditorNew" func={this.changeEditor.bind(this)} value={this.state.item?.text} refs_={this.myRef} toolbar={true} menubar={true} />
                   </Grid>
                   : null
                 }
 
                 {(type === 'art' || type === 'art_edit') && this.state.item?.hist && parseInt(acces?.show_hist) ? 
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <Accordion style={{ width: '100%' }}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Typography style={{ fontWeight: 'bold' }}>История изменений</Typography>
@@ -1030,7 +1071,6 @@ class FAQ_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <FAQ_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false, item: null, item_name: '' })}
@@ -1046,7 +1086,6 @@ class FAQ_ extends React.Component {
           delete={this.delete.bind(this)}
           acces={this.state.acces}
         />
-
         <FAQ_Modal_View
           open={this.state.modalDialogView}
           onClose={() => this.setState({ modalDialogView: false, item: null, item_name: '' })}
@@ -1056,33 +1095,47 @@ class FAQ_ extends React.Component {
           item_name={this.state.item_name}
           acces={this.state.acces}
         />
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Grid container spacing={3} mb={3} className='container_first_child'>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <Button onClick={this.openModal_add.bind(this, 'Новый раздел', 'section')} variant="contained">
               Добавить раздел
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={4}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <Button onClick={this.openModal_add.bind(this, 'Новая статья', 'art')} variant="contained">
               Добавить статью
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <MyTextInput
               label="Поиск по статьям"
               value={this.state.searchItem}
@@ -1092,7 +1145,11 @@ class FAQ_ extends React.Component {
           </Grid>
 
           {/* список разделов */}
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             {this.state.section.map( (item, key) =>
               <Accordion style={{ width: '100%' }} key={key}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />} className='accordion_f_a_q' style={{ backgroundColor: parseInt(item.status) === 2 ? '#fadadd' : '#fff'}}>
@@ -1140,7 +1197,12 @@ class FAQ_ extends React.Component {
 
           {/* список статей без раздела */}
           {!this.state.none_section.length ? null :
-            <Grid item xs={12} sm={12} style={{ marginBottom: 100 }}>
+            <Grid
+              style={{ marginBottom: 100 }}
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <Accordion style={{ width: '100%' }}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography style={{ fontWeight: 'bold' }}>Без раздела</Typography>

@@ -14,7 +14,7 @@ import TabContext from "@mui/lab/TabContext";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import TabPanel from "@mui/lab/TabPanel";
-import {formatDate, MyAlert, MyAutocomplite, MyDatePickerNewViews} from "@/ui/elements";
+import {MyAutocomplite, MyDatePickerNewViews} from "@/components/shared/Forms";
 import TableContainer from "@mui/material/TableContainer";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
@@ -33,6 +33,8 @@ import timezone from 'dayjs/plugin/timezone';
 import ModalDelete from "@/components/service_indicators/ModalDelete";
 import DeleteIcon from "@mui/icons-material/Delete";
 import IconButton from "@mui/material/IconButton";
+import { formatDate } from '@/src/helpers/ui/formatDate';
+import MyAlert from '@/components/shared/MyAlert';
 
 function IndicatorsPage() {
 	const [isLoad, setIsLoad] = useState(false);
@@ -359,7 +361,7 @@ function IndicatorsPage() {
 
 
 	return (
-		<Grid item xs={12} sm={12} container spacing={3} mb={3} className="container_first_child">
+		<Grid size={12} container spacing={3} mb={3} className="container_first_child">
 			<Backdrop style={{zIndex: 99}} open={isLoad}>
 				<CircularProgress color="inherit"/>
 			</Backdrop>
@@ -432,10 +434,10 @@ function IndicatorsPage() {
 					onDelete={deleteFutureDriver}
 				/>
 			)}
-			<Grid item xs={12} sm={6}>
+			<Grid size={{ xs: 12, sm: 6 }}>
 				<h1>{module.name}</h1>
 			</Grid>
-			<Grid item xs={12} sm={12} style={{paddingBottom: 24}}>
+			<Grid size={12} style={{paddingBottom: 24}}>
 				<Paper>
 					<TabContext value={value}>
 						<Tabs
@@ -449,11 +451,11 @@ function IndicatorsPage() {
 					</TabContext>
 				</Paper>
 			</Grid>
-			<Grid item xs={12} sm={12} style={{paddingTop: 0}}>
+			<Grid size={12} style={{paddingTop: 0}}>
 				<TabContext value={value}>
 					<TabPanel value="average_time">
 						<Grid container spacing={3}>
-							<Grid item xs={12} sm={12} style={{paddingBottom: 10, paddingTop: 0}}>
+							<Grid size={12} style={{paddingBottom: 10, paddingTop: 0}}>
 								<Paper>
 									<Tabs
 										value={activeTab}
@@ -468,15 +470,15 @@ function IndicatorsPage() {
 								</Paper>
 							</Grid>
 
-							<Grid item xs={12} sm={12} style={{paddingBottom: 10}}>
+							<Grid size={12} style={{paddingBottom: 10}}>
 								{activeTab === 'settings' && (
 									<Grid container spacing={3}>
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<MyAutocomplite label="Точки" data={points} value={pointSettings} func={(event, data) => {
 													setPointSettings(data);
 												}}/>
 											</Grid>
-										<Grid item xs={12} sm={12} mt={3} mb={5}>
+										<Grid size={12} mt={3} mb={5}>
 											<TableContainer style={{
 												overflowX: 'auto',
 												maxWidth: '100%',
@@ -553,7 +555,7 @@ function IndicatorsPage() {
 											</TableContainer>
 										</Grid>
 										{!statFutureTimes.length ? null : (
-											<Grid item xs={12} sm={12}>
+											<Grid size={12}>
 												<Accordion>
 													<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
 														<Typography>История изменений</Typography>
@@ -665,9 +667,9 @@ function IndicatorsPage() {
 								)}
 								{activeTab === 'table_month' && (
 									<>
-										<Grid container spacing={3} xs={12} sm={6}>
+										<Grid container spacing={3} size={{ xs: 12, sm: 6 }}>
 
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<MyDatePickerNewViews
 													label="Дата от"
 													views={['month', 'year']}
@@ -676,7 +678,7 @@ function IndicatorsPage() {
 												/>
 											</Grid>
 
-											<Grid item xs={12} sm={6} style={{paddingLeft: 12}}>
+											<Grid size={{ xs: 12, sm: 6 }} style={{paddingLeft: 12}}>
 												<MyDatePickerNewViews
 													label="Дата до"
 													views={['month', 'year']}
@@ -685,28 +687,28 @@ function IndicatorsPage() {
 												/>
 											</Grid>
 
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
 													setPoint(data)
 												}}/>
 											</Grid>
 
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<Button variant="contained" onClick={getTableData}>
 													Показать
 												</Button>
 											</Grid>
 										</Grid>
-										<Grid item xs={12} sm={12} paddingTop={4}>
+										<Grid size={12} paddingTop={4}>
 											{tableData.rows && <PerformanceTable dataTable={tableData}/>}
 										</Grid>
 									</>
 								)}
 								{activeTab === 'table_year' && (
 									<>
-										<Grid container spacing={3} xs={12} sm={6}>
+										<Grid container spacing={3} size={{ xs: 12, sm: 6 }}>
 
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<MyDatePickerNewViews
 													label="Дата от"
 													views={['year']}
@@ -715,7 +717,7 @@ function IndicatorsPage() {
 												/>
 											</Grid>
 
-											<Grid item xs={12} sm={6} style={{paddingLeft: 12}}>
+											<Grid size={{ xs: 12, sm: 6 }} style={{paddingLeft: 12}}>
 												<MyDatePickerNewViews
 													label="Дата до"
 													views={['year']}
@@ -724,19 +726,19 @@ function IndicatorsPage() {
 												/>
 											</Grid>
 
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
 													setPoint(data)
 												}}/>
 											</Grid>
 
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<Button variant="contained" onClick={getTableDataYear}>
 													Показать
 												</Button>
 											</Grid>
 										</Grid>
-										<Grid item xs={12} sm={12} paddingTop={4}>
+										<Grid size={12} paddingTop={4}>
 											{tableDataYear.rows && <PerformanceTableYears dataTable={tableDataYear}/>}
 										</Grid>
 									</>
@@ -746,7 +748,7 @@ function IndicatorsPage() {
 					</TabPanel>
 					<TabPanel value="driver_time">
 						<Grid container spacing={3}>
-							<Grid item xs={12} sm={12} style={{paddingBottom: 10, paddingTop: 0}}>
+							<Grid size={12} style={{paddingBottom: 10, paddingTop: 0}}>
 								<Paper>
 									<Tabs
 										value={activeTab}
@@ -761,15 +763,15 @@ function IndicatorsPage() {
 								</Paper>
 							</Grid>
 
-							<Grid item xs={12} sm={12} style={{paddingBottom: 10}}>
+							<Grid size={12} style={{paddingBottom: 10}}>
 								{activeTab === 'settings' && (
 									<Grid container spacing={3}>
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<MyAutocomplite label="Точки" data={points} value={pointSettings} func={(event, data) => {
 													setPointSettings(data);
 												}}/>
 											</Grid>
-										<Grid item xs={12} sm={12} mt={3} mb={5}>
+										<Grid size={12} mt={3} mb={5}>
 											<TableContainer style={{
 												overflowX: 'auto',
 												maxWidth: '100%',
@@ -846,7 +848,7 @@ function IndicatorsPage() {
 											</TableContainer>
 										</Grid>
 										{!statFutureTimes.length ? null : (
-											<Grid item xs={12} sm={12}>
+											<Grid size={12}>
 												<Accordion>
 													<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
 														<Typography>История изменений</Typography>
@@ -958,9 +960,9 @@ function IndicatorsPage() {
 								)}
 								{activeTab === 'table_month' && (
 									<>
-										<Grid container spacing={3} xs={12} sm={6}>
+										<Grid container spacing={3} size={{ xs: 12, sm: 6 }}>
 
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<MyDatePickerNewViews
 													label="Дата от"
 													views={['month', 'year']}
@@ -969,7 +971,7 @@ function IndicatorsPage() {
 												/>
 											</Grid>
 
-											<Grid item xs={12} sm={6} style={{paddingLeft: 12}}>
+											<Grid size={{ xs: 12, sm: 6 }} style={{paddingLeft: 12}}>
 												<MyDatePickerNewViews
 													label="Дата до"
 													views={['month', 'year']}
@@ -978,28 +980,28 @@ function IndicatorsPage() {
 												/>
 											</Grid>
 
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
 													setPoint(data)
 												}}/>
 											</Grid>
 
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<Button variant="contained" onClick={getTableDataDriver}>
 													Показать
 												</Button>
 											</Grid>
 										</Grid>
-										<Grid item xs={12} sm={12} paddingTop={4}>
+										<Grid size={12} paddingTop={4}>
 											{tableData.rows && <PerformanceTable dataTable={tableData}/>}
 										</Grid>
 									</>
 								)}
 								{activeTab === 'table_year' && (
 									<>
-										<Grid container spacing={3} xs={12} sm={6}>
+										<Grid container spacing={3} size={{ xs: 12, sm: 6 }}>
 
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<MyDatePickerNewViews
 													label="Дата от"
 													views={['year']}
@@ -1008,7 +1010,7 @@ function IndicatorsPage() {
 												/>
 											</Grid>
 
-											<Grid item xs={12} sm={6} style={{paddingLeft: 12}}>
+											<Grid size={{ xs: 12, sm: 6 }} style={{paddingLeft: 12}}>
 												<MyDatePickerNewViews
 													label="Дата до"
 													views={['year']}
@@ -1017,19 +1019,19 @@ function IndicatorsPage() {
 												/>
 											</Grid>
 
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<MyAutocomplite label="Точки" data={points} multiple={true} value={point} func={(event, data) => {
 													setPoint(data)
 												}}/>
 											</Grid>
 
-											<Grid item xs={12} sm={6}>
+											<Grid size={{ xs: 12, sm: 6 }}>
 												<Button variant="contained" onClick={getTableDataYearDriver}>
 													Показать
 												</Button>
 											</Grid>
 										</Grid>
-										<Grid item xs={12} sm={12} paddingTop={4}>
+										<Grid size={12} paddingTop={4}>
 											{tableDataYear.rows && <PerformanceTableYears dataTable={tableDataYear}/>}
 										</Grid>
 									</>

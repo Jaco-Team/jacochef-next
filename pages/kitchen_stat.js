@@ -19,7 +19,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 
-import { MyAutocomplite, MyDatePickerNew, formatDate, MyAlert } from "@/ui/elements";
+import { MyAutocomplite, MyDatePickerNew } from "@/components/shared/Forms";
 
 import { api_laravel_local, api_laravel } from "@/src/api_new";
 
@@ -31,6 +31,8 @@ import DownloadButton from "@/components/shared/DownloadButton";
 import { Box, Stack } from "@mui/material";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import TestAccess from "@/components/shared/TestAccess";
+import { formatDate } from "@/src/helpers/ui/formatDate";
+import MyAlert from "@/components/shared/MyAlert";
 
 const statPartsNames = [
   "orders_by_h",
@@ -323,37 +325,34 @@ class KitchenStat_ extends React.Component {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
-
         {/* <TestAccess
           access={this.state.access}
           setAccess={(access) => this.setState({ access })}
         /> */}
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Grid
           container
           spacing={3}
           className="container_first_child"
         >
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={4}
-          >
+            size={{
+              xs: 12,
+              sm: 4
+            }}>
             <MyAutocomplite
               label="Точки"
               multiple={true}
@@ -364,10 +363,10 @@ class KitchenStat_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -376,10 +375,10 @@ class KitchenStat_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -388,10 +387,10 @@ class KitchenStat_ extends React.Component {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            sm={2}
-          >
+            size={{
+              xs: 12,
+              sm: 2
+            }}>
             <Button
               onClick={this.getStatParts.bind(this)}
               variant="contained"
@@ -400,21 +399,21 @@ class KitchenStat_ extends React.Component {
             </Button>
           </Grid>
         </Grid>
-
         <Grid
           container
           pt={1}
           spacing={3}
+          sx={{paddingInline: "24px"}}
         >
 
           {/* таблица Оформленные заказы по часам */}
           {(this.state.arrayOrdersByH?.length || this.state.is_load_parts?.orders_by_h) && (
             <Grid
-              item
-              xs={12}
-              sm={12}
               mt={5}
-            >
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -507,11 +506,11 @@ class KitchenStat_ extends React.Component {
           {/* таблица Завершенные заказы по типу */}
           {(this.state.data?.type_stat_new?.length || this.state.is_load_parts?.type_stat_new) && (
             <Grid
-              item
-              xs={12}
-              sm={6}
               mt={5}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -560,11 +559,11 @@ class KitchenStat_ extends React.Component {
           {/* таблица Заказы по статусу */}
           {(this.state.data?.status_stat?.length || this.state.is_load_parts?.status_stat) && (
             <Grid
-              item
-              xs={12}
-              sm={6}
               mt={5}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -611,11 +610,11 @@ class KitchenStat_ extends React.Component {
           {/* таблица Не завершенные заказы */}
           {(this.state.data?.fake_orders?.length || this.state.is_load_parts?.fake_orders) && (
             <Grid
-              item
-              xs={12}
-              sm={12}
               mt={5}
-            >
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -670,11 +669,11 @@ class KitchenStat_ extends React.Component {
           {/* аккордион Проданные позиции (разбивка сетов, без допов) */}
           {(this.state.statAllItemsCount > 0 || this.state.is_load_parts?.stat_all_items) && (
             <Grid
-              item
-              xs={12}
-              sm={6}
               mt={3}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Grid
@@ -738,11 +737,11 @@ class KitchenStat_ extends React.Component {
           {/* аккордион Проданные позиции (все) */}
           {(this.state.data?.all_items_all || this.state.is_load_parts?.all_items_all) && (
             <Grid
-              item
-              xs={12}
-              sm={6}
               mt={3}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box sx={{ display: "flex", gap: 2 }}>
@@ -783,11 +782,11 @@ class KitchenStat_ extends React.Component {
             !this.isEmptyCheckoutStats("stat_items_checkout")) ||
             this.state.is_load_parts?.stat_items_checkout) && (
             <Grid
-              item
-              xs={12}
-              sm={6}
               mt={3}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box
@@ -837,9 +836,9 @@ class KitchenStat_ extends React.Component {
                       spacing={3}
                     >
                       <Grid
-                        item
-                        xs={12}
-                      >
+                        size={{
+                          xs: 12
+                        }}>
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout?.cash}
                           title={"Касса"}
@@ -847,9 +846,9 @@ class KitchenStat_ extends React.Component {
                         />
                       </Grid>
                       <Grid
-                        item
-                        xs={12}
-                      >
+                        size={{
+                          xs: 12
+                        }}>
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout?.callcenter}
                           title={"Колл-центр"}
@@ -857,9 +856,9 @@ class KitchenStat_ extends React.Component {
                         />
                       </Grid>
                       <Grid
-                        item
-                        xs={12}
-                      >
+                        size={{
+                          xs: 12
+                        }}>
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout?.client}
                           title={"Клиент"}
@@ -878,11 +877,11 @@ class KitchenStat_ extends React.Component {
             !this.isEmptyCheckoutStats("stat_items_checkout_all")) ||
             this.state.is_load_parts?.stat_items_checkout_all) && (
             <Grid
-              item
-              xs={12}
-              sm={6}
               mt={3}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box
@@ -917,9 +916,9 @@ class KitchenStat_ extends React.Component {
                       spacing={3}
                     >
                       <Grid
-                        item
-                        xs={12}
-                      >
+                        size={{
+                          xs: 12
+                        }}>
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout_all?.cash}
                           title={"Касса"}
@@ -927,9 +926,9 @@ class KitchenStat_ extends React.Component {
                         />
                       </Grid>
                       <Grid
-                        item
-                        xs={12}
-                      >
+                        size={{
+                          xs: 12
+                        }}>
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout_all?.callcenter}
                           title={"Колл-центр"}
@@ -937,9 +936,9 @@ class KitchenStat_ extends React.Component {
                         />
                       </Grid>
                       <Grid
-                        item
-                        xs={12}
-                      >
+                        size={{
+                          xs: 12
+                        }}>
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout_all?.client}
                           title={"Клиент"}
@@ -956,11 +955,11 @@ class KitchenStat_ extends React.Component {
           {/* аккордион Проданные позиции по категориям */}
           {(this.state.data?.stat_cat?.length || this.state.is_load_parts?.stat_cat) && (
             <Grid
-              item
-              xs={12}
-              sm={6}
               mt={3}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Accordion>
                 <AccordionSummary
                   expandIcon={<ExpandMoreIcon />}
@@ -1011,11 +1010,11 @@ class KitchenStat_ extends React.Component {
           {/* аккордион Использованные промокоды */}
           {(this.state.data?.promo_stat?.length || this.state.is_load_parts?.promo_stat) && (
             <Grid
-              item
-              xs={12}
-              sm={6}
               mt={3}
-            >
+              size={{
+                xs: 12,
+                sm: 6
+              }}>
               <Accordion>
                 <AccordionSummary
                   expandIcon={<ExpandMoreIcon />}

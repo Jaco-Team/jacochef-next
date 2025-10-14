@@ -24,7 +24,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import {MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyDatePickerNew, MyAlert} from '@/ui/elements';
+import {MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyDatePickerNew} from '@/components/shared/Forms';
 
 import Dropzone from 'dropzone';
 import { api_laravel, api_laravel_local } from '@/src/api_new';
@@ -39,6 +39,7 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import Box from "@mui/material/Box";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import MyAlert from '@/components/shared/MyAlert';
 
 class SiteUserManagerTable extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -821,20 +822,21 @@ class SiteUserManager_ extends React.Component {
         <Backdrop style={{ zIndex: 99999 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         <Dialog open={this.state.delModal} onClose={() => this.setState({ delModal: false, textDel: '' })}>
           <DialogTitle>Причина увольнения</DialogTitle>
           <DialogContent>
             <DialogContentText>Увольнение происходит не сразу, а в полночь</DialogContentText>
             <Grid container spacing={3} style={{ paddingBottom: 10, paddingTop: 20 }}>
-              <Grid item xs={12}>
+              <Grid
+                size={{
+                  xs: 12
+                }}>
                 <MyTextInput
                   label="Причина увольнения"
                   value={this.state.textDel}
@@ -852,23 +854,34 @@ class SiteUserManager_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Dialog open={this.state.graphModal} onClose={() => this.setState({ graphModal: false, graphType: 0 })}>
           <DialogTitle>С какого периода применить изменения ?</DialogTitle>
           <DialogContent>
             <Grid container spacing={3} style={{ paddingBottom: 10, paddingTop: 20 }}>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Button variant="contained" onClick={this.saveEditUser.bind(this, 1)} style={{ width: '100%' }}>
                   С текущего периода
                 </Button>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Button variant="contained" onClick={this.saveEditUser.bind(this, 2)} style={{ width: '100%' }}>
                   Со следующего периода
                 </Button>
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <Button variant="contained" onClick={this.saveEditUser.bind(this, 3)} style={{ width: '100%' }}>
                   Без изменений
                 </Button>
@@ -876,7 +889,6 @@ class SiteUserManager_ extends React.Component {
             </Grid>
           </DialogContent>
         </Dialog>
-
         <Dialog
             open={this.state.modalVacation}
             fullWidth={true}
@@ -886,23 +898,34 @@ class SiteUserManager_ extends React.Component {
           <DialogTitle>Добавление отсутстствия сотрудника</DialogTitle>
           <DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
             {this.state.editUser && this.state.modalUserEdit ? (
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
                       <MyDatePickerNew
                           label="Дата начала"
                           value={this.state.editUser.user.vacationStart ? dayjs(this.state.editUser.user.vacationStart) : null}
                           func={this.changeItem.bind(this, 'vacationStart')}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
                       <MyDatePickerNew
                           label="Дата окончания"
                           value={this.state.editUser.user.vacationEnd ? dayjs(this.state.editUser.user.vacationEnd) : null}
                           func={this.changeItem.bind(this, 'vacationEnd')}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <MyAutocomplite
                         data={this.state.dataVacation}
                         value={this.state.chooseVacation}
@@ -912,7 +935,7 @@ class SiteUserManager_ extends React.Component {
                       />
                     </Grid>
                     {this.state.chooseVacation?.id === 4 ? (
-                      <Grid item xs={12} sm={6}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
                       <MyTextInput
                         label="Объяснение"
                         value={this.state.commentDifVacation}
@@ -930,7 +953,6 @@ class SiteUserManager_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.state.modalUserEdit}
           fullWidth={true}
@@ -941,25 +963,43 @@ class SiteUserManager_ extends React.Component {
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3}>
               {this.state.editUser && this.state.modalUserEdit ? (
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <Grid container spacing={3}>
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Grid container spacing={3}>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyTextInput
                             label="Фамилия"
                             value={this.state.editUser.user.fam}
                             func={this.changeItem.bind(this, 'fam')}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyTextInput
                             label="Имя"
                             value={this.state.editUser.user.name}
                             func={this.changeItem.bind(this, 'name')}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyTextInput
                             label="Отчество"
                             value={this.state.editUser.user.otc}
@@ -969,16 +1009,27 @@ class SiteUserManager_ extends React.Component {
                       </Grid>
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Grid container spacing={3}>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyTextInput
                             label="Номер телефона"
                             value={this.state.editUser.user.login}
                             func={this.changeItem.bind(this, 'login')}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyDatePickerNew
                             label="Дата рождения"
                             value={dayjs(this.state.editUser.user.birthday)}
@@ -988,9 +1039,16 @@ class SiteUserManager_ extends React.Component {
                       </Grid>
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 6
+                          }}>
                           <img
                             alt={this.state.editUser.user['img_name']}
                             src={'https://storage.yandexcloud.net/user-img/max-img/' + this.state.editUser.user['img_name'] +
@@ -998,22 +1056,37 @@ class SiteUserManager_ extends React.Component {
                             style={{ maxWidth: 300, maxHeight: 300 }}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 6
+                          }}>
                           <div className="dropzone" id="for_img_edit" style={{ width: '100%', minHeight: 150 }} />
                         </Grid>
                       </Grid>
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Grid container spacing={3}>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyTextInput
                             label="Код авторизации (4 цифры)"
                             value={this.state.editUser.user.auth_code}
                             func={this.changeItem.bind(this, 'auth_code')}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyTextInput
                             label="ИНН"
                             value={this.state.editUser.user.inn}
@@ -1023,7 +1096,11 @@ class SiteUserManager_ extends React.Component {
                         {parseInt(this.state.show_access) == 0 ? (
                           false
                         ) : (
-                          <Grid item xs={12} sm={4}>
+                          <Grid
+                            size={{
+                              xs: 12,
+                              sm: 4
+                            }}>
                             <MyCheckBox
                               label="Работает официально"
                               value={parseInt(this.state.editUser.user.acc_to_kas) == 1 ? true : false}
@@ -1034,9 +1111,16 @@ class SiteUserManager_ extends React.Component {
                       </Grid>
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Grid container spacing={3}>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyAutocomplite
                             data={this.state.editUser.appointment}
                             value={this.state.chose_app}
@@ -1045,7 +1129,11 @@ class SiteUserManager_ extends React.Component {
                             label="Должность"
                           />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MySelect
                             data={this.state.editUser.cities}
                             value={this.state.editUser.user.city_id}
@@ -1054,7 +1142,11 @@ class SiteUserManager_ extends React.Component {
                             is_none={false}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MySelect
                             data={this.state.point_list_render}
                             value={this.state.editUser.user.point_id}
@@ -1063,7 +1155,11 @@ class SiteUserManager_ extends React.Component {
                             is_none={false}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 6
+                          }}>
                           <Button onClick={() => this.setState({ modalVacation: true })} color="primary" variant="contained">
                             Отсутствие
                           </Button>
@@ -1071,7 +1167,10 @@ class SiteUserManager_ extends React.Component {
                       </Grid>
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Box>
                         <Accordion>
                           <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
@@ -1079,9 +1178,10 @@ class SiteUserManager_ extends React.Component {
                           </AccordionSummary>
                           <AccordionDetails>
                             <Box>
-                              <TableContainer component={Paper} sx={{minWidth: 800}} sx={{
+                              <TableContainer component={Paper} sx={{
                                 overflowX: 'auto',
-                                maxHeight: 400
+                                maxHeight: 400,
+                                minWidth: 800
                               }}>
                                 <Table size={'small'} sx={{minWidth: '100%'}}>
                                   <TableHead>
@@ -1133,7 +1233,10 @@ class SiteUserManager_ extends React.Component {
                         </Accordion>
                       </Box>
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Box>
                         <Accordion>
                           <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
@@ -1183,7 +1286,6 @@ class SiteUserManager_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.state.modalUserNew}
           fullWidth={true}
@@ -1194,25 +1296,43 @@ class SiteUserManager_ extends React.Component {
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid container spacing={3}>
               {this.state.editUser && this.state.modalUserNew ? (
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   <Grid container spacing={3}>
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Grid container spacing={3}>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyTextInput
                             label="Фамилия"
                             value={this.state.editUser.user.fam}
                             func={this.changeItem.bind(this, 'fam')}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyTextInput
                             label="Имя"
                             value={this.state.editUser.user.name}
                             func={this.changeItem.bind(this, 'name')}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyTextInput
                             label="Отчество"
                             value={this.state.editUser.user.otc}
@@ -1222,16 +1342,27 @@ class SiteUserManager_ extends React.Component {
                       </Grid>
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Grid container spacing={3}>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyTextInput
                             label="Номер телефона"
                             value={this.state.editUser.user.login}
                             func={this.changeItem.bind(this, 'login')}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyDatePickerNew
                             label="Дата рождения"
                             value={dayjs(this.state.editUser.user.birthday)}
@@ -1241,9 +1372,16 @@ class SiteUserManager_ extends React.Component {
                       </Grid>
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 6
+                          }}>
                           <img
                             alt={this.state.editUser.user['img_name']}
                             src={'https://storage.yandexcloud.net/user-img/max-img/' + this.state.editUser.user['img_name'] +
@@ -1251,22 +1389,37 @@ class SiteUserManager_ extends React.Component {
                             style={{ maxWidth: 300, maxHeight: 300 }}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 6
+                          }}>
                           <div className="dropzone" id="for_img_new" style={{ width: '100%', minHeight: 150 }}/>
                         </Grid>
                       </Grid>
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Grid container spacing={3}>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyTextInput
                             label="Код авторизации (4 цифры)"
                             value={this.state.editUser.user.auth_code}
                             func={this.changeItem.bind(this, 'auth_code')}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyTextInput
                             label="ИНН"
                             value={this.state.editUser.user.inn}
@@ -1275,7 +1428,11 @@ class SiteUserManager_ extends React.Component {
                         </Grid>
                         {parseInt(this.state.show_access) == 0 ? false
                          : (
-                          <Grid item xs={12} sm={4}>
+                          <Grid
+                            size={{
+                              xs: 12,
+                              sm: 4
+                            }}>
                             <MyCheckBox
                               label="Работает официально"
                               value={parseInt(this.state.editUser.user.acc_to_kas) == 1 ? true : false}
@@ -1286,9 +1443,16 @@ class SiteUserManager_ extends React.Component {
                       </Grid>
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid
+                      size={{
+                        xs: 12
+                      }}>
                       <Grid container spacing={3}>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MyAutocomplite
                             data={this.state.editUser.appointment}
                             value={this.state.chose_app}
@@ -1297,7 +1461,11 @@ class SiteUserManager_ extends React.Component {
                             label="Должность"
                           />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MySelect
                             data={this.state.editUser.cities}
                             value={this.state.editUser.user.city_id}
@@ -1306,7 +1474,11 @@ class SiteUserManager_ extends React.Component {
                             is_none={false}
                           />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 4
+                          }}>
                           <MySelect
                             data={this.state.point_list_render}
                             value={this.state.editUser.user.point_id}
@@ -1328,12 +1500,19 @@ class SiteUserManager_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Grid container spacing={3} className="container_first_child">
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MySelect
               data={this.state.point_list}
               value={this.state.point_id}
@@ -1342,7 +1521,11 @@ class SiteUserManager_ extends React.Component {
               is_none={false}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyAutocomplite
               data={this.state.app_list}
               value={this.state.app_id}
@@ -1351,7 +1534,11 @@ class SiteUserManager_ extends React.Component {
               label="Должность"
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyTextInput
               label="Поиск по телефону/имени"
               value={this.state.textSearch}
@@ -1372,13 +1559,21 @@ class SiteUserManager_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.openNewUser.bind(this)} variant="contained">
               Добавить сотрудника
             </Button>
           </Grid>
 
-          <Grid item xs={12} mb={10}>
+          <Grid
+            mb={10}
+            size={{
+              xs: 12
+            }}>
             {this.state.users.length > 0 ? (
               <SiteUserManagerTable
                 users={this.state.users}

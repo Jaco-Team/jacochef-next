@@ -55,7 +55,7 @@ import SendIcon from '@mui/icons-material/Send';
 import TimeToLeaveIcon from '@mui/icons-material/TimeToLeave';
 import InfoIcon from '@mui/icons-material/Info';
 
-import { MySelect, MyTextInput, MyTimePicker, MyDatePickerGraph, formatDate, MyAlert, MyCheckBox, MyAutocomplite2, MyDatePickerNew } from '@/ui/elements';
+import { MyDatePickerGraph, MySelect, MyTextInput, MyTimePicker, MyCheckBox, MyAutocomplite2, MyDatePickerNew } from '@/components/shared/Forms';
 import { PickersDay } from '@mui/x-date-pickers/PickersDay';
 
 import queryString from 'query-string';
@@ -63,6 +63,7 @@ import queryString from 'query-string';
 import dayjs from 'dayjs';
 import handleUserAccess from '@/src/helpers/access/handleUserAccess';
 import TestAccess from '@/components/shared/TestAccess';
+import MyAlert from '@/components/shared/MyAlert';
 
 function SimpleDialog(props) {
   const { onClose, selectedValue, open } = props;
@@ -324,7 +325,7 @@ class WorkSchedule_Table extends React.Component {
 
     //this.props.openModalDirBonus;
 
-    console.log('this.props', this.props);
+    // console.log('this.props', this.props);
 
     return (
       <TableContainer component={Paper} style={{ paddingRight: 0 }}>
@@ -2373,16 +2374,13 @@ class WorkSchedule_ extends React.Component {
         <Backdrop open={this.state.is_load} style={{ zIndex: 999 }}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         {/* <TestAccess access={this.state.access} setAccess={(access) => this.setState({ access })} /> */}
-
         <MyAlert
           isOpen={this.state.operAlert}
           onClose={() => this.setState({ operAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
         />
-
         {/* конфирм */}
         <WorkSchedule_Confirm
           open={this.state.confirmDialog}
@@ -2390,7 +2388,6 @@ class WorkSchedule_ extends React.Component {
           textConfirm={this.state.textConfirm}
           methodConfirm={this.state.methodConfirm}
         />
-
         <Dialog onClose={() => this.setState({ mainMenuAddUsersMounth: false })} open={this.state.mainMenuAddUsersMounth}>
           <List sx={{ pt: 0 }}>
             <ListItemButton onClick={this.saveFastTimeMounth.bind(this, 1)}>
@@ -2430,7 +2427,6 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
           </List>
         </Dialog>
-
         <Dialog onClose={() => this.setState({ mainMenuAddUsersWeek: false })} open={this.state.mainMenuAddUsersWeek}>
           <List sx={{ pt: 0 }}>
             <ListItemButton onClick={this.saveFastTimeWeek.bind(this, this.state.tabTable === 0 ? 1 : 16)}>
@@ -2470,7 +2466,6 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
           </List>
         </Dialog>
-
         <Dialog onClose={() => this.setState({ mainMenuAddUsers: false })} open={this.state.mainMenuAddUsers}>
           <DialogTitle>Выбранные сотрудники {this.state.mounth}</DialogTitle>
 
@@ -2494,7 +2489,6 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
           </List>
         </Dialog>
-
         <Dialog onClose={() => this.setState({ mainMenuS: false })} open={this.state.mainMenuS}>
           {!this.state.chooseUser ? null : (
             <DialogTitle>
@@ -2541,7 +2535,6 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
           </List>
         </Dialog>
-
         <Dialog onClose={() => this.setState({ mainMenu: false })} open={this.state.mainMenu}>
           {!this.state.chooseUser ? null : (
             <DialogTitle>
@@ -2590,7 +2583,6 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
           </List>
         </Dialog>
-
         <Dialog onClose={() => this.setState({ mainMenuH: false })} open={this.state.mainMenuH}>
           {!this.state.chooseUser ? null : <DialogTitle>Часы {this.state.chooseUser.user_name} {this.state.mounth}</DialogTitle>}
 
@@ -2630,7 +2622,6 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
           </List>
         </Dialog>
-
         <Dialog onClose={() => this.setState({ mainMenuSmena: false })} open={this.state.mainMenuSmena}>
           {!this.state.chooseUser ? null : <DialogTitle>Смена {this.state.chooseUser.user_name} {this.state.mounth}</DialogTitle>}
 
@@ -2647,7 +2638,6 @@ class WorkSchedule_ extends React.Component {
             ))}
           </List>
         </Dialog>
-
         <Dialog onClose={() => this.setState({ mainMenuPoints: false })} open={this.state.mainMenuPoints}>
           {!this.state.chooseUser ? null : <DialogTitle>Смена точка с сегоднешнего дня {this.state.chooseUser.user_name}</DialogTitle>}
 
@@ -2664,7 +2654,6 @@ class WorkSchedule_ extends React.Component {
             ))}
           </List>
         </Dialog>
-
         <Dialog onClose={() => this.setState({ mainMenuPrice: false })} open={this.state.mainMenuPrice}>
           {!this.state.chooseUser ? null : <DialogTitle>Часовая ставка {this.state.chooseUser.user_name} {this.state.mounth}</DialogTitle>}
 
@@ -2684,7 +2673,6 @@ class WorkSchedule_ extends React.Component {
             </List>
           )}
         </Dialog>
-
         <Dialog onClose={() => this.setState({ mainMenuLVDIR: false })} open={this.state.mainMenuLVDIR}>
           <DialogTitle>Изменение уровня дирекора {this.state.mounth}</DialogTitle>
 
@@ -2702,7 +2690,6 @@ class WorkSchedule_ extends React.Component {
             ))}
           </List>
         </Dialog>
-
         <Dialog onClose={() => this.setState({ mainMenuDopBonus: false })} open={this.state.mainMenuDopBonus}>
           <DialogTitle>Командный бонус {this.state.mounth}-{parseInt(this.state.tabTable) == 0 ? '01' : '16'}</DialogTitle>
 
@@ -2725,7 +2712,6 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
           </List>
         </Dialog>
-
         {/* Лишение бонуса конкретного сотрудника */}
         <Dialog onClose={() => this.setState({ mainMenuDopBonusUser: false })} open={this.state.mainMenuDopBonusUser}>
           <DialogTitle>
@@ -2751,7 +2737,6 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
           </List>
         </Dialog>
-
         {!this.state.userInfo || this.state.mainMenuZP === false ? null : (
           <Dialog onClose={() => this.setState({ mainMenuZP: false, userInfo: null })} open={this.state.mainMenuZP}>
             <DialogTitle>
@@ -2760,7 +2745,11 @@ class WorkSchedule_ extends React.Component {
 
             <DialogContent>
               <Grid container spacing={3} style={{ marginTop: 10 }}>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="Выданная сумма"
                     value={this.state.userInfo.given}
@@ -2772,7 +2761,11 @@ class WorkSchedule_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <span>Вся сумма: </span>
                   <span style={{ color: '#c03', borderBottom: '1px dotted #c03', cursor: 'pointer' }}
                     onClick={() => {
@@ -2792,7 +2785,6 @@ class WorkSchedule_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         {!this.state.userInfo || this.state.mainMenuZPCart === false ? null : (
           <Dialog onClose={() => this.setState({ mainMenuZPCart: false, userInfo: null })} open={this.state.mainMenuZPCart}>
             <DialogTitle>
@@ -2801,7 +2793,11 @@ class WorkSchedule_ extends React.Component {
 
             <DialogContent>
               <Grid container spacing={3} style={{ marginTop: 10 }}>
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <MyTextInput
                     label="Выданная сумма"
                     value={this.state.userInfo.given}
@@ -2813,7 +2809,11 @@ class WorkSchedule_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <span>Вся сумма: </span>
                   <span style={{ color: '#c03', borderBottom: '1px dotted #c03', cursor: 'pointer' }}
                     onClick={() => {
@@ -2833,7 +2833,6 @@ class WorkSchedule_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         {!this.state.userInfo || this.state.isOpenModalH === false ? null : (
           <Dialog
             open={this.state.isOpenModalH}
@@ -2849,20 +2848,32 @@ class WorkSchedule_ extends React.Component {
             <DialogContent>
               <Grid container spacing={3}>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <Typography style={{ marginBottom: 10 }}>
                     {'Нагрузка: ' + this.state.userInfo.user.my_load_h + ' / Средняя нагрузка: ' + this.state.userInfo.user.all_load_h}
                   </Typography>
                 </Grid>
 
                 {!this.state.show_bonus ? null : (
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <Typography style={{ marginBottom: 10 }}>{'Бонус: ' + this.state.userInfo.user.bonus}</Typography>
                   </Grid>
                 )}
 
                 {this.state.otherAppList.length == 0 ? null : (
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <MySelect
                       data={this.state.otherAppList}
                       value={this.state.userInfo.new_app}
@@ -2877,7 +2888,11 @@ class WorkSchedule_ extends React.Component {
                 )}
 
                 {this.state.userInfo.mentor_list.length == 0 ? null : (
-                  <Grid item xs={12} sm={12}>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12
+                    }}>
                     <MySelect
                       data={this.state.userInfo.mentor_list}
                       value={this.state.userInfo.mentor_id}
@@ -2891,7 +2906,11 @@ class WorkSchedule_ extends React.Component {
                   </Grid>
                 )}
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyAutocomplite2
                     data={ [ {id: 1, name: '36,6'} ] }
                     value={this.state.userInfo.user_temp}
@@ -2914,7 +2933,11 @@ class WorkSchedule_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MySelect
                     data={this.state.dataType}
                     value={this.state.userInfo.type_healf}
@@ -2928,7 +2951,11 @@ class WorkSchedule_ extends React.Component {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   <Accordion
                     style={{ marginTop: 20 }}
                     expanded={this.state.openNewTimeAdd}
@@ -2982,7 +3009,11 @@ class WorkSchedule_ extends React.Component {
                   ))}
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12
+                  }}>
                   {!this.state.userInfo.hist.length ? null : (
                     <Accordion style={{ marginTop: 50 }} disabled>
                       <AccordionSummary>
@@ -3015,7 +3046,6 @@ class WorkSchedule_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         {!this.state.userInfo ||
         this.state.isOpenModalHMini === false ? null : (
           <Dialog
@@ -3069,7 +3099,6 @@ class WorkSchedule_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         {!this.state.userInfo || this.state.isOpenModalM === false ? null : (
           <Dialog
             open={this.state.isOpenModalM}
@@ -3083,7 +3112,11 @@ class WorkSchedule_ extends React.Component {
             </DialogTitle>
             <DialogContent>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <List component="nav">
                     <ListItemButton onClick={this.chooseType.bind(this, 0)} style={{ backgroundColor: '#98e38d', color: '#fff' }}>
                       <ListItemText primary="10:00 - 22:00" />{this.state.typeTimeAdd === 0 ? <SendIcon /> : null}
@@ -3103,7 +3136,11 @@ class WorkSchedule_ extends React.Component {
                     </ListItemButton>
                   </List>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <MyDatePickerGraph year={this.state.mounth} renderWeekPickerDay={this.renderWeekPickerDay}/>
                 </Grid>
               </Grid>
@@ -3114,7 +3151,6 @@ class WorkSchedule_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         {!this.state.showErr || this.state.isShowErr === false ? null : (
           <Dialog
             open={this.state.isShowErr}
@@ -3129,29 +3165,57 @@ class WorkSchedule_ extends React.Component {
             </DialogTitle>
             <DialogContent>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} className="cellErr">
+                <Grid
+                  className="cellErr"
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <b>Ошибка заказа</b>
                   <span>{this.state.showErr.order_desc}</span>
                 </Grid>
-                <Grid item xs={12} sm={6} className="cellErr">
+                <Grid
+                  className="cellErr"
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <b>Дата заказа</b>
                   <span>{this.state.showErr.date_time_order}</span>
                 </Grid>
 
-                <Grid item xs={12} sm={4} className="cellErr">
+                <Grid
+                  className="cellErr"
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <b>Позиция</b>
                   <span>{this.state.showErr.item_name}</span>
                 </Grid>
-                <Grid item xs={12} sm={4} className="cellErr">
+                <Grid
+                  className="cellErr"
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <b>Ошибка</b>
                   <span>{this.state.showErr.pr_name}</span>
                 </Grid>
-                <Grid item xs={12} sm={4} className="cellErr">
+                <Grid
+                  className="cellErr"
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
                   <b>Сумма</b>
                   <span>{this.state.showErr.my_price}</span>
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   {this.state.showErr.imgs.map((item, key) => (
                     <a key={key} href={'https://jacochef.ru/src/img/err_orders/uploads/' + item} target="_blank">
                       <img src={'https://jacochef.ru/src/img/err_orders/uploads/' + item} style={{ maxHeight: 150, maxWidth: 150, margin: 10 }}/>
@@ -3159,7 +3223,11 @@ class WorkSchedule_ extends React.Component {
                   ))}
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   {this.state.showErr.new_text_1.length > 0 && parseInt(this.state.showErr.is_edit) == 0 ? (
                     <div className="cellErr">
                       <b>Причина обжалования</b>
@@ -3180,7 +3248,11 @@ class WorkSchedule_ extends React.Component {
                     />
                   )}
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   {this.state.showErr.new_text_2.length == 0 ? null : (
                     <div className="cellErr">
                       <b>Ответ обжалования</b>
@@ -3189,7 +3261,11 @@ class WorkSchedule_ extends React.Component {
                   )}
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   {this.state.showErr.new_text_1.length > 0 && parseInt(this.state.showErr.is_edit) == 1 ? (
                     <Button variant="contained" onClick={this.fakeOrders.bind(this)}>Обжаловать</Button>
                   ) : null}
@@ -3198,7 +3274,6 @@ class WorkSchedule_ extends React.Component {
             </DialogContent>
           </Dialog>
         )}
-
         {!this.state.showErrCam || this.state.isShowErrCam === false ? null : (
           <Dialog
             open={this.state.isShowErrCam}
@@ -3211,21 +3286,38 @@ class WorkSchedule_ extends React.Component {
             <DialogTitle>Ошибка №{this.state.showErrCam.id}</DialogTitle>
             <DialogContent>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} className="cellErr">
+                <Grid
+                  className="cellErr"
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <b>Ошибка</b>
                   <span>{this.state.showErrCam.fine_name}</span>
                 </Grid>
-                <Grid item xs={12} sm={6} className="cellErr">
+                <Grid
+                  className="cellErr"
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   <b>Дата время ошибки</b>
                   <span>{this.state.showErrCam.date_time_fine}</span>
                 </Grid>
 
-                <Grid item xs={12} className="cellErr">
+                <Grid
+                  className="cellErr"
+                  size={{
+                    xs: 12
+                  }}>
                   <b>Комментарий</b>
                   <span>{this.state.showErrCam.comment}</span>
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
                   {this.state.showErrCam.imgs.map((item, key) => (
                     <a key={key} href={'https://jacochef.ru/src/img/fine_err/uploads/' + item} target="_blank">
                       <img src={'https://jacochef.ru/src/img/fine_err/uploads/' + item} style={{ maxHeight: 150, maxWidth: 150, margin: 10 }}/>
@@ -3233,7 +3325,11 @@ class WorkSchedule_ extends React.Component {
                   ))}
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   {this.state.showErrCam.text_one.length > 0 && parseInt(this.state.showErrCam.is_edit) == 0 ? (
                     <div className="cellErr">
                       <b>Причина обжалования</b>
@@ -3254,7 +3350,11 @@ class WorkSchedule_ extends React.Component {
                     />
                   )}
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   {this.state.showErrCam.text_two.length == 0 ? null : (
                     <div className="cellErr">
                       <b>Ответ обжалования</b>
@@ -3263,7 +3363,11 @@ class WorkSchedule_ extends React.Component {
                   )}
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6
+                  }}>
                   {this.state.showErrCam.text_one.length > 0 && parseInt(this.state.showErrCam.is_edit) == 1 ? (
                     <Button variant="contained" onClick={this.fakeCam.bind(this)}>Обжаловать</Button>
                   ) : null}
@@ -3272,12 +3376,15 @@ class WorkSchedule_ extends React.Component {
             </DialogContent>
           </Dialog>
         )}
-
         <Dialog onClose={() => this.setState({ newSmena: false, newSmenaName: '' })} open={this.state.newSmena}>
           <DialogTitle>Новая смена</DialogTitle>
           <DialogContent>
             <Grid container spacing={3} style={{ marginTop: 10 }}>
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput
                   label="Название смены"
                   value={this.state.newSmenaName}
@@ -3285,7 +3392,11 @@ class WorkSchedule_ extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <List className="userSmenalist">
                   {this.state.allUsers.map((item, key) => (
                     <ListItemButton
@@ -3306,16 +3417,23 @@ class WorkSchedule_ extends React.Component {
             <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ newSmena: false })}>Отмена</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog onClose={() => this.setState({ editSmena: false, newSmenaName: '' })} open={this.state.editSmena} fullWidth={true}>
           <DialogTitle>Редактирование смены</DialogTitle>
           <DialogContent>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <span style={{ color: 'red', fontWeight: 'bold' }}>Все изменения применяются сразу</span>
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput
                   label="Название смены"
                   value={this.state.newSmenaName}
@@ -3323,7 +3441,11 @@ class WorkSchedule_ extends React.Component {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <List className="userSmenalist">
                   {this.state.allUsers.map((item, key) => (
                     <ListItemButton
@@ -3353,7 +3475,6 @@ class WorkSchedule_ extends React.Component {
             <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ editSmena: false })}>Отмена</Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.state.isOpenHJ}
           onClose={() => this.setState({ isOpenHJ: false })}
@@ -3365,7 +3486,11 @@ class WorkSchedule_ extends React.Component {
           <DialogTitle>Журнал здоровья</DialogTitle>
           <DialogContent>
             <Grid container spacing={3} style={{ marginTop: 2 }}>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyDatePickerNew
                   label="Дата от"
                   value={dayjs(this.state.date_start)}
@@ -3373,7 +3498,11 @@ class WorkSchedule_ extends React.Component {
                   minDate={dayjs("2023-05-01")}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyDatePickerNew
                   label="Дата до"
                   value={dayjs(this.state.date_end)}
@@ -3400,7 +3529,6 @@ class WorkSchedule_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         {/* модалка для распечатки графика работы */}
         <Dialog
           open={this.state.isOpenWS}
@@ -3413,7 +3541,11 @@ class WorkSchedule_ extends React.Component {
           <DialogTitle>График работ</DialogTitle>
           <DialogContent>
             <Grid container spacing={3} style={{ marginTop: 2 }}>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyDatePickerNew
                   label="Дата от"
                   value={dayjs(this.state.date_start_ws)}
@@ -3421,7 +3553,11 @@ class WorkSchedule_ extends React.Component {
                   minDate={dayjs("2023-05-01")}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
                 <MyDatePickerNew
                   label="Дата до"
                   value={dayjs(this.state.date_end_ws)}
@@ -3448,7 +3584,6 @@ class WorkSchedule_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         {/* бонус директора */}
         <Dialog onClose={() => this.setState({ isModalDirBonus: false, dir_bonus: 0 })} open={this.state.isModalDirBonus}>
           <DialogTitle>Бонус директора {this.state?.userInfo?.name} {this.state?.userInfo?.date}</DialogTitle>
@@ -3456,7 +3591,11 @@ class WorkSchedule_ extends React.Component {
           <DialogContent>
             <Grid container spacing={3} style={{ marginTop: 10 }}>
 
-              <Grid item xs={12} sm={12}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12
+                }}>
                 <MyTextInput
                   label="Сумма"
                   value={this.state.dir_bonus}
@@ -3472,13 +3611,20 @@ class WorkSchedule_ extends React.Component {
             <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ isModalDirBonus: false })}>Отмена</Button>
           </DialogActions>
         </Dialog>
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MySelect
               is_none={false}
               data={this.state.points}
@@ -3488,7 +3634,11 @@ class WorkSchedule_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MySelect
               is_none={false}
               data={this.state.mounths}
@@ -3498,7 +3648,13 @@ class WorkSchedule_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} display='flex' justifyContent='space-between'>
+          <Grid
+            display='flex'
+            justifyContent='space-between'
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button variant="contained" onClick={this.updateData.bind(this)}>
               Обновить данные
             </Button>
@@ -3508,7 +3664,11 @@ class WorkSchedule_ extends React.Component {
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <Button variant="contained" onClick={ () => { this.setState({ isOpenHJ: true }) } }>
               Журнал здоровья
             </Button>
@@ -3663,7 +3823,11 @@ class WorkSchedule_ extends React.Component {
             )}
           </Box>
 
-          <Grid item xs={12} style={{overflow: 'auto'}}>
+          <Grid
+            style={{overflow: 'auto'}}
+            size={{
+              xs: 12
+            }}>
             <Table>
               <TableHead>
                 <TableRow>
@@ -3721,7 +3885,10 @@ class WorkSchedule_ extends React.Component {
               </TableFooter>
             </Table>
           </Grid>
-          <Grid item xs={12}>
+          <Grid
+            size={{
+              xs: 12
+            }}>
             <Table>
               <TableHead>
                 <TableRow>

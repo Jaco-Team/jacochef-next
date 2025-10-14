@@ -1,6 +1,6 @@
 "use client";
 
-import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/elements";
+import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/components/shared/Forms";
 import {
   Autocomplete,
   Button,
@@ -123,17 +123,17 @@ export default function ModalUpdateAder({
           style={{ marginBottom: 16, marginTop: 4 }}
         >
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Typography>Общее</Typography>
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTextInput
               label="Название"
               value={formData.name}
@@ -146,10 +146,10 @@ export default function ModalUpdateAder({
             />
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={6}
-          >
+            size={{
+              xs: 12,
+              sm: 6
+            }}>
             <MyTextInput
               label="Описание"
               multiline={true}
@@ -171,10 +171,10 @@ export default function ModalUpdateAder({
           style={{ marginBottom: 16, marginTop: 4 }}
         >
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата начала"
               value={formData.date_start}
@@ -182,10 +182,10 @@ export default function ModalUpdateAder({
             />
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyDatePickerNew
               label="Дата окончания"
               value={formData.date_end}
@@ -193,10 +193,10 @@ export default function ModalUpdateAder({
             />
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Autocomplete
               size="small"
               options={[0, 1, 2]}
@@ -227,10 +227,10 @@ export default function ModalUpdateAder({
           </Grid>
           {formData.where_active === 2 && (
             <Grid
-              item
-              xs={12}
-              sm={3}
-            >
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyAutocomplite
                 label="Кафе"
                 data={points}
@@ -244,10 +244,10 @@ export default function ModalUpdateAder({
           )}
           {formData.where_active === 1 && (
             <Grid
-              item
-              xs={12}
-              sm={3}
-            >
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyAutocomplite
                 label="Город"
                 data={cities}
@@ -267,17 +267,17 @@ export default function ModalUpdateAder({
           style={{ marginBottom: 16, marginTop: 4 }}
         >
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Typography>Условие</Typography>
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyCheckBox
               label="На первый заказ клиента"
               value={!!formData.order_type}
@@ -287,10 +287,10 @@ export default function ModalUpdateAder({
             />
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTextInput
               label="Сумма заказа от"
               value={formData.sum_order}
@@ -304,10 +304,10 @@ export default function ModalUpdateAder({
             />
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Autocomplete
               size="small"
               multiple
@@ -332,10 +332,10 @@ export default function ModalUpdateAder({
           style={{ marginBottom: 16 }}
         >
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Autocomplete
               size="small"
               options={[0, 1]}
@@ -364,10 +364,10 @@ export default function ModalUpdateAder({
           </Grid>
           {formData.in_order === 0 && (
             <Grid
-              item
-              xs={12}
-              sm={3}
-            >
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyAutocomplite
                 label="Блюда"
                 data={items}
@@ -381,10 +381,10 @@ export default function ModalUpdateAder({
           )}
           {formData.in_order === 1 && (
             <Grid
-              item
-              xs={12}
-              sm={3}
-            >
+              size={{
+                xs: 12,
+                sm: 3
+              }}>
               <MyAutocomplite
                 label="Категории"
                 data={categories}
@@ -403,17 +403,17 @@ export default function ModalUpdateAder({
           style={{ marginBottom: 16, marginTop: 4 }}
         >
           <Grid
-            item
-            xs={12}
-            sm={12}
-          >
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <Typography>Добавляемая позиция</Typography>
           </Grid>
           <Grid
-            item
-            xs={12}
-            sm={3}
-          >
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTextInput
               label="Название на сборке"
               value={formData.name_pack}

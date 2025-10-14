@@ -15,7 +15,7 @@ import TableRow from '@mui/material/TableRow';
 import TableContainer from '@mui/material/TableContainer';
 
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 
 import Dialog from '@mui/material/Dialog';
@@ -31,7 +31,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from '@/ui/elements';
+import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from '@/components/shared/Forms';
 
 import queryString from 'query-string';
 
@@ -240,176 +240,260 @@ class SkladItemsModule_Modal extends React.Component {
       onClose={this.onClose.bind(this)}
       fullScreen={this.props.fullScreen}
     >
-      <DialogTitle className="button">
-        <Typography>{this.props.method}{this.props.itemName ? `: ${this.props.itemName}` : ''}</Typography>
-        {this.props.fullScreen ? (
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
-            <CloseIcon />
-          </IconButton>
-        ) : null}
-      </DialogTitle>
-    
-      <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-        
-        <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6}>
-                    <MyTextInput 
-                    label="Название товара" 
-                    value={ this.state.itemEdit ? this.state.itemEdit.item.name : ''} 
-                    func={ this.changeItem.bind(this, 'name') } />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <MyAutocomplite label='Заготовка' 
-                    multiple={false} 
-                    data={this.state.itemEdit ? this.state.itemEdit.pf_list : []}
-                    value={this.state.itemEdit ? (this.state.itemEdit.item.pf_id == '0' ? null : this.state.itemEdit.item.pf_id) : ''} 
-                    func={ (event, value) => { 
-                      let this_storages = this.state.itemEdit; 
-                      this_storages.item.pf_id = value;
-                      this.setState({ itemEdit: this_storages }) } } 
-                      />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <MyTextInput label="Название товара для поставщика" 
-                    value={ this.state.itemEdit ? this.state.itemEdit.item.name_for_vendor : ''} 
-                    func={ this.changeItem.bind(this, 'name_for_vendor') } />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <MyTextInput label="Код для 1с" 
-                    value={ this.state.itemEdit ? this.state.itemEdit.item.art : ''} 
-                    func={ this.changeItem.bind(this, 'art') } />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <MyTextInput label="Максимальное количество заказов в месяц (0 - без ограничений)" 
-                    value={ this.state.itemEdit ? this.state.itemEdit.item.max_count_in_m : ''}
-                    func={ this.changeItem.bind(this, 'max_count_in_m') } />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
+        <DialogTitle className="button">
+          <Typography>{this.props.method}{this.props.itemName ? `: ${this.props.itemName}` : ''}</Typography>
+          {this.props.fullScreen ? (
+            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+              <CloseIcon />
+            </IconButton>
+          ) : null}
+        </DialogTitle>
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          
+          <Grid container spacing={3}>
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
+                  <Grid container spacing={3}>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
+                      <MyTextInput 
+                      label="Название товара" 
+                      value={ this.state.itemEdit ? this.state.itemEdit.item.name : ''} 
+                      func={ this.changeItem.bind(this, 'name') } />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
+                      <MyAutocomplite label='Заготовка' 
+                      multiple={false} 
+                      data={this.state.itemEdit ? this.state.itemEdit.pf_list : []}
+                      value={this.state.itemEdit ? (this.state.itemEdit.item.pf_id == '0' ? null : this.state.itemEdit.item.pf_id) : ''} 
+                      func={ (event, value) => { 
+                        let this_storages = this.state.itemEdit; 
+                        this_storages.item.pf_id = value;
+                        this.setState({ itemEdit: this_storages }) } } 
+                        />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
+                      <MyTextInput label="Название товара для поставщика" 
+                      value={ this.state.itemEdit ? this.state.itemEdit.item.name_for_vendor : ''} 
+                      func={ this.changeItem.bind(this, 'name_for_vendor') } />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
+                      <MyTextInput label="Код для 1с" 
+                      value={ this.state.itemEdit ? this.state.itemEdit.item.art : ''} 
+                      func={ this.changeItem.bind(this, 'art') } />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
+                      <MyTextInput label="Максимальное количество заказов в месяц (0 - без ограничений)" 
+                      value={ this.state.itemEdit ? this.state.itemEdit.item.max_count_in_m : ''}
+                      func={ this.changeItem.bind(this, 'max_count_in_m') } />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6
+                      }}>
 
-                  <MyAutocomplite label='Категория' 
-                    multiple={false} 
-                    data={this.state.itemEdit ? this.state.itemEdit.cats : []}
-                    value={this.state.itemEdit ? (this.state.itemEdit.item.cat_id === '0' ? '' : this.state.itemEdit.item.cat_id) : ''} 
-                    func={ (event, value) => { 
-                      let this_storages = this.state.itemEdit; 
-                      this_storages.item.cat_id = value;
-                      this.setState({ itemEdit: this_storages }) } } 
-                  />
+                    <MyAutocomplite label='Категория' 
+                      multiple={false} 
+                      data={this.state.itemEdit ? this.state.itemEdit.cats : []}
+                      value={this.state.itemEdit ? (this.state.itemEdit.item.cat_id === '0' ? '' : this.state.itemEdit.item.cat_id) : ''} 
+                      func={ (event, value) => { 
+                        let this_storages = this.state.itemEdit; 
+                        this_storages.item.cat_id = value;
+                        this.setState({ itemEdit: this_storages }) } } 
+                    />
+                    </Grid>
                   </Grid>
                 </Grid>
-              </Grid>
 
-              <Grid item xs={12} sm={4}>
-                <MyTextInput 
-                label="Количество в упаковке" 
-                value={ this.state.itemEdit ? this.state.itemEdit.item.pq : ''} 
-                func={ this.changeItem.bind(this, 'pq') } />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <MySelect 
-                data={this.state.itemEdit ? this.state.itemEdit.ed_izmer : []} 
-                value={this.state.itemEdit ? (this.state.itemEdit.item.ed_izmer_id === '0' ? '' : this.state.itemEdit.item.ed_izmer_id) : '' } 
-                func={ this.changeItem.bind(this, 'ed_izmer_id') } label='Ед измер' />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <MySelect 
-                data={this.state.itemEdit ? this.state.itemEdit.apps : []} 
-                value={this.state.itemEdit ? (this.state.itemEdit.item.app_id === '0' ? '' : this.state.itemEdit.item.app_id) : ''} 
-                func={ this.changeItem.bind(this, 'app_id') } 
-                label='Должность на кухне' />
-              </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
+                  <MyTextInput 
+                  label="Количество в упаковке" 
+                  value={ this.state.itemEdit ? this.state.itemEdit.item.pq : ''} 
+                  func={ this.changeItem.bind(this, 'pq') } />
+                </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
+                  <MySelect 
+                  data={this.state.itemEdit ? this.state.itemEdit.ed_izmer : []} 
+                  value={this.state.itemEdit ? (this.state.itemEdit.item.ed_izmer_id === '0' ? '' : this.state.itemEdit.item.ed_izmer_id) : '' } 
+                  func={ this.changeItem.bind(this, 'ed_izmer_id') } label='Ед измер' />
+                </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
+                  <MySelect 
+                  data={this.state.itemEdit ? this.state.itemEdit.apps : []} 
+                  value={this.state.itemEdit ? (this.state.itemEdit.item.app_id === '0' ? '' : this.state.itemEdit.item.app_id) : ''} 
+                  func={ this.changeItem.bind(this, 'app_id') } 
+                  label='Должность на кухне' />
+                </Grid>
 
-              <Grid item xs={12} sm={4}>
-                <MyTextInput 
-                label="Время приготовления ММ:SS (15:20)" 
-                value={ this.state.itemEdit ? this.state.itemEdit.item.time_min : ''} 
-                func={ this.changeItem.bind(this, 'time_min') } />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <MyTextInput 
-                label="Дополнительное время ММ:SS (15:20)" 
-                value={ this.state.itemEdit ? this.state.itemEdit.item.time_dop_min : ''} 
-                func={ this.changeItem.bind(this, 'time_dop_min') } />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <MyTextInput 
-                label="Время разгрузки ММ:SS.iiii (00:20.004)" 
-                value={ this.state.itemEdit ? this.state.itemEdit.item.time_min_other : ''} 
-                func={ this.changeItem.bind(this, 'time_min_other') } />
-              </Grid>
-              
-              <Grid item xs={12} sm={4}>
-                <MyTextInput 
-                label="% потерь" 
-                value={ this.state.itemEdit ? this.state.itemEdit.item.los_percent : '' } 
-                func={ this.changeItem.bind(this, 'los_percent') } />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <MyTextInput 
-                label="% заявки" 
-                value={ this.state.itemEdit ? this.state.itemEdit.item.percent : ''} 
-                func={ this.changeItem.bind(this, 'percent') } />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <MyTextInput 
-                label="% повышения ценника" 
-                value={ this.state.itemEdit ? this.state.itemEdit.item.vend_percent : ''} 
-                func={ this.changeItem.bind(this, 'vend_percent') } />
-              </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
+                  <MyTextInput 
+                  label="Время приготовления ММ:SS (15:20)" 
+                  value={ this.state.itemEdit ? this.state.itemEdit.item.time_min : ''} 
+                  func={ this.changeItem.bind(this, 'time_min') } />
+                </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
+                  <MyTextInput 
+                  label="Дополнительное время ММ:SS (15:20)" 
+                  value={ this.state.itemEdit ? this.state.itemEdit.item.time_dop_min : ''} 
+                  func={ this.changeItem.bind(this, 'time_dop_min') } />
+                </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
+                  <MyTextInput 
+                  label="Время разгрузки ММ:SS.iiii (00:20.004)" 
+                  value={ this.state.itemEdit ? this.state.itemEdit.item.time_min_other : ''} 
+                  func={ this.changeItem.bind(this, 'time_min_other') } />
+                </Grid>
+                
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
+                  <MyTextInput 
+                  label="% потерь" 
+                  value={ this.state.itemEdit ? this.state.itemEdit.item.los_percent : '' } 
+                  func={ this.changeItem.bind(this, 'los_percent') } />
+                </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
+                  <MyTextInput 
+                  label="% заявки" 
+                  value={ this.state.itemEdit ? this.state.itemEdit.item.percent : ''} 
+                  func={ this.changeItem.bind(this, 'percent') } />
+                </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4
+                  }}>
+                  <MyTextInput 
+                  label="% повышения ценника" 
+                  value={ this.state.itemEdit ? this.state.itemEdit.item.vend_percent : ''} 
+                  func={ this.changeItem.bind(this, 'vend_percent') } />
+                </Grid>
 
-              <Grid item xs={12} sm={3}>
-                <MyCheckBox 
-                label="Вес заготовки" 
-                value={ this.state.itemEdit ? (parseInt(this.state.itemEdit.item.w_pf) == 1 ? true : false) : false } 
-                func={ this.changeItemChecked.bind(this, 'w_pf') } />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <MyCheckBox 
-                label="Вес отхода" 
-                value={ this.state.itemEdit ? (parseInt(this.state.itemEdit.item.w_trash) == 1 ? true : false) : false } 
-                func={ this.changeItemChecked.bind(this, 'w_trash') } />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <MyCheckBox 
-                label="Вес товара" 
-                value={ this.state.itemEdit ? (parseInt(this.state.itemEdit.item.w_item) == 1 ? true : false) : false } 
-                func={ this.changeItemChecked.bind(this, 'w_item') } />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <MyCheckBox 
-                label="Два сотрудника" 
-                value={ this.state.itemEdit ? (parseInt(this.state.itemEdit.item.two_user) == 1 ? true : false) : false }
-                func={ this.changeItemChecked.bind(this, 'two_user') } />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <MyAutocomplite 
-                label='Места хранения' 
-                multiple={true} 
-                data={ this.state.itemEdit ? this.state.itemEdit.storages : []} 
-                value={this.state.itemEdit ? this.state.itemEdit.this_storages : ''} 
-                func={ (event, value) => { let this_storages = this.state.itemEdit; this_storages.this_storages = value; this.setState({ itemEdit: this_storages }) } } />
-              </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
+                  <MyCheckBox 
+                  label="Вес заготовки" 
+                  value={ this.state.itemEdit ? (parseInt(this.state.itemEdit.item.w_pf) == 1 ? true : false) : false } 
+                  func={ this.changeItemChecked.bind(this, 'w_pf') } />
+                </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
+                  <MyCheckBox 
+                  label="Вес отхода" 
+                  value={ this.state.itemEdit ? (parseInt(this.state.itemEdit.item.w_trash) == 1 ? true : false) : false } 
+                  func={ this.changeItemChecked.bind(this, 'w_trash') } />
+                </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
+                  <MyCheckBox 
+                  label="Вес товара" 
+                  value={ this.state.itemEdit ? (parseInt(this.state.itemEdit.item.w_item) == 1 ? true : false) : false } 
+                  func={ this.changeItemChecked.bind(this, 'w_item') } />
+                </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3
+                  }}>
+                  <MyCheckBox 
+                  label="Два сотрудника" 
+                  value={ this.state.itemEdit ? (parseInt(this.state.itemEdit.item.two_user) == 1 ? true : false) : false }
+                  func={ this.changeItemChecked.bind(this, 'two_user') } />
+                </Grid>
+                
+                <Grid
+                  size={{
+                    xs: 12
+                  }}>
+                  <MyAutocomplite 
+                  label='Места хранения' 
+                  multiple={true} 
+                  data={ this.state.itemEdit ? this.state.itemEdit.storages : []} 
+                  value={this.state.itemEdit ? this.state.itemEdit.this_storages : ''} 
+                  func={ (event, value) => { let this_storages = this.state.itemEdit; this_storages.this_storages = value; this.setState({ itemEdit: this_storages }) } } />
+                </Grid>
 
-              {this.props.method === 'Редактирование товара' ? <Grid item xs={12}>
-                    <MyCheckBox label="Активность" value={ parseInt(this.state.itemEdit.item.is_show) == 1 ? true : false } func={ this.changeItemChecked.bind(this, 'is_show') } />
-                  </Grid>
-                  : null
-              }
+                {this.props.method === 'Редактирование товара' ? <Grid
+                  size={{
+                    xs: 12
+                  }}>
+                      <MyCheckBox label="Активность" value={ parseInt(this.state.itemEdit.item.is_show) == 1 ? true : false } func={ this.changeItemChecked.bind(this, 'is_show') } />
+                    </Grid>
+                    : null
+                }
 
-        </Grid>
-          
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={
-          this.props.method === 'Редактирование товара' ? 
-          this.props.checkArt.bind(this, this.state.itemEdit) : 
-          this.props.checkArtNew.bind(this, this.state.itemEdit)} 
-          color="primary">Сохранить</Button>
-      </DialogActions>
-    </Dialog>
+          </Grid>
+            
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={
+            this.props.method === 'Редактирование товара' ? 
+            this.props.checkArt.bind(this, this.state.itemEdit) : 
+            this.props.checkArtNew.bind(this, this.state.itemEdit)} 
+            color="primary">Сохранить</Button>
+        </DialogActions>
+      </Dialog>
     );
   }
 }
@@ -801,7 +885,6 @@ class SkladItemsModule_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Dialog
           onClose={() => {
             this.setState({ checkArtDialog: false, checkArtList: [] });
@@ -811,13 +894,12 @@ class SkladItemsModule_ extends React.Component {
           <DialogTitle>Такой код 1с уже задан у следующих позиций:</DialogTitle>
           <List sx={{ pt: 0 }}>
             {this.state.checkArtList.map((item, key) => (
-              <ListItem button onClick={this.chooseArt.bind(this, item.id)} key={key}>
+              <ListItemButton onClick={this.chooseArt.bind(this, item.id)} key={key}>
                 <ListItemText primary={item.name} />
-              </ListItem>
+              </ListItemButton>
             ))}
           </List>
         </Dialog>
-
         <SkladItemsModule_Modal
           open={this.state.modalDialog}
           onClose={() => {
@@ -830,7 +912,6 @@ class SkladItemsModule_ extends React.Component {
           itemName={this.state.itemName}
           fullScreen={this.state.fullScreen}
         />
-
         <SkladItemsModule_Modal_Edit
           open={this.state.modalDialogEdit}
           onClose={() => {
@@ -845,19 +926,30 @@ class SkladItemsModule_ extends React.Component {
           changeTableItem={this.changeTableItem.bind(this)}
           fullScreen={this.state.fullScreen}
         />
-
         <Grid container spacing={3} className='container_first_child'>
-          <Grid item xs={12} sm={12}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12
+            }}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <Button onClick={this.openModalItemNew.bind(this, 'Новый товар')} variant="contained">
               Добавить товар
             </Button>
           </Grid>
 
-          <Grid item xs={12} sm={3}>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3
+            }}>
             <MyTextInput
               label="Поиск"
               value={this.state.searchItem}
@@ -866,7 +958,11 @@ class SkladItemsModule_ extends React.Component {
             />
           </Grid>
 
-          <Grid item xs={12} style={{ paddingBottom: '40px' }}>
+          <Grid
+            style={{ paddingBottom: '40px' }}
+            size={{
+              xs: 12
+            }}>
             {this.state.cats.map((item, key) => (
               <Accordion key={key}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>

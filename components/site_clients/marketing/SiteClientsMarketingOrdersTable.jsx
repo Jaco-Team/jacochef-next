@@ -157,9 +157,10 @@ function SiteClientsMarketingOrdersTable({
   };
 
   // effects
-  const debouncedGetOrders = useDebounce(getOrders, 700);
+  const debouncedGetOrders = useDebounce(getOrders);
 
   useEffect(() => {
+    setIsLoading(true);
     debouncedGetOrders();
   }, [filters, page, perPage, slices, orderIds]);
 
@@ -191,7 +192,7 @@ function SiteClientsMarketingOrdersTable({
           maxHeight: "70dvh", // adjust to fit Dialog
         }}
       >
-        <Table stickyHeader>
+        <Table stickyHeader sx={{ pointerEvents: isLoading ? "none" : "auto", opacity: isLoading ? 0.5 : 1 }}>
           <TableHead>
             <TableRow>
               {ordersTableColumns.map((col) => (
@@ -366,8 +367,8 @@ function SiteClientsMarketingOrdersTable({
         rowsPerPage={perPage}
         page={page - 1}
         onPageChange={(_, newPage) => {
-          console.log(`Changing page to ${newPage + 1}`);
-          setPage(newPage + 1);
+          // console.log(`Changing page to ${newPage + 1}`);
+          setPage((newPage + 1) || 1);
         }}
         onRowsPerPageChange={(event) => {
           const newPerPage = parseInt(event.target.value, 10);
