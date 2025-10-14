@@ -130,7 +130,8 @@ const UserMenu = ({my, logOut}) => {
 					sx: {
 						mt: 1.5,
 						minWidth: 200,
-						borderRadius: 2
+						borderRadius: 2,
+						zIndex: 9999
 					}
 				}}
 				transformOrigin={{horizontal: 'right', vertical: 'top'}}
@@ -244,6 +245,11 @@ export default function Header() {
 				onClose={openMenu}
 				onOpen={openMenu}
 				className={'LeftMenu ' + font.variable}
+				sx={{
+					'& .MuiDrawer-paper': {
+						zIndex: 1300,
+					}
+				}}
 			>
 
 				<div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: 10}}>
@@ -339,7 +345,24 @@ export default function Header() {
 								</li>
 							);
 						}}
-						renderInput={(params) => <TextField {...params} label="Поиск" variant="outlined"/>}
+						renderInput={(params) =>
+							<TextField
+								{...params}
+								label="Поиск"
+								variant="outlined"
+								autoComplete="off"
+								inputProps={{
+									...params.inputProps,
+									autoComplete: "off",
+									autoCorrect: "off",
+									autoCapitalize: "off",
+									spellCheck: "false",
+									form: "autocomplete-form",
+								}}
+							/>}
+						autoComplete="off"
+  					autoHighlight={false}
+  					clearOnBlur={false}
 					/>
 
 					<IconButton onClick={openMenu}>

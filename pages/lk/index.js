@@ -78,6 +78,10 @@ const ModalChangePassword = ({open, onClose, save, title = 'Смена паро�
 					func={(event) => {
 						setPassword(event.target.value)
 					}}
+					autoComplete="new-password"
+  				autoCorrect="off"
+  				autoCapitalize="none"
+  				spellCheck="false"
 				/>
 			</DialogContent>
 			<DialogContent align="center" sx={{fontWeight: 'bold'}} style={{ paddingBottom: 10, paddingTop: 10 }}>
@@ -88,6 +92,10 @@ const ModalChangePassword = ({open, onClose, save, title = 'Смена паро�
 					func={(event) => {
 						setPasswordReset(event.target.value)
 					}}
+					autoComplete="new-password"
+  				autoCorrect="off"
+  				autoCapitalize="none"
+  				spellCheck="false"
 				/>
 			</DialogContent>
 			<DialogActions>

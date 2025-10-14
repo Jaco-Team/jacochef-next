@@ -20,6 +20,10 @@ export function MyTextInput(props) {
       min={props.min || 0}
       style={{ width: "100%" }}
       onKeyUp={props.enter}
+      autoComplete={props.autoComplete ?? ''}
+      autoCorrect={props.autoCorrect ?? ''}
+      autoCapitalize={props.autoCapitalize ?? ''}
+      spellCheck={props.autoCapitalize ?? ''}
       InputProps={props.inputAdornment}
       inputProps={{ tabIndex: props.tabindex, ...(props.inputProps || {}) }}
       className={props.className}
