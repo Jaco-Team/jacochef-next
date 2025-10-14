@@ -17,20 +17,18 @@ import dayjs from "dayjs";
 import CompositionOfOrdersGroupGraph from "./CompositionOfOrdersGroupGraph";
 import { Close } from "@mui/icons-material";
 
-
-
 export default function CompositionOfOrdersGroupGraphModal({ open, onClose, data, rowName }) {
   const [selectedMetrics, setSelectedMetrics] = useState(["group_count"]);
   const [step, setStep] = useState("day"); // "day" | "month"
-const metricsList = [
-  { key: "group_count", label: "Количество", color: "#4e79a7" },
-  { key: "group_sum", label: "Сумма", color: "#59a14f" },
-  { key: "count_percent", label: "% Кол-ва", color: "#9c755f" },
-  { key: "sum_percent", label: "% Суммы", color: "#f28e2b" },
-];
+  const metricsList = [
+    { key: "group_count", label: "Количество", color: "#4e79a7" },
+    { key: "group_sum", label: "Сумма", color: "#59a14f" },
+    { key: "count_percent", label: "% Кол-ва", color: "#9c755f" },
+    { key: "sum_percent", label: "% Суммы", color: "#f28e2b" },
+  ];
   const handleToggleMetric = (metricKey) => (e) => {
     setSelectedMetrics((prev) =>
-      e.target.checked ? [...prev, metricKey] : prev.filter((m) => m !== metricKey)
+      e.target.checked ? [...prev, metricKey] : prev.filter((m) => m !== metricKey),
     );
   };
 
@@ -78,9 +76,12 @@ const metricsList = [
       maxWidth="xl"
       fullWidth
     >
-      <DialogTitle className="button">
+      <DialogTitle>
         {rowName}
-        <IconButton onClick={onClose}>
+        <IconButton
+          onClick={onClose}
+          style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+        >
           <Close />
         </IconButton>
       </DialogTitle>

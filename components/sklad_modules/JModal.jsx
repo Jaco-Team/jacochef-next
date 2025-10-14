@@ -11,10 +11,11 @@ import {
   Button,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/components/shared/Forms";
+import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/ui/Forms";
+import { Close } from "@mui/icons-material";
 
-const ModalNewTagNav = ({open, onClose, save}) => {
-  const [newTagName, setNewTagName] = useState('');
+const ModalNewTagNav = ({ open, onClose, save }) => {
+  const [newTagName, setNewTagName] = useState("");
   return (
     <Dialog
       open={open}
@@ -22,14 +23,23 @@ const ModalNewTagNav = ({open, onClose, save}) => {
       fullWidth
       maxWidth="sm"
     >
-      <DialogTitle>Добавить новый тег навигации</DialogTitle>
+      <DialogTitle>
+        Добавить новый тег навигации
+        <IconButton
+          onClick={onClose}
+          style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+        >
+          <Close />
+        </IconButton>
+      </DialogTitle>
       <DialogContent>
         <Grid
           mt={2}
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <MyTextInput
             label="Название"
             value={newTagName}
@@ -39,14 +49,19 @@ const ModalNewTagNav = ({open, onClose, save}) => {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Отмена</Button>
-        <Button variant="contained" onClick={() => save(newTagName)}>Сохранить</Button>
+        <Button
+          variant="contained"
+          onClick={() => save(newTagName)}
+        >
+          Сохранить
+        </Button>
       </DialogActions>
     </Dialog>
   );
-}
+};
 
-const ModalNewTagCont = ({open, onClose, save}) => {
-  const [newTagName, setNewTagName] = useState('');
+const ModalNewTagCont = ({ open, onClose, save }) => {
+  const [newTagName, setNewTagName] = useState("");
   return (
     <Dialog
       open={open}
@@ -54,14 +69,23 @@ const ModalNewTagCont = ({open, onClose, save}) => {
       fullWidth
       maxWidth="sm"
     >
-      <DialogTitle>Добавить новое название контента</DialogTitle>
+      <DialogTitle>
+        Добавить новое название контента
+        <IconButton
+          onClick={onClose}
+          style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+        >
+          <Close />
+        </IconButton>
+      </DialogTitle>
       <DialogContent>
         <Grid
           mt={2}
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <MyTextInput
             label="Название"
             value={newTagName}
@@ -71,11 +95,16 @@ const ModalNewTagCont = ({open, onClose, save}) => {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Отмена</Button>
-        <Button variant="contained" onClick={() => save(newTagName)}>Сохранить</Button>
+        <Button
+          variant="contained"
+          onClick={() => save(newTagName)}
+        >
+          Сохранить
+        </Button>
       </DialogActions>
     </Dialog>
   );
-}
+};
 
 export default function JModal({
   open,
@@ -85,13 +114,13 @@ export default function JModal({
   item: propItem,
   listCat: propListCat,
   listNav: propListNav,
-  listContent : propListContent,
+  listContent: propListContent,
   mark,
   updateOne,
   getData,
   save,
   onClose,
-  canEdit
+  canEdit,
 }) {
   const [item, setItem] = useState(null);
   const [listCat, setListCat] = useState(null);
@@ -105,29 +134,27 @@ export default function JModal({
 
   useEffect(() => {
     if (propItem) {
-      const foundCat = propListCat?.find(
-        (c) => parseInt(c.id) === parseInt(propItem.parent_id)
-      );
+      const foundCat = propListCat?.find((c) => parseInt(c.id) === parseInt(propItem.parent_id));
       setItem(propItem);
       setListCat(propListCat || []);
       const navEls = [];
       const contsEls = [];
       if (propListNav?.length && propItem.navs_id) {
-        propItem.navs_id.split(',').map((id) => {
+        propItem.navs_id.split(",").map((id) => {
           const item = propListNav.find((item) => item.id == id);
           if (item?.id) {
             navEls.push(item);
           }
-        })
+        });
       }
 
       if (propListContent?.length && propItem.conts_id) {
-        propItem.conts_id.split(',').map((id) => {
+        propItem.conts_id.split(",").map((id) => {
           const item = propListContent.find((item) => item.id == id);
           if (item?.id) {
             contsEls.push(item);
           }
-        })
+        });
       }
 
       setItemContent(contsEls);
@@ -139,17 +166,11 @@ export default function JModal({
   useEffect(() => {
     if (propListContent?.length || propListNav?.length) {
       if (propListNav?.length) {
-        setListNav([
-          {id: -1, name: 'Добавить новый'},
-          ...propListNav,
-        ] || []);
+        setListNav([{ id: -1, name: "Добавить новый" }, ...propListNav] || []);
       }
 
       if (propListContent?.length) {
-        setListContent([
-          {id: -1, name: 'Добавить новый'},
-          ...propListContent,
-        ] || []);
+        setListContent([{ id: -1, name: "Добавить новый" }, ...propListContent] || []);
       }
     }
   }, [propListCat, propListContent]);
@@ -159,9 +180,7 @@ export default function JModal({
   };
 
   const changeItemChecked = (key, checked) => {
-    setItem((prev) =>
-      prev ? { ...prev, [key]: checked === true ? 1 : 0 } : prev
-    );
+    setItem((prev) => (prev ? { ...prev, [key]: checked === true ? 1 : 0 } : prev));
   };
 
   const changeItemCat = (key, value) => {
@@ -171,10 +190,10 @@ export default function JModal({
 
   const changeItemNav = (key, value) => {
     setItem((prev) => (prev ? { ...prev, [key]: value ? value.id : "" } : prev));
-    const addPlaceholder = value.find(tag => tag.id === -1);
+    const addPlaceholder = value.find((tag) => tag.id === -1);
     let selected = value;
     if (addPlaceholder) {
-      selected = value.filter(tag => tag.id !== -1);
+      selected = value.filter((tag) => tag.id !== -1);
       setOpenNewNavTagModal(true);
     }
     setItemNav(selected);
@@ -182,38 +201,36 @@ export default function JModal({
 
   const changeItemContent = (key, value) => {
     setItem((prev) => (prev ? { ...prev, [key]: value ? value.id : "" } : prev));
-    const addPlaceholder = value.find(tag => tag.id === -1);
+    const addPlaceholder = value.find((tag) => tag.id === -1);
     let selected = value;
     if (addPlaceholder) {
-      selected = value.filter(tag => tag.id !== -1);
+      selected = value.filter((tag) => tag.id !== -1);
       setOpenNewContTagModal(true);
     }
     setItemContent(selected);
   };
 
   const handleSaveNav = async (name) => {
-    const res = await getData('save_nav', {name});
+    const res = await getData("save_nav", { name });
     if (res.st) {
       setOpenNewNavTagModal(false);
       updateOne(propItem.id);
     } else {
-
     }
-  }
+  };
 
   const handleSaveCont = async (name) => {
-    const res = await getData('save_cont', {name});
+    const res = await getData("save_cont", { name });
     if (res.st) {
       setOpenNewContTagModal(false);
       updateOne(propItem.id);
     } else {
-
     }
-  }
+  };
 
   const handleSave = () => {
     if (!item) return;
-    const itemCurrent = {...item, itemContent, itemNav};
+    const itemCurrent = { ...item, itemContent, itemNav };
     save(itemCurrent);
     handleClose();
   };
@@ -236,9 +253,27 @@ export default function JModal({
       <DialogTitle className="button">
         {method}
         {itemName ? `: ${itemName}` : null}
+        <IconButton
+          onClick={onClose}
+          style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+        >
+          <Close />
+        </IconButton>
       </DialogTitle>
-      {openNewTagNavModal && <ModalNewTagNav open={openNewTagNavModal} onClose={() => setOpenNewNavTagModal(false)} save={handleSaveNav}/>}
-      {openNewContTagModal && <ModalNewTagCont open={openNewContTagModal} onClose={() => setOpenNewContTagModal(false)} save={handleSaveCont}/>}
+      {openNewTagNavModal && (
+        <ModalNewTagNav
+          open={openNewTagNavModal}
+          onClose={() => setOpenNewNavTagModal(false)}
+          save={handleSaveNav}
+        />
+      )}
+      {openNewContTagModal && (
+        <ModalNewTagCont
+          open={openNewContTagModal}
+          onClose={() => setOpenNewContTagModal(false)}
+          save={handleSaveCont}
+        />
+      )}
       <IconButton
         onClick={handleClose}
         sx={{
@@ -252,11 +287,15 @@ export default function JModal({
         <CloseIcon />
       </IconButton>
       <DialogContent sx={{ pb: 1, pt: 1 }}>
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+        >
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <MyTextInput
               label="Название"
               value={item?.name || ""}
@@ -266,8 +305,9 @@ export default function JModal({
 
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <MyTextInput
               label="Адрес модуля (URL)"
               value={item?.link ?? ""}
@@ -278,8 +318,9 @@ export default function JModal({
 
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <MyAutocomplite
               label="Категория"
               multiple={false}
@@ -291,8 +332,9 @@ export default function JModal({
 
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <MyAutocomplite
               label="Внутренняя навигация"
               multiple={true}
@@ -304,8 +346,9 @@ export default function JModal({
 
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <MyAutocomplite
               label="Контент"
               multiple={true}
@@ -318,8 +361,9 @@ export default function JModal({
           {mark === "edit" && (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <MyCheckBox
                 label="Активность"
                 value={parseInt(item?.is_show) === 1}
@@ -330,7 +374,10 @@ export default function JModal({
         </Grid>
       </DialogContent>
       <DialogActions>
-        <Button variant="contained" onClick={handleSave}>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+        >
           Сохранить
         </Button>
       </DialogActions>

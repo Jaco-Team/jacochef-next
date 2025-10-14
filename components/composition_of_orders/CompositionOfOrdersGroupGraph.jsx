@@ -21,7 +21,7 @@ export default function CompositionOfOrdersGroupGraph({ data, metrics }) {
         panX: true,
         wheelX: "panX",
         wheelY: "zoomX",
-      })
+      }),
     );
 
     // X axis
@@ -29,7 +29,7 @@ export default function CompositionOfOrdersGroupGraph({ data, metrics }) {
       am5xy.DateAxis.new(root, {
         baseInterval: { timeUnit: "day", count: 1 },
         renderer: am5xy.AxisRendererX.new(root, {}),
-      })
+      }),
     );
     const xTip = am5.Tooltip.new(root, { pointerOrientation: "horizontal" });
     xTip.label.setAll({ text: "{value.formatDate('dd MMM')}" });
@@ -41,7 +41,7 @@ export default function CompositionOfOrdersGroupGraph({ data, metrics }) {
         renderer: am5xy.AxisRendererY.new(root, {}),
         numberFormat: "#,###",
         min: 0,
-      })
+      }),
     );
 
     // Y axis for percents
@@ -52,7 +52,7 @@ export default function CompositionOfOrdersGroupGraph({ data, metrics }) {
         max: 100,
         strictMinMax: true,
         numberFormat: "#'%'",
-      })
+      }),
     );
 
     const axisMap = {
@@ -84,7 +84,7 @@ export default function CompositionOfOrdersGroupGraph({ data, metrics }) {
           tooltip: am5.Tooltip.new(root, {
             labelText: "{name}: {valueY.formatNumber('#.##')}",
           }),
-        })
+        }),
       );
 
       series.strokes.template.setAll({ strokeWidth: 2 });

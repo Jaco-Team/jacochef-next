@@ -15,7 +15,7 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import useSaveCategory from "../hooks/useSaveCategory";
 import { useCategoryStore } from "./useCategoryStore";
 import { useSiteSettingStore } from "../useSiteSettingStore";
-import { MyTextInput } from "@/components/shared/Forms";
+import { MyTextInput } from "@/ui/Forms";
 import { CategoryModal } from "./CategoryModal";
 import { useDebounce } from "@/src/hooks/useDebounce";
 
@@ -29,15 +29,12 @@ export function SiteSettingCategory() {
   // Category store
   const { getData, setModuleName, setItem, setItemName, setCategories, changeSort } =
     useCategoryStore.getState();
-  const [itemName, moduleName] = useCategoryStore((s) => [
-    s.itemName,
-    s.moduleName,
-  ]);
+  const [itemName, moduleName] = useCategoryStore((s) => [s.itemName, s.moduleName]);
   const categories = useCategoryStore((state) => state.categories);
   const rootCategories = categories.filter((c) => c.parent_id === 0);
   const getSubCategories = useCallback(
     (id) => categories.filter((c) => c.parent_id === id),
-    [categories]
+    [categories],
   );
   const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle);
 
@@ -58,11 +55,9 @@ export function SiteSettingCategory() {
     closeModal,
     showAlert,
     getData,
-    fetchCoreData
+    fetchCoreData,
   );
-  const [acces] = useSiteSettingStore((state) => [
-    state.acces,
-  ]);
+  const [acces] = useSiteSettingStore((state) => [state.acces]);
 
   const saveSort = useDebounce(async (id, event) => {
     const targetCategory = useCategoryStore.getState().categories.find((cat) => cat.id === id);
@@ -103,8 +98,8 @@ export function SiteSettingCategory() {
         </>
       ),
       () => {
-        setItem(null), setItemName("");
-      }
+        (setItem(null), setItemName(""));
+      },
     );
   };
 
@@ -115,7 +110,7 @@ export function SiteSettingCategory() {
   // update banner name in modal title
   useEffect(
     () => setModalTitle(`${modalPrefix}${itemName ? `: ${itemName}` : ""}`),
-    [modalPrefix, itemName]
+    [modalPrefix, itemName],
   );
 
   return (
@@ -135,8 +130,9 @@ export function SiteSettingCategory() {
           justifyContent: "space-between",
         }}
         size={{
-          xs: 12
-        }}>
+          xs: 12,
+        }}
+      >
         <Typography variant="h5">{moduleName}</Typography>
         {acces.category_edit ? (
           <Button
@@ -151,8 +147,9 @@ export function SiteSettingCategory() {
         mb={10}
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <TableContainer>
           <Table size="small">
             <TableHead>

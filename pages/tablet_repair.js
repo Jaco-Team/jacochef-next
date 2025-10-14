@@ -1,33 +1,33 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import {MySelect, MyTextInput, MyDatePickerNew} from '@/components/shared/Forms';
+import { MySelect, MyTextInput, MyDatePickerNew } from "@/ui/Forms";
 
-import queryString from 'query-string';
+import queryString from "query-string";
 
-import dayjs from 'dayjs';
-import MyAlert from '@/components/shared/MyAlert';
+import dayjs from "dayjs";
+import MyAlert from "@/ui/MyAlert";
 
 class TabletRepair_Modal extends React.Component {
   constructor(props) {
@@ -35,18 +35,16 @@ class TabletRepair_Modal extends React.Component {
 
     this.state = {
       date: formatDate(new Date()),
-      number: '',
-      imei: '',
-      name: '',
-      tablet: '',
+      number: "",
+      imei: "",
+      name: "",
+      tablet: "",
     };
   }
 
   componentDidUpdate(prevProps) {
     if (this.props.tablet !== prevProps.tablet) {
-
-      if(this.props.type === 'updateTablet') {
-
+      if (this.props.type === "updateTablet") {
         const { tablet } = this.props;
 
         this.setState({
@@ -56,7 +54,6 @@ class TabletRepair_Modal extends React.Component {
           imei: tablet.imei,
           name: tablet.model,
         });
-
       }
 
       //this.setState({ tablet: tablets ? tablets[0].id : '' });
@@ -71,7 +68,7 @@ class TabletRepair_Modal extends React.Component {
 
   changeDateRange(data, event) {
     this.setState({
-      [data]: event ? (event) : '',
+      [data]: event ? event : "",
     });
   }
 
@@ -80,18 +77,18 @@ class TabletRepair_Modal extends React.Component {
 
     let data;
 
-    if (type === 'addTablet') {
+    if (type === "addTablet") {
       data = {
         number: this.state.number,
         imei: this.state.imei,
         model: this.state.name,
-        buy_date: dayjs(this.state.date).format('YYYY-MM-DD'),
+        buy_date: dayjs(this.state.date).format("YYYY-MM-DD"),
       };
     } else {
       data = {
         name_repair: this.state.name,
         price: this.state.number,
-        date: dayjs(this.state.date).format('YYYY-MM-DD'),
+        date: dayjs(this.state.date).format("YYYY-MM-DD"),
         tablet_id: this.state.tablet,
       };
     }
@@ -106,7 +103,7 @@ class TabletRepair_Modal extends React.Component {
       imei: this.state.imei,
       model: this.state.name,
       number: this.state.number,
-      buy_date: dayjs(this.state.date).format('YYYY-MM-DD'),
+      buy_date: dayjs(this.state.date).format("YYYY-MM-DD"),
       id: this.state.tablet.id,
     };
 
@@ -116,7 +113,6 @@ class TabletRepair_Modal extends React.Component {
   }
 
   close() {
-
     this.props.closeTablet();
 
     this.onClose();
@@ -124,10 +120,10 @@ class TabletRepair_Modal extends React.Component {
 
   onClose() {
     this.setState({
-      number: '',
-      imei: '',
-      name: '',
-      tablet: '',
+      number: "",
+      imei: "",
+      name: "",
+      tablet: "",
     });
 
     this.props.onClose();
@@ -144,80 +140,99 @@ class TabletRepair_Modal extends React.Component {
       >
         <DialogTitle className="button">
           <div>
-            <Typography>Точка:{' '}<span style={{ fontWeight: 'bold' }}>{this.props.pointModal}</span></Typography>
-            {this.props.type === 'tablet' ? (
+            <Typography>
+              Точка: <span style={{ fontWeight: "bold" }}>{this.props.pointModal}</span>
+            </Typography>
+            {this.props.type === "tablet" ? (
               <>
-                <Typography mt={1}>Наименование планшета:{' '}<span style={{ fontWeight: 'bold' }}>{this.props.tablet.tablet.model}</span></Typography>
-                <Typography mt={1}>Порядковый номер планшета:{' '}<span style={{ fontWeight: 'bold' }}>{this.props.tablet.tablet.number}</span></Typography>
+                <Typography mt={1}>
+                  Наименование планшета:{" "}
+                  <span style={{ fontWeight: "bold" }}>{this.props.tablet.tablet.model}</span>
+                </Typography>
+                <Typography mt={1}>
+                  Порядковый номер планшета:{" "}
+                  <span style={{ fontWeight: "bold" }}>{this.props.tablet.tablet.number}</span>
+                </Typography>
               </>
             ) : null}
           </div>
 
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+          <IconButton
+            onClick={this.onClose.bind(this)}
+            style={{ cursor: "pointer" }}
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3}>
-            {this.props.type === 'addTablet' || this.props.type === 'updateTablet' ? (
+          <Grid
+            container
+            spacing={3}
+          >
+            {this.props.type === "addTablet" || this.props.type === "updateTablet" ? (
               <>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MyTextInput
                     label="Порядковый номер планшета"
                     value={this.state.number}
-                    func={this.changeItem.bind(this, 'number')}
+                    func={this.changeItem.bind(this, "number")}
                   />
                 </Grid>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MyTextInput
                     label="Название марки и модель, например Dexp K48"
                     value={this.state.name}
-                    func={this.changeItem.bind(this, 'name')}
+                    func={this.changeItem.bind(this, "name")}
                   />
                 </Grid>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MyTextInput
                     label="IMIE"
                     value={this.state.imei}
-                    func={this.changeItem.bind(this, 'imei')}
+                    func={this.changeItem.bind(this, "imei")}
                   />
                 </Grid>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MyDatePickerNew
                     label="Дата ввода в эксплуатацию"
                     value={this.state.date}
-                    func={this.changeDateRange.bind(this, 'date')}
+                    func={this.changeDateRange.bind(this, "date")}
                   />
                 </Grid>
               </>
-            ) : this.props.type === 'addRepair' ? (
+            ) : this.props.type === "addRepair" ? (
               <>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MySelect
                     is_none={false}
                     data={this.props.tablets}
                     value={this.state.tablet}
-                    func={this.changeItem.bind(this, 'tablet')}
+                    func={this.changeItem.bind(this, "tablet")}
                     label="Выбрать планшет"
                   />
                 </Grid>
@@ -225,35 +240,38 @@ class TabletRepair_Modal extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MyTextInput
                     label="Наименование ремонта"
                     value={this.state.name}
-                    func={this.changeItem.bind(this, 'name')}
+                    func={this.changeItem.bind(this, "name")}
                   />
                 </Grid>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MyTextInput
                     label="Стоимость"
-                    type={'number'}
+                    type={"number"}
                     value={this.state.number}
-                    func={this.changeItem.bind(this, 'number')}
+                    func={this.changeItem.bind(this, "number")}
                   />
                 </Grid>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MyDatePickerNew
                     label="Дата ремонта"
                     value={this.state.date}
-                    func={this.changeDateRange.bind(this, 'date')}
+                    func={this.changeDateRange.bind(this, "date")}
                   />
                 </Grid>
               </>
@@ -262,8 +280,9 @@ class TabletRepair_Modal extends React.Component {
                 mb={5}
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <TableContainer>
                   <Table>
                     <TableHead>
@@ -291,19 +310,28 @@ class TabletRepair_Modal extends React.Component {
           </Grid>
         </DialogContent>
         <DialogActions>
-          {this.props.type === 'tablet' ? 
-            <Button variant="contained" onClick={this.close.bind(this)}>
+          {this.props.type === "tablet" ? (
+            <Button
+              variant="contained"
+              onClick={this.close.bind(this)}
+            >
               Снять с обращения
             </Button>
-          : this.props.type === 'updateTablet' ? 
-            <Button variant="contained" onClick={this.update.bind(this)}>
+          ) : this.props.type === "updateTablet" ? (
+            <Button
+              variant="contained"
+              onClick={this.update.bind(this)}
+            >
               Сохранить изменения
             </Button>
-          :
-            <Button variant="contained" onClick={this.add.bind(this)}>
-              Добавить {this.props.type === 'addTablet' ? 'планшет' : 'ремонт'}
+          ) : (
+            <Button
+              variant="contained"
+              onClick={this.add.bind(this)}
+            >
+              Добавить {this.props.type === "addTablet" ? "планшет" : "ремонт"}
             </Button>
-          }
+          )}
         </DialogActions>
       </Dialog>
     );
@@ -315,31 +343,31 @@ class TabletRepair_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'tablet_repair',
-      module_name: '',
+      module: "tablet_repair",
+      module_name: "",
       is_load: false,
 
       points: [],
-      point: '0',
+      point: "0",
 
       tabletsActive: [],
       tabletsNonActive: [],
 
-      type: '',
+      type: "",
       tablet: null,
       tablets: null,
-      pointModal: '',
+      pointModal: "",
       modalDialog: false,
       fullScreen: false,
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
     };
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     this.setState({
       points: data.point_list,
@@ -359,28 +387,28 @@ class TabletRepair_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: queryString.stringify({
         method: method,
         module: this.state.module,
         version: 2,
-        login: localStorage.getItem('token'),
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })
       .then((res) => res.json())
       .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/auth';
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/auth";
           return;
         }
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
           return;
         }
 
@@ -428,7 +456,7 @@ class TabletRepair_ extends React.Component {
       point_id,
     };
 
-    const res = await this.getData('get_tablets', data);
+    const res = await this.getData("get_tablets", data);
 
     this.setState({
       tabletsActive: res.active,
@@ -445,13 +473,13 @@ class TabletRepair_ extends React.Component {
 
     const pointModal = points.find((it) => it.id === point_id).name;
 
-    if (type === 'tablet') {
+    if (type === "tablet") {
       const data = {
         point_id,
         table_id,
       };
 
-      const res = await this.getData('get_tablet', data);
+      const res = await this.getData("get_tablet", data);
 
       this.setState({
         type,
@@ -461,11 +489,11 @@ class TabletRepair_ extends React.Component {
       });
     }
 
-    if (type === 'addRepair') {
+    if (type === "addRepair") {
       const tablets = this.state.tabletsActive;
 
       const tabletsData = tablets.reduce((newTablets, item) => {
-        newTablets.push({id: item.id, name: `${item.number} - ${item.model}`});
+        newTablets.push({ id: item.id, name: `${item.number} - ${item.model}` });
         return newTablets;
       }, []);
 
@@ -477,7 +505,7 @@ class TabletRepair_ extends React.Component {
       });
     }
 
-    if (type === 'addTablet') {
+    if (type === "addTablet") {
       this.setState({
         type,
         pointModal,
@@ -485,14 +513,13 @@ class TabletRepair_ extends React.Component {
       });
     }
 
-    if (type === 'updateTablet') {
-
+    if (type === "updateTablet") {
       const data = {
         point_id,
         table_id,
       };
 
-      const res = await this.getData('get_one', data);
+      const res = await this.getData("get_one", data);
 
       this.setState({
         type,
@@ -510,17 +537,17 @@ class TabletRepair_ extends React.Component {
 
     data.point_id = this.state.point;
 
-    if (type === 'addTablet') {
-      res = await this.getData('add_tablet', data);
+    if (type === "addTablet") {
+      res = await this.getData("add_tablet", data);
     } else {
-      res = await this.getData('add_repair', data);
+      res = await this.getData("add_repair", data);
     }
 
     if (res.st) {
       this.setState({
         openAlert: true,
         err_status: true,
-        err_text: 'Успешно добавлен!',
+        err_text: "Успешно добавлен!",
       });
 
       setTimeout(() => {
@@ -541,16 +568,16 @@ class TabletRepair_ extends React.Component {
 
     const data = {
       point_id,
-      tablet_id
-    }
+      tablet_id,
+    };
 
-    const res = await this.getData('closeTablet', data);
+    const res = await this.getData("closeTablet", data);
 
     if (res.st) {
       this.setState({
         openAlert: true,
         err_status: true,
-        err_text: 'Планшет снят с обращения',
+        err_text: "Планшет снят с обращения",
       });
 
       setTimeout(() => {
@@ -566,13 +593,13 @@ class TabletRepair_ extends React.Component {
   }
 
   async updateTablet(data) {
-    const res = await this.getData('update_tablet', data);
+    const res = await this.getData("update_tablet", data);
 
     if (res.st) {
       this.setState({
         openAlert: true,
         err_status: true,
-        err_text: 'Данные планшета изменены',
+        err_text: "Данные планшета изменены",
       });
 
       setTimeout(() => {
@@ -590,7 +617,10 @@ class TabletRepair_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
+        <Backdrop
+          open={this.state.is_load}
+          style={{ zIndex: 99 }}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -611,20 +641,26 @@ class TabletRepair_ extends React.Component {
           closeTablet={this.closeTablet.bind(this)}
           updateTablet={this.updateTablet.bind(this)}
         />
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MySelect
               is_none={false}
               data={this.state.points}
@@ -637,27 +673,40 @@ class TabletRepair_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
-            <Button variant="contained" onClick={this.getTablets.bind(this)}>
+              sm: 6,
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={this.getTablets.bind(this)}
+            >
               Обновить данные
             </Button>
           </Grid>
           <Grid
             size={{
               xs: 12,
-              sm: 2
-            }}>
-            <Button variant="contained" style={{ whiteSpace: 'nowrap' }} onClick={this.openModal.bind(this, 'addTablet')}>
+              sm: 2,
+            }}
+          >
+            <Button
+              variant="contained"
+              style={{ whiteSpace: "nowrap" }}
+              onClick={this.openModal.bind(this, "addTablet")}
+            >
               Добавить планшет
             </Button>
           </Grid>
           <Grid
             size={{
               xs: 12,
-              sm: 4
-            }}>
-            <Button variant="contained" onClick={this.openModal.bind(this, 'addRepair')}>
+              sm: 4,
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={this.openModal.bind(this, "addRepair")}
+            >
               Добавить ремонт
             </Button>
           </Grid>
@@ -667,8 +716,9 @@ class TabletRepair_ extends React.Component {
             mb={5}
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <TableContainer>
               <Table>
                 <TableHead>
@@ -686,9 +736,29 @@ class TabletRepair_ extends React.Component {
                 <TableBody>
                   {this.state.tabletsActive.map((item, key) => (
                     <TableRow key={key}>
-                      <TableCell onClick={this.openModal.bind(this, 'updateTablet', item.id)} style={{ cursor: 'pointer', fontWeight: 700, color: '#c03', textDecoration: 'underline' }}> {item.number}</TableCell>
-                      <TableCell onClick={this.openModal.bind(this, 'tablet', item.id)} style={{ cursor: 'pointer', fontWeight: 700, color: '#c03', textDecoration: 'underline' }}>
-                        {item.model}</TableCell>
+                      <TableCell
+                        onClick={this.openModal.bind(this, "updateTablet", item.id)}
+                        style={{
+                          cursor: "pointer",
+                          fontWeight: 700,
+                          color: "#c03",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        {" "}
+                        {item.number}
+                      </TableCell>
+                      <TableCell
+                        onClick={this.openModal.bind(this, "tablet", item.id)}
+                        style={{
+                          cursor: "pointer",
+                          fontWeight: 700,
+                          color: "#c03",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        {item.model}
+                      </TableCell>
                       <TableCell>{item.imei}</TableCell>
                       <TableCell>{item.buy_date}</TableCell>
                       <TableCell>{item.repairs.summ ?? 0}</TableCell>
@@ -700,7 +770,11 @@ class TabletRepair_ extends React.Component {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell colSpan={6} height={100} style={{ border: 'none' }}></TableCell>
+                      <TableCell
+                        colSpan={6}
+                        height={100}
+                        style={{ border: "none" }}
+                      ></TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell colSpan={6}> Планшеты выведенные из эксплуатации</TableCell>
@@ -716,7 +790,12 @@ class TabletRepair_ extends React.Component {
                   </TableHead>
                   <TableBody>
                     {this.state.tabletsNonActive.map((item, key) => (
-                      <TableRow key={key} style={{ cursor: 'pointer' }} hover onClick={this.openModal.bind(this, 'tablet', item.id)}>
+                      <TableRow
+                        key={key}
+                        style={{ cursor: "pointer" }}
+                        hover
+                        onClick={this.openModal.bind(this, "tablet", item.id)}
+                      >
                         <TableCell>{item.number}</TableCell>
                         <TableCell>{item.model}</TableCell>
                         <TableCell>{item.imei}</TableCell>
@@ -741,13 +820,16 @@ export default function TabletRepair() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

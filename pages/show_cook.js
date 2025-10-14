@@ -2,15 +2,7 @@ import React from "react";
 
 import PropTypes from "prop-types";
 import { api_laravel } from "@/src/api_new";
-import {
-  Backdrop,
-  Box,
-  CircularProgress,
-  Grid,
-  Paper,
-  Tab,
-  Tabs,
-} from "@mui/material";
+import { Backdrop, Box, CircularProgress, Grid, Paper, Tab, Tabs } from "@mui/material";
 import CookCatsTab from "@/components/show_cook/CookCatsTab";
 import CookItemModal from "@/components/show_cook/CookItemModal";
 import CookRecipesTab from "@/components/show_cook/CookRecipesTab";
@@ -141,8 +133,9 @@ class ShowCook_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
@@ -161,8 +154,9 @@ class ShowCook_ extends React.Component {
             style={{ marginBottom: 24 }}
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Paper>
               <Tabs
                 value={this.state.activeTab}
@@ -189,23 +183,28 @@ class ShowCook_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <TabPanel
               value={this.state.activeTab}
               index={0}
               id="items"
               style={{ width: "auto", display: "flex", justifyContent: "center" }}
             >
-              <CookCatsTab cats={this.state.cats} openItem={async (id) => await this.openItem(id)} />
+              <CookCatsTab
+                cats={this.state.cats}
+                openItem={async (id) => await this.openItem(id)}
+              />
             </TabPanel>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <TabPanel
               value={this.state.activeTab}
               index={1}
@@ -218,8 +217,9 @@ class ShowCook_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <TabPanel
               value={this.state.activeTab}
               index={2}
@@ -244,7 +244,7 @@ export async function getServerSideProps({ res }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

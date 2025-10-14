@@ -21,8 +21,8 @@ export function MySelect(props) {
       ? props.value.map(String)
       : []
     : props.value != null
-    ? String(props.value)
-    : "";
+      ? String(props.value)
+      : "";
 
   // force display of selected name
   const renderValue = (selected) => {
@@ -61,7 +61,7 @@ export function MySelect(props) {
             <MenuItem
               key={key}
               value={item.id}
-              sx={{ color: item?.color ? item.color : null}}
+              sx={{ color: item?.color ? item.color : null }}
             >
               {item.name}
             </MenuItem>

@@ -29,12 +29,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import {
-  MyTextInput,
-  MyAutocomplite,
-  MyDatePickerNew,
-  MyCheckBox,
-} from "@/components/shared/Forms";
+import { MyTextInput, MyAutocomplite, MyDatePickerNew, MyCheckBox } from "@/ui/Forms";
 
 import { ExlIcon } from "@/ui/icons";
 
@@ -50,13 +45,13 @@ import SiteClients_Modal_Client_Order from "@/components/site_clients/_SiteClien
 import SiteClients_Modal_Client from "@/components/site_clients/_SiteClientsModalClient";
 import Clients from "@/components/site_clients/_Clients";
 import OrdersMore from "@/components/site_clients/_OrdersMore";
-import a11yProps from "@/components/shared/TabPanel/a11yProps";
-import TabPanel from "@/components/shared/TabPanel/TabPanel";
+import a11yProps from "@/ui/TabPanel/a11yProps";
+import TabPanel from "@/ui/TabPanel/TabPanel";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import SiteClientsMarketingTab from "@/components/site_clients/marketing/SiteClientsMarketingTab";
-import TestAccess from "@/components/shared/TestAccess";
+import TestAccess from "@/ui/TestAccess";
 import { formatDate } from "@/src/helpers/ui/formatDate";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 
 class SiteClients_ extends React.Component {
   constructor(props) {
@@ -925,63 +920,418 @@ class SiteClients_ extends React.Component {
           </Grid>
 
           {/* Поиск клиента */}
-					{this.state.activeTab === this.state.index_search_clients && (
-          <Grid
-            style={{ paddingTop: 0 }}
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <TabPanel
-              value={this.state.activeTab}
-              index={this.state.index_clients}
-              id="clients"
+          {this.state.activeTab === this.state.index_search_clients && (
+            <Grid
+              style={{ paddingTop: 0 }}
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
             >
-              <Grid
-                container
-                spacing={3}
+              <TabPanel
+                value={this.state.activeTab}
+                index={this.state.index_clients}
+                id="clients"
               >
                 <Grid
-                  size={{
-                    xs: 12,
-                    sm: 6,
-                  }}
+                  container
+                  spacing={3}
                 >
-                  <MyTextInput
-                    type="number"
-                    className="input_login"
-                    label="Поиск по номеру телефона"
-                    value={this.state.search}
-                    func={this.changeSearch.bind(this, "search")}
-                    inputAdornment={{
-                      endAdornment: (
-                        <>
-                          {!this.state.search ? null : (
-                            <InputAdornment position="end">
-                              <IconButton>
-                                <ClearIcon onClick={this.changeSearch.bind(this, "clear")} />
-                              </IconButton>
-                            </InputAdornment>
-                          )}
-                        </>
-                      ),
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6,
                     }}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 4,
-                  }}
-                >
-                  <Button
-                    onClick={this.getClients.bind(this)}
-                    variant="contained"
                   >
-                    Показать
-                  </Button>
+                    <MyTextInput
+                      type="number"
+                      className="input_login"
+                      label="Поиск по номеру телефона"
+                      value={this.state.search}
+                      func={this.changeSearch.bind(this, "search")}
+                      inputAdornment={{
+                        endAdornment: (
+                          <>
+                            {!this.state.search ? null : (
+                              <InputAdornment position="end">
+                                <IconButton>
+                                  <ClearIcon onClick={this.changeSearch.bind(this, "clear")} />
+                                </IconButton>
+                              </InputAdornment>
+                            )}
+                          </>
+                        ),
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 4,
+                    }}
+                  >
+                    <Button
+                      onClick={this.getClients.bind(this)}
+                      variant="contained"
+                    >
+                      Показать
+                    </Button>
+                  </Grid>
+
+                  <Grid
+                    mt={5}
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    <TableContainer
+                      sx={{ maxHeight: { xs: "none", sm: 570 } }}
+                      component={Paper}
+                    >
+                      <Table
+                        stickyHeader
+                        size="small"
+                      >
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>#</TableCell>
+                            <TableCell>Имя</TableCell>
+                            <TableCell>Номер телефона</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {this.state.clients.map((item, key) => (
+                            <TableRow
+                              hover
+                              key={key}
+                              style={{ cursor: "pointer" }}
+                              onClick={this.openModalClient.bind(this, item.login, "open")}
+                            >
+                              <TableCell>{key + 1}</TableCell>
+                              <TableCell>{item.name}</TableCell>
+                              <TableCell>{item.login}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                </Grid>
+              </TabPanel>
+            </Grid>
+          )}
+          {/* Поиск клиента */}
+
+          {/* Поиск заказов */}
+          {this.state.activeTab === this.state.index_orders && (
+            <Grid
+              style={{ paddingTop: 0 }}
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
+            >
+              <TabPanel
+                value={this.state.activeTab}
+                index={this.state.index_orders}
+                id="clients"
+              >
+                <Grid
+                  container
+                  spacing={3}
+                >
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    <ToggleButtonGroup
+                      value={this.state.select_toggle}
+                      exclusive
+                      onChange={this.handleToggleChange}
+                      sx={{
+                        display: "flex",
+                        "& .MuiToggleButton-root": {
+                          fontSize: 16,
+                          textTransform: "none",
+                          borderRadius: 0,
+                          px: 3,
+                          py: 0.5,
+                        },
+                        "& .MuiToggleButton-root:first-of-type": {
+                          borderTopLeftRadius: 4,
+                          borderBottomLeftRadius: 4,
+                        },
+                        "& .MuiToggleButton-root:last-of-type": {
+                          borderTopRightRadius: 4,
+                          borderBottomRightRadius: 4,
+                        },
+                        "& .MuiToggleButton-root.Mui-selected": {
+                          backgroundColor: "primary.main",
+                          color: "primary.contrastText",
+                          "&:hover": {
+                            backgroundColor: "primary.dark",
+                          },
+                        },
+                      }}
+                    >
+                      <ToggleButton value="city">Город</ToggleButton>
+                      <ToggleButton value="point">Точка</ToggleButton>
+                    </ToggleButtonGroup>
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    {this.state.select_toggle === "city" ? (
+                      <MyAutocomplite
+                        label="Город"
+                        multiple={true}
+                        data={this.state.cities}
+                        value={this.state.city_id}
+                        func={this.changeAutocomplite.bind(this, "city_id")}
+                      />
+                    ) : (
+                      <MyAutocomplite
+                        label="Точка"
+                        multiple={true}
+                        data={this.state.points}
+                        value={this.state.point_id}
+                        func={this.changeAutocomplite.bind(this, "point_id")}
+                      />
+                    )}
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                    }}
+                  >
+                    <MyDatePickerNew
+                      label="Дата от"
+                      customActions={true}
+                      value={dayjs(this.state.date_start)}
+                      func={this.changeDateRange.bind(this, "date_start")}
+                    />
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                    }}
+                  >
+                    <MyDatePickerNew
+                      label="Дата до"
+                      customActions={true}
+                      value={dayjs(this.state.date_end)}
+                      func={this.changeDateRange.bind(this, "date_end")}
+                    />
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 4,
+                    }}
+                  >
+                    <MyTextInput
+                      type="number"
+                      className="input_login"
+                      label="Номер заказа"
+                      value={this.state.order}
+                      func={this.changeInput.bind(this, "order", "edit")}
+                      inputAdornment={{
+                        endAdornment: (
+                          <>
+                            {!this.state.order ? null : (
+                              <InputAdornment position="end">
+                                <IconButton>
+                                  <ClearIcon
+                                    onClick={this.changeInput.bind(this, "order", "clear")}
+                                  />
+                                </IconButton>
+                              </InputAdornment>
+                            )}
+                          </>
+                        ),
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 4,
+                    }}
+                  >
+                    <MyTextInput
+                      type="number"
+                      className="input_login"
+                      label="Номер телефона"
+                      value={this.state.number}
+                      func={this.changeInput.bind(this, "number", "edit")}
+                      inputAdornment={{
+                        endAdornment: (
+                          <>
+                            {!this.state.number ? null : (
+                              <InputAdornment position="end">
+                                <IconButton>
+                                  <ClearIcon
+                                    onClick={this.changeInput.bind(this, "number", "clear")}
+                                  />
+                                </IconButton>
+                              </InputAdornment>
+                            )}
+                          </>
+                        ),
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 2,
+                    }}
+                  >
+                    <MyTextInput
+                      type="text"
+                      className="input_promo"
+                      label="Промокод"
+                      value={this.state.promo}
+                      func={this.changeInput.bind(this, "promo", "edit")}
+                      inputAdornment={{
+                        endAdornment: (
+                          <>
+                            {!this.state.number ? null : (
+                              <InputAdornment position="end">
+                                <IconButton>
+                                  <ClearIcon
+                                    onClick={this.changeInput.bind(this, "promo", "clear")}
+                                  />
+                                </IconButton>
+                              </InputAdornment>
+                            )}
+                          </>
+                        ),
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 2,
+                    }}
+                  >
+                    <MyCheckBox
+                      value={this.state.promo_dr}
+                      func={this.changeDataCheck.bind(this, "promo_dr")}
+                      label="Промик на ДР"
+                    />
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                    }}
+                  >
+                    <MyTextInput
+                      className="input_login"
+                      label="Адрес клиента"
+                      value={this.state.addr}
+                      func={this.changeInput.bind(this, "addr", "edit")}
+                      inputAdornment={{
+                        endAdornment: (
+                          <>
+                            {!this.state.addr ? null : (
+                              <InputAdornment position="end">
+                                <IconButton>
+                                  <ClearIcon
+                                    onClick={this.changeInput.bind(this, "addr", "clear")}
+                                  />
+                                </IconButton>
+                              </InputAdornment>
+                            )}
+                          </>
+                        ),
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 3,
+                    }}
+                  >
+                    <MyAutocomplite
+                      label="Кто оформил"
+                      multiple={true}
+                      data={this.state.all_created}
+                      value={this.state.created}
+                      func={this.changeAutocomplite.bind(this, "created")}
+                    />
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 5,
+                    }}
+                  >
+                    <MyAutocomplite
+                      label="Товары в заказе"
+                      multiple={true}
+                      data={this.state.all_items}
+                      value={this.state.items}
+                      func={this.changeAutocomplite.bind(this, "items")}
+                    />
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 2,
+                    }}
+                  >
+                    <Button
+                      onClick={this.getOrders.bind(this)}
+                      variant="contained"
+                    >
+                      Показать
+                    </Button>
+                  </Grid>
+
+                  {this.canAccess("download_file") && this.state.search_orders?.length > 0 && (
+                    <Grid
+                      x={{ display: "flex", alignItems: "center" }}
+                      size={{
+                        xs: 12,
+                        sm: 2,
+                      }}
+                    >
+                      <Tooltip
+                        title={<Typography color="inherit">{"Скачать таблицу в Excel"}</Typography>}
+                      >
+                        <IconButton
+                          disableRipple
+                          sx={{ padding: 0 }}
+                          onClick={this.downLoad.bind(this)}
+                        >
+                          <ExlIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Grid>
+                  )}
                 </Grid>
 
                 <Grid
@@ -996,1092 +1346,747 @@ class SiteClients_ extends React.Component {
                     component={Paper}
                   >
                     <Table
+                      size={"small"}
                       stickyHeader
-                      size="small"
                     >
                       <TableHead>
                         <TableRow>
                           <TableCell>#</TableCell>
-                          <TableCell>Имя</TableCell>
-                          <TableCell>Номер телефона</TableCell>
+                          <TableCell>Заказ</TableCell>
+                          <TableCell>Точка</TableCell>
+                          <TableCell>Оформил</TableCell>
+                          <TableCell>Номер клиента</TableCell>
+                          <TableCell>Адрес доставки</TableCell>
+                          <TableCell>Время открытия заказа</TableCell>
+                          <TableCell>Ко времени</TableCell>
+                          <TableCell>Закрыт на кухне</TableCell>
+                          <TableCell>Получен клиентом</TableCell>
+                          <TableCell>Время обещ</TableCell>
+                          <TableCell>Тип</TableCell>
+                          <TableCell>Статус</TableCell>
+                          <TableCell>Сумма</TableCell>
+                          <TableCell>Оплата</TableCell>
+                          <TableCell>Водитель</TableCell>
                         </TableRow>
                       </TableHead>
+
                       <TableBody>
-                        {this.state.clients.map((item, key) => (
+                        {this.state.search_orders.map((item, key) => (
                           <TableRow
                             hover
                             key={key}
-                            style={{ cursor: "pointer" }}
-                            onClick={this.openModalClient.bind(this, item.login, "open")}
+                            style={
+                              parseInt(item.is_delete) == 1
+                                ? {
+                                    backgroundColor: "red",
+                                    color: "#fff",
+                                    fontWeight: "bold",
+                                  }
+                                : {}
+                            }
+                            sx={{ cursor: "pointer" }}
+                            onClick={this.openClientOrder.bind(this, item.id, item.point_id)}
                           >
-                            <TableCell>{key + 1}</TableCell>
-                            <TableCell>{item.name}</TableCell>
-                            <TableCell>{item.login}</TableCell>
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {key + 1}
+                            </TableCell>
+                            <TableCell
+                              style={
+                                parseInt(item.dist) >= 0
+                                  ? {
+                                      backgroundColor: "yellow",
+                                      color: "#000",
+                                      cursor: "pointer",
+                                      fontWeight: "inherit",
+                                    }
+                                  : { color: "inherit", cursor: "pointer", fontWeight: "inherit" }
+                              }
+                            >
+                              {item.id}
+                            </TableCell>
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.point_addr}
+                            </TableCell>
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.type_user}
+                            </TableCell>
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.number}
+                            </TableCell>
+                            <TableCell
+                              style={{
+                                color: "inherit",
+                                fontWeight: "inherit",
+                              }}
+                            >
+                              {item.street} {item.home}
+                            </TableCell>
+                            <TableCell
+                              style={{
+                                color: "inherit",
+                                fontWeight: "inherit",
+                              }}
+                            >
+                              {item.date_time_order}
+                            </TableCell>
+                            <TableCell
+                              style={{
+                                color: "inherit",
+                                fontWeight: "inherit",
+                                backgroundColor:
+                                  parseInt(item.is_preorder) == 1 ? "#bababa" : "inherit",
+                              }}
+                            >
+                              {item.need_time}
+                            </TableCell>
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.give_data_time == "00:00:00" ? "" : item.give_data_time}
+                            </TableCell>
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.close_order}
+                            </TableCell>
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.unix_time_to_client == "0" || parseInt(item.is_preorder) == 1
+                                ? ""
+                                : item.unix_time_to_client}
+                            </TableCell>
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.type_order}
+                            </TableCell>
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.status}
+                            </TableCell>
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.order_price}
+                            </TableCell>
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.type_pay}
+                            </TableCell>
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.driver}
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
+                  {this.state.search_orders.length ? (
+                    <Box
+                      sx={{
+                        backgroundColor: "#f5f5f5",
+                        padding: "10px",
+                        borderTop: "1px solid #ddd",
+                        fontWeight: "bold",
+                        marginBottom: "1rem",
+                        textAlign: "center",
+                        position: "sticky",
+                        bottom: 0,
+                      }}
+                    >
+                      <span
+                        style={{
+                          marginRight: "24px",
+                          marginLeft: "10px",
+                        }}
+                      >
+                        Кол-во заказов: {this.state.search_orders.length}
+                      </span>
+                      {this.state.acces?.count_complete_order_access && (
+                        <>
+                          <span style={{ color: "green", marginRight: "24px" }}>
+                            Кол-во завершенных заказов:{" "}
+                            {
+                              this.state.search_orders.filter((src) => src.status_order === 6)
+                                ?.length
+                            }
+                          </span>
+                          <span style={{ color: "blue" }}>
+                            Сумма завершенных заказов:{" "}
+                            {this.state.search_orders
+                              .filter((src) => src.status_order === 6)
+                              .reduce((sum, order) => sum + (parseFloat(order.order_price) || 0), 0)
+                              .toLocaleString("ru-RU", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}{" "}
+                            руб.
+                          </span>
+                        </>
+                      )}
+                    </Box>
+                  ) : null}
                 </Grid>
-              </Grid>
-            </TabPanel>
-          </Grid>
-					)}
-          {/* Поиск клиента */}
-
+              </TabPanel>
+            </Grid>
+          )}
           {/* Поиск заказов */}
-					{this.state.activeTab === this.state.index_orders && (
-          <Grid
-            style={{ paddingTop: 0 }}
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <TabPanel
-              value={this.state.activeTab}
-              index={this.state.index_orders}
-              id="clients"
+
+          {/* Заказы по адресам */}
+          {this.state.activeTab === this.state.index_address && (
+            <Grid
+              style={{ paddingTop: 0 }}
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
             >
-              <Grid
-                container
-                spacing={3}
+              <TabPanel
+                value={this.state.activeTab}
+                index={this.state.index_address}
+                id="clients"
               >
                 <Grid
-                  size={{
-                    xs: 12,
-                    sm: 12,
-                  }}
+                  container
+                  spacing={3}
                 >
-                  <ToggleButtonGroup
-                    value={this.state.select_toggle}
-                    exclusive
-                    onChange={this.handleToggleChange}
-                    sx={{
-                      display: "flex",
-                      "& .MuiToggleButton-root": {
-                        fontSize: 16,
-                        textTransform: "none",
-                        borderRadius: 0,
-                        px: 3,
-                        py: 0.5,
-                      },
-                      "& .MuiToggleButton-root:first-of-type": {
-                        borderTopLeftRadius: 4,
-                        borderBottomLeftRadius: 4,
-                      },
-                      "& .MuiToggleButton-root:last-of-type": {
-                        borderTopRightRadius: 4,
-                        borderBottomRightRadius: 4,
-                      },
-                      "& .MuiToggleButton-root.Mui-selected": {
-                        backgroundColor: "primary.main",
-                        color: "primary.contrastText",
-                        "&:hover": {
-                          backgroundColor: "primary.dark",
-                        },
-                      },
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 4,
                     }}
                   >
-                    <ToggleButton value="city">Город</ToggleButton>
-                    <ToggleButton value="point">Точка</ToggleButton>
-                  </ToggleButtonGroup>
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 12,
-                  }}
-                >
-                  {this.state.select_toggle === "city" ? (
                     <MyAutocomplite
                       label="Город"
                       multiple={true}
                       data={this.state.cities}
-                      value={this.state.city_id}
-                      func={this.changeAutocomplite.bind(this, "city_id")}
+                      value={this.state.city_id_addr}
+                      func={this.changeAutocomplite.bind(this, "city_id_addr")}
                     />
-                  ) : (
-                    <MyAutocomplite
-                      label="Точка"
-                      multiple={true}
-                      data={this.state.points}
-                      value={this.state.point_id}
-                      func={this.changeAutocomplite.bind(this, "point_id")}
-                    />
-                  )}
-                </Grid>
+                  </Grid>
 
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 6,
-                  }}
-                >
-                  <MyDatePickerNew
-                    label="Дата от"
-                    customActions={true}
-                    value={dayjs(this.state.date_start)}
-                    func={this.changeDateRange.bind(this, "date_start")}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 6,
-                  }}
-                >
-                  <MyDatePickerNew
-                    label="Дата до"
-                    customActions={true}
-                    value={dayjs(this.state.date_end)}
-                    func={this.changeDateRange.bind(this, "date_end")}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 4,
-                  }}
-                >
-                  <MyTextInput
-                    type="number"
-                    className="input_login"
-                    label="Номер заказа"
-                    value={this.state.order}
-                    func={this.changeInput.bind(this, "order", "edit")}
-                    inputAdornment={{
-                      endAdornment: (
-                        <>
-                          {!this.state.order ? null : (
-                            <InputAdornment position="end">
-                              <IconButton>
-                                <ClearIcon
-                                  onClick={this.changeInput.bind(this, "order", "clear")}
-                                />
-                              </IconButton>
-                            </InputAdornment>
-                          )}
-                        </>
-                      ),
-                    }}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 4,
-                  }}
-                >
-                  <MyTextInput
-                    type="number"
-                    className="input_login"
-                    label="Номер телефона"
-                    value={this.state.number}
-                    func={this.changeInput.bind(this, "number", "edit")}
-                    inputAdornment={{
-                      endAdornment: (
-                        <>
-                          {!this.state.number ? null : (
-                            <InputAdornment position="end">
-                              <IconButton>
-                                <ClearIcon
-                                  onClick={this.changeInput.bind(this, "number", "clear")}
-                                />
-                              </IconButton>
-                            </InputAdornment>
-                          )}
-                        </>
-                      ),
-                    }}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 2,
-                  }}
-                >
-                  <MyTextInput
-                    type="text"
-                    className="input_promo"
-                    label="Промокод"
-                    value={this.state.promo}
-                    func={this.changeInput.bind(this, "promo", "edit")}
-                    inputAdornment={{
-                      endAdornment: (
-                        <>
-                          {!this.state.number ? null : (
-                            <InputAdornment position="end">
-                              <IconButton>
-                                <ClearIcon
-                                  onClick={this.changeInput.bind(this, "promo", "clear")}
-                                />
-                              </IconButton>
-                            </InputAdornment>
-                          )}
-                        </>
-                      ),
-                    }}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 2,
-                  }}
-                >
-                  <MyCheckBox
-                    value={this.state.promo_dr}
-                    func={this.changeDataCheck.bind(this, "promo_dr")}
-                    label="Промик на ДР"
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                  }}
-                >
-                  <MyTextInput
-                    className="input_login"
-                    label="Адрес клиента"
-                    value={this.state.addr}
-                    func={this.changeInput.bind(this, "addr", "edit")}
-                    inputAdornment={{
-                      endAdornment: (
-                        <>
-                          {!this.state.addr ? null : (
-                            <InputAdornment position="end">
-                              <IconButton>
-                                <ClearIcon onClick={this.changeInput.bind(this, "addr", "clear")} />
-                              </IconButton>
-                            </InputAdornment>
-                          )}
-                        </>
-                      ),
-                    }}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 3,
-                  }}
-                >
-                  <MyAutocomplite
-                    label="Кто оформил"
-                    multiple={true}
-                    data={this.state.all_created}
-                    value={this.state.created}
-                    func={this.changeAutocomplite.bind(this, "created")}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 5,
-                  }}
-                >
-                  <MyAutocomplite
-                    label="Товары в заказе"
-                    multiple={true}
-                    data={this.state.all_items}
-                    value={this.state.items}
-                    func={this.changeAutocomplite.bind(this, "items")}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 2,
-                  }}
-                >
-                  <Button
-                    onClick={this.getOrders.bind(this)}
-                    variant="contained"
-                  >
-                    Показать
-                  </Button>
-                </Grid>
-
-                {this.canAccess("download_file") && this.state.search_orders?.length > 0 && (
                   <Grid
-                    x={{ display: "flex", alignItems: "center" }}
+                    size={{
+                      xs: 12,
+                      sm: 4,
+                    }}
+                  >
+                    <MyDatePickerNew
+                      label="Дата от"
+                      customActions={true}
+                      value={dayjs(this.state.date_start_addr)}
+                      func={this.changeDateRange.bind(this, "date_start_addr")}
+                    />
+                  </Grid>
+
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 4,
+                    }}
+                  >
+                    <MyDatePickerNew
+                      label="Дата до"
+                      customActions={true}
+                      value={dayjs(this.state.date_end_addr)}
+                      func={this.changeDateRange.bind(this, "date_end_addr")}
+                    />
+                  </Grid>
+
+                  <Grid
+                    style={{ paddingRight: "20px" }}
+                    size={{
+                      xs: 12,
+                      sm: 8,
+                    }}
+                  >
+                    <TextareaAutosize
+                      aria-label="empty textarea"
+                      placeholder=""
+                      minRows={8}
+                      value={this.state.address_list}
+                      onChange={this.changeAddressList.bind(this, "address_list")}
+                      label="Список адресов"
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        fontFamily: "Arial, sans-serif",
+                        fontSize: "16px",
+                        borderRadius: "4px",
+                        borderColor: "#ccc",
+                        maxWidth: "100%",
+                        resize: "vertical",
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid
                     size={{
                       xs: 12,
                       sm: 2,
                     }}
                   >
-                    <Tooltip
-                      title={<Typography color="inherit">{"Скачать таблицу в Excel"}</Typography>}
+                    <Button
+                      onClick={this.getDataAddress.bind(this)}
+                      variant="contained"
                     >
-                      <IconButton
-                        disableRipple
-                        sx={{ padding: 0 }}
-                        onClick={this.downLoad.bind(this)}
-                      >
-                        <ExlIcon />
-                      </IconButton>
-                    </Tooltip>
+                      Показать
+                    </Button>
                   </Grid>
-                )}
-              </Grid>
 
-              <Grid
-                mt={5}
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
-              >
-                <TableContainer
-                  sx={{ maxHeight: { xs: "none", sm: 570 } }}
-                  component={Paper}
-                >
-                  <Table
-                    size={"small"}
-                    stickyHeader
-                  >
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>#</TableCell>
-                        <TableCell>Заказ</TableCell>
-                        <TableCell>Точка</TableCell>
-                        <TableCell>Оформил</TableCell>
-                        <TableCell>Номер клиента</TableCell>
-                        <TableCell>Адрес доставки</TableCell>
-                        <TableCell>Время открытия заказа</TableCell>
-                        <TableCell>Ко времени</TableCell>
-                        <TableCell>Закрыт на кухне</TableCell>
-                        <TableCell>Получен клиентом</TableCell>
-                        <TableCell>Время обещ</TableCell>
-                        <TableCell>Тип</TableCell>
-                        <TableCell>Статус</TableCell>
-                        <TableCell>Сумма</TableCell>
-                        <TableCell>Оплата</TableCell>
-                        <TableCell>Водитель</TableCell>
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {this.state.search_orders.map((item, key) => (
-                        <TableRow
-                          hover
-                          key={key}
-                          style={
-                            parseInt(item.is_delete) == 1
-                              ? {
-                                  backgroundColor: "red",
-                                  color: "#fff",
-                                  fontWeight: "bold",
-                                }
-                              : {}
-                          }
-                          sx={{ cursor: "pointer" }}
-                          onClick={this.openClientOrder.bind(this, item.id, item.point_id)}
-                        >
-                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                            {key + 1}
-                          </TableCell>
-                          <TableCell
-                            style={
-                              parseInt(item.dist) >= 0
-                                ? {
-                                    backgroundColor: "yellow",
-                                    color: "#000",
-                                    cursor: "pointer",
-                                    fontWeight: "inherit",
-                                  }
-                                : { color: "inherit", cursor: "pointer", fontWeight: "inherit" }
-                            }
-                          >
-                            {item.id}
-                          </TableCell>
-                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                            {item.point_addr}
-                          </TableCell>
-                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                            {item.type_user}
-                          </TableCell>
-                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                            {item.number}
-                          </TableCell>
-                          <TableCell
-                            style={{
-                              color: "inherit",
-                              fontWeight: "inherit",
-                            }}
-                          >
-                            {item.street} {item.home}
-                          </TableCell>
-                          <TableCell
-                            style={{
-                              color: "inherit",
-                              fontWeight: "inherit",
-                            }}
-                          >
-                            {item.date_time_order}
-                          </TableCell>
-                          <TableCell
-                            style={{
-                              color: "inherit",
-                              fontWeight: "inherit",
-                              backgroundColor:
-                                parseInt(item.is_preorder) == 1 ? "#bababa" : "inherit",
-                            }}
-                          >
-                            {item.need_time}
-                          </TableCell>
-                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                            {item.give_data_time == "00:00:00" ? "" : item.give_data_time}
-                          </TableCell>
-                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                            {item.close_order}
-                          </TableCell>
-                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                            {item.unix_time_to_client == "0" || parseInt(item.is_preorder) == 1
-                              ? ""
-                              : item.unix_time_to_client}
-                          </TableCell>
-                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                            {item.type_order}
-                          </TableCell>
-                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                            {item.status}
-                          </TableCell>
-                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                            {item.order_price}
-                          </TableCell>
-                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                            {item.type_pay}
-                          </TableCell>
-                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                            {item.driver}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                {this.state.search_orders.length ? (
-                  <Box
-                    sx={{
-                      backgroundColor: "#f5f5f5",
-                      padding: "10px",
-                      borderTop: "1px solid #ddd",
-                      fontWeight: "bold",
-                      marginBottom: "1rem",
-                      textAlign: "center",
-                      position: "sticky",
-                      bottom: 0,
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12,
                     }}
                   >
-                    <span
-                      style={{
-                        marginRight: "24px",
-                        marginLeft: "10px",
-                      }}
-                    >
-                      Кол-во заказов: {this.state.search_orders.length}
-                    </span>
-                    {this.state.acces?.count_complete_order_access && (
-                      <>
-                        <span style={{ color: "green", marginRight: "24px" }}>
-                          Кол-во завершенных заказов:{" "}
-                          {this.state.search_orders.filter((src) => src.status_order === 6)?.length}
-                        </span>
-                        <span style={{ color: "blue" }}>
-                          Сумма завершенных заказов:{" "}
-                          {this.state.search_orders
-                            .filter((src) => src.status_order === 6)
-                            .reduce((sum, order) => sum + (parseFloat(order.order_price) || 0), 0)
-                            .toLocaleString("ru-RU", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}{" "}
-                          руб.
-                        </span>
-                      </>
-                    )}
-                  </Box>
-                ) : null}
-              </Grid>
-            </TabPanel>
-          </Grid>
-					)}
-          {/* Поиск заказов */}
+                    <Paper>
+                      <Tabs
+                        value={this.state.activeTab_address}
+                        onChange={this.changeTab_address.bind(this)}
+                        centered
+                        variant="fullWidth"
+                      >
+                        <Tab
+                          label="Список заказов"
+                          {...a11yProps(0)}
+                        />
+                        <Tab
+                          label="Список адресов"
+                          {...a11yProps(1)}
+                        />
+                      </Tabs>
+                    </Paper>
+                  </Grid>
 
-          {/* Заказы по адресам */}
-					{this.state.activeTab === this.state.index_address && (
-          <Grid
-            style={{ paddingTop: 0 }}
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <TabPanel
-              value={this.state.activeTab}
-              index={this.state.index_address}
-              id="clients"
-            >
-              <Grid
-                container
-                spacing={3}
-              >
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 4,
-                  }}
-                >
-                  <MyAutocomplite
-                    label="Город"
-                    multiple={true}
-                    data={this.state.cities}
-                    value={this.state.city_id_addr}
-                    func={this.changeAutocomplite.bind(this, "city_id_addr")}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 4,
-                  }}
-                >
-                  <MyDatePickerNew
-                    label="Дата от"
-                    customActions={true}
-                    value={dayjs(this.state.date_start_addr)}
-                    func={this.changeDateRange.bind(this, "date_start_addr")}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 4,
-                  }}
-                >
-                  <MyDatePickerNew
-                    label="Дата до"
-                    customActions={true}
-                    value={dayjs(this.state.date_end_addr)}
-                    func={this.changeDateRange.bind(this, "date_end_addr")}
-                  />
-                </Grid>
-
-                <Grid
-                  style={{ paddingRight: "20px" }}
-                  size={{
-                    xs: 12,
-                    sm: 8,
-                  }}
-                >
-                  <TextareaAutosize
-                    aria-label="empty textarea"
-                    placeholder=""
-                    minRows={8}
-                    value={this.state.address_list}
-                    onChange={this.changeAddressList.bind(this, "address_list")}
-                    label="Список адресов"
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      fontFamily: "Arial, sans-serif",
-                      fontSize: "16px",
-                      borderRadius: "4px",
-                      borderColor: "#ccc",
-                      maxWidth: "100%",
-                      resize: "vertical",
+                  {/* Список заказов */}
+                  <Grid
+                    style={{ paddingTop: 0 }}
+                    size={{
+                      xs: 12,
+                      sm: 12,
                     }}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 2,
-                  }}
-                >
-                  <Button
-                    onClick={this.getDataAddress.bind(this)}
-                    variant="contained"
                   >
-                    Показать
-                  </Button>
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 12,
-                  }}
-                >
-                  <Paper>
-                    <Tabs
+                    <TabPanel
                       value={this.state.activeTab_address}
-                      onChange={this.changeTab_address.bind(this)}
-                      centered
-                      variant="fullWidth"
-                    >
-                      <Tab
-                        label="Список заказов"
-                        {...a11yProps(0)}
-                      />
-                      <Tab
-                        label="Список адресов"
-                        {...a11yProps(1)}
-                      />
-                    </Tabs>
-                  </Paper>
-                </Grid>
-
-                {/* Список заказов */}
-                <Grid
-                  style={{ paddingTop: 0 }}
-                  size={{
-                    xs: 12,
-                    sm: 12,
-                  }}
-                >
-                  <TabPanel
-                    value={this.state.activeTab_address}
-                    index={0}
-                    id="clients"
-                  >
-                    <Grid
-                      container
-                      spacing={3}
+                      index={0}
+                      id="clients"
                     >
                       <Grid
-                        mt={3}
-                        mb={5}
-                        size={{
-                          xs: 12,
-                          sm: 12,
-                        }}
+                        container
+                        spacing={3}
                       >
-                        <TableContainer
-                          sx={{ maxHeight: { xs: "none", sm: 570 } }}
-                          component={Paper}
+                        <Grid
+                          mt={3}
+                          mb={5}
+                          size={{
+                            xs: 12,
+                            sm: 12,
+                          }}
                         >
-                          <Table
-                            size={"small"}
-                            stickyHeader
+                          <TableContainer
+                            sx={{ maxHeight: { xs: "none", sm: 570 } }}
+                            component={Paper}
                           >
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>#</TableCell>
-                                <TableCell>ИД заказа</TableCell>
-                                <TableCell>Точка</TableCell>
-                                <TableCell>Номер клиента</TableCell>
-                                <TableCell>Адрес заказа</TableCell>
-                                <TableCell>Сумма заказа</TableCell>
-                              </TableRow>
-                            </TableHead>
-
-                            <TableBody>
-                              {this.state.orders_list.map((item, key) => (
-                                <TableRow
-                                  hover
-                                  key={key}
-                                  sx={{
-                                    cursor: "pointer",
-                                    backgroundColor: item.is_new ? "#ffcc00" : "inherit",
-                                  }}
-                                  onClick={this.openClientOrder.bind(this, item.id, item.point_id)}
-                                >
-                                  <TableCell>{key + 1}</TableCell>
-                                  <TableCell>{item.id}</TableCell>
-                                  <TableCell>{item.point_addr}</TableCell>
-                                  <TableCell>{item.number}</TableCell>
-                                  <TableCell>{item.addr}</TableCell>
-                                  <TableCell>
-                                    {new Intl.NumberFormat("ru-RU").format(item.order_price ?? 0)} ₽
-                                  </TableCell>
+                            <Table
+                              size={"small"}
+                              stickyHeader
+                            >
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>#</TableCell>
+                                  <TableCell>ИД заказа</TableCell>
+                                  <TableCell>Точка</TableCell>
+                                  <TableCell>Номер клиента</TableCell>
+                                  <TableCell>Адрес заказа</TableCell>
+                                  <TableCell>Сумма заказа</TableCell>
                                 </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      </Grid>
-                    </Grid>
-                  </TabPanel>
-                </Grid>
-                {/* Список заказов */}
+                              </TableHead>
 
-                {/* Список адресов */}
-                <Grid
-                  style={{ paddingTop: 0 }}
-                  size={{
-                    xs: 12,
-                    sm: 12,
-                  }}
-                >
-                  <TabPanel
-                    value={this.state.activeTab_address}
-                    index={1}
-                    id="clients"
-                  >
-                    <Grid
-                      container
-                      spacing={3}
-                    >
-                      <Grid
-                        mt={3}
-                        mb={5}
-                        size={{
-                          xs: 12,
-                          sm: 12,
-                        }}
-                      >
-                        <TableContainer>
-                          <Table>
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>#</TableCell>
-                                <TableCell>Адрес</TableCell>
-                                <TableCell>Количество заказов</TableCell>
-                                <TableCell>Сумма заказов</TableCell>
-                                <TableCell></TableCell>
-                              </TableRow>
-                            </TableHead>
-
-                            <TableBody>
-                              {this.state.orders_list_addr.map((item, key) => (
-                                <React.Fragment key={key}>
+                              <TableBody>
+                                {this.state.orders_list.map((item, key) => (
                                   <TableRow
                                     hover
-                                    onClick={this.openAccordionAdrress.bind(this, item.id)}
-                                    style={{ cursor: "pointer" }}
+                                    key={key}
+                                    sx={{
+                                      cursor: "pointer",
+                                      backgroundColor: item.is_new ? "#ffcc00" : "inherit",
+                                    }}
+                                    onClick={this.openClientOrder.bind(
+                                      this,
+                                      item.id,
+                                      item.point_id,
+                                    )}
                                   >
                                     <TableCell>{key + 1}</TableCell>
-                                    <TableCell>{item.address}</TableCell>
-                                    <TableCell>{item.orders_count}</TableCell>
+                                    <TableCell>{item.id}</TableCell>
+                                    <TableCell>{item.point_addr}</TableCell>
+                                    <TableCell>{item.number}</TableCell>
+                                    <TableCell>{item.addr}</TableCell>
                                     <TableCell>
-                                      {new Intl.NumberFormat("ru-RU").format(
-                                        item.total_amount ?? 0
-                                      )}{" "}
+                                      {new Intl.NumberFormat("ru-RU").format(item.order_price ?? 0)}{" "}
                                       ₽
                                     </TableCell>
-                                    <TableCell>
-                                      <Tooltip
-                                        title={
-                                          <Typography color="inherit">
-                                            Все заказы по этому адресу
-                                          </Typography>
-                                        }
-                                      >
-                                        <ExpandMoreIcon
-                                          style={{
-                                            display: "flex",
-                                            transform: item.is_open
-                                              ? "rotate(180deg)"
-                                              : "rotate(0deg)",
-                                          }}
-                                        />
-                                      </Tooltip>
-                                    </TableCell>
                                   </TableRow>
-                                  <TableRow>
-                                    <TableCell
-                                      style={{ padding: 0 }}
-                                      colSpan={10}
-                                    >
-                                      <Collapse
-                                        in={item.is_open}
-                                        timeout="auto"
-                                        unmountOnExit
-                                      >
-                                        <Box sx={{ margin: "8px 0" }}>
-                                          <Table
-                                            size={"small"}
-                                            stickyHeader
-                                          >
-                                            <TableHead>
-                                              <TableRow>
-                                                <TableCell>#</TableCell>
-                                                <TableCell>ИД заказа</TableCell>
-                                                <TableCell>Точка</TableCell>
-                                                <TableCell>Номер клиента</TableCell>
-                                                <TableCell>Адрес заказа</TableCell>
-                                                <TableCell>Сумма заказа</TableCell>
-                                              </TableRow>
-                                            </TableHead>
-
-                                            <TableBody>
-                                              {item.orders.map((it, k) => (
-                                                <TableRow
-                                                  hover
-                                                  key={k}
-                                                  sx={{
-                                                    cursor: "pointer",
-                                                    backgroundColor: it.is_new
-                                                      ? "#ffcc00"
-                                                      : "inherit",
-                                                  }}
-                                                  onClick={this.openClientOrder.bind(
-                                                    this,
-                                                    it.id,
-                                                    it.point_id
-                                                  )}
-                                                >
-                                                  <TableCell>{key + 1}</TableCell>
-                                                  <TableCell>{it.id}</TableCell>
-                                                  <TableCell>{it.point_addr}</TableCell>
-                                                  <TableCell>{it.number}</TableCell>
-                                                  <TableCell>{it.addr}</TableCell>
-                                                  <TableCell>
-                                                    {new Intl.NumberFormat("ru-RU").format(
-                                                      it.order_price ?? 0
-                                                    )}{" "}
-                                                    ₽
-                                                  </TableCell>
-                                                </TableRow>
-                                              ))}
-                                            </TableBody>
-                                          </Table>
-                                        </Box>
-                                      </Collapse>
-                                    </TableCell>
-                                  </TableRow>
-                                </React.Fragment>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        </Grid>
                       </Grid>
-                    </Grid>
-                  </TabPanel>
+                    </TabPanel>
+                  </Grid>
+                  {/* Список заказов */}
+
+                  {/* Список адресов */}
+                  <Grid
+                    style={{ paddingTop: 0 }}
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    <TabPanel
+                      value={this.state.activeTab_address}
+                      index={1}
+                      id="clients"
+                    >
+                      <Grid
+                        container
+                        spacing={3}
+                      >
+                        <Grid
+                          mt={3}
+                          mb={5}
+                          size={{
+                            xs: 12,
+                            sm: 12,
+                          }}
+                        >
+                          <TableContainer>
+                            <Table>
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>#</TableCell>
+                                  <TableCell>Адрес</TableCell>
+                                  <TableCell>Количество заказов</TableCell>
+                                  <TableCell>Сумма заказов</TableCell>
+                                  <TableCell></TableCell>
+                                </TableRow>
+                              </TableHead>
+
+                              <TableBody>
+                                {this.state.orders_list_addr.map((item, key) => (
+                                  <React.Fragment key={key}>
+                                    <TableRow
+                                      hover
+                                      onClick={this.openAccordionAdrress.bind(this, item.id)}
+                                      style={{ cursor: "pointer" }}
+                                    >
+                                      <TableCell>{key + 1}</TableCell>
+                                      <TableCell>{item.address}</TableCell>
+                                      <TableCell>{item.orders_count}</TableCell>
+                                      <TableCell>
+                                        {new Intl.NumberFormat("ru-RU").format(
+                                          item.total_amount ?? 0,
+                                        )}{" "}
+                                        ₽
+                                      </TableCell>
+                                      <TableCell>
+                                        <Tooltip
+                                          title={
+                                            <Typography color="inherit">
+                                              Все заказы по этому адресу
+                                            </Typography>
+                                          }
+                                        >
+                                          <ExpandMoreIcon
+                                            style={{
+                                              display: "flex",
+                                              transform: item.is_open
+                                                ? "rotate(180deg)"
+                                                : "rotate(0deg)",
+                                            }}
+                                          />
+                                        </Tooltip>
+                                      </TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                      <TableCell
+                                        style={{ padding: 0 }}
+                                        colSpan={10}
+                                      >
+                                        <Collapse
+                                          in={item.is_open}
+                                          timeout="auto"
+                                          unmountOnExit
+                                        >
+                                          <Box sx={{ margin: "8px 0" }}>
+                                            <Table
+                                              size={"small"}
+                                              stickyHeader
+                                            >
+                                              <TableHead>
+                                                <TableRow>
+                                                  <TableCell>#</TableCell>
+                                                  <TableCell>ИД заказа</TableCell>
+                                                  <TableCell>Точка</TableCell>
+                                                  <TableCell>Номер клиента</TableCell>
+                                                  <TableCell>Адрес заказа</TableCell>
+                                                  <TableCell>Сумма заказа</TableCell>
+                                                </TableRow>
+                                              </TableHead>
+
+                                              <TableBody>
+                                                {item.orders.map((it, k) => (
+                                                  <TableRow
+                                                    hover
+                                                    key={k}
+                                                    sx={{
+                                                      cursor: "pointer",
+                                                      backgroundColor: it.is_new
+                                                        ? "#ffcc00"
+                                                        : "inherit",
+                                                    }}
+                                                    onClick={this.openClientOrder.bind(
+                                                      this,
+                                                      it.id,
+                                                      it.point_id,
+                                                    )}
+                                                  >
+                                                    <TableCell>{key + 1}</TableCell>
+                                                    <TableCell>{it.id}</TableCell>
+                                                    <TableCell>{it.point_addr}</TableCell>
+                                                    <TableCell>{it.number}</TableCell>
+                                                    <TableCell>{it.addr}</TableCell>
+                                                    <TableCell>
+                                                      {new Intl.NumberFormat("ru-RU").format(
+                                                        it.order_price ?? 0,
+                                                      )}{" "}
+                                                      ₽
+                                                    </TableCell>
+                                                  </TableRow>
+                                                ))}
+                                              </TableBody>
+                                            </Table>
+                                          </Box>
+                                        </Collapse>
+                                      </TableCell>
+                                    </TableRow>
+                                  </React.Fragment>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        </Grid>
+                      </Grid>
+                    </TabPanel>
+                  </Grid>
+                  {/* Список адресов */}
                 </Grid>
-                {/* Список адресов */}
-              </Grid>
-            </TabPanel>
-          </Grid>
-					)}
+              </TabPanel>
+            </Grid>
+          )}
           {/* Заказы по адресам */}
 
           {/* Поиск клиентов */}
           {this.state.activeTab === this.state.index_search_clients && (
-						<Grid
-            style={{ padding: 0 }}
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <TabPanel
-              value={this.state.activeTab}
-              index={this.state.index_search_clients}
-              id="traffic"
+            <Grid
+              style={{ padding: 0 }}
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
             >
-              <Clients canAccess={this.canAccess} />
-            </TabPanel>
-          </Grid>
-					)}
+              <TabPanel
+                value={this.state.activeTab}
+                index={this.state.index_search_clients}
+                id="traffic"
+              >
+                <Clients canAccess={this.canAccess} />
+              </TabPanel>
+            </Grid>
+          )}
           {/* Поиск клиентов */}
 
           {/* Поиск заказов расширенный */}
-					{this.state.activeTab === this.state.index_order_more && (
-          <Grid
-            style={{ paddingTop: 0 }}
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <TabPanel
-              value={this.state.activeTab}
-              index={this.state.index_order_more}
-              id="traffic"
+          {this.state.activeTab === this.state.index_order_more && (
+            <Grid
+              style={{ paddingTop: 0 }}
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
             >
-              <OrdersMore />
-            </TabPanel>
-          </Grid>
-					)}
+              <TabPanel
+                value={this.state.activeTab}
+                index={this.state.index_order_more}
+                id="traffic"
+              >
+                <OrdersMore />
+              </TabPanel>
+            </Grid>
+          )}
           {/* Поиск заказов расширенный */}
 
           {/* Аналитика по заказам */}
-					{this.state.activeTab === this.state.index_traffic && (
-          <Grid
-            style={{ paddingTop: 0 }}
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <TabPanel
-              value={this.state.activeTab}
-              index={this.state.index_traffic}
-              id="traffic"
+          {this.state.activeTab === this.state.index_traffic && (
+            <Grid
+              style={{ paddingTop: 0 }}
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
             >
-              <Grid
-                container
-                spacing={3}
+              <TabPanel
+                value={this.state.activeTab}
+                index={this.state.index_traffic}
+                id="traffic"
               >
                 <Grid
-                  size={{
-                    xs: 12,
-                    sm: 4,
-                  }}
+                  container
+                  spacing={3}
                 >
-                  <MyAutocomplite
-                    label="Город"
-                    multiple={true}
-                    data={this.state.cities}
-                    value={this.state.city_id_traffic}
-                    func={this.changeAutocomplite.bind(this, "city_id_traffic")}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 3,
-                  }}
-                >
-                  <MyDatePickerNew
-                    label="Дата от"
-                    customActions={true}
-                    value={dayjs(this.state.date_start_traffic)}
-                    func={this.changeDateRange.bind(this, "date_start_traffic")}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 3,
-                  }}
-                >
-                  <MyDatePickerNew
-                    label="Дата до"
-                    customActions={true}
-                    value={dayjs(this.state.date_end_traffic)}
-                    func={this.changeDateRange.bind(this, "date_end_traffic")}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 2,
-                  }}
-                >
-                  <Button
-                    onClick={this.getDataTraffic.bind(this)}
-                    variant="contained"
-                  >
-                    Показать
-                  </Button>
-                </Grid>
-
-                {/* Визиты статистика */}
-                {this.state.traffic_stats?.length > 0 && (
                   <Grid
-                    mt={3}
-                    mb={5}
                     size={{
                       xs: 12,
-                      sm: 6,
+                      sm: 4,
                     }}
                   >
-                    <Typography variant="h4">Визиты все</Typography>
-                    <SiteClientsTrafficSummaryTable data={this.state.traffic_stats[0]} />
+                    <MyAutocomplite
+                      label="Город"
+                      multiple={true}
+                      data={this.state.cities}
+                      value={this.state.city_id_traffic}
+                      func={this.changeAutocomplite.bind(this, "city_id_traffic")}
+                    />
                   </Grid>
-                )}
-                {/* Визиты статистика */}
 
-                {/* Визиты по источнику */}
-                {this.state.traffic_sources?.length > 0 && (
                   <Grid
-                    mt={3}
-                    mb={5}
                     size={{
                       xs: 12,
-                      sm: 6,
+                      sm: 3,
                     }}
                   >
-                    <Typography variant="h4">Источники трафика</Typography>
-                    <SiteClientsTrafficBySourceTable rows={this.state.traffic_sources} />
+                    <MyDatePickerNew
+                      label="Дата от"
+                      customActions={true}
+                      value={dayjs(this.state.date_start_traffic)}
+                      func={this.changeDateRange.bind(this, "date_start_traffic")}
+                    />
                   </Grid>
-                )}
-                {/* Визиты по источнику */}
 
-                {/* Заказы по источнику */}
-                {this.state.orders_by_source?.length > 0 && (
                   <Grid
-                    mt={3}
-                    mb={5}
                     size={{
                       xs: 12,
-                      sm: 6,
+                      sm: 3,
                     }}
                   >
-                    <Typography variant="h4">Источники заказов</Typography>
-                    <SiteClientsOrdersBySourceTable rows={this.state.orders_by_source} />
+                    <MyDatePickerNew
+                      label="Дата до"
+                      customActions={true}
+                      value={dayjs(this.state.date_end_traffic)}
+                      func={this.changeDateRange.bind(this, "date_end_traffic")}
+                    />
                   </Grid>
-                )}
-                {/* Заказы по источнику */}
 
-                {/* Заказы по utm */}
-                {this.state.orders_by_utm?.length > 0 && (
                   <Grid
-                    mt={3}
-                    mb={5}
                     size={{
                       xs: 12,
-                      sm: 6,
+                      sm: 2,
                     }}
                   >
-                    <Typography variant="h4">Заказы по UTM</Typography>
-                    <SiteClientsOrdersByUtmTable rows={this.state.orders_by_utm} />
+                    <Button
+                      onClick={this.getDataTraffic.bind(this)}
+                      variant="contained"
+                    >
+                      Показать
+                    </Button>
                   </Grid>
-                )}
-                {/* Заказы по utm */}
-              </Grid>
-            </TabPanel>
-          </Grid>
-					)}
+
+                  {/* Визиты статистика */}
+                  {this.state.traffic_stats?.length > 0 && (
+                    <Grid
+                      mt={3}
+                      mb={5}
+                      size={{
+                        xs: 12,
+                        sm: 6,
+                      }}
+                    >
+                      <Typography variant="h4">Визиты все</Typography>
+                      <SiteClientsTrafficSummaryTable data={this.state.traffic_stats[0]} />
+                    </Grid>
+                  )}
+                  {/* Визиты статистика */}
+
+                  {/* Визиты по источнику */}
+                  {this.state.traffic_sources?.length > 0 && (
+                    <Grid
+                      mt={3}
+                      mb={5}
+                      size={{
+                        xs: 12,
+                        sm: 6,
+                      }}
+                    >
+                      <Typography variant="h4">Источники трафика</Typography>
+                      <SiteClientsTrafficBySourceTable rows={this.state.traffic_sources} />
+                    </Grid>
+                  )}
+                  {/* Визиты по источнику */}
+
+                  {/* Заказы по источнику */}
+                  {this.state.orders_by_source?.length > 0 && (
+                    <Grid
+                      mt={3}
+                      mb={5}
+                      size={{
+                        xs: 12,
+                        sm: 6,
+                      }}
+                    >
+                      <Typography variant="h4">Источники заказов</Typography>
+                      <SiteClientsOrdersBySourceTable rows={this.state.orders_by_source} />
+                    </Grid>
+                  )}
+                  {/* Заказы по источнику */}
+
+                  {/* Заказы по utm */}
+                  {this.state.orders_by_utm?.length > 0 && (
+                    <Grid
+                      mt={3}
+                      mb={5}
+                      size={{
+                        xs: 12,
+                        sm: 6,
+                      }}
+                    >
+                      <Typography variant="h4">Заказы по UTM</Typography>
+                      <SiteClientsOrdersByUtmTable rows={this.state.orders_by_utm} />
+                    </Grid>
+                  )}
+                  {/* Заказы по utm */}
+                </Grid>
+              </TabPanel>
+            </Grid>
+          )}
           {/* Аналитика по заказам */}
 
           {/* Маркетинговая Аналитика */}
-					{this.state.activeTab === this.state.index_marketing && (
-          <Grid
-            style={{ paddingTop: 0 }}
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <TabPanel
-              value={this.state.activeTab}
-              index={this.state.index_marketing}
-              id="marketing"
+          {this.state.activeTab === this.state.index_marketing && (
+            <Grid
+              style={{ paddingTop: 0 }}
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
             >
-              <SiteClientsMarketingTab
-                points={this.state.points}
-                getData={this.getData.bind(this)}
-                showAlert={this.showAlert.bind(this)}
-                canAccess={this.canAccess.bind(this)}
-                isLoading={this.state.is_load}
-                setIsLoading={(loading) => this.setState({ is_load: loading })}
-              />
-            </TabPanel>
-          </Grid>
-					)}
+              <TabPanel
+                value={this.state.activeTab}
+                index={this.state.index_marketing}
+                id="marketing"
+              >
+                <SiteClientsMarketingTab
+                  points={this.state.points}
+                  getData={this.getData.bind(this)}
+                  showAlert={this.showAlert.bind(this)}
+                  canAccess={this.canAccess.bind(this)}
+                  isLoading={this.state.is_load}
+                  setIsLoading={(loading) => this.setState({ is_load: loading })}
+                />
+              </TabPanel>
+            </Grid>
+          )}
           {/* Маркетинговая Аналитика */}
         </Grid>
       </>

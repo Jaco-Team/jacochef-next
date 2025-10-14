@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useState } from "react";
-import { MyAutocomplite2, MyCheckBox } from "@/components/shared/Forms";
+import { MyAutocomplite2, MyCheckBox } from "@/ui/Forms";
 import {
   Button,
   Dialog,
@@ -15,7 +15,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import useCafeEditModalsStore from "./useCafeEditModalsStore";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 
 const CafeEdit_Modal_Close_Cafe = (props) => {
   const { open, fullScreen, changeItemChecked } = props;
@@ -28,7 +28,7 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
     useCafeEditModalsStore();
 
   const open_confirm = () => {
-    console.log(useCafeEditModalsStore.getState().reason_list)
+    console.log(useCafeEditModalsStore.getState().reason_list);
     const { is_сlosed_overload, is_сlosed_technic, chooseReason } =
       useCafeEditModalsStore.getState();
     if (!is_сlosed_technic && !is_сlosed_overload) {
@@ -45,7 +45,6 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
   const changeReason = (event, value) => {
     const res = event.target.value || value || "";
     setModalsStateKey("chooseReason", res);
-
   };
 
   const save = () => {
@@ -117,8 +116,9 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MyCheckBox
                 label="Закрыто из-за большого количества заказов"
                 value={parseInt(is_сlosed_overload) == 1 ? true : false}
@@ -129,8 +129,9 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MyCheckBox
                 label="Закрыто по техническим причинам"
                 value={parseInt(is_сlosed_technic) == 1 ? true : false}
@@ -142,8 +143,9 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <MyAutocomplite2
                   id="cafe_upr_edit"
                   data={reason_list}

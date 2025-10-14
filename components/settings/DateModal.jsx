@@ -1,7 +1,16 @@
 "use client";
 
-import { MyDatePickerNew } from "@/components/shared/Forms";
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import { MyDatePickerNew } from "@/ui/Forms";
+import { Close } from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+} from "@mui/material";
 import { memo, useState } from "react";
 
 const DateModal = ({ open, onClose, onSave }) => {
@@ -28,7 +37,15 @@ const DateModal = ({ open, onClose, onSave }) => {
       maxWidth="sm"
       fullWidth
     >
-      <DialogTitle>Создать дату с которой будут применяться изменения</DialogTitle>
+      <DialogTitle>
+        Создать дату с которой будут применяться изменения
+        <IconButton
+          onClick={handleClose}
+          style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+        >
+          <Close />
+        </IconButton>
+      </DialogTitle>
 
       <DialogContent>
         <Box sx={{ mt: 2 }}>

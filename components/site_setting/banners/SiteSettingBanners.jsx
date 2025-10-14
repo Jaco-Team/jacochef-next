@@ -1,6 +1,6 @@
 "use client";
 
-import { MyCheckBox, MySelect, MyTextInput } from "@/components/shared/Forms";
+import { MyCheckBox, MySelect, MyTextInput } from "@/ui/Forms";
 import {
   Accordion,
   AccordionDetails,
@@ -27,14 +27,10 @@ export function SiteSettingBanners(props) {
   const {} = props;
   const submodule = "banners";
   // Page state
-  const [cityId, cities] = useSiteSettingStore((state) => [
-    state.city_id,
-    state.cities,
-  ]);
-  const { createModal, setCityId, closeModal, setModalTitle, showAlert } = useSiteSettingStore.getState();
-  const [acces] = useSiteSettingStore((state) => [
-    state.acces,
-  ]);
+  const [cityId, cities] = useSiteSettingStore((state) => [state.city_id, state.cities]);
+  const { createModal, setCityId, closeModal, setModalTitle, showAlert } =
+    useSiteSettingStore.getState();
+  const [acces] = useSiteSettingStore((state) => [state.acces]);
 
   // banners list state
   const { getData, setActiveBanners, setNonActiveBanners, setModuleName } =
@@ -122,13 +118,13 @@ export function SiteSettingBanners(props) {
             </Button>
           ) : null}
         </>
-      )
+      ),
     );
   };
   // update banner name in modal title
   useEffect(
     () => setModalTitle(`${modalPrefix}${bannerName ? `: ${bannerName}` : ""}`),
-    [modalPrefix, bannerName]
+    [modalPrefix, bannerName],
   );
 
   useEffect(() => {
@@ -151,7 +147,8 @@ export function SiteSettingBanners(props) {
           alignItems: "flex-start", // or 'center' based on your taste
           justifyContent: "space-between", // optional
         }}
-        size={12}>
+        size={12}
+      >
         <Typography variant="h5">{moduleName}</Typography>
 
         {acces.banners_edit ? (
@@ -163,8 +160,7 @@ export function SiteSettingBanners(props) {
           </Button>
         ) : null}
       </Grid>
-      <Grid
-        size={12}>
+      <Grid size={12}>
         <MySelect
           data={cities}
           value={cityId}
@@ -178,8 +174,9 @@ export function SiteSettingBanners(props) {
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <TableContainer>
             <Table>
               <TableHead>
@@ -220,8 +217,9 @@ export function SiteSettingBanners(props) {
                       <Grid
                         size={{
                           xs: 12,
-                          sm: 6
-                        }}>
+                          sm: 6,
+                        }}
+                      >
                         <MyTextInput
                           value={item.sort}
                           disabled={acces.banners_view && !acces.banners_edit}
@@ -252,8 +250,9 @@ export function SiteSettingBanners(props) {
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography sx={{ fontWeight: "bold" }}>Законченные</Typography>

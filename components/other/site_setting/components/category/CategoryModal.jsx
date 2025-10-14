@@ -2,7 +2,7 @@
 
 import { Grid } from "@mui/material";
 import { useCategoryStore } from "./useCategoryStore";
-import { MyAutocomplite, MyTextInput } from "@/components/shared/Forms";
+import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
 
 export function CategoryModal() {
   const currentItem = useCategoryStore((state) => state.item);
@@ -19,8 +19,9 @@ export function CategoryModal() {
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <MyTextInput
             label="Название категории"
             value={currentItem?.name || ""}
@@ -31,8 +32,9 @@ export function CategoryModal() {
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <MyTextInput
             label="Сроки хранения"
             multiline={true}
@@ -45,8 +47,9 @@ export function CategoryModal() {
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           {/* <MySelect
             label="Родительская категория"
             data={listCat ? listCat : []}
@@ -58,7 +61,12 @@ export function CategoryModal() {
             multiple={false}
             data={rootCategories || []}
             disableCloseOnSelect={false}
-            value={rootCategories?.find((c) => c.id === currentItem?.parent_id) || {id:0,name:"Не задано"}}
+            value={
+              rootCategories?.find((c) => c.id === currentItem?.parent_id) || {
+                id: 0,
+                name: "Не задано",
+              }
+            }
             func={(...params) => changeAutoComplete("parent_id", ...params)}
           />
         </Grid>

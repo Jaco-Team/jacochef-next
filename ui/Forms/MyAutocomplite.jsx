@@ -8,7 +8,9 @@ export function MyAutocomplite(props) {
       <Stack spacing={3}>
         <Autocomplete
           size="small"
-          disableCloseOnSelect={props.disableCloseOnSelect ?? (props.multiple === false ? false : true)}
+          disableCloseOnSelect={
+            props.disableCloseOnSelect ?? (props.multiple === false ? false : true)
+          }
           // freeSolo
           // multiple={true}
           disabled={props.disabled || props.disabled === true ? true : false}
@@ -20,7 +22,7 @@ export function MyAutocomplite(props) {
           value={props.value}
           onChange={props.func}
           autoFocus={props.autoFocus}
-    			disableAutoFocus={props.disableAutoFocus}
+    			// disableAutoFocus={props.disableAutoFocus}
           onBlur={props.onBlur || undefined}
           filterSelectedOptions
           multiple={props.multiple && props.multiple === true ? true : false}

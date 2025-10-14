@@ -1,6 +1,6 @@
 import React from "react";
 import dayjs from "dayjs";
-import {MySelect, MyTextInput} from "@/components/shared/Forms";
+import { MySelect, MyTextInput } from "@/ui/Forms";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -25,602 +25,686 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Box from "@mui/material/Box";
 import PropTypes from "prop-types";
-import a11yProps from "../shared/TabPanel/a11yProps";
-import TabPanel from "../shared/TabPanel/TabPanel";
-import MyAlert from "@/components/shared/MyAlert";
+import a11yProps from "../../ui/TabPanel/a11yProps";
+import TabPanel from "../../ui/TabPanel/TabPanel";
+import MyAlert from "@/ui/MyAlert";
 
 export default class SiteClients_Modal_Client extends React.Component {
-	click = false;
+  click = false;
 
-	constructor(props) {
-		super(props);
+  constructor(props) {
+    super(props);
 
-		this.myRef = React.createRef();
+    this.myRef = React.createRef();
 
-		this.state = {
-			item: null,
-			activeTab: 0,
+    this.state = {
+      item: null,
+      activeTab: 0,
 
-			openAlert: false,
-			err_status: true,
-			err_text: '',
+      openAlert: false,
+      err_status: true,
+      err_text: "",
 
-			confirmDialog: false
-		};
-	}
+      confirmDialog: false,
+    };
+  }
 
-	componentDidUpdate(prevProps) {
-		//console.log('componentDidUpdate', this.props);
+  componentDidUpdate(prevProps) {
+    //console.log('componentDidUpdate', this.props);
 
-		if (!this.props.item) {
-			return;
-		}
+    if (!this.props.item) {
+      return;
+    }
 
-		if (this.props.item !== prevProps.item) {
-			this.setState({
-				item: this.props.item
-			});
-		}
-	}
+    if (this.props.item !== prevProps.item) {
+      this.setState({
+        item: this.props.item,
+      });
+    }
+  }
 
-	changeItem(data, event) {
-		const item = this.state.item;
-		const value = event.target.value;
+  changeItem(data, event) {
+    const item = this.state.item;
+    const value = event.target.value;
 
-		item[data] = value;
+    item[data] = value;
 
-		this.setState({
-			item
-		});
-	}
+    this.setState({
+      item,
+    });
+  }
 
-	resetDateBR() {
-		const item = this.state.item;
+  resetDateBR() {
+    const item = this.state.item;
 
-		item.date_bir = '';
-		item.day = '';
-		item.month = '';
+    item.date_bir = "";
+    item.day = "";
+    item.month = "";
 
-		this.setState({
-			item
-		});
-	}
+    this.setState({
+      item,
+    });
+  }
 
-	changeTab(event, val) {
-		this.setState({
-			activeTab: val
-		})
-	}
+  changeTab(event, val) {
+    this.setState({
+      activeTab: val,
+    });
+  }
 
-	saveEdit() {
+  saveEdit() {
+    const item = this.state.item;
 
-		const item = this.state.item;
+    if ((item.day && !item.month) || (!item.day && item.month)) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Необходимо указать полную дату рождения, либо сбросить",
+      });
 
-		if ((item.day && !item.month) || (!item.day && item.month)) {
+      return;
+    }
 
-			this.setState({
-				openAlert: true,
-				err_status: false,
-				err_text: 'Необходимо указать полную дату рождения, либо сбросить',
-			})
+    if (this.click === true) {
+      return;
+    } else {
+      this.click = true;
+    }
 
-			return;
-		}
+    let date_bir;
 
-		if (this.click === true) {
-			return;
-		} else {
-			this.click = true;
-		}
+    if (item.day && item.month) {
+      date_bir = dayjs(`2024-${item.month}-${item.day}`).format("YYYY-MM-DD");
+    } else {
+      date_bir = null;
+    }
 
-		let date_bir;
+    const data = {
+      mail: item.mail,
+      login: item.login,
+      date_bir,
+    };
 
-		if (item.day && item.month) {
-			date_bir = dayjs(`2024-${item.month}-${item.day}`).format('YYYY-MM-DD');
-		} else {
-			date_bir = null;
-		}
+    this.props.saveEdit(data);
 
-		const data = {
-			mail: item.mail,
-			login: item.login,
-			date_bir,
-		}
+    setTimeout(() => {
+      this.click = false;
+    }, 500);
+  }
 
-		this.props.saveEdit(data);
+  saveComment() {
+    if (this.myRef.current) {
+      if (this.myRef.current.getContent().length == 0) {
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: "Комментарий пустой",
+        });
 
-		setTimeout(() => {
-			this.click = false;
-		}, 500)
-	}
+        return;
+      }
+    } else {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Комментарий пустой",
+      });
 
-	saveComment() {
-		if (this.myRef.current) {
-			if (this.myRef.current.getContent().length == 0) {
+      return;
+    }
 
-				this.setState({
-					openAlert: true,
-					err_status: false,
-					err_text: 'Комментарий пустой',
-				});
+    if (this.click === true) {
+      return;
+    } else {
+      this.click = true;
+    }
 
-				return;
-			}
-		} else {
-			this.setState({
-				openAlert: true,
-				err_status: false,
-				err_text: 'Комментарий пустой',
-			});
+    let data = {
+      number: this.props.item_login,
+      text: this.myRef.current.getContent(),
+    };
 
-			return;
-		}
+    this.props.saveComment(data);
 
-		if (this.click === true) {
-			return;
-		} else {
-			this.click = true;
-		}
+    setTimeout(() => {
+      this.myRef.current.setContent("");
+      this.click = false;
+    }, 500);
+  }
 
-		let data = {
-			number: this.props.item_login,
-			text: this.myRef.current.getContent()
-		};
+  send_code() {
+    this.setState({
+      confirmDialog: false,
+    });
 
-		this.props.saveComment(data);
+    this.props.sendCode();
+  }
 
-		setTimeout(() => {
-			this.myRef.current.setContent('');
-			this.click = false;
-		}, 500)
-	}
+  onClose() {
+    setTimeout(() => {
+      this.setState({
+        item: null,
+        activeTab: 0,
+        openAlert: false,
+        err_status: true,
+        err_text: "",
+        confirmDialog: false,
+      });
+    }, 100);
 
-	send_code() {
-		this.setState({
-			confirmDialog: false
-		});
+    this.props.onClose();
+  }
 
-		this.props.sendCode();
-	}
+  render() {
+    const {
+      open,
+      fullScreen,
+      item_login,
+      acces,
+      days,
+      months,
+      orders,
+      openClientOrder,
+      err_orders,
+      comments,
+      openSaveAction,
+      login_sms,
+      login_yandex,
+    } = this.props;
 
-	onClose() {
+    return (
+      <>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+        <Dialog
+          sx={{
+            "& .MuiDialog-paper": {
+              width: "80%",
+              maxHeight: 435,
+            },
+          }}
+          maxWidth="sm"
+          open={this.state.confirmDialog}
+          onClose={() => this.setState({ confirmDialog: false })}
+        >
+          <DialogTitle>Подтвердите действие</DialogTitle>
+          <DialogContent
+            align="center"
+            sx={{ fontWeight: "bold" }}
+          >
+            <Typography>Точно выслать новый код ?</Typography>
+            <Typography style={{ color: "#dd1a32" }}>Важно: код действуют 15 минут</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              autoFocus
+              onClick={() => this.setState({ confirmDialog: false })}
+            >
+              Отмена
+            </Button>
+            <Button onClick={this.send_code.bind(this)}>Ok</Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          open={open}
+          onClose={this.onClose.bind(this)}
+          fullScreen={fullScreen}
+          fullWidth={true}
+          maxWidth={"xl"}
+        >
+          <DialogTitle className="button">
+            Информация о клиенте с номером телефона
+            {item_login ? `: ${item_login}` : null}
+            <IconButton
+              onClick={this.onClose.bind(this)}
+              style={{
+                cursor: "pointer",
+                position: "absolute",
+                top: 0,
+                right: 0,
+                padding: 20,
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
 
-		setTimeout(() => {
-			this.setState({
-				item: null,
-				activeTab: 0,
-				openAlert: false,
-				err_status: true,
-				err_text: '',
-				confirmDialog: false
-			});
-		}, 100);
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
+            >
+              <Paper>
+                <Tabs
+                  value={this.state.activeTab}
+                  onChange={this.changeTab.bind(this)}
+                  centered
+                  variant="fullWidth"
+                >
+                  <Tab
+                    label="О клиенте"
+                    {...a11yProps(0)}
+                  />
+                  <Tab
+                    label="Заказы"
+                    {...a11yProps(1)}
+                  />
+                  <Tab
+                    label="Оформленные ошибки"
+                    {...a11yProps(2)}
+                  />
+                  <Tab
+                    label="Обращения"
+                    {...a11yProps(3)}
+                  />
+                  <Tab
+                    label="Авторизации"
+                    {...a11yProps(4)}
+                  />
+                </Tabs>
+              </Paper>
+            </Grid>
 
-		this.props.onClose();
-	}
+            {/* О клиенте */}
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
+            >
+              <TabPanel
+                value={this.state.activeTab}
+                index={0}
+                id="client"
+              >
+                <Paper style={{ padding: 24 }}>
+                  <Grid
+                    style={{ display: "flex" }}
+                    mb={3}
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    <Typography style={{ fontWeight: "bold" }}>Имя: &nbsp;</Typography>
+                    <Typography>{this.state.item?.name ?? "Не указано"}</Typography>
+                  </Grid>
 
-	render() {
-		const {
-			open,
-			fullScreen,
-			item_login,
-			acces,
-			days,
-			months,
-			orders,
-			openClientOrder,
-			err_orders,
-			comments,
-			openSaveAction,
-			login_sms,
-			login_yandex
-		} = this.props;
+                  <Grid
+                    style={{ display: "flex" }}
+                    mb={3}
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    <Typography style={{ fontWeight: "bold" }}>Телефон: &nbsp;</Typography>
+                    <Typography>{this.state.item?.login ?? "Не указан"}</Typography>
+                  </Grid>
 
-		return (
-            <>
-                <MyAlert
-					isOpen={this.state.openAlert}
-					onClose={() => this.setState({openAlert: false})}
-					status={this.state.err_status}
-					text={this.state.err_text}
-				/>
-                <Dialog sx={{
-					'& .MuiDialog-paper': {
-						width: '80%',
-						maxHeight: 435
-					}
-				}} maxWidth="sm" open={this.state.confirmDialog} onClose={() => this.setState({confirmDialog: false})}>
-					<DialogTitle>Подтвердите действие</DialogTitle>
-					<DialogContent align="center" sx={{fontWeight: 'bold'}}>
-						<Typography>Точно выслать новый код ?</Typography>
-						<Typography style={{color: '#dd1a32'}}>Важно: код действуют 15 минут</Typography>
-					</DialogContent>
-					<DialogActions>
-						<Button autoFocus onClick={() => this.setState({confirmDialog: false})}>Отмена</Button>
-						<Button onClick={this.send_code.bind(this)}>Ok</Button>
-					</DialogActions>
-				</Dialog>
-                <Dialog
-					open={open}
-					onClose={this.onClose.bind(this)}
-					fullScreen={fullScreen}
-					fullWidth={true}
-					maxWidth={'xl'}
-				>
-					<DialogTitle className="button">
-						Информация о клиенте с номером телефона
-						{item_login ? `: ${item_login}` : null}
-						<IconButton onClick={this.onClose.bind(this)} style={{
-							cursor: 'pointer',
-							position: 'absolute',
-							top: 0,
-							right: 0,
-							padding: 20
-						}}>
-							<CloseIcon/>
-						</IconButton>
-					</DialogTitle>
+                  {parseInt(acces?.edit_mail_access) ? (
+                    <Grid
+                      mb={3}
+                      className="mail_box"
+                      size={{
+                        xs: 12,
+                        sm: 12,
+                      }}
+                    >
+                      <Typography style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                        Эл почта:
+                      </Typography>
+                      <MyTextInput
+                        label="Электронная @ почта"
+                        func={this.changeItem.bind(this, "mail")}
+                        value={this.state.item?.mail ?? ""}
+                        type="email"
+                      />
+                    </Grid>
+                  ) : (
+                    <Grid
+                      style={{ display: "flex" }}
+                      mb={3}
+                      size={{
+                        xs: 12,
+                        sm: 12,
+                      }}
+                    >
+                      <Typography style={{ fontWeight: "bold" }}>Эл почта: &nbsp;</Typography>
+                      <Typography>{this.state.item?.mail ?? "Не указана"}</Typography>
+                    </Grid>
+                  )}
 
-					<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
+                  <Grid
+                    style={{ display: "flex" }}
+                    mb={3}
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    <Typography style={{ fontWeight: "bold" }}>Регистрация: &nbsp;</Typography>
+                    <Typography>{this.state.item?.date_reg ?? "Не указана"}</Typography>
+                  </Grid>
 
-						<Grid
-                            size={{
-                                xs: 12,
-                                sm: 12
-                            }}>
-							<Paper>
-								<Tabs value={this.state.activeTab} onChange={this.changeTab.bind(this)} centered variant='fullWidth'>
-									<Tab label="О клиенте" {...a11yProps(0)} />
-									<Tab label="Заказы" {...a11yProps(1)} />
-									<Tab label="Оформленные ошибки" {...a11yProps(2)} />
-									<Tab label="Обращения" {...a11yProps(3)} />
-									<Tab label="Авторизации" {...a11yProps(4)} />
-								</Tabs>
-							</Paper>
-						</Grid>
+                  {parseInt(acces?.edit_bir_access) ? (
+                    <Grid
+                      mb={3}
+                      className="select_box"
+                      size={{
+                        xs: 12,
+                        sm: 12,
+                      }}
+                    >
+                      <Typography style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+                        Дата рождения:
+                      </Typography>
+                      <MySelect
+                        data={days}
+                        value={this.state.item?.day ?? ""}
+                        func={this.changeItem.bind(this, "day")}
+                        label="День"
+                      />
+                      <MySelect
+                        data={months}
+                        value={this.state.item?.month ?? ""}
+                        func={this.changeItem.bind(this, "month")}
+                        label="Месяц"
+                      />
+                      <Button
+                        variant="contained"
+                        onClick={this.resetDateBR.bind(this)}
+                      >
+                        Сбросить
+                      </Button>
+                    </Grid>
+                  ) : (
+                    <Grid
+                      style={{ display: "flex" }}
+                      mb={3}
+                      size={{
+                        xs: 12,
+                        sm: 12,
+                      }}
+                    >
+                      <Typography style={{ fontWeight: "bold" }}>Дата рождения: &nbsp;</Typography>
+                      <Typography>{this.state.item?.date_bir ?? "Не указана"}</Typography>
+                    </Grid>
+                  )}
 
-						{/* О клиенте */}
-						<Grid
-                            size={{
-                                xs: 12,
-                                sm: 12
-                            }}>
-							<TabPanel value={this.state.activeTab} index={0} id='client'>
-								<Paper style={{padding: 24}}>
+                  <Grid
+                    style={{ display: "flex" }}
+                    mb={3}
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    <Typography style={{ fontWeight: "bold" }}>Заказов: &nbsp;</Typography>
+                    <Typography>
+                      {`${this.state.item?.all_count_order} / ${this.state.item?.summ} р.`}
+                    </Typography>
+                  </Grid>
 
-									<Grid
-                                        style={{display: 'flex'}}
-                                        mb={3}
-                                        size={{
-                                            xs: 12,
-                                            sm: 12
-                                        }}>
-										<Typography style={{fontWeight: 'bold'}}>
-											Имя: &nbsp;
-										</Typography>
-										<Typography>
-											{this.state.item?.name ?? 'Не указано'}
-										</Typography>
-									</Grid>
+                  <Grid
+                    style={{ display: "flex" }}
+                    mb={3}
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    <Typography style={{ fontWeight: "bold" }}>Доставок: &nbsp;</Typography>
+                    <Typography>
+                      {`${this.state.item?.count_dev} / ${this.state.item?.summ_dev} р.`}
+                    </Typography>
+                  </Grid>
 
-									<Grid
-                                        style={{display: 'flex'}}
-                                        mb={3}
-                                        size={{
-                                            xs: 12,
-                                            sm: 12
-                                        }}>
-										<Typography style={{fontWeight: 'bold'}}>
-											Телефон: &nbsp;
-										</Typography>
-										<Typography>
-											{this.state.item?.login ?? 'Не указан'}
-										</Typography>
-									</Grid>
+                  <Grid
+                    style={{ display: "flex" }}
+                    mb={3}
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    <Typography style={{ fontWeight: "bold" }}>Самовывозов: &nbsp;</Typography>
+                    <Typography>
+                      {`${this.state.item?.count_pic} / ${this.state.item?.summ_pic} р.`}
+                    </Typography>
+                  </Grid>
 
-									{parseInt(acces?.edit_mail_access) ?
-										<Grid
-                                            mb={3}
-                                            className='mail_box'
-                                            size={{
-                                                xs: 12,
-                                                sm: 12
-                                            }}>
-											<Typography style={{fontWeight: 'bold', whiteSpace: 'nowrap'}}>
-												Эл почта:
-											</Typography>
-											<MyTextInput
-												label="Электронная @ почта"
-												func={this.changeItem.bind(this, 'mail')}
-												value={this.state.item?.mail ?? ''}
-												type="email"
-											/>
-										</Grid>
-										:
-										<Grid
-                                            style={{display: 'flex'}}
-                                            mb={3}
-                                            size={{
-                                                xs: 12,
-                                                sm: 12
-                                            }}>
-											<Typography style={{fontWeight: 'bold'}}>
-												Эл почта: &nbsp;
-											</Typography>
-											<Typography>
-												{this.state.item?.mail ?? 'Не указана'}
-											</Typography>
-										</Grid>
-									}
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    {!parseInt(acces?.edit_bir_access) &&
+                    !parseInt(acces?.edit_mail_access) ? null : (
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={this.saveEdit.bind(this)}
+                      >
+                        Сохранить
+                      </Button>
+                    )}
+                  </Grid>
+                </Paper>
+              </TabPanel>
+            </Grid>
+            {/* О клиенте */}
 
-									<Grid
-                                        style={{display: 'flex'}}
-                                        mb={3}
-                                        size={{
-                                            xs: 12,
-                                            sm: 12
-                                        }}>
-										<Typography style={{fontWeight: 'bold'}}>
-											Регистрация: &nbsp;
-										</Typography>
-										<Typography>
-											{this.state.item?.date_reg ?? 'Не указана'}
-										</Typography>
-									</Grid>
+            {/* Заказы */}
+            {parseInt(acces?.view_orders_access) ? null : (
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+              >
+                <TabPanel
+                  value={this.state.activeTab}
+                  index={1}
+                  id="client"
+                >
+                  <TableContainer
+                    sx={{ maxHeight: { xs: "none", sm: 607 } }}
+                    component={Paper}
+                  >
+                    <Table
+                      size="small"
+                      stickyHeader
+                    >
+                      <TableHead>
+                        <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                          <TableCell style={{ width: "5%" }}>#</TableCell>
+                          <TableCell style={{ width: "20%" }}>Точка</TableCell>
+                          <TableCell style={{ width: "20%" }}>Тип заказа</TableCell>
+                          <TableCell style={{ width: "20%" }}>Дата заказа</TableCell>
+                          <TableCell style={{ width: "15%" }}>ID заказа</TableCell>
+                          <TableCell style={{ width: "20%" }}>Сумма заказа</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {orders.map((item, key) => (
+                          <TableRow
+                            hover
+                            key={key}
+                            onClick={openClientOrder.bind(this, item.order_id, item.point_id)}
+                            style={{
+                              cursor: "pointer",
+                              backgroundColor: parseInt(item.is_delete) ? "rgb(204, 0, 51)" : null,
+                            }}
+                            sx={{ "& td": { color: parseInt(item.is_delete) ? "#fff" : "#000" } }}
+                          >
+                            <TableCell>{key + 1}</TableCell>
+                            <TableCell>{item.point}</TableCell>
+                            <TableCell>{item.new_type_order}</TableCell>
+                            <TableCell>{item.date_time}</TableCell>
+                            <TableCell>{`#${item.order_id}`}</TableCell>
+                            <TableCell>{`${item.summ} р.`}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </TabPanel>
+              </Grid>
+            )}
+            {/* Заказы */}
 
-									{parseInt(acces?.edit_bir_access) ?
-										<Grid
-                                            mb={3}
-                                            className='select_box'
-                                            size={{
-                                                xs: 12,
-                                                sm: 12
-                                            }}>
-											<Typography style={{fontWeight: 'bold', whiteSpace: 'nowrap'}}>
-												Дата рождения:
-											</Typography>
-											<MySelect
-												data={days}
-												value={this.state.item?.day ?? ''}
-												func={this.changeItem.bind(this, 'day')}
-												label="День"
-											/>
-											<MySelect
-												data={months}
-												value={this.state.item?.month ?? ''}
-												func={this.changeItem.bind(this, 'month')}
-												label="Месяц"
-											/>
-											<Button variant="contained" onClick={this.resetDateBR.bind(this)}>
-												Сбросить
-											</Button>
-										</Grid>
-										:
-										<Grid
-                                            style={{display: 'flex'}}
-                                            mb={3}
-                                            size={{
-                                                xs: 12,
-                                                sm: 12
-                                            }}>
-											<Typography style={{fontWeight: 'bold'}}>
-												Дата рождения: &nbsp;
-											</Typography>
-											<Typography>
-												{this.state.item?.date_bir ?? 'Не указана'}
-											</Typography>
-										</Grid>
-									}
+            {/* Оформленные ошибки */}
+            {!parseInt(acces?.view_err_access) ? null : (
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+              >
+                <TabPanel
+                  value={this.state.activeTab}
+                  index={2}
+                  id="client"
+                >
+                  <TableContainer
+                    sx={{ maxHeight: { xs: "none", sm: 607 } }}
+                    component={Paper}
+                  >
+                    <Table
+                      size="small"
+                      stickyHeader
+                    >
+                      <TableHead>
+                        <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                          <TableCell style={{ width: "5%" }}>#</TableCell>
+                          <TableCell style={{ width: "15%" }}>Точка</TableCell>
+                          <TableCell style={{ width: "10%" }}>ID заказа</TableCell>
+                          <TableCell style={{ width: "20%" }}>Дата</TableCell>
+                          <TableCell style={{ width: "25%" }}>Описание</TableCell>
+                          <TableCell style={{ width: "25%" }}>Действия</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {err_orders.map((item, key) => (
+                          <TableRow
+                            hover
+                            key={key}
+                          >
+                            <TableCell>{key + 1}</TableCell>
+                            <TableCell>{item.point}</TableCell>
+                            <TableCell>{`#${item.order_id}`}</TableCell>
+                            <TableCell>{item.date_time_desc}</TableCell>
+                            <TableCell>{item.order_desc}</TableCell>
+                            <TableCell>{item.text_win}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </TabPanel>
+              </Grid>
+            )}
+            {/* Оформленные ошибки */}
 
-									<Grid
-                                        style={{display: 'flex'}}
-                                        mb={3}
-                                        size={{
-                                            xs: 12,
-                                            sm: 12
-                                        }}>
-										<Typography style={{fontWeight: 'bold'}}>
-											Заказов: &nbsp;
-										</Typography>
-										<Typography>
-											{`${this.state.item?.all_count_order} / ${this.state.item?.summ} р.`}
-										</Typography>
-									</Grid>
+            {/* Обращения */}
+            {!parseInt(acces?.view_comment_access) ? null : (
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+              >
+                <TabPanel
+                  value={this.state.activeTab}
+                  index={3}
+                  id="client"
+                >
+                  {!comments.length ? null : (
+                    <Accordion style={{ marginBottom: 24 }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography style={{ fontWeight: "bold" }}>Оформленные ошибки</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        {comments.map((item, key) => (
+                          <Paper
+                            key={key}
+                            style={{ padding: 15, marginBottom: 15 }}
+                            elevation={3}
+                          >
+                            <b>{item?.description ? "Обращение:" : "Комментарий:"}</b>
+                            <span dangerouslySetInnerHTML={{ __html: item.comment }} />
 
-									<Grid
-                                        style={{display: 'flex'}}
-                                        mb={3}
-                                        size={{
-                                            xs: 12,
-                                            sm: 12
-                                        }}>
-										<Typography style={{fontWeight: 'bold'}}>
-											Доставок: &nbsp;
-										</Typography>
-										<Typography>
-											{`${this.state.item?.count_dev} / ${this.state.item?.summ_dev} р.`}
-										</Typography>
-									</Grid>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                alignItems: "center",
+                              }}
+                            >
+                              <div>
+                                <span style={{ marginRight: 20 }}>{item.date_add}</span>
+                                <span>{item.name}</span>
+                              </div>
+                            </div>
 
-									<Grid
-                                        style={{display: 'flex'}}
-                                        mb={3}
-                                        size={{
-                                            xs: 12,
-                                            sm: 12
-                                        }}>
-										<Typography style={{fontWeight: 'bold'}}>
-											Самовывозов: &nbsp;
-										</Typography>
-										<Typography>
-											{`${this.state.item?.count_pic} / ${this.state.item?.summ_pic} р.`}
-										</Typography>
-									</Grid>
+                            <hr />
 
-									<Grid
-                                        size={{
-                                            xs: 12,
-                                            sm: 12
-                                        }}>
-										{!parseInt(acces?.edit_bir_access) && !parseInt(acces?.edit_mail_access) ? null :
-											<Button variant="contained" color='success' onClick={this.saveEdit.bind(this)}>
-												Сохранить
-											</Button>
-										}
-									</Grid>
+                            <b>{item?.description ? "Действие:" : null}</b>
 
-								</Paper>
-							</TabPanel>
-						</Grid>
-						{/* О клиенте */}
+                            <p dangerouslySetInnerHTML={{ __html: item?.description }} />
 
-						{/* Заказы */}
-						{parseInt(acces?.view_orders_access) ? null :
-							<Grid
-                                size={{
-                                    xs: 12,
-                                    sm: 12
-                                }}>
-								<TabPanel value={this.state.activeTab} index={1} id='client'>
-									<TableContainer sx={{maxHeight: {xs: 'none', sm: 607}}} component={Paper}>
-										<Table size='small' stickyHeader>
-											<TableHead>
-												<TableRow sx={{'& th': {fontWeight: 'bold'}}}>
-													<TableCell style={{width: '5%'}}>#</TableCell>
-													<TableCell style={{width: '20%'}}>Точка</TableCell>
-													<TableCell style={{width: '20%'}}>Тип заказа</TableCell>
-													<TableCell style={{width: '20%'}}>Дата заказа</TableCell>
-													<TableCell style={{width: '15%'}}>ID заказа</TableCell>
-													<TableCell style={{width: '20%'}}>Сумма заказа</TableCell>
-												</TableRow>
-											</TableHead>
-											<TableBody>
-												{orders.map((item, key) =>
-													<TableRow
-														hover
-														key={key}
-														onClick={openClientOrder.bind(this, item.order_id, item.point_id)}
-														style={{
-															cursor: 'pointer',
-															backgroundColor: parseInt(item.is_delete) ? 'rgb(204, 0, 51)' : null
-														}}
-														sx={{'& td': {color: parseInt(item.is_delete) ? '#fff' : '#000'}}}
-													>
-														<TableCell>{key + 1}</TableCell>
-														<TableCell>{item.point}</TableCell>
-														<TableCell>{item.new_type_order}</TableCell>
-														<TableCell>{item.date_time}</TableCell>
-														<TableCell>{`#${item.order_id}`}</TableCell>
-														<TableCell>{`${item.summ} р.`}</TableCell>
-													</TableRow>
-												)}
-											</TableBody>
-										</Table>
-									</TableContainer>
-								</TabPanel>
-							</Grid>
-						}
-						{/* Заказы */}
+                            <p>
+                              <b>
+                                {parseInt(item.raiting) > 0
+                                  ? parseInt(item.raiting) == 1
+                                    ? "Положительный отзыв"
+                                    : parseInt(item.raiting) == 2
+                                      ? "Средний отзыв"
+                                      : "Отрицательный отзыв"
+                                  : ""}
+                              </b>
+                              {(parseInt(item.raiting) > 0) & (parseInt(item.sale) > 0)
+                                ? " / "
+                                : ""}
+                              <b>
+                                {parseInt(item.sale) > 0
+                                  ? "Выписана скидка " + item.sale + "%"
+                                  : ""}
+                              </b>
+                            </p>
 
-						{/* Оформленные ошибки */}
-						{!parseInt(acces?.view_err_access) ? null :
-							<Grid
-                                size={{
-                                    xs: 12,
-                                    sm: 12
-                                }}>
-								<TabPanel value={this.state.activeTab} index={2} id='client'>
-									<TableContainer sx={{maxHeight: {xs: 'none', sm: 607}}} component={Paper}>
-										<Table size='small' stickyHeader>
-											<TableHead>
-												<TableRow sx={{'& th': {fontWeight: 'bold'}}}>
-													<TableCell style={{width: '5%'}}>#</TableCell>
-													<TableCell style={{width: '15%'}}>Точка</TableCell>
-													<TableCell style={{width: '10%'}}>ID заказа</TableCell>
-													<TableCell style={{width: '20%'}}>Дата</TableCell>
-													<TableCell style={{width: '25%'}}>Описание</TableCell>
-													<TableCell style={{width: '25%'}}>Действия</TableCell>
-												</TableRow>
-											</TableHead>
-											<TableBody>
-												{err_orders.map((item, key) =>
-													<TableRow hover key={key}>
-														<TableCell>{key + 1}</TableCell>
-														<TableCell>{item.point}</TableCell>
-														<TableCell>{`#${item.order_id}`}</TableCell>
-														<TableCell>{item.date_time_desc}</TableCell>
-														<TableCell>{item.order_desc}</TableCell>
-														<TableCell>{item.text_win}</TableCell>
-													</TableRow>
-												)}
-											</TableBody>
-										</Table>
-									</TableContainer>
-								</TabPanel>
-							</Grid>
-						}
-						{/* Оформленные ошибки */}
-
-						{/* Обращения */}
-						{!parseInt(acces?.view_comment_access) ? null :
-							<Grid
-                                size={{
-                                    xs: 12,
-                                    sm: 12
-                                }}>
-								<TabPanel value={this.state.activeTab} index={3} id='client'>
-									{!comments.length ? null :
-										<Accordion style={{marginBottom: 24}}>
-											<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-												<Typography style={{fontWeight: 'bold'}}>Оформленные ошибки</Typography>
-											</AccordionSummary>
-											<AccordionDetails>
-												{comments.map((item, key) =>
-													<Paper key={key} style={{padding: 15, marginBottom: 15}} elevation={3}>
-														<b>{item?.description ? 'Обращение:' : 'Комментарий:'}</b>
-														<span dangerouslySetInnerHTML={{__html: item.comment}}/>
-
-														<div style={{display: 'flex', justifyContent: 'flex-end', alignItems: 'center'}}>
-															<div>
-																<span style={{marginRight: 20}}>{item.date_add}</span>
-																<span>{item.name}</span>
-															</div>
-														</div>
-
-														<hr/>
-
-														<b>{item?.description ? 'Действие:' : null}</b>
-
-														<p dangerouslySetInnerHTML={{__html: item?.description}}/>
-
-														<p>
-															<b>{parseInt(item.raiting) > 0 ? parseInt(item.raiting) == 1 ? 'Положительный отзыв' : parseInt(item.raiting) == 2 ? 'Средний отзыв' : 'Отрицательный отзыв' : ''}</b>
-															{parseInt(item.raiting) > 0 & parseInt(item.sale) > 0 ? ' / ' : ''}
-															<b>{parseInt(item.sale) > 0 ? 'Выписана скидка ' + item.sale + '%' : ''}</b>
-														</p>
-
-														<div style={{
-															display: 'flex',
-															justifyContent: item?.description ? 'flex-end' : 'space-between',
-															alignItems: 'center'
-														}}>
-															{/* {item?.description ? null :
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: item?.description ? "flex-end" : "space-between",
+                                alignItems: "center",
+                              }}
+                            >
+                              {/* {item?.description ? null :
                                 <>
                                   <Button color="primary" variant="contained" onClick={ openSaveAction.bind(this, item.id)}>Действие</Button>
                                 </>
                               } */}
-															<div>
-																<span style={{marginRight: 20}}>{item.date_time}</span>
-																<span>{item.name_close}</span>
-															</div>
-														</div>
-													</Paper>
-												)}
-											</AccordionDetails>
-										</Accordion>
-									}
+                              <div>
+                                <span style={{ marginRight: 20 }}>{item.date_time}</span>
+                                <span>{item.name_close}</span>
+                              </div>
+                            </div>
+                          </Paper>
+                        ))}
+                      </AccordionDetails>
+                    </Accordion>
+                  )}
 
-									{/* <Accordion>
+                  {/* <Accordion>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography style={{ fontWeight: 'bold' }}>Новое обращение</Typography>
                     </AccordionSummary>
@@ -637,112 +721,137 @@ export default class SiteClients_Modal_Client extends React.Component {
                       </Grid>
                     </AccordionDetails>
                   </Accordion> */}
+                </TabPanel>
+              </Grid>
+            )}
+            {/* Обращения */}
 
-								</TabPanel>
-							</Grid>
-						}
-						{/* Обращения */}
+            {/* Авторизации */}
+            {!parseInt(acces?.view_auth_access) ? null : (
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+              >
+                <TabPanel
+                  value={this.state.activeTab}
+                  index={4}
+                  id="client"
+                >
+                  {parseInt(acces?.send_code_access) ? (
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 12,
+                      }}
+                    >
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={() => this.setState({ confirmDialog: true })}
+                      >
+                        Выслать новый код
+                      </Button>
+                    </Grid>
+                  ) : null}
 
-						{/* Авторизации */}
-						{!parseInt(acces?.view_auth_access) ? null :
-							<Grid
-                                size={{
-                                    xs: 12,
-                                    sm: 12
-                                }}>
-								<TabPanel value={this.state.activeTab} index={4} id='client'>
+                  <Grid className="client_auth">
+                    {!login_sms.length ? null : (
+                      <TableContainer
+                        sx={{
+                          maxHeight: { xs: "none", sm: 607 },
+                          width: "48%",
+                          height: "max-content",
+                        }}
+                        component={Paper}
+                      >
+                        <Table
+                          size="small"
+                          stickyHeader
+                        >
+                          <TableHead>
+                            <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                              <TableCell colSpan={3}>Авторизации по смс</TableCell>
+                            </TableRow>
+                            <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                              <TableCell style={{ width: "15%" }}>#</TableCell>
+                              <TableCell>Дата и время авторизации</TableCell>
+                              <TableCell>Код для авторизации</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {login_sms.map((item, key) => (
+                              <TableRow
+                                hover
+                                key={key}
+                              >
+                                <TableCell>{key + 1}</TableCell>
+                                <TableCell>{item.date_time}</TableCell>
+                                <TableCell>{item.code}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    )}
 
-									{parseInt(acces?.send_code_access) ?
-										<Grid
-                                            size={{
-                                                xs: 12,
-                                                sm: 12
-                                            }}>
-											<Button variant="contained" color='success' onClick={() => this.setState({confirmDialog: true})}>
-												Выслать новый код
-											</Button>
-										</Grid>
-										: null
-									}
+                    {!login_yandex.length ? null : (
+                      <TableContainer
+                        sx={{
+                          maxHeight: {
+                            xs: "none",
+                            sm: 607,
+                            width: "48%",
+                            height: "max-content",
+                          },
+                        }}
+                        component={Paper}
+                      >
+                        <Table
+                          size="small"
+                          stickyHeader
+                        >
+                          <TableHead>
+                            <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                              <TableCell colSpan={2}>Авторизации через Яндекс</TableCell>
+                            </TableRow>
+                            <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                              <TableCell style={{ width: "15%" }}>#</TableCell>
+                              <TableCell>Дата и время авторизации</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {login_yandex.map((item, key) => (
+                              <TableRow
+                                hover
+                                key={key}
+                              >
+                                <TableCell>{key + 1}</TableCell>
+                                <TableCell>{item.date_time}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    )}
+                  </Grid>
+                </TabPanel>
+              </Grid>
+            )}
+            {/* Авторизации */}
+          </DialogContent>
 
-									<Grid className='client_auth'>
-										{!login_sms.length ? null :
-											<TableContainer sx={{
-												maxHeight: {xs: 'none', sm: 607},
-												width: '48%',
-												height: 'max-content'
-											}} component={Paper}>
-												<Table size='small' stickyHeader>
-													<TableHead>
-														<TableRow sx={{'& th': {fontWeight: 'bold'}}}>
-															<TableCell colSpan={3}>Авторизации по смс</TableCell>
-														</TableRow>
-														<TableRow sx={{'& th': {fontWeight: 'bold'}}}>
-															<TableCell style={{width: '15%'}}>#</TableCell>
-															<TableCell>Дата и время авторизации</TableCell>
-															<TableCell>Код для авторизации</TableCell>
-														</TableRow>
-													</TableHead>
-													<TableBody>
-														{login_sms.map((item, key) =>
-															<TableRow hover key={key}>
-																<TableCell>{key + 1}</TableCell>
-																<TableCell>{item.date_time}</TableCell>
-																<TableCell>{item.code}</TableCell>
-															</TableRow>
-														)}
-													</TableBody>
-												</Table>
-											</TableContainer>
-										}
-
-										{!login_yandex.length ? null :
-											<TableContainer sx={{
-												maxHeight: {
-													xs: 'none',
-													sm: 607,
-													width: '48%',
-													height: 'max-content'
-												}
-											}} component={Paper}>
-												<Table size='small' stickyHeader>
-													<TableHead>
-														<TableRow sx={{'& th': {fontWeight: 'bold'}}}>
-															<TableCell colSpan={2}>Авторизации через Яндекс</TableCell>
-														</TableRow>
-														<TableRow sx={{'& th': {fontWeight: 'bold'}}}>
-															<TableCell style={{width: '15%'}}>#</TableCell>
-															<TableCell>Дата и время авторизации</TableCell>
-														</TableRow>
-													</TableHead>
-													<TableBody>
-														{login_yandex.map((item, key) =>
-															<TableRow hover key={key}>
-																<TableCell>{key + 1}</TableCell>
-																<TableCell>{item.date_time}</TableCell>
-															</TableRow>
-														)}
-													</TableBody>
-												</Table>
-											</TableContainer>
-										}
-									</Grid>
-
-								</TabPanel>
-							</Grid>
-						}
-						{/* Авторизации */}
-
-					</DialogContent>
-
-					<DialogActions>
-						<Button variant="contained" onClick={this.onClose.bind(this)}>
-							Закрыть
-						</Button>
-					</DialogActions>
-
-				</Dialog>
-            </>
-        );
-	}
+          <DialogActions>
+            <Button
+              variant="contained"
+              onClick={this.onClose.bind(this)}
+            >
+              Закрыть
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
+    );
+  }
 }

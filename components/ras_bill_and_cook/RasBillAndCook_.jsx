@@ -19,13 +19,13 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import { MySelect, MyDatePickerNew } from "@/components/shared/Forms";
+import { MySelect, MyDatePickerNew } from "@/ui/Forms";
 
 import dayjs from "dayjs";
 import { api_laravel } from "@/src/api_new";
 import { formatNumber } from "@/src/helpers/utils/i18n";
 import { formatDate } from "@/src/helpers/ui/formatDate";
-import MyAlert from "../shared/MyAlert";
+import MyAlert from "../../ui/MyAlert";
 
 export default class RasBillAndCook_ extends Component {
   click = false;
@@ -178,39 +178,31 @@ export default class RasBillAndCook_ extends Component {
           spacing={3}
           className="container_first_child"
         >
-          <Grid
-            size={12}
-          >
+          <Grid size={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid
-           size={{ xs: 12, sm: 4 }}
-          >
+          <Grid size={{ xs: 12, sm: 4 }}>
             <MySelect
               is_none={false}
               data={this.state.points}
-              value={this.state.point || ''}
+              value={this.state.point || ""}
               func={this.changePoint.bind(this)}
               label="Кафе"
             />
           </Grid>
 
-          <Grid
-            size={{ xs: 12, sm: 4 }}
-          >
+          <Grid size={{ xs: 12, sm: 4 }}>
             <MySelect
               is_none={false}
               data={this.state.rev_list}
-              value={this.state.rev || ''}
+              value={this.state.rev || ""}
               func={this.changeRev.bind(this)}
               label="Ревизия"
             />
           </Grid>
 
-          <Grid
-            size={{ xs: 12, sm: 4 }}
-          >
+          <Grid size={{ xs: 12, sm: 4 }}>
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -218,9 +210,7 @@ export default class RasBillAndCook_ extends Component {
             />
           </Grid>
 
-          <Grid
-            size={{ xs: 12, sm: 6 }}
-          >
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Button
               variant="contained"
               onClick={this.updateData.bind(this)}
@@ -229,9 +219,7 @@ export default class RasBillAndCook_ extends Component {
             </Button>
           </Grid>
 
-          <Grid
-            size={12}
-          >
+          <Grid size={12}>
             {this.state.cats.map((item, key) => (
               <Accordion key={key}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>

@@ -1,4 +1,4 @@
-import { getDataSSR } from "@/backend/api";
+import { getDataSSR } from "@/src/api_backend/api";
 import CafeEdit from "@/components/cafe_edit/CafeEdit";
 
 export default function CafeEditPage({ initialData, initialPointData }) {
@@ -15,7 +15,7 @@ export async function getServerSideProps({ req, res }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

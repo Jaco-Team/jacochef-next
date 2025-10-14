@@ -30,7 +30,7 @@ export default function CompositionOfOrdersGraphModal({ open, onClose, data, row
 
   const handleToggleMetric = (metricKey) => (e) => {
     setSelectedMetrics((prev) =>
-      e.target.checked ? [...prev, metricKey] : prev.filter((m) => m !== metricKey)
+      e.target.checked ? [...prev, metricKey] : prev.filter((m) => m !== metricKey),
     );
   };
 
@@ -93,9 +93,12 @@ export default function CompositionOfOrdersGraphModal({ open, onClose, data, row
       maxWidth="xl"
       fullWidth
     >
-      <DialogTitle className="button">
+      <DialogTitle>
         {rowName}
-        <IconButton onClick={onClose}>
+        <IconButton
+          onClick={onClose}
+          style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+        >
           <Close />
         </IconButton>
       </DialogTitle>

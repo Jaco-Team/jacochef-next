@@ -19,7 +19,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 
-import { MyAutocomplite, MyDatePickerNew } from "@/components/shared/Forms";
+import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 
 import { api_laravel_local, api_laravel } from "@/src/api_new";
 
@@ -27,12 +27,12 @@ import dayjs from "dayjs";
 
 import StatTableAccordeon from "@/components/kitchen_stat/StatTableAccordeon";
 import ExcelIcon from "@/ui/ExcelIcon";
-import DownloadButton from "@/components/shared/DownloadButton";
+import DownloadButton from "@/ui/DownloadButton";
 import { Box, Stack } from "@mui/material";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
-import TestAccess from "@/components/shared/TestAccess";
+import TestAccess from "@/ui/TestAccess";
 import { formatDate } from "@/src/helpers/ui/formatDate";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 
 const statPartsNames = [
   "orders_by_h",
@@ -199,7 +199,7 @@ class KitchenStat_ extends React.Component {
 
     const statAllItemsCount = res.stat_all_items.reduce(
       (count, item) => count + Number(item.count),
-      0
+      0,
     );
     const statItemsCheckoutCount = [
       ...res.stat_items_checkout.cash,
@@ -263,7 +263,7 @@ class KitchenStat_ extends React.Component {
         if (key === "stat_all_items") {
           const statAllItemsCount = keyResult.reduce(
             (count, item) => count + Number(item.count),
-            0
+            0,
           );
           this.setState({ statAllItemsCount });
         }
@@ -272,7 +272,7 @@ class KitchenStat_ extends React.Component {
           if (!!cash && !!callcenter && !!client) {
             const statItemsCheckoutCount = [...cash, ...callcenter, ...client].reduce(
               (total, item) => total + Number(item.count),
-              0
+              0,
             );
             this.setState({ statItemsCheckoutCount });
           }
@@ -343,16 +343,18 @@ class KitchenStat_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 4
-            }}>
+              sm: 4,
+            }}
+          >
             <MyAutocomplite
               label="Точки"
               multiple={true}
@@ -365,8 +367,9 @@ class KitchenStat_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -377,8 +380,9 @@ class KitchenStat_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -389,8 +393,9 @@ class KitchenStat_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 2
-            }}>
+              sm: 2,
+            }}
+          >
             <Button
               onClick={this.getStatParts.bind(this)}
               variant="contained"
@@ -403,17 +408,17 @@ class KitchenStat_ extends React.Component {
           container
           pt={1}
           spacing={3}
-          sx={{paddingInline: "24px"}}
+          sx={{ paddingInline: "24px" }}
         >
-
           {/* таблица Оформленные заказы по часам */}
           {(this.state.arrayOrdersByH?.length || this.state.is_load_parts?.orders_by_h) && (
             <Grid
               mt={5}
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -509,8 +514,9 @@ class KitchenStat_ extends React.Component {
               mt={5}
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -562,8 +568,9 @@ class KitchenStat_ extends React.Component {
               mt={5}
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -613,8 +620,9 @@ class KitchenStat_ extends React.Component {
               mt={5}
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <TableContainer>
                 <Table size="small">
                   <TableHead>
@@ -672,8 +680,9 @@ class KitchenStat_ extends React.Component {
               mt={3}
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Grid
@@ -740,8 +749,9 @@ class KitchenStat_ extends React.Component {
               mt={3}
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box sx={{ display: "flex", gap: 2 }}>
@@ -785,8 +795,9 @@ class KitchenStat_ extends React.Component {
               mt={3}
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box
@@ -837,8 +848,9 @@ class KitchenStat_ extends React.Component {
                     >
                       <Grid
                         size={{
-                          xs: 12
-                        }}>
+                          xs: 12,
+                        }}
+                      >
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout?.cash}
                           title={"Касса"}
@@ -847,8 +859,9 @@ class KitchenStat_ extends React.Component {
                       </Grid>
                       <Grid
                         size={{
-                          xs: 12
-                        }}>
+                          xs: 12,
+                        }}
+                      >
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout?.callcenter}
                           title={"Колл-центр"}
@@ -857,8 +870,9 @@ class KitchenStat_ extends React.Component {
                       </Grid>
                       <Grid
                         size={{
-                          xs: 12
-                        }}>
+                          xs: 12,
+                        }}
+                      >
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout?.client}
                           title={"Клиент"}
@@ -880,8 +894,9 @@ class KitchenStat_ extends React.Component {
               mt={3}
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box
@@ -917,8 +932,9 @@ class KitchenStat_ extends React.Component {
                     >
                       <Grid
                         size={{
-                          xs: 12
-                        }}>
+                          xs: 12,
+                        }}
+                      >
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout_all?.cash}
                           title={"Касса"}
@@ -927,8 +943,9 @@ class KitchenStat_ extends React.Component {
                       </Grid>
                       <Grid
                         size={{
-                          xs: 12
-                        }}>
+                          xs: 12,
+                        }}
+                      >
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout_all?.callcenter}
                           title={"Колл-центр"}
@@ -937,8 +954,9 @@ class KitchenStat_ extends React.Component {
                       </Grid>
                       <Grid
                         size={{
-                          xs: 12
-                        }}>
+                          xs: 12,
+                        }}
+                      >
                         <StatTableAccordeon
                           data={this.state.data?.stat_items_checkout_all?.client}
                           title={"Клиент"}
@@ -958,8 +976,9 @@ class KitchenStat_ extends React.Component {
               mt={3}
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <Accordion>
                 <AccordionSummary
                   expandIcon={<ExpandMoreIcon />}
@@ -1013,8 +1032,9 @@ class KitchenStat_ extends React.Component {
               mt={3}
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <Accordion>
                 <AccordionSummary
                   expandIcon={<ExpandMoreIcon />}
@@ -1074,7 +1094,7 @@ export async function getServerSideProps({ req, res, query }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

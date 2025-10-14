@@ -36,11 +36,11 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 
-import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from "@/components/shared/Forms";
+import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from "@/ui/Forms";
 
 import { api_laravel_local, api_laravel } from "@/src/api_new";
 import Box from "@mui/material/Box";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 
 class SkladItemsModule_Modal_History_View extends React.Component {
   constructor(props) {
@@ -1654,9 +1654,14 @@ class SkladItemsModule_ extends React.Component {
 
       for (let key in itemView) {
         if (itemView[key] !== itemView_old[key]) {
-          if (key === "cat_id") {
+          if (key === "pf_id") {
+            const name = (itemView.pf_id = itemView.pf_list.find(
+              (item) => item.id === itemView.pf_id,
+            )?.name);
+            itemView[key] = { key: name, color: "true" };
+          } else if (key === "cat_id") {
             const name = (itemView.cat_id = itemView.cats.find(
-              (item) => item.id === itemView.cat_id
+              (item) => item.id === itemView.cat_id,
             )?.name);
             itemView[key] = { key: name, color: "true" };
           } else if (key === "app_id") {
@@ -1664,7 +1669,7 @@ class SkladItemsModule_ extends React.Component {
             itemView[key] = { key: name, color: "true" };
           } else if (key === "ed_izmer_id") {
             const name = (itemView.ed_izmer_id = itemView.ed_izmer.find(
-              (item) => item.id === itemView.ed_izmer_id
+              (item) => item.id === itemView.ed_izmer_id,
             )?.name);
             itemView[key] = { key: name, color: "true" };
           } else {
@@ -1707,17 +1712,24 @@ class SkladItemsModule_ extends React.Component {
           onClose={() => this.setState({ checkArtDialog: false, checkArtList: [] })}
           open={this.state.checkArtDialog}
         >
-          <DialogTitle>Такой код 1с уже задан у следующих позиций:</DialogTitle>
-          <List sx={{ pt: 0 }}>
-            {this.state.checkArtList.map((item, key) => (
-              <ListItemButton
-                onClick={this.chooseArt.bind(this, item.id)}
-                key={key}
-              >
-                <ListItemText primary={item.name} />
-              </ListItemButton>
-            ))}
-          </List>
+          <DialogTitle className="button">
+            <Typography>Такой код 1с уже задан у следующих позиций:</Typography>
+            <IconButton onClick={() => this.setState({ checkArtDialog: false, checkArtList: [] })}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <List sx={{ pt: 0 }}>
+              {this.state.checkArtList.map((item, key) => (
+                <ListItemButton
+                  onClick={this.chooseArt.bind(this, item.id)}
+                  key={key}
+                >
+                  <ListItemText primary={item.name} />
+                </ListItemButton>
+              ))}
+            </List>
+          </DialogContent>
         </Dialog>
         <MyAlert
           isOpen={this.state.operAlert}
@@ -1854,7 +1866,7 @@ class SkladItemsModule_ extends React.Component {
                                               func={this.saveCheckItem.bind(
                                                 this,
                                                 it.id,
-                                                "show_in_order"
+                                                "show_in_order",
                                               )}
                                             />
                                           </TableCell>
@@ -1865,7 +1877,7 @@ class SkladItemsModule_ extends React.Component {
                                               func={this.saveCheckItem.bind(
                                                 this,
                                                 it.id,
-                                                "show_in_rev"
+                                                "show_in_rev",
                                               )}
                                             />
                                           </TableCell>
@@ -1876,7 +1888,7 @@ class SkladItemsModule_ extends React.Component {
                                             onClick={this.showEditItem.bind(
                                               this,
                                               it.id,
-                                              "Редактирование товара"
+                                              "Редактирование товара",
                                             )}
                                           >
                                             <EditIcon />
@@ -1886,7 +1898,7 @@ class SkladItemsModule_ extends React.Component {
                                             onClick={this.openHistoryItem.bind(
                                               this,
                                               it.id,
-                                              "История изменений"
+                                              "История изменений",
                                             )}
                                           >
                                             <EditNoteIcon />
@@ -2070,7 +2082,7 @@ export async function getServerSideProps({ req, res, query }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

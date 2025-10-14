@@ -74,9 +74,7 @@ function CafeEditTabKKT({ canAccess, canView, canEdit, openHistModal }) {
       spacing={3}
     >
       {canAccess("add_kkt") && (
-        <Grid
-          size={{ xs: 12, sm: 2 }}
-        >
+        <Grid size={{ xs: 12, sm: 2 }}>
           <Button
             variant="contained"
             style={{ whiteSpace: "nowrap" }}

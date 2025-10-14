@@ -270,8 +270,12 @@ export function MySelect(props) {
 
   // value -> строка / массив строк
   const normalizedValue = multiple
-    ? Array.isArray(props.value) ? props.value.map(String) : []
-    : props.value == null ? "" : String(props.value);
+    ? Array.isArray(props.value)
+      ? props.value.map(String)
+      : []
+    : props.value == null
+      ? ""
+      : String(props.value);
 
   // до маунта считаем НЕ мобилка (совпадёт с SSR)
   const [mounted, setMounted] = useState(false);
@@ -291,7 +295,12 @@ export function MySelect(props) {
   };
 
   return (
-    <FormControl fullWidth variant="outlined" size="small" style={style}>
+    <FormControl
+      fullWidth
+      variant="outlined"
+      size="small"
+      style={style}
+    >
       {label && <InputLabel id={labelId}>{label}</InputLabel>}
 
       {isMobile ? (
@@ -305,7 +314,12 @@ export function MySelect(props) {
         >
           {is_none && <option value="">None</option>}
           {items.map((i) => (
-            <option key={i.id} value={i.id}>{i.name}</option>
+            <option
+              key={i.id}
+              value={i.id}
+            >
+              {i.name}
+            </option>
           ))}
         </NativeSelect>
       ) : (
@@ -353,7 +367,7 @@ export function MySelect(props) {
               value={i.id}
               // 🛡 подстраховка: вручную эмитим «выбор» при клике на пункт
               onClick={(mouseEvent) => {
-                console.log('1234')
+                console.log("1234");
                 // если по какой-то причине Select не кинул onChange — сами пушнём значение
                 emitEvent(mouseEvent, i.id);
               }}

@@ -3,8 +3,7 @@
 import { Button, Dialog, DialogActions, DialogTitle } from "@mui/material";
 import { memo } from "react";
 
-const ModalDelete = ({open, onClose, onDelete, date}) => {
-
+const ModalDelete = ({ open, onClose, onDelete, date }) => {
   const handleSubmit = () => {
     onDelete(date.date_start);
     handleClose();
@@ -15,7 +14,12 @@ const ModalDelete = ({open, onClose, onDelete, date}) => {
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+    >
       <DialogTitle>Вы точно хотите удалить изменения?</DialogTitle>
       <DialogActions>
         <Button onClick={handleClose}>Нет</Button>

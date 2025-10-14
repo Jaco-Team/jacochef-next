@@ -1,63 +1,63 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import CloseIcon from '@mui/icons-material/Close';
-import IconButton from '@mui/material/IconButton';
+import CloseIcon from "@mui/icons-material/Close";
+import IconButton from "@mui/material/IconButton";
 
-import Box from '@mui/material/Box';
-import SpeedDial from '@mui/material/SpeedDial';
-import SpeedDialIcon from '@mui/material/SpeedDialIcon';
-import SpeedDialAction from '@mui/material/SpeedDialAction';
+import Box from "@mui/material/Box";
+import SpeedDial from "@mui/material/SpeedDial";
+import SpeedDialIcon from "@mui/material/SpeedDialIcon";
+import SpeedDialAction from "@mui/material/SpeedDialAction";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import BottomNavigation from '@mui/material/BottomNavigation';
-import BottomNavigationAction from '@mui/material/BottomNavigationAction';
-import RestoreIcon from '@mui/icons-material/Restore';
-import SaveIcon from '@mui/icons-material/SaveAs';
-import Paper from '@mui/material/Paper';
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
+import BottomNavigation from "@mui/material/BottomNavigation";
+import BottomNavigationAction from "@mui/material/BottomNavigationAction";
+import RestoreIcon from "@mui/icons-material/Restore";
+import SaveIcon from "@mui/icons-material/SaveAs";
+import Paper from "@mui/material/Paper";
+import List from "@mui/material/List";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
 
-import SwipeableDrawer from '@mui/material/SwipeableDrawer';
-import InputAdornment from '@mui/material/InputAdornment';
+import SwipeableDrawer from "@mui/material/SwipeableDrawer";
+import InputAdornment from "@mui/material/InputAdornment";
 
-import Autocomplete from '@mui/material/Autocomplete';
-import TextField from '@mui/material/TextField';
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
 
-import {MySelect, MyTextInput} from '@/components/shared/Forms';
+import { MySelect, MyTextInput } from "@/ui/Forms";
 
-import { evaluate } from 'mathjs';
-import queryString from 'query-string';
-import MyAlert from '@/components/shared/MyAlert';
+import { evaluate } from "mathjs";
+import queryString from "query-string";
+import MyAlert from "@/ui/MyAlert";
 
 function formatDate(date) {
   var d = new Date(date),
-    month = '' + (d.getMonth() + 1),
-    day = '' + d.getDate(),
+    month = "" + (d.getMonth() + 1),
+    day = "" + d.getDate(),
     year = d.getFullYear();
 
-  if (month.length < 2) month = '0' + month;
-  if (day.length < 2) day = '0' + day;
+  if (month.length < 2) month = "0" + month;
+  if (day.length < 2) day = "0" + day;
 
-  return [year, month, day].join('-');
+  return [year, month, day].join("-");
 }
 
 // модальные окна
@@ -67,7 +67,7 @@ class Revizion_Modal extends React.Component {
 
     return (
       <Dialog
-        maxWidth={this.props.pf_list ? 'lg' : 'sm'}
+        maxWidth={this.props.pf_list ? "lg" : "sm"}
         open={this.props.modalDialog}
         onClose={this.props.close.bind(this)}
         fullScreen={this.props.fullScreen}
@@ -75,52 +75,88 @@ class Revizion_Modal extends React.Component {
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle className={this.props.fullScreen ? 'button' : null}>
-          <Typography align={this.props.pf_list ? 'left' : 'center'} sx={{ fontWeight: 'bold' }}>{this.props.title}</Typography>
+        <DialogTitle className={this.props.fullScreen ? "button" : null}>
+          <Typography
+            align={this.props.pf_list ? "left" : "center"}
+            sx={{ fontWeight: "bold" }}
+          >
+            {this.props.title}
+          </Typography>
           {this.props.fullScreen ? (
-            <IconButton onClick={this.props.close.bind(this)} style={{ cursor: 'pointer' }}>
+            <IconButton
+              onClick={this.props.close.bind(this)}
+              style={{ cursor: "pointer" }}
+            >
               <CloseIcon />
             </IconButton>
           ) : null}
         </DialogTitle>
         {this.props.comment ? <DialogTitle>{this.props.comment}</DialogTitle> : null}
-          <DialogContent align="center" sx={{ fontWeight: this.props.pf_list ? null : 'bold' }}>
-            {this.props.pf_list ? (
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell style={{ width: '40%' }}>Наименование</TableCell>
-                      <TableCell style={{ width: '40%' }}>Количество</TableCell>
-                      <TableCell style={{ width: '20%' }}>Ед измерения</TableCell>
+        <DialogContent
+          align="center"
+          sx={{ fontWeight: this.props.pf_list ? null : "bold" }}
+        >
+          {this.props.pf_list ? (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell style={{ width: "40%" }}>Наименование</TableCell>
+                    <TableCell style={{ width: "40%" }}>Количество</TableCell>
+                    <TableCell style={{ width: "20%" }}>Ед измерения</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {this.props.pf_list.map((item, key) => (
+                    <TableRow
+                      key={key}
+                      style={{
+                        backgroundColor: this.props.save
+                          ? item.count_warn > 0
+                            ? "#ffc107"
+                            : null
+                          : null,
+                      }}
+                    >
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>{item.count}</TableCell>
+                      <TableCell>{item?.ei_name ?? ""}</TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {this.props.pf_list.map((item, key) => (
-                      <TableRow key={key} style={{backgroundColor: this.props.save ? item.count_warn > 0 ? '#ffc107' : null : null}}>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.count}</TableCell>
-                        <TableCell>{item?.ei_name ?? ''}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            ) : this.props.content}
-          </DialogContent>
-          <DialogActions>
-            {this.props.pf_list ? (
-              <>
-                <Button onClick={this.props.close.bind(this)}>{this.props.save ? 'Отмена' : 'Закрыть'}</Button>
-                {this.props.save ? <Button color="success" onClick={this.props.saveRev.bind(this)}>Сохранить</Button> : null}
-              </>
-            ) : (
-              <>
-                <Button onClick={this.props.notRestoreData.bind(this)}>Нет</Button>
-                <Button color="success" onClick={this.props.getDataRev.bind(this)}>Восстановить</Button>
-              </>
-            )}
-          </DialogActions>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            this.props.content
+          )}
+        </DialogContent>
+        <DialogActions>
+          {this.props.pf_list ? (
+            <>
+              <Button onClick={this.props.close.bind(this)}>
+                {this.props.save ? "Отмена" : "Закрыть"}
+              </Button>
+              {this.props.save ? (
+                <Button
+                  color="success"
+                  onClick={this.props.saveRev.bind(this)}
+                >
+                  Сохранить
+                </Button>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <Button onClick={this.props.notRestoreData.bind(this)}>Нет</Button>
+              <Button
+                color="success"
+                onClick={this.props.getDataRev.bind(this)}
+              >
+                Восстановить
+              </Button>
+            </>
+          )}
+        </DialogActions>
       </Dialog>
     );
   }
@@ -128,47 +164,52 @@ class Revizion_Modal extends React.Component {
 
 // группа кнопок Сохранить/Сортировка мест хранения
 class Revizion_Button_Group extends React.Component {
-
   render() {
     // console.log( 'Revizion_Button_Group render' )
 
     return (
       <>
-      {this.props.storages.length == 0 ? null : this.props.fullScreen ? (
-        !this.props.items.length || !this.props.pf.length ? null : (
-          <Paper sx={{position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 7}} elevation={3}>
-            <BottomNavigation showLabels>
-              <BottomNavigationAction
+        {this.props.storages.length == 0 ? null : this.props.fullScreen ? (
+          !this.props.items.length || !this.props.pf.length ? null : (
+            <Paper
+              sx={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 7 }}
+              elevation={3}
+            >
+              <BottomNavigation showLabels>
+                <BottomNavigationAction
+                  onClick={this.props.open.bind(this)}
+                  label="Места хранения"
+                  icon={<RestoreIcon />}
+                />
+                <BottomNavigationAction
+                  onClick={this.props.checkData.bind(this)}
+                  label="Сохранить"
+                  icon={<SaveIcon />}
+                />
+              </BottomNavigation>
+            </Paper>
+          )
+        ) : !this.props.items.length || !this.props.pf.length ? null : (
+          <Box sx={{ position: "fixed", bottom: 20, right: 90 }}>
+            <SpeedDial
+              ariaLabel="SpeedDial basic example"
+              icon={<SpeedDialIcon />}
+            >
+              <SpeedDialAction
                 onClick={this.props.open.bind(this)}
-                label="Места хранения"
+                key={"Recents"}
                 icon={<RestoreIcon />}
+                tooltipTitle={"Места хранения"}
               />
-              <BottomNavigationAction
+              <SpeedDialAction
                 onClick={this.props.checkData.bind(this)}
-                label="Сохранить"
+                key={"Save"}
                 icon={<SaveIcon />}
+                tooltipTitle={"Сохранить"}
               />
-            </BottomNavigation>
-          </Paper>
-        )
-      ) : !this.props.items.length || !this.props.pf.length ? null : (
-        <Box sx={{ position: 'fixed', bottom: 20, right: 90 }}>
-          <SpeedDial ariaLabel="SpeedDial basic example" icon={<SpeedDialIcon />}>
-            <SpeedDialAction
-              onClick={this.props.open.bind(this)}
-              key={'Recents'}
-              icon={<RestoreIcon />}
-              tooltipTitle={'Места хранения'}
-            />
-            <SpeedDialAction
-              onClick={this.props.checkData.bind(this)}
-              key={'Save'}
-              icon={<SaveIcon />}
-              tooltipTitle={'Сохранить'}
-            />
-          </SpeedDial>
-        </Box>
-      )}
+            </SpeedDial>
+          </Box>
+        )}
       </>
     );
   }
@@ -187,26 +228,39 @@ class Revizion_Table_Row extends React.Component {
     return (
       <TableRow>
         <TableCell>
-          <Grid container spacing={2}>
+          <Grid
+            container
+            spacing={2}
+          >
             <Grid
-              sx={{ wordWrap: 'break-word' }}
+              sx={{ wordWrap: "break-word" }}
               size={{
                 xs: 5,
-                sm: 4
-              }}>{item.name}</Grid>
+                sm: 4,
+              }}
+            >
+              {item.name}
+            </Grid>
             <Grid
               size={{
                 xs: 7,
-                sm: 8
-              }}>
+                sm: 8,
+              }}
+            >
               <MyTextInput
                 label="Количество"
                 tabindex={{ tabIndex: index }}
                 value={item.value}
-                func={(event) => saveData(event, type, item.id, 'value')}
-                onBlur={(event) => math(event, type, item.id, 'value')}
-                enter={(event) => event.key === 'Enter' ? math(event, type, item.id, 'value') : null}
-                inputAdornment={{endAdornment: <InputAdornment position="end">{item?.ei_name ?? ''}</InputAdornment>}}
+                func={(event) => saveData(event, type, item.id, "value")}
+                onBlur={(event) => math(event, type, item.id, "value")}
+                enter={(event) =>
+                  event.key === "Enter" ? math(event, type, item.id, "value") : null
+                }
+                inputAdornment={{
+                  endAdornment: (
+                    <InputAdornment position="end">{item?.ei_name ?? ""}</InputAdornment>
+                  ),
+                }}
               />
             </Grid>
           </Grid>
@@ -228,36 +282,47 @@ class Revizion_Table_Row_Item extends React.Component {
 
     return (
       <TableRow>
-        <TableCell style={{ borderBottom: 'none', borderTop: 'none' }}>
-          <Grid container spacing={2}>
+        <TableCell style={{ borderBottom: "none", borderTop: "none" }}>
+          <Grid
+            container
+            spacing={2}
+          >
             <Grid
               size={{
                 xs: 4,
-                sm: 4
-              }}>
+                sm: 4,
+              }}
+            >
               <MySelect
                 is_none={false}
                 label="Объем упаковки"
                 data={item.size}
                 value={it.need_pq}
-                func={(event) => saveData(event, 'item', item.id, 'need_pq', i)}
+                func={(event) => saveData(event, "item", item.id, "need_pq", i)}
               />
             </Grid>
 
             <Grid
               size={{
                 xs: i === 0 ? 8 : 5,
-                sm: i === 0 ? 8 : 7
-              }}>
+                sm: i === 0 ? 8 : 7,
+              }}
+            >
               <MyTextInput
-                label={fullScreen ? i === 0 ? 'Количество' : 'Кол-во' : 'Количество'}
+                label={fullScreen ? (i === 0 ? "Количество" : "Кол-во") : "Количество"}
                 id={item.id}
                 value={it.value}
                 tabindex={{ tabIndex: index }}
-                func={(event) => saveData(event, 'item', item.id, 'value', i)}
-                onBlur={(event) => math(event, 'item', item.id, 'value', i)}
-                enter={(event) => event.key === 'Enter' ? math(event, 'item', item.id, 'value', i) : null}
-                inputAdornment={{endAdornment: <InputAdornment position="end"> {item?.ei_name ?? ''}</InputAdornment>}}
+                func={(event) => saveData(event, "item", item.id, "value", i)}
+                onBlur={(event) => math(event, "item", item.id, "value", i)}
+                enter={(event) =>
+                  event.key === "Enter" ? math(event, "item", item.id, "value", i) : null
+                }
+                inputAdornment={{
+                  endAdornment: (
+                    <InputAdornment position="end"> {item?.ei_name ?? ""}</InputAdornment>
+                  ),
+                }}
               />
             </Grid>
 
@@ -265,9 +330,13 @@ class Revizion_Table_Row_Item extends React.Component {
               <Grid
                 size={{
                   xs: 1,
-                  sm: 1
-                }}>
-                <Button variant="contained" onClick={() => clearData(item.id, i)}>
+                  sm: 1,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={() => clearData(item.id, i)}
+                >
                   <CloseIcon />
                 </Button>
               </Grid>
@@ -294,20 +363,31 @@ class Revizion_Table_Item extends React.Component {
         <TableHead>
           <TableRow>
             {fullScreen ? (
-              <TableCell>{item.name} {item.value} {item.value === '' ? '' : item.ei_name}</TableCell>
+              <TableCell>
+                {item.name} {item.value} {item.value === "" ? "" : item.ei_name}
+              </TableCell>
             ) : (
               <TableCell>
-                <Grid container spacing={2}>
+                <Grid
+                  container
+                  spacing={2}
+                >
                   <Grid
                     size={{
                       xs: 4,
-                      sm: 4
-                    }}>{item.name}</Grid>
+                      sm: 4,
+                    }}
+                  >
+                    {item.name}
+                  </Grid>
                   <Grid
                     size={{
                       xs: 8,
-                      sm: 8
-                    }}>{item.value} {item.value === '' ? '' : item.ei_name}</Grid>
+                      sm: 8,
+                    }}
+                  >
+                    {item.value} {item.value === "" ? "" : item.ei_name}
+                  </Grid>
                 </Grid>
               </TableCell>
             )}
@@ -328,8 +408,11 @@ class Revizion_Table_Item extends React.Component {
             />
           ))}
           <TableRow>
-            <TableCell style={{ borderTop: 'none', borderBottom: '1px groove #e6e6e6' }}>
-              <Button variant="contained" onClick={() => copyData(item.id)}>
+            <TableCell style={{ borderTop: "none", borderBottom: "1px groove #e6e6e6" }}>
+              <Button
+                variant="contained"
+                onClick={() => copyData(item.id)}
+              >
                 Дублировать
               </Button>
             </TableCell>
@@ -349,7 +432,7 @@ class Revizion_Table extends React.Component {
       items: [],
       rec: [],
       pf: [],
-      id: '',
+      id: "",
     };
   }
 
@@ -360,7 +443,11 @@ class Revizion_Table extends React.Component {
       return null;
     }
 
-    if (nextProps.items !== prevState.items || nextProps.pf !== prevState.pf || nextProps.rec !== prevState.rec) {
+    if (
+      nextProps.items !== prevState.items ||
+      nextProps.pf !== prevState.pf ||
+      nextProps.rec !== prevState.rec
+    ) {
       if (prevState.id) {
         const id = prevState.id;
 
@@ -370,11 +457,17 @@ class Revizion_Table extends React.Component {
 
         const pfCopy = JSON.parse(JSON.stringify(nextProps.pf));
 
-        const items = itemsCopy.filter((item) => item.storages.find((storages) => id ? storages.storage_id === id : storages));
+        const items = itemsCopy.filter((item) =>
+          item.storages.find((storages) => (id ? storages.storage_id === id : storages)),
+        );
 
-        const rec = recCopy.filter((item) => item.storages.find((storages) => id ? storages.storage_id === id : storages));
+        const rec = recCopy.filter((item) =>
+          item.storages.find((storages) => (id ? storages.storage_id === id : storages)),
+        );
 
-        const pf = pfCopy.filter((item) => item.storages.find((storages) => id ? storages.storage_id === id : storages));
+        const pf = pfCopy.filter((item) =>
+          item.storages.find((storages) => (id ? storages.storage_id === id : storages)),
+        );
 
         return { items, rec, pf };
       } else {
@@ -396,11 +489,17 @@ class Revizion_Table extends React.Component {
 
     const pfCopy = this.state.pf;
 
-    const items = itemsCopy.filter((item) => item.storages.find((storages) => id ? storages.storage_id === id : storages));
+    const items = itemsCopy.filter((item) =>
+      item.storages.find((storages) => (id ? storages.storage_id === id : storages)),
+    );
 
-    const rec = recCopy.filter((item) => item.storages.find((storages) => id ? storages.storage_id === id : storages));
+    const rec = recCopy.filter((item) =>
+      item.storages.find((storages) => (id ? storages.storage_id === id : storages)),
+    );
 
-    const pf = pfCopy.filter((item) => item.storages.find((storages) => id ? storages.storage_id === id : storages));
+    const pf = pfCopy.filter((item) =>
+      item.storages.find((storages) => (id ? storages.storage_id === id : storages)),
+    );
 
     this.setState({ items, rec, pf, id });
 
@@ -413,24 +512,36 @@ class Revizion_Table extends React.Component {
     return (
       <>
         {/* Товары */}
-        <TableContainer component={Paper} style={{ marginBottom: 85 }}>
+        <TableContainer
+          component={Paper}
+          style={{ marginBottom: 85 }}
+        >
           <Table>
             {/* Товары */}
             {!this.state.items.length ? null : (
               <TableHead>
-                <TableRow style={{ backgroundColor: '#ADD8E6' }}>
+                <TableRow style={{ backgroundColor: "#ADD8E6" }}>
                   <TableCell>
-                    <Grid container spacing={2}>
+                    <Grid
+                      container
+                      spacing={2}
+                    >
                       <Grid
                         size={{
                           xs: 4,
-                          sm: 4
-                        }}>Товар</Grid>
+                          sm: 4,
+                        }}
+                      >
+                        Товар
+                      </Grid>
                       <Grid
                         size={{
                           xs: 8,
-                          sm: 8
-                        }}>Количество</Grid>
+                          sm: 8,
+                        }}
+                      >
+                        Количество
+                      </Grid>
                     </Grid>
                   </TableCell>
                 </TableRow>
@@ -453,19 +564,28 @@ class Revizion_Table extends React.Component {
             {!this.state.pf.length ? null : (
               <>
                 <TableHead>
-                  <TableRow style={{ backgroundColor: '#ADD8E6' }}>
+                  <TableRow style={{ backgroundColor: "#ADD8E6" }}>
                     <TableCell>
-                      <Grid container spacing={2}>
+                      <Grid
+                        container
+                        spacing={2}
+                      >
                         <Grid
                           size={{
                             xs: 5,
-                            sm: 4
-                          }}>Заготовка</Grid>
+                            sm: 4,
+                          }}
+                        >
+                          Заготовка
+                        </Grid>
                         <Grid
                           size={{
                             xs: 7,
-                            sm: 8
-                          }}>Количество</Grid>
+                            sm: 8,
+                          }}
+                        >
+                          Количество
+                        </Grid>
                       </Grid>
                     </TableCell>
                   </TableRow>
@@ -478,7 +598,7 @@ class Revizion_Table extends React.Component {
                       item={item}
                       saveData={this.props.saveData}
                       math={this.props.math}
-                      type={'pf'}
+                      type={"pf"}
                     />
                   ))}
                 </TableBody>
@@ -489,19 +609,28 @@ class Revizion_Table extends React.Component {
             {!this.state.rec.length ? null : (
               <>
                 <TableHead>
-                  <TableRow style={{ backgroundColor: '#ADD8E6' }}>
+                  <TableRow style={{ backgroundColor: "#ADD8E6" }}>
                     <TableCell>
-                      <Grid container spacing={2}>
+                      <Grid
+                        container
+                        spacing={2}
+                      >
                         <Grid
                           size={{
                             xs: 5,
-                            sm: 4
-                          }}>Рецепт</Grid>
+                            sm: 4,
+                          }}
+                        >
+                          Рецепт
+                        </Grid>
                         <Grid
                           size={{
                             xs: 7,
-                            sm: 8
-                          }}>Количество</Grid>
+                            sm: 8,
+                          }}
+                        >
+                          Количество
+                        </Grid>
                       </Grid>
                     </TableCell>
                   </TableRow>
@@ -514,7 +643,7 @@ class Revizion_Table extends React.Component {
                       item={item}
                       saveData={this.props.saveData}
                       math={this.props.math}
-                      type={'rec'}
+                      type={"rec"}
                     />
                   ))}
                 </TableBody>
@@ -525,14 +654,17 @@ class Revizion_Table extends React.Component {
         {/* Боковая панель с выбором мест хранения */}
         <React.Fragment>
           <SwipeableDrawer
-            anchor={'left'}
+            anchor={"left"}
             open={this.props.open}
             onClose={() => this.props.onClose()}
             onOpen={() => this.props.onOpen()}
           >
-            <List style={{ width: '100%' }}>
+            <List style={{ width: "100%" }}>
               {this.props.storages.map((item, key) => (
-                <ListItemButton key={key} onClick={this.sortItem.bind(this, item.id)}>
+                <ListItemButton
+                  key={key}
+                  onClick={this.sortItem.bind(this, item.id)}
+                >
                   <ListItemText primary={item.name} />
                 </ListItemButton>
               ))}
@@ -550,17 +682,17 @@ class RevizionNew_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'revizion',
-      module_name: '',
+      module: "revizion",
+      module_name: "",
       is_load: false,
 
       points: [],
-      point: '0',
+      point: "0",
 
       revData: null,
 
       allItems: [],
-      search: '',
+      search: "",
       itemsCopy: [],
       recCopy: [],
       pfCopy: [],
@@ -571,16 +703,16 @@ class RevizionNew_ extends React.Component {
       pf: [],
 
       modalDialog: false,
-      title: '',
-      content: '',
-      comment: '',
+      title: "",
+      content: "",
+      comment: "",
       open: false,
 
       fullScreen: false,
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
 
       pf_list: null,
       save: false,
@@ -589,11 +721,11 @@ class RevizionNew_ extends React.Component {
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     this.setState({
       points: data.point_list,
-      point: data.point_list.length == 1 ? data.point_list[0].id : '0',
+      point: data.point_list.length == 1 ? data.point_list[0].id : "0",
       module_name: data.module_info.name,
     });
 
@@ -639,7 +771,7 @@ class RevizionNew_ extends React.Component {
       allItems: [],
       save: false,
       pf_list: null,
-      search: '',
+      search: "",
       fullScreen: false,
     });
   }
@@ -650,28 +782,28 @@ class RevizionNew_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: queryString.stringify({
         method: method,
         module: this.state.module,
         version: 2,
-        login: localStorage.getItem('token'),
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })
       .then((res) => res.json())
       .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/";
           return;
         }
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
           return;
         }
 
@@ -694,9 +826,9 @@ class RevizionNew_ extends React.Component {
 
     this.setState({
       modalDialog: false,
-      title: '',
-      comment: '',
-      content: '',
+      title: "",
+      comment: "",
+      content: "",
     });
 
     const point_id = this.state.point;
@@ -707,7 +839,7 @@ class RevizionNew_ extends React.Component {
       point_id,
     };
 
-    const res = await this.getData('get_data_for_new_rev', data);
+    const res = await this.getData("get_data_for_new_rev", data);
 
     // console.log(res);
 
@@ -761,12 +893,14 @@ class RevizionNew_ extends React.Component {
       return;
     }
 
-    const result = String(evaluate(event.target.value) ?? '');
+    const result = String(evaluate(event.target.value) ?? "");
 
     this.saveData(result, type, id, data, i);
 
     if (document.activeElement !== document.body) {
-      const nextInput = [...document.querySelectorAll('input:not([tabindex = "-1"]):not([autocomplete])')];
+      const nextInput = [
+        ...document.querySelectorAll('input:not([tabindex = "-1"]):not([autocomplete])'),
+      ];
       const index = nextInput.indexOf(document.activeElement) + 1;
 
       if (nextInput[index]) {
@@ -781,7 +915,7 @@ class RevizionNew_ extends React.Component {
   saveData(event, type, id, data, index) {
     // console.log(type, id, data, index);
 
-    if (type == 'item') {
+    if (type == "item") {
       const items = this.state.items;
 
       items.forEach((item) => {
@@ -791,8 +925,8 @@ class RevizionNew_ extends React.Component {
           let allVal = 0;
 
           item.counts.forEach((it) => {
-            if (it.value.includes('=')) {
-              it.value = evaluate(it.value.replaceAll('=', ''));
+            if (it.value.includes("=")) {
+              it.value = evaluate(it.value.replaceAll("=", ""));
               allVal += Number(it.need_pq) * Number(it.value);
             } else {
               allVal += Number(it.need_pq) * Number(it.value);
@@ -814,15 +948,15 @@ class RevizionNew_ extends React.Component {
       });
     }
 
-    if (type === 'pf') {
+    if (type === "pf") {
       const pf = this.state.pf;
 
       pf.forEach((pf) => {
         if (pf.id === id) {
           const value = event.target?.value ?? event;
 
-          if (value.includes('=')) {
-            pf[data] = evaluate(value.replaceAll('=', ''));
+          if (value.includes("=")) {
+            pf[data] = evaluate(value.replaceAll("=", ""));
           } else {
             pf[data] = value;
           }
@@ -836,15 +970,15 @@ class RevizionNew_ extends React.Component {
       });
     }
 
-    if (type === 'rec') {
+    if (type === "rec") {
       const rec = this.state.rec;
 
       rec.forEach((rec) => {
         if (rec.id === id) {
           const value = event.target?.value ?? event;
 
-          if (value.includes('=')) {
-            rec[data] = evaluate(value.replaceAll('=', ''));
+          if (value.includes("=")) {
+            rec[data] = evaluate(value.replaceAll("=", ""));
           } else {
             rec[data] = value;
           }
@@ -874,7 +1008,9 @@ class RevizionNew_ extends React.Component {
         return item;
       });
 
-      data.items = data.items.find((item) => item.id === id && item.type === type) ? data.items : [...data.items, ...[{ type, id, value, counts }]];
+      data.items = data.items.find((item) => item.id === id && item.type === type)
+        ? data.items
+        : [...data.items, ...[{ type, id, value, counts }]];
     } else {
       data = {
         date: formatDate(new Date()),
@@ -901,8 +1037,8 @@ class RevizionNew_ extends React.Component {
       this.setState({
         revData,
         modalDialog: true,
-        title: 'В памяти есть данные по Ревизии!',
-        content: 'Восстановить данные?',
+        title: "В памяти есть данные по Ревизии!",
+        content: "Восстановить данные?",
         storages: [],
         items: [],
         rec: [],
@@ -922,9 +1058,9 @@ class RevizionNew_ extends React.Component {
     this.setState({
       modalDialog: false,
       revData: null,
-      title: '',
-      comment: '',
-      content: '',
+      title: "",
+      comment: "",
+      content: "",
     });
 
     setTimeout(() => {
@@ -938,7 +1074,7 @@ class RevizionNew_ extends React.Component {
 
     items.forEach((item) => {
       if (item.id === id) {
-        item.counts = [...item.counts, ...[{ need_pq: item.counts[0].need_pq, value: '' }]];
+        item.counts = [...item.counts, ...[{ need_pq: item.counts[0].need_pq, value: "" }]];
       }
     });
 
@@ -957,7 +1093,7 @@ class RevizionNew_ extends React.Component {
 
         let allVal = 0;
 
-        item.counts.forEach((it) => allVal += Number(it.need_pq) * Number(it.value));
+        item.counts.forEach((it) => (allVal += Number(it.need_pq) * Number(it.value)));
 
         item.value = allVal;
 
@@ -978,7 +1114,7 @@ class RevizionNew_ extends React.Component {
       return;
     }
 
-    let search = event?.target?.value ? event.target.value : value ? value : '';
+    let search = event?.target?.value ? event.target.value : value ? value : "";
 
     let items = this.state.itemsCopy;
 
@@ -997,7 +1133,7 @@ class RevizionNew_ extends React.Component {
       return;
     }
 
-    if (typeof search === 'string') {
+    if (typeof search === "string") {
       items = items.filter((value) => value.name.toLowerCase().includes(search.toLowerCase()));
 
       rec = rec.filter((value) => value.name.toLowerCase().includes(search.toLowerCase()));
@@ -1052,15 +1188,15 @@ class RevizionNew_ extends React.Component {
       items,
     };
 
-    const res = await this.getData('check_count', data);
+    const res = await this.getData("check_count", data);
 
     // console.log(res);
 
     if (res.count_err > 0) {
       this.setState({
         modalDialog: true,
-        title: 'Уточнение данных',
-        comment: 'Для продолжения надо исправить количество в позициях',
+        title: "Уточнение данных",
+        comment: "Для продолжения надо исправить количество в позициях",
         pf_list: res.pf_list,
       });
     } else {
@@ -1068,8 +1204,9 @@ class RevizionNew_ extends React.Component {
 
       this.setState({
         modalDialog: true,
-        title: 'Уточнение данных',
-        comment: 'Цифра показывает сумму всех позиций, а не каждую в отдельности (товар / заготовка / рецепт)',
+        title: "Уточнение данных",
+        comment:
+          "Цифра показывает сумму всех позиций, а не каждую в отдельности (товар / заготовка / рецепт)",
         pf_list,
         save: true,
         data,
@@ -1081,24 +1218,24 @@ class RevizionNew_ extends React.Component {
   async saveRev() {
     this.setState({
       modalDialog: false,
-      title: '',
-      comment: '',
+      title: "",
+      comment: "",
       save: false,
       pf_list: null,
     });
 
     const data = this.state.data;
 
-    const res = await this.getData('save_new', data);
+    const res = await this.getData("save_new", data);
 
     if (res.st) {
       this.setState({
         openAlert: true,
         err_status: true,
-        err_text: 'Ревизия успешно сохранена!',
+        err_text: "Ревизия успешно сохранена!",
       });
 
-      window.location.href = '/revizion';
+      window.location.href = "/revizion";
     } else {
       this.setState({
         openAlert: true,
@@ -1112,7 +1249,10 @@ class RevizionNew_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -1121,24 +1261,30 @@ class RevizionNew_ extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>Новая ревизия</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Button
               variant="contained"
               onClick={this.checkData.bind(this)}
-              disabled={!this.state.point || this.state.point === '0' ? true : false}
+              disabled={!this.state.point || this.state.point === "0" ? true : false}
             >
               Сохранить
             </Button>
@@ -1147,8 +1293,9 @@ class RevizionNew_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MySelect
               data={this.state.points}
               value={this.state.point}
@@ -1160,21 +1307,22 @@ class RevizionNew_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <Autocomplete
               freeSolo={true}
               size="small"
               disableCloseOnSelect={true}
               options={this.state.allItems}
-              getOptionLabel={(option) => option?.name ?? ''}
+              getOptionLabel={(option) => option?.name ?? ""}
               value={this.state.search}
               onChange={this.search.bind(this)}
               onBlur={this.search.bind(this)}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label={'Поиск'}
+                  label={"Поиск"}
                   onChange={(event) => this.search(event)}
                 />
               )}
@@ -1184,8 +1332,9 @@ class RevizionNew_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Revizion_Table
               items={this.state.items}
               rec={this.state.rec}
@@ -1202,7 +1351,7 @@ class RevizionNew_ extends React.Component {
             />
           </Grid>
         </Grid>
-        <Revizion_Button_Group 
+        <Revizion_Button_Group
           items={this.state.items}
           pf={this.state.pf}
           fullScreen={this.state.fullScreen}
@@ -1210,10 +1359,10 @@ class RevizionNew_ extends React.Component {
           checkData={this.checkData.bind(this)}
           open={() => this.setState({ open: true })}
         />
-        <Revizion_Modal 
+        <Revizion_Modal
           pf_list={this.state.pf_list}
           modalDialog={this.state.modalDialog}
-          close={() => this.setState({modalDialog: false, title: '', comment: '', save: false})}
+          close={() => this.setState({ modalDialog: false, title: "", comment: "", save: false })}
           fullScreen={this.state.fullScreen}
           title={this.state.title}
           comment={this.state.comment}
@@ -1233,13 +1382,16 @@ export default function RevizionNew() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

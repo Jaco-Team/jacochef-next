@@ -1,23 +1,23 @@
-import React from 'react';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
-import Paper from '@mui/material/Paper';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+import Paper from "@mui/material/Paper";
 
-import {MySelect, MyAutocomplite2} from '@/components/shared/Forms';
+import { MySelect, MyAutocomplite2 } from "@/ui/Forms";
 
-import queryString from 'query-string';
+import queryString from "query-string";
 
 // главная страница
 class Revizion_ extends React.Component {
@@ -25,15 +25,15 @@ class Revizion_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'revizion',
-      module_name: '',
+      module: "revizion",
+      module_name: "",
       is_load: false,
 
       points: [],
-      point: '0',
+      point: "0",
 
       revList: [],
-      chooseRev: '',
+      chooseRev: "",
 
       items: [],
       pf: [],
@@ -45,13 +45,13 @@ class Revizion_ extends React.Component {
       itemsCopy: [],
       pfCopy: [],
       recCopy: [],
-      search: '',
+      search: "",
     };
   }
 
   // переменные для фильтра
   async componentDidMount() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     this.setState({
       points: data.point_list,
@@ -71,28 +71,28 @@ class Revizion_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: queryString.stringify({
         method: method,
         module: this.state.module,
         version: 2,
-        login: localStorage.getItem('token'),
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })
       .then((res) => res.json())
       .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/";
           return;
         }
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
           return;
         }
 
@@ -115,7 +115,7 @@ class Revizion_ extends React.Component {
 
     this.setState({
       point: data,
-      search: '',
+      search: "",
     });
 
     setTimeout(() => {
@@ -129,7 +129,7 @@ class Revizion_ extends React.Component {
 
     this.setState({
       chooseRev: data,
-      search: '',
+      search: "",
     });
 
     setTimeout(() => {
@@ -143,13 +143,13 @@ class Revizion_ extends React.Component {
       point_id: this.state.point,
     };
 
-    const res = await this.getData('get_rev_list', data);
+    const res = await this.getData("get_rev_list", data);
 
     res.length = 10;
 
     this.setState({
       revList: res,
-      chooseRev: res.length > 0 ? res[0]['id'] : '',
+      chooseRev: res.length > 0 ? res[0]["id"] : "",
     });
 
     if (res.length > 0) {
@@ -166,7 +166,7 @@ class Revizion_ extends React.Component {
       rev_id: this.state.chooseRev,
     };
 
-    const res = await this.getData('get_data_rev', data);
+    const res = await this.getData("get_data_rev", data);
 
     // console.log(res);
 
@@ -184,7 +184,7 @@ class Revizion_ extends React.Component {
 
   // поиск
   search(event, value) {
-    const search = event.target.value ? event.target.value : value ? value : '';
+    const search = event.target.value ? event.target.value : value ? value : "";
 
     const itemsCopy = this.state.itemsCopy;
 
@@ -192,11 +192,17 @@ class Revizion_ extends React.Component {
 
     const recCopy = this.state.recCopy;
 
-    const items = itemsCopy.filter((value) => search ? value.name.toLowerCase() === search.toLowerCase() : value);
+    const items = itemsCopy.filter((value) =>
+      search ? value.name.toLowerCase() === search.toLowerCase() : value,
+    );
 
-    const pf = pfCopy.filter((value) => search ? value.name.toLowerCase() === search.toLowerCase() : value);
+    const pf = pfCopy.filter((value) =>
+      search ? value.name.toLowerCase() === search.toLowerCase() : value,
+    );
 
-    const rec = recCopy.filter((value) => search ? value.name.toLowerCase() === search.toLowerCase() : value);
+    const rec = recCopy.filter((value) =>
+      search ? value.name.toLowerCase() === search.toLowerCase() : value,
+    );
 
     this.setState({
       search,
@@ -213,33 +219,48 @@ class Revizion_ extends React.Component {
       rev_id: this.state.chooseRev,
     };
 
-    localStorage.setItem('editRevData', JSON.stringify(data));
+    localStorage.setItem("editRevData", JSON.stringify(data));
 
-    window.location.href = '/revizion/edit';
+    window.location.href = "/revizion/edit";
   }
 
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 2
-            }}>
-            <Button variant="contained" style={{ whiteSpace: 'nowrap' }}>
-              <Link style={{ color: '#fff', textDecoration: 'none' }} href="/revizion/new">
+              sm: 2,
+            }}
+          >
+            <Button
+              variant="contained"
+              style={{ whiteSpace: "nowrap" }}
+            >
+              <Link
+                style={{ color: "#fff", textDecoration: "none" }}
+                href="/revizion/new"
+              >
                 Новая ревизия
               </Link>
             </Button>
@@ -248,8 +269,9 @@ class Revizion_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 8
-            }}>
+              sm: 8,
+            }}
+          >
             <MyAutocomplite2
               label="Поиск"
               freeSolo={true}
@@ -264,8 +286,9 @@ class Revizion_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 4
-            }}>
+              sm: 4,
+            }}
+          >
             <MySelect
               is_none={false}
               data={this.state.points}
@@ -277,8 +300,9 @@ class Revizion_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 4
-            }}>
+              sm: 4,
+            }}
+          >
             <MySelect
               is_none={false}
               data={this.state.revList}
@@ -290,12 +314,13 @@ class Revizion_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 2
-            }}>
+              sm: 2,
+            }}
+          >
             <Button
               variant="contained"
               onClick={this.getDataRev.bind(this)}
-              style={{ whiteSpace: 'nowrap' }}
+              style={{ whiteSpace: "nowrap" }}
             >
               Обновить данные
             </Button>
@@ -303,13 +328,18 @@ class Revizion_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 2
-            }}>
+              sm: 2,
+            }}
+          >
             <Button
               variant="contained"
-              style={{ whiteSpace: 'nowrap' }}
+              style={{ whiteSpace: "nowrap" }}
               onClick={this.editDataRev.bind(this)}
-              disabled={!this.state.point || !this.state.chooseRev || this.state.point === '0' ? true : false}
+              disabled={
+                !this.state.point || !this.state.chooseRev || this.state.point === "0"
+                  ? true
+                  : false
+              }
             >
               Редактировать ревизию
             </Button>
@@ -318,15 +348,16 @@ class Revizion_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <TableContainer component={Paper}>
               <Table>
                 {!this.state.items.length ? null : (
                   <TableHead>
-                    <TableRow style={{ backgroundColor: '#ADD8E6' }}>
-                      <TableCell style={{ width: '60%' }}>Товар</TableCell>
-                      <TableCell style={{ width: '40%' }}>Объем</TableCell>
+                    <TableRow style={{ backgroundColor: "#ADD8E6" }}>
+                      <TableCell style={{ width: "60%" }}>Товар</TableCell>
+                      <TableCell style={{ width: "40%" }}>Объем</TableCell>
                     </TableRow>
                   </TableHead>
                 )}
@@ -334,16 +365,18 @@ class Revizion_ extends React.Component {
                   {this.state.items.map((item, key) => (
                     <TableRow key={key}>
                       <TableCell>{item.name}</TableCell>
-                      <TableCell>{item.value} {item.ei_name}</TableCell>
+                      <TableCell>
+                        {item.value} {item.ei_name}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
 
                 {!this.state.pf.length ? null : (
                   <TableHead>
-                    <TableRow style={{ backgroundColor: '#ADD8E6' }}>
-                      <TableCell style={{ width: '60%' }}>Заготовка</TableCell>
-                      <TableCell style={{ width: '40%' }}>Объем</TableCell>
+                    <TableRow style={{ backgroundColor: "#ADD8E6" }}>
+                      <TableCell style={{ width: "60%" }}>Заготовка</TableCell>
+                      <TableCell style={{ width: "40%" }}>Объем</TableCell>
                     </TableRow>
                   </TableHead>
                 )}
@@ -351,16 +384,18 @@ class Revizion_ extends React.Component {
                   {this.state.pf.map((item, key) => (
                     <TableRow key={key}>
                       <TableCell>{item.name}</TableCell>
-                      <TableCell>{item.value} {item.ei_name}</TableCell>
+                      <TableCell>
+                        {item.value} {item.ei_name}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
 
                 {!this.state.rec.length ? null : (
                   <TableHead>
-                    <TableRow style={{ backgroundColor: '#ADD8E6' }}>
-                      <TableCell style={{ width: '60%' }}>Рецепт</TableCell>
-                      <TableCell style={{ width: '40%' }}>Объем</TableCell>
+                    <TableRow style={{ backgroundColor: "#ADD8E6" }}>
+                      <TableCell style={{ width: "60%" }}>Рецепт</TableCell>
+                      <TableCell style={{ width: "40%" }}>Объем</TableCell>
                     </TableRow>
                   </TableHead>
                 )}
@@ -368,7 +403,9 @@ class Revizion_ extends React.Component {
                   {this.state.rec.map((item, key) => (
                     <TableRow key={key}>
                       <TableCell>{item.name}</TableCell>
-                      <TableCell>{item.value} {item.ei_name}</TableCell>
+                      <TableCell>
+                        {item.value} {item.ei_name}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -386,13 +423,16 @@ export default function Revizion() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

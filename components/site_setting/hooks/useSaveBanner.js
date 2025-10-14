@@ -10,7 +10,6 @@ export default function useSaveBanner(showAlert, getData, onClose) {
     }
 
     return new Promise((resolve) => {
-
       dropzone.current?.on("sending", (file, xhr, formData) => {
         formData.append("name", bannerName);
         formData.append("id", bannerId);
@@ -71,7 +70,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
 
       if (uploads.length) {
         const results = await Promise.all(uploads);
-        if (results.some(res => !res?.st)) {
+        if (results.some((res) => !res?.st)) {
           showAlert("Some images failed to upload");
           return;
         }
@@ -79,9 +78,11 @@ export default function useSaveBanner(showAlert, getData, onClose) {
 
       showAlert(
         `Баннер ${isNew ? "создан" : "обновлён"} успешно${
-          uploads.length ? ` с ${uploads.length} изображени${uploads.length > 1 ? "ями" : "ем"}` : ""
+          uploads.length
+            ? ` с ${uploads.length} изображени${uploads.length > 1 ? "ями" : "ем"}`
+            : ""
         }`,
-        true
+        true,
       );
       setTimeout(() => onClose(), 1000);
     } catch (error) {

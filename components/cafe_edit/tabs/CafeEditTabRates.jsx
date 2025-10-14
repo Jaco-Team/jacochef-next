@@ -1,11 +1,8 @@
 "use client";
 
-import {
-  Button,
-  Grid,
-} from "@mui/material";
+import { Button, Grid } from "@mui/material";
 import useCafeEditStore from "../useCafeEditStore";
-import { MyTextInput } from "@/components/shared/Forms";
+import { MyTextInput } from "@/ui/Forms";
 import HistDropDownTable from "../HistDropDownTable";
 import useCafeEditModalsStore from "../useCafeEditModalsStore";
 
@@ -17,16 +14,14 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
       modalDialog_edit: true,
       mark: "rate",
     });
-  }
+  };
   return (
     canView("rate_point") && (
       <Grid
         container
         spacing={3}
       >
-        <Grid
-          size={{ xs: 12, sm: 4 }}
-        >
+        <Grid size={{ xs: 12, sm: 4 }}>
           <MyTextInput
             disabled={!canEdit("rate_point")}
             label="Коэффициент количества пиццы в час"
@@ -35,15 +30,13 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
             inputProps={{
               min: 0,
               max: 999,
-              step: 0.1
+              step: 0.1,
             }}
             func={(e) => changePointInfoData("k_pizza", e)}
           />
         </Grid>
 
-        <Grid
-          size={{ xs: 12, sm: 4 }}
-        >
+        <Grid size={{ xs: 12, sm: 4 }}>
           <MyTextInput
             disabled={!canEdit("rate_point")}
             label="Коэффициент мойки посуды для пиццы (кух раб)"
@@ -52,15 +45,13 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
             inputProps={{
               min: 0,
               max: 999,
-              step: 0.01
+              step: 0.01,
             }}
             func={(e) => changePointInfoData("k_pizza_kux", e)}
           />
         </Grid>
 
-        <Grid
-          size={{ xs: 12, sm: 4 }}
-        >
+        <Grid size={{ xs: 12, sm: 4 }}>
           <MyTextInput
             disabled={!canEdit("rate_point")}
             label="Коэффициент мойки посуды для роллов (кух раб)"
@@ -69,7 +60,7 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
             inputProps={{
               min: 0,
               max: 999,
-              step: 0.01
+              step: 0.01,
             }}
             func={(e) => changePointInfoData("k_rolls_kux", e)}
           />

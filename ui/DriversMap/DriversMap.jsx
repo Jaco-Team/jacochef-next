@@ -52,7 +52,7 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
       {
         preset: "islands#blackDotIcon",
         iconColor: "black",
-      }
+      },
     );
 
     if (!mapRef.current) {
@@ -64,7 +64,7 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
         },
         {
           searchControlProvider: "yandex#search",
-        }
+        },
       );
       // console.log("Map created");
     } else {
@@ -246,8 +246,9 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
 
         <Grid
           size={{
-            xs: 12
-          }}>
+            xs: 12,
+          }}
+        >
           {drivers.map((item, key) => (
             <div
               key={key}
@@ -264,8 +265,9 @@ const DriversMap = ({ pointId = 0, onShowOrder = defaultCallBack }) => {
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <div
             id="map"
             name="map"

@@ -29,7 +29,7 @@ export default function CityCafeAutocomplete({
         name: k.name,
         cityId: c.id,
         cityName: c.name,
-      }))
+      })),
     );
   }, [cities]);
 
@@ -61,10 +61,7 @@ export default function CityCafeAutocomplete({
     return map;
   }, [allCafes]);
 
-  const selectedIds = useMemo(
-    () => new Set(actualValue.map((v) => v.id)),
-    [actualValue]
-  );
+  const selectedIds = useMemo(() => new Set(actualValue.map((v) => v.id)), [actualValue]);
 
   const citySelectState = useCallback(
     (cityId) => {
@@ -77,7 +74,7 @@ export default function CityCafeAutocomplete({
         some: selectedCount > 0 && selectedCount < total,
       };
     },
-    [cafesByCity, selectedIds]
+    [cafesByCity, selectedIds],
   );
 
   const handleToggleCity = (cityId) => {
@@ -106,7 +103,11 @@ export default function CityCafeAutocomplete({
       disabled={disabled}
       autoFocus={autoFocus}
       renderInput={(params) => (
-        <TextField {...params} label={label} placeholder={placeholder} />
+        <TextField
+          {...params}
+          label={label}
+          placeholder={placeholder}
+        />
       )}
       renderTags={(selected, getTagProps) => {
         const maxVisible = 2;
@@ -126,7 +127,10 @@ export default function CityCafeAutocomplete({
         );
       }}
       renderOption={(props, option, { selected }) => (
-        <li {...props} key={option.id}>
+        <li
+          {...props}
+          key={option.id}
+        >
           <Checkbox
             size="small"
             checked={selected}
@@ -144,9 +148,7 @@ export default function CityCafeAutocomplete({
         const city = cities.find((c) => c.name === groupParams.group);
         const cityId = city?.id ?? "";
         const isOpen = cityId ? expanded.has(cityId) : true;
-        const { all, some } = cityId
-          ? citySelectState(cityId)
-          : { all: false, some: false };
+        const { all, some } = cityId ? citySelectState(cityId) : { all: false, some: false };
 
         return (
           <Box

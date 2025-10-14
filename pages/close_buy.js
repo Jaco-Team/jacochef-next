@@ -1,46 +1,46 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
+import Grid from "@mui/material/Grid";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import { MySelect, MyCheckBox } from '@/components/shared/Forms';
+import { MySelect, MyCheckBox } from "@/ui/Forms";
 
-import { api_laravel_local, api_laravel } from '@/src/api_new';
-import MyAlert from '@/components/shared/MyAlert';
+import { api_laravel_local, api_laravel } from "@/src/api_new";
+import MyAlert from "@/ui/MyAlert";
 
 class CloseBuy_ extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      module: 'close_buy',
-      module_name: '',
+      module: "close_buy",
+      module_name: "",
       is_load: false,
 
       points: [],
-      point: '0',
+      point: "0",
 
       cats: [],
 
@@ -49,31 +49,33 @@ class CloseBuy_ extends React.Component {
 
       openAlert: false,
       err_status: false,
-      err_text: '',
+      err_text: "",
     };
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
-    this.setState({
-      points: data.points,
-      point: data.points[0].id,
-      module_name: data.module_info.name,
-    }, this.update);
+    this.setState(
+      {
+        points: data.points,
+        point: data.points[0].id,
+        module_name: data.module_info.name,
+      },
+      this.update,
+    );
 
     document.title = data.module_info.name;
   }
 
   getData = (method, data = {}) => {
-        
     this.setState({
       is_load: true,
     });
 
     let res = api_laravel(this.state.module, method, data)
-      .then(result => result.data)
-      .finally( () => {
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
@@ -82,14 +84,17 @@ class CloseBuy_ extends React.Component {
       });
 
     return res;
-  }
+  };
 
   changePoint(event) {
     const point = event.target.value;
 
-    this.setState({
-      point,
-    }, this.update);
+    this.setState(
+      {
+        point,
+      },
+      this.update,
+    );
   }
 
   openConfirm(cat, event) {
@@ -108,7 +113,7 @@ class CloseBuy_ extends React.Component {
 
     let items = [];
 
-    if (mark === 'all') {
+    if (mark === "all") {
       this.setState({
         confirmDialog: false,
       });
@@ -125,7 +130,7 @@ class CloseBuy_ extends React.Component {
       });
     }
 
-    if (mark === 'one') {
+    if (mark === "one") {
       const value = event.target.checked === true ? 1 : 0;
 
       it.is_active = value;
@@ -148,22 +153,22 @@ class CloseBuy_ extends React.Component {
       items,
     };
 
-    const res = await this.getData('save_active', data);
+    const res = await this.getData("save_active", data);
 
     this.setState({
       cats,
     });
 
     if (res.st) {
-
-      this.setState({
-        openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
-      }, this.update);
-
+      this.setState(
+        {
+          openAlert: true,
+          err_status: res.st,
+          err_text: res.text,
+        },
+        this.update,
+      );
     }
-
   }
 
   async update() {
@@ -173,7 +178,7 @@ class CloseBuy_ extends React.Component {
       point_id: point,
     };
 
-    const res = await this.getData('get_items', data);
+    const res = await this.getData("get_items", data);
 
     this.setState({
       cats: res.items,
@@ -183,7 +188,10 @@ class CloseBuy_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -193,32 +201,49 @@ class CloseBuy_ extends React.Component {
           text={this.state.err_text}
         />
         <Dialog
-          sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+          sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
           maxWidth="sm"
           open={this.state.confirmDialog}
           onClose={() => this.setState({ confirmDialog: false })}
         >
           <DialogTitle>Подтвердите действие</DialogTitle>
-          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>Изменить Активность у всех товаров данной категории ?</DialogContent>
+          <DialogContent
+            align="center"
+            sx={{ fontWeight: "bold" }}
+          >
+            Изменить Активность у всех товаров данной категории ?
+          </DialogContent>
           <DialogActions>
-            <Button autoFocus onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
-            <Button onClick={this.changeItemChecked.bind(this, 'all')}>Ok</Button>
+            <Button
+              autoFocus
+              onClick={() => this.setState({ confirmDialog: false })}
+            >
+              Отмена
+            </Button>
+            <Button onClick={this.changeItemChecked.bind(this, "all")}>Ok</Button>
           </DialogActions>
         </Dialog>
-        <Grid container spacing={3} mb={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          mb={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 4
-            }}>
+              sm: 4,
+            }}
+          >
             <MySelect
               is_none={false}
               data={this.state.points}
@@ -230,25 +255,29 @@ class CloseBuy_ extends React.Component {
         </Grid>
         <Grid
           mb={1}
-          style={{ padding: '24px' }}
+          style={{ padding: "24px" }}
           size={{
-            xs: 12
-          }}>
+            xs: 12,
+          }}
+        >
           {this.state.cats.map((cat, key) => {
             return (
               <Accordion key={key}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <CheckBoxIcon style={{ marginRight: 30, color: '#c03' }} onClick={this.openConfirm.bind(this, cat)}/>
+                  <CheckBoxIcon
+                    style={{ marginRight: 30, color: "#c03" }}
+                    onClick={this.openConfirm.bind(this, cat)}
+                  />
                   <Typography>{cat.name}</Typography>
                 </AccordionSummary>
-                <AccordionDetails sx={{ maxWidth: '100%', overflowY: 'auto' }}>
+                <AccordionDetails sx={{ maxWidth: "100%", overflowY: "auto" }}>
                   <TableContainer>
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell style={{ width: '5%' }}>#</TableCell>
-                          <TableCell style={{ width: '55%' }}>Позиция</TableCell>
-                          <TableCell style={{ width: '40%' }}>Активность</TableCell>
+                          <TableCell style={{ width: "5%" }}>#</TableCell>
+                          <TableCell style={{ width: "55%" }}>Позиция</TableCell>
+                          <TableCell style={{ width: "40%" }}>Активность</TableCell>
                         </TableRow>
                       </TableHead>
 
@@ -261,7 +290,7 @@ class CloseBuy_ extends React.Component {
                               <MyCheckBox
                                 label=""
                                 value={parseInt(it.is_active) == 1 ? true : false}
-                                func={this.changeItemChecked.bind(this, 'one', cat, it)}
+                                func={this.changeItemChecked.bind(this, "one", cat, it)}
                               />
                             </TableCell>
                           </TableRow>
@@ -284,13 +313,16 @@ export default function CloseBuy() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

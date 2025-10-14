@@ -80,15 +80,17 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <b>Дата начала изменения: {story?.date_start}</b>
             </Grid>
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <FormControl
                 fullWidth
                 size="small"
@@ -113,8 +115,9 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
+                  sm: 6,
+                }}
+              >
                 <Autocomplete
                   options={[]}
                   size="small"
@@ -147,8 +150,9 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <Table>
                     <TableHead>
                       <TableRow>
@@ -186,8 +190,9 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <TextField
                 fullWidth
                 label="Минимальная сумма заказа"
@@ -203,8 +208,9 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <TextField
                 fullWidth
                 label="Максимальная сумма заказа"
@@ -220,8 +226,9 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <TextField
                 fullWidth
                 disabled
@@ -238,8 +245,9 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <TextField
                 fullWidth
                 label="За сколько дней выписан промокод"
@@ -256,8 +264,9 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <TextField
                 fullWidth
                 size="small"
@@ -273,8 +282,9 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
 
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <TextField
                 fullWidth
                 label="Описание промокода"

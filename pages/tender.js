@@ -1,37 +1,36 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TableContainer from '@mui/material/TableContainer';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableContainer from "@mui/material/TableContainer";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import { MyAutocomplite, MySelect } from '@/components/shared/Forms';
+import { MyAutocomplite, MySelect } from "@/ui/Forms";
 
-import queryString from 'query-string';
-import { api_laravel } from '@/src/api_new';
-import handleUserAccess from '@/src/helpers/access/handleUserAccess';
-import TestAccess from '@/components/shared/TestAccess';
-import MyAlert from '@/components/shared/MyAlert';
-
+import queryString from "query-string";
+import { api_laravel } from "@/src/api_new";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import TestAccess from "@/ui/TestAccess";
+import MyAlert from "@/ui/MyAlert";
 
 const cellBgColor = {
   white: "#fff",
   red: "#a00",
-  green: "#00a550"
-}
+  green: "#00a550",
+};
 const cellColor = {
   white: "#000",
   red: "#fff",
-  green: "#fff"
-}
+  green: "#fff",
+};
 
 class TenderCell extends React.Component {
   // shouldComponentUpdate(nextProps){
@@ -47,25 +46,25 @@ class TenderCell extends React.Component {
   render() {
     const { vendor, price, item } = this.props;
 
-    let className = 'tdprice ';
+    let className = "tdprice ";
 
-    if (price.checkTender == '1') {
-      className += 'chooseCell ';
+    if (price.checkTender == "1") {
+      className += "chooseCell ";
     }
 
     if (price.price == price.min_price) {
-      className += 'minPriceCell ';
+      className += "minPriceCell ";
     }
 
     if (price.price == price.max_price) {
-      className += 'maxPriceCell ';
+      className += "maxPriceCell ";
     }
 
     return (
       <TableCell
         className={className}
-        style={{ cursor: 'pointer' }}
-        onClick={this.props.changePrice.bind(this, vendor.id, item.id, price.price )}
+        style={{ cursor: "pointer" }}
+        onClick={this.props.changePrice.bind(this, vendor.id, item.id, price.price)}
       >
         {price.price}
       </TableCell>
@@ -78,18 +77,18 @@ class Tender_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'tender',
-      module_name: '',
+      module: "tender",
+      module_name: "",
       access: null,
       is_load: false,
 
       cities: [],
-      city: '',
+      city: "",
 
       // url: '',
       alertOpened: false,
       alertStatus: true,
-      alertText: '',
+      alertText: "",
 
       allVendors: [],
       allTenders: [],
@@ -104,17 +103,17 @@ class Tender_ extends React.Component {
       allCats: [],
       newCat: [],
 
-      all_price: '',
+      all_price: "",
     };
   }
 
   async componentDidMount() {
-    let data = await this.getData('get_all');
+    let data = await this.getData("get_all");
 
     this.setState({
       module_name: data.module_info.name,
       cities: data.cities,
-      access: data.access
+      access: data.access,
     });
 
     document.title = data.module_info.name;
@@ -173,8 +172,8 @@ class Tender_ extends React.Component {
 
     let result = api_laravel(this.state.module, method, data)
       .then((response) => response?.data)
-      .catch( (e) => {
-        this.showAlert(`Ошибка сервера: ${e.message}`, false)
+      .catch((e) => {
+        this.showAlert(`Ошибка сервера: ${e.message}`, false);
         return null;
       })
       .finally(() => {
@@ -188,9 +187,9 @@ class Tender_ extends React.Component {
     return result;
   };
 
-  changeTender(_, data){
+  changeTender(_, data) {
     this.setState({
-      tender: data
+      tender: data,
     });
   }
 
@@ -199,7 +198,7 @@ class Tender_ extends React.Component {
       city_id: event.target.value,
     };
 
-    const res = await this.getData('get_vendors', data);
+    const res = await this.getData("get_vendors", data);
 
     this.setState({
       city: event.target.value,
@@ -213,7 +212,7 @@ class Tender_ extends React.Component {
   changeVendor(_, value) {
     this.setState({
       vendor: value,
-      newCat: '',
+      newCat: "",
     });
   }
 
@@ -232,7 +231,7 @@ class Tender_ extends React.Component {
       date: this.state.tender.name,
     };
 
-    const res = await this.getData('get_data', data);
+    const res = await this.getData("get_data", data);
 
     // передаем урл для скачивания Excel
     // this.setState({
@@ -283,10 +282,10 @@ class Tender_ extends React.Component {
     vendors.forEach((vendor) => {
       vendor.price.forEach((price) => {
         if (price.item_id === cat_id && price.vendor_id === vendor_id) {
-          price.checkTender = '1';
+          price.checkTender = "1";
         }
         if (price.item_id === cat_id && price.vendor_id !== vendor_id) {
-          price.checkTender = '0';
+          price.checkTender = "0";
         }
       });
     });
@@ -315,24 +314,24 @@ class Tender_ extends React.Component {
       items: items,
     };
 
-    const response = await this.getData('save', data);
-    this.showAlert(response?.text, response?.st)
+    const response = await this.getData("save", data);
+    this.showAlert(response?.text, response?.st);
     this.getDataTable();
   }
 
   // запрос на подготовку  Excel вендора
-  async downLoadVendor(vendor_id){
+  async downLoadVendor(vendor_id) {
     const data = {
       city_id: this.state.city,
       vendor_id: vendor_id,
-      date: this.state.tender?.name
+      date: this.state.tender?.name,
     };
 
-    const res =  await this.getData('downLoadVendor', data);
+    const res = await this.getData("downLoadVendor", data);
 
     // правка 26.12 скачивания файла в один клик
-    if(res.url){
-      const link = document.createElement('a');
+    if (res.url) {
+      const link = document.createElement("a");
       link.href = res.url;
       link.click();
     }
@@ -347,18 +346,18 @@ class Tender_ extends React.Component {
       vendors: this.state.vendor,
       cat: this.state.newCat,
       date: this.state.tender.name,
-      withUrl: true
+      withUrl: true,
     };
 
-    const res = await this.getData('get_data', data);
+    const res = await this.getData("get_data", data);
 
-    if(!res?.st) {
-      this.showAlert(res?.text || 'Ошибка', false);
+    if (!res?.st) {
+      this.showAlert(res?.text || "Ошибка", false);
       return;
     }
 
-    if(res?.url){
-      const link = document.createElement('a');
+    if (res?.url) {
+      const link = document.createElement("a");
       link.href = res.url;
       link.click();
     }
@@ -374,29 +373,29 @@ class Tender_ extends React.Component {
       date: this.state.tender.name,
     };
 
-    const res = await this.getData('get_data2', data);
+    const res = await this.getData("get_data2", data);
 
-    if(res?.url){
-      const link = document.createElement('a');
+    if (res?.url) {
+      const link = document.createElement("a");
       link.href = res.url;
       link.click();
     }
   }
 
-  showAlert(message = 'Ошибка', status = false) {
+  showAlert(message = "Ошибка", status = false) {
     this.setState({
       alertOpened: true,
       alertStatus: status,
-      alertText: message
-    })
+      alertText: message,
+    });
     setTimeout(() => {
-      this.setState({alertOpened: false})
+      this.setState({ alertOpened: false });
     }, 3000);
   }
 
-  canAccess(key){
-    const {userCan} = handleUserAccess(this.state.access)
-    return userCan('access', key);
+  canAccess(key) {
+    const { userCan } = handleUserAccess(this.state.access);
+    return userCan("access", key);
   }
 
   render() {
@@ -408,23 +407,28 @@ class Tender_ extends React.Component {
         {/* <TestAccess access={this.state.access} setAccess={(access) => this.setState({access})} /> */}
         <MyAlert
           isOpen={this.state.alertOpened}
-          onClose={() => this.setState({alertOpened: false, alertText: ''})}
+          onClose={() => this.setState({ alertOpened: false, alertText: "" })}
           status={this.state.alertStatus}
           text={this.state.alertText}
         />
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={12}
             sx={{ mb: 2 }}
           >
             <h1>{this.state.module_name}</h1>
-          </Grid> 
+          </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 2
-            }}>
+              sm: 2,
+            }}
+          >
             <MySelect
               data={this.state.cities}
               value={this.state.city}
@@ -435,8 +439,9 @@ class Tender_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 2
-            }}>
+              sm: 2,
+            }}
+          >
             <MyAutocomplite
               label="Тендер"
               multiple={false}
@@ -446,12 +451,13 @@ class Tender_ extends React.Component {
               func={this.changeTender.bind(this)}
             />
           </Grid>
-          
+
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyAutocomplite
               label="Поставщик"
               multiple={true}
@@ -463,8 +469,9 @@ class Tender_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 2
-            }}>
+              sm: 2,
+            }}
+          >
             <MyAutocomplite
               label="Категория"
               disableCloseOnSelect={false}
@@ -475,15 +482,15 @@ class Tender_ extends React.Component {
             />
           </Grid>
 
-
           <Grid
             size={{
               xs: 12,
-              sm: 1
-            }}>
+              sm: 1,
+            }}
+          >
             <Button
               variant="contained"
-              style={{ whiteSpace: 'nowrap' }}
+              style={{ whiteSpace: "nowrap" }}
               onClick={this.getDataTable.bind(this)}
             >
               Обновить
@@ -493,13 +500,14 @@ class Tender_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 1
-            }}>
+              sm: 1,
+            }}
+          >
             <Button
               style={{
-                whiteSpace: 'nowrap',
-                backgroundColor: '#00a550',
-                color: 'white',
+                whiteSpace: "nowrap",
+                backgroundColor: "#00a550",
+                color: "white",
               }}
               onClick={this.saveData.bind(this)}
             >
@@ -510,14 +518,15 @@ class Tender_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 1
-            }}>
-            {this.state.city && this.canAccess('export') && (
+              sm: 1,
+            }}
+          >
+            {this.state.city && this.canAccess("export") && (
               <Button
                 style={{
-                  whiteSpace: 'nowrap',
-                  backgroundColor: '#00a550',
-                  color: 'white',
+                  whiteSpace: "nowrap",
+                  backgroundColor: "#00a550",
+                  color: "white",
                 }}
                 onClick={this.onDownload.bind(this)}
                 //onClick={this.onDownload2.bind(this)}
@@ -525,31 +534,36 @@ class Tender_ extends React.Component {
                 Скачать
               </Button>
             )}
-          </Grid>  
+          </Grid>
         </Grid>
         {!this.state.cats.length ? null : (
-          <Grid container spacing={3} className='tender' sx={{ paddingInline: 2, mt: 3}} >
-            <Grid
-              size={12}>
-              <TableContainer sx={{ maxHeight: { xs: 'none', sm: 1000 } }}>
-                <Table stickyHeader size="small">
-                  <TableHead style={{ position: 'sticky', top: 0, zIndex: 7 }}>
+          <Grid
+            container
+            spacing={3}
+            className="tender"
+            sx={{ paddingInline: 2, mt: 3 }}
+          >
+            <Grid size={12}>
+              <TableContainer sx={{ maxHeight: { xs: "none", sm: 1000 } }}>
+                <Table
+                  stickyHeader
+                  size="small"
+                >
+                  <TableHead style={{ position: "sticky", top: 0, zIndex: 7 }}>
                     <TableRow>
                       <TableCell sx={{ zIndex: 7 }}>Средний закуп</TableCell>
                       <TableCell
                         sx={{
                           borderRight: 0,
-                          textAlign: 'center',
-                          fontWeight: 'bold',
-                          left: '177px',
+                          textAlign: "center",
+                          fontWeight: "bold",
+                          left: "177px",
                           zIndex: 7,
                         }}
                       >
                         {this.state.all_price}
                       </TableCell>
-                      <TableCell
-                        colSpan={`${2 + this.state.vendors.length * 2}`}
-                      ></TableCell>
+                      <TableCell colSpan={`${2 + this.state.vendors.length * 2}`}></TableCell>
                     </TableRow>
 
                     <TableRow>
@@ -561,7 +575,7 @@ class Tender_ extends React.Component {
                           key={key}
                           style={{
                             maxWidth: 150,
-                            textAlign: 'center',
+                            textAlign: "center",
                           }}
                         >
                           {vendor.name}
@@ -569,7 +583,7 @@ class Tender_ extends React.Component {
                       ))}
                     </TableRow>
 
-                    {this.canAccess('export') && (
+                    {this.canAccess("export") && (
                       <TableRow>
                         <TableCell style={{ zIndex: 3 }}></TableCell>
                         <TableCell></TableCell>
@@ -579,14 +593,13 @@ class Tender_ extends React.Component {
                             key={key}
                             style={{
                               maxWidth: 150,
-                              textAlign: 'center',
-                              cursor: 'pointer'
+                              textAlign: "center",
+                              cursor: "pointer",
                             }}
                             onClick={this.downLoadVendor.bind(this, vendor.id)}
                           >
                             Скачать
                           </TableCell>
-                        
                         ))}
                       </TableRow>
                     )}
@@ -600,7 +613,7 @@ class Tender_ extends React.Component {
                           key={key}
                           style={{
                             maxWidth: 150,
-                            textAlign: 'center',
+                            textAlign: "center",
                           }}
                         >
                           {vendor.date_last_update}
@@ -609,7 +622,7 @@ class Tender_ extends React.Component {
                     </TableRow>
 
                     <TableRow>
-                      <TableCell style={{ zIndex: 3, whiteSpace: 'nowrap' }}>
+                      <TableCell style={{ zIndex: 3, whiteSpace: "nowrap" }}>
                         Средний на месяц
                       </TableCell>
                       <TableCell></TableCell>
@@ -619,7 +632,7 @@ class Tender_ extends React.Component {
                           key={key}
                           style={{
                             maxWidth: 150,
-                            textAlign: 'center',
+                            textAlign: "center",
                           }}
                         >
                           {vendor.price2}
@@ -628,7 +641,7 @@ class Tender_ extends React.Component {
                     </TableRow>
 
                     <TableRow>
-                      <TableCell style={{ zIndex: 3, whiteSpace: 'nowrap' }}>
+                      <TableCell style={{ zIndex: 3, whiteSpace: "nowrap" }}>
                         Средний на день
                       </TableCell>
                       <TableCell></TableCell>
@@ -638,12 +651,10 @@ class Tender_ extends React.Component {
                           key={key}
                           style={{
                             maxWidth: 150,
-                            textAlign: 'center',
+                            textAlign: "center",
 
-                            backgroundColor:
-                              cellBgColor[vendor.type],
-                            color:
-                              cellColor[vendor.type],
+                            backgroundColor: cellBgColor[vendor.type],
+                            color: cellColor[vendor.type],
                             fontWeight: 700,
                           }}
                         >
@@ -659,15 +670,15 @@ class Tender_ extends React.Component {
                         <TableRow>
                           <TableCell
                             style={{
-                              position: 'sticky',
-                              display: 'flex',
-                              backgroundColor: '#ADD8E6',
+                              position: "sticky",
+                              display: "flex",
+                              backgroundColor: "#ADD8E6",
                             }}
                           >
                             {item.name}
                           </TableCell>
                           <TableCell
-                            style={{ backgroundColor: '#ADD8E6' }}
+                            style={{ backgroundColor: "#ADD8E6" }}
                             colSpan={`${3 + this.state.vendors.length * 2}`}
                           ></TableCell>
                         </TableRow>
@@ -676,9 +687,9 @@ class Tender_ extends React.Component {
                           <React.Fragment key={key_cat}>
                             <TableRow
                               sx={{
-                                '& td': {
-                                  backgroundColor: '#ADD8E6',
-                                  borderRight: 'none',
+                                "& td": {
+                                  backgroundColor: "#ADD8E6",
+                                  borderRight: "none",
                                 },
                               }}
                             >
@@ -700,15 +711,16 @@ class Tender_ extends React.Component {
                             </TableRow>
 
                             {category.items.map((item, k) => (
-                              <TableRow key={k} hover>
+                              <TableRow
+                                key={k}
+                                hover
+                              >
                                 <TableCell variant="head">{item.name}</TableCell>
                                 <TableCell>{item.price}</TableCell>
                                 <TableCell>{item.ras}</TableCell>
                                 {this.state.vendors.map((vendor, key) => (
                                   <React.Fragment key={key}>
-                                    {vendor.price.find(
-                                      (it) => it.item_id === item.id
-                                    ) ? (
+                                    {vendor.price.find((it) => it.item_id === item.id) ? (
                                       <TenderCell
                                         vendor={vendor}
                                         item={item}
@@ -742,13 +754,16 @@ export default function Tender() {
 }
 
 export async function getServerSideProps({ res }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

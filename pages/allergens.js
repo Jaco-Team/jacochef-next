@@ -13,7 +13,7 @@ import TableRow from "@mui/material/TableRow";
 
 import { api_laravel } from "@/src/api_new";
 import AllergensModal from "@/components/allergens/AllergensModal";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 
 class Allergens_ extends React.Component {
   constructor(props) {
@@ -174,16 +174,18 @@ class Allergens_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -198,8 +200,9 @@ class Allergens_ extends React.Component {
             mb={5}
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             {!this.state.allergens ? null : (
               <Table>
                 <TableHead>
@@ -242,7 +245,7 @@ export async function getServerSideProps({ req, res, query }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

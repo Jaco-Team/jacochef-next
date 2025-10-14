@@ -1,50 +1,50 @@
-import React from 'react';
+import React from "react";
 
-import Script from 'next/script';
+import Script from "next/script";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Paper from '@mui/material/Paper';
-import PropTypes from 'prop-types';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
+import Paper from "@mui/material/Paper";
+import PropTypes from "prop-types";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import {MyCheckBox, MyDatePickerNew, MyAutocomplite} from '@/components/shared/Forms';
+import { MyCheckBox, MyDatePickerNew, MyAutocomplite } from "@/ui/Forms";
 
-import { api_laravel, api_laravel_local } from '@/src/api_new';
-import dayjs from 'dayjs';
-import MyAlert from '@/components/shared/MyAlert';
-import { formatDate } from '@/src/helpers/ui/formatDate';
+import { api_laravel, api_laravel_local } from "@/src/api_new";
+import dayjs from "dayjs";
+import MyAlert from "@/ui/MyAlert";
+import { formatDate } from "@/src/helpers/ui/formatDate";
 
 var am5locales_ru_RU = {
-  Jan: 'Янв',
-  January: 'Янв',
-  Feb: 'Фев',
-  February: 'Фев',
-  Mar: 'Мар',
-  March: 'Мар',
-  Apr: 'Апр',
-  April: 'Апр',
-  May: 'Май',
-  Jun: 'Июн',
-  June: 'Июн',
-  Jul: 'Июл',
-  July: 'Июл',
-  Aug: 'Авг',
-  August: 'Авг',
-  Sep: 'Сен',
-  September: 'Сен',
-  Oct: 'Окт',
-  October: 'Окт',
-  Nov: 'Ноя',
-  November: 'Ноя',
-  Dec: 'Дек',
-  December: 'Дек',
+  Jan: "Янв",
+  January: "Янв",
+  Feb: "Фев",
+  February: "Фев",
+  Mar: "Мар",
+  March: "Мар",
+  Apr: "Апр",
+  April: "Апр",
+  May: "Май",
+  Jun: "Июн",
+  June: "Июн",
+  Jul: "Июл",
+  July: "Июл",
+  Aug: "Авг",
+  August: "Авг",
+  Sep: "Сен",
+  September: "Сен",
+  Oct: "Окт",
+  October: "Окт",
+  Nov: "Ноя",
+  November: "Ноя",
+  Dec: "Дек",
+  December: "Дек",
 };
 
 function TabPanel(props) {
@@ -72,7 +72,7 @@ TabPanel.propTypes = {
 function a11yProps(index) {
   return {
     id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
+    "aria-controls": `simple-tabpanel-${index}`,
   };
 }
 
@@ -85,13 +85,13 @@ class StatOrder_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'module_stat_order',
-      module_name: '',
+      module: "module_stat_order",
+      module_name: "",
       is_load: false,
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
 
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
@@ -117,12 +117,12 @@ class StatOrder_ extends React.Component {
       type: [],
 
       promos: [],
-      promo: '',
+      promo: "",
     };
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     this.setState({
       points: data.points,
@@ -173,7 +173,7 @@ class StatOrder_ extends React.Component {
 
   changeDateRange(data, event) {
     this.setState({
-      [data]: event ? event : '',
+      [data]: event ? event : "",
     });
   }
 
@@ -212,13 +212,13 @@ class StatOrder_ extends React.Component {
 
     const { activeTab, point, metric, date_start, date_end, is_akcii, promo, type } = this.state;
 
-    const type_active = activeTab ? 'month' : 'days';
+    const type_active = activeTab ? "month" : "days";
 
     if (!point.length) {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо выбрать точки',
+        err_text: "Необходимо выбрать точки",
       });
 
       return;
@@ -228,7 +228,7 @@ class StatOrder_ extends React.Component {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо выбрать метрику',
+        err_text: "Необходимо выбрать метрику",
       });
 
       return;
@@ -255,8 +255,8 @@ class StatOrder_ extends React.Component {
     let promo_name = promo ? parseInt(promo.id) : 0;
 
     const data = {
-      date_start: date_start ? dayjs(date_start).format('YYYY-MM-DD') : '',
-      date_end: date_end ? dayjs(date_end).format('YYYY-MM-DD') : '',
+      date_start: date_start ? dayjs(date_start).format("YYYY-MM-DD") : "",
+      date_end: date_end ? dayjs(date_end).format("YYYY-MM-DD") : "",
       point,
       metric,
       is_akcii,
@@ -264,15 +264,15 @@ class StatOrder_ extends React.Component {
       avg,
       summ,
       type,
-      promo_name
+      promo_name,
     };
 
     let res;
 
-    if (type_active === 'days') {
-      res = await this.getData('get_stat_days', data);
+    if (type_active === "days") {
+      res = await this.getData("get_stat_days", data);
     } else {
-      res = await this.getData('get_stat_month', data);
+      res = await this.getData("get_stat_month", data);
     }
 
     this.setState({
@@ -295,7 +295,8 @@ class StatOrder_ extends React.Component {
           if (exist) {
             let existIndex = newData.indexOf(exist);
 
-            newData[existIndex].count = (parseInt(item.avg_orders) + parseInt(newData[existIndex].count)) / 2;
+            newData[existIndex].count =
+              (parseInt(item.avg_orders) + parseInt(newData[existIndex].count)) / 2;
 
             if (newData[existIndex]?.avd_data && item?.avd?.length) {
               newData[existIndex]?.avd_data?.push(...item.avd);
@@ -315,18 +316,25 @@ class StatOrder_ extends React.Component {
       let data_column = [];
 
       myData_avg.forEach((item) => {
+        let date = item.date.split("-");
 
-        let date = item.date.split('-');
-
-        item.date = type === 'days' ? new Date(date[0], parseInt(date[1]) - 1, date[2]).getTime() : new Date(date[0], parseInt(date[1]) - 1, 1).getTime();
+        item.date =
+          type === "days"
+            ? new Date(date[0], parseInt(date[1]) - 1, date[2]).getTime()
+            : new Date(date[0], parseInt(date[1]) - 1, 1).getTime();
         item.value = Math.floor(item.count);
 
         if (item?.avd_data?.length) {
-          item.avd_data = item.avd_data.filter((value, index, self) => index === self.findIndex((t) => t.name === value.name));
+          item.avd_data = item.avd_data.filter(
+            (value, index, self) => index === self.findIndex((t) => t.name === value.name),
+          );
 
           item.avd_data.forEach((it) => {
             data_column.push({
-              date: type === 'days' ? new Date(date[0], parseInt(date[1]) - 1, date[2]).getTime() : new Date(date[0], parseInt(date[1]) - 1, 1).getTime(),
+              date:
+                type === "days"
+                  ? new Date(date[0], parseInt(date[1]) - 1, date[2]).getTime()
+                  : new Date(date[0], parseInt(date[1]) - 1, 1).getTime(),
               value: (Math.floor(item.count) / 100) * 90,
               name: it.name,
             });
@@ -334,19 +342,24 @@ class StatOrder_ extends React.Component {
         }
       });
 
-      data_column = Object.values(data_column.reduce((acc, c) => (c.name in acc ? acc[c.name].push(c) : (acc[c.name] = [c]), acc), []));
+      data_column = Object.values(
+        data_column.reduce(
+          (acc, c) => (c.name in acc ? acc[c.name].push(c) : (acc[c.name] = [c]), acc),
+          [],
+        ),
+      );
 
       this.setState({
-        avg_graph: 'avg_graph',
+        avg_graph: "avg_graph",
       });
 
-      if (type === 'days') {
+      if (type === "days") {
         setTimeout(() => {
-          this.renderGraph_days(myData_avg, 'avg_graph', 'Средний чек', data_column);
+          this.renderGraph_days(myData_avg, "avg_graph", "Средний чек", data_column);
         }, 200);
       } else {
         setTimeout(() => {
-          this.renderGraph_month(myData_avg, 'avg_graph', 'Средний чек', data_column);
+          this.renderGraph_month(myData_avg, "avg_graph", "Средний чек", data_column);
         }, 200);
       }
     }
@@ -359,7 +372,8 @@ class StatOrder_ extends React.Component {
           if (exist) {
             let existIndex = newData.indexOf(exist);
 
-            newData[existIndex].count = (parseInt(item.sum_orders) + parseInt(newData[existIndex].count));
+            newData[existIndex].count =
+              parseInt(item.sum_orders) + parseInt(newData[existIndex].count);
 
             if (newData[existIndex]?.avd_data && item?.avd?.length) {
               newData[existIndex]?.avd_data?.push(...item.avd);
@@ -379,18 +393,25 @@ class StatOrder_ extends React.Component {
       let data_column = [];
 
       myData_summ.forEach((item) => {
+        let date = item.date.split("-");
 
-        let date = item.date.split('-');
-
-        item.date = type === 'days' ? new Date(date[0], parseInt(date[1]) - 1, date[2]).getTime() : new Date(date[0], parseInt(date[1]) - 1, 1).getTime();
+        item.date =
+          type === "days"
+            ? new Date(date[0], parseInt(date[1]) - 1, date[2]).getTime()
+            : new Date(date[0], parseInt(date[1]) - 1, 1).getTime();
         item.value = Math.floor(item.count);
 
         if (item?.avd_data?.length) {
-          item.avd_data = item.avd_data.filter((value, index, self) => index === self.findIndex((t) => t.name === value.name));
+          item.avd_data = item.avd_data.filter(
+            (value, index, self) => index === self.findIndex((t) => t.name === value.name),
+          );
 
           item.avd_data.forEach((it) => {
             data_column.push({
-              date: type === 'days' ? new Date(date[0], parseInt(date[1]) - 1, date[2]).getTime() : new Date(date[0], parseInt(date[1]) - 1, 1).getTime(),
+              date:
+                type === "days"
+                  ? new Date(date[0], parseInt(date[1]) - 1, date[2]).getTime()
+                  : new Date(date[0], parseInt(date[1]) - 1, 1).getTime(),
               value: (Math.floor(item.count) / 100) * 90,
               name: it.name,
             });
@@ -398,19 +419,24 @@ class StatOrder_ extends React.Component {
         }
       });
 
-      data_column = Object.values(data_column.reduce((acc, c) => (c.name in acc ? acc[c.name].push(c) : (acc[c.name] = [c]), acc), []));
+      data_column = Object.values(
+        data_column.reduce(
+          (acc, c) => (c.name in acc ? acc[c.name].push(c) : (acc[c.name] = [c]), acc),
+          [],
+        ),
+      );
 
       this.setState({
-        summ_graph: 'summ_graph',
+        summ_graph: "summ_graph",
       });
 
-      if (type === 'days') {
+      if (type === "days") {
         setTimeout(() => {
-          this.renderGraph_days(myData_summ, 'summ_graph', 'Выручка', data_column);
+          this.renderGraph_days(myData_summ, "summ_graph", "Выручка", data_column);
         }, 200);
       } else {
         setTimeout(() => {
-          this.renderGraph_month(myData_summ, 'summ_graph', 'Выручка', data_column);
+          this.renderGraph_month(myData_summ, "summ_graph", "Выручка", data_column);
         }, 200);
       }
     }
@@ -423,7 +449,8 @@ class StatOrder_ extends React.Component {
           if (exist) {
             let existIndex = newData.indexOf(exist);
 
-            newData[existIndex].count = (parseInt(item.count_orders) + parseInt(newData[existIndex].count));
+            newData[existIndex].count =
+              parseInt(item.count_orders) + parseInt(newData[existIndex].count);
 
             if (newData[existIndex]?.avd_data && item?.avd?.length) {
               newData[existIndex]?.avd_data?.push(...item.avd);
@@ -443,18 +470,25 @@ class StatOrder_ extends React.Component {
       let data_column = [];
 
       myData_count.forEach((item) => {
+        let date = item.date.split("-");
 
-        let date = item.date.split('-');
-
-        item.date = type === 'days' ? new Date(date[0], parseInt(date[1]) - 1, date[2]).getTime() : new Date(date[0], parseInt(date[1]) - 1, 1).getTime();
+        item.date =
+          type === "days"
+            ? new Date(date[0], parseInt(date[1]) - 1, date[2]).getTime()
+            : new Date(date[0], parseInt(date[1]) - 1, 1).getTime();
         item.value = Math.floor(item.count);
 
         if (item?.avd_data?.length) {
-          item.avd_data = item.avd_data.filter((value, index, self) => index === self.findIndex((t) => t.name === value.name));
+          item.avd_data = item.avd_data.filter(
+            (value, index, self) => index === self.findIndex((t) => t.name === value.name),
+          );
 
           item.avd_data.forEach((it) => {
             data_column.push({
-              date: type === 'days' ? new Date(date[0], parseInt(date[1]) - 1, date[2]).getTime() : new Date(date[0], parseInt(date[1]) - 1, 1).getTime(),
+              date:
+                type === "days"
+                  ? new Date(date[0], parseInt(date[1]) - 1, date[2]).getTime()
+                  : new Date(date[0], parseInt(date[1]) - 1, 1).getTime(),
               value: (Math.floor(item.count) / 100) * 90,
               name: it.name,
             });
@@ -462,38 +496,43 @@ class StatOrder_ extends React.Component {
         }
       });
 
-      data_column = Object.values(data_column.reduce((acc, c) => (c.name in acc ? acc[c.name].push(c) : (acc[c.name] = [c]), acc), []));
+      data_column = Object.values(
+        data_column.reduce(
+          (acc, c) => (c.name in acc ? acc[c.name].push(c) : (acc[c.name] = [c]), acc),
+          [],
+        ),
+      );
 
       this.setState({
-        count_graph: 'count_graph',
+        count_graph: "count_graph",
       });
 
-      if (type === 'days') {
+      if (type === "days") {
         setTimeout(() => {
-          this.renderGraph_days(myData_count, 'count_graph', 'Кол-во заказов', data_column);
+          this.renderGraph_days(myData_count, "count_graph", "Кол-во заказов", data_column);
         }, 200);
       } else {
         setTimeout(() => {
-          this.renderGraph_month(myData_count, 'count_graph', 'Кол-во заказов', data_column);
+          this.renderGraph_month(myData_count, "count_graph", "Кол-во заказов", data_column);
         }, 200);
       }
     }
   }
 
   renderGraph_days(data_series, id, type, data_column) {
-    if (id === 'avg_graph') {
+    if (id === "avg_graph") {
       if (this.chart_avg) {
         this.chart_avg.dispose();
       }
     }
 
-    if (id === 'summ_graph') {
+    if (id === "summ_graph") {
       if (this.chart_summ) {
         this.chart_summ.dispose();
       }
     }
 
-    if (id === 'count_graph') {
+    if (id === "count_graph") {
       if (this.chart_count) {
         this.chart_count.dispose();
       }
@@ -501,15 +540,15 @@ class StatOrder_ extends React.Component {
 
     var root = am5.Root.new(id);
 
-    if (id === 'avg_graph') {
+    if (id === "avg_graph") {
       this.chart_avg = root;
     }
 
-    if (id === 'summ_graph') {
+    if (id === "summ_graph") {
       this.chart_summ = root;
     }
 
-    if (id === 'count_graph') {
+    if (id === "count_graph") {
       this.chart_count = root;
     }
 
@@ -519,9 +558,9 @@ class StatOrder_ extends React.Component {
     var chart = root.container.children.push(
       am5xy.XYChart.new(root, {
         panY: false,
-        wheelY: 'zoomX',
+        wheelY: "zoomX",
         layout: root.verticalLayout,
-      })
+      }),
     );
 
     // Create Y-axis
@@ -529,23 +568,23 @@ class StatOrder_ extends React.Component {
       am5xy.ValueAxis.new(root, {
         extraTooltipPrecision: 1,
         renderer: am5xy.AxisRendererY.new(root, {}),
-      })
+      }),
     );
 
     // Create X-Axis
     let xAxis = chart.xAxes.push(
       am5xy.DateAxis.new(root, {
-        baseInterval: { timeUnit: 'day', count: 1 },
+        baseInterval: { timeUnit: "day", count: 1 },
         startLocation: 0.5,
         endLocation: 0.5,
         renderer: am5xy.AxisRendererX.new(root, {
           minGridDistance: 30,
         }),
-      })
+      }),
     );
 
-    xAxis.get('dateFormats')['day'] = 'dd/MM';
-    xAxis.get('periodChangeDateFormats')['day'] = 'dd/MM';
+    xAxis.get("dateFormats")["day"] = "dd/MM";
+    xAxis.get("periodChangeDateFormats")["day"] = "dd/MM";
 
     // Create series
     function createSeries(name, field, data) {
@@ -555,10 +594,10 @@ class StatOrder_ extends React.Component {
           xAxis: xAxis,
           yAxis: yAxis,
           valueYField: field,
-          valueXField: 'date',
+          valueXField: "date",
           tooltip: am5.Tooltip.new(root, {}),
           maskBullets: false,
-        })
+        }),
       );
 
       // правка radius: 5->3
@@ -566,17 +605,17 @@ class StatOrder_ extends React.Component {
         return am5.Bullet.new(root, {
           sprite: am5.Circle.new(root, {
             radius: 2,
-            fill: series.get('fill'),
+            fill: series.get("fill"),
           }),
         });
       });
 
-      series.strokes.template.set('strokeWidth', 3);
-      series.get('tooltip').label.set('text', '[bold]{name}[/]\n{valueX.formatDate()}: {valueY}');
+      series.strokes.template.set("strokeWidth", 3);
+      series.get("tooltip").label.set("text", "[bold]{name}[/]\n{valueX.formatDate()}: {valueY}");
       series.data.setAll(data);
     }
 
-    createSeries(type, 'value', data_series);
+    createSeries(type, "value", data_series);
 
     function createColumn(name, field, data) {
       var series1 = chart.series.push(
@@ -585,11 +624,11 @@ class StatOrder_ extends React.Component {
           xAxis: xAxis,
           yAxis: yAxis,
           valueYField: field,
-          valueXField: 'date',
+          valueXField: "date",
           tooltip: am5.Tooltip.new(root, {
-            pointerOrientation: 'horizontal',
+            pointerOrientation: "horizontal",
           }),
-        })
+        }),
       );
 
       series1.columns.template.setAll({
@@ -600,52 +639,52 @@ class StatOrder_ extends React.Component {
         cornerRadiusTR: 5,
       });
 
-      series1.get('tooltip').label.set('text', '[bold]{name}');
+      series1.get("tooltip").label.set("text", "[bold]{name}");
       series1.data.setAll(data);
     }
 
     data_column.forEach((item) => {
-      createColumn('Акция', 'value', item);
+      createColumn("Акция", "value", item);
     });
 
     // Add cursor
     chart.set(
-      'cursor',
+      "cursor",
       am5xy.XYCursor.new(root, {
-        behavior: 'zoomXY',
+        behavior: "zoomXY",
         xAxis: xAxis,
-      })
+      }),
     );
 
     xAxis.set(
-      'tooltip',
+      "tooltip",
       am5.Tooltip.new(root, {
-        themeTags: ['axis'],
-      })
+        themeTags: ["axis"],
+      }),
     );
 
     yAxis.set(
-      'tooltip',
+      "tooltip",
       am5.Tooltip.new(root, {
-        themeTags: ['axis'],
-      })
+        themeTags: ["axis"],
+      }),
     );
   }
 
   renderGraph_month(data_series, id, type, data_column) {
-    if (id === 'avg_graph') {
+    if (id === "avg_graph") {
       if (this.chart_avg) {
         this.chart_avg.dispose();
       }
     }
 
-    if (id === 'summ_graph') {
+    if (id === "summ_graph") {
       if (this.chart_summ) {
         this.chart_summ.dispose();
       }
     }
 
-    if (id === 'count_graph') {
+    if (id === "count_graph") {
       if (this.chart_count) {
         this.chart_count.dispose();
       }
@@ -653,15 +692,15 @@ class StatOrder_ extends React.Component {
 
     var root = am5.Root.new(id);
 
-    if (id === 'avg_graph') {
+    if (id === "avg_graph") {
       this.chart_avg = root;
     }
 
-    if (id === 'summ_graph') {
+    if (id === "summ_graph") {
       this.chart_summ = root;
     }
 
-    if (id === 'count_graph') {
+    if (id === "count_graph") {
       this.chart_count = root;
     }
 
@@ -672,9 +711,9 @@ class StatOrder_ extends React.Component {
     var chart = root.container.children.push(
       am5xy.XYChart.new(root, {
         panY: false,
-        wheelY: 'zoomX',
+        wheelY: "zoomX",
         layout: root.verticalLayout,
-      })
+      }),
     );
 
     // Create Y-axis
@@ -682,24 +721,24 @@ class StatOrder_ extends React.Component {
       am5xy.ValueAxis.new(root, {
         extraTooltipPrecision: 1,
         renderer: am5xy.AxisRendererY.new(root, {}),
-      })
+      }),
     );
 
     // Create X-Axis
     let xAxis = chart.xAxes.push(
       am5xy.DateAxis.new(root, {
-        baseInterval: { timeUnit: 'month', count: 1 },
+        baseInterval: { timeUnit: "month", count: 1 },
         startLocation: 0.5,
         endLocation: 0.5,
         renderer: am5xy.AxisRendererX.new(root, {
           minGridDistance: 30,
         }),
-      })
+      }),
     );
 
-    xAxis.get('dateFormats')['day'] = 'MM/dd';
-    xAxis.get('periodChangeDateFormats')['day'] = 'MM/dd';
-    xAxis.get('dateFormats')['month'] = 'MMMM';
+    xAxis.get("dateFormats")["day"] = "MM/dd";
+    xAxis.get("periodChangeDateFormats")["day"] = "MM/dd";
+    xAxis.get("dateFormats")["month"] = "MMMM";
 
     function createSeries(name, field, data) {
       var series = chart.series.push(
@@ -708,10 +747,10 @@ class StatOrder_ extends React.Component {
           xAxis: xAxis,
           yAxis: yAxis,
           valueYField: field,
-          valueXField: 'date',
+          valueXField: "date",
           tooltip: am5.Tooltip.new(root, {}),
           maskBullets: false,
-        })
+        }),
       );
 
       // правка radius: 5->3
@@ -719,17 +758,17 @@ class StatOrder_ extends React.Component {
         return am5.Bullet.new(root, {
           sprite: am5.Circle.new(root, {
             radius: 2,
-            fill: series.get('fill'),
+            fill: series.get("fill"),
           }),
         });
       });
 
-      series.strokes.template.set('strokeWidth', 3);
-      series.get('tooltip').label.set('text', '[bold]{name}[/]\n{valueX.formatDate()}: {valueY}');
+      series.strokes.template.set("strokeWidth", 3);
+      series.get("tooltip").label.set("text", "[bold]{name}[/]\n{valueX.formatDate()}: {valueY}");
       series.data.setAll(data);
     }
 
-    createSeries(type, 'value', data_series);
+    createSeries(type, "value", data_series);
 
     function createColumn(name, field, data) {
       var series1 = chart.series.push(
@@ -738,11 +777,11 @@ class StatOrder_ extends React.Component {
           xAxis: xAxis,
           yAxis: yAxis,
           valueYField: field,
-          valueXField: 'date',
+          valueXField: "date",
           tooltip: am5.Tooltip.new(root, {
-            pointerOrientation: 'horizontal',
+            pointerOrientation: "horizontal",
           }),
-        })
+        }),
       );
 
       series1.columns.template.setAll({
@@ -753,41 +792,41 @@ class StatOrder_ extends React.Component {
         cornerRadiusTR: 5,
       });
 
-      series1.get('tooltip').label.set('text', '[bold]{name}');
+      series1.get("tooltip").label.set("text", "[bold]{name}");
       series1.data.setAll(data);
     }
 
     data_column.forEach((item) => {
-      createColumn('Акция', 'value', item);
+      createColumn("Акция", "value", item);
     });
 
     // Add cursor
     chart.set(
-      'cursor',
+      "cursor",
       am5xy.XYCursor.new(root, {
-        behavior: 'zoomXY',
+        behavior: "zoomXY",
         xAxis: xAxis,
-      })
+      }),
     );
 
     xAxis.set(
-      'tooltip',
+      "tooltip",
       am5.Tooltip.new(root, {
-        themeTags: ['axis'],
-      })
+        themeTags: ["axis"],
+      }),
     );
 
     yAxis.set(
-      'tooltip',
+      "tooltip",
       am5.Tooltip.new(root, {
-        themeTags: ['axis'],
-      })
+        themeTags: ["axis"],
+      }),
     );
   }
 
   changePromo(data, event, value) {
     this.setState({
-      [data]: value
+      [data]: value,
     });
   }
 
@@ -797,7 +836,10 @@ class StatOrder_ extends React.Component {
         <Script src="https://cdn.amcharts.com/lib/5/index.js"></Script>
         <Script src="https://cdn.amcharts.com/lib/5/xy.js"></Script>
         <Script src="//cdn.amcharts.com/lib/5/themes/Animated.js"></Script>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -806,100 +848,113 @@ class StatOrder_ extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-        <Grid container spacing={3} mb={3} className="container_first_child">
+        <Grid
+          container
+          spacing={3}
+          mb={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
-              func={this.changeDateRange.bind(this, 'date_start')}
+              func={this.changeDateRange.bind(this, "date_start")}
             />
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
-              func={this.changeDateRange.bind(this, 'date_end')}
+              func={this.changeDateRange.bind(this, "date_end")}
             />
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyAutocomplite
               label="Точка"
               multiple={true}
               data={this.state.points}
               value={this.state.point}
-              func={this.changeAutocomplite.bind(this, 'point')}
+              func={this.changeAutocomplite.bind(this, "point")}
             />
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyAutocomplite
               label="Метрика"
               multiple={true}
               data={this.state.metrics}
               value={this.state.metric}
-              func={this.changeAutocomplite.bind(this, 'metric')}
+              func={this.changeAutocomplite.bind(this, "metric")}
             />
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyAutocomplite
               label="Тип оформления"
               multiple={true}
               data={this.state.types}
               value={this.state.type}
-              func={this.changeAutocomplite.bind(this, 'type')}
+              func={this.changeAutocomplite.bind(this, "type")}
             />
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyAutocomplite
               label="Наличие промокода в заказе"
               multiple={false}
               data={this.state.promos}
               value={this.state.promo}
-              func={this.changePromo.bind(this, 'promo')}
+              func={this.changePromo.bind(this, "promo")}
             />
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyCheckBox
               label="Показывать акции"
               value={parseInt(this.state.is_akcii) == 1 ? true : false}
@@ -910,9 +965,13 @@ class StatOrder_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
-            <Button onClick={this.get_stat_orders.bind(this)} variant="contained">
+              sm: 6,
+            }}
+          >
+            <Button
+              onClick={this.get_stat_orders.bind(this)}
+              variant="contained"
+            >
               Показать
             </Button>
           </Grid>
@@ -921,12 +980,24 @@ class StatOrder_ extends React.Component {
             style={{ paddingBottom: 24 }}
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Paper>
-              <Tabs value={this.state.activeTab} onChange={this.changeTab.bind(this)} centered variant="fullWidth">
-                <Tab label="Дни" {...a11yProps(0)} />
-                <Tab label="Месяца" {...a11yProps(1)} />
+              <Tabs
+                value={this.state.activeTab}
+                onChange={this.changeTab.bind(this)}
+                centered
+                variant="fullWidth"
+              >
+                <Tab
+                  label="Дни"
+                  {...a11yProps(0)}
+                />
+                <Tab
+                  label="Месяца"
+                  {...a11yProps(1)}
+                />
               </Tabs>
             </Paper>
           </Grid>
@@ -936,18 +1007,30 @@ class StatOrder_ extends React.Component {
             style={{ paddingTop: 0 }}
             size={{
               xs: 12,
-              sm: 12
-            }}>
-            <TabPanel value={this.state.activeTab} index={0} id="stat">
-              <Grid container spacing={3}>
+              sm: 12,
+            }}
+          >
+            <TabPanel
+              value={this.state.activeTab}
+              index={0}
+              id="stat"
+            >
+              <Grid
+                container
+                spacing={3}
+              >
                 {!this.state.avg_graph ? null : (
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 12
-                    }}>
-                    <h2 style={{ textAlign: 'center' }}>Средний чек по дням</h2>
-                    <div id={this.state.avg_graph} style={{ width: '100%', height: '500px' }}/>
+                      sm: 12,
+                    }}
+                  >
+                    <h2 style={{ textAlign: "center" }}>Средний чек по дням</h2>
+                    <div
+                      id={this.state.avg_graph}
+                      style={{ width: "100%", height: "500px" }}
+                    />
                   </Grid>
                 )}
 
@@ -955,10 +1038,14 @@ class StatOrder_ extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 12
-                    }}>
-                    <h2 style={{ textAlign: 'center' }}>Выручка по дням</h2>
-                    <div id={this.state.summ_graph} style={{ width: '100%', height: '500px' }}/>
+                      sm: 12,
+                    }}
+                  >
+                    <h2 style={{ textAlign: "center" }}>Выручка по дням</h2>
+                    <div
+                      id={this.state.summ_graph}
+                      style={{ width: "100%", height: "500px" }}
+                    />
                   </Grid>
                 )}
 
@@ -966,12 +1053,14 @@ class StatOrder_ extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 12
-                    }}>
-                    <h2 style={{ textAlign: 'center' }}>
-                      Кол-во заказов по дням
-                    </h2>
-                    <div id={this.state.count_graph} style={{ width: '100%', height: '500px' }}/>
+                      sm: 12,
+                    }}
+                  >
+                    <h2 style={{ textAlign: "center" }}>Кол-во заказов по дням</h2>
+                    <div
+                      id={this.state.count_graph}
+                      style={{ width: "100%", height: "500px" }}
+                    />
                   </Grid>
                 )}
               </Grid>
@@ -981,23 +1070,33 @@ class StatOrder_ extends React.Component {
 
           {/* по месяцам */}
           <Grid
-            style={{ paddingTop: 0, paddingBottom: '40px' }}
+            style={{ paddingTop: 0, paddingBottom: "40px" }}
             size={{
               xs: 12,
-              sm: 12
-            }}>
-            <TabPanel value={this.state.activeTab} index={1} id="stat">
-              <Grid container spacing={3}>
+              sm: 12,
+            }}
+          >
+            <TabPanel
+              value={this.state.activeTab}
+              index={1}
+              id="stat"
+            >
+              <Grid
+                container
+                spacing={3}
+              >
                 {!this.state.avg_graph ? null : (
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 12
-                    }}>
-                    <h2 style={{ textAlign: 'center' }}>
-                      Средний чек по месяцам
-                    </h2>
-                    <div id={this.state.avg_graph} style={{ width: '100%', height: '500px' }}/>
+                      sm: 12,
+                    }}
+                  >
+                    <h2 style={{ textAlign: "center" }}>Средний чек по месяцам</h2>
+                    <div
+                      id={this.state.avg_graph}
+                      style={{ width: "100%", height: "500px" }}
+                    />
                   </Grid>
                 )}
 
@@ -1005,10 +1104,14 @@ class StatOrder_ extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 12
-                    }}>
-                    <h2 style={{ textAlign: 'center' }}>Выручка по месяцам</h2>
-                    <div id={this.state.summ_graph} style={{ width: '100%', height: '500px' }}/>
+                      sm: 12,
+                    }}
+                  >
+                    <h2 style={{ textAlign: "center" }}>Выручка по месяцам</h2>
+                    <div
+                      id={this.state.summ_graph}
+                      style={{ width: "100%", height: "500px" }}
+                    />
                   </Grid>
                 )}
 
@@ -1016,12 +1119,14 @@ class StatOrder_ extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 12
-                    }}>
-                    <h2 style={{ textAlign: 'center' }}>
-                      Кол-во заказов по месяцам
-                    </h2>
-                    <div id={this.state.count_graph} style={{ width: '100%', height: '500px' }}/>
+                      sm: 12,
+                    }}
+                  >
+                    <h2 style={{ textAlign: "center" }}>Кол-во заказов по месяцам</h2>
+                    <div
+                      id={this.state.count_graph}
+                      style={{ width: "100%", height: "500px" }}
+                    />
                   </Grid>
                 )}
               </Grid>
@@ -1039,17 +1144,14 @@ export default function StatOrder() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=3600, stale-while-revalidate=3600'
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},

@@ -45,14 +45,13 @@ export default function CookItemModal({ isOpened, onClose, itemsEdit, stage_1, s
           <Grid
             style={{ display: "flex", justifyContent: "center" }}
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             {itemsEdit.img_app.length == 0 && itemsEdit.img_new.length > 0 ? (
               <img
                 src={
-                  "https://storage.yandexcloud.net/site-img/" +
-                  itemsEdit.img_new +
-                  "_585x585.jpg"
+                  "https://storage.yandexcloud.net/site-img/" + itemsEdit.img_new + "_585x585.jpg"
                 }
                 style={{ maxHeight: 400, width: "100%" }}
                 loading="lazy"
@@ -89,8 +88,9 @@ export default function CookItemModal({ isOpened, onClose, itemsEdit, stage_1, s
           {stage_1?.length > 0 ? (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <h3 style={{ textAlign: "center" }}>Этап 1</h3>
               <List>
                 {stage_1?.map((item, key) => (
@@ -117,8 +117,9 @@ export default function CookItemModal({ isOpened, onClose, itemsEdit, stage_1, s
           {stage_2?.length > 0 ? (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <h3 style={{ textAlign: "center" }}>Этап 2</h3>
               <List>
                 {stage_2?.map((item, key) => (
@@ -145,8 +146,9 @@ export default function CookItemModal({ isOpened, onClose, itemsEdit, stage_1, s
           {stage_3?.length > 0 ? (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <h3 style={{ textAlign: "center" }}>Этап 3</h3>
               <List>
                 {stage_3?.map((item, key) => (

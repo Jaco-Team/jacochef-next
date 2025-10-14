@@ -192,7 +192,8 @@ export const useAppointmentModalStore = create(
       if (!parent) {
         return;
       }
-      const features = ci > -1 ? parent.features_cat[ci]?.features ?? [] : parent.features ?? [];
+      const features =
+        ci > -1 ? (parent.features_cat[ci]?.features ?? []) : (parent.features ?? []);
 
       return features?.every((f) => (f[key] ?? 1) === 1);
     },
@@ -204,7 +205,8 @@ export const useAppointmentModalStore = create(
       if (!parent) {
         return;
       }
-      const features = ci > -1 ? parent.features_cat[ci]?.features ?? [] : parent.features ?? [];
+      const features =
+        ci > -1 ? (parent.features_cat[ci]?.features ?? []) : (parent.features ?? []);
 
       if (!features.length) return false;
 
@@ -241,5 +243,5 @@ export const useAppointmentModalStore = create(
         state.parent_key = "";
         state.type = "";
       }),
-  }))
+  })),
 );

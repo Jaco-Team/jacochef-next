@@ -89,7 +89,7 @@ export default function CityCafeAutocomplete2({
             cityName: cityName || cityNames[c.id],
             base: k.base,
           };
-        })
+        }),
       ) || [];
     return withAll ? [ALL_OPTION, ...cafes] : cafes;
   }, [cities, withAll]);
@@ -128,7 +128,9 @@ export default function CityCafeAutocomplete2({
       mapped = points;
     } else if (wasAll && hasOthers) {
       // All was active, user clicked another → uncheck All and keep others selected
-      cleanNext = points.filter((o) => o.id !== ALL_OPTION.id && !next.map(n => n.id).includes(o.id));
+      cleanNext = points.filter(
+        (o) => o.id !== ALL_OPTION.id && !next.map((n) => n.id).includes(o.id),
+      );
       mapped = cleanNext.map((v) => pointsMap.get(v.id)).filter(Boolean);
     } else if (hasAll && hasOthers) {
       // User toggled All along with others → collapse back to All
@@ -177,7 +179,7 @@ export default function CityCafeAutocomplete2({
         some: selectedCount > 0 && selectedCount < total,
       };
     },
-    [cafesByCity, selectedIds]
+    [cafesByCity, selectedIds],
   );
 
   const handleToggleCity = (cityId) => {

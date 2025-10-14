@@ -2,12 +2,7 @@ import React from "react";
 
 import dynamic from "next/dynamic";
 
-import {
-  MyCheckBox,
-  MyDatePickerNew,
-  MyAutoCompleteWithAll,
-  MyAutocomplite,
-} from "@/components/shared/Forms";
+import { MyCheckBox, MyDatePickerNew, MyAutoCompleteWithAll, MyAutocomplite } from "@/ui/Forms";
 
 import {
   Grid,
@@ -25,9 +20,9 @@ import {
 import { api_laravel } from "@/src/api_new";
 // import { api_laravel_local as api_laravel } from '@/src/api_new';
 import dayjs from "dayjs";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 import { formatDate } from "@/src/helpers/ui/formatDate";
-import CityCafeAutocomplete2 from "@/components/shared/CityCafeAutocomplete2";
+import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import CompositionOfOrdersTooltip from "@/components/composition_of_orders/CompositionOfOrdersToolTip";
 import CompositionOfOrdersIconSort from "@/components/composition_of_orders/CompositionOfOrdersIconSort";
 import CompositionOfOrdersRow from "@/components/composition_of_orders/CompositionOfOrdersRow";
@@ -35,11 +30,11 @@ import { formatNumber } from "@/src/helpers/utils/i18n";
 
 const CompositionOfOrdersGraphModal = dynamic(
   () => import("@/components/composition_of_orders/CompositionOfOrdersGraphModal"),
-  { ssr: false }
+  { ssr: false },
 );
 const CompositionOfOrdersGroupGraphModal = dynamic(
   () => import("@/components/composition_of_orders/CompositionOfOrdersGroupGraphModal"),
-  { ssr: false }
+  { ssr: false },
 );
 
 class CompositionOfOrders_ extends React.Component {
@@ -239,7 +234,7 @@ class CompositionOfOrders_ extends React.Component {
     const newStat = [...stat].map((item) => {
       if (item.name === row_name) {
         console.log(
-          `page: ${res.pagination.page}, perPage: ${res.pagination.perPage}, total: ${res.pagination.total}`
+          `page: ${res.pagination.page}, perPage: ${res.pagination.perPage}, total: ${res.pagination.total}`,
         );
       }
       return item.name === row_name
@@ -442,7 +437,7 @@ class CompositionOfOrders_ extends React.Component {
 
   setRowsPerPage(rowName, newPerPage) {
     const newStat = this.state.stat.map((i) =>
-      i.name === rowName ? { ...i, perPage: newPerPage } : i
+      i.name === rowName ? { ...i, perPage: newPerPage } : i,
     );
     this.setState({ stat: newStat });
   }
@@ -770,7 +765,7 @@ export async function getServerSideProps({ req, res, query }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

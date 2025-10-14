@@ -1,30 +1,29 @@
-import React from 'react';
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import React from "react";
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
-import CloseIcon from '@mui/icons-material/Close';
-import IconButton from '@mui/material/IconButton';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+import CloseIcon from "@mui/icons-material/Close";
+import IconButton from "@mui/material/IconButton";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import { MyTextInput } from '@/components/shared/Forms';
+import { MyTextInput } from "@/ui/Forms";
 
-import queryString from 'query-string';
-import MyAlert from '@/components/shared/MyAlert';
+import queryString from "query-string";
+import MyAlert from "@/ui/MyAlert";
 
 class SitePages_Modal extends React.Component {
-
   constructor(props) {
     super(props);
 
@@ -44,7 +43,6 @@ class SitePages_Modal extends React.Component {
       this.setState({
         item: this.props.item,
       });
-     
     }
   }
 
@@ -67,8 +65,7 @@ class SitePages_Modal extends React.Component {
   }
 
   onClose() {
-
-    this.setState ({
+    this.setState({
       item: null,
     });
 
@@ -82,45 +79,55 @@ class SitePages_Modal extends React.Component {
         onClose={this.onClose.bind(this)}
         fullScreen={this.props.fullScreen}
         fullWidth={true}
-        maxWidth='md'
+        maxWidth="md"
       >
         <DialogTitle className="button">
           {this.props.method}
           {this.props.itemName ? `: ${this.props.itemName}` : null}
         </DialogTitle>
-        <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+        <IconButton
+          onClick={this.onClose.bind(this)}
+          style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+        >
           <CloseIcon />
         </IconButton>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3}>
+          <Grid
+            container
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MyTextInput
                 label="Название"
-                value={ this.state.item ? this.state.item.name : '' }
-                func={this.changeItem.bind(this, 'name')}
+                value={this.state.item ? this.state.item.name : ""}
+                func={this.changeItem.bind(this, "name")}
               />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MyTextInput
                 label="Ссылка"
-                value={this.state.item ? this.state.item.link : '' }
-                func={this.changeItem.bind(this, 'link')}
+                value={this.state.item ? this.state.item.link : ""}
+                func={this.changeItem.bind(this, "link")}
               />
             </Grid>
-            
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" onClick={this.save.bind(this)}>
+          <Button
+            variant="contained"
+            onClick={this.save.bind(this)}
+          >
             Сохранить
           </Button>
         </DialogActions>
@@ -134,33 +141,33 @@ class SitePages_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'site_pages',
-      module_name: '',
+      module: "site_pages",
+      module_name: "",
       is_load: false,
 
       fullScreen: false,
 
       pages: null,
       page: null,
-      
+
       mark: null,
       modalDialog: false,
-      method: '',
-      pageName: '',
+      method: "",
+      pageName: "",
 
       pageNew: {
-        name: '',
-        link: '',
+        name: "",
+        link: "",
       },
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
     };
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     this.setState({
       pages: data.pages,
@@ -175,28 +182,28 @@ class SitePages_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: queryString.stringify({
         method: method,
         module: this.state.module,
         version: 2,
-        login: localStorage.getItem('token'),
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })
       .then((res) => res.json())
       .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/";
           return;
         }
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
           return;
         }
 
@@ -214,7 +221,7 @@ class SitePages_ extends React.Component {
           is_load: false,
         });
       });
-  }
+  };
 
   handleResize() {
     if (window.innerWidth < 601) {
@@ -228,64 +235,61 @@ class SitePages_ extends React.Component {
     }
   }
 
-  openModal (mark, id) {
+  openModal(mark, id) {
     this.handleResize();
 
-    if(mark === 'add') {
-
+    if (mark === "add") {
       this.setState({
         mark,
         item: JSON.parse(JSON.stringify(this.state.pageNew)),
         modalDialog: true,
-        method: 'Новая страница',
+        method: "Новая страница",
       });
-
     }
 
-    if(mark === 'edit') {
+    if (mark === "edit") {
       const pages = this.state.pages;
 
-      const page = pages.find(item => item.id === id);
+      const page = pages.find((item) => item.id === id);
 
       this.setState({
         mark,
         item: JSON.parse(JSON.stringify(page)),
         pageName: page.name,
         modalDialog: true,
-        method: 'Редактирование страницы',
+        method: "Редактирование страницы",
       });
     }
-
   }
 
   async save(data) {
     const mark = this.state.mark;
 
     let res;
-    
-    if(mark === 'add') {
-      res = await this.getData('save_new', data);
+
+    if (mark === "add") {
+      res = await this.getData("save_new", data);
     }
 
-    if(mark === 'edit') {
-      res = await this.getData('save_edit', data);
+    if (mark === "edit") {
+      res = await this.getData("save_edit", data);
     }
 
-    if(!res.st) {
+    if (!res.st) {
       this.setState({
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
       });
     } else {
-      setTimeout( () => {
+      setTimeout(() => {
         this.update();
-      }, 300 )
+      }, 300);
     }
   }
 
   async update() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     this.setState({
       pages: data.pages,
@@ -295,7 +299,10 @@ class SitePages_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
+        <Backdrop
+          open={this.state.is_load}
+          style={{ zIndex: 99 }}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -306,7 +313,7 @@ class SitePages_ extends React.Component {
         />
         <SitePages_Modal
           open={this.state.modalDialog}
-          onClose={() => this.setState({ modalDialog: false, pageName: '', method: '' })}
+          onClose={() => this.setState({ modalDialog: false, pageName: "", method: "" })}
           mark={this.state.mark}
           item={this.state.item}
           method={this.state.method}
@@ -314,25 +321,31 @@ class SitePages_ extends React.Component {
           fullScreen={this.state.fullScreen}
           save={this.save.bind(this)}
         />
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
-              style={{ whiteSpace: 'nowrap' }}
-              onClick={this.openModal.bind(this, 'add', null)}
+              style={{ whiteSpace: "nowrap" }}
+              onClick={this.openModal.bind(this, "add", null)}
             >
               Добавить
             </Button>
@@ -342,12 +355,13 @@ class SitePages_ extends React.Component {
             mb={5}
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             {!this.state.pages ? null : (
               <Table>
                 <TableHead>
-                  <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                  <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                     <TableCell>#</TableCell>
                     <TableCell>Название</TableCell>
                     <TableCell>Адрес</TableCell>
@@ -358,7 +372,10 @@ class SitePages_ extends React.Component {
                   {this.state.pages.map((item, key) => (
                     <TableRow key={key}>
                       <TableCell>{key + 1}</TableCell>
-                      <TableCell  onClick={this.openModal.bind(this, 'edit', item.id)} style={{ color: '#c03', fontWeight: 700, cursor: 'pointer' }}>
+                      <TableCell
+                        onClick={this.openModal.bind(this, "edit", item.id)}
+                        style={{ color: "#c03", fontWeight: 700, cursor: "pointer" }}
+                      >
                         {item.name}
                       </TableCell>
                       <TableCell>{item.link}</TableCell>
@@ -379,13 +396,16 @@ export default function SitePages() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

@@ -28,7 +28,7 @@ export const useBannerModalStore = create((set, get) => ({
     if (!banner?.this_ban) return;
     banner.this_ban.items =
       banner.this_ban.items?.map((element) =>
-        typeof element === "number" ? banner.items?.find((item) => item.id === element) : element
+        typeof element === "number" ? banner.items?.find((item) => item.id === element) : element,
       ) || [];
     get().setBannerName(banner.this_ban.name);
     set({ banner });

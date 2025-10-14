@@ -1,35 +1,35 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
+import Grid from "@mui/material/Grid";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
 
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import {MySelect, MyCheckBox, MyTextInput, MyAutocomplite} from '@/components/shared/Forms';
+import { MySelect, MyCheckBox, MyTextInput, MyAutocomplite } from "@/ui/Forms";
 
-import queryString from 'query-string';
-import MyAlert from '@/components/shared/MyAlert';
+import queryString from "query-string";
+import MyAlert from "@/ui/MyAlert";
 
 class PolufabricatModule_Modal extends React.Component {
   constructor(props) {
@@ -48,7 +48,7 @@ class PolufabricatModule_Modal extends React.Component {
     if (this.props.event !== prevProps.event) {
       const item = this.props.event;
 
-      if(this.props.mark === 'newItem') {
+      if (this.props.mark === "newItem") {
         item.item.this_storages = [];
       }
 
@@ -101,88 +101,114 @@ class PolufabricatModule_Modal extends React.Component {
         onClose={this.onClose.bind(this)}
         fullScreen={this.props.fullScreen}
         fullWidth={true}
-        maxWidth={'md'}
+        maxWidth={"md"}
       >
         <DialogTitle className="button">
-          <Typography>{this.props.method}{this.props.itemName ? ': ' + this.props.itemName : ''}
+          <Typography>
+            {this.props.method}
+            {this.props.itemName ? ": " + this.props.itemName : ""}
           </Typography>
           {this.props.fullScreen ? (
-            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+            <IconButton
+              onClick={this.onClose.bind(this)}
+              style={{ cursor: "pointer" }}
+            >
               <CloseIcon />
             </IconButton>
           ) : null}
         </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3}>
+          <Grid
+            container
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyTextInput
                 label="Название заготовки"
-                value={this.state.item ? this.state.item.item.name : ''}
-                func={this.changeItem.bind(this, 'name')}
+                value={this.state.item ? this.state.item.item.name : ""}
+                func={this.changeItem.bind(this, "name")}
               />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MySelect
                 is_none={false}
                 label="Категория"
                 data={this.state.item ? this.state.item.cat_pf : []}
-                value={this.state.item ? parseInt(this.state.item.item.cat_pf_id) == 0 ? '' : this.state.item.item.cat_pf_id : ''}
-                func={this.changeItem.bind(this, 'cat_pf_id')}
+                value={
+                  this.state.item
+                    ? parseInt(this.state.item.item.cat_pf_id) == 0
+                      ? ""
+                      : this.state.item.item.cat_pf_id
+                    : ""
+                }
+                func={this.changeItem.bind(this, "cat_pf_id")}
               />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MySelect
                 is_none={false}
                 label="Ед измерения"
                 data={this.state.item ? this.state.item.ed_izmer : []}
-                value={this.state.item ? parseInt(this.state.item.item.ed_izmer_id) == 0 ? '' : this.state.item.item.ed_izmer_id : ''}
-                func={this.changeItem.bind(this, 'ed_izmer_id')}
+                value={
+                  this.state.item
+                    ? parseInt(this.state.item.item.ed_izmer_id) == 0
+                      ? ""
+                      : this.state.item.item.ed_izmer_id
+                    : ""
+                }
+                func={this.changeItem.bind(this, "ed_izmer_id")}
               />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyTextInput
                 label="Минимальный остаток"
-                value={this.state.item ? this.state.item.item.min_count : ''}
-                func={this.changeItem.bind(this, 'min_count')}
+                value={this.state.item ? this.state.item.item.min_count : ""}
+                func={this.changeItem.bind(this, "min_count")}
               />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MyTextInput
                 label="Срок годности"
-                value={this.state.item ? this.state.item.item.shelf_life : ''}
-                func={this.changeItem.bind(this, 'shelf_life')}
+                value={this.state.item ? this.state.item.item.shelf_life : ""}
+                func={this.changeItem.bind(this, "shelf_life")}
               />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MyAutocomplite
                 label="Место хранения"
                 multiple={true}
@@ -199,20 +225,22 @@ class PolufabricatModule_Modal extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MyTextInput
                 label="Состав"
-                value={this.state.item ? this.state.item.item.structure : ''}
-                func={this.changeItem.bind(this, 'structure')}
+                value={this.state.item ? this.state.item.item.structure : ""}
+                func={this.changeItem.bind(this, "structure")}
               />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MyAutocomplite
                 label="Аллергены"
                 multiple={true}
@@ -229,8 +257,9 @@ class PolufabricatModule_Modal extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MyAutocomplite
                 label="Возможные аллергены"
                 multiple={true}
@@ -244,22 +273,33 @@ class PolufabricatModule_Modal extends React.Component {
               />
             </Grid>
 
-            {this.props.mark === 'itemEdit' ? (
+            {this.props.mark === "itemEdit" ? (
               <Grid
                 size={{
-                  xs: 12
-                }}>
+                  xs: 12,
+                }}
+              >
                 <MyCheckBox
                   label="Активность"
-                  value={this.state.item ? parseInt(this.state.item.item.is_show) == 1 ? true : false : false}
-                  func={this.changeItemChecked.bind(this, 'is_show')}
+                  value={
+                    this.state.item
+                      ? parseInt(this.state.item.item.is_show) == 1
+                        ? true
+                        : false
+                      : false
+                  }
+                  func={this.changeItemChecked.bind(this, "is_show")}
                 />
               </Grid>
             ) : null}
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" style={{ whiteSpace: 'nowrap' }} onClick={this.save.bind(this)}>
+          <Button
+            variant="contained"
+            style={{ whiteSpace: "nowrap" }}
+            onClick={this.save.bind(this)}
+          >
             Сохранить
           </Button>
         </DialogActions>
@@ -273,8 +313,8 @@ class PolufabricatModule_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'polufabricat_module',
-      module_name: '',
+      module: "polufabricat_module",
+      module_name: "",
       is_load: false,
 
       cats: [],
@@ -283,24 +323,24 @@ class PolufabricatModule_ extends React.Component {
       modalDialog: false,
       fullScreen: false,
 
-      mark: '',
-      method: '',
+      mark: "",
+      method: "",
 
       item: null,
-      itemName: '',
+      itemName: "",
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
 
       type: 0,
 
-      searchItem: '',
+      searchItem: "",
     };
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     // console.log(data)
 
@@ -314,16 +354,15 @@ class PolufabricatModule_ extends React.Component {
   }
 
   handleResize() {
-
     if (window.innerWidth < 601) {
-          this.setState({
-            fullScreen: true,
-          });
-        } else {
-          this.setState({
-            fullScreen: false,
-          });
-        }
+      this.setState({
+        fullScreen: true,
+      });
+    } else {
+      this.setState({
+        fullScreen: false,
+      });
+    }
   }
 
   getData = (method, data = {}) => {
@@ -331,28 +370,28 @@ class PolufabricatModule_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: queryString.stringify({
         method: method,
         module: this.state.module,
         version: 2,
-        login: localStorage.getItem('token'),
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })
       .then((res) => res.json())
       .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/";
           return;
         }
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
           return;
         }
 
@@ -372,8 +411,8 @@ class PolufabricatModule_ extends React.Component {
   async openModal(mark, method, item_id) {
     this.handleResize();
 
-    if (mark === 'newItem') {
-      const res = await this.getData('get_all_for_new');
+    if (mark === "newItem") {
+      const res = await this.getData("get_all_for_new");
 
       this.setState({
         modalDialog: true,
@@ -383,12 +422,12 @@ class PolufabricatModule_ extends React.Component {
       });
     }
 
-    if (mark === 'itemEdit') {
+    if (mark === "itemEdit") {
       const data = {
         item_id,
       };
 
-      const res = await this.getData('get_one', data);
+      const res = await this.getData("get_one", data);
 
       const itemName = res.item.name;
 
@@ -403,38 +442,35 @@ class PolufabricatModule_ extends React.Component {
   }
 
   changeTableItem(item_id, type, is_show, show_in_rev, show_in_order) {
-
     const is_show_edit = parseInt(is_show) == 1 ? 0 : 1;
     const show_in_rev_edit = parseInt(show_in_rev) == 1 ? 0 : 1;
     const show_in_order_edit = parseInt(show_in_order) == 1 ? 0 : 1;
 
     if (parseInt(type) == 1 || parseInt(type) == 2 || parseInt(type) == 3) {
-
-
       if (parseInt(type) == 1) {
-        this.saveItem(item_id, 'active', is_show_edit);
+        this.saveItem(item_id, "active", is_show_edit);
       }
 
       if (parseInt(type) == 2) {
-        this.saveItem(item_id, 'rev', show_in_rev_edit);
+        this.saveItem(item_id, "rev", show_in_rev_edit);
       }
 
       if (parseInt(type) == 3) {
-        this.saveItem(item_id, 'order', show_in_order_edit);
+        this.saveItem(item_id, "order", show_in_order_edit);
       }
     }
 
     if (parseInt(type) == 4 || parseInt(type) == 5 || parseInt(type) == 6) {
       if (parseInt(type) == 4) {
-        this.saveItem(item_id, 'active', is_show_edit);
+        this.saveItem(item_id, "active", is_show_edit);
       }
 
       if (parseInt(type) == 5) {
-        this.saveItem(item_id, 'rev', show_in_rev_edit);
+        this.saveItem(item_id, "rev", show_in_rev_edit);
       }
 
       if (parseInt(type) == 6) {
-        this.saveItem(item_id, 'order', show_in_order_edit);
+        this.saveItem(item_id, "order", show_in_order_edit);
       }
     }
   }
@@ -446,7 +482,7 @@ class PolufabricatModule_ extends React.Component {
       is_show,
     };
 
-    let res = await this.getData('update_order_rev_active', data);
+    let res = await this.getData("update_order_rev_active", data);
 
     if (!res.st) {
       this.setState({
@@ -456,7 +492,7 @@ class PolufabricatModule_ extends React.Component {
       });
     } else {
       setTimeout(() => {
-          this.update();
+        this.update();
       }, 300);
     }
   }
@@ -468,12 +504,12 @@ class PolufabricatModule_ extends React.Component {
       item,
     };
 
-    if (mark === 'newItem') {
-      res = await this.getData('save_new', data);
+    if (mark === "newItem") {
+      res = await this.getData("save_new", data);
     }
 
-    if (mark === 'itemEdit') {
-      res = await this.getData('update', data);
+    if (mark === "itemEdit") {
+      res = await this.getData("update", data);
     }
 
     if (!res.st) {
@@ -484,13 +520,13 @@ class PolufabricatModule_ extends React.Component {
       });
     } else {
       setTimeout(() => {
-          this.update();
+        this.update();
       }, 300);
     }
   }
 
   async update() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     this.setState({
       cats: data.items,
@@ -503,7 +539,7 @@ class PolufabricatModule_ extends React.Component {
       item: this.state.searchItem,
     };
 
-    const res = await this.getData('get_all_search', data);
+    const res = await this.getData("get_all_search", data);
 
     this.setState({
       cats: res.items,
@@ -514,17 +550,21 @@ class PolufabricatModule_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
-          isOpen={this.state.openAlert} 
-          onClose={() => this.setState({ openAlert: false }) } 
-          status={this.state.err_status} 
-          text={this.state.err_text} />
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
         <PolufabricatModule_Modal
           open={this.state.modalDialog}
-          onClose={() => this.setState({ modalDialog: false, itemName: '' })}
+          onClose={() => this.setState({ modalDialog: false, itemName: "" })}
           method={this.state.method}
           event={this.state.item}
           mark={this.state.mark}
@@ -532,21 +572,31 @@ class PolufabricatModule_ extends React.Component {
           itemName={this.state.itemName}
           fullScreen={this.state.fullScreen}
         />
-        <Grid container spacing={3} mb={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          mb={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
-            <Button onClick={this.openModal.bind(this, 'newItem', 'Новая заготовка')} variant="contained">
+              sm: 3,
+            }}
+          >
+            <Button
+              onClick={this.openModal.bind(this, "newItem", "Новая заготовка")}
+              variant="contained"
+            >
               Добавить заготовку
             </Button>
           </Grid>
@@ -554,21 +604,25 @@ class PolufabricatModule_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyTextInput
               label="Поиск"
               value={this.state.searchItem}
-              func={(event) => {this.setState({ searchItem: event.target.value })}}
+              func={(event) => {
+                this.setState({ searchItem: event.target.value });
+              }}
               onBlur={this.search.bind(this)}
             />
           </Grid>
 
           <Grid
-            style={{ paddingBottom: '10px' }}
+            style={{ paddingBottom: "10px" }}
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             {this.state.cats.map((item, key) => (
               <Accordion key={key}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -580,18 +634,18 @@ class PolufabricatModule_ extends React.Component {
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Typography>{category.name}</Typography>
                       </AccordionSummary>
-                      <AccordionDetails style={{ width: '100%', overflow: 'scroll' }}>
+                      <AccordionDetails style={{ width: "100%", overflow: "scroll" }}>
                         <Table>
                           <TableHead>
                             <TableRow>
-                              <TableCell style={{ width: '5%' }}>id</TableCell>
-                              <TableCell style={{ width: '10%' }}>Активность</TableCell>
-                              <TableCell style={{ width: '10%' }}>Ревизия</TableCell>
-                              <TableCell style={{ width: '10%' }}>Заявка</TableCell>
-                              <TableCell style={{ width: '20%' }}>Название заготовки</TableCell>
-                              <TableCell style={{ width: '10%' }}>Мин. ост.</TableCell>
-                              <TableCell style={{ width: '10%' }}>Ед. измер</TableCell>
-                              <TableCell style={{ width: '25%' }}>Место хранения</TableCell>
+                              <TableCell style={{ width: "5%" }}>id</TableCell>
+                              <TableCell style={{ width: "10%" }}>Активность</TableCell>
+                              <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
+                              <TableCell style={{ width: "10%" }}>Заявка</TableCell>
+                              <TableCell style={{ width: "20%" }}>Название заготовки</TableCell>
+                              <TableCell style={{ width: "10%" }}>Мин. ост.</TableCell>
+                              <TableCell style={{ width: "10%" }}>Ед. измер</TableCell>
+                              <TableCell style={{ width: "25%" }}>Место хранения</TableCell>
                             </TableRow>
                           </TableHead>
 
@@ -599,25 +653,60 @@ class PolufabricatModule_ extends React.Component {
                             {category.items.map((it, k) => (
                               <TableRow key={k}>
                                 <TableCell>{it.id}</TableCell>
-                                <TableCell onClick={this.changeTableItem.bind(this, it.id, 1, it.is_show, it.show_in_rev, it.show_in_order)}>
+                                <TableCell
+                                  onClick={this.changeTableItem.bind(
+                                    this,
+                                    it.id,
+                                    1,
+                                    it.is_show,
+                                    it.show_in_rev,
+                                    it.show_in_order,
+                                  )}
+                                >
                                   <MyCheckBox
                                     label=""
                                     value={parseInt(it.is_show) == 1 ? true : false}
                                   />
                                 </TableCell>
-                                <TableCell onClick={this.changeTableItem.bind(this, it.id, 2, it.is_show, it.show_in_rev, it.show_in_order)}>
+                                <TableCell
+                                  onClick={this.changeTableItem.bind(
+                                    this,
+                                    it.id,
+                                    2,
+                                    it.is_show,
+                                    it.show_in_rev,
+                                    it.show_in_order,
+                                  )}
+                                >
                                   <MyCheckBox
                                     label=""
                                     value={parseInt(it.show_in_rev) == 1 ? true : false}
                                   />
                                 </TableCell>
-                                <TableCell onClick={this.changeTableItem.bind(this, it.id, 3, it.is_show, it.show_in_rev, it.show_in_order)}>
+                                <TableCell
+                                  onClick={this.changeTableItem.bind(
+                                    this,
+                                    it.id,
+                                    3,
+                                    it.is_show,
+                                    it.show_in_rev,
+                                    it.show_in_order,
+                                  )}
+                                >
                                   <MyCheckBox
                                     label=""
                                     value={parseInt(it.show_in_order) == 1 ? true : false}
                                   />
                                 </TableCell>
-                                <TableCell style={{ cursor: 'pointer' }} onClick={this.openModal.bind(this, 'itemEdit', 'Редактирование заготовки', it.id)}>
+                                <TableCell
+                                  style={{ cursor: "pointer" }}
+                                  onClick={this.openModal.bind(
+                                    this,
+                                    "itemEdit",
+                                    "Редактирование заготовки",
+                                    it.id,
+                                  )}
+                                >
                                   {it.name}
                                 </TableCell>
                                 <TableCell>{it.min_count}</TableCell>
@@ -638,18 +727,18 @@ class PolufabricatModule_ extends React.Component {
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography>Без категории</Typography>
                 </AccordionSummary>
-                <AccordionDetails style={{ width: '100%', overflow: 'scroll' }}>
+                <AccordionDetails style={{ width: "100%", overflow: "scroll" }}>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell style={{ width: '5%' }}>id</TableCell>
-                        <TableCell style={{ width: '10%' }}>Активность</TableCell>
-                        <TableCell style={{ width: '10%' }}>Ревизия</TableCell>
-                        <TableCell style={{ width: '10%' }}>Заявка</TableCell>
-                        <TableCell style={{ width: '20%' }}>Название заготовки</TableCell>
-                        <TableCell style={{ width: '10%' }}>Мин. ост.</TableCell>
-                        <TableCell style={{ width: '10%' }}>Ед. измер</TableCell>
-                        <TableCell style={{ width: '25%' }}>Место хранения</TableCell>
+                        <TableCell style={{ width: "5%" }}>id</TableCell>
+                        <TableCell style={{ width: "10%" }}>Активность</TableCell>
+                        <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
+                        <TableCell style={{ width: "10%" }}>Заявка</TableCell>
+                        <TableCell style={{ width: "20%" }}>Название заготовки</TableCell>
+                        <TableCell style={{ width: "10%" }}>Мин. ост.</TableCell>
+                        <TableCell style={{ width: "10%" }}>Ед. измер</TableCell>
+                        <TableCell style={{ width: "25%" }}>Место хранения</TableCell>
                       </TableRow>
                     </TableHead>
 
@@ -657,25 +746,60 @@ class PolufabricatModule_ extends React.Component {
                       {this.state.freeItems.map((cat, key) => (
                         <TableRow key={key}>
                           <TableCell>{cat.id}</TableCell>
-                          <TableCell onClick={this.changeTableItem.bind(this, cat.id, 4, cat.is_show, cat.show_in_rev, cat.show_in_order)}>
+                          <TableCell
+                            onClick={this.changeTableItem.bind(
+                              this,
+                              cat.id,
+                              4,
+                              cat.is_show,
+                              cat.show_in_rev,
+                              cat.show_in_order,
+                            )}
+                          >
                             <MyCheckBox
                               label=""
                               value={parseInt(cat.is_show) == 1 ? true : false}
                             />
                           </TableCell>
-                          <TableCell onClick={this.changeTableItem.bind(this, cat.id, 5, cat.is_show, cat.show_in_rev, cat.show_in_order)}>
+                          <TableCell
+                            onClick={this.changeTableItem.bind(
+                              this,
+                              cat.id,
+                              5,
+                              cat.is_show,
+                              cat.show_in_rev,
+                              cat.show_in_order,
+                            )}
+                          >
                             <MyCheckBox
                               label=""
                               value={parseInt(cat.show_in_rev) == 1 ? true : false}
                             />
                           </TableCell>
-                          <TableCell onClick={this.changeTableItem.bind(this, cat.id, 6, cat.is_show, cat.show_in_rev, cat.show_in_order)}>
+                          <TableCell
+                            onClick={this.changeTableItem.bind(
+                              this,
+                              cat.id,
+                              6,
+                              cat.is_show,
+                              cat.show_in_rev,
+                              cat.show_in_order,
+                            )}
+                          >
                             <MyCheckBox
                               label=""
                               value={parseInt(cat.show_in_order) == 1 ? true : false}
                             />
                           </TableCell>
-                          <TableCell style={{ cursor: 'pointer' }} onClick={this.openModal.bind(this, 'itemEdit', 'Редактирование заготовки', cat.id)}>
+                          <TableCell
+                            style={{ cursor: "pointer" }}
+                            onClick={this.openModal.bind(
+                              this,
+                              "itemEdit",
+                              "Редактирование заготовки",
+                              cat.id,
+                            )}
+                          >
                             {cat.name}
                           </TableCell>
                           <TableCell>{cat.min_count}</TableCell>
@@ -700,13 +824,16 @@ export default function PolufabricatModule() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

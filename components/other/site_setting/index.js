@@ -9,7 +9,7 @@ import { SiteSettingModal } from "@/pages/site_setting/components/SiteSettingMod
 import { SiteSettingPages } from "@/pages/site_setting/components/seo/SiteSettingPages";
 import { SiteSettingSocial } from "@/pages/site_setting/components/social/SiteSettingSocial";
 import { SiteSettingCategory } from "@/pages/site_setting/components/category/SiteSettingCategory";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 
 const subMap = {
   social: SiteSettingSocial,
@@ -48,15 +48,8 @@ function a11yProps(index) {
 }
 
 export default function SiteSetting() {
-  const {
-    getData,
-    setCities,
-    setModuleName,
-    setData,
-    setOpenAlert,
-    closeModal,
-    setActiveTab,
-  } = useSiteSettingStore.getState();
+  const { getData, setCities, setModuleName, setData, setOpenAlert, closeModal, setActiveTab } =
+    useSiteSettingStore.getState();
   const {
     subModules,
     activeTab,
@@ -140,16 +133,18 @@ export default function SiteSetting() {
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <h1>{module_name}</h1>
         </Grid>
 
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <Tabs
             value={activeTab}
             onChange={setActiveTab}
@@ -168,8 +163,9 @@ export default function SiteSetting() {
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           {subList.map((subm, i) => {
             const MyComponent = subMap[subm.key];
             return (
@@ -194,7 +190,7 @@ export async function getServerSideProps({ res }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

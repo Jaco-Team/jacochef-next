@@ -1,47 +1,47 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
-import ClearIcon from '@mui/icons-material/Clear';
-import CheckIcon from '@mui/icons-material/Check';
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
+import ClearIcon from "@mui/icons-material/Clear";
+import CheckIcon from "@mui/icons-material/Check";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TableContainer from '@mui/material/TableContainer';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableContainer from "@mui/material/TableContainer";
 
-import Box from '@mui/material/Box';
-import Tab from '@mui/material/Tab';
-import TabContext from '@mui/lab/TabContext';
-import TabList from '@mui/lab/TabList';
-import TabPanel from '@mui/lab/TabPanel';
+import Box from "@mui/material/Box";
+import Tab from "@mui/material/Tab";
+import TabContext from "@mui/lab/TabContext";
+import TabList from "@mui/lab/TabList";
+import TabPanel from "@mui/lab/TabPanel";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import { MySelect, MyAutocomplite, MyDatePickerNew, MyTextInput } from '@/components/shared/Forms';
+import { MySelect, MyAutocomplite, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 
-import moment from 'moment';
-import { api_laravel_local, api_laravel } from '@/src/api_new';
+import moment from "moment";
+import { api_laravel_local, api_laravel } from "@/src/api_new";
 
-import dayjs from 'dayjs';
-import MyAlert from '@/components/shared/MyAlert';
+import dayjs from "dayjs";
+import MyAlert from "@/ui/MyAlert";
 
-const formatter = new Intl.NumberFormat('ru', {
-  style: 'unit',
-  unit: 'year',
-  unitDisplay: 'long',
+const formatter = new Intl.NumberFormat("ru", {
+  style: "unit",
+  unit: "year",
+  unitDisplay: "long",
 });
 
 class Experience_Modal_Cloth extends React.Component {
@@ -65,7 +65,7 @@ class Experience_Modal_Cloth extends React.Component {
 
       listCloth = listCloth.filter((item) => item.name);
 
-      listCloth.push({ id: '0', name: '' });
+      listCloth.push({ id: "0", name: "" });
 
       this.setState({
         listCloth,
@@ -80,7 +80,7 @@ class Experience_Modal_Cloth extends React.Component {
 
     listCloth = listCloth.filter((item) => item.name);
 
-    listCloth.push({ id: '0', name: '' });
+    listCloth.push({ id: "0", name: "" });
 
     this.setState({
       listCloth,
@@ -112,37 +112,49 @@ class Experience_Modal_Cloth extends React.Component {
         onClose={this.onClose.bind(this)}
         fullScreen={this.props.fullScreen}
         fullWidth={true}
-        maxWidth={'md'}
+        maxWidth={"md"}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle className="button">
-          <Typography style={{ fontWeight: 'bold' }}>Список предметов одежды</Typography>
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+          <Typography style={{ fontWeight: "bold" }}>Список предметов одежды</Typography>
+          <IconButton
+            onClick={this.onClose.bind(this)}
+            style={{ cursor: "pointer" }}
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         <DialogContent style={{ paddingTop: 10, paddingBottom: 10 }}>
-          <Grid container spacing={3}>
-            {!this.state.listCloth ? null :
-              this.state.listCloth.map((it, key) => (
-                <Grid
-                  key={key}
-                  size={{
-                    xs: 12,
-                    sm: 12
-                  }}>
-                  <MyTextInput
-                    label="Наименование"
-                    value={it.name}
-                    func={this.changeName.bind(this, key)}
-                  />
-                </Grid>
-            ))}
+          <Grid
+            container
+            spacing={3}
+          >
+            {!this.state.listCloth
+              ? null
+              : this.state.listCloth.map((it, key) => (
+                  <Grid
+                    key={key}
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    <MyTextInput
+                      label="Наименование"
+                      value={it.name}
+                      func={this.changeName.bind(this, key)}
+                    />
+                  </Grid>
+                ))}
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button color="success" variant="contained" onClick={this.saveClothList.bind(this)}>
+          <Button
+            color="success"
+            variant="contained"
+            onClick={this.saveClothList.bind(this)}
+          >
             Coxранить
           </Button>
         </DialogActions>
@@ -159,16 +171,16 @@ class Experience_Modal_User extends React.Component {
       item: null,
       setEdit: false,
       pressCount: 0,
-      data: '',
+      data: "",
 
-      ItemTab: '1',
+      ItemTab: "1",
       listData: null,
       listClothUserActive: null,
       listClothUserNonActive: null,
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
     };
   }
 
@@ -186,15 +198,15 @@ class Experience_Modal_User extends React.Component {
         const end = moment(item.end);
 
         if (!item.end) {
-          item.change = 'daysOver';
+          item.change = "daysOver";
         }
 
-        if (end.diff(moment(), 'days') < -13) {
-          item.change = 'daysOver';
+        if (end.diff(moment(), "days") < -13) {
+          item.change = "daysOver";
         }
 
-        if (end.diff(moment(), 'days') < 14 && end.diff(moment(), 'days') > -14) {
-          item.change = 'endDays';
+        if (end.diff(moment(), "days") < 14 && end.diff(moment(), "days") > -14) {
+          item.change = "endDays";
         }
       });
 
@@ -216,29 +228,24 @@ class Experience_Modal_User extends React.Component {
   }
 
   changeDateRange(data, type, date, val) {
-    const value = val ? dayjs(val).format('YYYY-MM-DD') : '';
+    const value = val ? dayjs(val).format("YYYY-MM-DD") : "";
 
-    if (data === 'list') {
+    if (data === "list") {
       const listData = this.state.listData;
 
-      listData.forEach((item) =>
-        item.type === type ? (item.start = value) : item
-      );
+      listData.forEach((item) => (item.type === type ? (item.start = value) : item));
 
       this.setState({
         listData,
       });
-    } else if (data === 'cloth') {
+    } else if (data === "cloth") {
       const listClothUserActive = this.state.listClothUserActive;
 
-      listClothUserActive.forEach((item) =>
-        item.cloth_id === type ? (item[date] = value) : item
-      );
+      listClothUserActive.forEach((item) => (item.cloth_id === type ? (item[date] = value) : item));
 
       this.setState({
         listClothUserActive,
       });
-
     } else {
       const item = this.state.item;
 
@@ -279,7 +286,7 @@ class Experience_Modal_User extends React.Component {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Укажите дату!',
+        err_text: "Укажите дату!",
       });
 
       return;
@@ -293,7 +300,7 @@ class Experience_Modal_User extends React.Component {
       return;
     }
 
-    item.date_registration = dayjs(item.date_registration).format('YYYY-MM-DD');
+    item.date_registration = dayjs(item.date_registration).format("YYYY-MM-DD");
 
     this.props.saveEdit(item.date_registration, item.id);
 
@@ -319,7 +326,7 @@ class Experience_Modal_User extends React.Component {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо заполнить все даты прохождения!',
+        err_text: "Необходимо заполнить все даты прохождения!",
       });
 
       return;
@@ -347,7 +354,7 @@ class Experience_Modal_User extends React.Component {
     const data = {
       user_id: user.id,
       items,
-    }
+    };
 
     this.props.saveListClothUser(data);
 
@@ -358,16 +365,16 @@ class Experience_Modal_User extends React.Component {
     this.setState({
       item: null,
       setEdit: false,
-      data: '',
+      data: "",
 
-      ItemTab: '1',
+      ItemTab: "1",
       listData: null,
       listClothUserActive: null,
       listClothUserNonActive: [],
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
     });
 
     this.props.onClose();
@@ -387,14 +394,17 @@ class Experience_Modal_User extends React.Component {
           onClose={this.onClose.bind(this)}
           fullScreen={this.props.fullScreen}
           fullWidth={true}
-          maxWidth={'md'}
+          maxWidth={"md"}
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
           <DialogTitle className="button">
-            <Typography style={{ fontWeight: 'bold' }}>Информация о сотруднике</Typography>
+            <Typography style={{ fontWeight: "bold" }}>Информация о сотруднике</Typography>
             {this.props.fullScreen ? (
-              <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+              <IconButton
+                onClick={this.onClose.bind(this)}
+                style={{ cursor: "pointer" }}
+              >
                 <CloseIcon />
               </IconButton>
             ) : null}
@@ -402,32 +412,59 @@ class Experience_Modal_User extends React.Component {
 
           <DialogContent style={{ paddingTop: 10, paddingBottom: 10 }}>
             <TabContext value={this.state.ItemTab}>
-              <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <TabList onChange={this.changeTab.bind(this)} variant="fullWidth">
-                  <Tab label="Информация" value="1" />
+              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                <TabList
+                  onChange={this.changeTab.bind(this)}
+                  variant="fullWidth"
+                >
+                  <Tab
+                    label="Информация"
+                    value="1"
+                  />
                   {parseInt(this.state.item?.is_health_book) == 1 ? (
-                    <Tab label="Мед книжка" value="2" />
+                    <Tab
+                      label="Мед книжка"
+                      value="2"
+                    />
                   ) : null}
                   {parseInt(this.state.item?.is_cloth) == 1 ? (
-                    <Tab label="Предметы одежды" value="3" />
+                    <Tab
+                      label="Предметы одежды"
+                      value="3"
+                    />
                   ) : null}
                 </TabList>
               </Box>
 
               {/* Информация */}
-              <TabPanel value={'1'} style={{ padding: '24px 0' }}>
-                <Grid container spacing={3}>
+              <TabPanel
+                value={"1"}
+                style={{ padding: "24px 0" }}
+              >
+                <Grid
+                  container
+                  spacing={3}
+                >
                   <Grid
                     display="flex"
                     justifyContent="center"
                     size={{
                       xs: 12,
-                      sm: 4
-                    }}>
-                    {this.state.item ?
-                      this.state.item.photo ?
-                        <img src={this.state.item.photo} style={{ width: '100%', height: 'auto' }}/>
-                        : 'Фото отсутствует' : 'Фото отсутствует'}
+                      sm: 4,
+                    }}
+                  >
+                    {this.state.item ? (
+                      this.state.item.photo ? (
+                        <img
+                          src={this.state.item.photo}
+                          style={{ width: "100%", height: "auto" }}
+                        />
+                      ) : (
+                        "Фото отсутствует"
+                      )
+                    ) : (
+                      "Фото отсутствует"
+                    )}
                   </Grid>
 
                   <Grid
@@ -435,65 +472,145 @@ class Experience_Modal_User extends React.Component {
                     flexDirection="column"
                     size={{
                       xs: 12,
-                      sm: 6
-                    }}>
-                    <Grid display="flex" flexDirection="row" mb={2}>
-                      <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', marginRight: 2 }}>ФИО:</Typography>
-                      <Typography sx={{ whiteSpace: 'nowrap' }}>{this.state.item?.name ?? 'Не указано'}</Typography>
-                    </Grid>
-
-                    <Grid display="flex" flexDirection="row" mb={2}>
-                      <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', marginRight: 2 }}>Текущая должность:</Typography>
-                      <Typography sx={{ whiteSpace: 'nowrap' }}>{this.state.item?.app_name ?? 'Не указана'}</Typography>
-                    </Grid>
-
-                    <Grid display="flex" flexDirection="row" mb={2}>
-                      <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', marginRight: 2 }}>Общий стаж:</Typography>
-                      <Typography sx={{ whiteSpace: 'nowrap' }}>{this.state.item?.exp ?? 'Не указано'}</Typography>
-                    </Grid>
-
-                    <Grid display="flex" flexDirection="row" mb={2}>
-                      <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', marginRight: 2 }}>Текущая организация:</Typography>
-                      <Typography sx={{ whiteSpace: 'nowrap' }}>{this.state.item?.point ?? 'Не указано'}</Typography>
-                    </Grid>
-
-                    <Grid display="flex" flexDirection="row" mb={2}>
-                      <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', marginRight: 2 }}>Телефон:</Typography>
-                      <Typography sx={{ whiteSpace: 'nowrap' }}>{this.state.item?.login ?? 'Не указано'}</Typography>
-                    </Grid>
-
-                    <Grid display="flex" flexDirection="row" mb={2}>
-                      <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', marginRight: 2 }}>Трудоустроен:</Typography>
-                      <Typography sx={{ whiteSpace: 'nowrap' }}>
-                        {this.state.item ? this.state.item.acc_to_kas == 0 ? 'Неофициально' : 'Официально' : 'Не указано'}
+                      sm: 6,
+                    }}
+                  >
+                    <Grid
+                      display="flex"
+                      flexDirection="row"
+                      mb={2}
+                    >
+                      <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
+                        ФИО:
+                      </Typography>
+                      <Typography sx={{ whiteSpace: "nowrap" }}>
+                        {this.state.item?.name ?? "Не указано"}
                       </Typography>
                     </Grid>
 
-                    <Grid display="flex" flexDirection={this.state.setEdit ? 'column' : 'row'} mb={2}>
-                      <Typography sx={{ fontWeight: 'bold', whiteSpace: 'nowrap', marginRight: 2, marginBottom: 2 }}>Дата трудоустройства:</Typography>
+                    <Grid
+                      display="flex"
+                      flexDirection="row"
+                      mb={2}
+                    >
+                      <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
+                        Текущая должность:
+                      </Typography>
+                      <Typography sx={{ whiteSpace: "nowrap" }}>
+                        {this.state.item?.app_name ?? "Не указана"}
+                      </Typography>
+                    </Grid>
+
+                    <Grid
+                      display="flex"
+                      flexDirection="row"
+                      mb={2}
+                    >
+                      <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
+                        Общий стаж:
+                      </Typography>
+                      <Typography sx={{ whiteSpace: "nowrap" }}>
+                        {this.state.item?.exp ?? "Не указано"}
+                      </Typography>
+                    </Grid>
+
+                    <Grid
+                      display="flex"
+                      flexDirection="row"
+                      mb={2}
+                    >
+                      <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
+                        Текущая организация:
+                      </Typography>
+                      <Typography sx={{ whiteSpace: "nowrap" }}>
+                        {this.state.item?.point ?? "Не указано"}
+                      </Typography>
+                    </Grid>
+
+                    <Grid
+                      display="flex"
+                      flexDirection="row"
+                      mb={2}
+                    >
+                      <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
+                        Телефон:
+                      </Typography>
+                      <Typography sx={{ whiteSpace: "nowrap" }}>
+                        {this.state.item?.login ?? "Не указано"}
+                      </Typography>
+                    </Grid>
+
+                    <Grid
+                      display="flex"
+                      flexDirection="row"
+                      mb={2}
+                    >
+                      <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
+                        Трудоустроен:
+                      </Typography>
+                      <Typography sx={{ whiteSpace: "nowrap" }}>
+                        {this.state.item
+                          ? this.state.item.acc_to_kas == 0
+                            ? "Неофициально"
+                            : "Официально"
+                          : "Не указано"}
+                      </Typography>
+                    </Grid>
+
+                    <Grid
+                      display="flex"
+                      flexDirection={this.state.setEdit ? "column" : "row"}
+                      mb={2}
+                    >
+                      <Typography
+                        sx={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          marginRight: 2,
+                          marginBottom: 2,
+                        }}
+                      >
+                        Дата трудоустройства:
+                      </Typography>
                       {this.state.setEdit ? (
-                        <Grid display="flex" flexDirection="row">
+                        <Grid
+                          display="flex"
+                          flexDirection="row"
+                        >
                           <Grid mr={2}>
                             <MyDatePickerNew
                               label="Изменить датy"
-                              value={dayjs(this.state.item?.date_registration ?? '')}
-                              func={this.changeDateRange.bind(this, 'registration', 0, 0)}
+                              value={dayjs(this.state.item?.date_registration ?? "")}
+                              func={this.changeDateRange.bind(this, "registration", 0, 0)}
                             />
                           </Grid>
                           <Grid mr={2}>
-                            <Button onClick={this.saveEdit.bind(this)} style={{ cursor: 'pointer' }} color="success" variant="contained">
+                            <Button
+                              onClick={this.saveEdit.bind(this)}
+                              style={{ cursor: "pointer" }}
+                              color="success"
+                              variant="contained"
+                            >
                               <CheckIcon />
                             </Button>
                           </Grid>
                           <Grid>
-                            <Button onClick={this.closeEdit.bind(this)} style={{ cursor: 'pointer' }} color="error" variant="contained">
+                            <Button
+                              onClick={this.closeEdit.bind(this)}
+                              style={{ cursor: "pointer" }}
+                              color="error"
+                              variant="contained"
+                            >
                               <ClearIcon />
                             </Button>
                           </Grid>
                         </Grid>
                       ) : (
-                        <Typography sx={{ whiteSpace: 'nowrap', cursor: 'pointer' }} onClick={this.onDoubleClick.bind(this)}>
-                          {this.state.item?.date_registration ?? 'Не указана'}
+                        <Typography
+                          sx={{ whiteSpace: "nowrap", cursor: "pointer" }}
+                          onClick={this.onDoubleClick.bind(this)}
+                        >
+                          {this.state.item?.date_registration ?? "Не указана"}
                         </Typography>
                       )}
                     </Grid>
@@ -502,31 +619,50 @@ class Experience_Modal_User extends React.Component {
               </TabPanel>
 
               {/* мед книжка */}
-              <TabPanel value={'2'} style={{ padding: '24px 0' }}>
+              <TabPanel
+                value={"2"}
+                style={{ padding: "24px 0" }}
+              >
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell style={{ width: '33%' }}>Название</TableCell>
-                        <TableCell style={{ width: '34%', minWidth: '150px' }}>Дата прохождения</TableCell>
-                        <TableCell style={{ width: '33%', minWidth: '150px' }}>Дата окончания</TableCell>
+                        <TableCell style={{ width: "33%" }}>Название</TableCell>
+                        <TableCell style={{ width: "34%", minWidth: "150px" }}>
+                          Дата прохождения
+                        </TableCell>
+                        <TableCell style={{ width: "33%", minWidth: "150px" }}>
+                          Дата окончания
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {!this.state.listData ? null :
-                          this.state.listData.map((item, key) => (
+                      {!this.state.listData
+                        ? null
+                        : this.state.listData.map((item, key) => (
                             <TableRow key={key}>
                               <TableCell>{item.name}</TableCell>
                               <TableCell>
                                 <MyDatePickerNew
                                   label="Дата"
-                                  value={dayjs(item?.start ?? '')}
-                                  func={this.changeDateRange.bind(this, 'list', item.type, 0)}
+                                  value={dayjs(item?.start ?? "")}
+                                  func={this.changeDateRange.bind(this, "list", item.type, 0)}
                                 />
                               </TableCell>
                               <TableCell
-                                style={{ backgroundColor: item.change ? item.change === 'daysOver' ? '#c03' : '#ffcc00' : null,
-                                  color: item.change ? item.change === 'daysOver' ? '#fff' : null : null }}>
+                                style={{
+                                  backgroundColor: item.change
+                                    ? item.change === "daysOver"
+                                      ? "#c03"
+                                      : "#ffcc00"
+                                    : null,
+                                  color: item.change
+                                    ? item.change === "daysOver"
+                                      ? "#fff"
+                                      : null
+                                    : null,
+                                }}
+                              >
                                 {item.end}
                               </TableCell>
                             </TableRow>
@@ -537,59 +673,90 @@ class Experience_Modal_User extends React.Component {
               </TabPanel>
 
               {/* предметы одежды */}
-              <TabPanel value='3' style={{ padding: '24px 0' }}>
+              <TabPanel
+                value="3"
+                style={{ padding: "24px 0" }}
+              >
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell style={{ width: '33%' }}>Наименование</TableCell>
-                        <TableCell style={{ width: '34%', minWidth: '150px' }}>Дата выдачи</TableCell>
-                        <TableCell style={{ width: '33%', minWidth: '150px' }}>Дата сдачи</TableCell>
+                        <TableCell style={{ width: "33%" }}>Наименование</TableCell>
+                        <TableCell style={{ width: "34%", minWidth: "150px" }}>
+                          Дата выдачи
+                        </TableCell>
+                        <TableCell style={{ width: "33%", minWidth: "150px" }}>
+                          Дата сдачи
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {!this.state.listClothUserActive ? null :
-                        this.state.listClothUserActive.map((item, key) => (
-                          <TableRow key={key}>
-                            <TableCell>{item.name}</TableCell>
-                            <TableCell>
-                              <MyDatePickerNew
-                                label="Дата"
-                                value={dayjs(item?.date_start ?? '')}
-                                func={this.changeDateRange.bind(this, 'cloth', item.cloth_id, 'date_start')}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyDatePickerNew
-                                label="Дата"
-                                value={dayjs(item?.date_end ?? '')}
-                                func={this.changeDateRange.bind(this, 'cloth', item.cloth_id, 'date_end')}
-                              />
-                            </TableCell>
-                          </TableRow>
-                       ))}
+                      {!this.state.listClothUserActive
+                        ? null
+                        : this.state.listClothUserActive.map((item, key) => (
+                            <TableRow key={key}>
+                              <TableCell>{item.name}</TableCell>
+                              <TableCell>
+                                <MyDatePickerNew
+                                  label="Дата"
+                                  value={dayjs(item?.date_start ?? "")}
+                                  func={this.changeDateRange.bind(
+                                    this,
+                                    "cloth",
+                                    item.cloth_id,
+                                    "date_start",
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyDatePickerNew
+                                  label="Дата"
+                                  value={dayjs(item?.date_end ?? "")}
+                                  func={this.changeDateRange.bind(
+                                    this,
+                                    "cloth",
+                                    item.cloth_id,
+                                    "date_end",
+                                  )}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
                     </TableBody>
                   </Table>
-                  <Table size="small" style={{ marginTop: '30px'}}>
+                  <Table
+                    size="small"
+                    style={{ marginTop: "30px" }}
+                  >
                     <TableHead>
                       <TableRow>
-                        <TableCell  style={{ border: 'none' }} colSpan={3}><h4>Сданная одежда</h4></TableCell>
+                        <TableCell
+                          style={{ border: "none" }}
+                          colSpan={3}
+                        >
+                          <h4>Сданная одежда</h4>
+                        </TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell style={{ width: '33%' }}>Наименование</TableCell>
-                        <TableCell style={{ width: '34%', minWidth: '150px' }}>Дата выдачи</TableCell>
-                        <TableCell style={{ width: '33%', minWidth: '150px' }}>Дата сдачи</TableCell>
+                        <TableCell style={{ width: "33%" }}>Наименование</TableCell>
+                        <TableCell style={{ width: "34%", minWidth: "150px" }}>
+                          Дата выдачи
+                        </TableCell>
+                        <TableCell style={{ width: "33%", minWidth: "150px" }}>
+                          Дата сдачи
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {!this.state.listClothUserNonActive ? null :
-                        this.state.listClothUserNonActive.map((item, key) => (
-                          <TableRow key={key}>
-                            <TableCell>{item.name}</TableCell>
-                            <TableCell>{item?.date_start ?? ''}</TableCell>
-                            <TableCell>{item?.date_end ?? ''}</TableCell>
-                          </TableRow>
-                       ))}
+                      {!this.state.listClothUserNonActive
+                        ? null
+                        : this.state.listClothUserNonActive.map((item, key) => (
+                            <TableRow key={key}>
+                              <TableCell>{item.name}</TableCell>
+                              <TableCell>{item?.date_start ?? ""}</TableCell>
+                              <TableCell>{item?.date_end ?? ""}</TableCell>
+                            </TableRow>
+                          ))}
                     </TableBody>
                   </Table>
                 </TableContainer>
@@ -597,17 +764,31 @@ class Experience_Modal_User extends React.Component {
             </TabContext>
           </DialogContent>
 
-          <DialogActions className={this.state.ItemTab !== '1' ? 'button' : null}>
-            {this.state.ItemTab === '1' ? (
-              <Button variant="contained" onClick={this.onClose.bind(this)}>
+          <DialogActions className={this.state.ItemTab !== "1" ? "button" : null}>
+            {this.state.ItemTab === "1" ? (
+              <Button
+                variant="contained"
+                onClick={this.onClose.bind(this)}
+              >
                 Закрыть
               </Button>
             ) : (
               <>
-                <Button onClick={this.onClose.bind(this)} variant="contained">
+                <Button
+                  onClick={this.onClose.bind(this)}
+                  variant="contained"
+                >
                   Отмена
                 </Button>
-                <Button color="success" variant="contained" onClick={this.state.ItemTab === '2' ? this.saveHealthBook.bind(this) : this.saveListClothUser.bind(this)}>
+                <Button
+                  color="success"
+                  variant="contained"
+                  onClick={
+                    this.state.ItemTab === "2"
+                      ? this.saveHealthBook.bind(this)
+                      : this.saveListClothUser.bind(this)
+                  }
+                >
                   Coxранить
                 </Button>
               </>
@@ -624,12 +805,12 @@ class Experience_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'experience',
-      module_name: '',
+      module: "experience",
+      module_name: "",
       is_load: false,
 
       cities: [],
-      city: '',
+      city: "",
 
       points: [],
       pointsCopy: [],
@@ -645,20 +826,20 @@ class Experience_ extends React.Component {
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
       apps: [],
       app: {},
 
       listData: [
-        { type: 'type_2', name: 'Отоларинголог' },
-        { type: 'type_3', name: 'Патогенный стафилококк' },
-        { type: 'type_4', name: 'Стоматолог' },
-        { type: 'type_5', name: 'Терапевт' },
-        { type: 'type_6', name: 'Мед. осмотр' },
-        { type: 'type_7', name: 'Флюорография' },
-        { type: 'type_8', name: 'Бак. анализ' },
-        { type: 'type_9', name: 'Яйц. глист' },
-        { type: 'type_10', name: 'Санитарный минимум' },
+        { type: "type_2", name: "Отоларинголог" },
+        { type: "type_3", name: "Патогенный стафилококк" },
+        { type: "type_4", name: "Стоматолог" },
+        { type: "type_5", name: "Терапевт" },
+        { type: "type_6", name: "Мед. осмотр" },
+        { type: "type_7", name: "Флюорография" },
+        { type: "type_8", name: "Бак. анализ" },
+        { type: "type_9", name: "Яйц. глист" },
+        { type: "type_10", name: "Санитарный минимум" },
       ],
 
       ItemTab: null,
@@ -674,15 +855,21 @@ class Experience_ extends React.Component {
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     let city = this.state.city;
 
     let point = this.state.point;
 
-    city = data.cities.length === 1 ? data.cities[0].id : data.cities.find((city) => city.id === -1).id ?? data.cities[0].id;
+    city =
+      data.cities.length === 1
+        ? data.cities[0].id
+        : (data.cities.find((city) => city.id === -1).id ?? data.cities[0].id);
 
-    point = data.cities.length === 1 ? [...point, ...data.points] : [...point, ...([data.points.find((point) => point.id === -1)] ?? [data.points[0]])];
+    point =
+      data.cities.length === 1
+        ? [...point, ...data.points]
+        : [...point, ...([data.points.find((point) => point.id === -1)] ?? [data.points[0]])];
 
     this.setState({
       city,
@@ -698,7 +885,7 @@ class Experience_ extends React.Component {
     document.title = data.module_info.name;
 
     setTimeout(() => {
-      this.getInfo()
+      this.getInfo();
     }, 500);
   }
 
@@ -715,14 +902,13 @@ class Experience_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
-
     this.setState({
       is_load: true,
     });
 
     let res = api_laravel(this.state.module, method, data)
-      .then(result => result.data)
-      .finally( () => {
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
@@ -731,13 +917,13 @@ class Experience_ extends React.Component {
       });
 
     return res;
-  }
+  };
 
   changeCity(event) {
     const data = JSON.parse(JSON.stringify(this.state.pointsCopy));
 
     const points = data.filter((point) =>
-      event.target.value === -1 ? point : point.city_id === event.target.value
+      event.target.value === -1 ? point : point.city_id === event.target.value,
     );
 
     this.setState({
@@ -750,24 +936,24 @@ class Experience_ extends React.Component {
   changePoint = (event, newValue, reason, details) => {
     const clicked = details?.option;
 
-    if (reason === 'clear') {
+    if (reason === "clear") {
       this.setState({ point: [] });
       return;
     }
 
-    if (reason === 'removeOption') {
+    if (reason === "removeOption") {
       this.setState({ point: newValue });
       return;
     }
 
-    if (reason === 'selectOption' && (clicked.id === -1 || clicked.id === -2)) {
+    if (reason === "selectOption" && (clicked.id === -1 || clicked.id === -2)) {
       this.setState({ point: [clicked] });
       return;
     }
 
-    const normalPoints = newValue.filter(p => p.id > 0);
+    const normalPoints = newValue.filter((p) => p.id > 0);
     this.setState({ point: normalPoints });
-  }
+  };
 
   async getInfo() {
     const point = this.state.point;
@@ -776,7 +962,7 @@ class Experience_ extends React.Component {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Выберите точку!',
+        err_text: "Выберите точку!",
       });
 
       return;
@@ -787,7 +973,7 @@ class Experience_ extends React.Component {
       app: this.state.app,
     };
 
-    let res = await this.getData('get_info', data);
+    let res = await this.getData("get_info", data);
 
     res.users.sort((a, b) => new Date(a.date_registration) - new Date(b.date_registration));
 
@@ -807,17 +993,17 @@ class Experience_ extends React.Component {
       user_id,
     };
 
-    const res = await this.getData('get_user_info', data);
+    const res = await this.getData("get_user_info", data);
 
     listData.forEach((item) => {
-      item.change = '';
+      item.change = "";
 
       for (const key in res.health_book) {
-        if (Number(key.split('_')[1]) === Number(item.type.split('_')[1])) {
-          if (key.includes('start')) {
+        if (Number(key.split("_")[1]) === Number(item.type.split("_")[1])) {
+          if (key.includes("start")) {
             item.start = res.health_book[key];
           }
-          if (key.includes('end')) {
+          if (key.includes("end")) {
             item.end = res.health_book[key];
           }
         }
@@ -837,16 +1023,14 @@ class Experience_ extends React.Component {
   }
 
   async saveEdit(date_registration, user_id) {
-
     const data = {
       user_id,
       date_registration,
     };
 
-    const res = await this.getData('save_date_registration', data);
+    const res = await this.getData("save_date_registration", data);
 
     if (res.st) {
-
       this.setState({
         openAlert: true,
         err_status: res.st,
@@ -856,24 +1040,20 @@ class Experience_ extends React.Component {
       setTimeout(() => {
         this.getInfo();
       }, 300);
-
     } else {
-
       this.setState({
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
       });
-
     }
   }
 
   async saveHealthBook(data) {
-    const res = await this.getData('save_health_book', data);
+    const res = await this.getData("save_health_book", data);
 
     if (res.st) {
-
-     this.setState({
+      this.setState({
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
@@ -882,23 +1062,19 @@ class Experience_ extends React.Component {
       setTimeout(() => {
         this.getInfo();
       }, 300);
-
     } else {
-
       this.setState({
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
       });
-
     }
-
   }
 
   async getDataСloth() {
     this.handleResize();
 
-    const res = await this.getData('get_cloth');
+    const res = await this.getData("get_cloth");
 
     this.setState({
       modalDialogCloth: true,
@@ -907,15 +1083,13 @@ class Experience_ extends React.Component {
   }
 
   async saveClothList(items) {
-
     const data = {
       items,
     };
 
-    const res = await this.getData('save_cloth_list', data);
+    const res = await this.getData("save_cloth_list", data);
 
     if (res.st) {
-
       this.setState({
         openAlert: true,
         err_status: res.st,
@@ -925,24 +1099,19 @@ class Experience_ extends React.Component {
       setTimeout(() => {
         this.getInfo();
       }, 300);
-
     } else {
-
       this.setState({
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
       });
-
     }
-
   }
 
   async saveListClothUser(data) {
-    const res = await this.getData('save_cloth_user', data);
+    const res = await this.getData("save_cloth_user", data);
 
     if (res.st) {
-
       this.setState({
         openAlert: true,
         err_status: res.st,
@@ -952,15 +1121,12 @@ class Experience_ extends React.Component {
       setTimeout(() => {
         this.getInfo();
       }, 300);
-
     } else {
-
       this.setState({
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
       });
-
     }
   }
 
@@ -971,10 +1137,12 @@ class Experience_ extends React.Component {
   }
 
   render() {
-
     return (
       <>
-        <Backdrop style={{ zIndex: 999 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 999 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -1003,20 +1171,25 @@ class Experience_ extends React.Component {
           listCloth={this.state.listCloth}
           saveClothList={this.saveClothList.bind(this)}
         />
-        <Grid container spacing={3} className='container_first_child'>
-
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MySelect
               label="Город"
               is_none={false}
@@ -1029,8 +1202,9 @@ class Experience_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyAutocomplite
               label="Точки"
               multiple={true}
@@ -1043,47 +1217,58 @@ class Experience_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyAutocomplite
               label="Должность"
               multiple={false}
               data={this.state.apps}
               value={this.state.app}
-              func={this.changeAutocomplite.bind(this, 'app')}
+              func={this.changeAutocomplite.bind(this, "app")}
             />
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 2
-            }}>
-            <Button variant="contained" onClick={this.getInfo.bind(this)} sx={{ whiteSpace: 'nowrap' }}>
+              sm: 2,
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={this.getInfo.bind(this)}
+              sx={{ whiteSpace: "nowrap" }}
+            >
               Обновить данные
             </Button>
           </Grid>
 
-          {this.state.user_kind === '1' || this.state.user_kind === '0' ?
+          {this.state.user_kind === "1" || this.state.user_kind === "0" ? (
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
-              <Button variant="contained" onClick={this.getDataСloth.bind(this)} sx={{ whiteSpace: 'nowrap' }}>
+                sm: 12,
+              }}
+            >
+              <Button
+                variant="contained"
+                onClick={this.getDataСloth.bind(this)}
+                sx={{ whiteSpace: "nowrap" }}
+              >
                 Предметы одежды
               </Button>
             </Grid>
-            : null
-          }
+          ) : null}
 
           {/* статистика */}
           {!this.state.stat ? null : (
             <Grid
               size={{
                 xs: 12,
-                sm: 4
-              }}>
+                sm: 4,
+              }}
+            >
               <TableContainer>
                 <Table>
                   <TableBody>
@@ -1093,7 +1278,10 @@ class Experience_ extends React.Component {
                     {this.state.stat.map((stat, key) => (
                       <TableRow key={key}>
                         <TableCell>
-                          {stat.days === '0' ? 'Стаж менее года' : `${formatter.format(stat.days)} стажа`}{' '} - {stat.count} сотрудника(-ов)
+                          {stat.days === "0"
+                            ? "Стаж менее года"
+                            : `${formatter.format(stat.days)} стажа`}{" "}
+                          - {stat.count} сотрудника(-ов)
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1108,8 +1296,9 @@ class Experience_ extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 4
-              }}>
+                sm: 4,
+              }}
+            >
               <TableContainer>
                 <Table>
                   <TableBody>
@@ -1118,12 +1307,14 @@ class Experience_ extends React.Component {
                     </TableRow>
                     <TableRow>
                       <TableCell>
-                        Официально: {this.state.stat_of.true_count}{' '}сотрудника(-ов) / {this.state.stat_of.true_perc} % от числа сотрудников
+                        Официально: {this.state.stat_of.true_count} сотрудника(-ов) /{" "}
+                        {this.state.stat_of.true_perc} % от числа сотрудников
                       </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>
-                        Неофициально: {this.state.stat_of.false_count}{' '}сотрудника(-ов) / {this.state.stat_of.false_perc} % от числа сотрудников
+                        Неофициально: {this.state.stat_of.false_count} сотрудника(-ов) /{" "}
+                        {this.state.stat_of.false_perc} % от числа сотрудников
                       </TableCell>
                     </TableRow>
                   </TableBody>
@@ -1138,19 +1329,20 @@ class Experience_ extends React.Component {
               mb={5}
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <TableContainer>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell style={{ width: '5%' }}>#</TableCell>
-                      <TableCell style={{ width: '25%' }}>ФИО</TableCell>
-                      <TableCell style={{ width: '20%' }}>Дата устройства на работу</TableCell>
-                      <TableCell style={{ width: '20%' }}>Текущая организация</TableCell>
-                      <TableCell style={{ width: '10%' }}>Общий стаж год/месяц</TableCell>
-                      <TableCell style={{ width: '10%' }}>Должность</TableCell>
-                      <TableCell style={{ width: '10%' }}>Статус мед. книжки</TableCell>
+                      <TableCell style={{ width: "5%" }}>#</TableCell>
+                      <TableCell style={{ width: "25%" }}>ФИО</TableCell>
+                      <TableCell style={{ width: "20%" }}>Дата устройства на работу</TableCell>
+                      <TableCell style={{ width: "20%" }}>Текущая организация</TableCell>
+                      <TableCell style={{ width: "10%" }}>Общий стаж год/месяц</TableCell>
+                      <TableCell style={{ width: "10%" }}>Должность</TableCell>
+                      <TableCell style={{ width: "10%" }}>Статус мед. книжки</TableCell>
                     </TableRow>
                   </TableHead>
 
@@ -1158,7 +1350,10 @@ class Experience_ extends React.Component {
                     {this.state.users.map((item, i) => (
                       <TableRow key={i}>
                         <TableCell>{i + 1}</TableCell>
-                        <TableCell onClick={this.openModal.bind(this, item.id, null)} style={{ cursor: 'pointer', fontWeight: 700 }}>
+                        <TableCell
+                          onClick={this.openModal.bind(this, item.id, null)}
+                          style={{ cursor: "pointer", fontWeight: 700 }}
+                        >
                           {item.name}
                         </TableCell>
                         <TableCell>{item.date_registration}</TableCell>
@@ -1166,8 +1361,23 @@ class Experience_ extends React.Component {
                         <TableCell>{item.exp}</TableCell>
                         <TableCell>{item.app_name}</TableCell>
                         <TableCell
-                          style={{ background: parseInt(item.type) == 0 ? '#fff' : parseInt(item.type) == 1 ? '#fff' : parseInt(item.type) == 2 ? '#ffcc00' : '#c03',
-                            color: parseInt(item.type) == 1 ? '#000' : parseInt(item.type) == 2 ? '#000' : '#fff' }}>
+                          style={{
+                            background:
+                              parseInt(item.type) == 0
+                                ? "#fff"
+                                : parseInt(item.type) == 1
+                                  ? "#fff"
+                                  : parseInt(item.type) == 2
+                                    ? "#ffcc00"
+                                    : "#c03",
+                            color:
+                              parseInt(item.type) == 1
+                                ? "#000"
+                                : parseInt(item.type) == 2
+                                  ? "#000"
+                                  : "#fff",
+                          }}
+                        >
                           {item?.status}
                         </TableCell>
                       </TableRow>
@@ -1177,7 +1387,6 @@ class Experience_ extends React.Component {
               </TableContainer>
             </Grid>
           )}
-
         </Grid>
       </>
     );
@@ -1189,13 +1398,16 @@ export default function Experience() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

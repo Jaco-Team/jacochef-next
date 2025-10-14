@@ -39,7 +39,7 @@ export default function useXLSExport() {
           return c.format(row);
         }
         return String(row[c.key]) ?? "-";
-      })
+      }),
     );
 
     const worksheet = XLSX.utils.aoa_to_sheet([header, ...data]);

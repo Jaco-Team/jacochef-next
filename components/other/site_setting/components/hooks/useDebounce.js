@@ -8,14 +8,17 @@ export function useDebounce(fn, delay = 300) {
     fnRef.current = fn;
   }, [fn]);
 
-  const debouncedFn = useCallback((...args) => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
-    timerRef.current = setTimeout(() => {
-      fnRef.current(...args);
-    }, delay);
-  }, [delay]);
+  const debouncedFn = useCallback(
+    (...args) => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      timerRef.current = setTimeout(() => {
+        fnRef.current(...args);
+      }, delay);
+    },
+    [delay],
+  );
 
   useEffect(() => {
     return () => {

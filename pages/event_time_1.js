@@ -1,47 +1,47 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import CloseIcon from '@mui/icons-material/Close';
+import CloseIcon from "@mui/icons-material/Close";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Typography from '@mui/material/Typography';
-import Card from '@mui/material/Card';
-import Divider from '@mui/material/Divider';
+import Typography from "@mui/material/Typography";
+import Card from "@mui/material/Card";
+import Divider from "@mui/material/Divider";
 
-import Paper from '@mui/material/Paper';
-import PropTypes from 'prop-types';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
+import Paper from "@mui/material/Paper";
+import PropTypes from "prop-types";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
 
-import {MySelect, MyAutocomplite2, MyTimePicker, MyDatePickerNew} from '@/components/shared/Forms';
+import { MySelect, MyAutocomplite2, MyTimePicker, MyDatePickerNew } from "@/ui/Forms";
 
-import { api_laravel_local, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from "@/src/api_new";
 
-import dayjs from 'dayjs';
-import MyAlert from '@/components/shared/MyAlert';
+import dayjs from "dayjs";
+import MyAlert from "@/ui/MyAlert";
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -54,9 +54,7 @@ function TabPanel(props) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>{children}</Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -70,14 +68,14 @@ TabPanel.propTypes = {
 function a11yProps(index) {
   return {
     id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
+    "aria-controls": `simple-tabpanel-${index}`,
   };
 }
 
 class EventTime1_Modal_Map extends React.Component {
-
   render() {
-    const { item_one, itemData_one, deleteItem, openModal, fullScreen, open, zone_name, onClose } = this.props;
+    const { item_one, itemData_one, deleteItem, openModal, fullScreen, open, zone_name, onClose } =
+      this.props;
 
     return (
       <Dialog
@@ -85,7 +83,7 @@ class EventTime1_Modal_Map extends React.Component {
         onClose={onClose.bind(this)}
         fullScreen={fullScreen}
         fullWidth={true}
-        maxWidth={'xl'}
+        maxWidth={"xl"}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
@@ -100,17 +98,16 @@ class EventTime1_Modal_Map extends React.Component {
             container
             spacing={3}
             size={{
-              xs: 12
-            }}>
-
+              xs: 12,
+            }}
+          >
             <EventTime1_Data
               item={item_one}
               itemData={itemData_one}
               deleteItem={deleteItem}
               openModal={openModal}
-              type='modal'
+              type="modal"
             />
-            
           </Grid>
         </DialogContent>
         <DialogActions>
@@ -128,10 +125,10 @@ class EventTime1_Modal extends React.Component {
     this.state = {
       item: null,
       data: [],
-      
+
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
     };
   }
 
@@ -159,9 +156,8 @@ class EventTime1_Modal extends React.Component {
   changeItem(data, event, value) {
     const item = this.state.item;
 
-
-    if( data == 'time_dev' ){
-      if( !value ){
+    if (data == "time_dev") {
+      if (!value) {
         value = event.target.value;
         // console.log( event.target.value )
       }
@@ -188,7 +184,7 @@ class EventTime1_Modal extends React.Component {
   changeDateRange(data, value) {
     const item = this.state.item;
 
-    item[data] = value ? (value) : '';
+    item[data] = value ? value : "";
 
     this.setState({
       item,
@@ -196,11 +192,14 @@ class EventTime1_Modal extends React.Component {
   }
 
   save() {
-    const message = 'Необходимо заполнить все данные!';
+    const message = "Необходимо заполнить все данные!";
 
-    let item = this.state.item
+    let item = this.state.item;
 
-    if (this.props.mark === 'newDay' && (!item.date || !item.time_start || !item.time_end || !item.time_dev)) {
+    if (
+      this.props.mark === "newDay" &&
+      (!item.date || !item.time_start || !item.time_end || !item.time_dev)
+    ) {
       this.setState({
         openAlert: true,
         err_status: false,
@@ -210,8 +209,10 @@ class EventTime1_Modal extends React.Component {
       return;
     }
 
-    if ((this.props.mark === 'newEvent' || this.props.mark === 'editEvent') && 
-    (!item.time_start || !item.time_end || !item.time_dev)) {
+    if (
+      (this.props.mark === "newEvent" || this.props.mark === "editEvent") &&
+      (!item.time_start || !item.time_end || !item.time_dev)
+    ) {
       this.setState({
         openAlert: true,
         err_status: false,
@@ -221,9 +222,7 @@ class EventTime1_Modal extends React.Component {
       return;
     }
 
-    item.date = dayjs(item.date).format('YYYY-MM-DD'),
-
-    this.props.save(item, this.props.mark);
+    ((item.date = dayjs(item.date).format("YYYY-MM-DD")), this.props.save(item, this.props.mark));
 
     this.onClose();
   }
@@ -233,7 +232,7 @@ class EventTime1_Modal extends React.Component {
       item: this.props.event ? this.props.event : null,
       data: [],
       err_status: true,
-      err_text: '',
+      err_text: "",
     });
 
     this.props.onClose();
@@ -243,16 +242,17 @@ class EventTime1_Modal extends React.Component {
     return (
       <>
         <MyAlert
-          isOpen={this.state.openAlert} 
-          onClose={() => this.setState({ openAlert: false }) } 
-          status={this.state.err_status} 
-          text={this.state.err_text} />
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
         <Dialog
           open={this.props.open}
           onClose={this.onClose.bind(this)}
           fullScreen={this.props.fullScreen}
           fullWidth={true}
-          maxWidth={this.props.mark !== 'newDay' ? 'md' : 'lg'}
+          maxWidth={this.props.mark !== "newDay" ? "md" : "lg"}
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
@@ -269,59 +269,64 @@ class EventTime1_Modal extends React.Component {
               spacing={3}
               mb={3}
               size={{
-                xs: 12
-              }}>
-              {this.props.mark !== 'newDay' ? null : (
+                xs: 12,
+              }}
+            >
+              {this.props.mark !== "newDay" ? null : (
                 <Grid
                   size={{
                     sm: 3,
-                    xs: 12
-                  }}>
+                    xs: 12,
+                  }}
+                >
                   <MyDatePickerNew
                     label="Дата"
                     value={this.state.item?.date ? dayjs(this.state.item.date) : null}
-                    func={this.changeDateRange.bind(this, 'date')}
+                    func={this.changeDateRange.bind(this, "date")}
                   />
                 </Grid>
               )}
 
               <Grid
                 size={{
-                  sm: this.props.mark !== 'newDay' ? 4 : 3,
-                  xs: 6
-                }}>
+                  sm: this.props.mark !== "newDay" ? 4 : 3,
+                  xs: 6,
+                }}
+              >
                 <MyTimePicker
-                  value={this.state.item ? this.state.item.time_start : ''}
-                  func={this.changeTime.bind(this, 'time_start')}
+                  value={this.state.item ? this.state.item.time_start : ""}
+                  func={this.changeTime.bind(this, "time_start")}
                   label="Время начала"
                 />
               </Grid>
 
               <Grid
                 size={{
-                  sm: this.props.mark !== 'newDay' ? 4 : 3,
-                  xs: 6
-                }}>
+                  sm: this.props.mark !== "newDay" ? 4 : 3,
+                  xs: 6,
+                }}
+              >
                 <MyTimePicker
-                  value={this.state.item ? this.state.item.time_end : ''}
-                  func={this.changeTime.bind(this, 'time_end')}
+                  value={this.state.item ? this.state.item.time_end : ""}
+                  func={this.changeTime.bind(this, "time_end")}
                   label="Время окончания"
                 />
               </Grid>
 
               <Grid
                 size={{
-                  sm: this.props.mark !== 'newDay' ? 4 : 3,
-                  xs: 12
-                }}>
+                  sm: this.props.mark !== "newDay" ? 4 : 3,
+                  xs: 12,
+                }}
+              >
                 <MyAutocomplite2
                   label="Время на доставку"
                   multiple={false}
                   freeSolo={true}
-                  func={this.changeItem.bind(this, 'time_dev')}
-                  onBlur={this.changeItem.bind(this, 'time_dev')}
+                  func={this.changeItem.bind(this, "time_dev")}
+                  onBlur={this.changeItem.bind(this, "time_dev")}
                   data={this.state.data}
-                  value={this.state.item ? this.state.item.time_dev : ''}
+                  value={this.state.item ? this.state.item.time_dev : ""}
                 />
               </Grid>
             </Grid>
@@ -337,7 +342,6 @@ class EventTime1_Modal extends React.Component {
 }
 
 class EventTime1_Data extends React.Component {
-
   shouldComponentUpdate(nextProps) {
     return (
       JSON.stringify(nextProps.itemData) !== JSON.stringify(this.props.itemData) ||
@@ -351,45 +355,69 @@ class EventTime1_Data extends React.Component {
 
     return (
       <>
-        {type === 'zone' ? null :
+        {type === "zone" ? null : (
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
-            <Button variant="contained" style={{ whiteSpace: 'nowrap' }} onClick={openModal.bind(this, 'Особый день', 'newDay')}>
+              sm: 12,
+            }}
+          >
+            <Button
+              variant="contained"
+              style={{ whiteSpace: "nowrap" }}
+              onClick={openModal.bind(this, "Особый день", "newDay")}
+            >
               Добавить особый день
             </Button>
           </Grid>
-        }
+        )}
         <Grid
           size={{
             sm: 6,
-            xs: 12
-          }}>
+            xs: 12,
+          }}
+        >
           <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content">
-              <Typography style={{ whiteSpace: 'nowrap', fontWeight: 'bold ' }}> Особые дни </Typography>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="panel1a-content"
+            >
+              <Typography style={{ whiteSpace: "nowrap", fontWeight: "bold " }}>
+                {" "}
+                Особые дни{" "}
+              </Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Accordion>
                 <TableContainer>
-                  <Table size="small" style={{ whiteSpace: 'nowrap' }}>
+                  <Table
+                    size="small"
+                    style={{ whiteSpace: "nowrap" }}
+                  >
                     <TableHead>
                       <TableRow>
-                        <TableCell style={{ width: '30%' }}>Дата</TableCell>
-                        <TableCell style={{ width: '30%' }}>Время</TableCell>
-                        <TableCell style={{ width: '30%' }}>Доставка</TableCell>
-                        <TableCell style={{ width: '10%' }}></TableCell>
+                        <TableCell style={{ width: "30%" }}>Дата</TableCell>
+                        <TableCell style={{ width: "30%" }}>Время</TableCell>
+                        <TableCell style={{ width: "30%" }}>Доставка</TableCell>
+                        <TableCell style={{ width: "10%" }}></TableCell>
                       </TableRow>
                     </TableHead>
-                    <TableBody sx={{ '& td': { border: 0 }, borderBottom: 1, borderColor: 'divider' }}>
+                    <TableBody
+                      sx={{ "& td": { border: 0 }, borderBottom: 1, borderColor: "divider" }}
+                    >
                       {item.map((item, key) => (
-                        <TableRow  key={key + 100}>
+                        <TableRow key={key + 100}>
                           <TableCell>{item.date}</TableCell>
-                          <TableCell>{item.time_start} - {item.time_end}</TableCell>
+                          <TableCell>
+                            {item.time_start} - {item.time_end}
+                          </TableCell>
                           <TableCell>{item.time_dev}</TableCell>
-                          <TableCell><CloseIcon onClick={deleteItem.bind(this, item.id, 'time_other')} style={{ cursor: 'pointer' }}/></TableCell>
+                          <TableCell>
+                            <CloseIcon
+                              onClick={deleteItem.bind(this, item.id, "time_other")}
+                              style={{ cursor: "pointer" }}
+                            />
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -402,39 +430,62 @@ class EventTime1_Data extends React.Component {
         <Grid
           size={{
             xs: 12,
-            sm: 6
-          }} />
+            sm: 6,
+          }}
+        />
         {itemData.map((item, key) => (
           <Grid
             key={key}
             size={{
               sm: 3,
-              xs: 12
-            }}>
-            <Card variant="outlined" sx={{ border: 1, boxShadow: 1, borderRadius: 2, p: 2, mb: '12px' }}>
+              xs: 12,
+            }}
+          >
+            <Card
+              variant="outlined"
+              sx={{ border: 1, boxShadow: 1, borderRadius: 2, p: 2, mb: "12px" }}
+            >
               <Grid align="center">{item.day_week}</Grid>
               <Divider />
-              <Table size="small" style={{ whiteSpace: 'nowrap' }}>
+              <Table
+                size="small"
+                style={{ whiteSpace: "nowrap" }}
+              >
                 <TableHead>
                   <TableRow>
-                    <TableCell style={{ maxWidth: '40%' }}>Время</TableCell>
-                    <TableCell style={{ maxWidth: '40%' }}>Доставка</TableCell>
-                    <TableCell style={{ maxWidth: '20%' }}></TableCell>
+                    <TableCell style={{ maxWidth: "40%" }}>Время</TableCell>
+                    <TableCell style={{ maxWidth: "40%" }}>Доставка</TableCell>
+                    <TableCell style={{ maxWidth: "20%" }}></TableCell>
                   </TableRow>
                 </TableHead>
-                <TableBody sx={{ '& td': { border: 0 }, borderBottom: 1, borderColor: 'divider' }}>
+                <TableBody sx={{ "& td": { border: 0 }, borderBottom: 1, borderColor: "divider" }}>
                   {item.data.map((item, key) => (
-                    <TableRow key={key + 100} style={{ cursor: 'pointer' }}>
-                      <TableCell onClick={openModal.bind(this, 'Редактирование времени', 'editEvent', item)}>{item.time_start} - {item.time_end}</TableCell>
-                      <TableCell onClick={openModal.bind(this, 'Редактирование времени', 'editEvent', item)}>{item.time_dev}</TableCell>
+                    <TableRow
+                      key={key + 100}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <TableCell
+                        onClick={openModal.bind(this, "Редактирование времени", "editEvent", item)}
+                      >
+                        {item.time_start} - {item.time_end}
+                      </TableCell>
+                      <TableCell
+                        onClick={openModal.bind(this, "Редактирование времени", "editEvent", item)}
+                      >
+                        {item.time_dev}
+                      </TableCell>
                       <TableCell style={{ padding: 0 }}>
-                        <CloseIcon onClick={deleteItem.bind(this, item.id, 'time')} />
+                        <CloseIcon onClick={deleteItem.bind(this, item.id, "time")} />
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-              <Button size="sm" fullWidth={true} onClick={openModal.bind(this, '- текущие заказы', 'newEvent', item)}>
+              <Button
+                size="sm"
+                fullWidth={true}
+                onClick={openModal.bind(this, "- текущие заказы", "newEvent", item)}
+              >
                 Добавить
               </Button>
             </Card>
@@ -452,77 +503,77 @@ class EventTime1_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'event_time_1',
-      module_name: '',
+      module: "event_time_1",
+      module_name: "",
       is_load: false,
 
       points: [],
-      point: '0',
+      point: "0",
 
       modalDialog: false,
-      method: '',
-      mark: '',
+      method: "",
+      mark: "",
       fullScreen: false,
 
       item: [],
       itemData: [],
 
       itemNew: {
-        dow: '',
-        zone_id: '',
-        time_start: '',
-        time_end: '',
-        time_dev: '',
+        dow: "",
+        zone_id: "",
+        time_start: "",
+        time_end: "",
+        time_dev: "",
       },
 
       event: null,
 
       cardData: [
         {
-          day_id: '1',
-          day_week: 'Понедельник',
+          day_id: "1",
+          day_week: "Понедельник",
           data: [],
         },
         {
-          day_id: '2',
-          day_week: 'Вторник',
+          day_id: "2",
+          day_week: "Вторник",
           data: [],
         },
         {
-          day_id: '3',
-          day_week: 'Среда',
+          day_id: "3",
+          day_week: "Среда",
           data: [],
         },
         {
-          day_id: '4',
-          day_week: 'Четверг',
+          day_id: "4",
+          day_week: "Четверг",
           data: [],
         },
         {
-          day_id: '5',
-          day_week: 'Пятница',
+          day_id: "5",
+          day_week: "Пятница",
           data: [],
         },
         {
-          day_id: '6',
-          day_week: 'Суббота',
+          day_id: "6",
+          day_week: "Суббота",
           data: [],
         },
         {
-          day_id: '7',
-          day_week: 'Воскресенье',
+          day_id: "7",
+          day_week: "Воскресенье",
           data: [],
         },
       ],
 
       openAlert: false,
       err_status: false,
-      err_text: '',
+      err_text: "",
 
       activeTab: 0,
 
       cities: [],
-      city: '',
+      city: "",
 
       zones: [],
 
@@ -530,13 +581,12 @@ class EventTime1_ extends React.Component {
       itemData_one: [],
       itemData_hist: [],
       modalDialog_one: false,
-      zone_name: '',
+      zone_name: "",
     };
-
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
     const itemData = JSON.parse(JSON.stringify(this.state.cardData));
 
     this.setState({
@@ -574,8 +624,8 @@ class EventTime1_ extends React.Component {
     });
 
     let res = api_laravel(this.state.module, method, data)
-      .then(result => result.data)
-      .finally( () => {
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
@@ -584,7 +634,7 @@ class EventTime1_ extends React.Component {
       });
 
     return res;
-  }
+  };
 
   async changePoint(event) {
     const zone_id = event.target.value;
@@ -601,8 +651,7 @@ class EventTime1_ extends React.Component {
   openModal(method, mark, item) {
     this.handleResize();
 
-    if (mark === 'newDay') {
-
+    if (mark === "newDay") {
       const itemNew = JSON.parse(JSON.stringify(this.state.itemNew));
 
       itemNew.zone_id = this.state.point;
@@ -615,8 +664,7 @@ class EventTime1_ extends React.Component {
       });
     }
 
-    if (mark === 'newEvent') {
-
+    if (mark === "newEvent") {
       const itemNew = JSON.parse(JSON.stringify(this.state.itemNew));
 
       itemNew.zone_id = this.state.point;
@@ -633,8 +681,7 @@ class EventTime1_ extends React.Component {
       });
     }
 
-    if (mark === 'editEvent') {
-
+    if (mark === "editEvent") {
       this.setState({
         modalDialog: true,
         method,
@@ -645,33 +692,28 @@ class EventTime1_ extends React.Component {
   }
 
   async saveItem(item, mark) {
-
     item.time = `${item.time_start}-${item.time_end}`;
     item.type = mark;
 
-    const res = await this.getData('save', item);
+    const res = await this.getData("save", item);
 
-    if(!res.st){
-
+    if (!res.st) {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: res.text
+        err_text: res.text,
       });
-
     } else {
-
       this.setState({
         openAlert: true,
         err_status: true,
-        err_text: res.text
+        err_text: res.text,
       });
-      
-      setTimeout( () => {
-        this.update();
-      }, 100)
-    }
 
+      setTimeout(() => {
+        this.update();
+      }, 100);
+    }
   }
 
   async deleteItem(time_id, mark) {
@@ -679,12 +721,12 @@ class EventTime1_ extends React.Component {
       time_id,
     };
 
-    if (mark === 'time') {
-      await this.getData('del_time', data);
+    if (mark === "time") {
+      await this.getData("del_time", data);
     }
 
-    if (mark === 'time_other') {
-      await this.getData('del_time_other', data);
+    if (mark === "time_other") {
+      await this.getData("del_time_other", data);
     }
 
     this.update();
@@ -698,7 +740,7 @@ class EventTime1_ extends React.Component {
       zone_id,
     };
 
-    const res = await this.getData('get_data', zone);
+    const res = await this.getData("get_data", zone);
 
     res.dows.forEach((item) => {
       itemData.forEach((el) => {
@@ -718,20 +760,21 @@ class EventTime1_ extends React.Component {
       });
     });
 
-    itemData_hist = itemData_hist.filter(day => day.data.length > 0).sort((a, b) => parseInt(a.day_id) - parseInt(b.day_id));
+    itemData_hist = itemData_hist
+      .filter((day) => day.data.length > 0)
+      .sort((a, b) => parseInt(a.day_id) - parseInt(b.day_id));
 
     this.setState({
       item: res.other_days,
       itemData,
       item_one: res.other_days,
       itemData_one: itemData,
-      itemData_hist
+      itemData_hist,
     });
   }
 
-  changeTab(event, val){
-
-    if(parseInt(val) === 1) {
+  changeTab(event, val) {
+    if (parseInt(val) === 1) {
       this.map = null;
 
       this.getZones();
@@ -740,8 +783,8 @@ class EventTime1_ extends React.Component {
     }
 
     this.setState({
-      activeTab: val
-    })
+      activeTab: val,
+    });
   }
 
   changeCity(event) {
@@ -749,26 +792,28 @@ class EventTime1_ extends React.Component {
       city: event.target.value,
     });
 
-    setTimeout( () => {
+    setTimeout(() => {
       this.getZones();
-    }, 100)
+    }, 100);
   }
 
   async getZones() {
     const city_id = this.state.city;
-    const city = this.state.cities.find((item) => parseInt(item.id) === parseInt(city_id))?.xy_center_map ?? '';
+    const city =
+      this.state.cities.find((item) => parseInt(item.id) === parseInt(city_id))?.xy_center_map ??
+      "";
 
     const data = {
       city_id,
     };
 
-    const res = await this.getData('get_zones', data);
+    const res = await this.getData("get_zones", data);
 
     this.setState({
       zones: res.zones,
     });
 
-    if(res.zones.length && city) {
+    if (res.zones.length && city) {
       setTimeout(() => {
         this.getMapZones(city, res.zones);
       }, 300);
@@ -777,29 +822,26 @@ class EventTime1_ extends React.Component {
         this.map?.geoObjects?.removeAll();
       }, 300);
     }
-
   }
 
   getMapZones(city, all_zones) {
-
     if (!this.map) {
       ymaps.ready(() => {
-
-        const mapElement = document.getElementById('map');
+        const mapElement = document.getElementById("map");
         if (!mapElement) {
           return;
         }
 
         this.map = new ymaps.Map(
-          'map',
+          "map",
           { center: JSON.parse(city), zoom: 11 },
-          { searchControlProvider: 'yandex#search' }
+          { searchControlProvider: "yandex#search" },
         );
-       
+
         all_zones.map((item) => {
           let points_zone = [];
 
-          points_zone.push(JSON.parse(item['zone']));
+          points_zone.push(JSON.parse(item["zone"]));
 
           let myGeoObject2 = [];
 
@@ -807,25 +849,23 @@ class EventTime1_ extends React.Component {
             myGeoObject2[poly] = new ymaps.Polygon(
               [points_zone[poly]],
               {
-                hintContent: '',
+                hintContent: "",
               },
               {
                 fillOpacity: 0.4,
-                fillColor: 'rgb(240, 128, 128)',
-                strokeColor: 'rgb(187, 0, 37)',
+                fillColor: "rgb(240, 128, 128)",
+                strokeColor: "rgb(187, 0, 37)",
                 strokeWidth: 5,
-              }
+              },
             );
 
             this.map.geoObjects.add(myGeoObject2[poly]);
           }
         });
 
-        this.map.geoObjects.events.add('click', this.openZone.bind(this));
+        this.map.geoObjects.events.add("click", this.openZone.bind(this));
       });
-
     } else {
-
       this.map.geoObjects.removeAll();
 
       this.map.setCenter(JSON.parse(city));
@@ -833,7 +873,7 @@ class EventTime1_ extends React.Component {
       all_zones.map((item) => {
         let points_zone = [];
 
-        points_zone.push(JSON.parse(item['zone']));
+        points_zone.push(JSON.parse(item["zone"]));
 
         let myGeoObject2 = [];
 
@@ -841,20 +881,19 @@ class EventTime1_ extends React.Component {
           myGeoObject2[poly] = new ymaps.Polygon(
             [points_zone[poly]],
             {
-              hintContent: '',
+              hintContent: "",
             },
             {
               fillOpacity: 0.4,
-              fillColor: 'rgb(240, 128, 128)',
-              strokeColor: 'rgb(187, 0, 37)',
+              fillColor: "rgb(240, 128, 128)",
+              strokeColor: "rgb(187, 0, 37)",
               strokeWidth: 5,
-            }
+            },
           );
 
           this.map.geoObjects.add(myGeoObject2[poly]);
         }
       });
-     
     }
   }
 
@@ -862,15 +901,14 @@ class EventTime1_ extends React.Component {
     this.handleResize();
 
     const zones = this.state.zones;
-    const index = this.map.geoObjects.indexOf(event.get('target'));
+    const index = this.map.geoObjects.indexOf(event.get("target"));
 
-    if(zones[index]) {
-
+    if (zones[index]) {
       const data = {
         zone_id: zones[index].id,
       };
-  
-      const res = await this.getData('get_data', data);
+
+      const res = await this.getData("get_data", data);
       const itemData = JSON.parse(JSON.stringify(this.state.cardData));
 
       res.dows.forEach((item) => {
@@ -880,30 +918,29 @@ class EventTime1_ extends React.Component {
           }
         });
       });
-  
+
       this.setState({
         modalDialog_one: true,
         item_one: res.other_days,
         itemData_one: itemData,
-        zone_name: zones[index].name
+        zone_name: zones[index].name,
       });
-
     } else {
-
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Что-то пошло не так, зона не найдена'
+        err_text: "Что-то пошло не так, зона не найдена",
       });
-
     }
-
   }
 
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -931,25 +968,41 @@ class EventTime1_ extends React.Component {
           openModal={this.openModal.bind(this)}
           zone_name={this.state.zone_name}
         />
-        <Grid container spacing={3} className='container_first_child'>
-
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Paper>
-              <Tabs value={this.state.activeTab} onChange={ this.changeTab.bind(this) } centered variant='fullWidth'>
-                <Tab label="По зонам" {...a11yProps(0)} />
-                <Tab label="На карте" {...a11yProps(1)} />
+              <Tabs
+                value={this.state.activeTab}
+                onChange={this.changeTab.bind(this)}
+                centered
+                variant="fullWidth"
+              >
+                <Tab
+                  label="По зонам"
+                  {...a11yProps(0)}
+                />
+                <Tab
+                  label="На карте"
+                  {...a11yProps(1)}
+                />
               </Tabs>
             </Paper>
           </Grid>
@@ -958,20 +1011,24 @@ class EventTime1_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
-            <TabPanel 
-              value={this.state.activeTab} 
-              index={0} 
-              id='clients'
+              sm: 12,
+            }}
+          >
+            <TabPanel
+              value={this.state.activeTab}
+              index={0}
+              id="clients"
             >
-              <Grid container spacing={3}>
-
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MySelect
                     is_none={false}
                     data={this.state.points}
@@ -984,9 +1041,14 @@ class EventTime1_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
-                  <Button variant="contained" style={{ whiteSpace: 'nowrap' }} onClick={this.openModal.bind(this, 'Особый день', 'newDay')}>
+                    sm: 6,
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    style={{ whiteSpace: "nowrap" }}
+                    onClick={this.openModal.bind(this, "Особый день", "newDay")}
+                  >
                     Добавить особый день
                   </Button>
                 </Grid>
@@ -996,7 +1058,7 @@ class EventTime1_ extends React.Component {
                   itemData={this.state.itemData}
                   deleteItem={this.deleteItem.bind(this)}
                   openModal={this.openModal.bind(this)}
-                  type='zone'
+                  type="zone"
                 />
 
                 {!this.state.itemData_hist.length ? null : (
@@ -1004,19 +1066,29 @@ class EventTime1_ extends React.Component {
                     mb={5}
                     size={{
                       xs: 12,
-                      sm: 12
-                    }}>
+                      sm: 12,
+                    }}
+                  >
                     <Accordion>
-
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}  aria-controls="main-accordion-content" id="main-accordion-header">
-                        <Typography sx={{ fontWeight: 'bold '}}>История изменений в днях недели</Typography>
+                      <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="main-accordion-content"
+                        id="main-accordion-header"
+                      >
+                        <Typography sx={{ fontWeight: "bold " }}>
+                          История изменений в днях недели
+                        </Typography>
                       </AccordionSummary>
 
                       <AccordionDetails>
                         {this.state.itemData_hist.map((day) => (
                           <Accordion key={day.day_id}>
-                            <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls={`accordion-day-${day.day_id}-content`} id={`accordion-day-${day.day_id}-header`}>
-                              <Typography sx={{ fontWeight: 'bold '}}>{day.day_week}</Typography>
+                            <AccordionSummary
+                              expandIcon={<ExpandMoreIcon />}
+                              aria-controls={`accordion-day-${day.day_id}-content`}
+                              id={`accordion-day-${day.day_id}-header`}
+                            >
+                              <Typography sx={{ fontWeight: "bold " }}>{day.day_week}</Typography>
                             </AccordionSummary>
                             <AccordionDetails>
                               <TableContainer component={Paper}>
@@ -1035,7 +1107,9 @@ class EventTime1_ extends React.Component {
                                       <TableRow key={key}>
                                         <TableCell>{key + 1}</TableCell>
                                         <TableCell>{row.date_time}</TableCell>
-                                        <TableCell>{row.time_start} - {row.time_end}</TableCell>
+                                        <TableCell>
+                                          {row.time_start} - {row.time_end}
+                                        </TableCell>
                                         <TableCell>{row.time_dev}</TableCell>
                                         <TableCell>{row.user_name}</TableCell>
                                       </TableRow>
@@ -1050,7 +1124,6 @@ class EventTime1_ extends React.Component {
                     </Accordion>
                   </Grid>
                 )}
-
               </Grid>
             </TabPanel>
           </Grid>
@@ -1061,20 +1134,24 @@ class EventTime1_ extends React.Component {
             style={{ paddingTop: 0 }}
             size={{
               xs: 12,
-              sm: 12
-            }}>
-            <TabPanel 
-              value={this.state.activeTab} 
-              index={1} 
-              id='clients'
+              sm: 12,
+            }}
+          >
+            <TabPanel
+              value={this.state.activeTab}
+              index={1}
+              id="clients"
             >
-              <Grid container spacing={3}>
-
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MySelect
                     label="Город"
                     is_none={false}
@@ -1088,17 +1165,19 @@ class EventTime1_ extends React.Component {
                   mb={5}
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
-                  <div id="map" name="map" style={{ width: '100%', height: 700, paddingTop: 10 }} />
+                    sm: 12,
+                  }}
+                >
+                  <div
+                    id="map"
+                    name="map"
+                    style={{ width: "100%", height: 700, paddingTop: 10 }}
+                  />
                 </Grid>
-
               </Grid>
             </TabPanel>
           </Grid>
           {/* На карте  */}
-
-
         </Grid>
       </>
     );
@@ -1110,13 +1189,16 @@ export default function EventTime1() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

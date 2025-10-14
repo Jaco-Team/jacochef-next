@@ -130,7 +130,7 @@ const AppointmentParamModal = (props) => {
                         <TableCell>{cat_f.name}</TableCell>
                         {renderFeatureCheckBoxes(cat_f, f.index, cat_f_key)}
                       </TableRow>
-                    ))
+                    )),
                   )}
             </TableBody>
           </Table>
