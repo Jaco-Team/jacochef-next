@@ -1,41 +1,48 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Dropzone from 'dropzone';
+import Dropzone from "dropzone";
 
-import { MyAutocomplite, MyDatePickerNew, MySelect, TextEditor, MyTextInput, MyCheckBox } from '@/components/shared/Forms';
+import {
+  MyAutocomplite,
+  MyDatePickerNew,
+  MySelect,
+  TextEditor,
+  MyTextInput,
+  MyCheckBox,
+} from "@/ui/Forms";
 
-import queryString from 'query-string';
+import queryString from "query-string";
 
-import dayjs from 'dayjs';
-import { formatDate } from '@/src/helpers/ui/formatDate';
+import dayjs from "dayjs";
+import { formatDate } from "@/src/helpers/ui/formatDate";
 
 class SiteAktii_Modal extends React.Component {
   dropzoneOptions = {
@@ -44,9 +51,9 @@ class SiteAktii_Modal extends React.Component {
     maxFiles: 1,
     timeout: 0,
     parallelUploads: 10,
-    acceptedFiles: 'image/jpeg,image/png',
+    acceptedFiles: "image/jpeg,image/png",
     addRemoveLinks: true,
-    url: 'https://jacochef.ru/src/img/site_aktii/upload_img.php',
+    url: "https://jacochef.ru/src/img/site_aktii/upload_img.php",
   };
 
   myDropzone = null;
@@ -73,11 +80,11 @@ class SiteAktii_Modal extends React.Component {
         item: this.props.item,
       });
 
-      console.log( this.props.item )
+      console.log(this.props.item);
 
-      setTimeout( () => {
+      setTimeout(() => {
         this.myDropzone = new Dropzone("#for_img_edit", this.dropzoneOptions);
-      }, 300 )
+      }, 300);
     }
   }
 
@@ -94,7 +101,7 @@ class SiteAktii_Modal extends React.Component {
   changeDateRange(data, event) {
     const item = this.state.item;
 
-    item.akcia[data] = event ? (event) : '';
+    item.akcia[data] = event ? event : "";
 
     this.setState({
       item,
@@ -140,55 +147,53 @@ class SiteAktii_Modal extends React.Component {
       item.akcia.promo_name = item.akcia.promo;
       item.akcia.items = item.akcia_items;
 
-      item.akcia.start_date = dayjs(item.akcia.start_date).format('YYYY-MM-DD')
-      item.akcia.end_date = dayjs(item.akcia.end_date).format('YYYY-MM-DD')
-      
+      item.akcia.start_date = dayjs(item.akcia.start_date).format("YYYY-MM-DD");
+      item.akcia.end_date = dayjs(item.akcia.end_date).format("YYYY-MM-DD");
 
       const data = item.akcia;
 
-      const res = await this.props.getData('save_new', data);
+      const res = await this.props.getData("save_new", data);
 
-      if(res.st === false){
+      if (res.st === false) {
         this.setState({
           openAlert: true,
           err_status: res.st,
           err_text: res.text,
         });
       } else {
-        if( this.myDropzone['files'].length > 0 ){
-          
-          if(this.myDropzone['files'].length > 0 && this.isInit === false) {
+        if (this.myDropzone["files"].length > 0) {
+          if (this.myDropzone["files"].length > 0 && this.isInit === false) {
             this.isInit = true;
-    
-            this.myDropzone.on('sending', (file, xhr, data) => {
-              data.append('name', item.akcia.name);
-							data.append('id', res.id);
-							data.append('img_type', 'full');
+
+            this.myDropzone.on("sending", (file, xhr, data) => {
+              data.append("name", item.akcia.name);
+              data.append("id", res.id);
+              data.append("img_type", "full");
             });
-    
-            this.myDropzone.on('queuecomplete', (data) => {
+
+            this.myDropzone.on("queuecomplete", (data) => {
               var check_img = false;
-    
-              this.myDropzone['files'].map( (item, key) => {
-                if (item['status'] == 'error') {
+
+              this.myDropzone["files"].map((item, key) => {
+                if (item["status"] == "error") {
                   check_img = true;
                 }
               });
-    
+
               if (check_img) {
                 this.setState({
                   openAlert: true,
                   err_status: false,
-                  err_text: 'Ошибка при загрузке фотографии',
+                  err_text: "Ошибка при загрузке фотографии",
                 });
-    
+
                 return;
               } else {
-                setTimeout( () => {
+                setTimeout(() => {
                   this.onClose(true);
-                }, 1000 )
+                }, 1000);
               }
-    
+
               this.isInit = false;
             });
           }
@@ -214,54 +219,53 @@ class SiteAktii_Modal extends React.Component {
       item.akcia.promo_name = item.akcia.promo;
       item.akcia.items = item.akcia_items;
 
-      item.akcia.start_date = dayjs(item.akcia.start_date).format('YYYY-MM-DD')
-      item.akcia.end_date = dayjs(item.akcia.end_date).format('YYYY-MM-DD')
+      item.akcia.start_date = dayjs(item.akcia.start_date).format("YYYY-MM-DD");
+      item.akcia.end_date = dayjs(item.akcia.end_date).format("YYYY-MM-DD");
 
       const data = item.akcia;
 
-      const res = await this.props.getData('save_edit', data);
+      const res = await this.props.getData("save_edit", data);
 
-      if(res.st === false){
+      if (res.st === false) {
         this.setState({
           openAlert: true,
           err_status: res.st,
           err_text: res.text,
         });
       } else {
-        if( this.myDropzone['files'].length > 0 ){
-          
-          if(this.myDropzone['files'].length > 0 && this.isInit === false) {
+        if (this.myDropzone["files"].length > 0) {
+          if (this.myDropzone["files"].length > 0 && this.isInit === false) {
             this.isInit = true;
-    
-            this.myDropzone.on('sending', (file, xhr, data) => {
-              data.append('name', item.akcia.name);
-							data.append('id', item.akcia.id);
-							data.append('img_type', 'full');
+
+            this.myDropzone.on("sending", (file, xhr, data) => {
+              data.append("name", item.akcia.name);
+              data.append("id", item.akcia.id);
+              data.append("img_type", "full");
             });
-    
-            this.myDropzone.on('queuecomplete', (data) => {
+
+            this.myDropzone.on("queuecomplete", (data) => {
               var check_img = false;
-    
-              this.myDropzone['files'].map( (item, key) => {
-                if (item['status'] == 'error') {
+
+              this.myDropzone["files"].map((item, key) => {
+                if (item["status"] == "error") {
                   check_img = true;
                 }
               });
-    
+
               if (check_img) {
                 this.setState({
                   openAlert: true,
                   err_status: false,
-                  err_text: 'Ошибка при загрузке фотографии',
+                  err_text: "Ошибка при загрузке фотографии",
                 });
-    
+
                 return;
               } else {
-                setTimeout( () => {
+                setTimeout(() => {
                   this.onClose(true);
-                }, 1000 )
+                }, 1000);
               }
-    
+
               this.isInit = false;
             });
           }
@@ -296,91 +300,118 @@ class SiteAktii_Modal extends React.Component {
           onClose={this.onClose.bind(this, false)}
           fullScreen={this.props.fullScreen}
           fullWidth={true}
-          maxWidth={'xl'}
+          maxWidth={"xl"}
         >
-          <DialogTitle className="button">{this.props.method}{this.props.itemName ? `: ${this.props.itemName}` : null}</DialogTitle>
+          <DialogTitle className="button">
+            {this.props.method}
+            {this.props.itemName ? `: ${this.props.itemName}` : null}
+          </DialogTitle>
 
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+          <IconButton
+            onClick={this.onClose.bind(this)}
+            style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+          >
             <CloseIcon />
           </IconButton>
 
-          { !this.state.item ? null :
+          {!this.state.item ? null : (
             <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-              <Grid container spacing={3}>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Название акции"
-                    value={this.state.item ? this.state.item.akcia.name : ''}
-                    func={this.changeItem.bind(this, 'name')}
+                    value={this.state.item ? this.state.item.akcia.name : ""}
+                    func={this.changeItem.bind(this, "name")}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MySelect
                     is_none={false}
                     label="Город"
                     data={this.state.item ? this.state.item.cities : []}
-                    value={this.state.item ? this.state.item.akcia.city_id : ''}
-                    func={this.changeItem.bind(this, 'city_id')}
+                    value={this.state.item ? this.state.item.akcia.city_id : ""}
+                    func={this.changeItem.bind(this, "city_id")}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyDatePickerNew
                     label="Дата старта"
-                    value={this.state.item ? dayjs(this.state.item.akcia.start_date) : ''}
-                    func={this.changeDateRange.bind(this, 'start_date')}
+                    value={this.state.item ? dayjs(this.state.item.akcia.start_date) : ""}
+                    func={this.changeDateRange.bind(this, "start_date")}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyDatePickerNew
                     label="Дата окончания"
-                    value={this.state.item ? dayjs(this.state.item.akcia.end_date) : ''}
-                    func={this.changeDateRange.bind(this, 'end_date')}
+                    value={this.state.item ? dayjs(this.state.item.akcia.end_date) : ""}
+                    func={this.changeDateRange.bind(this, "end_date")}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: this.props.mark === 'editAction' ? 10 : 12
-                  }}>
+                    sm: this.props.mark === "editAction" ? 10 : 12,
+                  }}
+                >
                   <MyAutocomplite
                     label="Товары участвующие в акции"
                     multiple={true}
-                    data={this.state.item ? this.state.item.all_items ? this.state.item.all_items : this.state.item.items : []}
+                    data={
+                      this.state.item
+                        ? this.state.item.all_items
+                          ? this.state.item.all_items
+                          : this.state.item.items
+                        : []
+                    }
                     value={this.state.item ? this.state.item.akcia_items : []}
-                    func={this.changeAutocomplite.bind(this, 'akcia_items')}
+                    func={this.changeAutocomplite.bind(this, "akcia_items")}
                   />
                 </Grid>
 
-                {this.props.mark === 'editAction' ? (
+                {this.props.mark === "editAction" ? (
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 2
-                    }}>
+                      sm: 2,
+                    }}
+                  >
                     <MyCheckBox
                       label="Активность"
-                      value={this.state.item ? parseInt(this.state.item.akcia.is_show) == 1 ? true : false : false}
-                      func={this.changeItemChecked.bind(this, 'is_show')}
+                      value={
+                        this.state.item
+                          ? parseInt(this.state.item.akcia.is_show) == 1
+                            ? true
+                            : false
+                          : false
+                      }
+                      func={this.changeItemChecked.bind(this, "is_show")}
                     />
                   </Grid>
                 ) : null}
@@ -388,60 +419,77 @@ class SiteAktii_Modal extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
-                  <Typography variant="h6" component="h6">Картинка соотношением 1:1 (например: 750x750) только JPG</Typography>
+                    sm: 12,
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    component="h6"
+                  >
+                    Картинка соотношением 1:1 (например: 750x750) только JPG
+                  </Typography>
 
-                  { !this.state.item || this.state.item.akcia.img_new.length == 0 ? null :
-                    <img style={{ maxHeight: 150 }} src={`https://storage.yandexcloud.net/site-aktii/${this.state.item.akcia.img_new}750х750.jpg`} />
-                  }
+                  {!this.state.item || this.state.item.akcia.img_new.length == 0 ? null : (
+                    <img
+                      style={{ maxHeight: 150 }}
+                      src={`https://storage.yandexcloud.net/site-aktii/${this.state.item.akcia.img_new}750х750.jpg`}
+                    />
+                  )}
 
                   <div
                     className="dropzone"
                     id="for_img_edit"
-                    style={{ width: '100%', minHeight: 150 }}
+                    style={{ width: "100%", minHeight: 150 }}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Заголовок акции"
-                    value={this.state.item ? this.state.item.akcia.promo_title : ''}
-                    func={this.changeItem.bind(this, 'promo_title')}
+                    value={this.state.item ? this.state.item.akcia.promo_title : ""}
+                    func={this.changeItem.bind(this, "promo_title")}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Промокод"
-                    value={this.state.item ? this.state.item.akcia.promo : ''}
-                    func={this.changeItem.bind(this, 'promo')}
+                    value={this.state.item ? this.state.item.akcia.promo : ""}
+                    func={this.changeItem.bind(this, "promo")}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <TextEditor
-                    value={this.state.item ? this.state.item.akcia.text : ''}
-                    func={this.changeItemText.bind(this, 'text')}
+                    value={this.state.item ? this.state.item.akcia.text : ""}
+                    func={this.changeItemText.bind(this, "text")}
                   />
                 </Grid>
               </Grid>
             </DialogContent>
-          }
+          )}
           <DialogActions>
-            <Button variant="contained" onClick={ this.props.mark == 'editAction' ? this.saveEdit.bind(this) : this.saveNew.bind(this) }>
+            <Button
+              variant="contained"
+              onClick={
+                this.props.mark == "editAction" ? this.saveEdit.bind(this) : this.saveNew.bind(this)
+              }
+            >
               Сохранить
             </Button>
           </DialogActions>
@@ -455,15 +503,14 @@ class SiteAktii_ extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-
-      module: 'site_aktii',
-      module_name: '',
+      module: "site_aktii",
+      module_name: "",
       is_load: false,
 
       cities: [],
       city: {
-        id: '-1',
-        name: 'Все города',
+        id: "-1",
+        name: "Все города",
       },
 
       active: [],
@@ -471,27 +518,27 @@ class SiteAktii_ extends React.Component {
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
 
       fullScreen: false,
 
       modalDialog: false,
-      method: '',
-      mark: '',
+      method: "",
+      mark: "",
       item: null,
-      itemName: '',
+      itemName: "",
 
       itemNew: {
-        promo_title: '',
-        city_id: '',
-        type: '1',
+        promo_title: "",
+        city_id: "",
+        type: "1",
         start_date: formatDate(new Date()),
         end_date: formatDate(new Date()),
-        format: '2',
-        name: '',
-        text: '',
-        promo: '',
-        img_new: ''
+        format: "2",
+        name: "",
+        text: "",
+        promo: "",
+        img_new: "",
       },
     };
   }
@@ -501,7 +548,7 @@ class SiteAktii_ extends React.Component {
       city_id: this.state.city.id,
     };
 
-    const data = await this.getData('get_all', city);
+    const data = await this.getData("get_all", city);
 
     this.setState({
       active: data.active,
@@ -518,28 +565,28 @@ class SiteAktii_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: queryString.stringify({
         method: method,
         module: this.state.module,
         version: 2,
-        login: localStorage.getItem('token'),
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })
       .then((res) => res.json())
       .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/";
           return;
         }
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
           return;
         }
 
@@ -573,20 +620,21 @@ class SiteAktii_ extends React.Component {
       city: value,
     });
 
-    setTimeout( () => {
+    setTimeout(() => {
       this.update();
-    }, 300 )
+    }, 300);
   }
 
   copyLink(item) {
     const link = `https://jacofood.ru/${item.link}/akcii?act_${item.id}`;
 
-    navigator.clipboard.writeText(link)
+    navigator.clipboard
+      .writeText(link)
       .then(() => {
         this.setState({
           openAlert: true,
           err_status: true,
-          err_text: 'Ссылка успешно скопирована!',
+          err_text: "Ссылка успешно скопирована!",
         });
       })
       .catch((err) => {
@@ -599,7 +647,7 @@ class SiteAktii_ extends React.Component {
   }
 
   async changeSort(data, status, it, event) {
-    if (status === 'active') {
+    if (status === "active") {
       const active = this.state.active;
 
       active.forEach((item) => {
@@ -612,7 +660,7 @@ class SiteAktii_ extends React.Component {
       });
     }
 
-    if (status === 'nonActive') {
+    if (status === "nonActive") {
       const non_active = this.state.non_active;
 
       non_active.forEach((item) => {
@@ -631,7 +679,7 @@ class SiteAktii_ extends React.Component {
       is_show: it.is_show,
     };
 
-    await this.getData('save_sort', item);
+    await this.getData("save_sort", item);
 
     setTimeout(() => {
       this.update();
@@ -639,7 +687,7 @@ class SiteAktii_ extends React.Component {
   }
 
   async changeChecked(data, status, it, event) {
-    if (status === 'active') {
+    if (status === "active") {
       const active = this.state.active;
 
       active.forEach((item) => {
@@ -652,7 +700,7 @@ class SiteAktii_ extends React.Component {
       });
     }
 
-    if (status === 'nonActive') {
+    if (status === "nonActive") {
       const non_active = this.state.non_active;
 
       non_active.forEach((item) => {
@@ -671,7 +719,7 @@ class SiteAktii_ extends React.Component {
       is_show: event.target.checked === true ? 1 : 0,
     };
 
-    await this.getData('save_sort', item);
+    await this.getData("save_sort", item);
 
     setTimeout(() => {
       this.update();
@@ -681,10 +729,10 @@ class SiteAktii_ extends React.Component {
   async openModal(mark, method, id) {
     this.handleResize();
 
-    if (mark === 'newAсtion') {
+    if (mark === "newAсtion") {
       const itemNew = JSON.parse(JSON.stringify(this.state.itemNew));
 
-      const item = await this.getData('get_all_for_new');
+      const item = await this.getData("get_all_for_new");
 
       item.akcia = itemNew;
 
@@ -698,12 +746,12 @@ class SiteAktii_ extends React.Component {
       });
     }
 
-    if (mark === 'editAction') {
+    if (mark === "editAction") {
       const data = {
         id,
       };
 
-      const item = await this.getData('get_one', data);
+      const item = await this.getData("get_one", data);
 
       this.setState({
         modalDialog: true,
@@ -720,7 +768,7 @@ class SiteAktii_ extends React.Component {
       city_id: this.state.city.id,
     };
 
-    const data = await this.getData('get_all', city);
+    const data = await this.getData("get_all", city);
 
     this.setState({
       active: data.active,
@@ -728,21 +776,24 @@ class SiteAktii_ extends React.Component {
     });
   }
 
-  onCloseModal(is_reload = false){
-    this.setState({ 
-      modalDialog: false, 
-      itemName: '' 
-    })
+  onCloseModal(is_reload = false) {
+    this.setState({
+      modalDialog: false,
+      itemName: "",
+    });
 
-    if( is_reload ){
-      this.update()
+    if (is_reload) {
+      this.update();
     }
   }
 
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 999 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 999 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -753,7 +804,7 @@ class SiteAktii_ extends React.Component {
         />
         <SiteAktii_Modal
           open={this.state.modalDialog}
-          onClose={ this.onCloseModal.bind(this) }
+          onClose={this.onCloseModal.bind(this)}
           method={this.state.method}
           mark={this.state.mark}
           item={this.state.item}
@@ -761,20 +812,26 @@ class SiteAktii_ extends React.Component {
           fullScreen={this.state.fullScreen}
           getData={this.getData.bind(this)}
         />
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyAutocomplite
               label="Город"
               multiple={false}
@@ -787,9 +844,13 @@ class SiteAktii_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
-            <Button onClick={this.openModal.bind(this, 'newAсtion', 'Новая акция')} variant="contained">
+              sm: 3,
+            }}
+          >
+            <Button
+              onClick={this.openModal.bind(this, "newAсtion", "Новая акция")}
+              variant="contained"
+            >
               Добавить акцию
             </Button>
           </Grid>
@@ -797,42 +858,58 @@ class SiteAktii_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell style={{ width: '5%' }}>#</TableCell>
-                    <TableCell style={{ width: '20%' }}>Название</TableCell>
-                    <TableCell style={{ width: '5%' }}></TableCell>
-                    <TableCell style={{ width: '10%' }}>Сорт</TableCell>
-                    <TableCell style={{ width: '15%' }}>Город</TableCell>
-                    <TableCell style={{ width: '15%' }}>Дата старта</TableCell>
-                    <TableCell style={{ width: '15%' }}>Дата окончания</TableCell>
-                    <TableCell style={{ width: '15%' }}>Активность</TableCell>
+                    <TableCell style={{ width: "5%" }}>#</TableCell>
+                    <TableCell style={{ width: "20%" }}>Название</TableCell>
+                    <TableCell style={{ width: "5%" }}></TableCell>
+                    <TableCell style={{ width: "10%" }}>Сорт</TableCell>
+                    <TableCell style={{ width: "15%" }}>Город</TableCell>
+                    <TableCell style={{ width: "15%" }}>Дата старта</TableCell>
+                    <TableCell style={{ width: "15%" }}>Дата окончания</TableCell>
+                    <TableCell style={{ width: "15%" }}>Активность</TableCell>
                   </TableRow>
                 </TableHead>
 
                 <TableBody>
                   {this.state.active.map((item, key) => (
-                    <TableRow key={key} hover>
+                    <TableRow
+                      key={key}
+                      hover
+                    >
                       <TableCell>{key + 1}</TableCell>
-                      <TableCell onClick={this.openModal.bind(this, 'editAction', 'Редактирование акции', item.id)} style={{ fontWeight: 700, cursor: 'pointer' }}>
+                      <TableCell
+                        onClick={this.openModal.bind(
+                          this,
+                          "editAction",
+                          "Редактирование акции",
+                          item.id,
+                        )}
+                        style={{ fontWeight: 700, cursor: "pointer" }}
+                      >
                         {item.name}
                       </TableCell>
                       <TableCell>
-                        <ContentCopyIcon onClick={this.copyLink.bind(this, item)} style={{ cursor: 'pointer' }}/>
+                        <ContentCopyIcon
+                          onClick={this.copyLink.bind(this, item)}
+                          style={{ cursor: "pointer" }}
+                        />
                       </TableCell>
                       <TableCell>
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 6
-                          }}>
+                            sm: 6,
+                          }}
+                        >
                           <MyTextInput
                             value={item.sort}
-                            func={this.changeSort.bind(this, 'sort', 'active', item)}
+                            func={this.changeSort.bind(this, "sort", "active", item)}
                           />
                         </Grid>
                       </TableCell>
@@ -842,7 +919,7 @@ class SiteAktii_ extends React.Component {
                       <TableCell>
                         <MyCheckBox
                           value={parseInt(item.is_show) == 1 ? true : false}
-                          func={this.changeChecked.bind(this, 'is_show', 'active', item)}
+                          func={this.changeChecked.bind(this, "is_show", "active", item)}
                         />
                       </TableCell>
                     </TableRow>
@@ -853,49 +930,65 @@ class SiteAktii_ extends React.Component {
           </Grid>
 
           <Grid
-            style={{ marginBottom: '40px' }}
+            style={{ marginBottom: "40px" }}
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography style={{ fontWeight: 700 }}>Законченные</Typography>
               </AccordionSummary>
-              <AccordionDetails style={{ width: '100%', overflow: 'scroll' }}>
+              <AccordionDetails style={{ width: "100%", overflow: "scroll" }}>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell style={{ width: '5%' }}>#</TableCell>
-                      <TableCell style={{ width: '20%' }}>Название</TableCell>
-                      <TableCell style={{ width: '5%' }}></TableCell>
-                      <TableCell style={{ width: '10%' }}>Сорт</TableCell>
-                      <TableCell style={{ width: '15%' }}>Город</TableCell>
-                      <TableCell style={{ width: '15%' }}>Дата старта</TableCell>
-                      <TableCell style={{ width: '15%' }}>Дата окончания</TableCell>
-                      <TableCell style={{ width: '15%' }}>Активность</TableCell>
+                      <TableCell style={{ width: "5%" }}>#</TableCell>
+                      <TableCell style={{ width: "20%" }}>Название</TableCell>
+                      <TableCell style={{ width: "5%" }}></TableCell>
+                      <TableCell style={{ width: "10%" }}>Сорт</TableCell>
+                      <TableCell style={{ width: "15%" }}>Город</TableCell>
+                      <TableCell style={{ width: "15%" }}>Дата старта</TableCell>
+                      <TableCell style={{ width: "15%" }}>Дата окончания</TableCell>
+                      <TableCell style={{ width: "15%" }}>Активность</TableCell>
                     </TableRow>
                   </TableHead>
 
                   <TableBody>
                     {this.state.non_active.map((item, key) => (
-                      <TableRow key={key} hover>
+                      <TableRow
+                        key={key}
+                        hover
+                      >
                         <TableCell>{key + 1}</TableCell>
-                        <TableCell onClick={this.openModal.bind(this, 'editAction', 'Редактирование акции', item.id)} style={{ fontWeight: 700, cursor: 'pointer' }}>
+                        <TableCell
+                          onClick={this.openModal.bind(
+                            this,
+                            "editAction",
+                            "Редактирование акции",
+                            item.id,
+                          )}
+                          style={{ fontWeight: 700, cursor: "pointer" }}
+                        >
                           {item.name}
                         </TableCell>
                         <TableCell>
-                          <ContentCopyIcon onClick={this.copyLink.bind(this, item)} style={{ cursor: 'pointer' }}/>
+                          <ContentCopyIcon
+                            onClick={this.copyLink.bind(this, item)}
+                            style={{ cursor: "pointer" }}
+                          />
                         </TableCell>
                         <TableCell>
                           <Grid
                             size={{
                               xs: 12,
-                              sm: 6
-                            }}>
+                              sm: 6,
+                            }}
+                          >
                             <MyTextInput
                               value={item.sort}
-                              func={this.changeSort.bind(this, 'sort', 'nonActive', item)}
+                              func={this.changeSort.bind(this, "sort", "nonActive", item)}
                             />
                           </Grid>
                         </TableCell>
@@ -905,7 +998,7 @@ class SiteAktii_ extends React.Component {
                         <TableCell>
                           <MyCheckBox
                             value={parseInt(item.is_show) == 1 ? true : false}
-                            func={this.changeChecked.bind(this, 'is_show', 'nonActive', item)}
+                            func={this.changeChecked.bind(this, "is_show", "nonActive", item)}
                           />
                         </TableCell>
                       </TableRow>
@@ -926,13 +1019,16 @@ export default function SiteAktii() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

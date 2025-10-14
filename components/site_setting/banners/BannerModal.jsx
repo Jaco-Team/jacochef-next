@@ -7,14 +7,14 @@ import {
   MySelect,
   MyTextInput,
   TextEditor,
-} from "@/components/shared/Forms";
+} from "@/ui/Forms";
 import { CircularProgress, Grid, TextField, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBannerModalStore } from "./useBannerModalStore";
 import Dropzone from "dropzone";
 import dayjs from "dayjs";
 import { dropzoneOptions } from "./bannerUtils";
-import {useSiteSettingStore} from "@/components/site_setting/useSiteSettingStore";
+import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingStore";
 
 export function BannerModal({ getData, showAlert, id, action }) {
   const banner = useBannerModalStore((state) => state.banner);
@@ -31,9 +31,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
   const changeThisBanFieldBool = useBannerModalStore((state) => state.changeThisBanFieldBool);
   const changeAutoComplete = useBannerModalStore((state) => state.changeAutoComplete);
   const getNewBanner = useBannerModalStore((state) => state.getNewBanner);
-  const [acces] = useSiteSettingStore((state) => [
-    state.acces,
-  ]);
+  const [acces] = useSiteSettingStore((state) => [state.acces]);
 
   // dropZones
   const [dropZonesReady, setDropZonesReady] = useState(false);
@@ -138,8 +136,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
         <Grid
           size={{
             xs: 12,
-            sm: 6
-          }}>
+            sm: 6,
+          }}
+        >
           <CircularProgress color="inherit" />
         </Grid>
       )}
@@ -148,8 +147,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyTextInput
               label="Название банера (внутреннее)"
               value={banner?.this_ban?.name || ""}
@@ -160,8 +160,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyTextInput
               label="Заголовок"
               disabled={acces.banners_view && !acces.banners_edit}
@@ -173,8 +174,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MySelect
               is_none={false}
               label="Город"
@@ -188,14 +190,16 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}></Grid>
+              sm: 6,
+            }}
+          ></Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyDatePickerNew
               label="Дата старта"
               disabled={acces.banners_view && !acces.banners_edit}
@@ -207,8 +211,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyDatePickerNew
               label="Дата окончания"
               disabled={acces.banners_view && !acces.banners_edit}
@@ -220,8 +225,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <MyAutocomplite
               label="Позиции (вместо промика)"
               multiple={true}
@@ -235,8 +241,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyAutocomplite
               label="Промокод (вместо позиций)"
               multiple={false}
@@ -250,8 +257,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 6,
-              sm: 2
-            }}>
+              sm: 2,
+            }}
+          >
             <MyCheckBox
               label="Активность"
               disabled={acces.banners_view && !acces.banners_edit}
@@ -262,8 +270,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 6,
-              sm: 2
-            }}>
+              sm: 2,
+            }}
+          >
             <MyCheckBox
               label="Показывать в акциях"
               disabled={acces.banners_view && !acces.banners_edit}
@@ -274,8 +283,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 6,
-              sm: 2
-            }}>
+              sm: 2,
+            }}
+          >
             <MyCheckBox
               label="Показывать на главной"
               disabled={acces.banners_view && !acces.banners_edit}
@@ -286,8 +296,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyTextInput
               label="Заголовок SEO"
               value={banner?.this_ban?.seo_title || ""}
@@ -298,8 +309,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <TextField
               label="Описание SEO"
               value={banner?.this_ban?.seo_desc || ""}
@@ -316,8 +328,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <Typography>Картинка на ПК разрешением 3700x1000 только JPG</Typography>
 
             {banner?.this_ban?.img?.length > 0 && (
@@ -342,8 +355,8 @@ export function BannerModal({ getData, showAlert, id, action }) {
                 width: "100%",
                 minHeight: 150,
                 opacity: acces.banners_view && !acces.banners_edit ? 0.6 : 1,
-                cursor: acces.banners_view && !acces.banners_edit ? 'not-allowed' : 'pointer',
-                pointerEvents: acces.banners_view && !acces.banners_edit ? 'none' : 'auto'
+                cursor: acces.banners_view && !acces.banners_edit ? "not-allowed" : "pointer",
+                pointerEvents: acces.banners_view && !acces.banners_edit ? "none" : "auto",
               }}
             />
           </Grid>
@@ -351,8 +364,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <Typography>
               Картинка мобильная соотношением 2:1 (например: 1000x500) только JPG
             </Typography>
@@ -379,8 +393,8 @@ export function BannerModal({ getData, showAlert, id, action }) {
                 width: "100%",
                 minHeight: 150,
                 opacity: acces.banners_view && !acces.banners_edit ? 0.6 : 1,
-                cursor: acces.banners_view && !acces.banners_edit ? 'not-allowed' : 'pointer',
-                pointerEvents: acces.banners_view && !acces.banners_edit ? 'none' : 'auto'
+                cursor: acces.banners_view && !acces.banners_edit ? "not-allowed" : "pointer",
+                pointerEvents: acces.banners_view && !acces.banners_edit ? "none" : "auto",
               }}
             />
           </Grid>
@@ -388,8 +402,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <TextEditor
               value={banner?.this_ban?.text || ""}
               func={(content) => changeThisBanField("text", null, content)}

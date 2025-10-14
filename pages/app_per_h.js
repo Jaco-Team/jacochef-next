@@ -9,7 +9,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
-import { MySelect, MyTextInput } from "@/components/shared/Forms";
+import { MySelect, MyTextInput } from "@/ui/Forms";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 import Typography from "@mui/material/Typography";
 import Dialog from "@mui/material/Dialog";
@@ -23,7 +23,7 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import IconButton from "@mui/material/IconButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { ModalAccept } from "@/components/general/ModalAccept";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 dayjs.locale("ru");
@@ -209,8 +209,8 @@ class AppPerH_ extends React.Component {
         err_text: "Обновлено",
       },
       () => {
-        this.update(), this.setState({ confirmDialog: false });
-      }
+        (this.update(), this.setState({ confirmDialog: false }));
+      },
     );
   }
 
@@ -247,7 +247,7 @@ class AppPerH_ extends React.Component {
         err_status: true,
         err_text: "Обновлено",
       },
-      () => this.update()
+      () => this.update(),
     );
   }
 
@@ -580,7 +580,7 @@ export async function getServerSideProps({ req, res, query }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

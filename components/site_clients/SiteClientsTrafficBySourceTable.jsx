@@ -11,7 +11,10 @@ import {
 
 export default function SiteClientsTrafficBySourceTable({ rows }) {
   return (
-    <TableContainer sx={{ maxHeight: { xs: 'none', sm: '70dvh' }, marginTop: '1em' }} component={Paper}>
+    <TableContainer
+      sx={{ maxHeight: { xs: "none", sm: "70dvh" }, marginTop: "1em" }}
+      component={Paper}
+    >
       <Table stickyHeader>
         <TableHead>
           <TableRow>
@@ -23,10 +26,10 @@ export default function SiteClientsTrafficBySourceTable({ rows }) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map( (item, key) =>
-            <TableRow 
+          {rows.map((item, key) => (
+            <TableRow
               hover
-              key={key} 
+              key={key}
             >
               <TableCell>{key + 1}</TableCell>
               <TableCell>{item.source}</TableCell>
@@ -34,7 +37,7 @@ export default function SiteClientsTrafficBySourceTable({ rows }) {
               <TableCell>{item.visits}</TableCell>
               <TableCell>{item.share_pct}%</TableCell>
             </TableRow>
-          )}
+          ))}
         </TableBody>
       </Table>
     </TableContainer>

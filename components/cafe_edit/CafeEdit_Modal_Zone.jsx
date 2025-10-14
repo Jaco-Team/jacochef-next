@@ -11,7 +11,7 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { MyCheckBox } from "@/components/shared/Forms";
+import { MyCheckBox } from "@/ui/Forms";
 
 function CafeEdit_Modal_Zone({ open, fullScreen, zone, save, onClose: parentOnClose }) {
   const [isActive, setIsActive] = useState(zone?.is_active);

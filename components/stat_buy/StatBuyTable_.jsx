@@ -2,14 +2,7 @@
 
 import React from "react";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableContainer,
-} from "@mui/material";
+import { Table, TableBody, TableCell, TableHead, TableRow, TableContainer } from "@mui/material";
 
 import { TabPanel } from "@mui/lab";
 import dayjs from "dayjs";
@@ -29,7 +22,7 @@ export default class Stat_buy_Table_ extends React.Component {
         style={{ padding: "24px 0" }}
         className="tender"
       >
-        <TableContainer sx={{ maxHeight: { xs: "none", sm: '60dvh' } }}>
+        <TableContainer sx={{ maxHeight: { xs: "none", sm: "60dvh" } }}>
           <Table
             stickyHeader
             size="small"

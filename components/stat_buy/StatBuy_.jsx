@@ -4,7 +4,7 @@ import React from "react";
 
 import { Grid, Button, TableCell, Box, Tab, Backdrop, CircularProgress } from "@mui/material";
 
-import { MyAutocomplite, MyDatePickerNew } from "@/components/shared/Forms";
+import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 
 import { TabContext, TabList } from "@mui/lab";
 import Stat_buy_Table_ from "./StatBuyTable_";
@@ -13,7 +13,7 @@ import dayjs from "dayjs";
 import { api_laravel } from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import { formatNumber } from "@/src/helpers/utils/i18n";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 
 dayjs.locale("ru");

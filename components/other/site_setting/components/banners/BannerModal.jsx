@@ -7,7 +7,7 @@ import {
   MySelect,
   MyTextInput,
   TextEditor,
-} from "@/components/shared/Forms";
+} from "@/ui/Forms";
 import { CircularProgress, Grid, TextField, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBannerModalStore } from "./useBannerModalStore";
@@ -134,8 +134,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
         <Grid
           size={{
             xs: 12,
-            sm: 6
-          }}>
+            sm: 6,
+          }}
+        >
           <CircularProgress color="inherit" />
         </Grid>
       )}
@@ -144,8 +145,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyTextInput
               label="Название банера (внутреннее)"
               value={banner?.this_ban?.name || ""}
@@ -155,8 +157,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyTextInput
               label="Заголовок"
               value={banner?.this_ban?.title || ""}
@@ -167,8 +170,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MySelect
               is_none={false}
               label="Город"
@@ -181,14 +185,16 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}></Grid>
+              sm: 6,
+            }}
+          ></Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyDatePickerNew
               label="Дата старта"
               value={banner ? dayjs(banner?.this_ban?.date_start) : ""}
@@ -199,8 +205,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyDatePickerNew
               label="Дата окончания"
               value={banner ? dayjs(banner?.this_ban?.date_end) : ""}
@@ -211,8 +218,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <MyAutocomplite
               label="Позиции (вместо промика)"
               multiple={true}
@@ -225,8 +233,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyAutocomplite
               label="Промокод (вместо позиций)"
               multiple={false}
@@ -239,8 +248,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 6,
-              sm: 2
-            }}>
+              sm: 2,
+            }}
+          >
             <MyCheckBox
               label="Активность"
               value={!!+banner?.this_ban?.is_active}
@@ -250,8 +260,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 6,
-              sm: 2
-            }}>
+              sm: 2,
+            }}
+          >
             <MyCheckBox
               label="Показывать в акциях"
               value={!!+banner?.this_ban?.is_active_actii}
@@ -261,8 +272,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 6,
-              sm: 2
-            }}>
+              sm: 2,
+            }}
+          >
             <MyCheckBox
               label="Показывать на главной"
               value={!!+banner?.this_ban?.is_active_home}
@@ -272,8 +284,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyTextInput
               label="Заголовок SEO"
               value={banner?.this_ban?.seo_title || ""}
@@ -283,8 +296,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <TextField
               label="Описание SEO"
               value={banner?.this_ban?.seo_desc || ""}
@@ -300,8 +314,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <Typography>Картинка на ПК разрешением 3700x1000 только JPG</Typography>
 
             {banner?.this_ban?.img?.length > 0 && (
@@ -329,8 +344,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <Typography>
               Картинка мобильная соотношением 2:1 (например: 1000x500) только JPG
             </Typography>
@@ -360,8 +376,9 @@ export default function BannerModal({ getData, showAlert, id, action }) {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <TextEditor
               value={banner?.this_ban?.text || ""}
               func={(content) => changeThisBanField("text", null, content)}

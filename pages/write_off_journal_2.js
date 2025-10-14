@@ -32,7 +32,7 @@ import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import { MySelect, MyDatePickerNew, MyTextInput, MyAutocomplite } from "@/components/shared/Forms";
+import { MySelect, MyDatePickerNew, MyTextInput, MyAutocomplite } from "@/ui/Forms";
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
@@ -40,7 +40,7 @@ import { api_laravel, api_laravel_local } from "@/src/api_new";
 import dayjs from "dayjs";
 import moment from "moment";
 import { formatDate } from "@/src/helpers/ui/formatDate";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 
 class Write_off_journal_View extends React.Component {
   constructor(props) {
@@ -82,7 +82,7 @@ class Write_off_journal_View extends React.Component {
 
   async openHistoryItem() {
     const point = this.props.points.find(
-      (point) => parseInt(point.id) === parseInt(this.props.point)
+      (point) => parseInt(point.id) === parseInt(this.props.point),
     );
 
     const data = {
@@ -231,7 +231,7 @@ class Write_off_journal_View extends React.Component {
                           onClick={this.props.openModalHistoryView.bind(
                             this,
                             key,
-                            this.state.itemHist
+                            this.state.itemHist,
                           )}
                         >
                           <TextSnippetOutlinedIcon />
@@ -584,7 +584,7 @@ class Write_off_journal_modal extends React.Component {
   changeItemData(data, event, value) {
     this.setState({
       [data]: value,
-      ed_izmer: value ? value?.ei_name ?? "" : "",
+      ed_izmer: value ? (value?.ei_name ?? "") : "",
     });
   }
 
@@ -1143,7 +1143,7 @@ class Write_off_journal_ extends React.Component {
 
   async getPointData() {
     const point = this.state.points.find(
-      (point) => parseInt(point.id) === parseInt(this.state.point)
+      (point) => parseInt(point.id) === parseInt(this.state.point),
     );
     const date_start = this.state.date_start
       ? dayjs(this.state.date_start).format("YYYY-MM-DD")
@@ -1284,7 +1284,7 @@ class Write_off_journal_ extends React.Component {
     }
 
     const point = this.state.points.find(
-      (point) => parseInt(point.id) === parseInt(this.state.point)
+      (point) => parseInt(point.id) === parseInt(this.state.point),
     );
 
     const data = {
@@ -1395,7 +1395,7 @@ class Write_off_journal_ extends React.Component {
     this.handleResize();
 
     const point = this.state.points.find(
-      (point) => parseInt(point.id) === parseInt(this.state.point)
+      (point) => parseInt(point.id) === parseInt(this.state.point),
     );
 
     const data = {
@@ -1455,7 +1455,8 @@ class Write_off_journal_ extends React.Component {
             .reduce((newList, it) => {
               if (
                 !itemView_old.items.find(
-                  (item) => item.type === it.type && parseInt(item.item_id) === parseInt(it.item_id)
+                  (item) =>
+                    item.type === it.type && parseInt(item.item_id) === parseInt(it.item_id),
                 )
               ) {
                 it.color = "add";
@@ -1467,13 +1468,13 @@ class Write_off_journal_ extends React.Component {
                 if (
                   !itemView.items.find(
                     (item) =>
-                      item.type === it.type && parseInt(item.item_id) === parseInt(it.item_id)
+                      item.type === it.type && parseInt(item.item_id) === parseInt(it.item_id),
                   )
                 ) {
                   it.color = "delete";
                   return it;
                 }
-              })
+              }),
             );
         }
       }
@@ -1854,8 +1855,8 @@ class Write_off_journal_ extends React.Component {
                           parseInt(item?.status) === 2
                             ? "red"
                             : item?.date_update
-                            ? "rgb(255, 204, 0)"
-                            : "#fff",
+                              ? "rgb(255, 204, 0)"
+                              : "#fff",
                       }}
                     >
                       <TableCell
@@ -1902,7 +1903,7 @@ export async function getServerSideProps({ req, res, query }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

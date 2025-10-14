@@ -1,86 +1,93 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Divider from '@mui/material/Divider';
-import Tooltip from '@mui/material/Tooltip';
-import AddIcon from '@mui/icons-material/Add';
-import ClearIcon from '@mui/icons-material/Clear';
-import IconButton from '@mui/material/IconButton';
+import Divider from "@mui/material/Divider";
+import Tooltip from "@mui/material/Tooltip";
+import AddIcon from "@mui/icons-material/Add";
+import ClearIcon from "@mui/icons-material/Clear";
+import IconButton from "@mui/material/IconButton";
 
-import Dropzone from 'dropzone';
+import Dropzone from "dropzone";
 
-import { MySelect, MyAutocomplite, MyAutocomplite2, MyDatePickerNew, MyTextInput, MyCheckBox } from '@/components/shared/Forms';
+import {
+  MySelect,
+  MyAutocomplite,
+  MyAutocomplite2,
+  MyDatePickerNew,
+  MyTextInput,
+  MyCheckBox,
+} from "@/ui/Forms";
 
-import queryString from 'query-string';
-import dayjs from 'dayjs';
-import { create } from 'zustand'
+import queryString from "query-string";
+import dayjs from "dayjs";
+import { create } from "zustand";
 
-import RotateLeftIcon from '@mui/icons-material/RotateLeft';
-import RotateRightIcon from '@mui/icons-material/RotateRight';
-import ContrastIcon from '@mui/icons-material/Contrast';
-import ZoomInIcon from '@mui/icons-material/ZoomIn';
-import ZoomOutIcon from '@mui/icons-material/ZoomOut';
-import CloseIcon from '@mui/icons-material/Close';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import HorizontalSplitIcon from '@mui/icons-material/HorizontalSplit';
-import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
+import RotateLeftIcon from "@mui/icons-material/RotateLeft";
+import RotateRightIcon from "@mui/icons-material/RotateRight";
+import ContrastIcon from "@mui/icons-material/Contrast";
+import ZoomInIcon from "@mui/icons-material/ZoomIn";
+import ZoomOutIcon from "@mui/icons-material/ZoomOut";
+import CloseIcon from "@mui/icons-material/Close";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import HorizontalSplitIcon from "@mui/icons-material/HorizontalSplit";
+import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
 
-import Draggable from 'react-draggable';
+import Draggable from "react-draggable";
 
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import MyAlert from '@/components/shared/MyAlert';
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import MyAlert from "@/ui/MyAlert";
 
 const types = [
   {
-    "name": "Счет",
-    "id": "1"
+    name: "Счет",
+    id: "1",
   },
   {
-    "name": "Поступление",
-    "id": "2"
+    name: "Поступление",
+    id: "2",
   },
   {
-    "name": "Коррекция",
-    "id": "3"
+    name: "Коррекция",
+    id: "3",
   },
   /*{
     "name": "Возврат",
     "id": "4"
   },*/
-]
+];
 
 function getOrientation(file, callback) {
-	var reader = new FileReader();
-  
-	reader.onload = function(event) {
+  var reader = new FileReader();
+
+  reader.onload = function (event) {
     var view = new DataView(event.target.result);
 
-    if (view.getUint16(0, false) != 0xFFD8) return callback(-2);
+    if (view.getUint16(0, false) != 0xffd8) return callback(-2);
 
     var length = view.byteLength,
       offset = 2;
@@ -89,35 +96,33 @@ function getOrientation(file, callback) {
       var marker = view.getUint16(offset, false);
       offset += 2;
 
-      if (marker == 0xFFE1) {
-        if (view.getUint32(offset += 2, false) != 0x45786966) {
+      if (marker == 0xffe1) {
+        if (view.getUint32((offset += 2), false) != 0x45786966) {
           return callback(-1);
         }
 
-        var little = view.getUint16(offset += 6, false) == 0x4949;
+        var little = view.getUint16((offset += 6), false) == 0x4949;
         offset += view.getUint32(offset + 4, little);
         var tags = view.getUint16(offset, little);
         offset += 2;
-  
+
         for (var i = 0; i < tags; i++)
-        if (view.getUint16(offset + (i * 12), little) == 0x0112)
-          return callback(view.getUint16(offset + (i * 12) + 8, little));
-
-      }else if ((marker & 0xFF00) != 0xFF00) break;
-
+          if (view.getUint16(offset + i * 12, little) == 0x0112)
+            return callback(view.getUint16(offset + i * 12 + 8, little));
+      } else if ((marker & 0xff00) != 0xff00) break;
       else offset += view.getUint16(offset, false);
-		}
-		  
-	  return callback(-1);
-	};
-  
-	reader.readAsArrayBuffer(file.slice(0, 64 * 1024));
-};
+    }
+
+    return callback(-1);
+  };
+
+  reader.readAsArrayBuffer(file.slice(0, 64 * 1024));
+}
 
 var i = 0;
 var global_new_bill_id = 0;
 var global_point_id = 0;
-var type_bill = 'bill';
+var type_bill = "bill";
 var bill_type = 0;
 var is_return = false;
 const url_bill = "https://jacochef.ru/src/img/billing_items/upload.php";
@@ -131,58 +136,76 @@ var dropzoneOptions_bill = {
   parallelUploads: 10,
   acceptedFiles: "image/jpeg,image/png,image/gif,.pdf",
   addRemoveLinks: true,
-  
+
   url: url_bill,
 
-  init: function() {
-
+  init: function () {
     var myDropzone = this;
 
-    this.on("queuecomplete", function(data){
+    this.on("queuecomplete", function (data) {
       var check_img = false;
 
-      myDropzone['files'].map(function(item, key){
-        if( item['status'] == "error" ){
+      myDropzone["files"].map(function (item, key) {
+        if (item["status"] == "error") {
           check_img = true;
         }
-      })
-      
-      if( check_img ){
+      });
+
+      if (check_img) {
         return;
       }
-      
+
       //console.log( 'queuecomplete' )
       //$('#modal_message').addClass('modal_true');
       //show_modal_message('Результат операции', 'Накладная успешно сохранена');
       //window.location.pathname = '/billing';
 
-      if( is_return == true ){
-        window.location = '/billing';
+      if (is_return == true) {
+        window.location = "/billing";
       }
-    })
-    
-    this.on("sending", function(file, xhr, data) {
+    });
+
+    this.on("sending", function (file, xhr, data) {
       //var point = document.getElementById('point_id').value;
 
       i++;
-      var file_type = (file.name).split('.');
+      var file_type = file.name.split(".");
       file_type = file_type[file_type.length - 1];
       file_type = file_type.toLowerCase();
 
-      if( type_bill == 'bill' ){
-        data.append("filetype", 'bill_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
-        data.append("type_bill", 'bill');
-      }else{
-        data.append("filetype", 'bill_ex_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
+      if (type_bill == "bill") {
+        data.append(
+          "filetype",
+          "bill_file_" +
+            i +
+            "_point_id_" +
+            global_point_id +
+            "_bill_id_" +
+            global_new_bill_id +
+            "." +
+            file_type,
+        );
+        data.append("type_bill", "bill");
+      } else {
+        data.append(
+          "filetype",
+          "bill_ex_file_" +
+            i +
+            "_point_id_" +
+            global_point_id +
+            "_bill_id_" +
+            global_new_bill_id +
+            "." +
+            file_type,
+        );
       }
-      
-      
+
       //'bill_file_0_point_id_1_bill_id_9114.png'
-      
-      if( file_type != 'pdf' ){
-        getOrientation(file, function(orientation) {
+
+      if (file_type != "pdf") {
+        getOrientation(file, function (orientation) {
           data.append("orientation", orientation);
-        })
+        });
       }
     });
   },
@@ -196,56 +219,74 @@ var dropzoneOptions_bill_factur = {
   parallelUploads: 10,
   acceptedFiles: "image/jpeg,image/png,image/gif,.pdf",
   addRemoveLinks: true,
-  
+
   url: url_bill,
 
-  init: function() {
-
+  init: function () {
     var myDropzone = this;
 
-    this.on("queuecomplete", function(data){
+    this.on("queuecomplete", function (data) {
       var check_img = false;
 
-      myDropzone['files'].map(function(item, key){
-        if( item['status'] == "error" ){
+      myDropzone["files"].map(function (item, key) {
+        if (item["status"] == "error") {
           check_img = true;
         }
-      })
-      
-      if( check_img ){
+      });
+
+      if (check_img) {
         return;
       }
-      
+
       //console.log( 'queuecomplete' )
       //$('#modal_message').addClass('modal_true');
       //show_modal_message('Результат операции', 'Накладная успешно сохранена');
       //window.location.pathname = '/billing';
 
-      window.location.pathname = '/billing';
-    })
-    
-    this.on("sending", function(file, xhr, data) {
+      window.location.pathname = "/billing";
+    });
+
+    this.on("sending", function (file, xhr, data) {
       //var point = document.getElementById('point_id').value;
 
       i++;
-      var file_type = (file.name).split('.');
+      var file_type = file.name.split(".");
       file_type = file_type[file_type.length - 1];
       file_type = file_type.toLowerCase();
 
-      if( type_bill== 'bill' ){
-        data.append("filetype", 'bill_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
-        data.append("type_bill", 'factur');
-      }else{
-        data.append("filetype", 'bill_ex_file_'+i+'_point_id_'+global_point_id+'_bill_id_'+global_new_bill_id+'.'+file_type);
+      if (type_bill == "bill") {
+        data.append(
+          "filetype",
+          "bill_file_" +
+            i +
+            "_point_id_" +
+            global_point_id +
+            "_bill_id_" +
+            global_new_bill_id +
+            "." +
+            file_type,
+        );
+        data.append("type_bill", "factur");
+      } else {
+        data.append(
+          "filetype",
+          "bill_ex_file_" +
+            i +
+            "_point_id_" +
+            global_point_id +
+            "_bill_id_" +
+            global_new_bill_id +
+            "." +
+            file_type,
+        );
       }
-      
-      
+
       //'bill_file_0_point_id_1_bill_id_9114.png'
-      
-      if( file_type != 'pdf' ){
-        getOrientation(file, function(orientation) {
+
+      if (file_type != "pdf") {
+        getOrientation(file, function (orientation) {
           data.append("orientation", orientation);
-        })
+        });
       }
     });
   },
@@ -258,16 +299,16 @@ const useStore = create((set, get) => ({
   my_acces: [],
 
   vendor_items: [],
-  search_item: '',
+  search_item: "",
   vendor_itemsCopy: [],
 
   all_ed_izmer: [],
 
-  pq: '',
-  count: '',
-  fact_unit: '',
-  summ: '',
-  sum_w_nds: '',
+  pq: "",
+  count: "",
+  fact_unit: "",
+  summ: "",
+  sum_w_nds: "",
 
   err_items: [],
 
@@ -279,44 +320,44 @@ const useStore = create((set, get) => ({
 
   openAlert: false,
   err_status: true,
-  err_text: '',
+  err_text: "",
 
   points: [],
-  point: '',
-  point_name: '',
+  point: "",
+  point_name: "",
 
-  search_vendor: '',
+  search_vendor: "",
 
   docs: [],
-  doc: '',
+  doc: "",
 
   vendors: [],
   vendorsCopy: [],
 
   types: types,
-  type: '',
+  type: "",
 
   fullScreen: false,
 
   kinds: [],
-  doc_base_id: '',
+  doc_base_id: "",
 
-  number: '',
-  number_factur: '',
+  number: "",
+  number_factur: "",
 
   date: null,
   date_factur: null,
   date_items: null,
 
   is_load_store: false,
-  module: 'billing',
+  module: "billing",
 
   imgs_bill: [],
   modalDialog: false,
-  image: '',
+  image: "",
   imgs_factur: [],
 
-  vendor_name: '',
+  vendor_name: "",
 
   bill_list: [],
   bill: null,
@@ -326,7 +367,7 @@ const useStore = create((set, get) => ({
   users: [],
   user: [],
 
-  comment: '',
+  comment: "",
 
   is_horizontal: false,
   is_vertical: false,
@@ -339,7 +380,7 @@ const useStore = create((set, get) => ({
 
   handleDrag: (event) => {
     set({
-      dragIndex: event.currentTarget.id
+      dragIndex: event.currentTarget.id,
     });
   },
 
@@ -353,7 +394,7 @@ const useStore = create((set, get) => ({
     bill_items[get().dragIndex] = drop;
 
     set({
-      bill_items
+      bill_items,
     });
   },
 
@@ -364,15 +405,15 @@ const useStore = create((set, get) => ({
     });
   },
 
-  setPoints: points => {
+  setPoints: (points) => {
     set({
-      points
-    })
+      points,
+    });
   },
 
-  setAcces: acces => {
+  setAcces: (acces) => {
     set({
-      acces
+      acces,
     });
   },
 
@@ -381,28 +422,28 @@ const useStore = create((set, get) => ({
       is_load_store: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: queryString.stringify({
         method: method,
         module: get().module,
         version: 2,
-        login: localStorage.getItem('token'),
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })
       .then((res) => res.json())
       .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/";
           return;
         }
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
           return;
         }
 
@@ -425,7 +466,7 @@ const useStore = create((set, get) => ({
   changeAutocomplite: (type, data) => {
     set({
       [type]: data,
-    })
+    });
   },
 
   changeItemChecked: (event, data) => {
@@ -437,45 +478,47 @@ const useStore = create((set, get) => ({
   },
 
   getDataBill: (res, point, items, docs) => {
-
     set({
       is_load_store: true,
     });
 
     const bill_items = res.bill_items.map((item) => {
-
-      item.all_ed_izmer = item.pq_item.map(it => {
+      item.all_ed_izmer = item.pq_item.map((it) => {
         it = { name: `${it.name}`, id: it.id };
         return it;
       });
 
-      item.fact_unit = (Number(item.fact_unit)).toFixed(2);
+      item.fact_unit = Number(item.fact_unit).toFixed(2);
       item.price_item = item.price;
 
-      const nds = get().check_nds_bill((Number(item.price_w_nds) - Number(item.price_item)) / (Number(item.price_item) / 100));
+      const nds = get().check_nds_bill(
+        (Number(item.price_w_nds) - Number(item.price_item)) / (Number(item.price_item) / 100),
+      );
 
       if (nds) {
         item.nds = nds;
-        item.summ_nds = (Number(item.price_w_nds) - Number(item.price_item)).toFixed(2)
+        item.summ_nds = (Number(item.price_w_nds) - Number(item.price_item)).toFixed(2);
       } else {
         item.summ_nds = (0).toFixed(2);
-        item.nds = '';
+        item.nds = "";
       }
 
       return item;
     });
 
-    const allPrice = (bill_items.reduce((all, item) => all + Number(item.price), 0)).toFixed(2);
-    const allPrice_w_nds = (bill_items.reduce((all, item) => all + Number(item.price_w_nds), 0)).toFixed(2);
-   
+    const allPrice = bill_items.reduce((all, item) => all + Number(item.price), 0).toFixed(2);
+    const allPrice_w_nds = bill_items
+      .reduce((all, item) => all + Number(item.price_w_nds), 0)
+      .toFixed(2);
+
     set({
       vendor_items: items,
       vendor_itemsCopy: items,
       docs: docs.billings,
       point: point ?? [],
-      point_name: point?.name ?? '',
+      point_name: point?.name ?? "",
       vendors: res?.vendors ?? [],
-      vendor_name: res?.vendors[0]?.name ?? '',
+      vendor_name: res?.vendors[0]?.name ?? "",
       bill_list: res?.bill_hist,
       imgs_bill: res?.bill_imgs,
       allPrice,
@@ -497,65 +540,63 @@ const useStore = create((set, get) => ({
       date_factur: res.bill?.date_factur,
     });
 
-
     get().changeKinds(res?.bill?.type_doc);
   },
 
   clearForm: () => {
     set({
       bill_items: [],
-      search_item: '',
+      search_item: "",
       vendor_items: [],
       vendor_itemsCopy: [],
       users: [],
       all_ed_izmer: [],
-      pq: '',
-      count: '',
-      fact_unit: '',
-      summ: '',
-      sum_w_nds: '',
+      pq: "",
+      count: "",
+      fact_unit: "",
+      summ: "",
+      sum_w_nds: "",
       bill_items_doc: [],
       docs: [],
-      doc: '',
+      doc: "",
       points: [],
-      point: '',
-      point_name: '',
+      point: "",
+      point_name: "",
       vendors: [],
-      vendor_name: '',
+      vendor_name: "",
       bill_list: [],
       imgs_bill: [],
       allPrice: 0,
       allPrice_w_nds: 0,
-      number: '',
+      number: "",
       date: null,
       date_items: null,
-      comment: '',
+      comment: "",
       user: [],
-      type: '',
-      doc_base_id: '',
-      number_factur: '',
+      type: "",
+      doc_base_id: "",
+      number_factur: "",
       date_factur: null,
-      is_new_doc: 0
+      is_new_doc: 0,
     });
-
   },
 
   closeDialog: () => {
     document.body.style.overflow = "";
-    set({ 
+    set({
       modalDialog: false,
       is_horizontal: false,
-      is_vertical: false
-    })
+      is_vertical: false,
+    });
   },
 
   openImageBill: (image) => {
     get().handleResize();
 
-    set({ 
-      modalDialog: true, 
-      image
-    })
+    set({
+      modalDialog: true,
+      image,
+    });
   },
 
   handleResize: () => {
@@ -583,84 +624,84 @@ const useStore = create((set, get) => ({
   },
 
   search_doc: async (event, name) => {
+    const search = event.target.value ? event.target.value : name ? name : "";
 
-    const search = event.target.value ? event.target.value : name ? name : '';
-
-    if(search) {
-        
+    if (search) {
       const docs = get().docs;
       const vendor_id = get().vendor?.id;
       const point = get().point;
-      
+
       const vendor_items = get().vendor_items;
 
-      const billing_id = docs.find(doc => doc.name === search)?.id;
-      
+      const billing_id = docs.find((doc) => doc.name === search)?.id;
+
       const obj = {
         billing_id,
         vendor_id,
         point_id: point.id,
-      }
-      
-      const res = await get().getData('get_base_doc_data', obj);
-      
+      };
+
+      const res = await get().getData("get_base_doc_data", obj);
+
       set({
         bill_items: [],
         //bill_items_doc: [],
-        search_item: '',
+        search_item: "",
         vendor_items: res.items,
         vendor_itemsCopy: res.items,
         users: res.users,
         all_ed_izmer: [],
-        pq: '',
-        count: '',
-        fact_unit: '',
-        summ: '',
-        sum_w_nds: '',
+        pq: "",
+        count: "",
+        fact_unit: "",
+        summ: "",
+        sum_w_nds: "",
         bill_items_doc: res.billing_items,
         bill_base_id: billing_id,
       });
 
-      
+      res.billing_items.map((item) => {
+        let test = res.items.filter((v) => parseInt(v.id) === parseInt(item.item_id));
 
-      res.billing_items.map( item => {
-
-        let test = res.items.filter( v => parseInt(v.id) === parseInt(item.item_id) );
-
-        get().addItem_fast(item.count, item.count * item.pq, item.price, item.price_w_nds, item.ed_izmer_name, item.pq, item.item_id, test);
-      } )
-
+        get().addItem_fast(
+          item.count,
+          item.count * item.pq,
+          item.price,
+          item.price_w_nds,
+          item.ed_izmer_name,
+          item.pq,
+          item.item_id,
+          test,
+        );
+      });
     } else {
-
       const point = get().point;
       const vendors = get().vendors;
       const docs = get().docs;
 
-      if(point && vendors.length === 1 && docs.length) {
-        
+      if (point && vendors.length === 1 && docs.length) {
         const data = {
           point_id: point.id,
-          vendor_id: vendor?.id
-        }
-        
-        const res = await get().getData('get_vendor_items', data);
-        
+          vendor_id: vendor?.id,
+        };
+
+        const res = await get().getData("get_vendor_items", data);
+
         set({
           bill_items: [],
           bill_items_doc: [],
           vendor_items: res.items,
           vendor_itemsCopy: res.items,
           users: res.users,
-          search_item: '',
+          search_item: "",
           all_ed_izmer: [],
-          pq: '',
-          count: '',
-          fact_unit: '',
-          summ: '',
-          sum_w_nds: '',
+          pq: "",
+          count: "",
+          fact_unit: "",
+          summ: "",
+          sum_w_nds: "",
         });
       }
-
     }
 
     set({
@@ -669,53 +710,51 @@ const useStore = create((set, get) => ({
   },
 
   search_vendors: async (event, name) => {
-    const search = event.target.value ? event.target.value : name ? name : '';
+    const search = event.target.value ? event.target.value : name ? name : "";
 
     const vendorsCopy = get().vendorsCopy;
 
-    const vendors = vendorsCopy.filter((value) => search ? value.name.toLowerCase() === search.toLowerCase() : value);
+    const vendors = vendorsCopy.filter((value) =>
+      search ? value.name.toLowerCase() === search.toLowerCase() : value,
+    );
 
     const vendor = get().vendors.find((value) => value.name == search);
 
     if (search && vendors.length) {
-
       const point = get().point;
 
       const data = {
         point_id: point.id,
-        vendor_id: vendors[0].id
-      }
+        vendor_id: vendors[0].id,
+      };
 
-      const res = await get().getData('get_vendor_items', data);
-      const docs = await get().getData('get_base_doc', data);
+      const res = await get().getData("get_vendor_items", data);
+      const docs = await get().getData("get_base_doc", data);
 
       set({
         vendor_items: res.items,
         vendor_itemsCopy: res.items,
         users: res.users,
         docs: docs.billings,
-        doc: '',
+        doc: "",
         vendor: vendor,
       });
-
     } else {
-    
       set({
         bill_items: [],
         bill_items_doc: [],
-        search_item: '',
+        search_item: "",
         vendor_items: [],
         vendor_itemsCopy: [],
         all_ed_izmer: [],
-        pq: '',
-        count: '',
-        fact_unit: '',
-        summ: '',
-        sum_w_nds: '',
+        pq: "",
+        count: "",
+        fact_unit: "",
+        summ: "",
+        sum_w_nds: "",
         docs: [],
-        doc: '',
+        doc: "",
       });
-
     }
 
     set({
@@ -725,77 +764,70 @@ const useStore = create((set, get) => ({
   },
 
   search_point: async (event, name) => {
-    const search = event.target.value ? event.target.value : name ? name : '';
+    const search = event.target.value ? event.target.value : name ? name : "";
 
     const type = get().type;
     const points = get().points;
-    const point = points.find(item => item.name === search);
-    
+    const point = points.find((item) => item.name === search);
+
     set({
       bill_items: [],
       bill_items_doc: [],
-      point: point ?? '',
-      point_name: point?.name ?? '',
-      search_vendor: '',
-      search_item: '',
+      point: point ?? "",
+      point_name: point?.name ?? "",
+      search_vendor: "",
+      search_item: "",
       vendor_items: [],
       vendor_itemsCopy: [],
       all_ed_izmer: [],
-      pq: '',
-      count: '',
-      fact_unit: '',
-      summ: '',
-      sum_w_nds: '',
+      pq: "",
+      count: "",
+      fact_unit: "",
+      summ: "",
+      sum_w_nds: "",
       users: [],
       docs: [],
-      doc: ''
+      doc: "",
     });
 
-    if(point && type) {
-  
-        const obj = {
-          point_id: point.id,
-          type
-        }
-  
-        const res = await get().getData('get_vendors', obj)
-  
-        set({
-          vendors: res.vendors,
-          vendorsCopy: res.vendors,
-        })
+    if (point && type) {
+      const obj = {
+        point_id: point.id,
+        type,
+      };
 
-      } else {
+      const res = await get().getData("get_vendors", obj);
 
-        set({
-          vendors: [],
-          vendorsCopy: [],
-        })
-
-      }
+      set({
+        vendors: res.vendors,
+        vendorsCopy: res.vendors,
+      });
+    } else {
+      set({
+        vendors: [],
+        vendorsCopy: [],
+      });
+    }
   },
 
   setData: (...props) => {
-
-    set(
-      ...props
-    )
+    set(...props);
   },
 
   search_vendor_items: (event, name) => {
+    const search = event.target.value ? event.target.value : name ? name : "";
 
-    const search = event.target.value ? event.target.value : name ? name : '';
-
-    const vendor_itemsCopy = JSON.parse(JSON.stringify(get().vendor_itemsCopy))
+    const vendor_itemsCopy = JSON.parse(JSON.stringify(get().vendor_itemsCopy));
 
     let vendor_items = [];
 
     if (vendor_itemsCopy.length) {
-
-      vendor_items = vendor_itemsCopy.filter((value) => search ? value.name.toLowerCase() === search.toLowerCase() : value);
+      vendor_items = vendor_itemsCopy.filter((value) =>
+        search ? value.name.toLowerCase() === search.toLowerCase() : value,
+      );
 
       vendor_items.map((item) => {
-        item.pq_item = item.pq_item.map(it => {
+        item.pq_item = item.pq_item.map((it) => {
           it = { name: `${it.name}`, id: it.id };
           return it;
         });
@@ -806,14 +838,13 @@ const useStore = create((set, get) => ({
         vendor_items,
         all_ed_izmer: vendor_items.length ? vendor_items[0].pq_item : [],
         //pq: vendor_items.length ? vendor_items[0].pq_item[0].id : '',
-        pq: '',
-        count: '',
-        fact_unit: '',
-        summ: '',
-        sum_w_nds: '',
+        pq: "",
+        count: "",
+        fact_unit: "",
+        summ: "",
+        sum_w_nds: "",
         //search_item: '',
       });
-
     }
 
     set({
@@ -828,7 +859,7 @@ const useStore = create((set, get) => ({
 
     set({
       count,
-      fact_unit: fact_unit ? fact_unit : '',
+      fact_unit: fact_unit ? fact_unit : "",
     });
   },
 
@@ -838,7 +869,7 @@ const useStore = create((set, get) => ({
     const fact_unit = Number(get().pq) * Number(count);
 
     set({
-      fact_unit: fact_unit ? fact_unit : '',
+      fact_unit: fact_unit ? fact_unit : "",
     });
   },
 
@@ -847,70 +878,68 @@ const useStore = create((set, get) => ({
 
     const value = event.target.value;
     const point = get().point;
-    
-    if(data === 'type' && point) {
 
+    if (data === "type" && point) {
       // const vendors = get().vendors;
 
-        // if(point) {
-          
-          const obj = {
-            point_id: point.id,
-            type: value
-          }
+      // if(point) {
 
-          const res = await get().getData('get_vendors', obj)
-          
-          // const data = {
-          //   point_id: point.id,
-          //   vendor_id: vendors[0]?.id
-          // }
+      const obj = {
+        point_id: point.id,
+        type: value,
+      };
 
-          // const res = await get().getData('get_vendor_items', data);
-          
-          set({
-            vendors: res.vendors,
-            vendorsCopy: res.vendors,
-            vendor_name: '',
-            bill_items: [],
-            bill_items_doc: [],
-            vendor_items: [],
-            vendor_itemsCopy: [],
-            users: [],
-            search_vendor: '',
-            // vendor_items: res.items,
-            // vendor_itemsCopy: res.items,
-            // users: res.users,
-            search_item: '',
-            all_ed_izmer: [],
-            pq: '',
-            count: '',
-            fact_unit: '',
-            summ: '',
-            sum_w_nds: '',
-            doc: '',
-          });
-        // }
+      const res = await get().getData("get_vendors", obj);
+
+      // const data = {
+      //   point_id: point.id,
+      //   vendor_id: vendors[0]?.id
+      // }
+
+      // const res = await get().getData('get_vendor_items', data);
+
+      set({
+        vendors: res.vendors,
+        vendorsCopy: res.vendors,
+        vendor_name: "",
+        bill_items: [],
+        bill_items_doc: [],
+        vendor_items: [],
+        vendor_itemsCopy: [],
+        users: [],
+        search_vendor: "",
+        // vendor_items: res.items,
+        // vendor_itemsCopy: res.items,
+        // users: res.users,
+        search_item: "",
+        all_ed_izmer: [],
+        pq: "",
+        count: "",
+        fact_unit: "",
+        summ: "",
+        sum_w_nds: "",
+        doc: "",
+      });
+      // }
     }
 
-    if(data === 'type' && (parseInt(value) === 3 || parseInt(value) === 2)) {
+    if (data === "type" && (parseInt(value) === 3 || parseInt(value) === 2)) {
       get().changeKinds(value);
     }
 
-    if(data === 'type'){
-      
-      if( parseInt(value) === 2 && parseInt( get().doc_base_id ) == 5 ){
-        setTimeout( () => {
-          if( document.getElementById('img_bill_type') ){
+    if (data === "type") {
+      if (parseInt(value) === 2 && parseInt(get().doc_base_id) == 5) {
+        setTimeout(() => {
+          if (document.getElementById("img_bill_type")) {
             set({
-              DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions_bill_factur)
-            })
+              DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions_bill_factur),
+            });
           }
-        }, 1000 )
-      }else{
+        }, 1000);
+      } else {
         set({
-          DropzoneDop: null
-        })
+          DropzoneDop: null,
+        });
       }
 
       /*set({
@@ -920,24 +949,24 @@ const useStore = create((set, get) => ({
       })*/
     }
 
-    if(data === 'doc_base_id'){
-      if( parseInt(value) === 1 && parseInt( get().type ) == 2 ){
-        setTimeout( () => {
-          if( document.getElementById('img_bill_type') ){
+    if (data === "doc_base_id") {
+      if (parseInt(value) === 1 && parseInt(get().type) == 2) {
+        setTimeout(() => {
+          if (document.getElementById("img_bill_type")) {
             set({
-              DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions_bill_factur)
-            })
+              DropzoneDop: new Dropzone("#img_bill_type", dropzoneOptions_bill_factur),
+            });
           }
-        }, 1000 )
-      }else{
+        }, 1000);
+      } else {
         set({
-          DropzoneDop: null
-        })
+          DropzoneDop: null,
+        });
       }
     }
 
     set({
-      [data]: event.target.value
+      [data]: event.target.value,
     });
 
     get().reCount();
@@ -946,22 +975,22 @@ const useStore = create((set, get) => ({
   changeKinds: (value) => {
     let kinds = [];
 
-    if( parseInt(value) === 2 ){
+    if (parseInt(value) === 2) {
       kinds = [
         {
-          "name": "Накладная",
-          "id": "1"
+          name: "Накладная",
+          id: "1",
         },
         {
-          "name": "УПД",
-          "id": "2"
+          name: "УПД",
+          id: "2",
         },
       ];
     } else {
       kinds = [
         {
-          "name": "УКД",
-          "id": "3"
+          name: "УКД",
+          id: "3",
         },
       ];
     }
@@ -974,13 +1003,15 @@ const useStore = create((set, get) => ({
   reducePrice: () => {
     const bill_items = get().bill_items;
 
-    const allPrice = (bill_items.reduce((all, item) => all + Number(item.price_item), 0)).toFixed(2);
-    const allPrice_w_nds = (bill_items.reduce((all, item) => all + Number(item.price_w_nds), 0)).toFixed(2);
+    const allPrice = bill_items.reduce((all, item) => all + Number(item.price_item), 0).toFixed(2);
+    const allPrice_w_nds = bill_items
+      .reduce((all, item) => all + Number(item.price_w_nds), 0)
+      .toFixed(2);
 
     set({
       allPrice,
-      allPrice_w_nds
-    })
+      allPrice_w_nds,
+    });
   },
 
   deleteItem: (key) => {
@@ -1000,10 +1031,10 @@ const useStore = create((set, get) => ({
   },
 
   showAlert: (status, text) => {
-    set({ 
+    set({
       openAlert: true,
       err_status: status,
-      err_text: text
+      err_text: text,
     });
   },
 
@@ -1013,24 +1044,22 @@ const useStore = create((set, get) => ({
     let bill_items = get().bill_items;
 
     if (!count || !fact_unit || !summ || !sum_w_nds || !pq || !all_ed_izmer.length) {
-
       set({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо выбрать Товар / кол-во Товара / указать суммы',
+        err_text: "Необходимо выбрать Товар / кол-во Товара / указать суммы",
       });
 
       return;
     }
 
-    const nds = get().check_nds_bill((Number(sum_w_nds) - Number(summ)) / (Number(summ) / 100))
+    const nds = get().check_nds_bill((Number(sum_w_nds) - Number(summ)) / (Number(summ) / 100));
 
     if (!nds) {
-
       set({
         openAlert: true,
         err_status: false,
-        err_text: 'Суммы указаны неверно',
+        err_text: "Суммы указаны неверно",
       });
 
       return;
@@ -1049,24 +1078,26 @@ const useStore = create((set, get) => ({
     vendor_items[0].pq = pq;
     vendor_items[0].all_ed_izmer = all_ed_izmer;
     vendor_items[0].count = count;
-    vendor_items[0].fact_unit = (Number(fact_unit)).toFixed(2);
+    vendor_items[0].fact_unit = Number(fact_unit).toFixed(2);
     vendor_items[0].price_item = summ;
     vendor_items[0].price_w_nds = sum_w_nds;
 
     const bill_items_doc = get().bill_items_doc;
 
-    if(bill_items_doc.length) {
-      const item = bill_items_doc.find(it => it.item_id === vendor_items[0].id);
+    if (bill_items_doc.length) {
+      const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
 
       item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
       item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
 
-      const nds = get().check_nds_bill((Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100))
+      const nds = get().check_nds_bill(
+        (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
+      );
 
-      if(nds) {
+      if (nds) {
         item.nds = nds;
       } else {
-        item.nds = '';
+        item.nds = "";
       }
 
       vendor_items[0].data_bill = item;
@@ -1074,28 +1105,29 @@ const useStore = create((set, get) => ({
 
     bill_items.push(vendor_items[0]);
 
-    const allPrice = (bill_items.reduce((all, item) => all + Number(item.price_item), 0)).toFixed(2);
-    const allPrice_w_nds = (bill_items.reduce((all, item) => all + Number(item.price_w_nds), 0)).toFixed(2);
+    const allPrice = bill_items.reduce((all, item) => all + Number(item.price_item), 0).toFixed(2);
+    const allPrice_w_nds = bill_items
+      .reduce((all, item) => all + Number(item.price_w_nds), 0)
+      .toFixed(2);
 
     set({
       bill_items,
       allPrice,
       allPrice_w_nds,
-      count: '',
-      fact_unit: '',
-      summ: '',
-      sum_w_nds: '',
-      search_item: '',
-      pq: '',
+      count: "",
+      fact_unit: "",
+      summ: "",
+      sum_w_nds: "",
+      search_item: "",
+      pq: "",
     });
 
     get().check_price_item_new();
   },
 
-  addItem_fast: ( count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, item_id, vendor_items ) => {
-    
-    if( vendor_items.length == 0 ) {
-      return ;
+  addItem_fast: (count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, item_id, vendor_items) => {
+    if (vendor_items.length == 0) {
+      return;
     }
 
     //const { count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, vendor_items } = get();
@@ -1105,30 +1137,32 @@ const useStore = create((set, get) => ({
     //const nds = get().check_nds_bill((Number(sum_w_nds) - Number(summ)) / (Number(summ) / 100))
 
     vendor_items[0].color = false;
-   
-    vendor_items[0].summ_nds = '';
-    vendor_items[0].nds = '';
-    vendor_items[0].pq = '';
+
+    vendor_items[0].summ_nds = "";
+    vendor_items[0].nds = "";
+    vendor_items[0].pq = "";
     vendor_items[0].all_ed_izmer = all_ed_izmer;
-    vendor_items[0].count = '';
-    vendor_items[0].fact_unit = '';
-    vendor_items[0].price_item = '';
-    vendor_items[0].price_w_nds = '';
+    vendor_items[0].count = "";
+    vendor_items[0].fact_unit = "";
+    vendor_items[0].price_item = "";
+    vendor_items[0].price_w_nds = "";
 
     const bill_items_doc = get().bill_items_doc;
 
-    if(bill_items_doc.length) {
-      const item = bill_items_doc.find(it => it.item_id === vendor_items[0].id);
+    if (bill_items_doc.length) {
+      const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
 
       item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
       item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
 
-      const nds = get().check_nds_bill((Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100))
+      const nds = get().check_nds_bill(
+        (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
+      );
 
-      if(nds) {
+      if (nds) {
         item.nds = nds;
       } else {
-        item.nds = '';
+        item.nds = "";
       }
 
       vendor_items[0].data_bill = item;
@@ -1136,8 +1170,10 @@ const useStore = create((set, get) => ({
 
     bill_items.push(vendor_items[0]);
 
-    const allPrice = (bill_items.reduce((all, item) => all + Number(item.price_item), 0)).toFixed(2);
-    const allPrice_w_nds = (bill_items.reduce((all, item) => all + Number(item.price_w_nds), 0)).toFixed(2);
+    const allPrice = bill_items.reduce((all, item) => all + Number(item.price_item), 0).toFixed(2);
+    const allPrice_w_nds = bill_items
+      .reduce((all, item) => all + Number(item.price_w_nds), 0)
+      .toFixed(2);
 
     set({
       bill_items,
@@ -1148,57 +1184,71 @@ const useStore = create((set, get) => ({
 
   check_nds_bill: (value) => {
     let nds = [];
-    nds[0] = 'без НДС';
-    nds[5] = '5 %';
-    nds[7] = '7 %';
-    nds[10] = '10 %';
-    nds[20] = '20 %';
-    nds[18] = '18 %';
- 
+    nds[0] = "без НДС";
+    nds[5] = "5 %";
+    nds[7] = "7 %";
+    nds[10] = "10 %";
+    nds[20] = "20 %";
+    nds[18] = "18 %";
+
     return nds[Math.round(value)] ? nds[Math.round(value)] : false;
   },
 
   check_price_item_new: () => {
-		var err_items = [];
-    var bill_items = get().bill_items;		
+    var err_items = [];
+    var bill_items = get().bill_items;
     var vendor_items = get().vendor_items;
 
-    console.log( bill_items )
-    console.log( vendor_items )
+    console.log(bill_items);
+    console.log(vendor_items);
 
     bill_items.map((item, key) => {
-      let one_price_bill = parseFloat(item['price']);
-      let one_price_vend = vendor_items.find(it => parseInt(it.id) === parseInt(item['id']))?.price;
-      let vendor_percent = vendor_items.find(it => parseInt(it.id) === parseInt(item['id']))?.vend_percent;
+      let one_price_bill = parseFloat(item["price"]);
+      let one_price_vend = vendor_items.find(
+        (it) => parseInt(it.id) === parseInt(item["id"]),
+      )?.price;
+      let vendor_percent = vendor_items.find(
+        (it) => parseInt(it.id) === parseInt(item["id"]),
+      )?.vend_percent;
 
-      let one_price_max = parseFloat(one_price_vend) + ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
-			let one_price_min = parseFloat(one_price_vend) - ((parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent));
+      let one_price_max =
+        parseFloat(one_price_vend) +
+        (parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent);
+      let one_price_min =
+        parseFloat(one_price_vend) -
+        (parseFloat(one_price_vend) / 100) * parseFloat(vendor_percent);
 
-      if(one_price_bill >= one_price_max || one_price_bill <= one_price_min || !one_price_bill || !one_price_max || !one_price_min || one_price_bill == 0 ){
+      if (
+        one_price_bill >= one_price_max ||
+        one_price_bill <= one_price_min ||
+        !one_price_bill ||
+        !one_price_max ||
+        !one_price_min ||
+        one_price_bill == 0
+      ) {
         err_items.push(item);
 
-        bill_items[ key ].color = true;
-      }else{
-        bill_items[ key ].color = false;
+        bill_items[key].color = true;
+      } else {
+        bill_items[key].color = false;
       }
-    })
+    });
 
     set({
       bill_items,
-      err_items
-    })
-	},
+      err_items,
+    });
+  },
 
   check_price_item: (price, percent, summ, pq) => {
-
-    const res = Number(price) / 100 * Number(percent);
+    const res = (Number(price) / 100) * Number(percent);
 
     const price_item = Number(summ) / Number(pq);
 
-    if(price_item >= (Number(price) - res) && price_item <= (Number(price) + res)) {
-      return true
+    if (price_item >= Number(price) - res && price_item <= Number(price) + res) {
+      return true;
     } else {
-      return false
+      return false;
     }
   },
 
@@ -1209,58 +1259,57 @@ const useStore = create((set, get) => ({
 
     bill_items = bill_items.map((item, index) => {
       if (item.id === id && key === index) {
-
         item[type] = value;
 
-        if (type === 'pq') {
+        if (type === "pq") {
           item.fact_unit = (Number(item[type]) * Number(item.count)).toFixed(2);
-        } 
-
-        if (value && value !== '0' && value[0] !== '0' && type === 'count') {
-
-          item.fact_unit = (Number(item[type]) * Number(item.pq)).toFixed(2);
-
-        } else {
-
-          if (type === 'count') {
-            item.fact_unit = 0;
-          }
-    
-          //item.color = true;
-
         }
 
+        if (value && value !== "0" && value[0] !== "0" && type === "count") {
+          item.fact_unit = (Number(item[type]) * Number(item.pq)).toFixed(2);
+        } else {
+          if (type === "count") {
+            item.fact_unit = 0;
+          }
 
-        if(type === 'price_item' || type === 'price_w_nds') {
-          const nds = get().check_nds_bill((Number(item.price_w_nds) - Number(item.price_item)) / (Number(item.price_item) / 100))
+          //item.color = true;
+        }
+
+        if (type === "price_item" || type === "price_w_nds") {
+          const nds = get().check_nds_bill(
+            (Number(item.price_w_nds) - Number(item.price_item)) / (Number(item.price_item) / 100),
+          );
 
           if (nds) {
             item.nds = nds;
-            item.summ_nds = (Number(item.price_w_nds) - Number(item.price_item)).toFixed(2)
+            item.summ_nds = (Number(item.price_w_nds) - Number(item.price_item)).toFixed(2);
           } else {
             item.summ_nds = 0;
-            item.nds = '';
+            item.nds = "";
           }
-        } 
+        }
 
-
-
-        item.price = Number(item.fact_unit) == 0 ? 0 : Number(item.price_w_nds) / Number(item.fact_unit);
+        item.price =
+          Number(item.fact_unit) == 0 ? 0 : Number(item.price_w_nds) / Number(item.fact_unit);
       }
 
       return item;
     });
 
-    if (type === 'price_item') {
-      const allPrice = (bill_items.reduce((all, item) => all + Number(item.price_item), 0)).toFixed(2);
+    if (type === "price_item") {
+      const allPrice = bill_items
+        .reduce((all, item) => all + Number(item.price_item), 0)
+        .toFixed(2);
 
       set({
         allPrice,
       });
     }
 
-    if (type === 'price_w_nds') {
-      const allPrice_w_nds = (bill_items.reduce((all, item) => all + Number(item.price_w_nds), 0)).toFixed(2);
+    if (type === "price_w_nds") {
+      const allPrice_w_nds = bill_items
+        .reduce((all, item) => all + Number(item.price_w_nds), 0)
+        .toFixed(2);
 
       set({
         allPrice_w_nds,
@@ -1272,16 +1321,30 @@ const useStore = create((set, get) => ({
     });
 
     get().check_price_item_new();
-  }
-
+  },
 }));
 
-function FormVendorItems(){
+function FormVendorItems() {
+  const [type, vendor_items, search_item, all_ed_izmer, changeCount, changeData, addItem] =
+    useStore((state) => [
+      state.type,
+      state.vendor_items,
+      state.search_item,
+      state.all_ed_izmer,
+      state.changeCount,
+      state.changeData,
+      state.addItem,
+    ]);
+  const [search_vendor_items, pq, count, fact_unit, summ, sum_w_nds] = useStore((state) => [
+    state.search_vendor_items,
+    state.pq,
+    state.count,
+    state.fact_unit,
+    state.summ,
+    state.sum_w_nds,
+  ]);
 
-  const [ type, vendor_items, search_item, all_ed_izmer, changeCount, changeData, addItem ] = useStore( state => [ state.type, state.vendor_items, state.search_item, state.all_ed_izmer, state.changeCount, state.changeData, state.addItem ]);
-  const [ search_vendor_items, pq, count, fact_unit, summ, sum_w_nds ] = useStore( state => [ state.search_vendor_items, state.pq, state.count, state.fact_unit, state.summ, state.sum_w_nds ]);
-
-  if( parseInt(type) == 3 ){
+  if (parseInt(type) == 3) {
     return null;
   }
 
@@ -1290,54 +1353,61 @@ function FormVendorItems(){
       <Grid
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <h2>Товары поставщика</h2>
-        <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
+        <Divider style={{ backgroundColor: "rgba(0, 0, 0, 0.87)" }} />
       </Grid>
       <Grid
         size={{
           xs: 12,
-          sm: 4
-        }}>
+          sm: 4,
+        }}
+      >
         <MyAutocomplite2
           label="Товар поставщика"
           freeSolo={true}
           multiple={false}
-          data={ vendor_items }
-          value={ search_item?.name }
-          func={ (event, name) => search_vendor_items(event, name) }
-          onBlur={ (event, name) => search_vendor_items(event, name) }
+          data={vendor_items}
+          value={search_item?.name}
+          func={(event, name) => search_vendor_items(event, name)}
+          onBlur={(event, name) => search_vendor_items(event, name)}
         />
       </Grid>
       <Grid
         size={{
           xs: 12,
-          sm: 3
-        }}>
+          sm: 3,
+        }}
+      >
         <MyAutocomplite
           label="Объем упаковки"
           freeSolo={false}
           multiple={false}
-          name={'only_choose'}
-          data={ all_ed_izmer }
-          value={ all_ed_izmer.find( it => it.name == pq ) }
+          name={"only_choose"}
+          data={all_ed_izmer}
+          value={all_ed_izmer.find((it) => it.name == pq)}
           //func={ (event, name) => changeData('pq', event) }
           //onBlur={ (event, name) => changeData('pq', event) }
 
           // func={ (event, data) => { console.log(data, event) } }
           // onBlur={ (event, data) => { console.log(data, event) } }
 
-          func={ (event, data) => changeData( 'pq', { target: { value: data?.id ?? event.target.value } }) }
-          onBlur={ (event, data) => changeData( 'pq', { target: { value: data?.id ?? event.target.value } }) }
+          func={(event, data) =>
+            changeData("pq", { target: { value: data?.id ?? event.target.value } })
+          }
+          onBlur={(event, data) =>
+            changeData("pq", { target: { value: data?.id ?? event.target.value } })
+          }
         />
-
       </Grid>
       <Grid
         size={{
           xs: 12,
-          sm: 3
-        }}>
+          sm: 3,
+        }}
+      >
         <MyTextInput
           type="number"
           label="Кол-во упаковок"
@@ -1348,40 +1418,53 @@ function FormVendorItems(){
       <Grid
         size={{
           xs: 12,
-          sm: 2
-        }}>
-        <MyTextInput label="Кол-вo" disabled={true} value={fact_unit} className='disabled_input' />
+          sm: 2,
+        }}
+      >
+        <MyTextInput
+          label="Кол-вo"
+          disabled={true}
+          value={fact_unit}
+          className="disabled_input"
+        />
       </Grid>
       <Grid
         size={{
           xs: 12,
-          sm: 4
-        }}>
+          sm: 4,
+        }}
+      >
         <MyTextInput
           type="number"
           label="Сумма без НДС"
           value={summ}
-          func={ event => changeData('summ', event) }
+          func={(event) => changeData("summ", event)}
         />
       </Grid>
       <Grid
         size={{
           xs: 12,
-          sm: 4
-        }}>
+          sm: 4,
+        }}
+      >
         <MyTextInput
           type="number"
           label="Сумма c НДС"
           value={sum_w_nds}
-          func={ event => changeData('sum_w_nds', event) }
+          func={(event) => changeData("sum_w_nds", event)}
         />
       </Grid>
       <Grid
         size={{
           xs: 12,
-          sm: 4
-        }}>
-        <Button variant="contained" fullWidth  onClick={addItem}>
+          sm: 4,
+        }}
+      >
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={addItem}
+        >
           <AddIcon />
         </Button>
       </Grid>
@@ -1389,46 +1472,60 @@ function FormVendorItems(){
   );
 }
 
-function VendorItemsTableEdit(){
-
-  const [ type, deleteItem, changeDataTable, handleDrag, handleDrop ] = useStore( state => [ state.type, state.deleteItem, state.changeDataTable, state.handleDrag, state.handleDrop ]);
-  const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+function VendorItemsTableEdit() {
+  const [type, deleteItem, changeDataTable, handleDrag, handleDrop] = useStore((state) => [
+    state.type,
+    state.deleteItem,
+    state.changeDataTable,
+    state.handleDrag,
+    state.handleDrop,
+  ]);
+  const [bill_items_doc, bill_items, allPrice, allPrice_w_nds] = useStore((state) => [
+    state.bill_items_doc,
+    state.bill_items,
+    state.allPrice,
+    state.allPrice_w_nds,
+  ]);
 
   let summ_nds = 0;
 
-  bill_items.map( item => {
+  bill_items.map((item) => {
     summ_nds += parseFloat(item.summ_nds);
-  } )
+  });
 
   return (
     <>
       <Grid
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <h2>Товары в документе</h2>
-        <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
+        <Divider style={{ backgroundColor: "rgba(0, 0, 0, 0.87)" }} />
       </Grid>
       <Grid
         style={{ marginBottom: 20 }}
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <TableContainer component={Paper}>
           <Table aria-label="a dense table">
             <TableHead>
-              <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                <TableCell style={{ minWidth: '150px' }}>Товар</TableCell>
-                { bill_items_doc.length == 0 ? null : <TableCell style={{ minWidth: '130px' }}>Изменения</TableCell> }
-                <TableCell style={{ minWidth: '130px' }}>В упак.</TableCell>
-                <TableCell style={{ minWidth: '130px' }}>Упак</TableCell>
+              <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                <TableCell style={{ minWidth: "150px" }}>Товар</TableCell>
+                {bill_items_doc.length == 0 ? null : (
+                  <TableCell style={{ minWidth: "130px" }}>Изменения</TableCell>
+                )}
+                <TableCell style={{ minWidth: "130px" }}>В упак.</TableCell>
+                <TableCell style={{ minWidth: "130px" }}>Упак</TableCell>
                 <TableCell>Кол-во</TableCell>
-                <TableCell style={{ minWidth: '100px' }}>НДС</TableCell>
-                <TableCell style={{ minWidth: '130px' }}>Сумма без НДС</TableCell>
+                <TableCell style={{ minWidth: "100px" }}>НДС</TableCell>
+                <TableCell style={{ minWidth: "130px" }}>Сумма без НДС</TableCell>
                 <TableCell>Сумма НДС</TableCell>
-                <TableCell style={{ minWidth: '130px' }}>Сумма с НДС</TableCell>
+                <TableCell style={{ minWidth: "130px" }}>Сумма с НДС</TableCell>
                 <TableCell></TableCell>
                 <TableCell></TableCell>
               </TableRow>
@@ -1436,9 +1533,9 @@ function VendorItemsTableEdit(){
             <TableBody>
               {bill_items.map((item, key) => (
                 <React.Fragment key={key}>
-                  {!item?.data_bill ? null :
-                    <TableRow 
-                      style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}
+                  {!item?.data_bill ? null : (
+                    <TableRow
+                      style={{ backgroundColor: item?.color ? "rgb(255, 204, 0)" : "#fff" }}
                       draggable={true}
                       onDragStart={handleDrag}
                       onDrop={handleDrop}
@@ -1447,111 +1544,148 @@ function VendorItemsTableEdit(){
                     >
                       <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
                       <TableCell>До</TableCell>
-                      <TableCell>{item?.data_bill?.pq} {item.ed_izmer_name}</TableCell>
+                      <TableCell>
+                        {item?.data_bill?.pq} {item.ed_izmer_name}
+                      </TableCell>
                       <TableCell>{item?.data_bill?.count}</TableCell>
-                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.fact_unit} {item.ed_izmer_name}</TableCell>
+                      <TableCell style={{ whiteSpace: "nowrap" }}>
+                        {item?.data_bill?.fact_unit} {item.ed_izmer_name}
+                      </TableCell>
                       <TableCell>{item?.data_bill?.nds}</TableCell>
                       <TableCell>{item?.data_bill?.price} ₽</TableCell>
-                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.summ_nds} ₽</TableCell>
+                      <TableCell style={{ whiteSpace: "nowrap" }}>
+                        {item?.data_bill?.summ_nds} ₽
+                      </TableCell>
                       <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
                       <TableCell rowSpan={2}>
-                        { parseInt(type) == 3 ? false :
-                          <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
+                        {parseInt(type) == 3 ? (
+                          false
+                        ) : (
+                          <Button
+                            onClick={() => deleteItem(key)}
+                            style={{ cursor: "pointer" }}
+                            color="error"
+                            variant="contained"
+                          >
                             <ClearIcon />
                           </Button>
-                        }
+                        )}
                       </TableCell>
                       <TableCell rowSpan={2}>
-                        {Number(item.count) === 0 ? Number(item.count).toFixed(2) : ( parseFloat(item.price_w_nds) / parseFloat(item.fact_unit)).toFixed(2)}
+                        {Number(item.count) === 0
+                          ? Number(item.count).toFixed(2)
+                          : (parseFloat(item.price_w_nds) / parseFloat(item.fact_unit)).toFixed(2)}
                       </TableCell>
                     </TableRow>
-                  }
+                  )}
 
-                  <TableRow 
-                    hover 
-                    style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }} 
+                  <TableRow
+                    hover
+                    style={{ backgroundColor: item?.color ? "rgb(255, 204, 0)" : "#fff" }}
                     draggable={true}
                     onDragStart={handleDrag}
                     onDrop={handleDrop}
                     id={key}
                     onDragOver={(ev) => ev.preventDefault()}
                   >
-                    {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
+                    {item?.data_bill ? null : (
+                      <TableCell> {item?.name ?? item.item_name} </TableCell>
+                    )}
                     {!item?.data_bill ? null : <TableCell>После</TableCell>}
                     <TableCell className="ceil_white">
-                      
-
                       <MyAutocomplite
                         label=""
-                        data={ item.pq_item }
+                        data={item.pq_item}
                         //value={ item.pq }
-                        value={ item.pq_item.find( it => it.name == item.pq ) }
+                        value={item.pq_item.find((it) => it.name == item.pq)}
                         //func={ (event, data) => { console.log( data ?? event.target.value ) } }
                         //onBlur={ (event, data) => { console.log( data ?? event.target.value ) } }
-                        func={ (event, data) => changeDataTable( { target: { value: data?.name ?? event.target.value } }, 'pq', item.id, key) }
-                        onBlur={ (event, data) => changeDataTable({ target: { value: data?.name ?? event.target.value } }, 'pq', item.id, key) }
+                        func={(event, data) =>
+                          changeDataTable(
+                            { target: { value: data?.name ?? event.target.value } },
+                            "pq",
+                            item.id,
+                            key,
+                          )
+                        }
+                        onBlur={(event, data) =>
+                          changeDataTable(
+                            { target: { value: data?.name ?? event.target.value } },
+                            "pq",
+                            item.id,
+                            key,
+                          )
+                        }
                       />
-
-
                     </TableCell>
                     <TableCell className="ceil_white">
                       <MyTextInput
                         type="number"
                         label=""
                         value={item.count}
-                        func={(event) => changeDataTable(event, 'count', item.id, key)}
-                        onBlur={(event) => changeDataTable(event, 'count', item.id, key)}
+                        func={(event) => changeDataTable(event, "count", item.id, key)}
+                        onBlur={(event) => changeDataTable(event, "count", item.id, key)}
                       />
                     </TableCell>
-                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.fact_unit} {item.ed_izmer_name}</TableCell>
+                    <TableCell style={{ whiteSpace: "nowrap" }}>
+                      {item.fact_unit} {item.ed_izmer_name}
+                    </TableCell>
                     <TableCell>{item.nds}</TableCell>
                     <TableCell className="ceil_white">
                       <MyTextInput
                         type="number"
                         label=""
                         value={item.price_item}
-                        func={(event) => changeDataTable(event, 'price_item', item.id, key)}
-                        onBlur={(event) => changeDataTable(event, 'price_item', item.id, key)}
+                        func={(event) => changeDataTable(event, "price_item", item.id, key)}
+                        onBlur={(event) => changeDataTable(event, "price_item", item.id, key)}
                       />
                     </TableCell>
-                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.summ_nds} ₽</TableCell>
+                    <TableCell style={{ whiteSpace: "nowrap" }}>{item.summ_nds} ₽</TableCell>
                     <TableCell className="ceil_white">
                       <MyTextInput
                         type="number"
                         label=""
                         value={item.price_w_nds}
-                        func={(event) => changeDataTable(event, 'price_w_nds', item.id, key)}
-                        onBlur={(event) => changeDataTable(event, 'price_w_nds', item.id, key)}
+                        func={(event) => changeDataTable(event, "price_w_nds", item.id, key)}
+                        onBlur={(event) => changeDataTable(event, "price_w_nds", item.id, key)}
                       />
                     </TableCell>
-                    {item?.data_bill ? null :
+                    {item?.data_bill ? null : (
                       <>
                         <TableCell>
-                          { parseInt(type) == 3 ? false :
-                            <Button onClick={ () => deleteItem(key) } style={{ cursor: 'pointer' }} color="error" variant="contained">
+                          {parseInt(type) == 3 ? (
+                            false
+                          ) : (
+                            <Button
+                              onClick={() => deleteItem(key)}
+                              style={{ cursor: "pointer" }}
+                              color="error"
+                              variant="contained"
+                            >
                               <ClearIcon />
                             </Button>
-                          }
+                          )}
                         </TableCell>
                         <TableCell>
-                          {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.fact_unit)).toFixed(2)}
+                          {Number(item.count) === 0
+                            ? Number(item.count).toFixed(2)
+                            : (Number(item.price_w_nds) / Number(item.fact_unit)).toFixed(2)}
                         </TableCell>
                       </>
-                    }
+                    )}
                   </TableRow>
-
                 </React.Fragment>
               ))}
-              { bill_items.length == 0 ? null : (
-                <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
+              {bill_items.length == 0 ? null : (
+                <TableRow sx={{ "& td": { fontWeight: "bold" } }}>
                   <TableCell>Итого:</TableCell>
-                  { bill_items_doc.length == 0 ? null : <TableCell></TableCell> }
+                  {bill_items_doc.length == 0 ? null : <TableCell></TableCell>}
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell>{allPrice} ₽</TableCell>
-                  <TableCell>{ summ_nds.toFixed(2) } ₽</TableCell>
+                  <TableCell>{summ_nds.toFixed(2)} ₽</TableCell>
                   <TableCell>{allPrice_w_nds} ₽</TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
@@ -1565,39 +1699,48 @@ function VendorItemsTableEdit(){
   );
 }
 
-function VendorItemsTableView(){
-
-  const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
-  const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+function VendorItemsTableView() {
+  const [deleteItem, changeDataTable] = useStore((state) => [
+    state.deleteItem,
+    state.changeDataTable,
+  ]);
+  const [bill_items_doc, bill_items, allPrice, allPrice_w_nds] = useStore((state) => [
+    state.bill_items_doc,
+    state.bill_items,
+    state.allPrice,
+    state.allPrice_w_nds,
+  ]);
 
   let summ_nds = 0;
 
-  bill_items.map( item => {
+  bill_items.map((item) => {
     summ_nds += parseFloat(item.summ_nds);
-  } )
+  });
 
   return (
     <>
       <Grid
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <h2>Товары в документе</h2>
-        <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
+        <Divider style={{ backgroundColor: "rgba(0, 0, 0, 0.87)" }} />
       </Grid>
       <Grid
         style={{ marginBottom: 20 }}
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <TableContainer component={Paper}>
           <Table aria-label="a dense table">
             <TableHead>
-              <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+              <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                 <TableCell>Товар</TableCell>
-                { bill_items_doc.length == 0 ? null : <TableCell>Изменения</TableCell> }
+                {bill_items_doc.length == 0 ? null : <TableCell>Изменения</TableCell>}
                 <TableCell>В упак.</TableCell>
                 <TableCell>Упак</TableCell>
                 <TableCell>Кол-во</TableCell>
@@ -1612,57 +1755,74 @@ function VendorItemsTableView(){
             <TableBody>
               {bill_items.map((item, key) => (
                 <React.Fragment key={key}>
-                  {!item?.data_bill ? null :
-                    <TableRow style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
+                  {!item?.data_bill ? null : (
+                    <TableRow
+                      style={{ backgroundColor: item?.color ? "rgb(255, 204, 0)" : "#fff" }}
+                    >
                       <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
                       <TableCell>До</TableCell>
-                      <TableCell>{item?.data_bill?.pq} {item.ed_izmer_name}</TableCell>
+                      <TableCell>
+                        {item?.data_bill?.pq} {item.ed_izmer_name}
+                      </TableCell>
                       <TableCell>{item?.data_bill?.count}</TableCell>
-                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.fact_unit} {item.ed_izmer_name}</TableCell>
+                      <TableCell style={{ whiteSpace: "nowrap" }}>
+                        {item?.data_bill?.fact_unit} {item.ed_izmer_name}
+                      </TableCell>
                       <TableCell>{item?.data_bill?.nds}</TableCell>
                       <TableCell>{item?.data_bill?.price} ₽</TableCell>
-                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.summ_nds} ₽</TableCell>
+                      <TableCell style={{ whiteSpace: "nowrap" }}>
+                        {item?.data_bill?.summ_nds} ₽
+                      </TableCell>
                       <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
                       <TableCell rowSpan={2}></TableCell>
                       <TableCell rowSpan={2}>
-                        {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
+                        {Number(item.count) === 0
+                          ? Number(item.count).toFixed(2)
+                          : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
                       </TableCell>
                     </TableRow>
-                  }
+                  )}
 
-                  <TableRow hover style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
-                    {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
+                  <TableRow
+                    hover
+                    style={{ backgroundColor: item?.color ? "rgb(255, 204, 0)" : "#fff" }}
+                  >
+                    {item?.data_bill ? null : (
+                      <TableCell> {item?.name ?? item.item_name} </TableCell>
+                    )}
                     {!item?.data_bill ? null : <TableCell>После</TableCell>}
                     <TableCell className="ceil_white">{item.pq}</TableCell>
                     <TableCell className="ceil_white">{item.count}</TableCell>
-                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.fact_unit} {item.ed_izmer_name}</TableCell>
+                    <TableCell style={{ whiteSpace: "nowrap" }}>
+                      {item.fact_unit} {item.ed_izmer_name}
+                    </TableCell>
                     <TableCell>{item.nds}</TableCell>
                     <TableCell className="ceil_white">{item.price_item}</TableCell>
-                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.summ_nds} ₽</TableCell>
+                    <TableCell style={{ whiteSpace: "nowrap" }}>{item.summ_nds} ₽</TableCell>
                     <TableCell className="ceil_white">{item.price_w_nds}</TableCell>
-                    {item?.data_bill ? null :
+                    {item?.data_bill ? null : (
                       <>
+                        <TableCell></TableCell>
                         <TableCell>
-                          
-                        </TableCell>
-                        <TableCell>
-                          {Number(item.count) === 0 ? Number(item.count).toFixed(2) : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
+                          {Number(item.count) === 0
+                            ? Number(item.count).toFixed(2)
+                            : (Number(item.price_w_nds) / Number(item.count)).toFixed(2)}
                         </TableCell>
                       </>
-                    }
+                    )}
                   </TableRow>
                 </React.Fragment>
               ))}
-              { bill_items.length == 0 ? null : (
-                <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
+              {bill_items.length == 0 ? null : (
+                <TableRow sx={{ "& td": { fontWeight: "bold" } }}>
                   <TableCell>Итого:</TableCell>
-                  { bill_items_doc.length == 0 ? null : <TableCell></TableCell> }
+                  {bill_items_doc.length == 0 ? null : <TableCell></TableCell>}
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell>{allPrice} ₽</TableCell>
-                  <TableCell>{ summ_nds.toFixed(2) } ₽</TableCell>
+                  <TableCell>{summ_nds.toFixed(2)} ₽</TableCell>
                   <TableCell>{allPrice_w_nds} ₽</TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
@@ -1676,182 +1836,258 @@ function VendorItemsTableView(){
   );
 }
 
-function VendorItemsTableView_min(){
-
-  const [ deleteItem, changeDataTable ] = useStore( state => [ state.deleteItem, state.changeDataTable ]);
-  const [ bill_items_doc, bill_items, allPrice, allPrice_w_nds ] = useStore( state => [ state.bill_items_doc, state.bill_items, state.allPrice, state.allPrice_w_nds ]);
+function VendorItemsTableView_min() {
+  const [deleteItem, changeDataTable] = useStore((state) => [
+    state.deleteItem,
+    state.changeDataTable,
+  ]);
+  const [bill_items_doc, bill_items, allPrice, allPrice_w_nds] = useStore((state) => [
+    state.bill_items_doc,
+    state.bill_items,
+    state.allPrice,
+    state.allPrice_w_nds,
+  ]);
 
   let summ_nds = 0;
 
-  bill_items.map( item => {
+  bill_items.map((item) => {
     summ_nds += parseFloat(item.summ_nds);
-  } )
+  });
 
   return (
-    
-        
-          <Table aria-label="a dense table">
-            <TableHead>
-              <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                <TableCell>Товар</TableCell>
-                { bill_items_doc.length == 0 ? null : <TableCell>Изменения</TableCell> }
-                <TableCell>В упак.</TableCell>
-                <TableCell>Упак</TableCell>
-                <TableCell>Кол-во</TableCell>
-                <TableCell>НДС</TableCell>
-                <TableCell>Сумма без НДС</TableCell>
-                <TableCell>Сумма НДС</TableCell>
-                <TableCell>Сумма с НДС</TableCell>
+    <Table aria-label="a dense table">
+      <TableHead>
+        <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+          <TableCell>Товар</TableCell>
+          {bill_items_doc.length == 0 ? null : <TableCell>Изменения</TableCell>}
+          <TableCell>В упак.</TableCell>
+          <TableCell>Упак</TableCell>
+          <TableCell>Кол-во</TableCell>
+          <TableCell>НДС</TableCell>
+          <TableCell>Сумма без НДС</TableCell>
+          <TableCell>Сумма НДС</TableCell>
+          <TableCell>Сумма с НДС</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {bill_items.map((item, key) => (
+          <React.Fragment key={key}>
+            {!item?.data_bill ? null : (
+              <TableRow style={{ backgroundColor: item?.color ? "rgb(255, 204, 0)" : "#fff" }}>
+                <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
+                <TableCell>До</TableCell>
+                <TableCell>
+                  {item?.data_bill?.pq} {item.ed_izmer_name}
+                </TableCell>
+                <TableCell>{item?.data_bill?.count}</TableCell>
+                <TableCell style={{ whiteSpace: "nowrap" }}>
+                  {item?.data_bill?.fact_unit} {item.ed_izmer_name}
+                </TableCell>
+                <TableCell>{item?.data_bill?.nds}</TableCell>
+                <TableCell>{item?.data_bill?.price} ₽</TableCell>
+                <TableCell style={{ whiteSpace: "nowrap" }}>
+                  {item?.data_bill?.summ_nds} ₽
+                </TableCell>
+                <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {bill_items.map((item, key) => (
-                <React.Fragment key={key}>
-                  {!item?.data_bill ? null :
-                    <TableRow style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
-                      <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
-                      <TableCell>До</TableCell>
-                      <TableCell>{item?.data_bill?.pq} {item.ed_izmer_name}</TableCell>
-                      <TableCell>{item?.data_bill?.count}</TableCell>
-                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.fact_unit} {item.ed_izmer_name}</TableCell>
-                      <TableCell>{item?.data_bill?.nds}</TableCell>
-                      <TableCell>{item?.data_bill?.price} ₽</TableCell>
-                      <TableCell style={{ whiteSpace: 'nowrap' }}>{item?.data_bill?.summ_nds} ₽</TableCell>
-                      <TableCell>{item?.data_bill?.price_w_nds} ₽</TableCell>
-                      
-                    </TableRow>
-                  }
+            )}
 
-                  <TableRow hover style={{ backgroundColor: item?.color ? 'rgb(255, 204, 0)' : '#fff' }}>
-                    {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
-                    {!item?.data_bill ? null : <TableCell>После</TableCell>}
-                    <TableCell className="ceil_white">{item.pq}</TableCell>
-                    <TableCell className="ceil_white">{item.count}</TableCell>
-                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.fact_unit} {item.ed_izmer_name}</TableCell>
-                    <TableCell>{item.nds}</TableCell>
-                    <TableCell className="ceil_white">{item.price_item}</TableCell>
-                    <TableCell style={{ whiteSpace: 'nowrap' }}>{item.summ_nds} ₽</TableCell>
-                    <TableCell className="ceil_white">{item.price_w_nds}</TableCell>
-                    
-                  </TableRow>
-                </React.Fragment>
-              ))}
-              { bill_items.length == 0 ? null : (
-                <TableRow sx={{ '& td': { fontWeight: 'bold' } }}>
-                  <TableCell>Итого:</TableCell>
-                  { bill_items_doc.length == 0 ? null : <TableCell></TableCell> }
-                  <TableCell></TableCell>
-                  <TableCell></TableCell>
-                  <TableCell></TableCell>
-                  <TableCell></TableCell>
-                  <TableCell>{allPrice} ₽</TableCell>
-                  <TableCell>{ summ_nds.toFixed(2) } ₽</TableCell>
-                  <TableCell>{allPrice_w_nds} ₽</TableCell>
-                  
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        
-  )
+            <TableRow
+              hover
+              style={{ backgroundColor: item?.color ? "rgb(255, 204, 0)" : "#fff" }}
+            >
+              {item?.data_bill ? null : <TableCell> {item?.name ?? item.item_name} </TableCell>}
+              {!item?.data_bill ? null : <TableCell>После</TableCell>}
+              <TableCell className="ceil_white">{item.pq}</TableCell>
+              <TableCell className="ceil_white">{item.count}</TableCell>
+              <TableCell style={{ whiteSpace: "nowrap" }}>
+                {item.fact_unit} {item.ed_izmer_name}
+              </TableCell>
+              <TableCell>{item.nds}</TableCell>
+              <TableCell className="ceil_white">{item.price_item}</TableCell>
+              <TableCell style={{ whiteSpace: "nowrap" }}>{item.summ_nds} ₽</TableCell>
+              <TableCell className="ceil_white">{item.price_w_nds}</TableCell>
+            </TableRow>
+          </React.Fragment>
+        ))}
+        {bill_items.length == 0 ? null : (
+          <TableRow sx={{ "& td": { fontWeight: "bold" } }}>
+            <TableCell>Итого:</TableCell>
+            {bill_items_doc.length == 0 ? null : <TableCell></TableCell>}
+            <TableCell></TableCell>
+            <TableCell></TableCell>
+            <TableCell></TableCell>
+            <TableCell></TableCell>
+            <TableCell>{allPrice} ₽</TableCell>
+            <TableCell>{summ_nds.toFixed(2)} ₽</TableCell>
+            <TableCell>{allPrice_w_nds} ₽</TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
+  );
 }
 
-function FormHeader_new({ page, type_edit }){
-
-  const [points, point_name, search_point, types, type, changeData, search_vendors, vendors, search_vendor, kinds, doc_base_id, docs, doc, search_doc, changeInput, number, number_factur, changeDateRange, date, date_factur, fullScreen, vendor_name] = useStore( state => [ state.points, state.point_name, state.search_point, state.types, state.type, state.changeData, state.search_vendors, state.vendors, state.search_vendor, state.kinds, state.doc_base_id, state.docs, state.doc, state.search_doc, state.changeInput, state.number, state.number_factur, state.changeDateRange, state.date, state.date_factur, state.fullScreen, state.vendor_name]);
+function FormHeader_new({ page, type_edit }) {
+  const [
+    points,
+    point_name,
+    search_point,
+    types,
+    type,
+    changeData,
+    search_vendors,
+    vendors,
+    search_vendor,
+    kinds,
+    doc_base_id,
+    docs,
+    doc,
+    search_doc,
+    changeInput,
+    number,
+    number_factur,
+    changeDateRange,
+    date,
+    date_factur,
+    fullScreen,
+    vendor_name,
+  ] = useStore((state) => [
+    state.points,
+    state.point_name,
+    state.search_point,
+    state.types,
+    state.type,
+    state.changeData,
+    state.search_vendors,
+    state.vendors,
+    state.search_vendor,
+    state.kinds,
+    state.doc_base_id,
+    state.docs,
+    state.doc,
+    state.search_doc,
+    state.changeInput,
+    state.number,
+    state.number_factur,
+    state.changeDateRange,
+    state.date,
+    state.date_factur,
+    state.fullScreen,
+    state.vendor_name,
+  ]);
 
   //doc
 
   return (
     <>
-      {page === 'new' ? 
+      {page === "new" ? (
         <Grid
           size={{
             xs: 12,
-            sm: 4
-          }}>
+            sm: 4,
+          }}
+        >
           <MyAutocomplite2
             data={points}
             value={point_name}
             multiple={false}
-            disabled={ type_edit === 'edit' ? false : true }
-            func={ (event, name) => search_point(event, name) }
-            onBlur={ (event, name) => search_point(event, name) }
+            disabled={type_edit === "edit" ? false : true}
+            func={(event, name) => search_point(event, name)}
+            onBlur={(event, name) => search_point(event, name)}
             label="Точка"
           />
         </Grid>
-        :
+      ) : (
         <Grid
           size={{
             xs: 12,
-            sm: 4
-          }}>
-          <MyTextInput label="Точка" disabled={ type_edit === 'edit' ? false : true } value={point_name} className='disabled_input'/>
+            sm: 4,
+          }}
+        >
+          <MyTextInput
+            label="Точка"
+            disabled={type_edit === "edit" ? false : true}
+            value={point_name}
+            className="disabled_input"
+          />
         </Grid>
-      }
+      )}
       <Grid
         size={{
           xs: 12,
-          sm: 4
-        }}>
+          sm: 4,
+        }}
+      >
         <MySelect
           data={types}
           value={type}
           multiple={false}
           is_none={false}
-          disabled={ type_edit === 'edit' ? false : true }
-          func={ event => changeData('type', event) }
+          disabled={type_edit === "edit" ? false : true}
+          func={(event) => changeData("type", event)}
           label="Тип"
         />
       </Grid>
-      {page === 'new' ? 
+      {page === "new" ? (
         <Grid
           size={{
             xs: 12,
-            sm: 4
-          }}>
+            sm: 4,
+          }}
+        >
           <MyAutocomplite2
             label="Поставщик"
             freeSolo={true}
             multiple={false}
             data={vendors}
             value={search_vendor}
-            disabled={ type_edit === 'edit' ? false : true }
-            func={ (event, name) => search_vendors(event, name) }
-            onBlur={ (event, name) => search_vendors(event, name) }
+            disabled={type_edit === "edit" ? false : true}
+            func={(event, name) => search_vendors(event, name)}
+            onBlur={(event, name) => search_vendors(event, name)}
           />
         </Grid>
-        :
+      ) : (
         <Grid
           size={{
             xs: 12,
-            sm: 4
-          }}>
-          <MyTextInput label="Поставщик" disabled={ type_edit === 'edit' ? false : true } value={vendor_name} className='disabled_input'/>
+            sm: 4,
+          }}
+        >
+          <MyTextInput
+            label="Поставщик"
+            disabled={type_edit === "edit" ? false : true}
+            value={vendor_name}
+            className="disabled_input"
+          />
         </Grid>
-      }
+      )}
       {parseInt(type) === 2 || parseInt(type) === 3 ? (
         <>
           <Grid
             size={{
               xs: 12,
-              sm: 4
-            }}>
+              sm: 4,
+            }}
+          >
             <MySelect
               data={kinds}
               value={doc_base_id}
               multiple={false}
               is_none={false}
-              disabled={ type_edit === 'edit' ? false : true }
-              func={ event => changeData('doc_base_id', event) }
+              disabled={type_edit === "edit" ? false : true}
+              func={(event) => changeData("doc_base_id", event)}
               label="Документ"
             />
           </Grid>
-          {parseInt(type) === 2 ?  <Grid
-            size={{
-              xs: 12,
-              sm: 4
-            }}></Grid> : null}
+          {parseInt(type) === 2 ? (
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4,
+              }}
+            ></Grid>
+          ) : null}
         </>
       ) : null}
       {parseInt(type) === 3 || parseInt(type) === 4 ? (
@@ -1859,118 +2095,148 @@ function FormHeader_new({ page, type_edit }){
           <Grid
             size={{
               xs: 12,
-              sm: 4
-            }}>
+              sm: 4,
+            }}
+          >
             <MyAutocomplite2
               data={docs}
               multiple={false}
               value={doc}
-              disabled={ type_edit === 'edit' ? false : true }
-              func={ (event, name) => search_doc(event, name) }
-              onBlur={ (event, name) => search_doc(event, name) }
+              disabled={type_edit === "edit" ? false : true}
+              func={(event, name) => search_doc(event, name)}
+              onBlur={(event, name) => search_doc(event, name)}
               label="Документ основание"
             />
           </Grid>
-          {parseInt(type) === 4 ?  <Grid
-            size={{
-              xs: 12,
-              sm: 4
-            }}></Grid> : null}
+          {parseInt(type) === 4 ? (
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4,
+              }}
+            ></Grid>
+          ) : null}
         </>
       ) : null}
       <Grid
         size={{
           xs: 12,
-          sm: 6
-        }}>
+          sm: 6,
+        }}
+      >
         <MyTextInput
           label="Номер документа"
-          disabled={ type_edit === 'edit' ? false : true }
+          disabled={type_edit === "edit" ? false : true}
           value={number}
-          func={ (event) => changeInput(event, 'number') }
+          func={(event) => changeInput(event, "number")}
         />
       </Grid>
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
         <Grid
           size={{
             xs: 12,
-            sm: 6
-          }}>
+            sm: 6,
+          }}
+        >
           <MyTextInput
             label="Номер счет-фактуры"
-            disabled={ type_edit === 'edit' ? false : true }
+            disabled={type_edit === "edit" ? false : true}
             value={number_factur}
-            func={ (event) => changeInput(event, 'number_factur') }
+            func={(event) => changeInput(event, "number_factur")}
           />
         </Grid>
-        : null
-      }
+      ) : null}
       <Grid
         size={{
           xs: 12,
-          sm: 6
-        }}>
+          sm: 6,
+        }}
+      >
         <MyDatePickerNew
           label="Дата документа"
           format="DD-MM-YYYY"
-          disabled={ type_edit === 'edit' ? false : true }
+          disabled={type_edit === "edit" ? false : true}
           value={date}
-          func={ (event) => changeDateRange(event, 'date') }
+          func={(event) => changeDateRange(event, "date")}
         />
       </Grid>
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? 
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
         <Grid
           size={{
             xs: 12,
-            sm: 6
-          }}>
+            sm: 6,
+          }}
+        >
           <MyDatePickerNew
             label="Дата счет-фактуры"
             format="DD-MM-YYYY"
-            disabled={ type_edit === 'edit' ? false : true }
+            disabled={type_edit === "edit" ? false : true}
             value={date_factur}
-            func={ (event) => changeDateRange(event, 'date_factur') }
+            func={(event) => changeDateRange(event, "date_factur")}
           />
         </Grid>
-        : null
-      }
+      ) : null}
     </>
   );
 }
 
-function FormImage_new({ type_edit }){
+function FormImage_new({ type_edit }) {
+  const [
+    type,
+    doc_base_id,
+    imgs_bill,
+    openImageBill,
+    fullScreen,
+    imgs_factur,
+    number_factur,
+    changeInput,
+    changeDateRange,
+    date_factur,
+  ] = useStore((state) => [
+    state.type,
+    state.doc_base_id,
+    state.imgs_bill,
+    state.openImageBill,
+    state.fullScreen,
+    state.imgs_factur,
+    state.number_factur,
+    state.changeInput,
+    state.changeDateRange,
+    state.date_factur,
+  ]);
 
-  const [type, doc_base_id, imgs_bill, openImageBill, fullScreen, imgs_factur, number_factur, changeInput, changeDateRange, date_factur] = useStore( state => [state.type, state.doc_base_id, state.imgs_bill, state.openImageBill, state.fullScreen, state.imgs_factur, state.number_factur, state.changeInput, state.changeDateRange, state.date_factur]);
+  const url = parseInt(type) === 1 ? "bill-ex-items/" : "bill/";
 
-  const url = parseInt(type) === 1 ? 'bill-ex-items/' : 'bill/';
-  
   return (
     <>
       <Grid
         size={{
           xs: 12,
-          sm: parseInt(type) === 2 && parseInt(doc_base_id) == 5 ? 6 : 12
-        }}>
+          sm: parseInt(type) === 2 && parseInt(doc_base_id) == 5 ? 6 : 12,
+        }}
+      >
         <TableContainer>
-          <Grid 
-            display="flex" 
-            flexDirection="row"   
+          <Grid
+            display="flex"
+            flexDirection="row"
             flexWrap="wrap"
-            style={{ fontWeight: 'bold', gap: '10px' }}
+            style={{ fontWeight: "bold", gap: "10px" }}
           >
-            {!imgs_bill.length ? '' :
+            {!imgs_bill.length ? (
+              ""
+            ) : (
               <>
                 {imgs_bill.map((img, key) => (
-                  <img 
-                    key={key} 
-                    src={'https://storage.yandexcloud.net/' + url + img}
-                    alt="Image bill" 
+                  <img
+                    key={key}
+                    src={"https://storage.yandexcloud.net/" + url + img}
+                    alt="Image bill"
                     className="img_modal_bill"
-                    onClick={() => openImageBill('https://storage.yandexcloud.net/' + url + img)}
+                    onClick={() => openImageBill("https://storage.yandexcloud.net/" + url + img)}
                   />
                 ))}
               </>
-            }
+            )}
           </Grid>
         </TableContainer>
       </Grid>
@@ -1979,222 +2245,273 @@ function FormImage_new({ type_edit }){
           display="flex"
           flexDirection="row"
           flexWrap="wrap"
-          style={{ fontWeight: 'bold', gap: '10px' }}
+          style={{ fontWeight: "bold", gap: "10px" }}
           size={{
             xs: 12,
-            sm: 6
-          }}>
-          {!imgs_factur.length ? '' :
+            sm: 6,
+          }}
+        >
+          {!imgs_factur.length ? (
+            ""
+          ) : (
             <>
               {imgs_factur.map((img, key) => (
-                <img 
-                  key={key} 
-                  src={'https://storage.yandexcloud.net/bill/' + img} 
-                  alt="Image bill" 
+                <img
+                  key={key}
+                  src={"https://storage.yandexcloud.net/bill/" + img}
+                  alt="Image bill"
                   className="img_modal_bill"
-                  onClick={() => openImageBill('https://storage.yandexcloud.net/bill/' + img)}
+                  onClick={() => openImageBill("https://storage.yandexcloud.net/bill/" + img)}
                 />
               ))}
             </>
-          }
+          )}
         </Grid>
       ) : null}
-      { type_edit === 'edit' ?
+      {type_edit === "edit" ? (
         <Grid
           size={{
             xs: 12,
-            sm: parseInt(type) === 2 ? 6 : 12
-          }}>
+            sm: parseInt(type) === 2 ? 6 : 12,
+          }}
+        >
           <div
             className="dropzone"
             id="img_bill"
-            style={{ width: '100%', minHeight: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          />
-        </Grid>
-          :
-        null
-      }
-      {type_edit === 'edit' && parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
-        <Grid
-          size={{
-            xs: 12,
-            sm: 6
-          }}>
-          
-          <div
-            className="dropzone"
-            id="img_bill_type"
-            style={{ width: '100%', minHeight: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{
+              width: "100%",
+              minHeight: 150,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           />
         </Grid>
       ) : null}
-      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && fullScreen ? 
+      {type_edit === "edit" && parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
+          }}
+        >
+          <div
+            className="dropzone"
+            id="img_bill_type"
+            style={{
+              width: "100%",
+              minHeight: 150,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          />
+        </Grid>
+      ) : null}
+      {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && fullScreen ? (
         <>
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <MyTextInput
               label="Номер счет-фактуры"
-              disabled={ type_edit === 'edit' ? false : true }
+              disabled={type_edit === "edit" ? false : true}
               value={number_factur}
-              func={ (event) => changeInput(event, 'number_factur') }
+              func={(event) => changeInput(event, "number_factur")}
             />
           </Grid>
 
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <MyDatePickerNew
               label="Дата счет-фактуры"
               format="DD-MM-YYYY"
-              disabled={ type_edit === 'edit' ? false : true }
+              disabled={type_edit === "edit" ? false : true}
               value={date_factur}
-              func={ (event) => changeDateRange(event, 'date_factur') }
+              func={(event) => changeDateRange(event, "date_factur")}
             />
           </Grid>
 
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <TableContainer>
-              <Grid 
-                display="flex" 
-                flexDirection="row" 
+              <Grid
+                display="flex"
+                flexDirection="row"
                 flexWrap="wrap"
-                style={{ fontWeight: 'bold', gap: '10px' }}
+                style={{ fontWeight: "bold", gap: "10px" }}
               >
-                {!imgs_factur.length ? '' :
+                {!imgs_factur.length ? (
+                  ""
+                ) : (
                   <>
                     {imgs_factur.map((img, key) => (
-                      <img 
-                        key={key} 
-                        src={'https://storage.yandexcloud.net/bill/' + img} 
-                        alt="Image bill" 
+                      <img
+                        key={key}
+                        src={"https://storage.yandexcloud.net/bill/" + img}
+                        alt="Image bill"
                         className="img_modal_bill"
-                        onClick={() => openImageBill('https://storage.yandexcloud.net/bill/' + img)}
+                        onClick={() => openImageBill("https://storage.yandexcloud.net/bill/" + img)}
                       />
                     ))}
                   </>
-                }
+                )}
               </Grid>
             </TableContainer>
           </Grid>
 
-          { type_edit === 'edit' ?
+          {type_edit === "edit" ? (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <div
                 className="dropzone"
                 id="img_bill_type"
-                style={{ width: '100%', minHeight: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{
+                  width: "100%",
+                  minHeight: 150,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               />
             </Grid>
-              :
-            null
-          }
+          ) : null}
         </>
-        : null
-      }
+      ) : null}
     </>
   );
 }
 
-function FormOther_new({ page, type_edit }){
-
-  const [type, date_items, changeDateRange, users, user, changeAutocomplite, comment, changeInput, changeItemChecked, is_new_doc] = useStore( state => [state.type, state.date_items, state.changeDateRange, state.users, state.user, state.changeAutocomplite, state.comment, state.changeInput, state.changeItemChecked, state.is_new_doc]);
+function FormOther_new({ page, type_edit }) {
+  const [
+    type,
+    date_items,
+    changeDateRange,
+    users,
+    user,
+    changeAutocomplite,
+    comment,
+    changeInput,
+    changeItemChecked,
+    is_new_doc,
+  ] = useStore((state) => [
+    state.type,
+    state.date_items,
+    state.changeDateRange,
+    state.users,
+    state.user,
+    state.changeAutocomplite,
+    state.comment,
+    state.changeInput,
+    state.changeItemChecked,
+    state.is_new_doc,
+  ]);
 
   return (
     <>
-      {parseInt(type) === 1 ? null :
+      {parseInt(type) === 1 ? null : (
         <>
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyDatePickerNew
               label="Дата разгрузки"
               format="DD-MM-YYYY"
-              disabled={ type_edit === 'edit' ? false : true }
+              disabled={type_edit === "edit" ? false : true}
               value={date_items}
-              func={ (event) => changeDateRange(event, 'date_items') }
+              func={(event) => changeDateRange(event, "date_items")}
             />
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyAutocomplite
               data={users}
               multiple={true}
-              disabled={ type_edit === 'edit' ? false : true }
+              disabled={type_edit === "edit" ? false : true}
               value={user}
-              func={(event, data) => changeAutocomplite('user', data)}
+              func={(event, data) => changeAutocomplite("user", data)}
               label={"Сотрудники"}
             />
           </Grid>
         </>
-      }
+      )}
       <Grid
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <MyTextInput
           label="Комментарии"
           multiline={true}
-          disabled={ type_edit === 'edit' ? false : true }
+          disabled={type_edit === "edit" ? false : true}
           maxRows={3}
           value={comment}
-          func={ (event) => changeInput(event, 'comment') }
+          func={(event) => changeInput(event, "comment")}
         />
       </Grid>
-      {page === 'new' ? null :
+      {page === "new" ? null : (
         <>
           <Grid
-            style={{ display: 'flex', marginBottom: 20 }}
+            style={{ display: "flex", marginBottom: 20 }}
             size={{
               xs: 12,
-              sm: 6
-            }}>
-            <Typography style={{ fontWeight: 'bold', color: '#9e9e9e' }}>
+              sm: 6,
+            }}
+          >
+            <Typography style={{ fontWeight: "bold", color: "#9e9e9e" }}>
               Причина удаления:&nbsp;
             </Typography>
             <Typography></Typography>
           </Grid>
 
           <Grid
-            style={{ display: 'flex', marginBottom: 20 }}
+            style={{ display: "flex", marginBottom: 20 }}
             size={{
               xs: 12,
-              sm: 6
-            }}>
-            <Typography style={{ fontWeight: 'bold', color: '#9e9e9e' }}>Комментарий бухгалтера:&nbsp;</Typography>
+              sm: 6,
+            }}
+          >
+            <Typography style={{ fontWeight: "bold", color: "#9e9e9e" }}>
+              Комментарий бухгалтера:&nbsp;
+            </Typography>
             <Typography>Переделать фото</Typography>
           </Grid>
         </>
-      }
+      )}
       <Grid
         display="flex"
         alignItems="center"
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <MyCheckBox
-          disabled={ type_edit === 'edit' ? false : true }
+          disabled={type_edit === "edit" ? false : true}
           value={parseInt(is_new_doc) === 1 ? true : false}
-          func={ (event) => changeItemChecked(event, 'is_new_doc') }
+          func={(event) => changeItemChecked(event, "is_new_doc")}
           label="Поставщик привезет новый документ"
         />
-        
       </Grid>
     </>
   );
@@ -2204,15 +2521,23 @@ function MyTooltip(props) {
   const { children, name, ...other } = props;
 
   return (
-    <Tooltip title={name} arrow placement="bottom-start"  {...other}
+    <Tooltip
+      title={name}
+      arrow
+      placement="bottom-start"
+      {...other}
       componentsProps={{
         tooltip: {
-          sx: { bgcolor: '#fff', color: '#000', fontSize: 16, border: '0.5px solid rgba(0, 0, 0, 0.87)',
-            '& .MuiTooltip-arrow': {
-              color: '#fff',
-              '&::before': {
-                backgroundColor: 'white',
-                border: '0.5px solid black',
+          sx: {
+            bgcolor: "#fff",
+            color: "#000",
+            fontSize: 16,
+            border: "0.5px solid rgba(0, 0, 0, 0.87)",
+            "& .MuiTooltip-arrow": {
+              color: "#fff",
+              "&::before": {
+                backgroundColor: "white",
+                border: "0.5px solid black",
               },
             },
           },
@@ -2230,7 +2555,11 @@ class Billing_Accordion extends React.Component {
     var array1 = nextProps.bill_list;
     var array2 = this.props.bill_list;
 
-    var is_same = array1.length == array2.length && array1.every(function (element, index) { return element === array2[index] });
+    var is_same =
+      array1.length == array2.length &&
+      array1.every(function (element, index) {
+        return element === array2[index];
+      });
 
     return !is_same;
   }
@@ -2243,42 +2572,72 @@ class Billing_Accordion extends React.Component {
         mb={5}
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <AccordionDetails>
-          <AccordionSummary style={{ cursor: 'default' }} expandIcon={<ExpandMoreIcon sx={{ opacity: 0 }} />} aria-controls="panel1a-content">
-            <Grid display="flex" flexDirection="row">
-              <Typography style={{ width: '1%' }}></Typography>
-              <Typography style={{ width: '4%', minWidth: '210px' }}>Тип {type === 'edit' ? ' документа' : ' накладной'}</Typography>
-              <Typography style={{ width: '12%' }}>Бумажный носитель</Typography>
-              <Typography style={{ width: '11%' }}></Typography>
-              <Typography style={{ width: '11%' }}>
-                Номер {type === 'edit' ? ' документа' : ' накладной'}
+          <AccordionSummary
+            style={{ cursor: "default" }}
+            expandIcon={<ExpandMoreIcon sx={{ opacity: 0 }} />}
+            aria-controls="panel1a-content"
+          >
+            <Grid
+              display="flex"
+              flexDirection="row"
+            >
+              <Typography style={{ width: "1%" }}></Typography>
+              <Typography style={{ width: "4%", minWidth: "210px" }}>
+                Тип {type === "edit" ? " документа" : " накладной"}
               </Typography>
-              <Typography style={{ width: '11%' }}>
-                Дата в {type === 'edit' ? ' документе' : ' накладной'}
+              <Typography style={{ width: "12%" }}>Бумажный носитель</Typography>
+              <Typography style={{ width: "11%" }}></Typography>
+              <Typography style={{ width: "11%" }}>
+                Номер {type === "edit" ? " документа" : " накладной"}
               </Typography>
-              <Typography style={{ width: '14%', minWidth: '200px' }}>Создатель</Typography>
-              <Typography style={{ width: '10%' }}>Дата обновления</Typography>
-              <Typography style={{ width: '14%', minWidth: '200px' }}>Редактор</Typography>
-              <Typography style={{ width: '11%' }}>Время обновления</Typography>
-              <Typography style={{ width: '8%' }}>Сумма с НДС</Typography>
+              <Typography style={{ width: "11%" }}>
+                Дата в {type === "edit" ? " документе" : " накладной"}
+              </Typography>
+              <Typography style={{ width: "14%", minWidth: "200px" }}>Создатель</Typography>
+              <Typography style={{ width: "10%" }}>Дата обновления</Typography>
+              <Typography style={{ width: "14%", minWidth: "200px" }}>Редактор</Typography>
+              <Typography style={{ width: "11%" }}>Время обновления</Typography>
+              <Typography style={{ width: "8%" }}>Сумма с НДС</Typography>
             </Grid>
           </AccordionSummary>
 
           {bill_list.map((item, i) => (
             <Accordion key={i}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" className="accordion_summary" style={{ paddingRight: '1%' }}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="panel1a-content"
+                className="accordion_summary"
+                style={{ paddingRight: "1%" }}
+              >
+                <Grid
+                  display="flex"
+                  flexDirection="row"
+                >
+                  <Typography
+                    component="div"
+                    style={{ width: "1%", backgroundColor: item.color, marginRight: "1%" }}
+                  ></Typography>
 
-                <Grid display="flex" flexDirection='row'>
-
-                  <Typography component="div" style={{ width: '1%', backgroundColor: item.color, marginRight: '1%' }}></Typography>
-                  
-                  <Typography style={{ width: '4%', minWidth: '210px',  display: 'flex', alignItems: 'center' }}>
+                  <Typography
+                    style={{
+                      width: "4%",
+                      minWidth: "210px",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
                     {item.name}
                   </Typography>
 
-                  <Typography className='checkbox_disable' component="div" style={{ width: '12%', display: 'flex', alignItems: 'center' }}>
+                  <Typography
+                    className="checkbox_disable"
+                    component="div"
+                    style={{ width: "12%", display: "flex", alignItems: "center" }}
+                  >
                     <MyCheckBox
                       value={parseInt(item.real_doc) == 1 ? true : false}
                       label=""
@@ -2286,42 +2645,54 @@ class Billing_Accordion extends React.Component {
                     />
                   </Typography>
 
-                  <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
+                  <Typography style={{ width: "11%", display: "flex", alignItems: "center" }}>
                     {item.number}
                   </Typography>
 
-                  <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
+                  <Typography style={{ width: "11%", display: "flex", alignItems: "center" }}>
                     {item.date}
                   </Typography>
 
-                  <Typography style={{ width: '14%', minWidth: '200px', display: 'flex', alignItems: 'center' }}>
+                  <Typography
+                    style={{
+                      width: "14%",
+                      minWidth: "200px",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
                     {item.creator_id}
                   </Typography>
 
-                  <Typography style={{ width: '10%',  display: 'flex', alignItems: 'center' }}>
+                  <Typography style={{ width: "10%", display: "flex", alignItems: "center" }}>
                     {item.date_update}
                   </Typography>
 
-                  <Typography style={{ width: '14%', minWidth: '200px', display: 'flex', alignItems: 'center'}}>
+                  <Typography
+                    style={{
+                      width: "14%",
+                      minWidth: "200px",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
                     {item.editor_id}
                   </Typography>
 
-                  <Typography style={{ width: '11%',  display: 'flex', alignItems: 'center' }}>
+                  <Typography style={{ width: "11%", display: "flex", alignItems: "center" }}>
                     {item.time_update}
                   </Typography>
 
-                  
-
-                  <Typography style={{ width: '8%',  display: 'flex', alignItems: 'center' }}>
+                  <Typography style={{ width: "8%", display: "flex", alignItems: "center" }}>
                     {item.sum_w_nds}
                   </Typography>
                 </Grid>
               </AccordionSummary>
 
-              <AccordionDetails style={{ width: '100%' }}>
+              <AccordionDetails style={{ width: "100%" }}>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                    <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                       <TableCell>Товар</TableCell>
                       <TableCell>Объем упак.</TableCell>
                       <TableCell>Кол-во упак.</TableCell>
@@ -2332,11 +2703,18 @@ class Billing_Accordion extends React.Component {
 
                   <TableBody>
                     {bill_items?.map((item, key) => (
-                      <TableRow key={key} hover>
+                      <TableRow
+                        key={key}
+                        hover
+                      >
                         <TableCell> {item.item_name} </TableCell>
-                        <TableCell>{item.pq} {item.ed_izmer_name}</TableCell>
+                        <TableCell>
+                          {item.pq} {item.ed_izmer_name}
+                        </TableCell>
                         <TableCell>{item.count}</TableCell>
-                        <TableCell>{item.fact_unit} {item.ed_izmer_name}</TableCell>
+                        <TableCell>
+                          {item.fact_unit} {item.ed_izmer_name}
+                        </TableCell>
                         <TableCell> {item.price_w_nds} ₽</TableCell>
                       </TableRow>
                     ))}
@@ -2353,7 +2731,6 @@ class Billing_Accordion extends React.Component {
 
 // модалка просмотра фото/картинок документов
 class Billing_Modal extends React.Component {
-
   constructor(props) {
     super(props);
 
@@ -2369,11 +2746,10 @@ class Billing_Modal extends React.Component {
   setLeftRotate() {
     let rotate = this.state.rotate;
     rotate = rotate - 90;
- 
+
     this.setState({
       rotate,
     });
-
   }
 
   setRigthRotate() {
@@ -2383,7 +2759,6 @@ class Billing_Modal extends React.Component {
     this.setState({
       rotate,
     });
-
   }
 
   setScaleHorizontal() {
@@ -2422,7 +2797,7 @@ class Billing_Modal extends React.Component {
 
     let rotate = this.state.rotate;
     rotate = rotate - 180;
- 
+
     this.setState({
       rotate,
     });
@@ -2432,15 +2807,15 @@ class Billing_Modal extends React.Component {
     let scaleY = this.state.scaleY;
     let scaleX = this.state.scaleX;
 
-    if(scaleY < 0) {
+    if (scaleY < 0) {
       scaleY = scaleY - 0.5;
     } else {
       scaleY = scaleY + 0.5;
     }
 
-    if(scaleX < 0) {
+    if (scaleX < 0) {
       scaleX = scaleX - 0.5;
-    }  else {
+    } else {
       scaleX = scaleX + 0.5;
     }
 
@@ -2448,22 +2823,21 @@ class Billing_Modal extends React.Component {
       scaleY,
       scaleX,
     });
-
   }
 
   setZoomOut() {
     let scaleY = this.state.scaleY;
     let scaleX = this.state.scaleX;
-      
-    if(scaleY < 0) {
+
+    if (scaleY < 0) {
       scaleY = scaleY + 0.5;
     } else {
       scaleY = scaleY - 0.5;
     }
-    
-    if(scaleX < 0) {
+
+    if (scaleX < 0) {
       scaleX = scaleX + 0.5;
-    }  else {
+    } else {
       scaleX = scaleX - 0.5;
     }
 
@@ -2471,7 +2845,6 @@ class Billing_Modal extends React.Component {
       scaleY,
       scaleX,
     });
-    
   }
 
   setSplitVertical() {
@@ -2485,7 +2858,6 @@ class Billing_Modal extends React.Component {
       vertical: !vertical,
       horizontal: false,
     });
-
   }
 
   setSplitHorizontal() {
@@ -2497,9 +2869,8 @@ class Billing_Modal extends React.Component {
 
     this.setState({
       horizontal: !horizontal,
-      vertical: false
+      vertical: false,
     });
-
   }
 
   reset() {
@@ -2511,73 +2882,92 @@ class Billing_Modal extends React.Component {
   }
 
   shouldComponentUpdate(nextState) {
-    return nextState.rotate !== this.state.rotate || nextState.scaleY !== this.state.scaleY || nextState.scaleX !== this.state.scaleX;
+    return (
+      nextState.rotate !== this.state.rotate ||
+      nextState.scaleY !== this.state.scaleY ||
+      nextState.scaleX !== this.state.scaleX
+    );
   }
 
   render() {
     return (
       <>
-        <div className='modal_btn'>
-          <MyTooltip name='Повернуть на 90 градусов влево'>
+        <div className="modal_btn">
+          <MyTooltip name="Повернуть на 90 градусов влево">
             <IconButton onClick={this.setLeftRotate.bind(this)}>
               <RotateLeftIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Повернуть на 90 градусов вправо'>
+          <MyTooltip name="Повернуть на 90 градусов вправо">
             <IconButton onClick={this.setRigthRotate.bind(this)}>
               <RotateRightIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Повернуть на 180 градусов влево'>
+          <MyTooltip name="Повернуть на 180 градусов влево">
             <IconButton onClick={this.setScaleVertical.bind(this)}>
               <ContrastIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Повернуть на 180 градусов вправо'>
+          <MyTooltip name="Повернуть на 180 градусов вправо">
             <IconButton onClick={this.setScaleHorizontal.bind(this)}>
-              <ContrastIcon style={{ transform: 'rotate(-90deg)'}}/>
+              <ContrastIcon style={{ transform: "rotate(-90deg)" }} />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Увеличить документ'>
+          <MyTooltip name="Увеличить документ">
             <IconButton onClick={this.setZoomIn.bind(this)}>
               <ZoomInIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Уменьшить документ'>
+          <MyTooltip name="Уменьшить документ">
             <IconButton onClick={this.setZoomOut.bind(this)}>
               <ZoomOutIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Разделить экран по вертикали' style={{ display: 'none' }}>
+          <MyTooltip
+            name="Разделить экран по вертикали"
+            style={{ display: "none" }}
+          >
             <IconButton onClick={this.setSplitVertical.bind(this)}>
               <VerticalSplitIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Разделить экран по горизонтали'>
+          <MyTooltip name="Разделить экран по горизонтали">
             <IconButton onClick={this.setSplitHorizontal.bind(this)}>
               <HorizontalSplitIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Сбросить'>
+          <MyTooltip name="Сбросить">
             <IconButton onClick={this.reset.bind(this)}>
               <RestartAltIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip name='Закрыть картинку'>
+          <MyTooltip name="Закрыть картинку">
             <IconButton onClick={this.props.onClose.bind(this)}>
               <CloseIcon />
             </IconButton>
           </MyTooltip>
         </div>
 
-        { !this.state.vertical && !this.state.horizontal ?
-          <div className="modal" onClick={this.props.onClose.bind(this)} style={{ width: this.state.vertical ? '50%' : '100%', height: this.state.horizontal ? '50vh' : '100vh'}}>
+        {!this.state.vertical && !this.state.horizontal ? (
+          <div
+            className="modal"
+            onClick={this.props.onClose.bind(this)}
+            style={{
+              width: this.state.vertical ? "50%" : "100%",
+              height: this.state.horizontal ? "50vh" : "100vh",
+            }}
+          >
             <Draggable>
               <div>
-                <div className="modal_content" style={{transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`}}>
-                  <img 
-                    src={this.props.image} 
-                    alt="Image bill" 
+                <div
+                  className="modal_content"
+                  style={{
+                    transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`,
+                  }}
+                >
+                  <img
+                    src={this.props.image}
+                    alt="Image bill"
                     className="image_bill"
                     onClick={(e) => e.stopPropagation()}
                     draggable="false"
@@ -2586,28 +2976,39 @@ class Billing_Modal extends React.Component {
               </div>
             </Draggable>
           </div>
-            : 
-          null
-        }
+        ) : null}
 
-        {this.state.vertical || this.state.horizontal ?
-          <div className="modal" style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)',  width: this.state.vertical ? '50%' : '100%',  height: this.state.horizontal ? '50vh' : '100vh', left: this.state.vertical ? '50%' : 0, top: this.state.horizontal ? '50%' : 0}}>
+        {this.state.vertical || this.state.horizontal ? (
+          <div
+            className="modal"
+            style={{
+              backgroundColor: "rgba(0, 0, 0, 0.9)",
+              width: this.state.vertical ? "50%" : "100%",
+              height: this.state.horizontal ? "50vh" : "100vh",
+              left: this.state.vertical ? "50%" : 0,
+              top: this.state.horizontal ? "50%" : 0,
+            }}
+          >
             <Draggable>
               <div>
-                <div className="modal_content" style={{transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`}}>
-                  <img 
-                    src={this.props.image} 
-                    alt="Image bill" 
-                    className="image_bill" 
+                <div
+                  className="modal_content"
+                  style={{
+                    transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`,
+                  }}
+                >
+                  <img
+                    src={this.props.image}
+                    alt="Image bill"
+                    className="image_bill"
                     draggable="false"
                     onClick={(e) => e.stopPropagation()}
                   />
                 </div>
               </div>
             </Draggable>
-          </div> 
-        : null}
-
+          </div>
+        ) : null}
       </>
     );
   }
@@ -2621,16 +3022,16 @@ class Billing_Edit_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'billing',
-      module_name: '',
+      module: "billing",
+      module_name: "",
       is_load: false,
 
       items_err: [],
       modelCheckErrItems: false,
 
-      thisTypeSave: '',
+      thisTypeSave: "",
 
-      acces: null
+      acces: null,
     };
   }
 
@@ -2640,11 +3041,11 @@ class Billing_Edit_ extends React.Component {
     clearForm();
 
     this.setState({
-      thisTypeSave: '',
+      thisTypeSave: "",
     });
 
-    const res = await this.getData('get_all_for_new');
-    
+    const res = await this.getData("get_all_for_new");
+
     this.setState({
       acces: res?.acces,
     });
@@ -2652,13 +3053,13 @@ class Billing_Edit_ extends React.Component {
     const { setAcces, setPoints } = this.props.store;
 
     setAcces(res?.acces);
-    setPoints(res?.points)
-    
-    document.title = 'Накладные';
+    setPoints(res?.points);
 
-    setTimeout( () => {
+    document.title = "Накладные";
+
+    setTimeout(() => {
       this.myDropzone = new Dropzone("#img_bill", dropzoneOptions_bill);
-    }, 500 )
+    }, 500);
   }
 
   getData = (method, data = {}) => {
@@ -2666,28 +3067,28 @@ class Billing_Edit_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: queryString.stringify({
         method: method,
         module: this.state.module,
         version: 2,
-        login: localStorage.getItem('token'),
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })
       .then((res) => res.json())
       .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/";
           return;
         }
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
           return;
         }
 
@@ -2707,46 +3108,67 @@ class Billing_Edit_ extends React.Component {
       });
   };
 
-  async saveNewBill ( type_save, check_err = true ) {
-
-    if( this.isClick === true ) return;
+  async saveNewBill(type_save, check_err = true) {
+    if (this.isClick === true) return;
 
     this.isClick = true;
 
-    if( type_save != 'type' ){
+    if (type_save != "type") {
       this.setState({
-        thisTypeSave: type_save
-      })
-    }else{
+        thisTypeSave: type_save,
+      });
+    } else {
       type_save = this.state.thisTypeSave;
     }
 
-    const {bill_base_id, vendor, err_items, DropzoneDop, showAlert, number, point, date, number_factur, date_factur, type, doc, docs, doc_base_id, date_items, user, comment, is_new_doc, bill_items} = this.props.store;
+    const {
+      bill_base_id,
+      vendor,
+      err_items,
+      DropzoneDop,
+      showAlert,
+      number,
+      point,
+      date,
+      number_factur,
+      date_factur,
+      type,
+      doc,
+      docs,
+      doc_base_id,
+      date_items,
+      user,
+      comment,
+      is_new_doc,
+      bill_items,
+    } = this.props.store;
 
     this.setState({
       modelCheckErrItems: false,
-    })
+    });
 
-    let doc_info = docs.find( item_doc => item_doc.name === doc )
+    let doc_info = docs.find((item_doc) => item_doc.name === doc);
 
-    const dateBill = date ? dayjs(date).format('YYYY-MM-DD') : '';
-    const dateFactur = date_factur ? dayjs(date_factur).format('YYYY-MM-DD') : '';
-    const dateItems = date_items ? dayjs(date_items).format('YYYY-MM-DD') : '';
+    const dateBill = date ? dayjs(date).format("YYYY-MM-DD") : "";
+    const dateFactur = date_factur ? dayjs(date_factur).format("YYYY-MM-DD") : "";
+    const dateItems = date_items ? dayjs(date_items).format("YYYY-MM-DD") : "";
 
     var items_color = [];
 
-    let new_bill_items = bill_items.filter( item => item.fact_unit.length == 0 || item.price_item.length == 0 || item.price_w_nds.length == 0 );
+    let new_bill_items = bill_items.filter(
+      (item) =>
+        item.fact_unit.length == 0 || item.price_item.length == 0 || item.price_w_nds.length == 0,
+    );
 
-    if( new_bill_items.length > 0 ){
-      showAlert(false, 'Не все даныне в товаре заполнены');
+    if (new_bill_items.length > 0) {
+      showAlert(false, "Не все даныне в товаре заполнены");
 
       this.isClick = false;
 
-      return ;
-    } 
+      return;
+    }
 
     const items = bill_items.reduce((newItems, item) => {
-
       let it = {};
 
       it.pq = item.pq;
@@ -2756,14 +3178,14 @@ class Billing_Edit_ extends React.Component {
       it.summ_w_nds = item.price_w_nds;
       it.color = item.color;
 
-      if( item.color && item.color === true ) {
+      if (item.color && item.color === true) {
         items_color.push(item);
       }
 
-      const nds = item.nds.split(' %')[0];
+      const nds = item.nds.split(" %")[0];
 
-      if(nds === 'без НДС') {
-        it.nds = -1
+      if (nds === "без НДС") {
+        it.nds = -1;
       } else {
         it.nds = nds;
       }
@@ -2771,49 +3193,50 @@ class Billing_Edit_ extends React.Component {
       newItems.push(it);
 
       return newItems;
-    }, [])
+    }, []);
 
-
-    if( check_err === true && items_color.length > 0 ){
-
+    if (check_err === true && items_color.length > 0) {
       this.setState({
         items_err: items_color,
-        modelCheckErrItems: true
-      })
+        modelCheckErrItems: true,
+      });
 
       this.isClick = false;
 
-      return ;
+      return;
     }
-    
 
-    if( !this.myDropzone || this.myDropzone['files'].length === 0 ) {
-      showAlert(false, 'Нет изображений документа');
+    if (!this.myDropzone || this.myDropzone["files"].length === 0) {
+      showAlert(false, "Нет изображений документа");
 
       this.isClick = false;
 
-      return ;
+      return;
     }
 
-    if( parseInt(type) == 2 && parseInt(doc_base_id) == 5 && ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ) {
-      showAlert(false, 'Нет изображений счет-фактуры');
+    if (
+      parseInt(type) == 2 &&
+      parseInt(doc_base_id) == 5 &&
+      (!DropzoneDop || DropzoneDop["files"].length === 0)
+    ) {
+      showAlert(false, "Нет изображений счет-фактуры");
 
       this.isClick = false;
 
-      return ;
+      return;
     }
 
-    if( parseInt(type) == 1 ){
+    if (parseInt(type) == 1) {
       this.myDropzone.options.url = url_bill_ex;
-      type_bill = 'bill_ex';
+      type_bill = "bill_ex";
       is_return = true;
-    }else{
+    } else {
       this.myDropzone.options.url = url_bill;
-      type_bill = 'bill';
+      type_bill = "bill";
       is_return = true;
     }
 
-    if( ( !DropzoneDop || DropzoneDop['files'].length === 0 ) ){
+    if (!DropzoneDop || DropzoneDop["files"].length === 0) {
       is_return = true;
     }
 
@@ -2830,72 +3253,84 @@ class Billing_Edit_ extends React.Component {
       date: dateBill,
       date_items: dateItems,
       date_factur: dateFactur,
-      point_id: point?.id ?? '',
+      point_id: point?.id ?? "",
       vendor_id: vendor?.id,
-      imgs: this.myDropzone['files'].length,
+      imgs: this.myDropzone["files"].length,
       type_save: type_save,
       err_items: items_color,
-      bill_base_id: bill_base_id
-    }
+      bill_base_id: bill_base_id,
+    };
 
-    const res = await this.getData('save_new', data);
+    const res = await this.getData("save_new", data);
 
-    setTimeout( () => {
+    setTimeout(() => {
       this.isClick = false;
-    }, 20000 );
+    }, 20000);
 
     if (res.st === true) {
-
-      if( res?.text && res.text.length > 0 ) {
-
+      if (res?.text && res.text.length > 0) {
         showAlert(res.st, res.text);
       }
 
-      global_point_id = point?.id
+      global_point_id = point?.id;
       global_new_bill_id = res.bill_id;
-      
+
       this.myDropzone.processQueue();
 
-      if( parseInt(type) == 2 && DropzoneDop && DropzoneDop['files'].length > 0 ){
+      if (parseInt(type) == 2 && DropzoneDop && DropzoneDop["files"].length > 0) {
         DropzoneDop.processQueue();
       }
 
-      if( (!DropzoneDop || DropzoneDop['files'].length == 0) ){
+      if (!DropzoneDop || DropzoneDop["files"].length == 0) {
         //window.location = '/billing';
       }
-
     } else {
-
       showAlert(res.st, res.text);
-
     }
-
   }
 
-  returnFN (){
+  returnFN() {
     const { clearForm } = this.props.store;
 
     clearForm();
-    window.location = '/billing';
+    window.location = "/billing";
   }
 
   render() {
-
-    const { isPink, openAlert, err_status, err_text, closeAlert, is_load_store, modalDialog, fullScreen, image, closeDialog, bill, bill_list, bill_items, is_horizontal, is_vertical } = this.props.store;
+    const {
+      isPink,
+      openAlert,
+      err_status,
+      err_text,
+      closeAlert,
+      is_load_store,
+      modalDialog,
+      fullScreen,
+      image,
+      closeDialog,
+      bill,
+      bill_list,
+      bill_items,
+      is_horizontal,
+      is_vertical,
+    } = this.props.store;
 
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load || is_load_store}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load || is_load_store}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
-        {!modalDialog ? null :
+        {!modalDialog ? null : (
           <Billing_Modal
             onClose={closeDialog}
             fullScreen={fullScreen}
             image={image}
             store={this.props.store}
           />
-        }
+        )}
         <MyAlert
           isOpen={openAlert}
           onClose={closeAlert}
@@ -2904,9 +3339,11 @@ class Billing_Edit_ extends React.Component {
         />
         <Dialog
           open={this.state.modelCheckErrItems}
-          onClose={ () => { this.setState({ modelCheckErrItems: false }) } }
+          onClose={() => {
+            this.setState({ modelCheckErrItems: false });
+          }}
           fullWidth={true}
-          maxWidth={'md'}
+          maxWidth={"md"}
         >
           <DialogTitle>Подтверждение</DialogTitle>
           <DialogContent>
@@ -2915,98 +3352,147 @@ class Billing_Edit_ extends React.Component {
             </DialogContentText>
 
             <VendorItemsTableView_min />
-
           </DialogContent>
-          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Button variant="contained" onClick={ () => { this.setState({ modelCheckErrItems: false }) } } color="error" >Отмена</Button>
-            <Button variant="contained" onClick={ this.saveNewBill.bind(this, 'type', false) } color="success">Сохранить</Button>
+          <DialogActions
+            style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+          >
+            <Button
+              variant="contained"
+              onClick={() => {
+                this.setState({ modelCheckErrItems: false });
+              }}
+              color="error"
+            >
+              Отмена
+            </Button>
+            <Button
+              variant="contained"
+              onClick={this.saveNewBill.bind(this, "type", false)}
+              color="success"
+            >
+              Сохранить
+            </Button>
           </DialogActions>
         </Dialog>
-        <Grid container spacing={3} mb={10} style={{ marginTop: '64px', maxWidth: is_vertical ? '50%' : '100%', marginBottom: is_horizontal ? 700 : 30 }}>
-
+        <Grid
+          container
+          spacing={3}
+          mb={10}
+          style={{
+            marginTop: "64px",
+            maxWidth: is_vertical ? "50%" : "100%",
+            marginBottom: is_horizontal ? 700 : 30,
+          }}
+        >
           <Grid
-            style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
+            style={{ display: "flex", flexDirection: "row", alignItems: "center" }}
             size={{
               xs: 12,
-              sm: 12
-            }}>
-            
-            <ArrowBackIosNewIcon style={{ width: 50, height: 30, cursor: 'pointer' }} onClick={this.returnFN.bind(this)} />
-            
+              sm: 12,
+            }}
+          >
+            <ArrowBackIosNewIcon
+              style={{ width: 50, height: 30, cursor: "pointer" }}
+              onClick={this.returnFN.bind(this)}
+            />
+
             <h1>Новый документ</h1>
-            
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
-            <Divider style={{ backgroundColor: 'rgba(0, 0, 0, 0.87)' }} />
+              sm: 12,
+            }}
+          >
+            <Divider style={{ backgroundColor: "rgba(0, 0, 0, 0.87)" }} />
           </Grid>
 
-          <FormHeader_new page={'new'} type_edit={ parseInt(this.state.acces?.header) == 1 ? 'edit' : 'show' } />
-          
-          <FormImage_new type_edit={ parseInt(this.state.acces?.photo) == 1 ? 'edit' : 'show' } />
+          <FormHeader_new
+            page={"new"}
+            type_edit={parseInt(this.state.acces?.header) == 1 ? "edit" : "show"}
+          />
 
-          { parseInt(this.state.acces?.items) == 1 ? 
+          <FormImage_new type_edit={parseInt(this.state.acces?.photo) == 1 ? "edit" : "show"} />
+
+          {parseInt(this.state.acces?.items) == 1 ? (
             <>
-              <FormVendorItems />  
+              <FormVendorItems />
               <VendorItemsTableEdit />
             </>
-              :
+          ) : (
             <VendorItemsTableView />
-          }
-          
-          <FormOther_new page={'new'} type_edit={parseInt(this.state.acces?.footer) == 1 ? 'edit' : 'show' } />
+          )}
 
-          {!bill_list.length ? null :
+          <FormOther_new
+            page={"new"}
+            type_edit={parseInt(this.state.acces?.footer) == 1 ? "edit" : "show"}
+          />
+
+          {!bill_list.length ? null : (
             <Billing_Accordion
               bill_list={bill_list}
               bill_items={bill_items}
-              type='new'
+              type="new"
             />
-          }
+          )}
 
-          { parseInt(this.state.acces?.only_save) === 0 ? false :
+          {parseInt(this.state.acces?.only_save) === 0 ? (
+            false
+          ) : (
             <Grid
               size={{
                 xs: 12,
-                sm: 4
-              }}>
-              <Button variant="contained" fullWidth color="success"  onClick={this.saveNewBill.bind(this, 'current', true)}>
+                sm: 4,
+              }}
+            >
+              <Button
+                variant="contained"
+                fullWidth
+                color="success"
+                onClick={this.saveNewBill.bind(this, "current", true)}
+              >
                 Сохранить
               </Button>
             </Grid>
-          }
-         
-          { parseInt(this.state.acces?.save_send) === 0 ? false :
+          )}
+
+          {parseInt(this.state.acces?.save_send) === 0 ? (
+            false
+          ) : (
             <Grid
               size={{
                 xs: 12,
-                sm: 4
-              }}>
-              <Button variant="contained" fullWidth color="info" 
-                onClick={this.saveNewBill.bind(this, 'next', true)}
+                sm: 4,
+              }}
+            >
+              <Button
+                variant="contained"
+                fullWidth
+                color="info"
+                onClick={this.saveNewBill.bind(this, "next", true)}
               >
                 Сохранить и отправить
               </Button>
             </Grid>
-          }
-          
-          
+          )}
         </Grid>
       </>
     );
   }
 }
 
-const withStore = BaseComponent => props => {
+const withStore = (BaseComponent) => (props) => {
   const store = useStore();
-  return <BaseComponent {...props} store={store} />;
+  return (
+    <BaseComponent
+      {...props}
+      store={store}
+    />
+  );
 };
 
-const Billing_Edit_Store = withStore(Billing_Edit_)
+const Billing_Edit_Store = withStore(Billing_Edit_);
 
 export default function BillingNew() {
   return <Billing_Edit_Store />;

@@ -19,12 +19,12 @@ import {
   TableRow,
 } from "@mui/material";
 
-import { MySelect, MyTextInput, MyDatePickerNew } from "@/components/shared/Forms";
+import { MySelect, MyTextInput, MyDatePickerNew } from "@/ui/Forms";
 
 import dayjs from "dayjs";
 import { api_laravel } from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 
 class DriverStat_ extends React.Component {
@@ -42,8 +42,8 @@ class DriverStat_ extends React.Component {
       points: [],
       point: "0",
 
-      date_start:  formatDate(),
-      date_end:  formatDate(),
+      date_start: formatDate(),
+      date_end: formatDate(),
       // rangeDate: [formatDate(new Date()), formatDate(new Date())],
 
       modalGetCash: false,
@@ -129,7 +129,7 @@ class DriverStat_ extends React.Component {
   }
 
   changeDate(key, value) {
-    if(!this.canAccess('dates')){
+    if (!this.canAccess("dates")) {
       let { date_start, date_end } = this.state;
       if (key === "date_start") {
         date_start = value;
@@ -161,11 +161,11 @@ class DriverStat_ extends React.Component {
   }
 
   getCash(driver_id, check_cash) {
-      this.setState({
-        modalGetCash: true,
-        choose_driver_id: driver_id,
-        check_cash: check_cash,
-      });
+    this.setState({
+      modalGetCash: true,
+      choose_driver_id: driver_id,
+      check_cash: check_cash,
+    });
   }
 
   async saveGetCash() {
@@ -380,8 +380,7 @@ class DriverStat_ extends React.Component {
           aria-describedby="alert-dialog-description"
         >
           <DialogTitle>
-            Дополнительная выплата курьеру "
-            {this.state.giveCashDriver?.name || ""}"
+            Дополнительная выплата курьеру "{this.state.giveCashDriver?.name || ""}"
           </DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid
@@ -391,8 +390,9 @@ class DriverStat_ extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <MyTextInput
                   type="number"
                   value={this.state.giveSumm}
@@ -406,8 +406,9 @@ class DriverStat_ extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <MyTextInput
                   maxRows={2}
                   value={this.state.giveCashComment}
@@ -512,16 +513,18 @@ class DriverStat_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -531,8 +534,9 @@ class DriverStat_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -543,8 +547,9 @@ class DriverStat_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MySelect
               data={this.state.points}
               value={this.state.point}
@@ -555,8 +560,9 @@ class DriverStat_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <Button
               variant="contained"
               onClick={this.updateData.bind(this)}
@@ -567,8 +573,9 @@ class DriverStat_ extends React.Component {
 
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <TableContainer component={Paper}>
               <Table>
                 <TableHead>
@@ -645,7 +652,7 @@ class DriverStat_ extends React.Component {
                       <TableCell>
                         <Button
                           variant="contained"
-                          disabled={!this.canAccess('get_cash')}
+                          disabled={!this.canAccess("get_cash")}
                           onClick={this.getCash.bind(this, item.driver_id, item.ost_cash)}
                         >
                           Сдать
@@ -654,7 +661,7 @@ class DriverStat_ extends React.Component {
                       <TableCell>
                         <Button
                           variant="contained"
-                          disabled={!this.canAccess('give_cash')}
+                          disabled={!this.canAccess("give_cash")}
                           onClick={this.giveCash.bind(this, item)}
                         >
                           Доп. выплата
@@ -670,9 +677,10 @@ class DriverStat_ extends React.Component {
           {this.state.drive_stat_date == null ? null : (
             <Grid
               size={{
-                xs: 12
-              }}>
-              <TableContainer component={Paper} >
+                xs: 12,
+              }}
+            >
+              <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -807,7 +815,7 @@ export async function getServerSideProps({ req, res, query }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

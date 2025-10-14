@@ -1,10 +1,19 @@
 "use client";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Accordion, AccordionDetails, AccordionSummary, List, ListItem, ListItemButton, ListItemText, Paper, Typography } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Paper,
+  Typography,
+} from "@mui/material";
 
-
-export default function CookRecipesTab({rec}) {
+export default function CookRecipesTab({ rec }) {
   return (
     <Paper
       sx={{ display: { xs: "block", md: "flex" }, width: { xs: "100%", md: "50%" } }}

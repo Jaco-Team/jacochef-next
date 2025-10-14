@@ -1,50 +1,49 @@
-import React from 'react';
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import React from "react";
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import MenuIcon from '@mui/icons-material/Menu';
+import MenuIcon from "@mui/icons-material/Menu";
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import TextField from '@mui/material/TextField';
+import TextField from "@mui/material/TextField";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import { MySelect, MyAutocomplite } from '@/components/shared/Forms';
-import Typography from '@mui/material/Typography';
+import { MySelect, MyAutocomplite } from "@/ui/Forms";
+import Typography from "@mui/material/Typography";
 
-import queryString from 'query-string';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import queryString from "query-string";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 class ModalCategoryItems extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      newMainCatMy: '',
-      editMainCatMy: '',
-      newMainNameMy: '',
-      editMainNameMy: '',
+      newMainCatMy: "",
+      editMainCatMy: "",
+      newMainNameMy: "",
+      editMainNameMy: "",
     };
   }
 
   componentDidUpdate(prevProps) {
-
-    if(!this.props.event) {
+    if (!this.props.event) {
       return;
     }
 
@@ -89,12 +88,11 @@ class ModalCategoryItems extends React.Component {
   }
 
   onClose() {
-
     this.setState({
-      newMainCatMy: '',
-      editMainCatMy: this.props.event ? this.props.event.parent_id : '',
-      newMainNameMy: '',
-      editMainNameMy: this.props.event ? this.props.event.name : '',
+      newMainCatMy: "",
+      editMainCatMy: this.props.event ? this.props.event.parent_id : "",
+      newMainNameMy: "",
+      editMainNameMy: this.props.event ? this.props.event.name : "",
     });
     this.props.onClose();
   }
@@ -109,22 +107,26 @@ class ModalCategoryItems extends React.Component {
       >
         <DialogTitle id="alert-dialog-title">{this.props.method}</DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3}>
+          <Grid
+            container
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MySelect
                 label="Главная категория"
                 data={this.props.data}
                 value={
-                  this.props.method === 'Редактирование категории'
+                  this.props.method === "Редактирование категории"
                     ? this.state.editMainCatMy
                     : this.state.newMainCatMy
                 }
                 func={
-                  this.props.method === 'Редактирование категории'
+                  this.props.method === "Редактирование категории"
                     ? this.changeCatMainEdit.bind(this)
                     : this.changeCatMain.bind(this)
                 }
@@ -133,21 +135,22 @@ class ModalCategoryItems extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <TextField
                 label="Название категории"
                 size="small"
                 variant="outlined"
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
                 color="primary"
                 value={
-                  this.props.method === 'Редактирование категории'
+                  this.props.method === "Редактирование категории"
                     ? this.state.editMainNameMy
                     : this.state.newMainNameMy
                 }
                 onChange={
-                  this.props.method === 'Редактирование категории'
+                  this.props.method === "Редактирование категории"
                     ? this.changeNameMainEdit.bind(this)
                     : this.changeNameMain.bind(this)
                 }
@@ -158,17 +161,13 @@ class ModalCategoryItems extends React.Component {
         <DialogActions>
           <Button
             onClick={
-              this.props.method === 'Редактирование категории'
+              this.props.method === "Редактирование категории"
                 ? this.props.saveEditCat.bind(
                     this,
                     this.state.editMainNameMy,
-                    this.state.editMainCatMy
+                    this.state.editMainCatMy,
                   )
-                : this.props.saveCat.bind(
-                    this,
-                    this.state.newMainNameMy,
-                    this.state.newMainCatMy
-                  )
+                : this.props.saveCat.bind(this, this.state.newMainNameMy, this.state.newMainCatMy)
             }
             color="primary"
           >
@@ -185,8 +184,8 @@ class CategoryItems_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'category_items',
-      module_name: '',
+      module: "category_items",
+      module_name: "",
       is_load: false,
 
       modalDialog: false,
@@ -205,7 +204,7 @@ class CategoryItems_ extends React.Component {
   }
 
   async componentDidMount() {
-    let data = await this.getData('get_all');
+    let data = await this.getData("get_all");
 
     this.setState({
       module_name: data.module_info.name,
@@ -245,9 +244,7 @@ class CategoryItems_ extends React.Component {
   }
 
   addItems(cat_id) {
-    let myVal = this.state.allItems.filter(
-      (item) => parseInt(item.cat_id) == parseInt(cat_id)
-    );
+    let myVal = this.state.allItems.filter((item) => parseInt(item.cat_id) == parseInt(cat_id));
     let data = this.state.allItems.filter((item) => parseInt(item.cat_id) == 0);
 
     this.setState({
@@ -264,7 +261,7 @@ class CategoryItems_ extends React.Component {
       items: this.state.thisValItems,
     };
 
-    let res = await this.getData('save_items_cat', data);
+    let res = await this.getData("save_items_cat", data);
 
     this.setState({
       allCats: res.cats,
@@ -283,7 +280,7 @@ class CategoryItems_ extends React.Component {
       cat_id: newMainCatMy,
     };
 
-    let res = await this.getData('save_cat', data);
+    let res = await this.getData("save_cat", data);
 
     if (res.st === false) {
       alert(res.text);
@@ -297,14 +294,13 @@ class CategoryItems_ extends React.Component {
   }
 
   async saveEditCat(editMainNameMy, editMainCatMy) {
-
     let data = {
       name: editMainNameMy,
       cat_id: editMainCatMy,
       id: this.state.data.id,
     };
 
-    let res = await this.getData('edit_cat', data);
+    let res = await this.getData("edit_cat", data);
 
     if (res.st === false) {
       alert(res.text);
@@ -320,7 +316,10 @@ class CategoryItems_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <ModalCategoryItems
@@ -329,7 +328,7 @@ class CategoryItems_ extends React.Component {
             this.setState({ modalDialog: false });
           }}
           data={this.state.allCats.filter(
-            (item) => parseInt(item.parent_id) == -1 || !item.parent_id
+            (item) => parseInt(item.parent_id) == -1 || !item.parent_id,
           )}
           saveCat={this.saveCat.bind(this)}
           saveEditCat={this.saveEditCat.bind(this)}
@@ -346,12 +345,16 @@ class CategoryItems_ extends React.Component {
         >
           <DialogTitle>Позиции категории</DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3}>
+            <Grid
+              container
+              spacing={3}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <MyAutocomplite
                   label="Выбранные позиции"
                   multiple={true}
@@ -365,41 +368,53 @@ class CategoryItems_ extends React.Component {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.saveItems.bind(this)} color="primary">
+            <Button
+              onClick={this.saveItems.bind(this)}
+              color="primary"
+            >
               Сохранить
             </Button>
           </DialogActions>
         </Dialog>
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Button
-              onClick={ () => this.setState({
-                    modalDialog: true,
-                    method: 'Новая категория',
-                  })}
+              onClick={() =>
+                this.setState({
+                  modalDialog: true,
+                  method: "Новая категория",
+                })
+              }
             >
               Создать категорию
             </Button>
           </Grid>
 
           <Grid
-            style={{ paddingBottom: '10px' }}
+            style={{ paddingBottom: "10px" }}
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             {this.state.allCats.map((main_cat, main_key) =>
               parseInt(main_cat.parent_id) != -1 ? null : (
                 <Accordion key={main_key}>
@@ -409,19 +424,14 @@ class CategoryItems_ extends React.Component {
                   >
                     <MenuIcon
                       style={{ marginRight: 10 }}
-                      onClick={this.onOpen.bind(
-                        this,
-                        'Редактирование категории',
-                        main_cat
-                      )}
+                      onClick={this.onOpen.bind(this, "Редактирование категории", main_cat)}
                     />
                     <Typography>{main_cat.name}</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
                     {this.state.allCats.map((parent_cat, parent_key) =>
-                      parseInt(main_cat.id) !=
-                      parseInt(parent_cat.parent_id) ? null : (
-                        <Accordion key={main_key + '_' + parent_key}>
+                      parseInt(main_cat.id) != parseInt(parent_cat.parent_id) ? null : (
+                        <Accordion key={main_key + "_" + parent_key}>
                           <AccordionSummary
                             expandIcon={<ExpandMoreIcon />}
                             aria-controls="panel1a-content"
@@ -430,8 +440,8 @@ class CategoryItems_ extends React.Component {
                               style={{ marginRight: 10 }}
                               onClick={this.onOpen.bind(
                                 this,
-                                'Редактирование категории',
-                                parent_cat
+                                "Редактирование категории",
+                                parent_cat,
                               )}
                             />
                             <Typography>{parent_cat.name}</Typography>
@@ -442,10 +452,7 @@ class CategoryItems_ extends React.Component {
                                 <TableRow>
                                   <TableCell>
                                     <Button
-                                      onClick={this.addItems.bind(
-                                        this,
-                                        parseInt(parent_cat.id)
-                                      )}
+                                      onClick={this.addItems.bind(this, parseInt(parent_cat.id))}
                                     >
                                       Добавить
                                     </Button>
@@ -453,16 +460,10 @@ class CategoryItems_ extends React.Component {
                                 </TableRow>
                                 {this.state.allItems
                                   .filter(
-                                    (item) =>
-                                      parseInt(item.cat_id) ==
-                                      parseInt(parent_cat.id)
+                                    (item) => parseInt(item.cat_id) == parseInt(parent_cat.id),
                                   )
                                   .map((item, key) => (
-                                    <TableRow
-                                      key={
-                                        main_key + '_' + parent_key + '_' + key
-                                      }
-                                    >
+                                    <TableRow key={main_key + "_" + parent_key + "_" + key}>
                                       <TableCell>{item.name}</TableCell>
                                     </TableRow>
                                   ))}
@@ -470,11 +471,11 @@ class CategoryItems_ extends React.Component {
                             </Table>
                           </AccordionDetails>
                         </Accordion>
-                      )
+                      ),
                     )}
                   </AccordionDetails>
                 </Accordion>
-              )
+              ),
             )}
           </Grid>
         </Grid>
@@ -488,13 +489,16 @@ export default function CategoryItems() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

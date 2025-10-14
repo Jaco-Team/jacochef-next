@@ -1,6 +1,6 @@
 "use client";
 
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 import { create } from "zustand";
 
 const defaultSubmodules = [
@@ -33,7 +33,7 @@ export const useSiteSettingStore = create((set, get) => ({
   setSubModuleTitle: (key, newTitle) =>
     set((state) => {
       state.subModules = state.subModules.map((s) =>
-        s.key === key ? { ...s, title: newTitle } : s
+        s.key === key ? { ...s, title: newTitle } : s,
       );
     }),
 
@@ -58,7 +58,7 @@ export const useSiteSettingStore = create((set, get) => ({
       modalContent: content,
       modalTitle: title,
       customModalActions: customActions,
-      onCloseModalHook: onCloseHook
+      onCloseModalHook: onCloseHook,
     });
     set({ fullScreen: window.innerWidth < 601 });
   },

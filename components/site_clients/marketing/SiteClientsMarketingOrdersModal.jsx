@@ -16,14 +16,20 @@ import { Close } from "@mui/icons-material";
 import { useLoading } from "./useClientsLoadingContext";
 
 const Transition = forwardRef(function Transition(props, ref) {
-  return <Slide direction="up" ref={ref} {...props} />;
+  return (
+    <Slide
+      direction="up"
+      ref={ref}
+      {...props}
+    />
+  );
 });
 
 function SiteClientsMarketingOrdersModal({ isOpen, onClose, title, children }) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const subtitle = useMarketingTabStore((state) => state.subtitle);
-  const {isLoading} = useLoading();
+  const { isLoading } = useLoading();
 
   return (
     <Dialog
@@ -34,12 +40,11 @@ function SiteClientsMarketingOrdersModal({ isOpen, onClose, title, children }) {
       maxWidth={"xl"}
       fullScreen={fullScreen}
       TransitionComponent={Transition}
-      sx={{opacity: isLoading ? 0 : 1}}
+      sx={{ opacity: isLoading ? 0 : 1 }}
     >
       <DialogTitle
         className="button"
         id="stats-dialog-title"
-        
       >
         <Typography
           style={{
@@ -57,9 +62,7 @@ function SiteClientsMarketingOrdersModal({ isOpen, onClose, title, children }) {
         </IconButton>
       </DialogTitle>
 
-      <DialogContent>
-        {children}
-      </DialogContent>
+      <DialogContent>{children}</DialogContent>
     </Dialog>
   );
 }

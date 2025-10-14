@@ -1,34 +1,34 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import ClearIcon from '@mui/icons-material/Clear';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import ClearIcon from "@mui/icons-material/Clear";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import TablePagination from '@mui/material/TablePagination';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import TablePagination from "@mui/material/TablePagination";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import {MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyDatePickerNew} from '@/components/shared/Forms';
+import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput, MyDatePickerNew } from "@/ui/Forms";
 
-import Dropzone from 'dropzone';
-import { api_laravel, api_laravel_local } from '@/src/api_new';
-import dayjs from 'dayjs';
+import Dropzone from "dropzone";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
+import dayjs from "dayjs";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -39,25 +39,30 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import Box from "@mui/material/Box";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import MyAlert from '@/components/shared/MyAlert';
+import MyAlert from "@/ui/MyAlert";
 
 class SiteUserManagerTable extends React.Component {
   shouldComponentUpdate(nextProps) {
     var array1 = nextProps.users;
     var array2 = this.props.users;
 
-    var same = array1.length == array2.length && array1.every(function (element, index) {
-      return element === array2[index];
-    });
+    var same =
+      array1.length == array2.length &&
+      array1.every(function (element, index) {
+        return element === array2[index];
+      });
 
     return (
-      !same || nextProps.page_table !== this.props.page_table || nextProps.rows_table !== this.props.rows_table ||
+      !same ||
+      nextProps.page_table !== this.props.page_table ||
+      nextProps.rows_table !== this.props.rows_table ||
       nextProps.total_rows !== this.props.total_rows
     );
   }
 
   render() {
-    const { handlePageChange, handleChangeRowsPerPage, page_table, rows_table, total_rows } = this.props;
+    const { handlePageChange, handleChangeRowsPerPage, page_table, rows_table, total_rows } =
+      this.props;
 
     return (
       <TableContainer component={Paper}>
@@ -74,13 +79,23 @@ class SiteUserManagerTable extends React.Component {
           </TableHead>
           <TableBody>
             {this.props.users.map((item, key) => (
-              <TableRow style={{ cursor: 'pointer' }} key={key} hover onClick={this.props.openEditUser.bind(this, item.id)}>
+              <TableRow
+                style={{ cursor: "pointer" }}
+                key={key}
+                hover
+                onClick={this.props.openEditUser.bind(this, item.id)}
+              >
                 <TableCell>{key + 1}</TableCell>
                 <TableCell>
-                  {item['img_name'] === null ? null : (
+                  {item["img_name"] === null ? null : (
                     <img
                       alt={item.name}
-                      src={'https://storage.yandexcloud.net/user-img/min-img/' + item['img_name'] + '?' + item['img_update']}
+                      src={
+                        "https://storage.yandexcloud.net/user-img/min-img/" +
+                        item["img_name"] +
+                        "?" +
+                        item["img_update"]
+                      }
                       style={{ maxWidth: 100, maxHeight: 100 }}
                     />
                   )}
@@ -88,7 +103,13 @@ class SiteUserManagerTable extends React.Component {
                 <TableCell>{item.login}</TableCell>
                 <TableCell>{item.name}</TableCell>
                 <TableCell>{item.app_name}</TableCell>
-                <TableCell align="center">{ parseInt(item.acc_to_kas) == 1 ? <CheckIcon style={{ color: 'green' }} /> : <CloseIcon style={{ color: 'red' }} /> }</TableCell>
+                <TableCell align="center">
+                  {parseInt(item.acc_to_kas) == 1 ? (
+                    <CheckIcon style={{ color: "green" }} />
+                  ) : (
+                    <CloseIcon style={{ color: "red" }} />
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -101,8 +122,10 @@ class SiteUserManagerTable extends React.Component {
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleChangeRowsPerPage}
           labelRowsPerPage="Количество строк на странице"
-          rowsPerPageOptions={[25, 50, 100, { value: -1, label: 'Все' }]}
-          labelDisplayedRows={({ from, to, count }) => `${from}–${to} из ${count !== -1 ? count : `больше, чем ${to}`}`}
+          rowsPerPageOptions={[25, 50, 100, { value: -1, label: "Все" }]}
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}–${to} из ${count !== -1 ? count : `больше, чем ${to}`}`
+          }
         />
       </TableContainer>
     );
@@ -116,9 +139,9 @@ class SiteUserManager_ extends React.Component {
     maxFiles: 1,
     timeout: 0,
     parallelUploads: 10,
-    acceptedFiles: 'image/jpeg,image/png',
+    acceptedFiles: "image/jpeg,image/png",
     addRemoveLinks: true,
-    url: 'https://jacochef.ru/src/img/users/upload.php',
+    url: "https://jacochef.ru/src/img/users/upload.php",
   };
   myDropzone = null;
   isInit = false;
@@ -128,8 +151,8 @@ class SiteUserManager_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'site_user_manager',
-      module_name: '',
+      module: "site_user_manager",
+      module_name: "",
       is_load: false,
 
       cats: [],
@@ -140,7 +163,7 @@ class SiteUserManager_ extends React.Component {
       modalItemNew: false,
 
       itemEdit: null,
-      itemName: '',
+      itemName: "",
 
       checkArtDialog: false,
       checkArtList: [],
@@ -149,7 +172,7 @@ class SiteUserManager_ extends React.Component {
 
       point_list: [],
       point_list_render: [],
-      point_id: '',
+      point_id: "",
 
       app_list: [],
       chose_app: null,
@@ -164,11 +187,16 @@ class SiteUserManager_ extends React.Component {
       modalVacation: false,
       modalUserNew: false,
       chooseVacation: {},
-      commentDifVacation: '',
-      dataVacation: [{id: 1, name: 'Отпуск'},{id: 2, name: 'Больничный'},{id: 3, name: 'Декрет'},{id: 4, name: 'Другое'}],
+      commentDifVacation: "",
+      dataVacation: [
+        { id: 1, name: "Отпуск" },
+        { id: 2, name: "Больничный" },
+        { id: 3, name: "Декрет" },
+        { id: 4, name: "Другое" },
+      ],
 
-      textDel: '',
-      textSearch: '',
+      textDel: "",
+      textSearch: "",
       delModal: false,
 
       graphModal: false,
@@ -177,7 +205,7 @@ class SiteUserManager_ extends React.Component {
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
 
       page_table: 0,
       rows_table: 25,
@@ -186,7 +214,7 @@ class SiteUserManager_ extends React.Component {
   }
 
   async componentDidMount() {
-    let data = await this.getData('get_all');
+    let data = await this.getData("get_all");
 
     this.setState({
       module_name: data.module_info.name,
@@ -194,7 +222,7 @@ class SiteUserManager_ extends React.Component {
       app_list: data.apps,
       show_access: data.my.show_access,
       app_id: data.apps[0],
-      point_id: data.points[0]['id'],
+      point_id: data.points[0]["id"],
     });
 
     setTimeout(() => {
@@ -224,18 +252,22 @@ class SiteUserManager_ extends React.Component {
   };
 
   changeSort = (() => {
-
     return (type, event, data) => {
-      if (type === 'app_id') {
-        this.setState({
-          app_id: data !== null ? data : null,
-        }, () => this.getUsers());
+      if (type === "app_id") {
+        this.setState(
+          {
+            app_id: data !== null ? data : null,
+          },
+          () => this.getUsers(),
+        );
       } else {
-        this.setState({
-          [type]: event.target.value,
-        }, () => this.getUsers());
+        this.setState(
+          {
+            [type]: event.target.value,
+          },
+          () => this.getUsers(),
+        );
       }
-
     };
   })();
 
@@ -249,23 +281,21 @@ class SiteUserManager_ extends React.Component {
       search: this.state.textSearch,
     };
 
-    let res = await this.getData('getUsers', data);
+    let res = await this.getData("getUsers", data);
 
     const total_rows = res.length;
     const resCopy = JSON.parse(JSON.stringify(res));
 
     if (total_rows < this.state.rows_table || this.state.rows_table < 0) {
-
       this.setState({
         users: res,
         usersCopy: resCopy,
         total_rows: res.length,
       });
-
     } else {
       const usersPerPage = res.slice(
         this.state.page_table * this.state.rows_table,
-        this.state.page_table * this.state.rows_table + this.state.rows_table
+        this.state.page_table * this.state.rows_table + this.state.rows_table,
       );
 
       this.setState({
@@ -281,7 +311,7 @@ class SiteUserManager_ extends React.Component {
       user_id: user_id,
     };
 
-    let res = await this.getData('getUser', data);
+    let res = await this.getData("getUser", data);
 
     // хак для автокомплита
     res.user.app_id = res.appointment.find((app) => parseInt(app.id) == parseInt(res.user.app_id));
@@ -295,14 +325,14 @@ class SiteUserManager_ extends React.Component {
     setTimeout(() => {
       this.sortPoint();
 
-      this.myDropzone = new Dropzone('#for_img_edit', this.dropzoneOptions);
+      this.myDropzone = new Dropzone("#for_img_edit", this.dropzoneOptions);
 
       this.click = false;
     }, 300);
   }
 
   async openNewUser() {
-    let res = await this.getData('getAllForNew');
+    let res = await this.getData("getAllForNew");
 
     // хак для автокомплита
     res.user.app_id = null;
@@ -315,7 +345,7 @@ class SiteUserManager_ extends React.Component {
     setTimeout(() => {
       this.sortPoint();
 
-      this.myDropzone = new Dropzone('#for_img_new', this.dropzoneOptions);
+      this.myDropzone = new Dropzone("#for_img_new", this.dropzoneOptions);
 
       this.click = false;
     }, 300);
@@ -324,10 +354,10 @@ class SiteUserManager_ extends React.Component {
   changeItem(data, event) {
     let vendor = this.state.editUser;
 
-    if (data == 'birthday' || data == 'vacationStart' || data == 'vacationEnd') {
+    if (data == "birthday" || data == "vacationStart" || data == "vacationEnd") {
       vendor.user[data] = event;
     } else {
-      if (data == 'acc_to_kas') {
+      if (data == "acc_to_kas") {
         vendor.user[data] = event.target.checked === true ? 1 : 0;
       } else {
         vendor.user[data] = event.target.value;
@@ -338,7 +368,7 @@ class SiteUserManager_ extends React.Component {
       editUser: vendor,
     });
 
-    if (data == 'city_id') {
+    if (data == "city_id") {
       setTimeout(() => {
         this.sortPoint();
       }, 300);
@@ -347,16 +377,13 @@ class SiteUserManager_ extends React.Component {
 
   // функция поиска по телефону или Фамилии
   search(type, event) {
-
-    if(type === 'clear') {
-
+    if (type === "clear") {
       this.setState({
-        textSearch: '',
+        textSearch: "",
         page_table: 0,
         rows_table: 25,
         total_rows: 0,
       });
-
     } else {
       let v = event.target.value;
 
@@ -381,7 +408,9 @@ class SiteUserManager_ extends React.Component {
     if (parseInt(city_id) == -1) {
       points_render = points;
     } else {
-      points_render = points.filter((item) => parseInt(item.city_id) == parseInt(city_id) || parseInt(item.city_id) == -1);
+      points_render = points.filter(
+        (item) => parseInt(item.city_id) == parseInt(city_id) || parseInt(item.city_id) == -1,
+      );
     }
 
     this.setState({
@@ -398,7 +427,7 @@ class SiteUserManager_ extends React.Component {
       });
 
       let is_graph = false;
-      const {user} = this.state.editUser;
+      const { user } = this.state.editUser;
 
       user.app_id = this.state.chose_app !== null ? this.state.chose_app.id : 0;
 
@@ -435,29 +464,29 @@ class SiteUserManager_ extends React.Component {
         return;
       }
 
-      if (this.myDropzone['files'].length > 0 && this.isInit === false) {
+      if (this.myDropzone["files"].length > 0 && this.isInit === false) {
         this.isInit = true;
 
-        this.myDropzone.on('sending', (file, xhr, data) => {
+        this.myDropzone.on("sending", (file, xhr, data) => {
           let user_id = this.state.editUser.user.id;
 
-          let file_type = file.name.split('.');
+          let file_type = file.name.split(".");
           file_type = file_type[file_type.length - 1];
           file_type = file_type.toLowerCase();
 
-          data.append('filetype', 'user_' + user_id + '.' + file_type);
-          data.append('filename', 'user_' + user_id);
+          data.append("filetype", "user_" + user_id + "." + file_type);
+          data.append("filename", "user_" + user_id);
 
           this.getOrientation(file, function (orientation) {
-            data.append('orientation', orientation);
+            data.append("orientation", orientation);
           });
         });
 
-        this.myDropzone.on('queuecomplete', (data) => {
+        this.myDropzone.on("queuecomplete", (data) => {
           var check_img = false;
 
-          this.myDropzone['files'].map(function (item, key) {
-            if (item['status'] == 'error') {
+          this.myDropzone["files"].map(function (item, key) {
+            if (item["status"] == "error") {
               check_img = true;
             }
           });
@@ -468,7 +497,7 @@ class SiteUserManager_ extends React.Component {
             this.setState({
               openAlert: true,
               err_status: false,
-              err_text: 'Ошибка при загрузке фотографии',
+              err_text: "Ошибка при загрузке фотографии",
             });
 
             return;
@@ -487,25 +516,25 @@ class SiteUserManager_ extends React.Component {
       }
 
       if (user.birthday) {
-        user.birthday = dayjs(user.birthday).format('YYYY-MM-DD');
+        user.birthday = dayjs(user.birthday).format("YYYY-MM-DD");
       }
 
       let data = {
-        user: {user},
+        user: { user },
         textDel: this.state.textDel,
-        graphType: graphType
+        graphType: graphType,
       };
-      let res = await this.getData('saveEditUser', data);
+      let res = await this.getData("saveEditUser", data);
 
       if (res?.st === false) {
         // alert(res.text);
         this.setState({
           openAlert: true,
           err_status: false,
-          err_text: res?.text ?? 'Unknown response',
+          err_text: res?.text ?? "Unknown response",
         });
       } else {
-        if (this.myDropzone['files'].length == 0) {
+        if (this.myDropzone["files"].length == 0) {
           this.isInit = false;
 
           this.setState({
@@ -539,23 +568,23 @@ class SiteUserManager_ extends React.Component {
       user.app_id = this.state.chose_app !== null ? this.state.chose_app.id : 0;
 
       if (user.birthday) {
-        user.birthday = dayjs(user.birthday).format('YYYY-MM-DD');
+        user.birthday = dayjs(user.birthday).format("YYYY-MM-DD");
       }
 
       if (user.vacationStart) {
-        user.vacationStart = dayjs(user.vacationStart).format('YYYY-MM-DD');
+        user.vacationStart = dayjs(user.vacationStart).format("YYYY-MM-DD");
       }
 
       if (user.vacationEnd) {
-        user.vacationEnd = dayjs(user.vacationEnd).format('YYYY-MM-DD');
+        user.vacationEnd = dayjs(user.vacationEnd).format("YYYY-MM-DD");
       }
 
       let data = {
         user,
         typeVacation: this.state.chooseVacation,
-        commentVacation: this.state.commentDifVacation
+        commentVacation: this.state.commentDifVacation,
       };
-      let res = await this.getData('saveVacationUser', data);
+      let res = await this.getData("saveVacationUser", data);
 
       if (res.st === false) {
         this.setState({
@@ -566,21 +595,24 @@ class SiteUserManager_ extends React.Component {
       } else {
         this.isInit = false;
 
-        this.setState({
-          modalVacation: false,
-        }, async () => {
-          let data = {
-            user_id: user.id,
-          };
+        this.setState(
+          {
+            modalVacation: false,
+          },
+          async () => {
+            let data = {
+              user_id: user.id,
+            };
 
-          let res = await this.getData('getUser', data);
-          this.setState({
-            editUser: res,
-            chose_app: res.user.app_id,
-            modalUserEdit: true,
-          });
-          this.click = false;
-        });
+            let res = await this.getData("getUser", data);
+            this.setState({
+              editUser: res,
+              chose_app: res.user.app_id,
+              modalUserEdit: true,
+            });
+            this.click = false;
+          },
+        );
       }
     }
   }
@@ -593,7 +625,7 @@ class SiteUserManager_ extends React.Component {
       let is_graph_ = false;
 
       // хак для нормальной работы атокомплита должность
-      const {user} = this.state.editUser;
+      const { user } = this.state.editUser;
       user.app_id = this.state.chose_app !== null ? this.state.chose_app.id : 0;
 
       this.state.app_list.map((item, key) => {
@@ -608,13 +640,13 @@ class SiteUserManager_ extends React.Component {
         }
       });
 
-      if (is_graph_ === true && this.myDropzone['files'].length == 0) {
+      if (is_graph_ === true && this.myDropzone["files"].length == 0) {
         // alert('Необходимо фотография сотрудника');
 
         this.setState({
           openAlert: true,
           err_status: false,
-          err_text: 'Необходима фотография сотрудника',
+          err_text: "Необходима фотография сотрудника",
         });
 
         setTimeout(() => {
@@ -624,29 +656,29 @@ class SiteUserManager_ extends React.Component {
         return;
       }
 
-      if (this.myDropzone['files'].length > 0 && this.isInit === false) {
+      if (this.myDropzone["files"].length > 0 && this.isInit === false) {
         this.isInit = true;
 
-        this.myDropzone.on('sending', (file, xhr, data) => {
+        this.myDropzone.on("sending", (file, xhr, data) => {
           let user_id = this.state.editUser.user.id;
 
-          let file_type = file.name.split('.');
+          let file_type = file.name.split(".");
           file_type = file_type[file_type.length - 1];
           file_type = file_type.toLowerCase();
 
-          data.append('filetype', 'user_' + user_id + '.' + file_type);
-          data.append('filename', 'user_' + user_id);
+          data.append("filetype", "user_" + user_id + "." + file_type);
+          data.append("filename", "user_" + user_id);
 
           this.getOrientation(file, function (orientation) {
-            data.append('orientation', orientation);
+            data.append("orientation", orientation);
           });
         });
 
-        this.myDropzone.on('queuecomplete', (data) => {
+        this.myDropzone.on("queuecomplete", (data) => {
           var check_img = false;
 
-          this.myDropzone['files'].map(function (item, key) {
-            if (item['status'] == 'error') {
+          this.myDropzone["files"].map(function (item, key) {
+            if (item["status"] == "error") {
               check_img = true;
             }
           });
@@ -657,7 +689,7 @@ class SiteUserManager_ extends React.Component {
             this.setState({
               openAlert: true,
               err_status: false,
-              err_text: 'Ошибка при загрузке фотографии',
+              err_text: "Ошибка при загрузке фотографии",
             });
 
             return;
@@ -676,15 +708,15 @@ class SiteUserManager_ extends React.Component {
       }
 
       if (user.birthday) {
-        user.birthday = dayjs(user.birthday).format('YYYY-MM-DD');
+        user.birthday = dayjs(user.birthday).format("YYYY-MM-DD");
       }
 
       let data = {
-        user: {user},
+        user: { user },
         graphType: is_graph === true ? 1 : 0,
       };
 
-      let res = await this.getData('saveNewUser', data);
+      let res = await this.getData("saveNewUser", data);
 
       if (res.st === false) {
         // alert(res.text);
@@ -701,11 +733,11 @@ class SiteUserManager_ extends React.Component {
           this.setState({
             openAlert: true,
             err_status: false,
-            err_text: 'Ошибка в отправке смс',
+            err_text: "Ошибка в отправке смс",
           });
         }
 
-        if (this.myDropzone['files'].length == 0) {
+        if (this.myDropzone["files"].length == 0) {
           this.isInit = false;
 
           this.setState({
@@ -780,7 +812,7 @@ class SiteUserManager_ extends React.Component {
 
     const usersPerPage = usersCopy.slice(
       page * this.state.rows_table,
-      page * this.state.rows_table + this.state.rows_table
+      page * this.state.rows_table + this.state.rows_table,
     );
 
     this.setState({
@@ -795,18 +827,13 @@ class SiteUserManager_ extends React.Component {
     const usersCopy = JSON.parse(JSON.stringify(this.state.usersCopy));
 
     if (rows_table < 0) {
-
       this.setState({
         users: usersCopy,
         rows_table,
         page_table: 0,
       });
-
     } else {
-      const usersPerPage = usersCopy.slice(
-        0 * rows_table,
-        0 * rows_table + rows_table
-      );
+      const usersPerPage = usersCopy.slice(0 * rows_table, 0 * rows_table + rows_table);
 
       this.setState({
         page_table: 0,
@@ -819,7 +846,10 @@ class SiteUserManager_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99999 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99999 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -828,15 +858,23 @@ class SiteUserManager_ extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-        <Dialog open={this.state.delModal} onClose={() => this.setState({ delModal: false, textDel: '' })}>
+        <Dialog
+          open={this.state.delModal}
+          onClose={() => this.setState({ delModal: false, textDel: "" })}
+        >
           <DialogTitle>Причина увольнения</DialogTitle>
           <DialogContent>
             <DialogContentText>Увольнение происходит не сразу, а в полночь</DialogContentText>
-            <Grid container spacing={3} style={{ paddingBottom: 10, paddingTop: 20 }}>
+            <Grid
+              container
+              spacing={3}
+              style={{ paddingBottom: 10, paddingTop: 20 }}
+            >
               <Grid
                 size={{
-                  xs: 12
-                }}>
+                  xs: 12,
+                }}
+              >
                 <MyTextInput
                   label="Причина увольнения"
                   value={this.state.textDel}
@@ -845,34 +883,52 @@ class SiteUserManager_ extends React.Component {
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Button variant="contained" onClick={this.saveEditUser.bind(this, 0)}>
+          <DialogActions style={{ display: "flex", justifyContent: "space-between" }}>
+            <Button
+              variant="contained"
+              onClick={this.saveEditUser.bind(this, 0)}
+            >
               Уволить
             </Button>
-            <Button onClick={() => this.setState({ delModal: false, textDel: '' })}>
-              Отмена
-            </Button>
+            <Button onClick={() => this.setState({ delModal: false, textDel: "" })}>Отмена</Button>
           </DialogActions>
         </Dialog>
-        <Dialog open={this.state.graphModal} onClose={() => this.setState({ graphModal: false, graphType: 0 })}>
+        <Dialog
+          open={this.state.graphModal}
+          onClose={() => this.setState({ graphModal: false, graphType: 0 })}
+        >
           <DialogTitle>С какого периода применить изменения ?</DialogTitle>
           <DialogContent>
-            <Grid container spacing={3} style={{ paddingBottom: 10, paddingTop: 20 }}>
+            <Grid
+              container
+              spacing={3}
+              style={{ paddingBottom: 10, paddingTop: 20 }}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
-                <Button variant="contained" onClick={this.saveEditUser.bind(this, 1)} style={{ width: '100%' }}>
+                  sm: 6,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={this.saveEditUser.bind(this, 1)}
+                  style={{ width: "100%" }}
+                >
                   С текущего периода
                 </Button>
               </Grid>
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
-                <Button variant="contained" onClick={this.saveEditUser.bind(this, 2)} style={{ width: '100%' }}>
+                  sm: 6,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={this.saveEditUser.bind(this, 2)}
+                  style={{ width: "100%" }}
+                >
                   Со следующего периода
                 </Button>
               </Grid>
@@ -880,9 +936,14 @@ class SiteUserManager_ extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
-                <Button variant="contained" onClick={this.saveEditUser.bind(this, 3)} style={{ width: '100%' }}>
+                  sm: 6,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={this.saveEditUser.bind(this, 3)}
+                  style={{ width: "100%" }}
+                >
                   Без изменений
                 </Button>
               </Grid>
@@ -890,65 +951,82 @@ class SiteUserManager_ extends React.Component {
           </DialogContent>
         </Dialog>
         <Dialog
-            open={this.state.modalVacation}
-            fullWidth={true}
-            maxWidth={'md'}
-            onClose={() => this.setState({modalVacation: false})}
+          open={this.state.modalVacation}
+          fullWidth={true}
+          maxWidth={"md"}
+          onClose={() => this.setState({ modalVacation: false })}
         >
           <DialogTitle>Добавление отсутстствия сотрудника</DialogTitle>
-          <DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
+          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             {this.state.editUser && this.state.modalUserEdit ? (
+              <Grid
+                size={{
+                  xs: 12,
+                }}
+              >
                 <Grid
-                  size={{
-                    xs: 12
-                  }}>
-                  <Grid container spacing={2}>
-                    <Grid
-                      size={{
-                        xs: 12,
-                        sm: 6
-                      }}>
-                      <MyDatePickerNew
-                          label="Дата начала"
-                          value={this.state.editUser.user.vacationStart ? dayjs(this.state.editUser.user.vacationStart) : null}
-                          func={this.changeItem.bind(this, 'vacationStart')}
-                      />
-                    </Grid>
-                    <Grid
-                      size={{
-                        xs: 12,
-                        sm: 6
-                      }}>
-                      <MyDatePickerNew
-                          label="Дата окончания"
-                          value={this.state.editUser.user.vacationEnd ? dayjs(this.state.editUser.user.vacationEnd) : null}
-                          func={this.changeItem.bind(this, 'vacationEnd')}
-                      />
-                    </Grid>
+                  container
+                  spacing={2}
+                >
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                    }}
+                  >
+                    <MyDatePickerNew
+                      label="Дата начала"
+                      value={
+                        this.state.editUser.user.vacationStart
+                          ? dayjs(this.state.editUser.user.vacationStart)
+                          : null
+                      }
+                      func={this.changeItem.bind(this, "vacationStart")}
+                    />
+                  </Grid>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                    }}
+                  >
+                    <MyDatePickerNew
+                      label="Дата окончания"
+                      value={
+                        this.state.editUser.user.vacationEnd
+                          ? dayjs(this.state.editUser.user.vacationEnd)
+                          : null
+                      }
+                      func={this.changeItem.bind(this, "vacationEnd")}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <MyAutocomplite
+                      data={this.state.dataVacation}
+                      value={this.state.chooseVacation}
+                      func={(event, data) => this.setState({ chooseVacation: data })}
+                      multiple={false}
+                      label="Причина"
+                    />
+                  </Grid>
+                  {this.state.chooseVacation?.id === 4 ? (
                     <Grid size={{ xs: 12, sm: 6 }}>
-                      <MyAutocomplite
-                        data={this.state.dataVacation}
-                        value={this.state.chooseVacation}
-                        func={(event, data) => this.setState({chooseVacation: data})}
-                        multiple={false}
-                        label="Причина"
-                      />
-                    </Grid>
-                    {this.state.chooseVacation?.id === 4 ? (
-                      <Grid size={{ xs: 12, sm: 6 }}>
                       <MyTextInput
                         label="Объяснение"
                         value={this.state.commentDifVacation}
-                        func={(e) => this.setState({commentDifVacation: e.target.value})}
+                        func={(e) => this.setState({ commentDifVacation: e.target.value })}
                       />
                     </Grid>
-                    ) : null}
-                  </Grid>
+                  ) : null}
                 </Grid>
+              </Grid>
             ) : null}
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.saveVacationUser.bind(this)} color="primary">
+            <Button
+              onClick={this.saveVacationUser.bind(this)}
+              color="primary"
+            >
               Добавить
             </Button>
           </DialogActions>
@@ -956,54 +1034,68 @@ class SiteUserManager_ extends React.Component {
         <Dialog
           open={this.state.modalUserEdit}
           fullWidth={true}
-          maxWidth={'md'}
+          maxWidth={"md"}
           onClose={() => this.setState({ modalUserEdit: false, editUser: null })}
         >
           <DialogTitle>Редактирование сотрудника</DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3}>
+            <Grid
+              container
+              spacing={3}
+            >
               {this.state.editUser && this.state.modalUserEdit ? (
                 <Grid
                   size={{
-                    xs: 12
-                  }}>
-                  <Grid container spacing={3}>
+                    xs: 12,
+                  }}
+                >
+                  <Grid
+                    container
+                    spacing={3}
+                  >
                     <Grid
                       size={{
-                        xs: 12
-                      }}>
-                      <Grid container spacing={3}>
+                        xs: 12,
+                      }}
+                    >
+                      <Grid
+                        container
+                        spacing={3}
+                      >
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyTextInput
                             label="Фамилия"
                             value={this.state.editUser.user.fam}
-                            func={this.changeItem.bind(this, 'fam')}
+                            func={this.changeItem.bind(this, "fam")}
                           />
                         </Grid>
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyTextInput
                             label="Имя"
                             value={this.state.editUser.user.name}
-                            func={this.changeItem.bind(this, 'name')}
+                            func={this.changeItem.bind(this, "name")}
                           />
                         </Grid>
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyTextInput
                             label="Отчество"
                             value={this.state.editUser.user.otc}
-                            func={this.changeItem.bind(this, 'otc')}
+                            func={this.changeItem.bind(this, "otc")}
                           />
                         </Grid>
                       </Grid>
@@ -1011,29 +1103,35 @@ class SiteUserManager_ extends React.Component {
 
                     <Grid
                       size={{
-                        xs: 12
-                      }}>
-                      <Grid container spacing={3}>
+                        xs: 12,
+                      }}
+                    >
+                      <Grid
+                        container
+                        spacing={3}
+                      >
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyTextInput
                             label="Номер телефона"
                             value={this.state.editUser.user.login}
-                            func={this.changeItem.bind(this, 'login')}
+                            func={this.changeItem.bind(this, "login")}
                           />
                         </Grid>
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyDatePickerNew
                             label="Дата рождения"
                             value={dayjs(this.state.editUser.user.birthday)}
-                            func={this.changeItem.bind(this, 'birthday')}
+                            func={this.changeItem.bind(this, "birthday")}
                           />
                         </Grid>
                       </Grid>
@@ -1041,56 +1139,76 @@ class SiteUserManager_ extends React.Component {
 
                     <Grid
                       size={{
-                        xs: 12
-                      }}>
-                      <Grid container spacing={3}>
+                        xs: 12,
+                      }}
+                    >
+                      <Grid
+                        container
+                        spacing={3}
+                      >
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 6
-                          }}>
+                            sm: 6,
+                          }}
+                        >
                           <img
-                            alt={this.state.editUser.user['img_name']}
-                            src={'https://storage.yandexcloud.net/user-img/max-img/' + this.state.editUser.user['img_name'] +
-                              '?' + this.state.editUser.user['img_update']}
+                            alt={this.state.editUser.user["img_name"]}
+                            src={
+                              "https://storage.yandexcloud.net/user-img/max-img/" +
+                              this.state.editUser.user["img_name"] +
+                              "?" +
+                              this.state.editUser.user["img_update"]
+                            }
                             style={{ maxWidth: 300, maxHeight: 300 }}
                           />
                         </Grid>
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 6
-                          }}>
-                          <div className="dropzone" id="for_img_edit" style={{ width: '100%', minHeight: 150 }} />
+                            sm: 6,
+                          }}
+                        >
+                          <div
+                            className="dropzone"
+                            id="for_img_edit"
+                            style={{ width: "100%", minHeight: 150 }}
+                          />
                         </Grid>
                       </Grid>
                     </Grid>
 
                     <Grid
                       size={{
-                        xs: 12
-                      }}>
-                      <Grid container spacing={3}>
+                        xs: 12,
+                      }}
+                    >
+                      <Grid
+                        container
+                        spacing={3}
+                      >
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyTextInput
                             label="Код авторизации (4 цифры)"
                             value={this.state.editUser.user.auth_code}
-                            func={this.changeItem.bind(this, 'auth_code')}
+                            func={this.changeItem.bind(this, "auth_code")}
                           />
                         </Grid>
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyTextInput
                             label="ИНН"
                             value={this.state.editUser.user.inn}
-                            func={this.changeItem.bind(this, 'inn')}
+                            func={this.changeItem.bind(this, "inn")}
                           />
                         </Grid>
                         {parseInt(this.state.show_access) == 0 ? (
@@ -1099,12 +1217,15 @@ class SiteUserManager_ extends React.Component {
                           <Grid
                             size={{
                               xs: 12,
-                              sm: 4
-                            }}>
+                              sm: 4,
+                            }}
+                          >
                             <MyCheckBox
                               label="Работает официально"
-                              value={parseInt(this.state.editUser.user.acc_to_kas) == 1 ? true : false}
-                              func={this.changeItem.bind(this, 'acc_to_kas')}
+                              value={
+                                parseInt(this.state.editUser.user.acc_to_kas) == 1 ? true : false
+                              }
+                              func={this.changeItem.bind(this, "acc_to_kas")}
                             />
                           </Grid>
                         )}
@@ -1113,14 +1234,19 @@ class SiteUserManager_ extends React.Component {
 
                     <Grid
                       size={{
-                        xs: 12
-                      }}>
-                      <Grid container spacing={3}>
+                        xs: 12,
+                      }}
+                    >
+                      <Grid
+                        container
+                        spacing={3}
+                      >
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyAutocomplite
                             data={this.state.editUser.appointment}
                             value={this.state.chose_app}
@@ -1132,12 +1258,13 @@ class SiteUserManager_ extends React.Component {
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MySelect
                             data={this.state.editUser.cities}
                             value={this.state.editUser.user.city_id}
-                            func={this.changeItem.bind(this, 'city_id')}
+                            func={this.changeItem.bind(this, "city_id")}
                             label="Город"
                             is_none={false}
                           />
@@ -1145,12 +1272,13 @@ class SiteUserManager_ extends React.Component {
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MySelect
                             data={this.state.point_list_render}
                             value={this.state.editUser.user.point_id}
-                            func={this.changeItem.bind(this, 'point_id')}
+                            func={this.changeItem.bind(this, "point_id")}
                             label="Точка"
                             is_none={false}
                           />
@@ -1158,9 +1286,14 @@ class SiteUserManager_ extends React.Component {
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 6
-                          }}>
-                          <Button onClick={() => this.setState({ modalVacation: true })} color="primary" variant="contained">
+                            sm: 6,
+                          }}
+                        >
+                          <Button
+                            onClick={() => this.setState({ modalVacation: true })}
+                            color="primary"
+                            variant="contained"
+                          >
                             Отсутствие
                           </Button>
                         </Grid>
@@ -1169,62 +1302,89 @@ class SiteUserManager_ extends React.Component {
 
                     <Grid
                       size={{
-                        xs: 12
-                      }}>
+                        xs: 12,
+                      }}
+                    >
                       <Box>
                         <Accordion>
-                          <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-                            <Typography sx={{fontWeight: 'bold'}}>История изменений</Typography>
+                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography sx={{ fontWeight: "bold" }}>История изменений</Typography>
                           </AccordionSummary>
                           <AccordionDetails>
                             <Box>
-                              <TableContainer component={Paper} sx={{
-                                overflowX: 'auto',
-                                maxHeight: 400,
-                                minWidth: 800
-                              }}>
-                                <Table size={'small'} sx={{minWidth: '100%'}}>
+                              <TableContainer
+                                component={Paper}
+                                sx={{
+                                  overflowX: "auto",
+                                  maxHeight: 400,
+                                  minWidth: 800,
+                                }}
+                              >
+                                <Table
+                                  size={"small"}
+                                  sx={{ minWidth: "100%" }}
+                                >
                                   <TableHead>
                                     <TableRow>
-                                      <TableCell style={{
-                                        minWidth: 125,
-                                        position: 'sticky',
-                                        left: 0,
-                                        backgroundColor: 'white',
-                                        zIndex: 1
-                                      }}>Дата</TableCell>
-                                      <TableCell style={{minWidth: 120}}>Кто обновлял</TableCell>
-                                      <TableCell style={{minWidth: 120}}>Имя</TableCell>
-                                      <TableCell style={{minWidth: 120}}>Телефон</TableCell>
-                                      <TableCell style={{minWidth: 120}}>Код авторизации</TableCell>
-                                      <TableCell style={{minWidth: 100}}>ИНН</TableCell>
-                                      <TableCell style={{minWidth: 120}}>Должность</TableCell>
-                                      <TableCell style={{minWidth: 120}}>Город</TableCell>
-                                      <TableCell style={{minWidth: 120}}>Точка</TableCell>
+                                      <TableCell
+                                        style={{
+                                          minWidth: 125,
+                                          position: "sticky",
+                                          left: 0,
+                                          backgroundColor: "white",
+                                          zIndex: 1,
+                                        }}
+                                      >
+                                        Дата
+                                      </TableCell>
+                                      <TableCell style={{ minWidth: 120 }}>Кто обновлял</TableCell>
+                                      <TableCell style={{ minWidth: 120 }}>Имя</TableCell>
+                                      <TableCell style={{ minWidth: 120 }}>Телефон</TableCell>
+                                      <TableCell style={{ minWidth: 120 }}>
+                                        Код авторизации
+                                      </TableCell>
+                                      <TableCell style={{ minWidth: 100 }}>ИНН</TableCell>
+                                      <TableCell style={{ minWidth: 120 }}>Должность</TableCell>
+                                      <TableCell style={{ minWidth: 120 }}>Город</TableCell>
+                                      <TableCell style={{ minWidth: 120 }}>Точка</TableCell>
                                     </TableRow>
                                   </TableHead>
                                   <TableBody>
-                                    {this.state.editUser.user.history.map(
-                                      (item, key) => (
-                                        <TableRow key={key}>
-                                          <TableCell style={{
+                                    {this.state.editUser.user.history.map((item, key) => (
+                                      <TableRow key={key}>
+                                        <TableCell
+                                          style={{
                                             minWidth: 125,
-                                            position: 'sticky',
+                                            position: "sticky",
                                             left: 0,
-                                            backgroundColor: 'white',
-                                            zIndex: 1
-                                          }}>{item.date_time_update}</TableCell>
-                                          <TableCell style={{minWidth: 120}}>{item.update_name}</TableCell>
-                                          <TableCell style={{minWidth: 120}}>{item.name}</TableCell>
-                                          <TableCell style={{minWidth: 120}}>{item.login}</TableCell>
-                                          <TableCell style={{minWidth: 120}}>{item.auth_code}</TableCell>
-                                          <TableCell style={{minWidth: 100}}>{item.inn}</TableCell>
-                                          <TableCell style={{minWidth: 120}}>{item.app_name}</TableCell>
-                                          <TableCell style={{minWidth: 120}}>{item.city_name}</TableCell>
-                                          <TableCell style={{minWidth: 120}}>{item.point_name}</TableCell>
-                                        </TableRow>
-                                      )
-                                    )}
+                                            backgroundColor: "white",
+                                            zIndex: 1,
+                                          }}
+                                        >
+                                          {item.date_time_update}
+                                        </TableCell>
+                                        <TableCell style={{ minWidth: 120 }}>
+                                          {item.update_name}
+                                        </TableCell>
+                                        <TableCell style={{ minWidth: 120 }}>{item.name}</TableCell>
+                                        <TableCell style={{ minWidth: 120 }}>
+                                          {item.login}
+                                        </TableCell>
+                                        <TableCell style={{ minWidth: 120 }}>
+                                          {item.auth_code}
+                                        </TableCell>
+                                        <TableCell style={{ minWidth: 100 }}>{item.inn}</TableCell>
+                                        <TableCell style={{ minWidth: 120 }}>
+                                          {item.app_name}
+                                        </TableCell>
+                                        <TableCell style={{ minWidth: 120 }}>
+                                          {item.city_name}
+                                        </TableCell>
+                                        <TableCell style={{ minWidth: 120 }}>
+                                          {item.point_name}
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
                                   </TableBody>
                                 </Table>
                               </TableContainer>
@@ -1235,19 +1395,20 @@ class SiteUserManager_ extends React.Component {
                     </Grid>
                     <Grid
                       size={{
-                        xs: 12
-                      }}>
+                        xs: 12,
+                      }}
+                    >
                       <Box>
                         <Accordion>
-                          <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-                            <Typography sx={{fontWeight: 'bold'}}>История отпусков</Typography>
+                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography sx={{ fontWeight: "bold" }}>История отпусков</Typography>
                           </AccordionSummary>
                           <AccordionDetails>
                             <TableContainer component={Paper}>
-                              <Table size={'small'}>
+                              <Table size={"small"}>
                                 <TableHead>
                                   <TableRow>
-                                    <TableCell >№</TableCell>
+                                    <TableCell>№</TableCell>
                                     <TableCell>Тип</TableCell>
                                     <TableCell>Дата начала</TableCell>
                                     <TableCell>Дата окончания</TableCell>
@@ -1256,18 +1417,18 @@ class SiteUserManager_ extends React.Component {
                                   </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                  {this.state.editUser.user.vacation.map(
-                                    (item, key) => (
-                                      <TableRow key={key}>
-                                        <TableCell>{key + 1}</TableCell>
-                                        <TableCell style={{minWidth: 125}}>{item.absence_type}</TableCell>
-                                        <TableCell>{item.date_start}</TableCell>
-                                        <TableCell>{item.date_end}</TableCell>
-                                        <TableCell>{item.user_name}</TableCell>
-                                        <TableCell>{item.date_create}</TableCell>
-                                      </TableRow>
-                                    )
-                                  )}
+                                  {this.state.editUser.user.vacation.map((item, key) => (
+                                    <TableRow key={key}>
+                                      <TableCell>{key + 1}</TableCell>
+                                      <TableCell style={{ minWidth: 125 }}>
+                                        {item.absence_type}
+                                      </TableCell>
+                                      <TableCell>{item.date_start}</TableCell>
+                                      <TableCell>{item.date_end}</TableCell>
+                                      <TableCell>{item.user_name}</TableCell>
+                                      <TableCell>{item.date_create}</TableCell>
+                                    </TableRow>
+                                  ))}
                                 </TableBody>
                               </Table>
                             </TableContainer>
@@ -1281,7 +1442,10 @@ class SiteUserManager_ extends React.Component {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.saveEditUser.bind(this, 0)} color="primary">
+            <Button
+              onClick={this.saveEditUser.bind(this, 0)}
+              color="primary"
+            >
               Сохранить
             </Button>
           </DialogActions>
@@ -1289,54 +1453,68 @@ class SiteUserManager_ extends React.Component {
         <Dialog
           open={this.state.modalUserNew}
           fullWidth={true}
-          maxWidth={'md'}
+          maxWidth={"md"}
           onClose={() => this.setState({ modalUserNew: false, editUser: null })}
         >
           <DialogTitle>Новый сотрудник</DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3}>
+            <Grid
+              container
+              spacing={3}
+            >
               {this.state.editUser && this.state.modalUserNew ? (
                 <Grid
                   size={{
-                    xs: 12
-                  }}>
-                  <Grid container spacing={3}>
+                    xs: 12,
+                  }}
+                >
+                  <Grid
+                    container
+                    spacing={3}
+                  >
                     <Grid
                       size={{
-                        xs: 12
-                      }}>
-                      <Grid container spacing={3}>
+                        xs: 12,
+                      }}
+                    >
+                      <Grid
+                        container
+                        spacing={3}
+                      >
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyTextInput
                             label="Фамилия"
                             value={this.state.editUser.user.fam}
-                            func={this.changeItem.bind(this, 'fam')}
+                            func={this.changeItem.bind(this, "fam")}
                           />
                         </Grid>
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyTextInput
                             label="Имя"
                             value={this.state.editUser.user.name}
-                            func={this.changeItem.bind(this, 'name')}
+                            func={this.changeItem.bind(this, "name")}
                           />
                         </Grid>
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyTextInput
                             label="Отчество"
                             value={this.state.editUser.user.otc}
-                            func={this.changeItem.bind(this, 'otc')}
+                            func={this.changeItem.bind(this, "otc")}
                           />
                         </Grid>
                       </Grid>
@@ -1344,29 +1522,35 @@ class SiteUserManager_ extends React.Component {
 
                     <Grid
                       size={{
-                        xs: 12
-                      }}>
-                      <Grid container spacing={3}>
+                        xs: 12,
+                      }}
+                    >
+                      <Grid
+                        container
+                        spacing={3}
+                      >
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyTextInput
                             label="Номер телефона"
                             value={this.state.editUser.user.login}
-                            func={this.changeItem.bind(this, 'login')}
+                            func={this.changeItem.bind(this, "login")}
                           />
                         </Grid>
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyDatePickerNew
                             label="Дата рождения"
                             value={dayjs(this.state.editUser.user.birthday)}
-                            func={this.changeItem.bind(this, 'birthday')}
+                            func={this.changeItem.bind(this, "birthday")}
                           />
                         </Grid>
                       </Grid>
@@ -1374,69 +1558,93 @@ class SiteUserManager_ extends React.Component {
 
                     <Grid
                       size={{
-                        xs: 12
-                      }}>
-                      <Grid container spacing={3}>
+                        xs: 12,
+                      }}
+                    >
+                      <Grid
+                        container
+                        spacing={3}
+                      >
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 6
-                          }}>
+                            sm: 6,
+                          }}
+                        >
                           <img
-                            alt={this.state.editUser.user['img_name']}
-                            src={'https://storage.yandexcloud.net/user-img/max-img/' + this.state.editUser.user['img_name'] +
-                              '?' + this.state.editUser.user['img_update']}
+                            alt={this.state.editUser.user["img_name"]}
+                            src={
+                              "https://storage.yandexcloud.net/user-img/max-img/" +
+                              this.state.editUser.user["img_name"] +
+                              "?" +
+                              this.state.editUser.user["img_update"]
+                            }
                             style={{ maxWidth: 300, maxHeight: 300 }}
                           />
                         </Grid>
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 6
-                          }}>
-                          <div className="dropzone" id="for_img_new" style={{ width: '100%', minHeight: 150 }}/>
+                            sm: 6,
+                          }}
+                        >
+                          <div
+                            className="dropzone"
+                            id="for_img_new"
+                            style={{ width: "100%", minHeight: 150 }}
+                          />
                         </Grid>
                       </Grid>
                     </Grid>
 
                     <Grid
                       size={{
-                        xs: 12
-                      }}>
-                      <Grid container spacing={3}>
+                        xs: 12,
+                      }}
+                    >
+                      <Grid
+                        container
+                        spacing={3}
+                      >
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyTextInput
                             label="Код авторизации (4 цифры)"
                             value={this.state.editUser.user.auth_code}
-                            func={this.changeItem.bind(this, 'auth_code')}
+                            func={this.changeItem.bind(this, "auth_code")}
                           />
                         </Grid>
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyTextInput
                             label="ИНН"
                             value={this.state.editUser.user.inn}
-                            func={this.changeItem.bind(this, 'inn')}
+                            func={this.changeItem.bind(this, "inn")}
                           />
                         </Grid>
-                        {parseInt(this.state.show_access) == 0 ? false
-                         : (
+                        {parseInt(this.state.show_access) == 0 ? (
+                          false
+                        ) : (
                           <Grid
                             size={{
                               xs: 12,
-                              sm: 4
-                            }}>
+                              sm: 4,
+                            }}
+                          >
                             <MyCheckBox
                               label="Работает официально"
-                              value={parseInt(this.state.editUser.user.acc_to_kas) == 1 ? true : false}
-                              func={this.changeItem.bind(this, 'acc_to_kas')}
+                              value={
+                                parseInt(this.state.editUser.user.acc_to_kas) == 1 ? true : false
+                              }
+                              func={this.changeItem.bind(this, "acc_to_kas")}
                             />
                           </Grid>
                         )}
@@ -1445,14 +1653,19 @@ class SiteUserManager_ extends React.Component {
 
                     <Grid
                       size={{
-                        xs: 12
-                      }}>
-                      <Grid container spacing={3}>
+                        xs: 12,
+                      }}
+                    >
+                      <Grid
+                        container
+                        spacing={3}
+                      >
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MyAutocomplite
                             data={this.state.editUser.appointment}
                             value={this.state.chose_app}
@@ -1464,12 +1677,13 @@ class SiteUserManager_ extends React.Component {
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MySelect
                             data={this.state.editUser.cities}
                             value={this.state.editUser.user.city_id}
-                            func={this.changeItem.bind(this, 'city_id')}
+                            func={this.changeItem.bind(this, "city_id")}
                             label="Город"
                             is_none={false}
                           />
@@ -1477,12 +1691,13 @@ class SiteUserManager_ extends React.Component {
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4
-                          }}>
+                            sm: 4,
+                          }}
+                        >
                           <MySelect
                             data={this.state.point_list_render}
                             value={this.state.editUser.user.point_id}
-                            func={this.changeItem.bind(this, 'point_id')}
+                            func={this.changeItem.bind(this, "point_id")}
                             label="Точка"
                             is_none={false}
                           />
@@ -1495,28 +1710,37 @@ class SiteUserManager_ extends React.Component {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.saveNewUser.bind(this)} color="primary">
+            <Button
+              onClick={this.saveNewUser.bind(this)}
+              color="primary"
+            >
               Сохранить
             </Button>
           </DialogActions>
         </Dialog>
-        <Grid container spacing={3} className="container_first_child">
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MySelect
               data={this.state.point_list}
               value={this.state.point_id}
-              func={this.changeSort.bind(this, 'point_id')}
+              func={this.changeSort.bind(this, "point_id")}
               label="Точка"
               is_none={false}
             />
@@ -1524,12 +1748,13 @@ class SiteUserManager_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyAutocomplite
               data={this.state.app_list}
               value={this.state.app_id}
-              func={this.changeSort.bind(this, 'app_id')}
+              func={this.changeSort.bind(this, "app_id")}
               multiple={false}
               label="Должность"
             />
@@ -1537,24 +1762,25 @@ class SiteUserManager_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyTextInput
               label="Поиск по телефону/имени"
               value={this.state.textSearch}
-              func={this.search.bind(this, 'search')}
+              func={this.search.bind(this, "search")}
               inputAdornment={{
                 endAdornment: (
                   <>
-                    {!this.state.textSearch ? null :
+                    {!this.state.textSearch ? null : (
                       <InputAdornment position="end">
-                      <IconButton>
-                        <ClearIcon onClick={this.search.bind(this, 'clear')} />
-                      </IconButton>
-                    </InputAdornment>
-                    }
+                        <IconButton>
+                          <ClearIcon onClick={this.search.bind(this, "clear")} />
+                        </IconButton>
+                      </InputAdornment>
+                    )}
                   </>
-                )
+                ),
               }}
             />
           </Grid>
@@ -1562,9 +1788,13 @@ class SiteUserManager_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
-            <Button onClick={this.openNewUser.bind(this)} variant="contained">
+              sm: 3,
+            }}
+          >
+            <Button
+              onClick={this.openNewUser.bind(this)}
+              variant="contained"
+            >
               Добавить сотрудника
             </Button>
           </Grid>
@@ -1572,8 +1802,9 @@ class SiteUserManager_ extends React.Component {
           <Grid
             mb={10}
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             {this.state.users.length > 0 ? (
               <SiteUserManagerTable
                 users={this.state.users}
@@ -1597,17 +1828,14 @@ export default function SiteUserManager() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=3600, stale-while-revalidate=3600'
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},

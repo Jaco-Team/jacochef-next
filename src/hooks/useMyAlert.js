@@ -13,9 +13,11 @@ export default function useMyAlert(delay = defaultDelay) {
     setAlertStatus(isSuccess);
     setIsAlert(true);
     if (alertTimeout) clearTimeout(alertTimeout);
-    setAlertTimeout(setTimeout(() => {
-      closeAlert();
-    }, delay));
+    setAlertTimeout(
+      setTimeout(() => {
+        closeAlert();
+      }, delay),
+    );
   };
 
   const closeAlert = () => {

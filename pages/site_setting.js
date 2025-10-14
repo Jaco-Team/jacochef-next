@@ -9,9 +9,9 @@ import { SiteSettingModal } from "@/components/site_setting/SiteSettingModal";
 import { SiteSettingPages } from "@/components/site_setting/seo/SiteSettingPages";
 import { SiteSettingSocial } from "@/components/site_setting/social/SiteSettingSocial";
 import { SiteSettingCategory } from "@/components/site_setting/category/SiteSettingCategory";
-import MyAlert from "@/components/shared/MyAlert";
-import TabPanel from "@/components/shared/TabPanel/TabPanel";
-import a11yProps from "@/components/shared/TabPanel/a11yProps";
+import MyAlert from "@/ui/MyAlert";
+import TabPanel from "@/ui/TabPanel/TabPanel";
+import a11yProps from "@/ui/TabPanel/a11yProps";
 
 const subMap = {
   social: SiteSettingSocial,
@@ -71,8 +71,8 @@ export default function SiteSetting() {
       setModuleName(data.module_info.name);
       setSubList(
         subModules.filter(
-          (sub) => data.access[`${sub.key}_view`] === 1 || data.access[`${sub.key}_edit`] === 1
-        )
+          (sub) => data.access[`${sub.key}_view`] === 1 || data.access[`${sub.key}_edit`] === 1,
+        ),
       );
       setAcces(data.access);
       document.title = data.module_info.name;
@@ -164,7 +164,7 @@ export async function getServerSideProps({ res }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

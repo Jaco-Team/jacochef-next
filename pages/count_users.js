@@ -1,37 +1,37 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 
-import Tab from '@mui/material/Tab';
-import TabContext from '@mui/lab/TabContext';
-import TabList from '@mui/lab/TabList';
-import TabPanel from '@mui/lab/TabPanel';
+import Tab from "@mui/material/Tab";
+import TabContext from "@mui/lab/TabContext";
+import TabList from "@mui/lab/TabList";
+import TabPanel from "@mui/lab/TabPanel";
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import CloseIcon from '@mui/icons-material/Close';
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
-import Divider from '@mui/material/Divider';
+import CloseIcon from "@mui/icons-material/Close";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+import Divider from "@mui/material/Divider";
 
-import {MySelect, MyTimePicker, MyDatePickerNew, MyTextInput} from '@/components/shared/Forms';
+import { MySelect, MyTimePicker, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 
-import queryString from 'query-string';
+import queryString from "query-string";
 
-import dayjs from 'dayjs';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import dayjs from "dayjs";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 class CountUsers_Modal extends React.Component {
   constructor(props) {
@@ -51,7 +51,9 @@ class CountUsers_Modal extends React.Component {
     if (this.props.event !== prevProps.event) {
       this.setState({
         item: JSON.parse(JSON.stringify(this.props.event)),
-        date_start: this.props.event[0]?.date ? JSON.parse(JSON.stringify(this.props.event[0].date)) : null,
+        date_start: this.props.event[0]?.date
+          ? JSON.parse(JSON.stringify(this.props.event[0].date))
+          : null,
       });
     }
   }
@@ -109,7 +111,7 @@ class CountUsers_Modal extends React.Component {
   changeDateRange(val) {
     const item = this.state.item;
 
-    item.forEach((el) => el.date = val);
+    item.forEach((el) => (el.date = val));
 
     this.setState({
       item,
@@ -134,28 +136,28 @@ class CountUsers_Modal extends React.Component {
     if (item.length) {
       const newItem = {
         id: item.length + 1,
-        time_start: '',
-        time_end: '',
+        time_start: "",
+        time_end: "",
         apps: [
           {
-            app_id: '6',
-            count: '0',
-            app_name: 'Кассир',
+            app_id: "6",
+            count: "0",
+            app_name: "Кассир",
           },
           {
-            app_id: '5',
-            count: '0',
-            app_name: 'Повар',
+            app_id: "5",
+            count: "0",
+            app_name: "Повар",
           },
           {
-            app_id: '21',
-            count: '0',
-            app_name: 'Кухонный работник',
+            app_id: "21",
+            count: "0",
+            app_name: "Кухонный работник",
           },
           {
-            app_id: '8',
-            count: '0',
-            app_name: 'Курьер',
+            app_id: "8",
+            count: "0",
+            app_name: "Курьер",
           },
         ],
       };
@@ -164,28 +166,28 @@ class CountUsers_Modal extends React.Component {
     } else {
       const newItem = {
         id: 1,
-        time_start: '',
-        time_end: '',
+        time_start: "",
+        time_end: "",
         apps: [
           {
-            app_id: '6',
-            count: '0',
-            app_name: 'Кассир',
+            app_id: "6",
+            count: "0",
+            app_name: "Кассир",
           },
           {
-            app_id: '5',
-            count: '0',
-            app_name: 'Повар',
+            app_id: "5",
+            count: "0",
+            app_name: "Повар",
           },
           {
-            app_id: '21',
-            count: '0',
-            app_name: 'Кухонный работник',
+            app_id: "21",
+            count: "0",
+            app_name: "Кухонный работник",
           },
           {
-            app_id: '8',
-            count: '0',
-            app_name: 'Курьер',
+            app_id: "8",
+            count: "0",
+            app_name: "Курьер",
           },
         ],
       };
@@ -223,25 +225,33 @@ class CountUsers_Modal extends React.Component {
         onClose={this.onClose.bind(this)}
         fullScreen={this.props.fullScreen}
         fullWidth={true}
-        maxWidth={'md'}
+        maxWidth={"md"}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle className="button">
-          <Typography style={{ fontWeight: 'normal' }}>{this.props.method}</Typography>
+          <Typography style={{ fontWeight: "normal" }}>{this.props.method}</Typography>
           {this.props.fullScreen ? (
-            <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+            <IconButton
+              onClick={this.onClose.bind(this)}
+              style={{ cursor: "pointer" }}
+            >
               <CloseIcon />
             </IconButton>
           ) : null}
         </DialogTitle>
         <DialogContent style={{ paddingTop: 10, paddingBottom: 10 }}>
-          <Grid container spacing={3} mb={3}>
+          <Grid
+            container
+            spacing={3}
+            mb={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyDatePickerNew
                 label="Дата"
                 value={this.state?.item[0]?.date ? dayjs(this.state?.item[0]?.date) : null}
@@ -251,14 +261,26 @@ class CountUsers_Modal extends React.Component {
           </Grid>
           {this.state.item.map((item, key) => (
             <React.Fragment key={key}>
-              <Grid container spacing={3}>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   mt={2}
                   size={{
                     xs: 8,
-                    sm: 3
-                  }}>
-                  <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'space-around', height: '100%', minHeight: 120}}>
+                    sm: 3,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-around",
+                      height: "100%",
+                      minHeight: 120,
+                    }}
+                  >
                     <MyTimePicker
                       value={item.time_start}
                       func={this.changeTimeStart.bind(this, item)}
@@ -272,21 +294,47 @@ class CountUsers_Modal extends React.Component {
                   </div>
                 </Grid>
                 <Grid
-                  sx={{ display: { xs: 'flex', sm: 'none' }, justifyContent: 'center', alignItems: 'center'}}
+                  sx={{
+                    display: { xs: "flex", sm: "none" },
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
                   size={{
                     xs: 4,
-                    sm: 0
-                  }}>
-                  <CloseIcon fontSize="large" onClick={this.deleteItem.bind(this, item.id)} style={{ cursor: 'pointer' }}/>
+                    sm: 0,
+                  }}
+                >
+                  <CloseIcon
+                    fontSize="large"
+                    onClick={this.deleteItem.bind(this, item.id)}
+                    style={{ cursor: "pointer" }}
+                  />
                 </Grid>
 
                 <Grid
                   size={{
-                    sm: 8
-                  }}>
-                  <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%'}}>
+                    sm: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      height: "100%",
+                    }}
+                  >
                     {item.apps.map((el, i) => (
-                      <div key={i + 10} style={{display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: 20, marginTop: i === 0 ? 20 : 0}}>
+                      <div
+                        key={i + 10}
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          marginBottom: 20,
+                          marginTop: i === 0 ? 20 : 0,
+                        }}
+                      >
                         <span style={{ minWidth: 200 }}>{el.app_name}</span>
                         <MyTextInput
                           value={el.count}
@@ -299,12 +347,21 @@ class CountUsers_Modal extends React.Component {
                 </Grid>
 
                 <Grid
-                  sx={{display: { xs: 'none', sm: 'flex' }, justifyContent: 'center', alignItems: 'center'}}
+                  sx={{
+                    display: { xs: "none", sm: "flex" },
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
                   size={{
                     xs: 4,
-                    sm: 1
-                  }}>
-                  <CloseIcon fontSize="large" onClick={this.deleteItem.bind(this, item.id)} style={{ cursor: 'pointer' }}/>
+                    sm: 1,
+                  }}
+                >
+                  <CloseIcon
+                    fontSize="large"
+                    onClick={this.deleteItem.bind(this, item.id)}
+                    style={{ cursor: "pointer" }}
+                  />
                 </Grid>
               </Grid>
               <Divider />
@@ -312,10 +369,16 @@ class CountUsers_Modal extends React.Component {
           ))}
         </DialogContent>
         <DialogActions className="button">
-          <Button style={{ whiteSpace: 'nowrap' }} onClick={this.addItem.bind(this)}>
+          <Button
+            style={{ whiteSpace: "nowrap" }}
+            onClick={this.addItem.bind(this)}
+          >
             Добавить
           </Button>
-          <Button style={{ color: '#00a550' }} onClick={this.save.bind(this)}>
+          <Button
+            style={{ color: "#00a550" }}
+            onClick={this.save.bind(this)}
+          >
             Сохранить
           </Button>
         </DialogActions>
@@ -407,28 +470,28 @@ class CountUsers_TablePanel extends React.Component {
     if (item.length) {
       const newItem = {
         id: item.length + 1,
-        time_start: '',
-        time_end: '',
+        time_start: "",
+        time_end: "",
         apps: [
           {
-            app_id: '6',
-            count: '0',
-            app_name: 'Кассир',
+            app_id: "6",
+            count: "0",
+            app_name: "Кассир",
           },
           {
-            app_id: '5',
-            count: '0',
-            app_name: 'Повар',
+            app_id: "5",
+            count: "0",
+            app_name: "Повар",
           },
           {
-            app_id: '21',
-            count: '0',
-            app_name: 'Кухонный работник',
+            app_id: "21",
+            count: "0",
+            app_name: "Кухонный работник",
           },
           {
-            app_id: '8',
-            count: '0',
-            app_name: 'Курьер',
+            app_id: "8",
+            count: "0",
+            app_name: "Курьер",
           },
         ],
       };
@@ -437,28 +500,28 @@ class CountUsers_TablePanel extends React.Component {
     } else {
       const newItem = {
         id: 1,
-        time_start: '',
-        time_end: '',
+        time_start: "",
+        time_end: "",
         apps: [
           {
-            app_id: '6',
-            count: '0',
-            app_name: 'Кассир',
+            app_id: "6",
+            count: "0",
+            app_name: "Кассир",
           },
           {
-            app_id: '5',
-            count: '0',
-            app_name: 'Повар',
+            app_id: "5",
+            count: "0",
+            app_name: "Повар",
           },
           {
-            app_id: '21',
-            count: '0',
-            app_name: 'Кухонный работник',
+            app_id: "21",
+            count: "0",
+            app_name: "Кухонный работник",
           },
           {
-            app_id: '8',
-            count: '0',
-            app_name: 'Курьер',
+            app_id: "8",
+            count: "0",
+            app_name: "Курьер",
           },
         ],
       };
@@ -484,7 +547,7 @@ class CountUsers_TablePanel extends React.Component {
   save() {
     const item = this.state.item;
 
-    this.props.save(item, 'Изменение данных таблицы');
+    this.props.save(item, "Изменение данных таблицы");
 
     this.setState({
       item: JSON.parse(JSON.stringify(this.props.event)),
@@ -494,28 +557,33 @@ class CountUsers_TablePanel extends React.Component {
   render() {
     return (
       <TabPanel value={this.props.value}>
-        <Grid container justifyContent="center">
+        <Grid
+          container
+          justifyContent="center"
+        >
           {this.state.item.map((item, key) => (
             <Grid
               container
               spacing={3}
               key={key}
-              sx={{ borderBottom: 1, borderColor: 'divider' }}
+              sx={{ borderBottom: 1, borderColor: "divider" }}
               size={{
-                sm: 8
-              }}>
+                sm: 8,
+              }}
+            >
               <Grid
                 mt={2}
                 size={{
                   xs: 8,
-                  sm: 3
-                }}>
+                  sm: 3,
+                }}
+              >
                 <div
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-around',
-                    height: '100%',
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-around",
+                    height: "100%",
                     minHeight: 120,
                   }}
                 >
@@ -533,40 +601,42 @@ class CountUsers_TablePanel extends React.Component {
               </Grid>
               <Grid
                 sx={{
-                  display: { xs: 'flex', sm: 'none' },
-                  justifyContent: 'center',
-                  alignItems: 'center',
+                  display: { xs: "flex", sm: "none" },
+                  justifyContent: "center",
+                  alignItems: "center",
                 }}
                 size={{
                   xs: 4,
-                  sm: 0
-                }}>
+                  sm: 0,
+                }}
+              >
                 <CloseIcon
                   fontSize="large"
                   onClick={this.deleteItem.bind(this, item.id)}
-                  style={{ cursor: 'pointer' }}
+                  style={{ cursor: "pointer" }}
                 />
               </Grid>
 
               <Grid
                 size={{
-                  sm: 6
-                }}>
+                  sm: 6,
+                }}
+              >
                 <div
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    height: '100%',
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    height: "100%",
                   }}
                 >
                   {item.apps.map((el, i) => (
                     <div
                       key={i + 10}
                       style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
                         marginBottom: 20,
                         marginTop: i === 0 ? 20 : 0,
                       }}
@@ -584,18 +654,19 @@ class CountUsers_TablePanel extends React.Component {
 
               <Grid
                 sx={{
-                  display: { xs: 'none', sm: 'flex' },
-                  justifyContent: 'center',
-                  alignItems: 'center',
+                  display: { xs: "none", sm: "flex" },
+                  justifyContent: "center",
+                  alignItems: "center",
                 }}
                 size={{
                   xs: 4,
-                  sm: 3
-                }}>
+                  sm: 3,
+                }}
+              >
                 <CloseIcon
                   fontSize="large"
                   onClick={this.deleteItem.bind(this, item.id)}
-                  style={{ cursor: 'pointer' }}
+                  style={{ cursor: "pointer" }}
                 />
               </Grid>
             </Grid>
@@ -606,16 +677,18 @@ class CountUsers_TablePanel extends React.Component {
             spacing={3}
             sx={{ marginBottom: { xs: 0, sm: 3 }, marginTop: 1 }}
             size={{
-              sm: 8
-            }}>
+              sm: 8,
+            }}
+          >
             <Grid
               size={{
                 xs: 6,
-                sm: 9
-              }}>
+                sm: 9,
+              }}
+            >
               <Button
                 variant="contained"
-                style={{ whiteSpace: 'nowrap' }}
+                style={{ whiteSpace: "nowrap" }}
                 onClick={this.addItem.bind(this)}
               >
                 Добавить
@@ -625,12 +698,13 @@ class CountUsers_TablePanel extends React.Component {
             <Grid
               size={{
                 xs: 6,
-                sm: 3
-              }}>
+                sm: 3,
+              }}
+            >
               <Button
                 variant="contained"
                 onClick={this.save.bind(this)}
-                style={{ backgroundColor: '#00a550', whiteSpace: 'nowrap' }}
+                style={{ backgroundColor: "#00a550", whiteSpace: "nowrap" }}
               >
                 Сохранить
               </Button>
@@ -647,42 +721,42 @@ class CountUsers_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'count_users',
-      module_name: '',
+      module: "count_users",
+      module_name: "",
       is_load: false,
 
       points: [],
-      point: '',
+      point: "",
 
-      ItemTab: '1',
+      ItemTab: "1",
 
       item: [],
 
       data: [
         {
           id: 1,
-          time_start: '',
-          time_end: '',
+          time_start: "",
+          time_end: "",
           apps: [
             {
-              app_id: '6',
-              count: '0',
-              app_name: 'Кассир',
+              app_id: "6",
+              count: "0",
+              app_name: "Кассир",
             },
             {
-              app_id: '5',
-              count: '0',
-              app_name: 'Повар',
+              app_id: "5",
+              count: "0",
+              app_name: "Повар",
             },
             {
-              app_id: '21',
-              count: '0',
-              app_name: 'Кухонный работник',
+              app_id: "21",
+              count: "0",
+              app_name: "Кухонный работник",
             },
             {
-              app_id: '8',
-              count: '0',
-              app_name: 'Курьер',
+              app_id: "8",
+              count: "0",
+              app_name: "Курьер",
             },
           ],
         },
@@ -702,7 +776,7 @@ class CountUsers_ extends React.Component {
   async componentDidMount() {
     const ItemTab = this.state.ItemTab;
 
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     const dataTable = this.state.data;
 
@@ -710,7 +784,7 @@ class CountUsers_ extends React.Component {
       point_id: data.point_list[0].id,
     };
 
-    const res = await this.getData('get_info', point);
+    const res = await this.getData("get_info", point);
 
     const dow = res.dows.find((el) => el.dow === Number(ItemTab));
 
@@ -730,13 +804,13 @@ class CountUsers_ extends React.Component {
 
   handleResize() {
     if (window.innerWidth < 601) {
-        this.setState({
-          fullScreen: true,
-        });
-      } else {
-        this.setState({
-          fullScreen: false,
-        });
+      this.setState({
+        fullScreen: true,
+      });
+    } else {
+      this.setState({
+        fullScreen: false,
+      });
     }
   }
 
@@ -767,7 +841,7 @@ class CountUsers_ extends React.Component {
       point_id: event.target.value,
     };
 
-    const res = await this.getData('get_info', data);
+    const res = await this.getData("get_info", data);
 
     const dow = res.dows.find((el) => el.dow === Number(ItemTab));
 
@@ -799,32 +873,32 @@ class CountUsers_ extends React.Component {
   async openModal(method, item, event) {
     this.handleResize();
 
-    if (method === 'Особый день') {
+    if (method === "Особый день") {
       const item = [
         {
           id: 1,
-          time_start: '',
-          time_end: '',
+          time_start: "",
+          time_end: "",
           apps: [
             {
-              app_id: '6',
-              count: '0',
-              app_name: 'Кассир',
+              app_id: "6",
+              count: "0",
+              app_name: "Кассир",
             },
             {
-              app_id: '5',
-              count: '0',
-              app_name: 'Повар',
+              app_id: "5",
+              count: "0",
+              app_name: "Повар",
             },
             {
-              app_id: '21',
-              count: '0',
-              app_name: 'Кухонный работник',
+              app_id: "21",
+              count: "0",
+              app_name: "Кухонный работник",
             },
             {
-              app_id: '8',
-              count: '0',
-              app_name: 'Курьер',
+              app_id: "8",
+              count: "0",
+              app_name: "Курьер",
             },
           ],
         },
@@ -837,7 +911,7 @@ class CountUsers_ extends React.Component {
       });
     }
 
-    if (method === 'Редактировать особый день') {
+    if (method === "Редактировать особый день") {
       event.stopPropagation();
 
       const point_id = this.state.point;
@@ -847,7 +921,7 @@ class CountUsers_ extends React.Component {
         point_id,
       };
 
-      const res = await this.getData('get_day', data);
+      const res = await this.getData("get_day", data);
 
       res.forEach((el) => {
         el.id = 1;
@@ -855,25 +929,25 @@ class CountUsers_ extends React.Component {
 
         el.apps.push(
           {
-            app_id: '6',
+            app_id: "6",
             count: el.count_kassir,
-            app_name: 'Кассир',
+            app_name: "Кассир",
           },
           {
-            app_id: '5',
+            app_id: "5",
             count: el.count_povar,
-            app_name: 'Повар',
+            app_name: "Повар",
           },
           {
-            app_id: '21',
+            app_id: "21",
             count: el.count_kux,
-            app_name: 'Кухонный работник',
+            app_name: "Кухонный работник",
           },
           {
-            app_id: '8',
+            app_id: "8",
             count: el.count_driver,
-            app_name: 'Курьер',
-          }
+            app_name: "Курьер",
+          },
         );
 
         delete el.count_kassir;
@@ -895,22 +969,22 @@ class CountUsers_ extends React.Component {
 
     const point_id = this.state.point;
 
-    const date = dayjs(item[0].date).format('YYYY-MM-DD');
+    const date = dayjs(item[0].date).format("YYYY-MM-DD");
 
     item.forEach((el) => {
-      (el.dow = Number(dow)), delete el.id;
+      ((el.dow = Number(dow)), delete el.id);
 
       el.apps.forEach((it) => {
-        if (it.app_name === 'Кассир') {
+        if (it.app_name === "Кассир") {
           el.count_kassir = it.count;
         }
-        if (it.app_name === 'Повар') {
+        if (it.app_name === "Повар") {
           el.count_povar = it.count;
         }
-        if (it.app_name === 'Кухонный работник') {
+        if (it.app_name === "Кухонный работник") {
           el.count_kux = it.count;
         }
-        if (it.app_name === 'Курьер') {
+        if (it.app_name === "Курьер") {
           el.count_driver = it.count;
         }
       });
@@ -922,35 +996,35 @@ class CountUsers_ extends React.Component {
       }
     });
 
-    if (method === 'Изменение данных таблицы') {
+    if (method === "Изменение данных таблицы") {
       const data = {
         point_id,
         dow: dow,
         data: item,
       };
 
-      await this.getData('update', data);
+      await this.getData("update", data);
 
       setTimeout(() => {
         this.update();
       }, 300);
     }
 
-    if (method === 'Особый день') {
+    if (method === "Особый день") {
       const data = {
         point_id,
         date,
         data: item,
       };
 
-      await this.getData('save_new_day', data);
+      await this.getData("save_new_day", data);
 
       setTimeout(() => {
         this.update();
       }, 300);
     }
 
-    if (method === 'Редактировать особый день') {
+    if (method === "Редактировать особый день") {
       const data = {
         point_id,
         date,
@@ -958,7 +1032,7 @@ class CountUsers_ extends React.Component {
         data: item,
       };
 
-      await this.getData('save_edit_day', data);
+      await this.getData("save_edit_day", data);
 
       setTimeout(() => {
         this.update();
@@ -974,7 +1048,7 @@ class CountUsers_ extends React.Component {
       date: item.date,
     };
 
-    await this.getData('del_day', data);
+    await this.getData("del_day", data);
 
     setTimeout(() => {
       this.update();
@@ -992,7 +1066,7 @@ class CountUsers_ extends React.Component {
       point_id,
     };
 
-    const res = await this.getData('get_info', data);
+    const res = await this.getData("get_info", data);
 
     const dow = res.dows.find((el) => el.dow === Number(ItemTab));
 
@@ -1008,7 +1082,10 @@ class CountUsers_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         {/* модалка */}
@@ -1020,11 +1097,16 @@ class CountUsers_ extends React.Component {
           save={this.save.bind(this)}
           fullScreen={this.state.fullScreen}
         />
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
@@ -1032,8 +1114,9 @@ class CountUsers_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MySelect
               data={this.state.points}
               value={this.state.point}
@@ -1045,9 +1128,14 @@ class CountUsers_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
-            <Button variant="contained" style={{ whiteSpace: 'nowrap' }} onClick={this.openModal.bind(this, 'Особый день')}>
+              sm: 6,
+            }}
+          >
+            <Button
+              variant="contained"
+              style={{ whiteSpace: "nowrap" }}
+              onClick={this.openModal.bind(this, "Особый день")}
+            >
               Добавить особый день
             </Button>
           </Grid>
@@ -1057,23 +1145,45 @@ class CountUsers_ extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 8
-              }}>
+                sm: 8,
+              }}
+            >
               <TabContext value={this.state.ItemTab}>
-                <Box sx={{borderBottom: 1, borderColor: 'divider'}}>
+                <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                   <TabList
                     onChange={this.changeTab.bind(this)}
                     variant="scrollable"
                     scrollButtons
                     allowScrollButtonsMobile
                   >
-                    <Tab label="Понедельник" value="1" />
-                    <Tab label="Вторник" value="2" />
-                    <Tab label="Среда" value="3" />
-                    <Tab label="Четверг" value="4" />
-                    <Tab label="Пятница" value="5" />
-                    <Tab label="Суббота" value="6" />
-                    <Tab label="Воскресенье" value="7" />
+                    <Tab
+                      label="Понедельник"
+                      value="1"
+                    />
+                    <Tab
+                      label="Вторник"
+                      value="2"
+                    />
+                    <Tab
+                      label="Среда"
+                      value="3"
+                    />
+                    <Tab
+                      label="Четверг"
+                      value="4"
+                    />
+                    <Tab
+                      label="Пятница"
+                      value="5"
+                    />
+                    <Tab
+                      label="Суббота"
+                      value="6"
+                    />
+                    <Tab
+                      label="Воскресенье"
+                      value="7"
+                    />
                   </TabList>
                 </Box>
                 <CountUsers_TablePanel
@@ -1091,17 +1201,31 @@ class CountUsers_ extends React.Component {
               mb={3}
               size={{
                 xs: 12,
-                sm: 4
-              }}>
+                sm: 4,
+              }}
+            >
               <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content">
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="panel1a-content"
+                >
                   <Typography>Даты</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   {this.state.other_days.map((item, i) => (
-                    <Accordion key={i} expanded={true} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                      <AccordionSummary expandIcon={<CloseIcon onClick={this.deleteItem.bind(this, item)}/>}>
-                        <Typography onClick={this.openModal.bind(this, 'Редактировать особый день', item)}>{item.date}</Typography>
+                    <Accordion
+                      key={i}
+                      expanded={true}
+                      sx={{ borderBottom: 1, borderColor: "divider" }}
+                    >
+                      <AccordionSummary
+                        expandIcon={<CloseIcon onClick={this.deleteItem.bind(this, item)} />}
+                      >
+                        <Typography
+                          onClick={this.openModal.bind(this, "Редактировать особый день", item)}
+                        >
+                          {item.date}
+                        </Typography>
                       </AccordionSummary>
                     </Accordion>
                   ))}
@@ -1120,13 +1244,16 @@ export default function CountUsers() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

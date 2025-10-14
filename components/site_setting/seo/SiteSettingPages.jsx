@@ -16,7 +16,7 @@ import {
   Typography,
 } from "@mui/material";
 import { PageTextModal } from "./PageTextModal";
-import { MySelect } from "@/components/shared/Forms";
+import { MySelect } from "@/ui/Forms";
 
 export function SiteSettingPages() {
   const submodule = "seo";
@@ -60,20 +60,22 @@ export function SiteSettingPages() {
       submodule,
       city_id: cityId,
     };
-    getData("get_page_text_data", data).then((response) => {
-      setModuleName(response.submodule.name);
-      setPages(response.pages);
-      setCategories(response.categories);
-    }).catch((e) => {
-      showAlert(`Fetch error: ${e}`, false);
-    })
+    getData("get_page_text_data", data)
+      .then((response) => {
+        setModuleName(response.submodule.name);
+        setPages(response.pages);
+        setCategories(response.categories);
+      })
+      .catch((e) => {
+        showAlert(`Fetch error: ${e}`, false);
+      });
   }, [cityId]);
 
   const { saveNew, saveEdit, setPageItem } = useSavePage(
     closeModal,
     showAlert,
     getData,
-    fetchCoreData
+    fetchCoreData,
   );
 
   const openModal = async (action, title, id = null) => {
@@ -100,8 +102,8 @@ export function SiteSettingPages() {
         </>
       ),
       () => {
-        setItem(null), setItemName("");
-      }
+        (setItem(null), setItemName(""));
+      },
     );
   };
 
@@ -112,7 +114,7 @@ export function SiteSettingPages() {
   // update page name in modal title
   useEffect(
     () => setModalTitle(`${modalPrefix}${itemName ? `: ${itemName}` : ""}`),
-    [modalPrefix, itemName]
+    [modalPrefix, itemName],
   );
 
   return (
@@ -132,8 +134,9 @@ export function SiteSettingPages() {
           justifyContent: "space-between",
         }}
         size={{
-          xs: 12
-        }}>
+          xs: 12,
+        }}
+      >
         <Typography variant="h5">{moduleName}</Typography>
 
         {acces.seo_edit ? (
@@ -149,8 +152,9 @@ export function SiteSettingPages() {
         sx={{ p: 3 }}
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <MySelect
           data={cities}
           value={cityId}
@@ -162,8 +166,9 @@ export function SiteSettingPages() {
       <Grid
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <TableContainer>
           <Table>
             <TableHead>
@@ -177,24 +182,23 @@ export function SiteSettingPages() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {pages
-                .map((page, key) => (
-                  <TableRow
-                    key={page.id}
-                    hover
-                    style={{ cursor: "pointer" }}
-                    onClick={() => openModal("editPage", "Редактирование страницы", page.id)}
-                  >
-                    <TableCell>{key + 1}</TableCell>
-                    <TableCell style={{ color: "#ff1744", fontWeight: 700 }}>
-                      {page.page_name}
-                    </TableCell>
-                    <TableCell>{page.city_name}</TableCell>
-                    <TableCell>{page.title}</TableCell>
-                    <TableCell>{page.description}</TableCell>
-                    <TableCell>{page.date_time_update}</TableCell>
-                  </TableRow>
-                ))}
+              {pages.map((page, key) => (
+                <TableRow
+                  key={page.id}
+                  hover
+                  style={{ cursor: "pointer" }}
+                  onClick={() => openModal("editPage", "Редактирование страницы", page.id)}
+                >
+                  <TableCell>{key + 1}</TableCell>
+                  <TableCell style={{ color: "#ff1744", fontWeight: 700 }}>
+                    {page.page_name}
+                  </TableCell>
+                  <TableCell>{page.city_name}</TableCell>
+                  <TableCell>{page.title}</TableCell>
+                  <TableCell>{page.description}</TableCell>
+                  <TableCell>{page.date_time_update}</TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </TableContainer>

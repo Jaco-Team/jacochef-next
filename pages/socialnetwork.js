@@ -1,56 +1,56 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import { MySelect, MyTextInput } from '@/components/shared/Forms';
+import { MySelect, MyTextInput } from "@/ui/Forms";
 
-import { api_laravel_local, api_laravel } from '@/src/api_new';
+import { api_laravel_local, api_laravel } from "@/src/api_new";
 
 class SocialNetwork_ extends React.Component {
   constructor(props) {
     super(props);
-        
+
     this.state = {
-      module: 'socialnetwork',
-      module_name: '',
+      module: "socialnetwork",
+      module_name: "",
       is_load: false,
-      
+
       cityList: [],
       city_id: 0,
 
       dataInfo: null,
-      file: null
+      file: null,
     };
   }
-  
-  async componentDidMount(){
-    let data = await this.getData('get_all');
-    
+
+  async componentDidMount() {
+    let data = await this.getData("get_all");
+
     this.setState({
       module_name: data.module_info.name,
       cityList: data.cities,
-      city_id: data.cities[0].id
-    })
-    
+      city_id: data.cities[0].id,
+    });
+
     document.title = data.module_info.name;
 
-    setTimeout( () => {
+    setTimeout(() => {
       this.updateData();
-    }, 50 )
+    }, 50);
   }
-  
+
   getData = (method, data = {}) => {
     this.setState({
       is_load: true,
     });
 
     let res = api_laravel(this.state.module, method, data)
-      .then(result => result.data)
-      .finally( () => {
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
@@ -59,47 +59,47 @@ class SocialNetwork_ extends React.Component {
       });
 
     return res;
-  }
-   
-  changeCity(event){
+  };
+
+  changeCity(event) {
     let data = event.target.value;
-    
+
     this.setState({
       city_id: data,
       dataInfo: null,
-      file: null
-    })
-    
-    setTimeout( () => {
+      file: null,
+    });
+
+    setTimeout(() => {
       this.updateData();
-    }, 50 )
+    }, 50);
   }
 
-  async updateData(){
+  async updateData() {
     let data = {
-      city_id: this.state.city_id
+      city_id: this.state.city_id,
     };
 
-    let res = await this.getData('get_data', data);
+    let res = await this.getData("get_data", data);
 
     this.setState({
       dataInfo: res.links,
-      file: null
-    })
+      file: null,
+    });
   }
 
-  changeData(type, event){
+  changeData(type, event) {
     let data = event.target.value;
     let info = this.state.dataInfo;
-    
-    info[ [type] ] = data;
+
+    info[[type]] = data;
 
     this.setState({
-      dataInfo: info
-    })
+      dataInfo: info,
+    });
   }
 
-  async saveData(){
+  async saveData() {
     let data = {
       city_id: this.state.city_id,
       vk: this.state.dataInfo.vk,
@@ -107,11 +107,11 @@ class SocialNetwork_ extends React.Component {
       ok: this.state.dataInfo.ok,
       tg: this.state.dataInfo.tg,
       fb: this.state.dataInfo.fb,
-      file1: ''
+      file1: "",
     };
 
-    await this.getData('save_data', data);
-    
+    await this.getData("save_data", data);
+
     /*if( this.state.file ){
       setTimeout( () => {
         this.setState({
@@ -155,85 +155,132 @@ class SocialNetwork_ extends React.Component {
   //   })
   // }
 
-  render(){
+  render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
-          
+
           <Grid
             size={{
               xs: 6,
-              sm: 6
-            }}>
-            <MySelect data={this.state.cityList} value={this.state.city_id} func={ this.changeCity.bind(this) } label='Город' is_none={false}/>
+              sm: 6,
+            }}
+          >
+            <MySelect
+              data={this.state.cityList}
+              value={this.state.city_id}
+              func={this.changeCity.bind(this)}
+              label="Город"
+              is_none={false}
+            />
           </Grid>
-          
-          {this.state.dataInfo == null ? null :
+
+          {this.state.dataInfo == null ? null : (
             <Grid
               size={{
-                xs: 12
-              }}>
-              <Grid container spacing={3}>
+                xs: 12,
+              }}
+            >
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
-                  <MyTextInput label="Вконтакте" value={this.state.dataInfo ? this.state.dataInfo.vk : ''} func={this.changeData.bind(this, 'vk')} />
+                    sm: 6,
+                  }}
+                >
+                  <MyTextInput
+                    label="Вконтакте"
+                    value={this.state.dataInfo ? this.state.dataInfo.vk : ""}
+                    func={this.changeData.bind(this, "vk")}
+                  />
                 </Grid>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
-                  <MyTextInput label="Инстаграм" value={this.state.dataInfo ? this.state.dataInfo.inst : ''} func={this.changeData.bind(this, 'inst')} />
-                </Grid>
-
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 6
-                  }}>
-                  <MyTextInput label="Одноклассники" value={this.state.dataInfo ? this.state.dataInfo.ok : ''} func={this.changeData.bind(this, 'ok')} />
-                </Grid>
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 6
-                  }}>
-                  <MyTextInput label="Телеграм" value={this.state.dataInfo ? this.state.dataInfo.tg : ''} func={this.changeData.bind(this, 'tg')} />
-                </Grid>
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 6
-                  }}>
-                  <MyTextInput label="Facebook" value={this.state.dataInfo ? this.state.dataInfo.fb : ''} func={this.changeData.bind(this, 'fb')} />
+                    sm: 6,
+                  }}
+                >
+                  <MyTextInput
+                    label="Инстаграм"
+                    value={this.state.dataInfo ? this.state.dataInfo.inst : ""}
+                    func={this.changeData.bind(this, "inst")}
+                  />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
-                  <Button variant="contained" onClick={this.saveData.bind(this)}>Обновить данные</Button>
+                    sm: 6,
+                  }}
+                >
+                  <MyTextInput
+                    label="Одноклассники"
+                    value={this.state.dataInfo ? this.state.dataInfo.ok : ""}
+                    func={this.changeData.bind(this, "ok")}
+                  />
+                </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6,
+                  }}
+                >
+                  <MyTextInput
+                    label="Телеграм"
+                    value={this.state.dataInfo ? this.state.dataInfo.tg : ""}
+                    func={this.changeData.bind(this, "tg")}
+                  />
+                </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6,
+                  }}
+                >
+                  <MyTextInput
+                    label="Facebook"
+                    value={this.state.dataInfo ? this.state.dataInfo.fb : ""}
+                    func={this.changeData.bind(this, "fb")}
+                  />
                 </Grid>
 
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6,
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    onClick={this.saveData.bind(this)}
+                  >
+                    Обновить данные
+                  </Button>
+                </Grid>
               </Grid>
             </Grid>
-          }
-        
-          
+          )}
         </Grid>
       </>
     );
@@ -241,19 +288,20 @@ class SocialNetwork_ extends React.Component {
 }
 
 export default function SocialNetwork() {
-  return (
-    <SocialNetwork_ />
-  );
+  return <SocialNetwork_ />;
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

@@ -1,31 +1,31 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import {MySelect, MyDatePickerNew, MyTextInput} from '@/components/shared/Forms';
+import { MySelect, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 
-import {api_laravel_local, api_laravel} from '@/src/api_new';
-import dayjs from 'dayjs';
-import MyAlert from '@/components/shared/MyAlert';
+import { api_laravel_local, api_laravel } from "@/src/api_new";
+import dayjs from "dayjs";
+import MyAlert from "@/ui/MyAlert";
 
 class SitePriceLevelEdit_input_level_name extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      item: props.data || '',
-      prevData: props.data || '',
+      item: props.data || "",
+      prevData: props.data || "",
     };
   }
 
@@ -79,15 +79,15 @@ class SitePriceLevelEdit_input_item extends React.Component {
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
     };
   }
 
   changeItem(event) {
-    let value = event.target.value.replace(/^0+(?=\d)/, '');
+    let value = event.target.value.replace(/^0+(?=\d)/, "");
 
-    if (value === '') {
-      value = '0';
+    if (value === "") {
+      value = "0";
     }
 
     this.setState({
@@ -101,8 +101,8 @@ class SitePriceLevelEdit_input_item extends React.Component {
 
       let value = this.state.item;
 
-      if (value === '' || value === null) {
-        value = '0';
+      if (value === "" || value === null) {
+        value = "0";
         this.setState({ item: value });
       }
 
@@ -142,7 +142,7 @@ class SitePriceLevelEdit_input_item extends React.Component {
           value={this.state.item}
           func={this.changeItem.bind(this)}
           onBlur={this.save_data_input.bind(this)}
-          enter={(event) => (event.key === 'Enter' ? this.save_data_input(event) : null)}
+          enter={(event) => (event.key === "Enter" ? this.save_data_input(event) : null)}
           onWheel={(e) => e.target.blur()}
         />
       </>
@@ -155,36 +155,36 @@ class SitePriceLevelEdit_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'site_price_lavel',
-      module_name: '',
+      module: "site_price_lavel",
+      module_name: "",
       is_load: false,
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
 
       cities: [],
-      city: '',
-      date_start: '',
+      city: "",
+      date_start: "",
       cats: [],
 
-      level_id: '',
-      level_name: '',
+      level_id: "",
+      level_name: "",
 
       acces: null,
 
-      initialCity: '',
-      initialDate: '',
+      initialCity: "",
+      initialDate: "",
     };
   }
 
   async componentDidMount() {
-    let data_level = window.location.pathname.split('/');
+    let data_level = window.location.pathname.split("/");
     this.update(data_level[2]);
   }
 
   getData = (method, data = {}) => {
-    if (method !== 'save_one_price') {
+    if (method !== "save_one_price") {
       this.setState({
         is_load: true,
       });
@@ -222,7 +222,7 @@ class SitePriceLevelEdit_ extends React.Component {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Указание даты обязательно',
+        err_text: "Указание даты обязательно",
         date_start: this.state.date_start,
       });
       return;
@@ -230,63 +230,59 @@ class SitePriceLevelEdit_ extends React.Component {
 
     const date_now = dayjs();
     let selectedDate = dayjs(event);
-    const initialIsPast = dayjs(this.state.initialDate).isBefore(date_now, 'day');
+    const initialIsPast = dayjs(this.state.initialDate).isBefore(date_now, "day");
 
     // если исходная дата Уровня цен прошлая — разрешаем только будущюю
     if (initialIsPast) {
-
-      if (!selectedDate.isAfter(date_now, 'day')) {
+      if (!selectedDate.isAfter(date_now, "day")) {
         this.setState({
           openAlert: true,
           err_status: false,
-          err_text: 'Изменение даты возможно только на будущую',
+          err_text: "Изменение даты возможно только на будущую",
         });
         return;
       }
-
     } else {
-
       // запрещаем только прошлые даты, сегодня — можно
-      if (selectedDate.isBefore(date_now, 'day')) {
+      if (selectedDate.isBefore(date_now, "day")) {
         this.setState({
           openAlert: true,
           err_status: false,
-          err_text: 'Изменение даты возможно только на сегодняшнюю или будущую',
+          err_text: "Изменение даты возможно только на сегодняшнюю или будущую",
         });
         return;
       }
-
     }
 
     this.setState(
       {
-        [data]: event ? event : '',
+        [data]: event ? event : "",
       },
       () => {
         const newDate = dayjs(this.state[data]);
         const baseDate = dayjs(this.state.initialDate);
 
-        if (newDate.isSame(date_now, 'day')) {
-          if (baseDate.isSame(date_now, 'day')) {
+        if (newDate.isSame(date_now, "day")) {
+          if (baseDate.isSame(date_now, "day")) {
             return;
           }
           this.handleSave();
         }
-      }
+      },
     );
   }
 
   // вычисляем, будет ли создан Новый уровень при сохранении
   willCreateNewOnSave = () => {
-    const {initialDate, date_start} = this.state;
+    const { initialDate, date_start } = this.state;
     const now = dayjs();
     const current = dayjs(date_start);
 
-    const isToday  = current.isSame(now, 'day');
-    const isFuture = current.isAfter(now, 'day');
-    const initialIsPast = dayjs(initialDate).isBefore(now, 'day');
-    const dateChanged = !current.isSame(dayjs(initialDate), 'day');
-   
+    const isToday = current.isSame(now, "day");
+    const isFuture = current.isAfter(now, "day");
+    const initialIsPast = dayjs(initialDate).isBefore(now, "day");
+    const dateChanged = !current.isSame(dayjs(initialDate), "day");
+
     // Новый уровень: только если дата будущая и (исходная прошла или изменили дату/город)
     return dateChanged && (isToday || (initialIsPast && isFuture));
   };
@@ -297,10 +293,10 @@ class SitePriceLevelEdit_ extends React.Component {
 
     if (!city || !level_name || !date_start) {
       const err_text = !city
-        ? 'Необходимо выбрать город'
+        ? "Необходимо выбрать город"
         : !level_name
-        ? 'Необходимо указать название'
-        : 'Указание даты обязательно';
+          ? "Необходимо указать название"
+          : "Указание даты обязательно";
 
       this.setState({
         openAlert: true,
@@ -312,41 +308,39 @@ class SitePriceLevelEdit_ extends React.Component {
 
     const now = dayjs();
     const current = dayjs(date_start);
-    const isToday  = current.isSame(now, 'day');
-    const isFuture = current.isAfter(now, 'day');
-    const initialIsPast = dayjs(initialDate).isBefore(now, 'day');
+    const isToday = current.isSame(now, "day");
+    const isFuture = current.isAfter(now, "day");
+    const initialIsPast = dayjs(initialDate).isBefore(now, "day");
 
     // кнопка активна всегда, НО сохраняем только для даты сегодня/будущая
-    if (!(isToday || isFuture)) { // прошлое
+    if (!(isToday || isFuture)) {
+      // прошлое
 
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Изменения невозможны для прошедшей даты',
+        err_text: "Изменения невозможны для прошедшей даты",
       });
 
       return;
-
     }
 
-   // Если исходная дата прошла, а выбрано "сегодня" — подсказать, что нужна только будущая дата
-   if (initialIsPast && isToday) {
+    // Если исходная дата прошла, а выбрано "сегодня" — подсказать, что нужна только будущая дата
+    if (initialIsPast && isToday) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Изменение даты возможно только на будущую",
+      });
 
-     this.setState({
-       openAlert: true,
-       err_status: false,
-       err_text: 'Изменение даты возможно только на будущую',
-     });
+      return;
+    }
 
-     return;
-
-   }
-
-    const formattedDate = current.format('YYYY-MM-DD');
+    const formattedDate = current.format("YYYY-MM-DD");
     const items = cats.reduce((acc, cat) => acc.concat(cat.items), []);
 
     // Новый уровень создаём и при Сегодня, и при Будущем, если исходная прошлая или изменили дату/город
-    const dateChanged   = !current.isSame(dayjs(initialDate), 'day');
+    const dateChanged = !current.isSame(dayjs(initialDate), "day");
     const creatingNew = dateChanged && (isToday || (initialIsPast && isFuture));
 
     if (creatingNew) {
@@ -355,11 +349,11 @@ class SitePriceLevelEdit_ extends React.Component {
         name: level_name,
         date_start: formattedDate,
         city_id: city,
-        type: 'date',
+        type: "date",
         items,
       };
 
-      const res = await this.getData('save_new', data);
+      const res = await this.getData("save_new", data);
 
       this.setState({
         openAlert: true,
@@ -368,15 +362,15 @@ class SitePriceLevelEdit_ extends React.Component {
       });
 
       if (res.st) {
-        window.location.href = '/site_price_lavel';
+        window.location.href = "/site_price_lavel";
       }
       return;
     }
 
     // иначе Редактируем существующий уровень
     const isCityChanged = city !== initialCity;
-    const isDateChanged = !current.isSame(dayjs(initialDate), 'day');
-    const typeValue = !isCityChanged && !isDateChanged ? 'edit' : 'check';
+    const isDateChanged = !current.isSame(dayjs(initialDate), "day");
+    const typeValue = !isCityChanged && !isDateChanged ? "edit" : "check";
 
     const data = {
       level_id,
@@ -387,7 +381,7 @@ class SitePriceLevelEdit_ extends React.Component {
       type: typeValue,
     };
 
-    const res = await this.getData('save_edit', data);
+    const res = await this.getData("save_edit", data);
 
     this.setState({
       openAlert: true,
@@ -413,7 +407,7 @@ class SitePriceLevelEdit_ extends React.Component {
     });
 
     // если исходная дата прошлая — не автосейвим (копим до нажатия кнопки "Сохранить")
-    const initialIsPast = dayjs(this.state.initialDate).isBefore(dayjs(), 'day');
+    const initialIsPast = dayjs(this.state.initialDate).isBefore(dayjs(), "day");
     if (initialIsPast) return;
 
     // если по кнопке будет создаваться Новый уровень — не шлём автосейв:
@@ -425,7 +419,7 @@ class SitePriceLevelEdit_ extends React.Component {
       value,
     };
 
-    await this.getData('save_one_price', data);
+    await this.getData("save_one_price", data);
   }
 
   async update(level_id) {
@@ -433,15 +427,15 @@ class SitePriceLevelEdit_ extends React.Component {
       level_id,
     };
 
-    const res = await this.getData('get_one', data);
- 
+    const res = await this.getData("get_one", data);
+
     let city;
 
     if (Number(res.acces?.edit_level_access) === 1) {
       city = String(res.level.city_id);
     } else {
       const cityObj = res.cities.find((item) => Number(item.id) === Number(res.level.city_id));
-      city = cityObj ? cityObj.name : '';
+      city = cityObj ? cityObj.name : "";
     }
 
     this.setState({
@@ -466,7 +460,10 @@ class SitePriceLevelEdit_ extends React.Component {
 
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -475,7 +472,12 @@ class SitePriceLevelEdit_ extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-        <Grid container spacing={3} mb={3} className="container_first_child">
+        <Grid
+          container
+          spacing={3}
+          mb={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
@@ -502,7 +504,7 @@ class SitePriceLevelEdit_ extends React.Component {
                 label="Название"
                 value={this.state.level_name}
                 disabled={true}
-                className={'disabled_input'}
+                className={"disabled_input"}
               />
             </Grid>
           )}
@@ -527,7 +529,7 @@ class SitePriceLevelEdit_ extends React.Component {
                 label="Город"
                 value={this.state.city}
                 disabled={true}
-                className={'disabled_input'}
+                className={"disabled_input"}
               />
             )}
           </Grid>
@@ -543,14 +545,14 @@ class SitePriceLevelEdit_ extends React.Component {
               <MyDatePickerNew
                 label="Дата старта"
                 value={dayjs(this.state.date_start)}
-                func={this.changeDateRange.bind(this, 'date_start')}
+                func={this.changeDateRange.bind(this, "date_start")}
               />
             ) : (
               <MyTextInput
                 label="Дата старта"
                 value={this.state.date_start}
                 disabled={true}
-                className={'disabled_input'}
+                className={"disabled_input"}
               />
             )}
           </Grid>
@@ -562,32 +564,44 @@ class SitePriceLevelEdit_ extends React.Component {
               sm: 12,
             }}
           >
-            <TableContainer sx={{ maxHeight: { xs: 'none', sm: 652 } }} component={Paper}>
-              <Table size="small" stickyHeader>
+            <TableContainer
+              sx={{ maxHeight: { xs: "none", sm: 652 } }}
+              component={Paper}
+            >
+              <Table
+                size="small"
+                stickyHeader
+              >
                 <TableHead>
-                  <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                    <TableCell style={{ width: '10%' }}>ID товара</TableCell>
-                    <TableCell style={{ width: '45%' }}>Наименование товара</TableCell>
-                    <TableCell style={{ width: '45%' }}>Цена товара</TableCell>
+                  <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                    <TableCell style={{ width: "10%" }}>ID товара</TableCell>
+                    <TableCell style={{ width: "45%" }}>Наименование товара</TableCell>
+                    <TableCell style={{ width: "45%" }}>Цена товара</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {this.state.cats.map((cat, key) =>
                     cat.items.length === 0 ? null : (
                       <React.Fragment key={key}>
-                        <TableRow sx={{ '& th': { border: 'none' } }}>
+                        <TableRow sx={{ "& th": { border: "none" } }}>
                           <TableCell></TableCell>
-                          <TableCell colSpan={2} sx={{ fontWeight: 'bold' }}>
+                          <TableCell
+                            colSpan={2}
+                            sx={{ fontWeight: "bold" }}
+                          >
                             {cat.name}
                           </TableCell>
                         </TableRow>
                         {cat.items.map((item, k) => (
-                          <TableRow hover key={k}>
+                          <TableRow
+                            hover
+                            key={k}
+                          >
                             <TableCell>{item.id}</TableCell>
                             <TableCell>{item.name}</TableCell>
                             <TableCell>
                               {/* Цены: по праву (можно менять всегда при доступе) */}
-                              {hasAccess ? ( 
+                              {hasAccess ? (
                                 <SitePriceLevelEdit_input_item
                                   data={item?.price}
                                   changeInput={this.changeInput.bind(this)}
@@ -601,14 +615,14 @@ class SitePriceLevelEdit_ extends React.Component {
                                   label=""
                                   value={item?.price}
                                   disabled={true}
-                                  className={'disabled_input'}
+                                  className={"disabled_input"}
                                 />
                               )}
                             </TableCell>
                           </TableRow>
                         ))}
                       </React.Fragment>
-                    )
+                    ),
                   )}
                 </TableBody>
               </Table>
@@ -623,7 +637,10 @@ class SitePriceLevelEdit_ extends React.Component {
                 sm: 4,
               }}
             >
-              <Button variant="contained" onClick={this.handleSave.bind(this)}>
+              <Button
+                variant="contained"
+                onClick={this.handleSave.bind(this)}
+              >
                 Сохранить
               </Button>
             </Grid>

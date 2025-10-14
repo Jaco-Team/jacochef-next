@@ -1,26 +1,32 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import { MySelect, MyCheckBox, MyTimePicker, MyTextInput, MyAutocomplite, MyDatePickerNew } from '@/components/shared/Forms';
-import Typography from '@mui/material/Typography';
+import {
+  MySelect,
+  MyCheckBox,
+  MyTimePicker,
+  MyTextInput,
+  MyAutocomplite,
+  MyDatePickerNew,
+} from "@/ui/Forms";
+import Typography from "@mui/material/Typography";
 
-import DatePicker from "react-multi-date-picker"
+import DatePicker from "react-multi-date-picker";
 
-
-import dayjs from 'dayjs';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
-import { formatDate } from '@/src/helpers/ui/formatDate';
+import dayjs from "dayjs";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { formatDate } from "@/src/helpers/ui/formatDate";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
@@ -32,107 +38,113 @@ import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
-import {PromoEdit} from "@/components/site_sale_2/PromoEdit";
+import { PromoEdit } from "@/components/site_sale_2/PromoEdit";
 
 class MyDatePicker extends React.PureComponent {
   constructor(props) {
     super(props);
 
-    this.state = {
-    };
+    this.state = {};
   }
 
-  render(){
+  render() {
     return (
       <>
         <Typography>{this.props.label}</Typography>
         <DatePicker
           format="YYYY-MM-DD"
-
           multiple
           sort
-
           //mask="____/__/__"
           //multiple={ this.props.multiple && this.props.multiple === true ? true : false }
           //disableCloseOnSelect={true}
           //inputFormat="yyyy-MM-dd"
-          style={{ width: '100%' }}
+          style={{ width: "100%" }}
           label={this.props.label}
           value={this.props.value}
           onChange={this.props.func}
         />
       </>
-    )
+    );
   }
 }
 
 function formatDateDot(date) {
   var d = new Date(date),
-      month = '' + (d.getMonth() + 1),
-      day = '' + d.getDate(),
-      year = d.getFullYear();
+    month = "" + (d.getMonth() + 1),
+    day = "" + d.getDate(),
+    year = d.getFullYear();
 
-  if (month.length < 2)
-      month = '0' + month;
-  if (day.length < 2)
-      day = '0' + day;
+  if (month.length < 2) month = "0" + month;
+  if (day.length < 2) day = "0" + day;
 
-  return [day, month, year].join('.');
+  return [day, month, year].join(".");
 }
 
 function formatDateName(date) {
   var d = new Date(date),
-      month = '' + (d.getMonth() + 1),
-      day = '' + d.getDate(),
-      year = d.getFullYear();
+    month = "" + (d.getMonth() + 1),
+    day = "" + d.getDate(),
+    year = d.getFullYear();
 
   //if (month.length < 2)
   //    month = '0' + month;
-  if (day.length < 2)
-      day = '0' + day;
+  if (day.length < 2) day = "0" + day;
 
-  let m = '';
+  let m = "";
 
-  switch(parseInt(month)){
-		case 1:{
-			m = 'Января';
-			break;}
-		case 2:{
-			m = 'Февраля';
-			break;}
-		case 3:{
-			m = 'Марта';
-			break;}
-		case 4:{
-			m = 'Апреля';
-			break;}
-		case 5:{
-			m = 'Мая';
-			break;}
-		case 6:{
-			m = 'Июня';
-			break;}
-		case 7:{
-			m = 'Июля';
-			break;}
-		case 8:{
-			m = 'Августа';
-			break;}
-		case 9:{
-			m = 'Сентября';
-			break;}
-		case 10:{
-			m = 'Октября';
-			break;}
-		case 11:{
-			m = 'Ноября';
-			break;}
-		case 12:{
-			m = 'Декабря';
-			break;}
-	}
+  switch (parseInt(month)) {
+    case 1: {
+      m = "Января";
+      break;
+    }
+    case 2: {
+      m = "Февраля";
+      break;
+    }
+    case 3: {
+      m = "Марта";
+      break;
+    }
+    case 4: {
+      m = "Апреля";
+      break;
+    }
+    case 5: {
+      m = "Мая";
+      break;
+    }
+    case 6: {
+      m = "Июня";
+      break;
+    }
+    case 7: {
+      m = "Июля";
+      break;
+    }
+    case 8: {
+      m = "Августа";
+      break;
+    }
+    case 9: {
+      m = "Сентября";
+      break;
+    }
+    case 10: {
+      m = "Октября";
+      break;
+    }
+    case 11: {
+      m = "Ноября";
+      break;
+    }
+    case 12: {
+      m = "Декабря";
+      break;
+    }
+  }
 
-  return [day, m].join(' ');
+  return [day, m].join(" ");
 }
 
 class SiteSale2_edit_ extends React.Component {
@@ -142,10 +154,10 @@ class SiteSale2_edit_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'site_sale_2',
-      module_name: '',
+      module: "site_sale_2",
+      module_name: "",
       is_load: false,
-      modalText: '',
+      modalText: "",
 
       points: [],
       point: 0,
@@ -154,57 +166,57 @@ class SiteSale2_edit_ extends React.Component {
       promo_copy_double: {},
 
       modalDialog: false,
-      modalLink: '',
+      modalLink: "",
       promo_history: [],
       promo_copy: {},
 
       where_promo_list: [
-        {id: 1, name: 'Создать'},
-        {id: 2, name: 'Создать и показать'},
-        {id: 3, name: 'Отправить на почту'},
-        {id: 4, name: 'Отправить в смс'},
-        {id: 5, name: 'Рассылка смс'},
-        {id: 6, name: 'Отправить в ЛК (через 8)'},
-        {id: 7, name: 'Создать сертификат(ы)'},
+        { id: 1, name: "Создать" },
+        { id: 2, name: "Создать и показать" },
+        { id: 3, name: "Отправить на почту" },
+        { id: 4, name: "Отправить в смс" },
+        { id: 5, name: "Рассылка смс" },
+        { id: 6, name: "Отправить в ЛК (через 8)" },
+        { id: 7, name: "Создать сертификат(ы)" },
       ],
       promo_action_list: [],
       sale_list: [
-        {id: 1, name: 'На товары'},
-        {id: 2, name: 'На категории'},
-        {id: 3, name: 'На все меню (кроме допов и закусок)'},
-        {id: 7, name: 'На все меню'},
+        { id: 1, name: "На товары" },
+        { id: 2, name: "На категории" },
+        { id: 3, name: "На все меню (кроме допов и закусок)" },
+        { id: 7, name: "На все меню" },
       ],
       promo_conditions_list: [
-        {id: 1, name: 'В корзине есть определенные товар(ы)'},
-        {id: 2, name: 'В корзине набрана определенная сумма'},
+        { id: 1, name: "В корзине есть определенные товар(ы)" },
+        { id: 2, name: "В корзине набрана определенная сумма" },
       ],
       promo_sale_list: [],
       type_sale_list: [
-        {id: 1, name: 'В рублях'},
-        {id: 2, name: 'В процентах'},
+        { id: 1, name: "В рублях" },
+        { id: 2, name: "В процентах" },
       ],
       date_promo_list: [
-        {id: 1, name: 'В определенные даты'},
-        {id: 2, name: '14 дней с 10:00 до 21:40'},
-        {id: 3, name: '14 дней с 00:00 до 23:59'},
-        {id: 4, name: '30 дней с 10:00 до 21:40'},
-        {id: 5, name: '30 дней с 00:00 до 23:59'},
+        { id: 1, name: "В определенные даты" },
+        { id: 2, name: "14 дней с 10:00 до 21:40" },
+        { id: 3, name: "14 дней с 00:00 до 23:59" },
+        { id: 4, name: "30 дней с 10:00 до 21:40" },
+        { id: 5, name: "30 дней с 00:00 до 23:59" },
       ],
       type_order_list: [
-        {id: 1, name: 'Все'},
-        {id: 3, name: 'Доставка'},
-        {id: 2, name: 'Самовывоз'},
-        {id: 4, name: 'Зал'},
+        { id: 1, name: "Все" },
+        { id: 3, name: "Доставка" },
+        { id: 2, name: "Самовывоз" },
+        { id: 4, name: "Зал" },
       ],
       where_order_list: [
-        {id: 1, name: 'В городе'},
-        {id: 2, name: 'На точке'}
+        { id: 1, name: "В городе" },
+        { id: 2, name: "На точке" },
       ],
 
       auto_text: true,
       where_promo: 1,
       modalDialogEdit: false,
-      promo_name: '',
+      promo_name: "",
       generate_new: false,
       count_action: 1,
       promo_action: 1,
@@ -220,8 +232,8 @@ class SiteSale2_edit_ extends React.Component {
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
       rangeDate: [formatDate(new Date()), formatDate(new Date())],
-      time_start: '10:00',
-      time_end: '21:30',
+      time_start: "10:00",
+      time_end: "21:30",
 
       promo_length: 5,
       promo_count: 1,
@@ -237,11 +249,10 @@ class SiteSale2_edit_ extends React.Component {
       type_order: 1,
       where_order: 1,
 
-      numberList: '',
-      promo_desc_true: '',
-      promo_desc_false: '',
-      textSMS: '',
-
+      numberList: "",
+      promo_desc_true: "",
+      promo_desc_false: "",
+      textSMS: "",
 
       addItem: 1,
       addItemCount: 1,
@@ -265,42 +276,41 @@ class SiteSale2_edit_ extends React.Component {
       once_number: false,
       for_registred: false,
 
-      created: '',
+      created: "",
 
       for_number: false,
-      for_number_text: '',
+      for_number_text: "",
       promo_conditions_items: [],
     };
   }
 
-  async componentDidMount(){
-
-    let promo_id = window.location.pathname.split('/')[3];
+  async componentDidMount() {
+    let promo_id = window.location.pathname.split("/")[3];
 
     let data = {
-      promo_id
-    }
+      promo_id,
+    };
 
-    let res = await this.getData('get_all_for_edit', data);
+    let res = await this.getData("get_all_for_edit", data);
 
     let items = [];
 
-    if( res.promo.promo_conditions_items.length > 4 ){
+    if (res.promo.promo_conditions_items.length > 4) {
       res.promo.promo_conditions_items = JSON.parse(res.promo.promo_conditions_items, true);
 
-      res.promo.promo_conditions_items.map( (item) => {
-        let findItem = res.items.find( (it) => parseInt(it.id) == parseInt(item) );
+      res.promo.promo_conditions_items.map((item) => {
+        let findItem = res.items.find((it) => parseInt(it.id) == parseInt(item));
 
-        items.push(findItem)
-      } )
+        items.push(findItem);
+      });
     }
 
-    setTimeout( () => {
+    setTimeout(() => {
       let limDate = [];
 
-      res.limit.map( (item) => {
-        limDate.push( new Date(item.date) )
-      } )
+      res.limit.map((item) => {
+        limDate.push(new Date(item.date));
+      });
 
       this.setState({
         promo_conditions_items: res.promo.promo_conditions_items,
@@ -309,13 +319,22 @@ class SiteSale2_edit_ extends React.Component {
         promo_history: res.promo_history,
         module_name: res.module_info.name,
         promo_action_list: res.promo_action_list,
-        promo_action: res.promo_action_list.find( (item) => parseInt(item.id) == parseInt(res.promo.promo_action))?.id,
+        promo_action: res.promo_action_list.find(
+          (item) => parseInt(item.id) == parseInt(res.promo.promo_action),
+        )?.id,
         promo_sale_list: res.promo_sale_list,
-        promo_sale: parseInt(res.promo.promo_type) == 1 ? parseInt(res.promo.count_promo) : res.promo_sale_list.find( (item) => parseInt(item.name) == parseInt(res.promo.count_promo))?.id,
+        promo_sale:
+          parseInt(res.promo.promo_type) == 1
+            ? parseInt(res.promo.count_promo)
+            : res.promo_sale_list.find(
+                (item) => parseInt(item.name) == parseInt(res.promo.count_promo),
+              )?.id,
         sale_type: parseInt(res.promo.promo_type),
         type_sale: res.promo.promo_type_sale,
         itemsAdd: JSON.parse(res.promo.promo__items) ? JSON.parse(res.promo.promo__items) : [],
-        itemsAddPrice: JSON.parse(res.promo.add_items_on_price) ? JSON.parse(res.promo.add_items_on_price) : [],
+        itemsAddPrice: JSON.parse(res.promo.add_items_on_price)
+          ? JSON.parse(res.promo.add_items_on_price)
+          : [],
         date_start: dayjs(res.promo.date1),
         date_end: dayjs(res.promo.date2),
         time_start: res.promo.time1,
@@ -361,20 +380,19 @@ class SiteSale2_edit_ extends React.Component {
 
         for_number: parseInt(res.promo.for_number) == 1 ? true : false,
         for_number_text: res.promo.for_number_text,
-      })
-    }, 300 )
-
+      });
+    }, 300);
 
     document.title = res.module_info.name;
 
     function cleanString(str) {
       return str
-        .replace(/\s+/g, ' ') // заменяем все пробельные символы на обычные пробелы
-        .replace(/[^\x20-\x7E]/g, '') // удаляем не-ASCII символы
+        .replace(/\s+/g, " ") // заменяем все пробельные символы на обычные пробелы
+        .replace(/[^\x20-\x7E]/g, "") // удаляем не-ASCII символы
         .trim();
     }
 
-    setTimeout( () => {
+    setTimeout(() => {
       const false_p = this.generateTextDescFalse();
       const true_f = this.generateTextDescTrue();
       if (cleanString(res.promo.coment) !== cleanString(true_f)) {
@@ -390,37 +408,33 @@ class SiteSale2_edit_ extends React.Component {
           auto_text: false,
         });
       }
-
-    }, 800 )
+    }, 800);
   }
 
-  async save(){
-
-    if( !this.click ){
+  async save() {
+    if (!this.click) {
       this.click = true;
 
       let conditionItems = [];
 
-      this.state.conditionItems.map( (item) => {
-        conditionItems.push(item.id)
-      } )
-
+      this.state.conditionItems.map((item) => {
+        conditionItems.push(item.id);
+      });
 
       let promo_items = [];
 
-      this.state.saleItem.map( (item) => {
-        promo_items.push(item.id)
-      } )
-
+      this.state.saleItem.map((item) => {
+        promo_items.push(item.id);
+      });
 
       let promo_cat = [];
       let dateList = [];
 
-      this.state.testDate.map( (item) => {
-        dateList.push( (new Date(item).toISOString()).split('T')[0] );
-      } )
+      this.state.testDate.map((item) => {
+        dateList.push(new Date(item).toISOString().split("T")[0]);
+      });
 
-      dateList = dateList.join(',')
+      dateList = dateList.join(",");
 
       let data = {
         promo_id: this.state.promo_id,
@@ -430,7 +444,12 @@ class SiteSale2_edit_ extends React.Component {
         promo_len: this.state.promo_length,
         promo_name: this.state.promo_name,
         type_sale: this.state.type_sale,
-        promo_sale: parseInt( this.state.sale_type ) == 2 ? this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale)) : parseInt(this.state.promo_sale) ?? 0,
+        promo_sale:
+          parseInt(this.state.sale_type) == 2
+            ? this.state.promo_sale_list.find(
+                (item) => parseInt(item.id) == parseInt(this.state.promo_sale),
+              )
+            : (parseInt(this.state.promo_sale) ?? 0),
         generate: this.state.generate_new ? 1 : 0,
         promo_in_count: this.state.count_action,
         promo_action: this.state.promo_action,
@@ -442,8 +461,8 @@ class SiteSale2_edit_ extends React.Component {
         promo_summ_to: this.state.price_end,
         promo_when: this.state.date_promo,
 
-        date_start  : dayjs(this.state.date_start).format('YYYY-MM-DD'),
-        date_end    : dayjs(this.state.date_end).format('YYYY-MM-DD'),
+        date_start: dayjs(this.state.date_start).format("YYYY-MM-DD"),
+        date_end: dayjs(this.state.date_end).format("YYYY-MM-DD"),
         time_start: this.state.time_start,
         time_end: this.state.time_end,
 
@@ -467,7 +486,6 @@ class SiteSale2_edit_ extends React.Component {
         condition_promo_text: this.state.promo_desc_false,
         textSMS: this.state.textSMS,
 
-
         promo_items: JSON.stringify(promo_items),
         promo_cat: JSON.stringify(promo_cat),
         promo_items_add: JSON.stringify(this.state.itemsAdd),
@@ -479,19 +497,19 @@ class SiteSale2_edit_ extends React.Component {
         once_number: this.state.once_number ? 1 : 0,
         for_registred: this.state.for_registred ? 1 : 0,
         for_number: this.state.for_number ? 1 : 0,
-        for_number_text: this.state.for_number_text
+        for_number_text: this.state.for_number_text,
       };
 
-      let res = await this.getData('save_edit_promo', data);
+      let res = await this.getData("save_edit_promo", data);
 
       this.setState({
         modalDialog: true,
-        modalText: res.text
-      })
+        modalText: res.text,
+      });
 
-      setTimeout( () => {
+      setTimeout(() => {
         this.click = false;
-      }, 300 )
+      }, 300);
     }
   }
 
@@ -516,21 +534,21 @@ class SiteSale2_edit_ extends React.Component {
   openModalPromo = (item, key) => {
     if (this.state.promo_history[key + 1]) {
       this.setState({
-      promo_copy_double: this.state.promo_history[key + 1],
-    })
+        promo_copy_double: this.state.promo_history[key + 1],
+      });
     }
     this.setState({
       promo_copy: item,
-      modalDialogEdit: true
-    })
-  }
+      modalDialogEdit: true,
+    });
+  };
 
-  changeData(type, event){
+  changeData(type, event) {
     this.setState({
-      [ type ]: event.target.value
-    })
+      [type]: event.target.value,
+    });
 
-    if( type == 'date_promo' && (event.target.value == 2 || event.target.value == 3) ){
+    if (type == "date_promo" && (event.target.value == 2 || event.target.value == 3)) {
       let thisDay = new Date();
       let nextDay = new Date();
       nextDay.setDate(nextDay.getDate() + 14);
@@ -540,12 +558,12 @@ class SiteSale2_edit_ extends React.Component {
         date_start: formatDate(thisDay),
         date_end: formatDate(nextDay),
 
-        time_start: event.target.value == 2 ? '10:00' : '00:00',
-        time_end: event.target.value == 2 ? '21:40' : '23:59',
-      })
+        time_start: event.target.value == 2 ? "10:00" : "00:00",
+        time_end: event.target.value == 2 ? "21:40" : "23:59",
+      });
     }
 
-    if( type == 'date_promo' && (event.target.value == 4 || event.target.value == 5) ){
+    if (type == "date_promo" && (event.target.value == 4 || event.target.value == 5)) {
       let thisDay = new Date();
       let nextDay = new Date();
       nextDay.setDate(nextDay.getDate() + 30);
@@ -555,189 +573,228 @@ class SiteSale2_edit_ extends React.Component {
         date_start: formatDate(thisDay),
         date_end: formatDate(nextDay),
 
-        time_start: event.target.value == 4 ? '10:00' : '00:00',
-        time_end: event.target.value == 4 ? '21:40' : '23:59',
-      })
+        time_start: event.target.value == 4 ? "10:00" : "00:00",
+        time_end: event.target.value == 4 ? "21:40" : "23:59",
+      });
     }
 
-    setTimeout( () => {
+    setTimeout(() => {
       this.generateTextDescFalse();
       this.generateTextDescTrue();
-    }, 300 )
+    }, 300);
   }
 
-  changeDataCheck(type, event){
+  changeDataCheck(type, event) {
     this.setState({
-      [ type ]: event.target.checked
-    })
-
-    if( type == 'once_number' || type == 'for_new' || type == 'for_registred' ) {
-      if( type == 'once_number' && event.target.checked === true ){
-        this.setState({
-          for_new: false
-        })
-      }
-      if( type == 'for_new' && event.target.checked === true ){
-        this.setState({
-          once_number: false,
-          for_registred: false
-        })
-      }
-      if( type == 'for_registred' && event.target.checked === true ){
-        this.setState({
-          for_new: false
-        })
-      }
-    }
-
-    setTimeout( () => {
-      this.generateTextDescFalse();
-      this.generateTextDescTrue();
-    }, 300 )
-  }
-
-  changeDateRange(data, event){
-    this.setState({
-      [data]: (event)
-    })
-
-    setTimeout( () => {
-      this.generateTextDescFalse();
-      this.generateTextDescTrue();
-    }, 300 )
-  }
-
-  changeDataData(type, data){
-    this.setState({
-      [ type ]: data
+      [type]: event.target.checked,
     });
 
-    setTimeout( () => {
+    if (type == "once_number" || type == "for_new" || type == "for_registred") {
+      if (type == "once_number" && event.target.checked === true) {
+        this.setState({
+          for_new: false,
+        });
+      }
+      if (type == "for_new" && event.target.checked === true) {
+        this.setState({
+          once_number: false,
+          for_registred: false,
+        });
+      }
+      if (type == "for_registred" && event.target.checked === true) {
+        this.setState({
+          for_new: false,
+        });
+      }
+    }
+
+    setTimeout(() => {
       this.generateTextDescFalse();
       this.generateTextDescTrue();
-    }, 300 )
+    }, 300);
   }
 
-  generateTextDescTrue(){
+  changeDateRange(data, event) {
+    this.setState({
+      [data]: event,
+    });
 
-    if( !this.state.auto_text ){
-      return ;
+    setTimeout(() => {
+      this.generateTextDescFalse();
+      this.generateTextDescTrue();
+    }, 300);
+  }
+
+  changeDataData(type, data) {
+    this.setState({
+      [type]: data,
+    });
+
+    setTimeout(() => {
+      this.generateTextDescFalse();
+      this.generateTextDescTrue();
+    }, 300);
+  }
+
+  generateTextDescTrue() {
+    if (!this.state.auto_text) {
+      return;
     }
 
     let promo_action = this.state.promo_action;
-    let textTrue = '';
+    let textTrue = "";
 
-    if(parseInt(promo_action) == 1){//скидка
+    if (parseInt(promo_action) == 1) {
+      //скидка
       var promo_type_sale = this.state.type_sale,
         //count_promo = this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale) )['name'],//размер скидки
         promo_type = this.state.sale_type; //1 - рубли 2 %
 
       let count_promo = 0;
 
+      if (parseInt(this.state.sale_type) == 2) {
+        let check = this.state.promo_sale_list.find(
+          (item) => parseInt(item.id) == parseInt(this.state.promo_sale),
+        );
 
-      if( parseInt( this.state.sale_type ) == 2 ){
-        let check = this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale) );
-
-        count_promo = check ? check['name'] : parseInt(this.state.promo_sale);//размер скидки
-      }else{
+        count_promo = check ? check["name"] : parseInt(this.state.promo_sale); //размер скидки
+      } else {
         count_promo = parseInt(this.state.promo_sale);
       }
 
-      if(parseInt(promo_type_sale) == 1){//товары
+      if (parseInt(promo_type_sale) == 1) {
+        //товары
         var promo_items = this.state.saleItem,
-          items = '';
+          items = "";
 
-        promo_items.map(function(item, key){
-          items += item.name+', ';
-        })
+        promo_items.map(function (item, key) {
+          items += item.name + ", ";
+        });
 
         items = items.substring(0, items.length - 2);
 
-        textTrue = 'скидку на '+items+' в размере '+count_promo+(parseInt(promo_type) == 1 ? 'руб.' : '%');
+        textTrue =
+          "скидку на " +
+          items +
+          " в размере " +
+          count_promo +
+          (parseInt(promo_type) == 1 ? "руб." : "%");
       }
-      if(parseInt(promo_type_sale) == 2){//категории
+      if (parseInt(promo_type_sale) == 2) {
+        //категории
         var promo_items = this.state.saleCat,
-          items = '';
+          items = "";
 
-        promo_items.map(function(item, key){
-          items += item.name+', ';
-        })
+        promo_items.map(function (item, key) {
+          items += item.name + ", ";
+        });
 
         items = items.substring(0, items.length - 2);
 
-        textTrue = 'скидку на '+items+' в размере '+count_promo+(parseInt(promo_type) == 1 ? 'руб.' : '%');
+        textTrue =
+          "скидку на " +
+          items +
+          " в размере " +
+          count_promo +
+          (parseInt(promo_type) == 1 ? "руб." : "%");
       }
-      if(parseInt(promo_type_sale) == 3){//все
-        textTrue = 'скидку на всё меню, кроме напитков, соусов, приправ и палочек, в размере '+count_promo+(parseInt(promo_type) == 1 ? 'руб.' : '%');
+      if (parseInt(promo_type_sale) == 3) {
+        //все
+        textTrue =
+          "скидку на всё меню, кроме напитков, соусов, приправ и палочек, в размере " +
+          count_promo +
+          (parseInt(promo_type) == 1 ? "руб." : "%");
       }
-      if(parseInt(promo_type_sale) == 7){//все
-        textTrue = 'скидку на всё меню, в размере '+count_promo+(parseInt(promo_type) == 1 ? 'руб.' : '%');
+      if (parseInt(promo_type_sale) == 7) {
+        //все
+        textTrue =
+          "скидку на всё меню, в размере " +
+          count_promo +
+          (parseInt(promo_type) == 1 ? "руб." : "%");
       }
     }
 
-    if(parseInt(promo_action) == 2){//добавляет товар
-      var itemText = '';
+    if (parseInt(promo_action) == 2) {
+      //добавляет товар
+      var itemText = "";
 
-      this.state.itemsAdd.map( (item, key) => {
-        if(parseInt(item['price']) == 0){
-          itemText += 'бесплатную '+item['name']+' '+item['count']+'шт. '+'за '+item['price']+'руб., ';
-        }else{
-          itemText += item['name']+' '+item['count']+'шт. '+'за '+item['price']+'руб., ';
+      this.state.itemsAdd.map((item, key) => {
+        if (parseInt(item["price"]) == 0) {
+          itemText +=
+            "бесплатную " +
+            item["name"] +
+            " " +
+            item["count"] +
+            "шт. " +
+            "за " +
+            item["price"] +
+            "руб., ";
+        } else {
+          itemText +=
+            item["name"] + " " + item["count"] + "шт. " + "за " + item["price"] + "руб., ";
         }
-      } )
+      });
 
       itemText = itemText.substring(0, itemText.length - 2);
 
-      textTrue = this.state.itemsAdd.length == 1 ? 'позицию '+itemText : 'позиции '+itemText;
+      textTrue = this.state.itemsAdd.length == 1 ? "позицию " + itemText : "позиции " + itemText;
     }
 
-    if(parseInt(promo_action) == 3){//товар за цену
-      var itemText = '';
+    if (parseInt(promo_action) == 3) {
+      //товар за цену
+      var itemText = "";
 
-      this.state.itemsAddPrice.map( (item, key) => {
-        itemText += item['name']+' по '+item['price']+'руб., ';
-      } )
+      this.state.itemsAddPrice.map((item, key) => {
+        itemText += item["name"] + " по " + item["price"] + "руб., ";
+      });
 
       itemText = itemText.substring(0, itemText.length - 2);
 
-      textTrue = this.state.itemsAddPrice.length-1 == 1 ? 'позицию '+itemText : 'позиции '+itemText;
+      textTrue =
+        this.state.itemsAddPrice.length - 1 == 1 ? "позицию " + itemText : "позиции " + itemText;
     }
 
-    let textSMS = 'Промокод --promo_name--, действует до '+formatDateName(this.state.date_end)+'. Заказывай на jacofood.ru!'
+    let textSMS =
+      "Промокод --promo_name--, действует до " +
+      formatDateName(this.state.date_end) +
+      ". Заказывай на jacofood.ru!";
 
     this.setState({
       promo_desc_true: textTrue,
       textSMS: textSMS,
-      cert_text: textTrue
-    })
+      cert_text: textTrue,
+    });
     return textTrue;
   }
 
-  generateTextDescFalse(){
-
-    if( !this.state.auto_text ){
-      return ;
+  generateTextDescFalse() {
+    if (!this.state.auto_text) {
+      return;
     }
 
-    var dop_text = '';
+    var dop_text = "";
 
-		if( parseInt(this.state.where_order) == 1 ){
-			//город
-			if( parseInt(this.state.city) != 0 ){
-        let city_name = this.state.cities.find( (item) => parseInt(item.id) == parseInt(this.state.city) )['name'];
+    if (parseInt(this.state.where_order) == 1) {
+      //город
+      if (parseInt(this.state.city) != 0) {
+        let city_name = this.state.cities.find(
+          (item) => parseInt(item.id) == parseInt(this.state.city),
+        )["name"];
 
-				dop_text = ' в г. '+city_name;
-			}
-		}
+        dop_text = " в г. " + city_name;
+      }
+    }
 
-		if( parseInt(this.state.where_order) == 2 ){
-			//точка
-			if( parseInt(this.state.point) != 0 ){
-        let point_name = this.state.points.find( (item) => parseInt(item.id) == parseInt(this.state.point) )['name'];
+    if (parseInt(this.state.where_order) == 2) {
+      //точка
+      if (parseInt(this.state.point) != 0) {
+        let point_name = this.state.points.find(
+          (item) => parseInt(item.id) == parseInt(this.state.point),
+        )["name"];
 
-				dop_text = ' в г. '+point_name;
-			}
-		}
+        dop_text = " в г. " + point_name;
+      }
+    }
 
     let dateStart = formatDateDot(this.state.date_start);
     let dateEnd = formatDateDot(this.state.date_end);
@@ -747,155 +804,169 @@ class SiteSale2_edit_ extends React.Component {
     let for_registred = this.state.for_registred;
     let for_number = this.state.for_number;
 
-    let textFalse = 'Промокод действует c '+dateStart+' до '+dateEnd+' с '+this.state.time_start+' до '+this.state.time_end+dop_text;
+    let textFalse =
+      "Промокод действует c " +
+      dateStart +
+      " до " +
+      dateEnd +
+      " с " +
+      this.state.time_start +
+      " до " +
+      this.state.time_end +
+      dop_text;
 
-    if( for_new === true ){
+    if (for_new === true) {
       textFalse += ". Только на первый заказ.";
     }
 
-    if( for_registred === true ){
+    if (for_registred === true) {
       textFalse += ". Только для зарегистрированных.";
     }
 
-    if( once_number === true ){
+    if (once_number === true) {
       textFalse += " Можно применить 1 раз.";
     }
 
-    if( for_number === true ){
+    if (for_number === true) {
       textFalse += " Привязан к номеру телефона.";
     }
 
     this.setState({
-      promo_desc_false: textFalse
-    })
+      promo_desc_false: textFalse,
+    });
     return textFalse;
-	}
+  }
 
-  delItemAdd(item){
+  delItemAdd(item) {
     let thisItems = this.state.itemsAdd;
 
-    let newItems = thisItems.filter( (it) => parseInt(it.item_id) != parseInt(item.item_id) );
+    let newItems = thisItems.filter((it) => parseInt(it.item_id) != parseInt(item.item_id));
 
     let addItemAllPrice = 0;
 
-    newItems.map( (item) => {
-      addItemAllPrice += parseInt(item.price)
-    } )
+    newItems.map((item) => {
+      addItemAllPrice += parseInt(item.price);
+    });
 
     this.setState({
       itemsAdd: newItems,
-      addItemAllPrice: addItemAllPrice
-    })
+      addItemAllPrice: addItemAllPrice,
+    });
 
-    setTimeout( () => {
+    setTimeout(() => {
       this.generateTextDescFalse();
       this.generateTextDescTrue();
-    }, 300 )
+    }, 300);
   }
 
-
-  addItemAdd(){
+  addItemAdd() {
     let thisItems = this.state.itemsAdd;
 
-    let check = thisItems.find( (item) => parseInt(item.item_id) == parseInt(this.state.addItem.id) );
+    let check = thisItems.find((item) => parseInt(item.item_id) == parseInt(this.state.addItem.id));
 
-    if( !check ){
-      let thisItem = this.state.items.find( (item) => parseInt(item.id) == parseInt(this.state.addItem.id) );
+    if (!check) {
+      let thisItem = this.state.items.find(
+        (item) => parseInt(item.id) == parseInt(this.state.addItem.id),
+      );
 
       thisItems.push({
         item_id: this.state.addItem.id,
         name: thisItem.name,
         count: this.state.addItemCount,
         price: this.state.addItemPrice,
-      })
+      });
 
       let addItemAllPrice = 0;
 
-      thisItems.map( (item) => {
-        addItemAllPrice += parseInt(item.price)
-      } )
+      thisItems.map((item) => {
+        addItemAllPrice += parseInt(item.price);
+      });
 
       this.setState({
         itemsAdd: thisItems,
-        addItemAllPrice: addItemAllPrice
-      })
+        addItemAllPrice: addItemAllPrice,
+      });
     }
-    setTimeout( () => {
+    setTimeout(() => {
       this.generateTextDescFalse();
       this.generateTextDescTrue();
-    }, 300 )
+    }, 300);
   }
 
-  priceItemAdd(){
+  priceItemAdd() {
     let thisItems = this.state.itemsAddPrice;
-    let check = thisItems.find( (item) => parseInt(item.item_id) == parseInt(this.state.priceItem) );
+    let check = thisItems.find((item) => parseInt(item.item_id) == parseInt(this.state.priceItem));
 
-    if( !check ){
-      let thisItem = this.state.items.find( (item) => parseInt(item.id) == parseInt(this.state.priceItem.id) );
+    if (!check) {
+      let thisItem = this.state.items.find(
+        (item) => parseInt(item.id) == parseInt(this.state.priceItem.id),
+      );
 
       thisItems.push({
         id: this.state.priceItem.id,
         name: thisItem.name,
         price: this.state.addItemCount,
-      })
+      });
 
       this.setState({
-        itemsAddPrice: thisItems
-      })
+        itemsAddPrice: thisItems,
+      });
     }
-    setTimeout( () => {
+    setTimeout(() => {
       this.generateTextDescFalse();
       this.generateTextDescTrue();
-    }, 300 )
+    }, 300);
   }
 
-  delItemPrice(item){
+  delItemPrice(item) {
     let thisItems = this.state.itemsAddPrice;
 
-    let newItems = thisItems.filter( (it) => parseInt(it.id) != parseInt(item.id));
+    let newItems = thisItems.filter((it) => parseInt(it.id) != parseInt(item.id));
 
     let addItemAllPrice = 0;
 
-    newItems.map( (item) => {
-      addItemAllPrice += parseInt(item.price)
-    } )
+    newItems.map((item) => {
+      addItemAllPrice += parseInt(item.price);
+    });
 
     this.setState({
-      itemsAddPrice: newItems
-    })
+      itemsAddPrice: newItems,
+    });
 
-    setTimeout( () => {
+    setTimeout(() => {
       this.generateTextDescFalse();
       this.generateTextDescTrue();
-    }, 300 )
+    }, 300);
   }
 
-  changeItemPrice(item, event){
+  changeItemPrice(item, event) {
     let thisItems = this.state.itemsAddPrice;
 
-    let newItems = thisItems.map( (it) => {
-      if( parseInt(it.id) == parseInt(item.id) ){
+    let newItems = thisItems.map((it) => {
+      if (parseInt(it.id) == parseInt(item.id)) {
         it.price = event.target.value;
       }
 
       return it;
-    } )
+    });
 
     this.setState({
-      itemsAddPrice: newItems
-    })
+      itemsAddPrice: newItems,
+    });
 
-    setTimeout( () => {
+    setTimeout(() => {
       this.generateTextDescFalse();
       this.generateTextDescTrue();
-    }, 300 )
-
+    }, 300);
   }
 
-  render(){
+  render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         {this.state.modalDialogEdit ? (
@@ -912,12 +983,16 @@ class SiteSale2_edit_ extends React.Component {
             created={this.state.created}
             promo={this.state.promo_copy}
             promo_double={this.state.promo_copy_double}
-            onClose={ () => { this.setState({ modalDialogEdit: false }) } }
+            onClose={() => {
+              this.setState({ modalDialogEdit: false });
+            }}
           />
         ) : null}
         <Dialog
           open={this.state.modalDialog}
-          onClose={ () => { this.setState({ modalDialog: false, modalLink: '' }) } }
+          onClose={() => {
+            this.setState({ modalDialog: false, modalLink: "" });
+          }}
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
@@ -925,218 +1000,375 @@ class SiteSale2_edit_ extends React.Component {
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Typography>{this.state.modalText}</Typography>
             <br />
-            { this.state.modalLink == '' ? null :
-              <a href={this.state.modalLink} style={{ color: 'red' }}>Скачать</a>
-            }
+            {this.state.modalLink == "" ? null : (
+              <a
+                href={this.state.modalLink}
+                style={{ color: "red" }}
+              >
+                Скачать
+              </a>
+            )}
           </DialogContent>
           <DialogActions>
-            <Button color="primary" onClick={ () => { this.setState({ modalDialog: false }) } }>Хорошо</Button>
+            <Button
+              color="primary"
+              onClick={() => {
+                this.setState({ modalDialog: false });
+              }}
+            >
+              Хорошо
+            </Button>
           </DialogActions>
         </Dialog>
-        <Grid container style={{ marginTop: '80px', paddingLeft: '24px', paddingRight: '24px', marginBottom: '24px' }}>
+        <Grid
+          container
+          style={{
+            marginTop: "80px",
+            paddingLeft: "24px",
+            paddingRight: "24px",
+            marginBottom: "24px",
+          }}
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid container direction="row" justifyContent="start" style={{ paddingTop: 20 }} spacing={3}>
-
-            <Grid
-              size={{
-                xs: 12
-              }}>
-              <Typography>Был создан: {this.state.created}</Typography>
-            </Grid>
-
-
-
-          </Grid>
-
-          <Grid container direction="row" justifyContent="start" style={{ paddingTop: 20 }} spacing={3}>
-
+          <Grid
+            container
+            direction="row"
+            justifyContent="start"
+            style={{ paddingTop: 20 }}
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
+              }}
+            >
+              <Typography>Был создан: {this.state.created}</Typography>
+            </Grid>
+          </Grid>
+
+          <Grid
+            container
+            direction="row"
+            justifyContent="start"
+            style={{ paddingTop: 20 }}
+            spacing={3}
+          >
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3,
+              }}
+            >
               <Typography>Промокод: {this.state.promo_name}</Typography>
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
-              <MyTextInput value={this.state.count_action} func={ this.changeData.bind(this, 'count_action') } label='Количество активаций' />
+                sm: 3,
+              }}
+            >
+              <MyTextInput
+                value={this.state.count_action}
+                func={this.changeData.bind(this, "count_action")}
+                label="Количество активаций"
+              />
             </Grid>
-
           </Grid>
 
-          <Grid container direction="column" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-
+          <Grid
+            container
+            direction="column"
+            justifyContent="center"
+            style={{ paddingTop: 20 }}
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
-              <MyCheckBox value={this.state.for_new} func={ this.changeDataCheck.bind(this, 'for_new') } label='Для новых клиентов ( на первый заказ )' />
+                sm: 3,
+              }}
+            >
+              <MyCheckBox
+                value={this.state.for_new}
+                func={this.changeDataCheck.bind(this, "for_new")}
+                label="Для новых клиентов ( на первый заказ )"
+              />
             </Grid>
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
-              <MyCheckBox value={this.state.once_number} func={ this.changeDataCheck.bind(this, 'once_number') } label='1 раз на номер телефона' />
+                sm: 3,
+              }}
+            >
+              <MyCheckBox
+                value={this.state.once_number}
+                func={this.changeDataCheck.bind(this, "once_number")}
+                label="1 раз на номер телефона"
+              />
             </Grid>
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
-              <MyCheckBox value={this.state.for_registred} func={ this.changeDataCheck.bind(this, 'for_registred') } label='Только для зарегистрированных клиентов' />
+                sm: 3,
+              }}
+            >
+              <MyCheckBox
+                value={this.state.for_registred}
+                func={this.changeDataCheck.bind(this, "for_registred")}
+                label="Только для зарегистрированных клиентов"
+              />
             </Grid>
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
-              <MyCheckBox value={this.state.for_number} func={ this.changeDataCheck.bind(this, 'for_number') } label='Привязан к номеру телефона' />
+                sm: 3,
+              }}
+            >
+              <MyCheckBox
+                value={this.state.for_number}
+                func={this.changeDataCheck.bind(this, "for_number")}
+                label="Привязан к номеру телефона"
+              />
             </Grid>
-
           </Grid>
 
-          <Grid container style={{ paddingTop: 20 }} spacing={3}>
-
-            {this.state.for_number && <Grid
-              size={{
-                xs: 3
-              }}>
-              <MyTextInput value={this.state.for_number_text} func={ this.changeData.bind(this, 'for_number_text') } label='Номер телефона' />
-            </Grid>}
-
+          <Grid
+            container
+            style={{ paddingTop: 20 }}
+            spacing={3}
+          >
+            {this.state.for_number && (
+              <Grid
+                size={{
+                  xs: 3,
+                }}
+              >
+                <MyTextInput
+                  value={this.state.for_number_text}
+                  func={this.changeData.bind(this, "for_number_text")}
+                  label="Номер телефона"
+                />
+              </Grid>
+            )}
           </Grid>
 
-          <Divider style={{ width: '100%', marginTop: 20 }} />
+          <Divider style={{ width: "100%", marginTop: 20 }} />
 
-          <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-
+          <Grid
+            container
+            direction="row"
+            justifyContent="center"
+            style={{ paddingTop: 20 }}
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
-              <MySelect data={this.state.promo_action_list} value={this.state.promo_action} func={ this.changeData.bind(this, 'promo_action') } label='Промокод дает:' />
+                sm: 3,
+              }}
+            >
+              <MySelect
+                data={this.state.promo_action_list}
+                value={this.state.promo_action}
+                func={this.changeData.bind(this, "promo_action")}
+                label="Промокод дает:"
+              />
             </Grid>
-
           </Grid>
 
-          { parseInt(this.state.promo_action) !== 1 ? null :
-            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-
+          {parseInt(this.state.promo_action) !== 1 ? null : (
+            <Grid
+              container
+              direction="row"
+              justifyContent="center"
+              style={{ paddingTop: 20 }}
+              spacing={3}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 3
-                }}>
-                <MySelect data={this.state.sale_list} value={this.state.type_sale} func={ this.changeData.bind(this, 'type_sale') } label='Скидка' />
+                  sm: 3,
+                }}
+              >
+                <MySelect
+                  data={this.state.sale_list}
+                  value={this.state.type_sale}
+                  func={this.changeData.bind(this, "type_sale")}
+                  label="Скидка"
+                />
               </Grid>
 
-              { parseInt(this.state.type_sale) !== 1 ? null :
+              {parseInt(this.state.type_sale) !== 1 ? null : (
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 9
-                  }}>
-                  <MyAutocomplite data={this.state.items} value={this.state.saleItem} func={ (event, data) => { this.changeDataData('saleItem', data) } } multiple={true} label='Товары' />
+                    sm: 9,
+                  }}
+                >
+                  <MyAutocomplite
+                    data={this.state.items}
+                    value={this.state.saleItem}
+                    func={(event, data) => {
+                      this.changeDataData("saleItem", data);
+                    }}
+                    multiple={true}
+                    label="Товары"
+                  />
                 </Grid>
-              }
+              )}
 
-              { parseInt(this.state.type_sale) !== 2 ? null :
+              {parseInt(this.state.type_sale) !== 2 ? null : (
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 9
-                  }}>
-                  <MyAutocomplite data={this.state.cats} value={this.state.saleCat} func={ (event, data) => { this.changeDataData('saleCat', data) } } multiple={true} label='Категории' />
+                    sm: 9,
+                  }}
+                >
+                  <MyAutocomplite
+                    data={this.state.cats}
+                    value={this.state.saleCat}
+                    func={(event, data) => {
+                      this.changeDataData("saleCat", data);
+                    }}
+                    multiple={true}
+                    label="Категории"
+                  />
                 </Grid>
-              }
+              )}
 
-              { parseInt( this.state.sale_type ) == 1 ?
+              {parseInt(this.state.sale_type) == 1 ? (
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 3
-                  }}>
-                  <MyTextInput value={this.state.promo_sale} func={ this.changeData.bind(this, 'promo_sale') } label='Размер скидки' />
+                    sm: 3,
+                  }}
+                >
+                  <MyTextInput
+                    value={this.state.promo_sale}
+                    func={this.changeData.bind(this, "promo_sale")}
+                    label="Размер скидки"
+                  />
                 </Grid>
-                  :
+              ) : (
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 3
-                  }}>
-                  <MySelect data={this.state.promo_sale_list} value={this.state.promo_sale} func={ this.changeData.bind(this, 'promo_sale') } label='Размер скидки' />
+                    sm: 3,
+                  }}
+                >
+                  <MySelect
+                    data={this.state.promo_sale_list}
+                    value={this.state.promo_sale}
+                    func={this.changeData.bind(this, "promo_sale")}
+                    label="Размер скидки"
+                  />
                 </Grid>
-              }
+              )}
 
               <Grid
                 size={{
                   xs: 12,
-                  sm: 3
-                }}>
-                <MySelect data={this.state.type_sale_list} value={this.state.sale_type} func={ this.changeData.bind(this, 'sale_type') } label='Какая скидка' />
+                  sm: 3,
+                }}
+              >
+                <MySelect
+                  data={this.state.type_sale_list}
+                  value={this.state.sale_type}
+                  func={this.changeData.bind(this, "sale_type")}
+                  label="Какая скидка"
+                />
               </Grid>
-
             </Grid>
-          }
-          { parseInt(this.state.promo_action) !== 2 ? null :
-            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-
+          )}
+          {parseInt(this.state.promo_action) !== 2 ? null : (
+            <Grid
+              container
+              direction="row"
+              justifyContent="center"
+              style={{ paddingTop: 20 }}
+              spacing={3}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 3
-                }}>
-                <MyAutocomplite data={this.state.items} value={this.state.addItem} func={ (event, data) => { this.changeDataData('addItem', data) } } label='Позиция' />
+                  sm: 3,
+                }}
+              >
+                <MyAutocomplite
+                  data={this.state.items}
+                  value={this.state.addItem}
+                  func={(event, data) => {
+                    this.changeDataData("addItem", data);
+                  }}
+                  label="Позиция"
+                />
               </Grid>
 
               <Grid
                 size={{
                   xs: 12,
-                  sm: 3
-                }}>
-                <MyTextInput value={this.state.addItemCount} func={ this.changeData.bind(this, 'addItemCount') } label='Количество' />
+                  sm: 3,
+                }}
+              >
+                <MyTextInput
+                  value={this.state.addItemCount}
+                  func={this.changeData.bind(this, "addItemCount")}
+                  label="Количество"
+                />
               </Grid>
 
               <Grid
                 size={{
                   xs: 12,
-                  sm: 3
-                }}>
-                <MyTextInput value={this.state.addItemPrice} func={ this.changeData.bind(this, 'addItemPrice') } label='Цена за все' />
+                  sm: 3,
+                }}
+              >
+                <MyTextInput
+                  value={this.state.addItemPrice}
+                  func={this.changeData.bind(this, "addItemPrice")}
+                  label="Цена за все"
+                />
               </Grid>
 
               <Grid
                 size={{
                   xs: 12,
-                  sm: 3
-                }}>
-                <Button variant="contained" onClick={this.addItemAdd.bind(this)}>Добавить</Button>
+                  sm: 3,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={this.addItemAdd.bind(this)}
+                >
+                  Добавить
+                </Button>
               </Grid>
-
             </Grid>
-          }
+          )}
 
-          { parseInt(this.state.promo_action) !== 2 ? null :
-            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+          {parseInt(this.state.promo_action) !== 2 ? null : (
+            <Grid
+              container
+              direction="row"
+              justifyContent="center"
+              style={{ paddingTop: 20 }}
+              spacing={3}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
+                  sm: 6,
+                }}
+              >
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -1147,17 +1379,20 @@ class SiteSale2_edit_ extends React.Component {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-
-                    { this.state.itemsAdd.map( (item, key) =>
+                    {this.state.itemsAdd.map((item, key) => (
                       <TableRow key={key}>
                         <TableCell>{item.name}</TableCell>
                         <TableCell>{item.count}</TableCell>
                         <TableCell>{item.price}</TableCell>
-                        <TableCell> <CloseIcon onClick={this.delItemAdd.bind(this, item)} style={{ cursor: 'pointer' }} /> </TableCell>
+                        <TableCell>
+                          {" "}
+                          <CloseIcon
+                            onClick={this.delItemAdd.bind(this, item)}
+                            style={{ cursor: "pointer" }}
+                          />{" "}
+                        </TableCell>
                       </TableRow>
-                    ) }
-
-
+                    ))}
                   </TableBody>
 
                   <TableFooter>
@@ -1168,50 +1403,78 @@ class SiteSale2_edit_ extends React.Component {
                       <TableCell></TableCell>
                     </TableRow>
                   </TableFooter>
-
-
                 </Table>
               </Grid>
             </Grid>
-          }
+          )}
 
-          { parseInt(this.state.promo_action) !== 3 ? null :
-            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-
+          {parseInt(this.state.promo_action) !== 3 ? null : (
+            <Grid
+              container
+              direction="row"
+              justifyContent="center"
+              style={{ paddingTop: 20 }}
+              spacing={3}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 3
-                }}>
-                <MyAutocomplite data={this.state.items} value={this.state.priceItem} func={ (event, data) => { this.changeDataData('priceItem', data) } } label='Позиция' />
+                  sm: 3,
+                }}
+              >
+                <MyAutocomplite
+                  data={this.state.items}
+                  value={this.state.priceItem}
+                  func={(event, data) => {
+                    this.changeDataData("priceItem", data);
+                  }}
+                  label="Позиция"
+                />
               </Grid>
 
               <Grid
                 size={{
                   xs: 12,
-                  sm: 3
-                }}>
-                <MyTextInput value={this.state.addItemCount} func={ this.changeData.bind(this, 'addItemCount') } label='Цена за 1 ед' />
+                  sm: 3,
+                }}
+              >
+                <MyTextInput
+                  value={this.state.addItemCount}
+                  func={this.changeData.bind(this, "addItemCount")}
+                  label="Цена за 1 ед"
+                />
               </Grid>
 
               <Grid
                 size={{
                   xs: 12,
-                  sm: 3
-                }}>
-                <Button variant="contained" onClick={this.priceItemAdd.bind(this)}>Добавить</Button>
+                  sm: 3,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={this.priceItemAdd.bind(this)}
+                >
+                  Добавить
+                </Button>
               </Grid>
-
             </Grid>
-          }
+          )}
 
-          { parseInt(this.state.promo_action) !== 3 ? null :
-            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+          {parseInt(this.state.promo_action) !== 3 ? null : (
+            <Grid
+              container
+              direction="row"
+              justifyContent="center"
+              style={{ paddingTop: 20 }}
+              spacing={3}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
+                  sm: 6,
+                }}
+              >
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -1221,235 +1484,413 @@ class SiteSale2_edit_ extends React.Component {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-
-                    { this.state.itemsAddPrice.map( (item, key) =>
+                    {this.state.itemsAddPrice.map((item, key) => (
                       <TableRow key={key}>
                         <TableCell>{item.name}</TableCell>
                         <TableCell>
-                          <MyTextInput value={item.price} func={ this.changeItemPrice.bind(this, item) } />
+                          <MyTextInput
+                            value={item.price}
+                            func={this.changeItemPrice.bind(this, item)}
+                          />
                         </TableCell>
-                        <TableCell> <CloseIcon onClick={this.delItemPrice.bind(this, item)} style={{ cursor: 'pointer' }} /> </TableCell>
+                        <TableCell>
+                          {" "}
+                          <CloseIcon
+                            onClick={this.delItemPrice.bind(this, item)}
+                            style={{ cursor: "pointer" }}
+                          />{" "}
+                        </TableCell>
                       </TableRow>
-                    ) }
-
+                    ))}
                   </TableBody>
                 </Table>
               </Grid>
             </Grid>
-          }
+          )}
 
-          <Divider style={{ width: '100%', marginTop: 20 }} />
+          <Divider style={{ width: "100%", marginTop: 20 }} />
 
-          <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-
+          <Grid
+            container
+            direction="row"
+            justifyContent="center"
+            style={{ paddingTop: 20 }}
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 4
-              }}>
-              <MySelect data={this.state.promo_conditions_list} value={this.state.promo_conditions} func={ this.changeData.bind(this, 'promo_conditions') } label='Условие' />
+                sm: 4,
+              }}
+            >
+              <MySelect
+                data={this.state.promo_conditions_list}
+                value={this.state.promo_conditions}
+                func={this.changeData.bind(this, "promo_conditions")}
+                label="Условие"
+              />
             </Grid>
 
-            { parseInt(this.state.promo_conditions) !== 1 ? null :
+            {parseInt(this.state.promo_conditions) !== 1 ? null : (
               <Grid
                 size={{
                   xs: 12,
-                  sm: 8
-                }}>
-                <MyAutocomplite data={this.state.items} value={this.state.conditionItems} func={ (event, data) => { this.changeDataData('conditionItems', data) } } multiple={true} label='Товары' />
+                  sm: 8,
+                }}
+              >
+                <MyAutocomplite
+                  data={this.state.items}
+                  value={this.state.conditionItems}
+                  func={(event, data) => {
+                    this.changeDataData("conditionItems", data);
+                  }}
+                  multiple={true}
+                  label="Товары"
+                />
               </Grid>
-            }
+            )}
 
-            { parseInt(this.state.promo_conditions) !== 2 ? null :
+            {parseInt(this.state.promo_conditions) !== 2 ? null : (
               <>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
-                  <MyTextInput value={this.state.price_start} func={ this.changeData.bind(this, 'price_start') } label='Сумма от' />
+                    sm: 4,
+                  }}
+                >
+                  <MyTextInput
+                    value={this.state.price_start}
+                    func={this.changeData.bind(this, "price_start")}
+                    label="Сумма от"
+                  />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
-                  <MyTextInput value={this.state.price_end} func={ this.changeData.bind(this, 'price_end') } label='Сумма до' />
+                    sm: 4,
+                  }}
+                >
+                  <MyTextInput
+                    value={this.state.price_end}
+                    func={this.changeData.bind(this, "price_end")}
+                    label="Сумма до"
+                  />
                 </Grid>
               </>
-            }
-
+            )}
           </Grid>
 
-          <Divider style={{ width: '100%', marginTop: 20 }} />
+          <Divider style={{ width: "100%", marginTop: 20 }} />
 
-          <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-
+          <Grid
+            container
+            direction="row"
+            justifyContent="center"
+            style={{ paddingTop: 20 }}
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
-              <MySelect data={this.state.date_promo_list} value={this.state.date_promo} func={ this.changeData.bind(this, 'date_promo') } label='Когда работает промокод' />
+                sm: 3,
+              }}
+            >
+              <MySelect
+                data={this.state.date_promo_list}
+                value={this.state.date_promo}
+                func={this.changeData.bind(this, "date_promo")}
+                label="Когда работает промокод"
+              />
             </Grid>
-
           </Grid>
 
-          <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-
+          <Grid
+            container
+            direction="row"
+            justifyContent="center"
+            style={{ paddingTop: 20 }}
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
-              <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDateRange.bind(this, 'date_start') } />
+                sm: 3,
+              }}
+            >
+              <MyDatePickerNew
+                label="Дата от"
+                value={this.state.date_start}
+                func={this.changeDateRange.bind(this, "date_start")}
+              />
             </Grid>
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
-              <MyDatePickerNew label="Дата до" value={ this.state.date_end } func={ this.changeDateRange.bind(this, 'date_end') } />
+                sm: 3,
+              }}
+            >
+              <MyDatePickerNew
+                label="Дата до"
+                value={this.state.date_end}
+                func={this.changeDateRange.bind(this, "date_end")}
+              />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
-              <MyTimePicker label="Время от" value={this.state.time_start} func={ this.changeData.bind(this, 'time_start') } />
+                sm: 3,
+              }}
+            >
+              <MyTimePicker
+                label="Время от"
+                value={this.state.time_start}
+                func={this.changeData.bind(this, "time_start")}
+              />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
-              <MyTimePicker label="Время до" value={this.state.time_end} func={ this.changeData.bind(this, 'time_end') } />
+                sm: 3,
+              }}
+            >
+              <MyTimePicker
+                label="Время до"
+                value={this.state.time_end}
+                func={this.changeData.bind(this, "time_end")}
+              />
             </Grid>
-
           </Grid>
 
-          <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+          <Grid
+            container
+            direction="row"
+            justifyContent="center"
+            style={{ paddingTop: 20 }}
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 11,
-                sm: 11
-              }}>
-              <MyDatePicker multiple={false} label={'Кроме дат'} value={this.state.testDate} func={ this.changeDataData.bind(this, 'testDate') } />
+                sm: 11,
+              }}
+            >
+              <MyDatePicker
+                multiple={false}
+                label={"Кроме дат"}
+                value={this.state.testDate}
+                func={this.changeDataData.bind(this, "testDate")}
+              />
             </Grid>
           </Grid>
 
-          <Grid container direction="row" justifyContent="center" style={{ marginTop: 20 }} spacing={3}>
+          <Grid
+            container
+            direction="row"
+            justifyContent="center"
+            style={{ marginTop: 20 }}
+            spacing={3}
+          >
+            <MyCheckBox
+              value={this.state.day_1}
+              func={this.changeDataCheck.bind(this, "day_1")}
+              label="Понедельник"
+            />
 
-            <MyCheckBox value={this.state.day_1} func={ this.changeDataCheck.bind(this, 'day_1') } label='Понедельник' />
+            <MyCheckBox
+              value={this.state.day_2}
+              func={this.changeDataCheck.bind(this, "day_2")}
+              label="Вторник"
+            />
 
-            <MyCheckBox value={this.state.day_2} func={ this.changeDataCheck.bind(this, 'day_2') } label='Вторник' />
+            <MyCheckBox
+              value={this.state.day_3}
+              func={this.changeDataCheck.bind(this, "day_3")}
+              label="Среда"
+            />
 
-            <MyCheckBox value={this.state.day_3} func={ this.changeDataCheck.bind(this, 'day_3') } label='Среда' />
+            <MyCheckBox
+              value={this.state.day_4}
+              func={this.changeDataCheck.bind(this, "day_4")}
+              label="Четверг"
+            />
 
-            <MyCheckBox value={this.state.day_4} func={ this.changeDataCheck.bind(this, 'day_4') } label='Четверг' />
+            <MyCheckBox
+              value={this.state.day_5}
+              func={this.changeDataCheck.bind(this, "day_5")}
+              label="Пятница"
+            />
 
-            <MyCheckBox value={this.state.day_5} func={ this.changeDataCheck.bind(this, 'day_5') } label='Пятница' />
+            <MyCheckBox
+              value={this.state.day_6}
+              func={this.changeDataCheck.bind(this, "day_6")}
+              label="Суббота"
+            />
 
-            <MyCheckBox value={this.state.day_6} func={ this.changeDataCheck.bind(this, 'day_6') } label='Суббота' />
-
-            <MyCheckBox value={this.state.day_7} func={ this.changeDataCheck.bind(this, 'day_7') } label='Воскресенье' />
-
+            <MyCheckBox
+              value={this.state.day_7}
+              func={this.changeDataCheck.bind(this, "day_7")}
+              label="Воскресенье"
+            />
           </Grid>
 
-          <Divider style={{ width: '100%', marginTop: 20 }} />
+          <Divider style={{ width: "100%", marginTop: 20 }} />
 
-          <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-
+          <Grid
+            container
+            direction="row"
+            justifyContent="center"
+            style={{ paddingTop: 20 }}
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 4
-              }}>
-              <MySelect data={this.state.type_order_list} value={this.state.type_order} func={ this.changeData.bind(this, 'type_order') } label='Тип заказа' />
+                sm: 4,
+              }}
+            >
+              <MySelect
+                data={this.state.type_order_list}
+                value={this.state.type_order}
+                func={this.changeData.bind(this, "type_order")}
+                label="Тип заказа"
+              />
             </Grid>
             <Grid
               size={{
                 xs: 12,
-                sm: 4
-              }}>
-              <MySelect data={this.state.where_order_list} value={this.state.where_order} func={ this.changeData.bind(this, 'where_order') } label='Где работает' />
+                sm: 4,
+              }}
+            >
+              <MySelect
+                data={this.state.where_order_list}
+                value={this.state.where_order}
+                func={this.changeData.bind(this, "where_order")}
+                label="Где работает"
+              />
             </Grid>
-            { parseInt(this.state.where_order) !== 1 ? null :
+            {parseInt(this.state.where_order) !== 1 ? null : (
               <Grid
                 size={{
                   xs: 12,
-                  sm: 4
-                }}>
-                <MySelect data={this.state.cities} value={this.state.city} func={ this.changeData.bind(this, 'city') } label='Город' />
+                  sm: 4,
+                }}
+              >
+                <MySelect
+                  data={this.state.cities}
+                  value={this.state.city}
+                  func={this.changeData.bind(this, "city")}
+                  label="Город"
+                />
               </Grid>
-            }
-            { parseInt(this.state.where_order) !== 2 ? null :
+            )}
+            {parseInt(this.state.where_order) !== 2 ? null : (
               <Grid
                 size={{
                   xs: 12,
-                  sm: 4
-                }}>
-                <MySelect data={this.state.points} value={this.state.point} func={ this.changeData.bind(this, 'point') } label='Точка' />
+                  sm: 4,
+                }}
+              >
+                <MySelect
+                  data={this.state.points}
+                  value={this.state.point}
+                  func={this.changeData.bind(this, "point")}
+                  label="Точка"
+                />
               </Grid>
-            }
-
+            )}
           </Grid>
 
-          <Divider style={{ width: '100%', marginTop: 20 }} />
+          <Divider style={{ width: "100%", marginTop: 20 }} />
 
-          <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
-
+          <Grid
+            container
+            direction="row"
+            justifyContent="center"
+            style={{ paddingTop: 20 }}
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
-              <MyCheckBox value={this.state.auto_text} func={ this.changeDataCheck.bind(this, 'auto_text') } label='Авто-текст' />
+                sm: 12,
+              }}
+            >
+              <MyCheckBox
+                value={this.state.auto_text}
+                func={this.changeDataCheck.bind(this, "auto_text")}
+                label="Авто-текст"
+              />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
-              <MyTextInput value={this.state.promo_desc_true} func={ this.changeData.bind(this, 'promo_desc_true') } label='Описание промокода после активации (Промокод дает: )' />
+                sm: 12,
+              }}
+            >
+              <MyTextInput
+                value={this.state.promo_desc_true}
+                func={this.changeData.bind(this, "promo_desc_true")}
+                label="Описание промокода после активации (Промокод дает: )"
+              />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
-              <MyTextInput value={this.state.promo_desc_false} func={ this.changeData.bind(this, 'promo_desc_false') } label='Условие промокода, когда условия не соблюдены' />
+                sm: 12,
+              }}
+            >
+              <MyTextInput
+                value={this.state.promo_desc_false}
+                func={this.changeData.bind(this, "promo_desc_false")}
+                label="Условие промокода, когда условия не соблюдены"
+              />
             </Grid>
-
           </Grid>
 
-
-
-          <Grid container direction="row" justifyContent="end" style={{ paddingTop: 50 }} spacing={3}>
-            <Button variant="contained" onClick={this.save.bind(this)}>Сохранить</Button>
+          <Grid
+            container
+            direction="row"
+            justifyContent="end"
+            style={{ paddingTop: 50 }}
+            spacing={3}
+          >
+            <Button
+              variant="contained"
+              onClick={this.save.bind(this)}
+            >
+              Сохранить
+            </Button>
           </Grid>
-          <Grid container direction="row" justifyContent="end" style={{ paddingTop: 10 }} spacing={3}>
+          <Grid
+            container
+            direction="row"
+            justifyContent="end"
+            style={{ paddingTop: 10 }}
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
-              {(this.state.promo_history.length) &&
-                <Accordion style={{width: '100%'}}>
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon/>}
-                  >
+                sm: 12,
+              }}
+            >
+              {this.state.promo_history.length && (
+                <Accordion style={{ width: "100%" }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Typography>История редактирования</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
-                    <Table size={'small'} style={{marginTop: 15}}>
+                    <Table
+                      size={"small"}
+                      style={{ marginTop: 15 }}
+                    >
                       <TableHead>
-                        <TableRow sx={{"& th": {fontWeight: "bold"}}}>
+                        <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                           <TableCell>#</TableCell>
                           <TableCell>Создатель</TableCell>
                           <TableCell>Тип</TableCell>
@@ -1457,28 +1898,32 @@ class SiteSale2_edit_ extends React.Component {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {this.state.promo_history.map((item, key) =>
-                          <TableRow key={key} style={{ cursor: 'pointer' }} hover onClick={() => this.openModalPromo(item, key)}>
+                        {this.state.promo_history.map((item, key) => (
+                          <TableRow
+                            key={key}
+                            style={{ cursor: "pointer" }}
+                            hover
+                            onClick={() => this.openModalPromo(item, key)}
+                          >
                             <TableCell>{key + 1}</TableCell>
                             <TableCell>{item.user_name}</TableCell>
                             <TableCell>{item.type}</TableCell>
-														<TableCell>{item.date_create}</TableCell>
+                            <TableCell>{item.date_create}</TableCell>
                           </TableRow>
-                        )}
+                        ))}
                       </TableBody>
                     </Table>
                   </AccordionDetails>
                 </Accordion>
-              }
+              )}
             </Grid>
           </Grid>
-
         </Grid>
       </>
     );
   }
 }
 
-export default function SiteSale2_Edit () {
+export default function SiteSale2_Edit() {
   return <SiteSale2_edit_ />;
 }

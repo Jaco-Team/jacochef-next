@@ -28,8 +28,8 @@ import {
   useTheme,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import a11yProps from "@/components/shared/TabPanel/a11yProps";
-import TabPanel from "@/components/shared/TabPanel/TabPanel";
+import a11yProps from "@/ui/TabPanel/a11yProps";
+import TabPanel from "@/ui/TabPanel/TabPanel";
 import useMarketingClientStore from "./useMarketingClientStore";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import dayjs from "dayjs";
@@ -143,8 +143,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
             <Grid
               mb={2}
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               Информация о клиенте с номером телефона
               {!!clientLogin && `: ${clientLogin}`}
               <IconButton
@@ -165,16 +166,18 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 3
-                  }}>
+                    sm: 3,
+                  }}
+                >
                   <Typography variant="body2">Имя:</Typography>
                   <Typography variant="h5">{clientInfo?.name ?? "Не указано"}</Typography>
                 </Grid>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 3
-                  }}>
+                    sm: 3,
+                  }}
+                >
                   <Typography variant="body2">Зарегистрировался:</Typography>
                   <Typography variant="body1">
                     {dayjs(clientInfo?.date_reg)?.format("DD MMMM YYYY в HH:mm") ?? "Неизвестно"}
@@ -183,13 +186,14 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 3
-                  }}>
+                    sm: 3,
+                  }}
+                >
                   <Typography variant="body2">Источник (первого заказа):</Typography>
                   <Typography variant="body1">
                     {clientInfo?.source || clientInfo?.medium
                       ? `${vocabulary(clientInfo?.source || "n/a")}: ${vocabulary(
-                          clientInfo?.medium || "n/a"
+                          clientInfo?.medium || "n/a",
                         )}`
                       : "Не указан"}
                   </Typography>
@@ -197,8 +201,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 3
-                  }}>
+                    sm: 3,
+                  }}
+                >
                   <Typography variant="body2">Сумма заказов:</Typography>
                   <Typography variant="h5">
                     {formatPrice(clientInfo?.summ) ?? 0} {"\u20bd"}
@@ -216,8 +221,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <Paper>
                 <Tabs
                   value={activeTab}
@@ -249,8 +255,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <TabPanel
                 value={activeTab}
                 index={0}
@@ -261,8 +268,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                     style={{ display: "flex" }}
                     mb={3}
                     size={{
-                      xs: 12
-                    }}>
+                      xs: 12,
+                    }}
+                  >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>Имя:</Typography>
                     <Typography>{clientInfo?.name || "Не указано"}</Typography>
                   </Grid>
@@ -271,8 +279,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                     style={{ display: "flex" }}
                     mb={3}
                     size={{
-                      xs: 12
-                    }}>
+                      xs: 12,
+                    }}
+                  >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
                       Телефон:
                     </Typography>
@@ -285,8 +294,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                     mb={3}
                     className="mail_box"
                     size={{
-                      xs: 12
-                    }}>
+                      xs: 12,
+                    }}
+                  >
                     <Typography
                       style={{ fontWeight: "bold", paddingRight: 10, whiteSpace: "nowrap" }}
                     >
@@ -299,8 +309,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                     style={{ display: "flex" }}
                     mb={3}
                     size={{
-                      xs: 12
-                    }}>
+                      xs: 12,
+                    }}
+                  >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
                       Зарегистрирован:
                     </Typography>
@@ -315,8 +326,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                     mb={3}
                     className="select_box"
                     size={{
-                      xs: 12
-                    }}>
+                      xs: 12,
+                    }}
+                  >
                     <Typography
                       style={{ fontWeight: "bold", paddingRight: 10, whiteSpace: "nowrap" }}
                     >
@@ -332,8 +344,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                     style={{ display: "flex" }}
                     mb={3}
                     size={{
-                      xs: 12
-                    }}>
+                      xs: 12,
+                    }}
+                  >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
                       Заказов:
                     </Typography>
@@ -346,14 +359,15 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                     style={{ display: "flex" }}
                     mb={3}
                     size={{
-                      xs: 12
-                    }}>
+                      xs: 12,
+                    }}
+                  >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
                       Доставок:
                     </Typography>
                     <Typography>{`${clientInfo?.count_dev} / ${formatPrice(
                       clientInfo?.summ_dev,
-                      true
+                      true,
                     )}`}</Typography>
                   </Grid>
 
@@ -361,14 +375,15 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                     style={{ display: "flex" }}
                     mb={3}
                     size={{
-                      xs: 12
-                    }}>
+                      xs: 12,
+                    }}
+                  >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
                       Самовывозов:
                     </Typography>
                     <Typography>{`${clientInfo?.count_pic} / ${formatPrice(
                       clientInfo?.summ_pic,
-                      true
+                      true,
                     )}`}</Typography>
                   </Grid>
                 </Paper>
@@ -380,8 +395,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <TabPanel
                 value={activeTab}
                 index={1}
@@ -449,7 +465,7 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
                             {" "}
                             {row.source || row.medium
                               ? `${vocabulary(row.source || "n/a")}: ${vocabulary(
-                                  row.medium || "n/a"
+                                  row.medium || "n/a",
                                 )}`
                               : "n/a"}{" "}
                           </TableCell>
@@ -483,8 +499,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <TabPanel
                   value={activeTab}
                   index={2}
@@ -541,8 +558,9 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <TabPanel
                   value={activeTab}
                   index={3}

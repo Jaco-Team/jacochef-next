@@ -2,11 +2,18 @@
   "name": "jacochef-next",
   "version": "0.1.0",
   "private": true,
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,md}": [
+      "prettier --write"
+    ]
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "format": "prettier --write .",
+    "prepare": "husky",
     "deploy:local": "next build && pm2 startOrRestart ecosystem.config.js --env local",
     "deploy:dev": "next build && pm2 startOrRestart ecosystem.config.js --env development",
     "deploy_test:prod": "npm update && next build && npm run sentry:sourcemaps && pm2 startOrRestart ecosystem.config.js --env production",
@@ -14,6 +21,7 @@
     "sentry:sourcemaps": "sentry-cli --url https://sentry.jacochef.ru/ sourcemaps upload --org sentry --project jacosoft-dop-react ./.next --rewrite"
   },
   "dependencies": {
+    "@amcharts/amcharts5": "^5.14.3",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.4",
@@ -50,6 +58,9 @@
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.7",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
+    "prettier": "^3.6.2",
     "sass": "^1.93.2"
   }
 }

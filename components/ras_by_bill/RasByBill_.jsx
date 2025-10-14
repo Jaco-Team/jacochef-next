@@ -18,7 +18,7 @@ import {
   Button,
 } from "@mui/material";
 
-import { MyAutocomplite, MyDatePickerNew } from "@/components/shared/Forms";
+import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 
 import dayjs from "dayjs";
 
@@ -29,7 +29,7 @@ import { formatNumber } from "@/src/helpers/utils/i18n";
 import { Component } from "react";
 import { ExpandMore } from "@mui/icons-material";
 import { formatDate } from "@/src/helpers/ui/formatDate";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 
 export default class RasByBill_ extends Component {
   constructor(props) {
@@ -231,16 +231,18 @@ export default class RasByBill_ extends Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             {/* <MySelect
               data={this.state.points}
               multiple={true}
@@ -260,8 +262,9 @@ export default class RasByBill_ extends Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyDatePickerNew
               label="Дата от"
               value={this.state.date_start}
@@ -271,8 +274,9 @@ export default class RasByBill_ extends Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
@@ -283,8 +287,9 @@ export default class RasByBill_ extends Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyAutocomplite
               data={this.state.items_cat || []}
               multiple={false}
@@ -300,8 +305,9 @@ export default class RasByBill_ extends Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <MyAutocomplite
               data={this.state.items}
               multiple={true}
@@ -313,8 +319,9 @@ export default class RasByBill_ extends Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <Button
               variant="contained"
               onClick={this.getItems.bind(this)}
@@ -325,8 +332,9 @@ export default class RasByBill_ extends Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <Button
               variant="contained"
               onClick={this.getCats.bind(this)}
@@ -339,15 +347,16 @@ export default class RasByBill_ extends Component {
             <>
               <Grid
                 size={{
-                  xs: 12
-                }}>
+                  xs: 12,
+                }}
+              >
                 <h1>Куплено по накладным</h1>
                 <TableContainer component={Paper}>
                   <Table aria-label="a dense table">
                     <TableHead>
                       <TableRow>
                         <TableCell>Наименование товара</TableCell>
-                        <TableCell>Объем товра</TableCell>
+                        <TableCell>Объем товара</TableCell>
                         <TableCell>Объем заготовки</TableCell>
                         <TableCell>Сумма</TableCell>
                         <TableCell>Кол-во накладных</TableCell>
@@ -358,12 +367,10 @@ export default class RasByBill_ extends Component {
                         <TableRow key={key}>
                           <TableCell> {item.name} </TableCell>
                           <TableCell>
-                            {" "}
-                            {formatNumber(item.count_item) + " " + item.ei_name}{" "}
+                            {formatNumber(item.count_item) + " " + item.ei_name}
                           </TableCell>
                           <TableCell>
-                            {" "}
-                            {formatNumber(item.count_pf) + " " + item.ei_name_pf}{" "}
+                            {formatNumber(item.count_pf) + " " + item.ei_name_pf}
                           </TableCell>
                           <TableCell> {formatNumber(item.sum)} </TableCell>
                           <TableCell> {formatNumber(item.count_bill, 0, 0)} </TableCell>
@@ -384,8 +391,9 @@ export default class RasByBill_ extends Component {
 
               <Grid
                 size={{
-                  xs: 12
-                }}>
+                  xs: 12,
+                }}
+              >
                 <h1>Расход заготовок (включая рецепты)</h1>
                 <TableContainer component={Paper}>
                   <Table aria-label="a dense table">
@@ -416,8 +424,9 @@ export default class RasByBill_ extends Component {
 
               <Grid
                 size={{
-                  xs: 12
-                }}>
+                  xs: 12,
+                }}
+              >
                 <h1>Расход рецептов</h1>
                 <TableContainer component={Paper}>
                   <Table aria-label="a dense table">
@@ -450,8 +459,9 @@ export default class RasByBill_ extends Component {
             <Grid
               style={{ marginBottom: "40px" }}
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <Accordion
                 disabled
                 style={{ backgroundColor: "#fff", opacity: 1 }}

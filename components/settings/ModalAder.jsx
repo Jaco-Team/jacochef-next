@@ -1,6 +1,6 @@
 "use client";
 
-import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/components/shared/Forms";
+import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 import {
   Autocomplete,
   Button,
@@ -55,7 +55,7 @@ export default function ModalAder({
     if (!formData.items_ids && !formData.category_ids) {
       showAlert(
         `Необходимо выбрать хотя бы ${formData.in_order === 0 ? "одно блюдо" : "одну категорию"}`,
-        false
+        false,
       );
       return;
     }
@@ -105,15 +105,17 @@ export default function ModalAder({
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Typography> Общее</Typography>
           </Grid>
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyTextInput
               label="Название"
               value={formData.name}
@@ -128,8 +130,9 @@ export default function ModalAder({
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MyTextInput
               label="Описание"
               multiline={true}
@@ -153,8 +156,9 @@ export default function ModalAder({
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyDatePickerNew
               label="Дата начала"
               value={formData.date_start}
@@ -164,8 +168,9 @@ export default function ModalAder({
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyDatePickerNew
               label="Дата окончания"
               value={formData.date_end}
@@ -175,8 +180,9 @@ export default function ModalAder({
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <Autocomplete
               size="small"
               options={[0, 1, 2]}
@@ -209,8 +215,9 @@ export default function ModalAder({
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
+                sm: 3,
+              }}
+            >
               <MyAutocomplite
                 label="Кафе"
                 data={points}
@@ -226,8 +233,9 @@ export default function ModalAder({
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
+                sm: 3,
+              }}
+            >
               <MyAutocomplite
                 label="Город"
                 data={cities}
@@ -249,15 +257,17 @@ export default function ModalAder({
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Typography>Условие</Typography>
           </Grid>
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyCheckBox
               label="На первый заказ клиента"
               value={!!formData.order_type}
@@ -269,8 +279,9 @@ export default function ModalAder({
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyTextInput
               label="Сумма заказа от"
               value={formData.sum_order}
@@ -286,8 +297,9 @@ export default function ModalAder({
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <Autocomplete
               size="small"
               multiple
@@ -314,8 +326,9 @@ export default function ModalAder({
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <Autocomplete
               size="small"
               options={[0, 1]}
@@ -346,8 +359,9 @@ export default function ModalAder({
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
+                sm: 3,
+              }}
+            >
               <MyAutocomplite
                 label="Блюда"
                 data={items}
@@ -363,8 +377,9 @@ export default function ModalAder({
             <Grid
               size={{
                 xs: 12,
-                sm: 3
-              }}>
+                sm: 3,
+              }}
+            >
               <MyAutocomplite
                 label="Категории"
                 data={categories}
@@ -385,15 +400,17 @@ export default function ModalAder({
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Typography>Добавляемая позиция</Typography>
           </Grid>
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <MyTextInput
               label="Название на сборке"
               value={formData.name_pack}

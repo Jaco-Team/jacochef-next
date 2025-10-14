@@ -1,17 +1,17 @@
-import React from 'react';
+import React from "react";
 
-import Script from 'next/script';
+import Script from "next/script";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import { MySelect } from '@/components/shared/Forms';
+import { MySelect } from "@/ui/Forms";
 
-import queryString from 'query-string';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import queryString from "query-string";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 class DriveMapStatAll_ extends React.Component {
   map = null;
@@ -20,42 +20,40 @@ class DriveMapStatAll_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'drive_map_stat_all',
-      module_name: '',
+      module: "drive_map_stat_all",
+      module_name: "",
       is_load: false,
 
       points: [],
-      point: '0',
-      drivers: []
+      point: "0",
+      drivers: [],
     };
   }
 
-  async componentDidMount(){
-
-    let data = await this.getData('get_all');
+  async componentDidMount() {
+    let data = await this.getData("get_all");
 
     this.setState({
       points: data.point_list,
       point: data.point_list[0].id,
-      module_name: data.module_info.name
-    })
+      module_name: data.module_info.name,
+    });
 
     document.title = data.module_info.name;
 
-    setTimeout( () => {
+    setTimeout(() => {
       //this.updateData();
-    }, 100 )
+    }, 100);
   }
 
-    getData = (method, data = {}) => {
-
+  getData = (method, data = {}) => {
     this.setState({
       is_load: true,
     });
 
     let res = api_laravel(this.state.module, method, data)
-      .then(result => result.data)
-      .finally( () => {
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
@@ -64,125 +62,129 @@ class DriveMapStatAll_ extends React.Component {
       });
 
     return res;
-  }
+  };
 
-  changePoint(event){
+  changePoint(event) {
     let data = event.target.value;
 
     this.setState({
-      point: data
-    })
+      point: data,
+    });
 
-    setTimeout( () => {
+    setTimeout(() => {
       this.updateData();
-    }, 50 )
+    }, 50);
   }
 
-  async updateData(){
+  async updateData() {
     let data = {
       point_id: this.state.point,
     };
 
-    let res = await this.getData('get_orders', data);
+    let res = await this.getData("get_orders", data);
 
-    this.getOrders(res.orders, res.home, res.drivers)
+    this.getOrders(res.orders, res.home, res.drivers);
 
     this.setState({
-      drivers: res.drivers
-    })
+      drivers: res.drivers,
+    });
 
-    console.log( res.drivers )
+    console.log(res.drivers);
   }
 
-  getOrders(orders, home, drivers){
+  getOrders(orders, home, drivers) {
     let objectManager = new ymaps.ObjectManager();
 
-    if( !this.map ){
+    if (!this.map) {
       ymaps.ready(() => {
-        this.map = new ymaps.Map('map', {
-          center: [home.latitude, home.longitude],
-          zoom: 11
-        }, {
-          searchControlProvider: 'yandex#search'
-        })
+        this.map = new ymaps.Map(
+          "map",
+          {
+            center: [home.latitude, home.longitude],
+            zoom: 11,
+          },
+          {
+            searchControlProvider: "yandex#search",
+          },
+        );
 
         //дом
-        let myGeoObject = new ymaps.GeoObject({
-          geometry: {
-            type: "Point",
-            coordinates: [home.latitude, home.longitude]
+        let myGeoObject = new ymaps.GeoObject(
+          {
+            geometry: {
+              type: "Point",
+              coordinates: [home.latitude, home.longitude],
+            },
           },
-        }, {
-          preset: 'islands#blackDotIcon',
-          iconColor: 'black'
-        })
+          {
+            preset: "islands#blackDotIcon",
+            iconColor: "black",
+          },
+        );
 
         this.map.geoObjects.add(myGeoObject);
 
         let json = {
-          "type": "FeatureCollection",
-          "features": []
+          type: "FeatureCollection",
+          features: [],
         };
 
-        orders.map( function(item){
-
+        orders.map(function (item) {
           json.features.push({
             type: "Feature",
             id: item.id,
             options: {
-              preset: parseInt(item.status_order) == 6 ? 'islands#blueCircleDotIconWithCaption' : 'islands#circleDotIcon',
-              iconColor: item.point_color ? item.point_color : item.color
+              preset:
+                parseInt(item.status_order) == 6
+                  ? "islands#blueCircleDotIconWithCaption"
+                  : "islands#circleDotIcon",
+              iconColor: item.point_color ? item.point_color : item.color,
             },
             properties: {
               iconCaption: item.point_text,
             },
             geometry: {
               type: "Point",
-              coordinates: [item.xy.latitude, item.xy.longitude]
+              coordinates: [item.xy.latitude, item.xy.longitude],
             },
-          })
-
-        } )
+          });
+        });
 
         objectManager.add(json);
 
-        drivers.map( function(driver){
-          driver.positions.map( function(pos, key){
-
-            pos['xy'] = JSON.parse(pos['xy'], true);
+        drivers.map(function (driver) {
+          driver.positions.map(function (pos, key) {
+            pos["xy"] = JSON.parse(pos["xy"], true);
 
             json.features.push({
               type: "Feature",
               id: pos.id,
               options: {
-                preset: 'islands#stretchyIcon',
+                preset: "islands#stretchyIcon",
                 iconColor: driver.color,
               },
               properties: {
-                iconContent: key
+                iconContent: key,
               },
               geometry: {
                 type: "Point",
-                coordinates: [pos['xy'][0], pos['xy'][1]],
+                coordinates: [pos["xy"][0], pos["xy"][1]],
               },
-            })
-
-
-          } )
-        } )
+            });
+          });
+        });
 
         objectManager.add(json);
 
         this.map.geoObjects.add(objectManager);
       });
-    }else{
-
+    } else {
       // дом в центре карты
       this.map.setCenter([home.latitude, home.longitude]);
 
       let json = {
-        "type": "FeatureCollection",
-        "features": []
+        type: "FeatureCollection",
+        features: [],
       };
 
       //дом
@@ -190,24 +192,25 @@ class DriveMapStatAll_ extends React.Component {
         type: "Feature",
         id: 0,
         options: {
-          preset: 'islands#blackDotIcon',
-          iconColor: 'black'
+          preset: "islands#blackDotIcon",
+          iconColor: "black",
         },
         geometry: {
           type: "Point",
-          coordinates: [home.latitude, home.longitude]
+          coordinates: [home.latitude, home.longitude],
         },
-      })
+      });
 
-
-      orders.map( function(item){
-
+      orders.map(function (item) {
         json.features.push({
           type: "Feature",
           id: item.id,
           options: {
-            preset: parseInt(item.status_order) == 6 ? 'islands#blueCircleDotIconWithCaption' : 'islands#circleDotIcon',
-            iconColor: item.point_color ? item.point_color : item.color
+            preset:
+              parseInt(item.status_order) == 6
+                ? "islands#blueCircleDotIconWithCaption"
+                : "islands#circleDotIcon",
+            iconColor: item.point_color ? item.point_color : item.color,
           },
           properties: {
             iconCaption: item.point_text,
@@ -215,96 +218,121 @@ class DriveMapStatAll_ extends React.Component {
           },
           geometry: {
             type: "Point",
-            coordinates: [item.xy.latitude, item.xy.longitude]
+            coordinates: [item.xy.latitude, item.xy.longitude],
           },
-        })
-
-      } )
+        });
+      });
 
       objectManager.add(json);
 
-      drivers.map( function(driver){
-        driver.positions.map( function(pos, key){
-
-          pos['xy'] = JSON.parse(pos['xy'], true);
+      drivers.map(function (driver) {
+        driver.positions.map(function (pos, key) {
+          pos["xy"] = JSON.parse(pos["xy"], true);
 
           json.features.push({
             type: "Feature",
             id: pos.id,
             options: {
-              preset: 'islands#stretchyIcon',
+              preset: "islands#stretchyIcon",
               iconColor: driver.color,
             },
             properties: {
-              iconContent: key
+              iconContent: key,
             },
             geometry: {
               type: "Point",
-              coordinates: [pos['xy'][0], pos['xy'][1]],
+              coordinates: [pos["xy"][0], pos["xy"][1]],
             },
-          })
-
-
-        } )
-      } )
+          });
+        });
+      });
 
       objectManager.add(json);
 
-      this.map.geoObjects.removeAll()
+      this.map.geoObjects.removeAll();
       this.map.geoObjects.add(objectManager);
     }
   }
 
-  render(){
+  render() {
     return (
       <>
         <Script src="https://api-maps.yandex.ru/2.1/?apikey=665f5b53-8905-4934-9502-4a6a7b06a900&lang=ru_RU" />
-        <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
+        <Backdrop
+          open={this.state.is_load}
+          style={{ zIndex: 99 }}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 6,
-              sm: 6
-            }}>
-            <MySelect data={this.state.points} value={this.state.point} func={ this.changePoint.bind(this) } label='Точка' />
+              sm: 6,
+            }}
+          >
+            <MySelect
+              data={this.state.points}
+              value={this.state.point}
+              func={this.changePoint.bind(this)}
+              label="Точка"
+            />
           </Grid>
           <Grid
             size={{
               xs: 6,
-              sm: 6
-            }}>
-            <Button variant="contained" onClick={this.updateData.bind(this)}>Обновить данные</Button>
+              sm: 6,
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={this.updateData.bind(this)}
+            >
+              Обновить данные
+            </Button>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
-            { this.state.drivers.map( (item, key) =>
-              <div key={key} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+              sm: 12,
+            }}
+          >
+            {this.state.drivers.map((item, key) => (
+              <div
+                key={key}
+                style={{ display: "flex", flexDirection: "row", alignItems: "center" }}
+              >
                 <div style={{ width: 50, height: 20, backgroundColor: item.color }}></div>
                 <div>{item.driver_name}</div>
               </div>
-            ) }
+            ))}
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
-            <div id="map" name="map" style={{ width: '100%', height: 700, paddingTop: 10 }} />
+              sm: 12,
+            }}
+          >
+            <div
+              id="map"
+              name="map"
+              style={{ width: "100%", height: 700, paddingTop: 10 }}
+            />
           </Grid>
         </Grid>
       </>
@@ -317,13 +345,16 @@ export default function DriveMapStatAll() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

@@ -1,7 +1,7 @@
 "use server";
 
-import dynamic from 'next/dynamic'
-import { getDataSSR } from "@/backend/api";
+import dynamic from "next/dynamic";
+import { getDataSSR } from "@/src/api_backend/api";
 
 const Stat_buy_ = dynamic(() => import("@/components/stat_buy/StatBuy_"), { ssr: false });
 
@@ -14,7 +14,7 @@ export async function getServerSideProps({ req, res }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

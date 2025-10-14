@@ -1,21 +1,21 @@
-import { Roboto } from 'next/font/google';
-import { createTheme } from '@mui/material/styles';
-import { red } from '@mui/material/colors';
+import { Roboto } from "next/font/google";
+import { createTheme } from "@mui/material/styles";
+import { red } from "@mui/material/colors";
 
 const roboto = Roboto({
-  weight: ['300', '400', '500', '700'],
-  subsets: ['latin'],
-  display: 'swap',
+  weight: ["300", "400", "500", "700"],
+  subsets: ["latin"],
+  display: "swap",
 });
 
 // Create a theme instance.
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#c03',
+      main: "#c03",
     },
     secondary: {
-      main: '#c03',
+      main: "#c03",
     },
     error: {
       main: red.A400,
@@ -28,16 +28,16 @@ const theme = createTheme({
     MuiGrid: {
       styleOverrides: {
         root: {
-          boxSizing: 'border-box',
+          boxSizing: "border-box",
         },
         container: {
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          width: '100%',
+          marginLeft: "auto",
+          marginRight: "auto",
+          width: "100%",
         },
         item: {
-          paddingLeft: '12px',
-          paddingRight: '12px',
+          paddingLeft: "12px",
+          paddingRight: "12px",
         },
       },
     },
@@ -45,9 +45,9 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           // target links inside List
-          '& a': {
-            textDecoration: 'none',
-            color: 'rgba(0, 0, 0, 0.87)',
+          "& a": {
+            textDecoration: "none",
+            color: "rgba(0, 0, 0, 0.87)",
           },
         },
       },

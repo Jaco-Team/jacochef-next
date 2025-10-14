@@ -28,7 +28,7 @@ import useMarketingTabStore, { defaultFilters } from "./useMarketingTabStore";
 import { Clear, FilterAlt, FilterAltOff, Sort, SwapVert } from "@mui/icons-material";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import ExcelIcon from "@/ui/ExcelIcon";
-import DownloadButton from "@/components/shared/DownloadButton";
+import DownloadButton from "@/ui/DownloadButton";
 import { useLoading } from "./useClientsLoadingContext";
 
 function SiteClientsMarketingOrdersTable({
@@ -192,7 +192,10 @@ function SiteClientsMarketingOrdersTable({
           maxHeight: "70dvh", // adjust to fit Dialog
         }}
       >
-        <Table stickyHeader sx={{ pointerEvents: isLoading ? "none" : "auto", opacity: isLoading ? 0.5 : 1 }}>
+        <Table
+          stickyHeader
+          sx={{ pointerEvents: isLoading ? "none" : "auto", opacity: isLoading ? 0.5 : 1 }}
+        >
           <TableHead>
             <TableRow>
               {ordersTableColumns.map((col) => (
@@ -368,7 +371,7 @@ function SiteClientsMarketingOrdersTable({
         page={page - 1}
         onPageChange={(_, newPage) => {
           // console.log(`Changing page to ${newPage + 1}`);
-          setPage((newPage + 1) || 1);
+          setPage(newPage + 1 || 1);
         }}
         onRowsPerPageChange={(event) => {
           const newPerPage = parseInt(event.target.value, 10);

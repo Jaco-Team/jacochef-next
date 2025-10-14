@@ -32,7 +32,7 @@ export const usePagesStore = create((set, get) => ({
     timer = setTimeout(() => {
       const q = query.toLowerCase();
       const filtered = get().pages.filter((p) =>
-        [p.title, p.description, p.content].some((val) => val.toLowerCase().includes(q))
+        [p.title, p.description, p.content].some((val) => val.toLowerCase().includes(q)),
       );
       set({ filteredPages: filtered });
     }, debounceDelay);

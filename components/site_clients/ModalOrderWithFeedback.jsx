@@ -43,7 +43,7 @@ const ModalOrderWithFeedback = ({
   const [values, setValues] = useState([]);
   const [discountValue, setDiscountValue] = useState(0);
   const [answerValue, setAnswerValue] = useState(0);
-  const [userActive, setUserActive] = useState('');
+  const [userActive, setUserActive] = useState("");
   const saveFeedback = () => {
     const feedbacks = [];
     order_items.map((value, index) => {
@@ -148,7 +148,7 @@ const ModalOrderWithFeedback = ({
                 element.data.conditions.stars.find(
                   (value) =>
                     value ===
-                    parseInt(item.form_feed.find((el) => el.type === "rating")?.data?.value)
+                    parseInt(item.form_feed.find((el) => el.type === "rating")?.data?.value),
                 ) ||
                 element.data.conditions.products.find((value) => value === item.name) ||
                 element.data.conditions.categories.find((value) => value === item.cat_name)
@@ -312,7 +312,7 @@ const ModalOrderWithFeedback = ({
               marginBottom: 10,
               display:
                 element.data.conditions.stars.find(
-                  (value) => value === parseInt(values[key]?.["rating"]?.value)
+                  (value) => value === parseInt(values[key]?.["rating"]?.value),
                 ) ||
                 element.data.conditions.products.find((value) => value === item.name) ||
                 element.data.conditions.categories.find((value) => value === item.cat_name)
@@ -403,8 +403,9 @@ const ModalOrderWithFeedback = ({
         >
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <span>
               {order?.type_order}: {order?.type_order_addr_new}
             </span>
@@ -414,23 +415,26 @@ const ModalOrderWithFeedback = ({
             parseInt(order?.fake_dom) == 0 ? (
               <Grid
                 size={{
-                  xs: 12
-                }}>
+                  xs: 12,
+                }}
+              >
                 <b style={{ color: "red", fontWeight: 900 }}>Домофон не работает</b>
               </Grid>
             ) : (
               <Grid
                 size={{
-                  xs: 12
-                }}>
+                  xs: 12,
+                }}
+              >
                 <b style={{ color: "green", fontWeight: 900 }}>Домофон работает</b>
               </Grid>
             )
           ) : null}
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <span>
               {order?.time_order_name}: {order?.time_order}
             </span>
@@ -439,8 +443,9 @@ const ModalOrderWithFeedback = ({
           {order?.number?.length > 1 ? (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <b>Телефон: </b>
               <span>{order?.number}</span>
             </Grid>
@@ -449,16 +454,18 @@ const ModalOrderWithFeedback = ({
           {order?.delete_reason?.length > 0 ? (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <span style={{ color: "red" }}>Удален: {order?.date_time_delete}</span>
             </Grid>
           ) : null}
           {order?.delete_reason?.length > 0 ? (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <span style={{ color: "red" }}>{order?.delete_reason}</span>
             </Grid>
           ) : null}
@@ -466,8 +473,9 @@ const ModalOrderWithFeedback = ({
           {parseInt(order?.is_preorder) == 1 ? null : (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <span>
                 {"Обещали: " + order?.time_to_client + " / "}
                 {order?.text_time}
@@ -480,15 +488,17 @@ const ModalOrderWithFeedback = ({
             <>
               <Grid
                 size={{
-                  xs: 12
-                }}>
+                  xs: 12,
+                }}
+              >
                 <b>Промокод: </b>
                 <span>{order?.promo_name}</span>
               </Grid>
               <Grid
                 size={{
-                  xs: 12
-                }}>
+                  xs: 12,
+                }}
+              >
                 <span className="noSpace">{order?.promo_text}</span>
               </Grid>
             </>
@@ -497,8 +507,9 @@ const ModalOrderWithFeedback = ({
           {order?.comment == null || order?.comment.length == 0 ? null : (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <b>Комментарий: </b>
               <span>{order?.comment}</span>
             </Grid>
@@ -507,8 +518,9 @@ const ModalOrderWithFeedback = ({
           {order?.sdacha == null || parseInt(order?.sdacha) == 0 ? null : (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <b>Сдача: </b>
               <span>{order?.sdacha}</span>
             </Grid>
@@ -516,8 +528,9 @@ const ModalOrderWithFeedback = ({
 
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <b>Сумма заказа: </b>
             <span>{order?.sum_order} р</span>
           </Grid>
@@ -525,8 +538,9 @@ const ModalOrderWithFeedback = ({
           {order?.check_pos_drive == null || !order?.check_pos_drive ? null : (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <b>Довоз оформлен: </b>
               <span>{order?.check_pos_drive?.comment}</span>
             </Grid>
@@ -535,19 +549,27 @@ const ModalOrderWithFeedback = ({
           {!order?.ready_answer ? null : (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <b>Готов давать обратную связь: </b>
-              {order?.ready_answer === 'Да' ? <span style={{color: 'green'}}>{order?.ready_answer}</span> : null}
-              {order?.ready_answer === 'Нет' ? <span style={{color: 'red'}}>{order?.ready_answer}</span> : null}
-              {order?.ready_answer === 'Редко' ? <span style={{color: 'yellow'}}>{order?.ready_answer}</span> : null}
+              {order?.ready_answer === "Да" ? (
+                <span style={{ color: "green" }}>{order?.ready_answer}</span>
+              ) : null}
+              {order?.ready_answer === "Нет" ? (
+                <span style={{ color: "red" }}>{order?.ready_answer}</span>
+              ) : null}
+              {order?.ready_answer === "Редко" ? (
+                <span style={{ color: "yellow" }}>{order?.ready_answer}</span>
+              ) : null}
             </Grid>
           )}
 
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <Table
               size={"small"}
               style={{ marginTop: 15 }}
@@ -559,19 +581,25 @@ const ModalOrderWithFeedback = ({
                       <TableCell>Заказов</TableCell>
                       <TableCell></TableCell>
                       <TableCell></TableCell>
-                      <TableCell><b>{order?.stat_order?.all_count} шт</b></TableCell>
+                      <TableCell>
+                        <b>{order?.stat_order?.all_count} шт</b>
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Доставок</TableCell>
                       <TableCell></TableCell>
                       <TableCell></TableCell>
-                      <TableCell><b>{order?.stat_order?.count_dev} шт</b></TableCell>
+                      <TableCell>
+                        <b>{order?.stat_order?.count_dev} шт</b>
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Самовывозов</TableCell>
                       <TableCell></TableCell>
                       <TableCell></TableCell>
-                      <TableCell><b>{order?.stat_order?.count_pic} шт</b></TableCell>
+                      <TableCell>
+                        <b>{order?.stat_order?.count_pic} шт</b>
+                      </TableCell>
                     </TableRow>
                   </>
                 ) : null}
@@ -597,12 +625,12 @@ const ModalOrderWithFeedback = ({
                               ? Object.entries(item.form_feed).map((data) =>
                                   data.map((element) => (
                                     <div key={element.id}>{renderElementFeed(element, item)}</div>
-                                  ))
+                                  )),
                                 )
                               : Object.entries(item.form_data).map((data) =>
                                   data.map((element) => (
                                     <div key={element.id}>{renderElement(element, key, item)}</div>
-                                  ))
+                                  )),
                                 )}
                           </Box>
                         </TableCell>
@@ -689,7 +717,8 @@ const ModalOrderWithFeedback = ({
                 )}
                 {order_items?.some(
                   (item) =>
-                    item.form_data.length && item.form_data.some((data) => data.type === "discount")
+                    item.form_data.length &&
+                    item.form_data.some((data) => data.type === "discount"),
                 ) && (
                   <TableRow>
                     <TableCell style={{ fontWeight: "bold", color: "#000" }}>
@@ -744,10 +773,7 @@ const ModalOrderWithFeedback = ({
                     </TableCell>
                   </TableRow>
                 )}
-                {(order_items?.some(
-                  (item) =>
-                    item.form_data.length
-                ) && !order?.ready_answer) && (
+                {order_items?.some((item) => item.form_data.length) && !order?.ready_answer && (
                   <TableRow>
                     <TableCell style={{ fontWeight: "bold", color: "#000" }}>
                       Готов давать обратную связь
@@ -777,13 +803,12 @@ const ModalOrderWithFeedback = ({
                             setAnswerValue(data);
                           }}
                         >
-                          {['Да', 'Нет', 'Редко'].map((answer) => {
+                          {["Да", "Нет", "Редко"].map((answer) => {
                             return (
                               <ToggleButton
                                 value={answer}
                                 style={{
-                                  backgroundColor:
-                                    answerValue === answer ? "#dd1a32" : "#fff",
+                                  backgroundColor: answerValue === answer ? "#dd1a32" : "#fff",
                                 }}
                               >
                                 <span
@@ -833,8 +858,9 @@ const ModalOrderWithFeedback = ({
             <Grid
               mt={3}
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMore />}>
                   <Typography style={{ fontWeight: "bold" }}>Ошибка</Typography>

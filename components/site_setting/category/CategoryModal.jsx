@@ -2,17 +2,15 @@
 
 import { Grid } from "@mui/material";
 import { useCategoryStore } from "./useCategoryStore";
-import { MyAutocomplite, MyTextInput } from "@/components/shared/Forms";
-import {useSiteSettingStore} from "@/components/site_setting/useSiteSettingStore";
+import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
+import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingStore";
 
 export function CategoryModal() {
   const currentItem = useCategoryStore((state) => state.item);
   const [rootCategories] = useCategoryStore((state) => [
     state.categories.filter((c) => c.parent_id === 0),
   ]);
-  const [acces] = useSiteSettingStore((state) => [
-    state.acces,
-  ]);
+  const [acces] = useSiteSettingStore((state) => [state.acces]);
   const { changeItemProp, changeAutoComplete } = useCategoryStore.getState();
   return (
     <>
@@ -23,8 +21,9 @@ export function CategoryModal() {
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <MyTextInput
             label="Название категории"
             disabled={acces.category_view && !acces.category_edit}
@@ -36,8 +35,9 @@ export function CategoryModal() {
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <MyTextInput
             label="Сроки хранения"
             multiline={true}
@@ -51,8 +51,9 @@ export function CategoryModal() {
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           {/* <MySelect
             label="Родительская категория"
             data={listCat ? listCat : []}
@@ -65,7 +66,12 @@ export function CategoryModal() {
             disabled={acces.category_view && !acces.category_edit}
             data={rootCategories || []}
             disableCloseOnSelect={false}
-            value={rootCategories?.find((c) => c.id === currentItem?.parent_id) || {id:0,name:"Не задано"}}
+            value={
+              rootCategories?.find((c) => c.id === currentItem?.parent_id) || {
+                id: 0,
+                name: "Не задано",
+              }
+            }
             func={(...params) => changeAutoComplete("parent_id", ...params)}
           />
         </Grid>

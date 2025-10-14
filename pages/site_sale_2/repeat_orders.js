@@ -1,35 +1,35 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TableContainer from '@mui/material/TableContainer';
-import Paper from '@mui/material/Paper';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableContainer from "@mui/material/TableContainer";
+import Paper from "@mui/material/Paper";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import { MyDatePickerNew, MyAutocomplite, MyTextInput } from '@/components/shared/Forms';
+import { MyDatePickerNew, MyAutocomplite, MyTextInput } from "@/ui/Forms";
 
-import dayjs from 'dayjs';
-import queryString from 'query-string';
+import dayjs from "dayjs";
+import queryString from "query-string";
 // import {api_laravel} from "@/src/api_new";
-import {api_laravel_local as api_laravel} from "@/src/api_new";
-import { formatDate } from '@/src/helpers/ui/formatDate';
-import MyAlert from '@/components/shared/MyAlert';
+import { api_laravel_local as api_laravel } from "@/src/api_new";
+import { formatDate } from "@/src/helpers/ui/formatDate";
+import MyAlert from "@/ui/MyAlert";
 
 class SiteSale2_RepeatOrders_ extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      module: 'site_sale_2',
-      module_name: '',
+      module: "site_sale_2",
+      module_name: "",
       is_load: false,
 
       date_start: formatDate(new Date()),
@@ -37,7 +37,7 @@ class SiteSale2_RepeatOrders_ extends React.Component {
 
       promo_list: [],
       total: null,
-      promoName: '',
+      promoName: "",
 
       promo_summary_list: [],
       total_summary: null,
@@ -47,18 +47,17 @@ class SiteSale2_RepeatOrders_ extends React.Component {
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
     };
   }
 
-  async componentDidMount(){
-
-    let data = await this.getData('get_repeat_orders_all');
+  async componentDidMount() {
+    let data = await this.getData("get_repeat_orders_all");
 
     this.setState({
       module_name: data.module_info.name,
       city_list: data.cities,
-    })
+    });
 
     document.title = data.module_info.name;
   }
@@ -81,70 +80,69 @@ class SiteSale2_RepeatOrders_ extends React.Component {
     return res;
   };
 
-  async getDataPromo(){
-
+  async getDataPromo() {
     const { city_id, date_start, date_end, promoName } = this.state;
 
-    if(!date_start || !date_end) {
-
+    if (!date_start || !date_end) {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо указать все даты',
-      })
+        err_text: "Необходимо указать все даты",
+      });
 
       return;
     }
 
-    if(!city_id.length) {
-
+    if (!city_id.length) {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо выбрать город',
-      })
+        err_text: "Необходимо выбрать город",
+      });
 
       return;
     }
 
-    if(!promoName) {
-
+    if (!promoName) {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо указать промокод',
-      })
+        err_text: "Необходимо указать промокод",
+      });
 
       return;
     }
 
     const data = {
       city_id,
-      date_start : dayjs(date_start).format('YYYY-MM-DD'),
-      date_end : dayjs(date_end).format('YYYY-MM-DD'),
-      promoName
-    }
+      date_start: dayjs(date_start).format("YYYY-MM-DD"),
+      date_end: dayjs(date_end).format("YYYY-MM-DD"),
+      promoName,
+    };
 
-    const res = await this.getData('get_data_repeat_orders', data);
+    const res = await this.getData("get_data_repeat_orders", data);
 
     this.setState({
       promo_list: res.promo_list,
       total: res.total,
       promo_summary_list: res.promo_summary_list,
       total_summary: res.total_summary,
-    })
+    });
   }
 
-  changeDateRange(data, event){
+  changeDateRange(data, event) {
     this.setState({
-      [data]: (event)
-    })
+      [data]: event,
+    });
   }
 
-  render(){
+  render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -153,38 +151,57 @@ class SiteSale2_RepeatOrders_ extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
-        <Grid container style={{ marginTop: '80px', paddingLeft: '24px' }}>
+        <Grid
+          container
+          style={{ marginTop: "80px", paddingLeft: "24px" }}
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid container direction="row" style={{ paddingTop: 20 }} spacing={4}>
-
+          <Grid
+            container
+            direction="row"
+            style={{ paddingTop: 20 }}
+            spacing={4}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
-              <MyDatePickerNew label="Дата от" value={ this.state.date_start } func={ this.changeDateRange.bind(this, 'date_start') } />
+                sm: 6,
+              }}
+            >
+              <MyDatePickerNew
+                label="Дата от"
+                value={this.state.date_start}
+                func={this.changeDateRange.bind(this, "date_start")}
+              />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
-              <MyDatePickerNew label="Дата до" value={ this.state.date_end } func={ this.changeDateRange.bind(this, 'date_end') } />
+                sm: 6,
+              }}
+            >
+              <MyDatePickerNew
+                label="Дата до"
+                value={this.state.date_end}
+                func={this.changeDateRange.bind(this, "date_end")}
+              />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyAutocomplite
                 label="Город"
                 multiple={true}
@@ -197,41 +214,53 @@ class SiteSale2_RepeatOrders_ extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyTextInput
                 value={this.state.promoName}
                 func={(event) => this.setState({ promoName: event.target.value })}
-                label='Промокод'
+                label="Промокод"
               />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
-              <Button variant="contained" onClick={this.getDataPromo.bind(this)}>Показать</Button>
+                sm: 12,
+              }}
+            >
+              <Button
+                variant="contained"
+                onClick={this.getDataPromo.bind(this)}
+              >
+                Показать
+              </Button>
             </Grid>
-
           </Grid>
 
           <Grid
             style={{ marginTop: 20 }}
             size={{
               xs: 12,
-              sm: 5.9
-            }}>
+              sm: 5.9,
+            }}
+          >
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <TableContainer component={Paper}>
-                <Table size='small'>
-
+                <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell colSpan={3} align='center'>Всего заказов</TableCell>
+                      <TableCell
+                        colSpan={3}
+                        align="center"
+                      >
+                        Всего заказов
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Заказов</TableCell>
@@ -241,33 +270,32 @@ class SiteSale2_RepeatOrders_ extends React.Component {
                   </TableHead>
 
                   <TableBody>
-
-                    {this.state.promo_list.map( (item, key) =>
+                    {this.state.promo_list.map((item, key) => (
                       <TableRow key={key}>
                         <TableCell>{item.orders}</TableCell>
-                        <TableCell>{new Intl.NumberFormat('ru-RU').format(item.count)}</TableCell>
-                        <TableCell>{new Intl.NumberFormat('ru-RU').format(item.summ)} ₽</TableCell>
+                        <TableCell>{new Intl.NumberFormat("ru-RU").format(item.count)}</TableCell>
+                        <TableCell>{new Intl.NumberFormat("ru-RU").format(item.summ)} ₽</TableCell>
                       </TableRow>
-                    )}
+                    ))}
 
                     {this.state.total && (
                       <TableRow>
-                        <TableCell><strong>Всего</strong></TableCell>
+                        <TableCell>
+                          <strong>Всего</strong>
+                        </TableCell>
                         <TableCell>
                           <strong>
-                            {new Intl.NumberFormat('ru-RU').format(this.state.total?.count)}
+                            {new Intl.NumberFormat("ru-RU").format(this.state.total?.count)}
                           </strong>
                         </TableCell>
                         <TableCell>
                           <strong>
-                            {new Intl.NumberFormat('ru-RU').format(this.state.total?.summ)} ₽
+                            {new Intl.NumberFormat("ru-RU").format(this.state.total?.summ)} ₽
                           </strong>
                         </TableCell>
                       </TableRow>
                     )}
-
                   </TableBody>
-
                 </Table>
               </TableContainer>
             </Grid>
@@ -276,25 +304,32 @@ class SiteSale2_RepeatOrders_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 0.2
-            }} />
+              sm: 0.2,
+            }}
+          />
 
           <Grid
-            style={{ marginTop: 20, marginBottom: 20}}
+            style={{ marginTop: 20, marginBottom: 20 }}
             size={{
               xs: 12,
-              sm: 5.9
-            }}>
+              sm: 5.9,
+            }}
+          >
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <TableContainer component={Paper}>
-                <Table size='small'>
-
+                <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell colSpan={3} align='center'>Новые клиенты</TableCell>
+                      <TableCell
+                        colSpan={3}
+                        align="center"
+                      >
+                        Новые клиенты
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Заказов</TableCell>
@@ -304,44 +339,43 @@ class SiteSale2_RepeatOrders_ extends React.Component {
                   </TableHead>
 
                   <TableBody>
-
-                    {this.state.promo_summary_list.map( (item, key) =>
+                    {this.state.promo_summary_list.map((item, key) => (
                       <TableRow key={key}>
                         <TableCell>{item.orders}</TableCell>
-                        <TableCell>{new Intl.NumberFormat('ru-RU').format(item.count)}</TableCell>
-                        <TableCell>{new Intl.NumberFormat('ru-RU').format(item.summ)} ₽</TableCell>
+                        <TableCell>{new Intl.NumberFormat("ru-RU").format(item.count)}</TableCell>
+                        <TableCell>{new Intl.NumberFormat("ru-RU").format(item.summ)} ₽</TableCell>
                       </TableRow>
-                    )}
+                    ))}
 
                     {this.state.total_summary && (
                       <TableRow>
-                        <TableCell><strong>Всего</strong></TableCell>
+                        <TableCell>
+                          <strong>Всего</strong>
+                        </TableCell>
                         <TableCell>
                           <strong>
-                            {new Intl.NumberFormat('ru-RU').format(this.state.total_summary?.count)}
+                            {new Intl.NumberFormat("ru-RU").format(this.state.total_summary?.count)}
                           </strong>
                         </TableCell>
                         <TableCell>
                           <strong>
-                            {new Intl.NumberFormat('ru-RU').format(this.state.total_summary?.summ)} ₽
+                            {new Intl.NumberFormat("ru-RU").format(this.state.total_summary?.summ)}{" "}
+                            ₽
                           </strong>
                         </TableCell>
                       </TableRow>
                     )}
-
                   </TableBody>
-
                 </Table>
               </TableContainer>
             </Grid>
           </Grid>
-
         </Grid>
       </>
     );
   }
 }
 
-export default function SiteSale2_RepeatOrders () {
+export default function SiteSale2_RepeatOrders() {
   return <SiteSale2_RepeatOrders_ />;
 }

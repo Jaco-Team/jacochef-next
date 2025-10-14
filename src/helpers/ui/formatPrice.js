@@ -7,7 +7,7 @@
 export default function formatPrice(value, withCurrency = false) {
   if (!Number(value) || isNaN(value)) return value;
 
-  const formatted = new Intl.NumberFormat('ru-RU', {
+  const formatted = new Intl.NumberFormat("ru-RU", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(Number(value));
