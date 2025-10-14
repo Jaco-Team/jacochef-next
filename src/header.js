@@ -125,13 +125,15 @@ const UserMenu = ({my, logOut}) => {
 				anchorEl={anchorEl}
 				open={Boolean(anchorEl)}
 				onClose={handleMenuClose}
-				PaperProps={{
+				slotProps={{
+					paper: {
 					elevation: 3,
 					sx: {
 						mt: 1.5,
 						minWidth: 200,
 						borderRadius: 2,
 						zIndex: 9999
+					}
 					}
 				}}
 				transformOrigin={{horizontal: 'right', vertical: 'top'}}
