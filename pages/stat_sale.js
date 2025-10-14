@@ -197,16 +197,13 @@ function hsvaToHex(hsva) {
   return hex + alphaHex;
 }
 
-
-// ---------- Компоненты страницы ---------- //
-
 // ---------- Кастомный колорпикер для выбора цвета в модалке Коэффициенты ----------
 
 export class CustomColorPicker extends React.Component {
   constructor(props) {
     super(props);
 
-    let initialHsva = { h: 0, s: 1, v: 1, a: 1 };
+    let initialHsva = {h: 0, s: 1, v: 1, a: 1};
 
     if (props.initialColor) {
       if (typeof props.initialColor === 'string') {
@@ -224,12 +221,11 @@ export class CustomColorPicker extends React.Component {
       hexInput: hsvaToHex(initialHsva),
       draggingAlpha: false,
       draggingWheel: false,
+      activePreset: 'default',
     };
 
-    // Ссылка на canvas (цветовое колесо)
     this.wheelRef = React.createRef();
 
-    // Ссылка на div-обёртку слайдера прозрачности
     this.alphaSliderRef = React.createRef();
 
     // Параметры колеса
@@ -239,7 +235,35 @@ export class CustomColorPicker extends React.Component {
     this.alphaWidth = 200;
     this.alphaHeight = 20;
 
-    // Готовые цвета (swatches)
+    // Цветовые пресеты как в Google Документах
+    this.colorPresets = {
+      default: [
+        ['#000000', '#434343', '#666666', '#999999', '#B7B7B7', '#CCCCCC', '#D9D9D9', '#EFEFEF', '#F3F3F3', '#FFFFFF'],
+        ['#980000', '#FF0000', '#FF9900', '#FFCC00', '#FFFF00', '#00FF00', '#00FFFF', '#4A86E8', '#0000FF', '#9900FF'],
+        ['#E6B8AF', '#F4CCCC', '#FCE5CD', '#FFF2CC', '#D9EAD3', '#D0E0E3', '#C9DAF8', '#CFE2F3', '#D9D2E9', '#EAD1DC'],
+        ['#DD7E6B', '#EA9999', '#F9CB9C', '#FFE599', '#B6D7A8', '#A2C4C9', '#A4C2F4', '#9FC5E8', '#B4A7D6', '#D5A6BD'],
+        ['#CC4125', '#E06666', '#F6B26B', '#FFD966', '#93C47D', '#76A5AF', '#6D9EEB', '#6FA8DC', '#8E7CC3', '#C27BA0'],
+        ['#A61C00', '#CC0000', '#E69138', '#F1C232', '#6AA84F', '#45818E', '#3C78D8', '#3D85C6', '#674EA7', '#A64D79'],
+        ['#85200C', '#990000', '#B45F06', '#BF9000', '#38761D', '#134F5C', '#1155CC', '#0B5394', '#351C75', '#741B47'],
+        ['#5B0F00', '#660000', '#783F04', '#7F6000', '#274E13', '#0C343D', '#1C4587', '#073763', '#20124D', '#4C1130']
+      ],
+      material: [
+        // Material Design colors
+        ['#FFEBEE', '#FFCDD2', '#EF9A9A', '#E57373', '#EF5350', '#F44336', '#E53935', '#D32F2F', '#C62828', '#B71C1C'],
+        ['#F3E5F5', '#E1BEE7', '#CE93D8', '#BA68C8', '#AB47BC', '#9C27B0', '#8E24AA', '#7B1FA2', '#6A1B9A', '#4A148C'],
+        ['#E8EAF6', '#C5CAE9', '#9FA8DA', '#7986CB', '#5C6BC0', '#3F51B5', '#3949AB', '#303F9F', '#283593', '#1A237E'],
+        ['#E1F5FE', '#B3E5FC', '#81D4FA', '#4FC3F7', '#29B6F6', '#03A9F4', '#039BE5', '#0288D1', '#0277BD', '#01579B']
+      ],
+      pastel: [
+        // Пастельные тона
+        ['#FFB5B5', '#FFD8B5', '#FFF7B5', '#DBFFB5', '#B5FFC9', '#B5FFFC', '#B5DEFF', '#C2B5FF', '#EBB5FF', '#FFB5F0'],
+        ['#FF9E9E', '#FFC79E', '#FFF49E', '#D4FF9E', '#9EFFB8', '#9EFFF4', '#9ED4FF', '#B19EFF', '#E29EFF', '#FF9EEA'],
+        ['#FF8787', '#FFB687', '#FFF187', '#CCFF87', '#87FFA7', '#87FFEB', '#87CCFF', '#9F87FF', '#D987FF', '#FF87E3'],
+        ['#FF7070', '#FFA570', '#FFEE70', '#C5FF70', '#70FF96', '#70FFE2', '#70C5FF', '#8E70FF', '#D170FF', '#FF70DC']
+      ]
+    };
+
+    // Стандартные цвета (как были раньше)
     this.colorSwatches = [
       '#FF0000', '#FF9900', '#FFFF00', '#00FF00',
       '#00FFFF', '#0000FF', '#9900FF', '#FF00FF',
@@ -251,9 +275,9 @@ export class CustomColorPicker extends React.Component {
   componentDidMount() {
     this.drawColorWheel();
 
-    window.addEventListener('touchmove', this.handleAlphaMove, { passive: false });
+    window.addEventListener('touchmove', this.handleAlphaMove, {passive: false});
     window.addEventListener('touchend', this.handleAlphaUp);
-    window.addEventListener('touchmove', this.handleWheelMove, { passive: false });
+    window.addEventListener('touchmove', this.handleWheelMove, {passive: false});
     window.addEventListener('touchend', this.handleWheelUp);
     window.addEventListener('mousemove', this.handleAlphaMove);
     window.addEventListener('mouseup', this.handleAlphaUp);
@@ -267,8 +291,6 @@ export class CustomColorPicker extends React.Component {
     window.removeEventListener('mousemove', this.handleWheelMove);
     window.removeEventListener('mouseup', this.handleWheelUp);
   }
-
-  // ---------- КОЛЕСО (CANVAS) ДЛЯ HUE/SATURATION ----------
 
   drawColorWheel() {
     const canvas = this.wheelRef.current;
@@ -299,7 +321,7 @@ export class CustomColorPicker extends React.Component {
         const s = dist / radius;
         const v = 1;
 
-        const { r, g, b } = hsvaToRgba({ h, s, v, a: 1 });
+        const {r, g, b} = hsvaToRgba({h, s, v, a: 1});
         const idx = (y * size + x) * 4;
         data[idx] = r;
         data[idx + 1] = g;
@@ -312,12 +334,11 @@ export class CustomColorPicker extends React.Component {
   }
 
   handleWheelClick = (e) => {
-
     if (document.activeElement) {
       document.activeElement.blur();
     }
 
-    this.setState({ draggingWheel: true });
+    this.setState({draggingWheel: true});
     this.updateWheel(e);
   };
 
@@ -341,12 +362,12 @@ export class CustomColorPicker extends React.Component {
     angle = (angle < 0) ? angle + 2 * Math.PI : angle;
     const h = angle / (2 * Math.PI);
     const s = dist / radius;
-    const { v, a } = this.state.hsva;
-    const newHsva = { h, s, v, a };
+    const {v, a} = this.state.hsva;
+    const newHsva = {h, s, v, a};
 
     const finalHex = hsvaToHex(newHsva);
 
-    this.setState({ hsva: newHsva, hexInput: finalHex });
+    this.setState({hsva: newHsva, hexInput: finalHex});
     this.props.hsvaConvertHex(newHsva);
   };
 
@@ -359,34 +380,123 @@ export class CustomColorPicker extends React.Component {
   // Обработчик отпускания кнопки мыши:
   handleWheelUp = () => {
     if (this.state.draggingWheel) {
-      this.setState({ draggingWheel: false });
+      this.setState({draggingWheel: false});
     }
   };
 
-  // ---------- SWATCHES (ГОТОВЫЕ ЦВЕТА) ----------
-
-  handleSwatchClick = (hex) => {
+  handlePresetClick = (hex) => {
     const newHsva = hexToHsva(hex);
-    // Сохраняем текущую прозрачность
     newHsva.a = this.state.hsva.a;
 
     const finalHex = hsvaToHex(newHsva);
 
-    this.setState({ hsva: newHsva, hexInput: finalHex });
+    this.setState({hsva: newHsva, hexInput: finalHex});
 
     this.props.hsvaConvertHex(newHsva);
   };
 
-  // ---------- CSS-СЛАЙДЕР ДЛЯ ПРОЗРАЧНОСТИ ----------
+  handlePresetGroupChange = (presetName) => {
+    this.setState({activePreset: presetName});
+  };
+
+  renderColorPresets() {
+    const {activePreset} = this.state;
+    const currentPreset = this.colorPresets[activePreset];
+
+    return (
+      <div style={{marginTop: 20}}>
+        <div style={{display: 'flex', gap: 10, marginBottom: 15, justifyContent: 'center'}}>
+          <button
+            onClick={() => this.handlePresetGroupChange('default')}
+            style={{
+              padding: '5px 10px',
+              border: '1px solid #ccc',
+              borderRadius: 4,
+              background: activePreset === 'default' ? '#e3f2fd' : '#fff',
+              cursor: 'pointer',
+              fontSize: 12
+            }}
+          >
+            Стандартные
+          </button>
+          <button
+            onClick={() => this.handlePresetGroupChange('material')}
+            style={{
+              padding: '5px 10px',
+              border: '1px solid #ccc',
+              borderRadius: 4,
+              background: activePreset === 'material' ? '#e3f2fd' : '#fff',
+              cursor: 'pointer',
+              fontSize: 12
+            }}
+          >
+            Material
+          </button>
+          <button
+            onClick={() => this.handlePresetGroupChange('pastel')}
+            style={{
+              padding: '5px 10px',
+              border: '1px solid #ccc',
+              borderRadius: 4,
+              background: activePreset === 'pastel' ? '#e3f2fd' : '#fff',
+              cursor: 'pointer',
+              fontSize: 12
+            }}
+          >
+            Пастельные
+          </button>
+        </div>
+
+        <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
+          {currentPreset.map((row, rowIndex) => (
+            <div key={rowIndex} style={{display: 'flex', gap: 8, justifyContent: 'center'}}>
+              {row.map((color, colorIndex) => (
+                <div
+                  key={colorIndex}
+                  onClick={() => this.handlePresetClick(color)}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    backgroundColor: color,
+                    border:
+                      hsvaToHex(this.state.hsva).toLowerCase() === color.toLowerCase()
+                        ? '2px solid #1976d2'
+                        : '1px solid #ddd',
+                    boxShadow:
+                      hsvaToHex(this.state.hsva).toLowerCase() === color.toLowerCase()
+                        ? '0 0 0 1px #fff inset'
+                        : 'none',
+                    transition: 'all 0.2s ease',
+                  }}
+                  title={color}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  handleSwatchClick = (hex) => {
+    const newHsva = hexToHsva(hex);
+    newHsva.a = this.state.hsva.a;
+
+    const finalHex = hsvaToHex(newHsva);
+
+    this.setState({hsva: newHsva, hexInput: finalHex});
+
+    this.props.hsvaConvertHex(newHsva);
+  };
 
   handleAlphaDown = (e) => {
-
     if (document.activeElement) {
       document.activeElement.blur();
     }
 
-    // Начинаем перетаскивать
-    this.setState({ draggingAlpha: true });
+    this.setState({draggingAlpha: true});
     this.updateAlpha(e);
   };
 
@@ -397,7 +507,7 @@ export class CustomColorPicker extends React.Component {
 
   handleAlphaUp = () => {
     if (this.state.draggingAlpha) {
-      this.setState({ draggingAlpha: false });
+      this.setState({draggingAlpha: false});
     }
   };
 
@@ -411,27 +521,24 @@ export class CustomColorPicker extends React.Component {
     if (x > rect.width) x = rect.width;
     const alpha = x / rect.width;
 
-    const { h, s, v } = this.state.hsva;
+    const {h, s, v} = this.state.hsva;
 
-    const finalHex = hsvaToHex({ h, s, v, a: alpha });
+    const finalHex = hsvaToHex({h, s, v, a: alpha});
 
-    this.setState({ hsva: { h, s, v, a: alpha }, hexInput: finalHex });
-    this.props.hsvaConvertHex({ h, s, v, a: alpha });
+    this.setState({hsva: {h, s, v, a: alpha}, hexInput: finalHex});
+    this.props.hsvaConvertHex({h, s, v, a: alpha});
   }
 
-  // Отдельный метод для рендера слайдера
   renderAlphaSlider() {
-    const { h, s, v, a } = this.state.hsva;
+    const {h, s, v, a} = this.state.hsva;
 
-    // Для градиента берём тот же цвет, но c a=1
-    const { r, g, b } = hsvaToRgba({ h, s, v, a: 1 });
+    const {r, g, b} = hsvaToRgba({h, s, v, a: 1});
     const baseColor = `${r}, ${g}, ${b}`;
 
     const sliderWidth = this.alphaWidth;
     const sliderHeight = this.alphaHeight;
     const handleSize = 20;
 
-    // Позиция ползунка (0..1) -> (0..sliderWidth - handleSize)
     const handlePos = a * (sliderWidth - handleSize);
 
     return (
@@ -444,11 +551,10 @@ export class CustomColorPicker extends React.Component {
           borderRadius: 10,
           margin: '0 auto',
           cursor: 'pointer',
-          // Для наглядности без border/padding, чтобы ползунок не "вылетал"
         }}
         onMouseDown={this.handleAlphaDown}
       >
-        {/* Шахматный фон */}
+
         <div
           style={{
             position: 'absolute',
@@ -465,7 +571,7 @@ export class CustomColorPicker extends React.Component {
             borderRadius: 10,
           }}
         />
-        {/* Градиент от прозрачного к полному baseColor */}
+
         <div
           style={{
             position: 'absolute',
@@ -478,7 +584,7 @@ export class CustomColorPicker extends React.Component {
             borderRadius: 10,
           }}
         />
-        {/* Ползунок */}
+
         <div
           style={{
             position: 'absolute',
@@ -496,21 +602,19 @@ export class CustomColorPicker extends React.Component {
     );
   }
 
-  // ---------- Инпут ввода цвета в формате hex ----------
-
   handleHexInputChange = (e) => {
     const inputValue = e.target.value;
 
-    this.setState({ hexInput: inputValue });
+    this.setState({hexInput: inputValue});
   };
 
   handleHexInputBlur = () => {
-    let { hexInput, hsva } = this.state;
+    let {hexInput, hsva} = this.state;
 
     hexInput = hexInput.trim();
 
     if (!hexInput) {
-      this.setState({ hexInput: hsvaToHex(hsva) });
+      this.setState({hexInput: hsvaToHex(hsva)});
       return;
     }
 
@@ -521,7 +625,7 @@ export class CustomColorPicker extends React.Component {
     const hexRegex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
 
     if (!hexRegex.test(hexInput)) {
-      this.setState({ hexInput: hsvaToHex(hsva) });
+      this.setState({hexInput: hsvaToHex(hsva)});
       return;
     }
 
@@ -529,7 +633,7 @@ export class CustomColorPicker extends React.Component {
 
     const finalHex = hsvaToHex(newHsva);
 
-    this.setState({ hsva: newHsva, hexInput: finalHex });
+    this.setState({hsva: newHsva, hexInput: finalHex});
 
     if (this.props.hsvaConvertHex) {
       this.props.hsvaConvertHex(newHsva);
@@ -537,7 +641,7 @@ export class CustomColorPicker extends React.Component {
   };
 
   render() {
-    const { hsva, hexInput } = this.state;
+    const {hsva, hexInput} = this.state;
     const currentColorRgba = hsvaToCssRgba(hsva);
 
     const radius = this.wheelSize / 2;
@@ -547,12 +651,11 @@ export class CustomColorPicker extends React.Component {
     const markerY = radius + hsva.s * effectiveRadius * Math.sin(hsva.h * 2 * Math.PI);
 
     return (
-      <div style={{ maxWidth: 300 }}>
-        <div style={{ marginBottom: 20 }}>
+      <div style={{maxWidth: 300}}>
+        <div style={{marginBottom: 20}}>
           <h3>Выбрать цвет ячейки</h3>
         </div>
 
-        {/* Цветовое колесо */}
         <div
           style={{
             position: 'relative',
@@ -573,7 +676,6 @@ export class CustomColorPicker extends React.Component {
               display: 'block',
             }}
           />
-          {/* Маркер */}
           <div
             style={{
               position: 'absolute',
@@ -590,8 +692,7 @@ export class CustomColorPicker extends React.Component {
           />
         </div>
 
-        {/* инпут ввода цвета в формате hex */}
-        <div style={{ marginTop: 20 }}>
+        <div style={{marginTop: 20}}>
           <TextField
             label="Указать цвет в формате hex"
             variant="outlined"
@@ -599,7 +700,7 @@ export class CustomColorPicker extends React.Component {
             value={hexInput}
             onChange={this.handleHexInputChange}
             onBlur={this.handleHexInputBlur}
-            inputProps={{ maxLength: 9, style: { padding: "10px 16px" } }}
+            inputProps={{maxLength: 9, style: {padding: "10px 16px"}}}
             sx={{
               marginTop: 2,
               "& .MuiInputBase-root": {
@@ -627,7 +728,6 @@ export class CustomColorPicker extends React.Component {
           />
         </div>
 
-        {/* Слайдер прозрачности (CSS) */}
         <div
           ref={this.alphaSliderRef}
           style={{
@@ -645,26 +745,7 @@ export class CustomColorPicker extends React.Component {
           {this.renderAlphaSlider()}
         </div>
 
-        {/* Swatches (готовые цвета) */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-          {this.colorSwatches.map((clr, idx) => (
-            <div
-              key={idx}
-              onClick={() => this.handleSwatchClick(clr)}
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: '50%',
-                cursor: 'pointer',
-                backgroundColor: clr,
-                border:
-                  hsvaToHex(this.state.hsva).toLowerCase() === clr.toLowerCase()
-                    ? '2px solid #000'
-                    : '2px solid transparent',
-              }}
-            />
-          ))}
-        </div>
+        {this.renderColorPresets()}
       </div>
     );
   }
