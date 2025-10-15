@@ -238,9 +238,9 @@ class SiteSale2_ extends React.Component {
                   { this.state.findPromoList.map( (item, key) =>
                     <TableRow key={key}>
                       <TableCell>
-                        <Button variant="contained" onClick={this.editPromo.bind(this, item.id)}>
+                        <Link href={"/site_sale_2/edit/"+item.id} style={{ zIndex: 10, fontWeight: 'bold', fontSize: '18px', textDecoration: 'none', color: 'rgba(0, 0, 0, 0.87)' }}>
                           {item.name}
-                        </Button>
+                        </Link>
                       </TableCell>
                       <TableCell>{ parseInt(item.city_id) == 0 ? 'Все города' : item.city_name }</TableCell>
                       <TableCell>{item.def_count}</TableCell>

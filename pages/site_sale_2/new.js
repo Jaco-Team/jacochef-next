@@ -28,7 +28,7 @@ import TextareaAutosize from '@mui/material/TextareaAutosize';
 import DatePicker from "react-multi-date-picker"
 
 import dayjs from 'dayjs';
-import {api_laravel} from "@/src/api_new";
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 import { formatDate } from '@/src/helpers/ui/formatDate';
 import MyAlert from '@/components/shared/MyAlert';
 
@@ -973,7 +973,7 @@ class SiteSale2_new_ extends React.Component {
             <Button color="primary" onClick={ () => { this.setState({ modalDialog: false }) } }>Хорошо</Button>
           </DialogActions>
         </Dialog>
-        <Grid container style={{ marginTop: '80px', paddingLeft: '24px' }}>
+        <Grid container style={{ marginTop: '80px', paddingLeft: '24px', paddingRight: '24px', marginBottom: '24px' }}>
           <Grid
             size={{
               xs: 12,
@@ -1399,8 +1399,8 @@ class SiteSale2_new_ extends React.Component {
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
             <Grid
               size={{
-                xs: 12,
-                sm: 12
+                xs: 11,
+                sm: 11
               }}>
               <MyDatePicker multiple={false} label={'Кроме дат'} value={this.state.testDate} func={ this.changeDataData.bind(this, 'testDate') } />
             </Grid>
