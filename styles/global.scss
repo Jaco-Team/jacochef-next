@@ -1,5 +1,5 @@
 // $Roboto: var(--inter-font);
-
+@import 'fonts';
 * {
   // font-family: $Roboto;
 }
@@ -84,6 +84,10 @@ th[class*='tableCelHead'] {
   background-color: #e5e5e5 !important;
 }
 
+.montserrat-family * {
+  font-family: $font-family-primary !important;
+}
+
 .button {
   display: flex !important;
   justify-content: space-between !important;
@@ -164,7 +168,7 @@ th[class*='tableCelHead'] {
       height: auto;
     }
   }
- 
+
 }
 
 #client {

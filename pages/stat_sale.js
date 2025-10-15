@@ -464,7 +464,7 @@ export class CustomColorPicker extends React.Component {
                     backgroundColor: color,
                     border:
                       hsvaToHex(this.state.hsva).toLowerCase() === color.toLowerCase()
-                        ? '2px solid #1976d2'
+                        ? '3px solid #1976d2'
                         : '1px solid #ddd',
                     boxShadow:
                       hsvaToHex(this.state.hsva).toLowerCase() === color.toLowerCase()
@@ -473,7 +473,7 @@ export class CustomColorPicker extends React.Component {
                     transition: 'all 0.2s ease',
                   }}
                   title={color}
-                />
+                ></div>
               ))}
             </div>
           ))}
@@ -1514,8 +1514,8 @@ class StatSale_Tab_Sett extends React.Component {
             if (typeKey === 'orders') {
               return {
                 id: item.id,
-                value: item.value / 100,
-                value_range: `${item.max_value / 100} - ${item.min_value / 100}`,
+                value: item.value,
+                value_range: `${item.max_value} - ${item.min_value}`,
                 backgroundColor: item.value_color,
               };
             } else {
@@ -2010,7 +2010,7 @@ class StatSale_Tab_Clients extends React.Component {
 
           const percentClientsRaw       = calcPercent(active, people);
           const percentActiveAccountsRaw = calcPercent(registred, active);
-          const ordersAvgRaw            = calcAvg(orders, active);
+          const ordersAvgRaw            = calcAvg(orders, registred);
           const averageCheckRaw         = calcAverageCheck(summ, orders);
 
           const matchingClients = rates.find(rate =>
@@ -2027,8 +2027,8 @@ class StatSale_Tab_Clients extends React.Component {
 
           const matchingOrders = rates.find(rate =>
             rate.type === 'orders' &&
-            ordersAvgRaw <= (rate.max_value / 100) &&
-            ordersAvgRaw >= (rate.min_value / 100)
+            ordersAvgRaw <= (rate.max_value) &&
+            ordersAvgRaw >= (rate.min_value)
           );
 
           const matchingAvg = rates.find(rate =>
@@ -2226,7 +2226,16 @@ class StatSale_Tab_Clients extends React.Component {
                 xs: 12,
                 sm: 12
               }}>
-              <TableContainer sx={{ display: 'flex', flexDirection: 'row', overflowX: 'auto', overflowY: 'hidden', paddingBottom: 5 }}>
+              <TableContainer
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
+                  paddingBottom: 5,
+                }}
+                className="montserrat-family"
+              >
                 {data_clients_list.map((table, index) => (
 
                   <Table
@@ -2378,11 +2387,11 @@ class StatSale_Tab_Clients extends React.Component {
                             <TableCell>аккаунтов</TableCell>
                             <TableCell>{item.activeFormatted}</TableCell>
                             <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
-                            <TableCell>актив акк</TableCell>
+                            <TableCell>актив. акк.</TableCell>
                             <TableCell>{item.registredFormatted}</TableCell>
                             <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
                             <TableCell>аккаунтов</TableCell>
-                            <TableCell>{item.activeFormatted}</TableCell>
+                            <TableCell>{item.registredFormatted}</TableCell>
                             <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
                             <TableCell>заказов</TableCell>
                             <TableCell>{item.ordersFormatted}</TableCell>
@@ -2462,7 +2471,7 @@ const DataTable = ({ tableData, openGraphModal }) => {
   const firstMonthKey = `${year}-${month}`;
 
   return (
-    <TableContainer component={Paper} sx={{ overflowX: 'auto', overflowY: 'hidden', p: 0, m: 0, pb: 5 }}>
+    <TableContainer component={Paper} sx={{ overflowX: 'auto', overflowY: 'hidden', p: 0, m: 0, pb: 5 }} className="montserrat-family">
       <Table stickyHeader size="small" sx={{ borderCollapse: 'separate', borderSpacing: 0, '& .MuiTableCell-root': { textAlign: 'center', whiteSpace: 'nowrap', border: thinBorder } }}>
 
         <TableHead>
