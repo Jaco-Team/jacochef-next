@@ -19,7 +19,7 @@ import DatePicker from "react-multi-date-picker"
 
 
 import dayjs from 'dayjs';
-import {api_laravel} from "@/src/api_new";
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 import { formatDate } from '@/src/helpers/ui/formatDate';
 
 class MyDatePicker extends React.PureComponent {
@@ -295,6 +295,7 @@ class SiteSale2_edit_ extends React.Component {
         module_name: res.module_info.name,
         promo_action_list: res.promo_action_list,
         promo_sale_list: res.promo_sale_list,
+        promo_sale: res.promo_sale_list.find( (item) => parseInt(item.name) == parseInt(res.promo.count_promo)).id,
         type_sale: res.promo.promo_type_sale,
 
         date_start: dayjs(res.promo.date1),
@@ -390,7 +391,7 @@ class SiteSale2_edit_ extends React.Component {
         promo_len: this.state.promo_length,
         promo_name: this.state.promo_name,
         type_sale: this.state.type_sale,
-        promo_sale: this.state.promo_sale,
+        promo_sale: parseInt( this.state.sale_type ) == 2 ? this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale)) : parseInt(this.state.promo_sale),
         generate: this.state.generate_new ? 1 : 0,
         promo_in_count: this.state.count_action,
         promo_action: this.state.promo_action,
