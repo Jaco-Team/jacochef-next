@@ -294,6 +294,7 @@ class SiteSale2_edit_ extends React.Component {
         cities: res.cities,
         module_name: res.module_info.name,
         promo_action_list: res.promo_action_list,
+        promo_action: res.promo_action_list.find( (item) => parseInt(item.id) == parseInt(res.promo.promo_action)).id,
         promo_sale_list: res.promo_sale_list,
         promo_sale: res.promo_sale_list.find( (item) => parseInt(item.name) == parseInt(res.promo.count_promo)).id,
         type_sale: res.promo.promo_type_sale,
