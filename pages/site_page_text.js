@@ -115,16 +115,16 @@ class SitePageText_Modal extends React.Component {
       'у': 'u',    'ф': 'f',    'х': 'h',    'ц': 'c',    'ч': 'ch',
       'ш': 'sh',   'щ': 'sh',   'ь': '',     'ы': 'y',    'ъ': '',
       'э': 'e',    'ю': 'iu',   'я': 'ia',
-  
+
       'А': 'A',    'Б': 'B',    'В': 'V',    'Г': 'G',    'Д': 'D',
       'Е': 'E',    'Ё': 'E',    'Ж': 'ZH',   'З': 'Z',    'И': 'I',
       'Й': 'Y',    'К': 'K',    'Л': 'L',    'М': 'M',    'Н': 'N',
       'О': 'O',    'П': 'P',    'Р': 'R',    'С': 'S',    'Т': 'T',
       'У': 'U',    'Ф': 'F',    'Х': 'H',    'Ц': 'C',    'Ч': 'CH',
       'Ш': 'SH',   'Щ': 'SH',   'Ь': '',     'Ы': 'Y',    'Ъ': '',
-      'Э': 'E',    'Ю': 'IU',   'Я': 'IA',   ' ': '_',    '%': '' 
+      'Э': 'E',    'Ю': 'IU',   'Я': 'IA',   ' ': '_',    '%': ''
     };
-  
+
     for (let i = 0; i < word.length; i++) {
       if (converter[word[i]] === undefined){
         answer += '';
@@ -132,7 +132,7 @@ class SitePageText_Modal extends React.Component {
         answer += converter[word[i]];
       }
     }
-  
+
     return answer;
   }
 
@@ -150,7 +150,7 @@ class SitePageText_Modal extends React.Component {
 
       return;
 
-    } 
+    }
 
     if (!item.page_name) {
 
@@ -162,40 +162,40 @@ class SitePageText_Modal extends React.Component {
 
       return;
 
-    } 
+    }
 
-    if(!item.link) {
-      
+    if(!item.link && (item.page_id !== 1 && item.page_id !== 55)) {
+
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: 'Необходимо указать ссылку'
       });
-      
+
       return;
-    } 
+    }
 
     if(!item.page_h || !item.title ) {
-      
+
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: 'Необходимо указать все заголовки'
       });
-      
+
       return;
-    } 
+    }
 
     if(!item.description) {
-      
+
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: 'Необходимо указать описание'
       });
-      
+
       return;
-    } 
+    }
 
     this.props.save(item);
 
@@ -343,7 +343,7 @@ class SitePageText_Modal extends React.Component {
                   func={this.changeItemText.bind(this, 'content')}
                 />
               </Grid>
-            
+
             </Grid>
           </DialogContent>
           <DialogActions>
@@ -427,7 +427,7 @@ class SitePageText_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
-    
+
     this.setState({
       is_load: true,
     });

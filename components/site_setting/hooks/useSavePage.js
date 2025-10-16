@@ -19,7 +19,7 @@ export default function useSavePage(onClose, showAlert, getData, onAfterSave) {
       return false;
     }
 
-    if (!item.link) {
+    if (!item.link && (item.page_id !== 1 && item.page_id !== 55)) {
       showAlert("Необходимо указать ссылку", false);
       return false;
     }
