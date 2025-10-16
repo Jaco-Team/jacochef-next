@@ -2390,7 +2390,7 @@ class StatSale_Tab_Clients extends React.Component {
                             <TableCell>актив. акк.</TableCell>
                             <TableCell>{item.registredFormatted}</TableCell>
                             <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
-                            <TableCell>аккаунтов</TableCell>
+                            <TableCell>актив. акк.</TableCell>
                             <TableCell>{item.registredFormatted}</TableCell>
                             <TableCell sx={emptyCellStyle}>{emptyCellContent}</TableCell>
                             <TableCell>заказов</TableCell>
