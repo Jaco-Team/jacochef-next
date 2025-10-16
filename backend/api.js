@@ -1,13 +1,22 @@
 "use server";
 
 import axios from "axios";
-import cookie from "cookie";
-import queryString from "query-string";
+// 1) фикс импорта cookie
+import { parse } from "cookie";
+// (опционально: у query-string лучше забирать именованный stringify)
+import { stringify } from "query-string";
 
-export async function getDataSSR(module, method, rawCookies = "", data = {}, dop_type = {}) {
+export async function getDataSSR(
+  module,
+  method,
+  rawCookies = "",
+  data = {},
+  dop_type = {}
+) {
   let redirect = null;
 
-  const cookies = cookie.parse(rawCookies);
+  // 2) используем именованную функцию
+  const cookies = parse(rawCookies || "");
   const login = cookies.token || null;
 
   if (!login) {
@@ -19,8 +28,7 @@ export async function getDataSSR(module, method, rawCookies = "", data = {}, dop
     process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/"
   }/${module}/${method}`;
 
-  // console.log(`apiUrl: ${apiUrl}`);
-  const requestData = queryString.stringify({
+  const requestData = stringify({
     method,
     module,
     version: 2,
@@ -29,15 +37,21 @@ export async function getDataSSR(module, method, rawCookies = "", data = {}, dop
   });
 
   try {
-    const response = await axios.post(apiUrl, requestData, dop_type);
+    // 3) axios по умолчанию кидает исключение на 4xx/5xx.
+    // Если хочешь обработать 401/403 в этом же блоке — разреши любой статус:
+    const response = await axios.post(apiUrl, requestData, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      validateStatus: () => true,
+      ...dop_type,
+    });
 
-    const responseData = response.data;
-
-    if (response.status === 401) redirect = { destination: "/auth", permanent: false };
-    if (response.status === 403) redirect = { destination: "/", permanent: false };
+    if (response.status === 401)
+      redirect = { destination: "/auth", permanent: false };
+    if (response.status === 403)
+      redirect = { destination: "/", permanent: false };
 
     if (redirect) return { redirect };
-    return responseData;
+    return response.data;
   } catch (err) {
     console.error("SSR fetch error:", err);
     return null; // fail silently for SSR
