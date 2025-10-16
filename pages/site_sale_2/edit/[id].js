@@ -186,7 +186,7 @@ class SiteSale2_edit_ extends React.Component {
         {id: 2, name: 'На точке'}
       ],
 
-      auto_text: false,
+      auto_text: true,
       where_promo: 1,
       promo_name: '',
       generate_new: false,
@@ -373,6 +373,10 @@ class SiteSale2_edit_ extends React.Component {
 
       let promo_items = [];
 
+      this.state.saleItem.map( (item) => {
+        promo_items.push(item.id)
+      } )
+
 
       let promo_cat = [];
       let dateList = [];
@@ -388,7 +392,6 @@ class SiteSale2_edit_ extends React.Component {
         cert_text: this.state.cert_text,
         addr: this.state.numberList,
         where_promo: this.state.where_promo,
-        promo_count: this.state.promo_count,
         promo_len: this.state.promo_length,
         promo_name: this.state.promo_name,
         type_sale: this.state.type_sale,
@@ -435,7 +438,6 @@ class SiteSale2_edit_ extends React.Component {
         promo_items_add: JSON.stringify(this.state.itemsAdd),
         promo_items_sale: JSON.stringify(this.state.itemsAddPrice),
         promo_conditions_items: JSON.stringify(conditionItems),
-
         date_between: dateList,
 
         for_new: this.state.for_new ? 1 : 0,
@@ -444,11 +446,8 @@ class SiteSale2_edit_ extends React.Component {
         for_number: this.state.for_number ? 1 : 0,
         for_number_text: this.state.for_number_text
       };
-      console.log(data);
 
       let res = await this.getData('save_edit_promo', data);
-
-      console.log( res )
 
       this.setState({
         modalDialog: true,
@@ -834,13 +833,6 @@ class SiteSale2_edit_ extends React.Component {
                 sm: 3
               }}>
               <MyTextInput value={this.state.count_action} func={ this.changeData.bind(this, 'count_action') } label='Количество активаций' />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3
-              }}>
-              <MyTextInput value={this.state.promo_count} func={ this.changeData.bind(this, 'promo_count') } label='Количество промокодов' />
             </Grid>
 
           </Grid>
