@@ -178,9 +178,75 @@
 //   }
 // }
 
+
+//работает мобила
+// "use client";
+
+// import {useEffect, useState} from "react";
+// import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+// import NativeSelect from "@mui/material/NativeSelect";
+
+// const detectMobile = () =>
+//   typeof navigator !== "undefined" && /iPhone|iPad|Android|Mobile/i.test(navigator.userAgent);
+
+// export function MySelect(props) {
+//   const { data = [], multiple, is_none = true, label, disabled, style } = props;
+
+//   const items = data.map(i => ({ ...i, id: String(i.id) }));
+//   const normalizedValue = multiple
+//     ? Array.isArray(props.value) ? props.value.map(String) : []
+//     : props.value == null ? "" : String(props.value);
+
+//   // ⬇️ до маунта считаем, что НЕ мобилка — совпадёт с SSR
+//   const [mounted, setMounted] = useState(false);
+//   useEffect(() => setMounted(true), []);
+//   const isMobile = (props.is_mobile ?? (mounted ? detectMobile() : false)) && !multiple;
+
+//   const emitEvent = (e, value) => {
+//     const v = Array.isArray(value) ? value.map(String) : String(value);
+//     props.func?.({ ...e, target: { ...e.target, value: v } });
+//   };
+
+//   const labelId = "my-select-label";
+//   // ключ, чтобы после маунта безопасно перестроить контрол
+//   const key = isMobile ? "native" : "mui";
+
+//   return (
+//     <FormControl fullWidth variant="outlined" size="small" style={style} key={key}>
+//       {label && <InputLabel id={labelId}>{label}</InputLabel>}
+
+//       {isMobile ? (
+//         <NativeSelect
+//           aria-labelledby={labelId}
+//           value={normalizedValue}
+//           disabled={!!disabled}
+//           onChange={(e) => emitEvent(e, e.target.value)}
+//         >
+//           {is_none && <option value="">None</option>}
+//           {items.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+//         </NativeSelect>
+//       ) : (
+//         <Select
+//           labelId={labelId}
+//           value={normalizedValue}
+//           label={label}
+//           disabled={!!disabled}
+//           multiple={!!multiple}
+//           onChange={(e) => { e.persist?.(); emitEvent(e, e.target.value); }}
+//           displayEmpty
+//           MenuProps={{ disablePortal: true, disableScrollLock: true }}
+//         >
+//           {is_none && !multiple && <MenuItem value=""><em>None</em></MenuItem>}
+//           {items.map(i => <MenuItem key={i.id} value={i.id}>{i.name}</MenuItem>)}
+//         </Select>
+//       )}
+//     </FormControl>
+//   );
+// }
+
 "use client";
 
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import NativeSelect from "@mui/material/NativeSelect";
 
@@ -190,52 +256,103 @@ const detectMobile = () =>
 export function MySelect(props) {
   const { data = [], multiple, is_none = true, label, disabled, style } = props;
 
-  const items = data.map(i => ({ ...i, id: String(i.id) }));
+  // ids -> строки
+  const items = data.map((i) => ({ ...i, id: String(i.id) }));
+
+  // value -> строка / массив строк
   const normalizedValue = multiple
     ? Array.isArray(props.value) ? props.value.map(String) : []
     : props.value == null ? "" : String(props.value);
 
-  // ⬇️ до маунта считаем, что НЕ мобилка — совпадёт с SSR
+  // до маунта считаем НЕ мобилка (совпадёт с SSR)
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const isMobile = (props.is_mobile ?? (mounted ? detectMobile() : false)) && !multiple;
 
-  const emitEvent = (e, value) => {
+  const uid = props.id || "my-select-" + (label || "lbl");
+  const labelId = uid + "-label";
+
+  // единый эмиттер наверх: имитируем DOM event с target.value
+  const emitEvent = (srcEvent, value) => {
     const v = Array.isArray(value) ? value.map(String) : String(value);
-    props.func?.({ ...e, target: { ...e.target, value: v } });
+    props.func?.({
+      ...srcEvent,
+      target: { ...(srcEvent?.target || {}), value: v },
+    });
   };
 
-  const labelId = "my-select-label";
-  // ключ, чтобы после маунта безопасно перестроить контрол
-  const key = isMobile ? "native" : "mui";
-
   return (
-    <FormControl fullWidth variant="outlined" size="small" style={style} key={key}>
+    <FormControl fullWidth variant="outlined" size="small" style={style}>
       {label && <InputLabel id={labelId}>{label}</InputLabel>}
 
       {isMobile ? (
+        // ===== Мобилка: нативный select — стабильно стреляет onChange =====
         <NativeSelect
+          id={uid}
           aria-labelledby={labelId}
           value={normalizedValue}
           disabled={!!disabled}
           onChange={(e) => emitEvent(e, e.target.value)}
         >
           {is_none && <option value="">None</option>}
-          {items.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+          {items.map((i) => (
+            <option key={i.id} value={i.id}>{i.name}</option>
+          ))}
         </NativeSelect>
       ) : (
+        // ===== Десктоп: обычный MUI Select + подстраховка на MenuItem.onClick =====
         <Select
+          id={uid}
           labelId={labelId}
           value={normalizedValue}
           label={label}
           disabled={!!disabled}
           multiple={!!multiple}
-          onChange={(e) => { e.persist?.(); emitEvent(e, e.target.value); }}
+          onChange={(e, child) => {
+            // штатный канал
+            let next = e?.target?.value;
+            // если вдруг пусто — берём из выбранного MenuItem
+            if (next == null && child && child.props) next = child.props.value;
+            e.persist?.();
+            emitEvent(e, next);
+          }}
           displayEmpty
           MenuProps={{ disablePortal: true, disableScrollLock: true }}
+          renderValue={(selected) => {
+            if (multiple) {
+              const ids = selected || [];
+              if (ids.length === 0) return "None";
+              return items
+                .filter((i) => ids.includes(i.id))
+                .map((i) => i.name)
+                .join(", ");
+            } else {
+              if (selected === "" || selected == null) return "None";
+              const sel = items.find((i) => i.id === selected);
+              return sel ? sel.name : "None";
+            }
+          }}
         >
-          {is_none && !multiple && <MenuItem value=""><em>None</em></MenuItem>}
-          {items.map(i => <MenuItem key={i.id} value={i.id}>{i.name}</MenuItem>)}
+          {is_none && !multiple && (
+            <MenuItem value="">
+              <em>None</em>
+            </MenuItem>
+          )}
+          {items.map((i) => (
+            <MenuItem
+              key={i.id}
+              value={i.id}
+              // 🛡 подстраховка: вручную эмитим «выбор» при клике на пункт
+              onClick={(mouseEvent) => {
+                console.log('1234')
+                // если по какой-то причине Select не кинул onChange — сами пушнём значение
+                emitEvent(mouseEvent, i.id);
+              }}
+              style={{ color: i.color ?? undefined, zIndex: 9999 }}
+            >
+              {i.name}
+            </MenuItem>
+          ))}
         </Select>
       )}
     </FormControl>
