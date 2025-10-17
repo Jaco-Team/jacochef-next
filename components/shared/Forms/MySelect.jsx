@@ -18,14 +18,32 @@ export function MySelect(props) {
     : String(props.value);
 
   // Обёртка onChange, чтобы наружу всегда уходил корректный тип
-  const handleChange = (e) => {
-    if (multiple) {
-      const arr = e.target.value || [];
-      props.func && props.func(arr);
-    } else {
-      const v = e.target.value;
-      props.func && props.func(v === "" ? null : v);
-    }
+  // const handleChange = (e) => {
+  //   if (multiple) {
+  //     const arr = e.target.value || [];
+  //     props.func && props.func(arr);
+  //   } else {
+  //     const v = e.target.value;
+  //     props.func && props.func(v === "" ? null : v);
+  //   }
+  // };
+
+  // Оборачиваем onChange и нормализуем event
+  const handleChange = (muiEvent) => {
+    // muiEvent.target.value может быть массивом или строкой
+    const value = muiEvent.target.value;
+
+    // 🧠 Костыль: создаём новый синтетический event с таким же интерфейсом, как у обычного <select>
+    const customEvent = {
+      ...muiEvent,
+      target: {
+        ...muiEvent.target,
+        value,
+      },
+    };
+
+    // Пробрасываем наружу как будто это обычный DOM event
+    props.func && props.func(customEvent);
   };
 
   const labelId = "my-select-label";
@@ -43,11 +61,12 @@ export function MySelect(props) {
         disabled={!!props.disabled}
         multiple={!!multiple}
         //onChange={handleChange}
-        onChange={props.func}
+        //onChange={props.func}
+        onChange={handleChange}
         displayEmpty
         
         // Иногда на мобильных помогает:
-        // MenuProps={{ disablePortal: true }}
+        MenuProps={{ disablePortal: true }}
       >
         {is_none && !multiple && (
           <MenuItem value="">
