@@ -1,13 +1,19 @@
 "use server";
 
 import axios from "axios";
-import cookie from "cookie";
-import queryString from "query-string";
+import { parse } from "cookie";
+import queryString from "query-string"; // ← исправлено
 
-export async function getDataSSR(module, method, rawCookies = "", data = {}, dop_type = {}) {
+export async function getDataSSR(
+  module,
+  method,
+  rawCookies = "",
+  data = {},
+  dop_type = {}
+) {
   let redirect = null;
 
-  const cookies = cookie.parse(rawCookies);
+  const cookies = parse(rawCookies || "");
   const login = cookies.token || null;
 
   if (!login) {
@@ -19,7 +25,6 @@ export async function getDataSSR(module, method, rawCookies = "", data = {}, dop
     process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/"
   }/${module}/${method}`;
 
-  // console.log(`apiUrl: ${apiUrl}`);
   const requestData = queryString.stringify({
     method,
     module,
@@ -29,17 +34,21 @@ export async function getDataSSR(module, method, rawCookies = "", data = {}, dop
   });
 
   try {
-    const response = await axios.post(apiUrl, requestData, dop_type);
+    const response = await axios.post(apiUrl, requestData, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      validateStatus: () => true,
+      ...dop_type,
+    });
 
-    const responseData = response.data;
-
-    if (response.status === 401) redirect = { destination: "/auth", permanent: false };
-    if (response.status === 403) redirect = { destination: "/", permanent: false };
+    if (response.status === 401)
+      redirect = { destination: "/auth", permanent: false };
+    if (response.status === 403)
+      redirect = { destination: "/", permanent: false };
 
     if (redirect) return { redirect };
-    return responseData;
+    return response.data;
   } catch (err) {
     console.error("SSR fetch error:", err);
-    return null; // fail silently for SSR
+    return null;
   }
 }
