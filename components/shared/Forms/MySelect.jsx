@@ -3,64 +3,76 @@
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
 export function MySelect(props) {
-  // normalize API ids to strings
-  const normalizedData = (props.data || []).map((item) => ({
-    ...item,
-    id: String(item.id),
-  }));
+  const { data = [], multiple, is_none = true } = props;
 
-  // add None option at the top if needed
-  // TODO: this behavior is counterintuitive, swap
-  if (props.is_none !== false) { 
-    normalizedData.unshift({ id: "none", name: "None" });
-  }
+  // Нормализуем id в строки
+  const items = data.map((i) => ({ ...i, id: String(i.id) }));
 
-  // normalize value
-  const normalizedValue = props.multiple
+  // Приводим value в правильный вид
+  const normalizedValue = multiple
     ? Array.isArray(props.value)
       ? props.value.map(String)
       : []
-    : props.value != null
-    ? String(props.value)
-    : "";
+    : props.value == null
+    ? "" // пустое значение
+    : String(props.value);
 
-  // force display of selected name
-  const renderValue = (selected) => {
-    if (props.multiple) {
-      if (!selected || selected.length === 0) return "None";
-      return normalizedData
-        .filter((item) => selected.includes(item.id))
-        .map((item) => item.name)
-        .join(", ");
+  // Обёртка onChange, чтобы наружу всегда уходил корректный тип
+  const handleChange = (e) => {
+    if (multiple) {
+      const arr = e.target.value || [];
+      props.func && props.func(arr);
     } else {
-      const sel = normalizedData.find((i) => i.id === normalizedValue);
-      return sel ? sel.name : "None";
+      const v = e.target.value;
+      props.func && props.func(v === "" ? null : v);
     }
   };
 
+  const labelId = "my-select-label";
+  const selectId = "my-select";
+
   return (
-    <FormControl
-      fullWidth
-      variant="outlined"
-      size="small"
-      style={props.style}
-    >
-      <InputLabel shrink={props.value !== undefined && props.value !== null}>
-        {props.label}
-      </InputLabel>
+    <FormControl fullWidth variant="outlined" size="small" style={props.style}>
+      {props.label && (
+        <InputLabel id={labelId}>{props.label}</InputLabel>
+      )}
       <Select
+        labelId={labelId}
+        id={selectId}
         value={normalizedValue}
         label={props.label}
         disabled={!!props.disabled}
+        multiple={!!multiple}
+        //onChange={handleChange}
         onChange={props.func}
-        multiple={!!props.multiple}
-        renderValue={renderValue}
+        displayEmpty
+        renderValue={(selected) => {
+          if (multiple) {
+            const ids = selected || [];
+            if (ids.length === 0) return "None";
+            return items
+              .filter((i) => ids.includes(i.id))
+              .map((i) => i.name)
+              .join(", ");
+          } else {
+            if (selected === "" || selected == null) return "None";
+            const sel = items.find((i) => i.id === selected);
+            return sel ? sel.name : "None";
+          }
+        }}
+        // Иногда на мобильных помогает:
+        // MenuProps={{ disablePortal: true }}
       >
-        {normalizedData?.map((item, key) => (
+        {is_none && !multiple && (
+          <MenuItem value="">
+            <em>None</em>
+          </MenuItem>
+        )}
+        {items.map((item) => (
           <MenuItem
-            key={key}
+            key={item.id}
             value={item.id}
-            style={{ color: item?.color ? item.color : null, zIndex: 9999 }}
+            style={{ color: item.color ?? undefined, zIndex: 9999 }}
           >
             {item.name}
           </MenuItem>
@@ -69,6 +81,78 @@ export function MySelect(props) {
     </FormControl>
   );
 }
+
+// "use client";
+
+// import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+
+// export function MySelect(props) {
+//   // normalize API ids to strings
+//   const normalizedData = (props.data || []).map((item) => ({
+//     ...item,
+//     id: String(item.id),
+//   }));
+
+//   // add None option at the top if needed
+//   // TODO: this behavior is counterintuitive, swap
+//   if (props.is_none !== false) { 
+//     normalizedData.unshift({ id: "none", name: "None" });
+//   }
+
+//   // normalize value
+//   const normalizedValue = props.multiple
+//     ? Array.isArray(props.value)
+//       ? props.value.map(String)
+//       : []
+//     : props.value != null
+//     ? String(props.value)
+//     : "";
+
+//   // force display of selected name
+//   const renderValue = (selected) => {
+//     if (props.multiple) {
+//       if (!selected || selected.length === 0) return "None";
+//       return normalizedData
+//         .filter((item) => selected.includes(item.id))
+//         .map((item) => item.name)
+//         .join(", ");
+//     } else {
+//       const sel = normalizedData.find((i) => i.id === normalizedValue);
+//       return sel ? sel.name : "None";
+//     }
+//   };
+
+//   return (
+//     <FormControl
+//       fullWidth
+//       variant="outlined"
+//       size="small"
+//       style={props.style}
+//     >
+//       <InputLabel shrink={props.value !== undefined && props.value !== null}>
+//         {props.label}
+//       </InputLabel>
+//       <Select
+//         value={normalizedValue}
+//         label={props.label}
+//         disabled={!!props.disabled}
+//         onChange={props.func}
+//         multiple={!!props.multiple}
+//         renderValue={renderValue}
+//       >
+//         {normalizedData?.map((item, key) => (
+//           <MenuItem
+//             key={key}
+//             value={item.id}
+//             style={{ color: item?.color ? item.color : null, zIndex: 9999 }}
+//           >
+//             {item.name}
+//           </MenuItem>
+//         ))}
+//       </Select>
+//     </FormControl>
+//   );
+// }
 
 // export class MySelect extends React.PureComponent {
 //   constructor(props) {
