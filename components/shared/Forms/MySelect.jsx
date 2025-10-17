@@ -34,12 +34,11 @@ export function MySelect(props) {
   return (
     <FormControl fullWidth variant="outlined" size="small" style={props.style}>
       {props.label && (
-        <InputLabel id={labelId}>{props.label}</InputLabel>
+        <InputLabel>{props.label}</InputLabel>
       )}
       <Select
-        labelId={labelId}
-        id={selectId}
-        value={normalizedValue}
+        //value={normalizedValue}
+        value={props.value}
         label={props.label}
         disabled={!!props.disabled}
         multiple={!!multiple}
