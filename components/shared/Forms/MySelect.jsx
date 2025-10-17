@@ -180,75 +180,64 @@
 
 "use client";
 
+import {useEffect, useState} from "react";
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import NativeSelect from "@mui/material/NativeSelect";
+
+const detectMobile = () =>
+  typeof navigator !== "undefined" && /iPhone|iPad|Android|Mobile/i.test(navigator.userAgent);
 
 export function MySelect(props) {
-  const { data = [], multiple, is_none = true } = props;
+  const { data = [], multiple, is_none = true, label, disabled, style } = props;
 
-  // 1) все id -> строки
-  const items = data.map((i) => ({ ...i, id: String(i.id) }));
-
-  // 2) value -> строка/массив строк
+  const items = data.map(i => ({ ...i, id: String(i.id) }));
   const normalizedValue = multiple
     ? Array.isArray(props.value) ? props.value.map(String) : []
     : props.value == null ? "" : String(props.value);
 
-  // 3) нормализуем событие и сохраняем его
-  const handleChange = (e) => {
-    console.log('handleChange')
-    e.persist?.(); // важно для iOS/React 18
-    const raw = e.target.value;
-    const normalized = Array.isArray(raw) ? raw.map(String) : String(raw);
+  // ⬇️ до маунта считаем, что НЕ мобилка — совпадёт с SSR
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isMobile = (props.is_mobile ?? (mounted ? detectMobile() : false)) && !multiple;
 
-    // делаем event-лайк объект с target.value
-    const customEvent = {
-      ...e,
-      target: {
-        ...e.target,
-        value: normalized,
-      },
-    };
-    props.func && props.func(customEvent);
+  const emitEvent = (e, value) => {
+    const v = Array.isArray(value) ? value.map(String) : String(value);
+    props.func?.({ ...e, target: { ...e.target, value: v } });
   };
 
-  const labelId = "my-select-label-" + (props.label || "lbl");
-  const selectId = labelId + "-ctl";
-
-  const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|Android/i.test(navigator.userAgent);
-
-  console.log('isMobile', isMobile)
+  const labelId = "my-select-label";
+  // ключ, чтобы после маунта безопасно перестроить контрол
+  const key = isMobile ? "native" : "mui";
 
   return (
-    <FormControl fullWidth variant="outlined" size="small" style={props.style}>
-      {props.label && <InputLabel id={labelId}>{props.label}</InputLabel>}
-      <Select
-        id={selectId}
-        labelId={labelId}
-        value={normalizedValue}         // <= контролируем строкой
-        label={props.label}
-        disabled={!!props.disabled}
-        multiple={!!multiple}
-        onChange={handleChange}
-        displayEmpty
-        // 4) фикс портала и скролл-лока для iOS
-        MenuProps={{ disablePortal: true, disableScrollLock: true }}
-      >
-        {is_none && !multiple && (
-          <MenuItem value="">
-            <em>None</em>
-          </MenuItem>
-        )}
+    <FormControl fullWidth variant="outlined" size="small" style={style} key={key}>
+      {label && <InputLabel id={labelId}>{label}</InputLabel>}
 
-        {items.map((item) => (
-          <MenuItem
-            key={item.id}
-            value={item.id}             // <= строка
-            style={{ color: item.color ?? undefined }}
-          >
-            {item.name}
-          </MenuItem>
-        ))}
-      </Select>
+      {isMobile ? (
+        <NativeSelect
+          aria-labelledby={labelId}
+          value={normalizedValue}
+          disabled={!!disabled}
+          onChange={(e) => emitEvent(e, e.target.value)}
+        >
+          {is_none && <option value="">None</option>}
+          {items.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+        </NativeSelect>
+      ) : (
+        <Select
+          labelId={labelId}
+          value={normalizedValue}
+          label={label}
+          disabled={!!disabled}
+          multiple={!!multiple}
+          onChange={(e) => { e.persist?.(); emitEvent(e, e.target.value); }}
+          displayEmpty
+          MenuProps={{ disablePortal: true, disableScrollLock: true }}
+        >
+          {is_none && !multiple && <MenuItem value=""><em>None</em></MenuItem>}
+          {items.map(i => <MenuItem key={i.id} value={i.id}>{i.name}</MenuItem>)}
+        </Select>
+      )}
     </FormControl>
   );
 }
