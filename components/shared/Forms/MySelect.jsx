@@ -30,6 +30,7 @@ export function MySelect(props) {
 
   // Оборачиваем onChange и нормализуем event
   const handleChange = (muiEvent) => {
+    console.log('handleChange', muiEvent, muiEvent.target.value)
     // muiEvent.target.value может быть массивом или строкой
     const value = muiEvent.target.value;
 
@@ -41,7 +42,7 @@ export function MySelect(props) {
         value,
       },
     };
-
+    console.log('return ', customEvent)
     // Пробрасываем наружу как будто это обычный DOM event
     props.func && props.func(customEvent);
   };
@@ -49,14 +50,16 @@ export function MySelect(props) {
   const labelId = "my-select-label";
   const selectId = "my-select";
 
+  console.log('value', props.value, normalizedValue)
+
   return (
     <FormControl fullWidth variant="outlined" size="small" style={props.style}>
       {props.label && (
         <InputLabel>{props.label}</InputLabel>
       )}
       <Select
-        //value={normalizedValue}
-        value={props.value}
+        value={normalizedValue}
+        // value={props.value}
         label={props.label}
         disabled={!!props.disabled}
         multiple={!!multiple}
