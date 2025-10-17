@@ -5,81 +5,61 @@ import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 export function MySelect(props) {
   const { data = [], multiple, is_none = true } = props;
 
-  // Нормализуем id в строки
+  // все id -> строки
   const items = data.map((i) => ({ ...i, id: String(i.id) }));
 
-  // Приводим value в правильный вид
+  // значение -> строка (или "" для пустого) / массив строк для multiple
   const normalizedValue = multiple
-    ? Array.isArray(props.value)
-      ? props.value.map(String)
-      : []
-    : props.value == null
-    ? "" // пустое значение
-    : String(props.value);
+    ? Array.isArray(props.value) ? props.value.map(String) : []
+    : props.value == null ? "" : String(props.value);
 
-  // Обёртка onChange, чтобы наружу всегда уходил корректный тип
-  // const handleChange = (e) => {
-  //   if (multiple) {
-  //     const arr = e.target.value || [];
-  //     props.func && props.func(arr);
-  //   } else {
-  //     const v = e.target.value;
-  //     props.func && props.func(v === "" ? null : v);
-  //   }
-  // };
-
-  // Оборачиваем onChange и нормализуем event
+  // нормализуем event и пробрасываем его вверх
   const handleChange = (muiEvent) => {
-    console.log('handleChange', muiEvent, muiEvent.target.value)
-    // muiEvent.target.value может быть массивом или строкой
-    const value = muiEvent.target.value;
+    muiEvent.persist?.(); // на всякий случай для iOS/React 18
+    const next = muiEvent.target.value;
 
-    // 🧠 Костыль: создаём новый синтетический event с таким же интерфейсом, как у обычного <select>
+    // гарантируем строку/массив строк
+    const normalized =
+      Array.isArray(next) ? next.map(String) : String(next);
+
+    // склеим «как нативный» и отдадим наверх
     const customEvent = {
       ...muiEvent,
       target: {
         ...muiEvent.target,
-        value,
+        value: normalized,
       },
     };
-    console.log('return ', customEvent)
-    // Пробрасываем наружу как будто это обычный DOM event
     props.func && props.func(customEvent);
   };
 
   const labelId = "my-select-label";
   const selectId = "my-select";
 
-  console.log('value', props.value, normalizedValue)
-
   return (
     <FormControl fullWidth variant="outlined" size="small" style={props.style}>
-      {props.label && (
-        <InputLabel>{props.label}</InputLabel>
-      )}
+      {props.label && <InputLabel id={labelId}>{props.label}</InputLabel>}
       <Select
-        value={normalizedValue}
-        // value={props.value}
+        id={selectId}
+        labelId={labelId}
+        value={normalizedValue}              
         label={props.label}
         disabled={!!props.disabled}
         multiple={!!multiple}
-        //onChange={handleChange}
-        //onChange={props.func}
         onChange={handleChange}
         displayEmpty
-        
-        // Иногда на мобильных помогает:
-        MenuProps={{ disablePortal: true }}
+        MenuProps={{ disablePortal: true, disableScrollLock: true }} // iOS fix
       >
         {is_none && !multiple && (
           <MenuItem value="">
             <em>None</em>
           </MenuItem>
         )}
+
         {items.map((item) => (
           <MenuItem
             key={item.id}
-            value={item.id}
+            value={item.id}                   
             style={{ color: item.color ?? undefined, zIndex: 9999 }}
           >
             {item.name}
