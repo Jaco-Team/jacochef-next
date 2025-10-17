@@ -2,25 +2,26 @@
 
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
+import { useState } from "react";
 
 export function MyDateTimePickerNew(props) {
+  const [localValue, setLocalValue] = useState(props.value ? dayjs(props.value) : null);
   return (
     <LocalizationProvider
       dateAdapter={AdapterDayjs}
       adapterLocale="ru"
     >
       <DateTimePicker
-        multiple={true}
         views={["year", "month", "day", "hours", "minutes"]}
-        mask="____-__-__ __:__"
         format="YYYY-MM-DD HH:mm"
         minDate={props.minDate ? props.minDate : null}
         label={props.label}
-        value={props.value}
+        value={localValue}
         disabled={props.disabled || props.disabled === true ? true : false}
-        //onChange={props.func}
+        onChange={(v) => setLocalValue(v ? dayjs(v) : null)}
         onBlur={props.onBlur ? props.onBlur : null}
-        onAccept={props.func} // <-- Изменения применяются только при нажатии "OK"
+        onAccept={() => props.func(localValue)} // <-- Изменения применяются только при нажатии "OK"
         className={"datePicker"}
         slotProps={{
           textField: { size: "small" },

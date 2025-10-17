@@ -43,28 +43,33 @@ class DateWithEditableTimePicker extends React.PureComponent {
   handleTimeChange = (newTime) => {
     const { value, onChange } = this.props;
     if (!newTime) return;
-    if (value) {
-      const fixedDate = dayjs(value).format('YYYY-MM-DD');
-      const updated = dayjs(`${fixedDate} ${dayjs(newTime).format('HH:mm')}`);
-      onChange(updated);
-    }
+
+    const fixedDate = value ? dayjs(value).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD");
+    const updated = dayjs(`${fixedDate} ${dayjs(newTime).format("HH:mm")}`);
+    onChange(updated);
   };
 
   render() {
     const { value, labelDate, labelTime, disabled, ...rest } = this.props;
+    const dateValue = value ? dayjs(value) : null;
+
     return (
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
         <div style={{ display: 'flex', gap: 8 }}>
           <TextField
             label={labelDate || "Дата"}
             value={value ? dayjs(value).format("YYYY-MM-DD") : ''}
-            InputProps={{ readOnly: true }}
+            slotProps={{
+              input: {
+                readOnly: true,
+              },
+            }}
             size="small"
             fullWidth
           />
           <TimePicker
             label={labelTime || "Время"}
-            value={value || null}
+            value={dateValue}
             onChange={this.handleTimeChange}
             disabled={disabled}
             ampm={false}
@@ -75,7 +80,6 @@ class DateWithEditableTimePicker extends React.PureComponent {
                 inputProps: { readOnly: true },
               },
             }}
-            disableClearable
             {...rest}
           />
         </div>
@@ -348,7 +352,7 @@ class Lamps_Modal_Add_Active extends React.Component {
     const time_end = this.state.time_end;
 
     if(data === 'time_start' && !time_end && event) {
-
+      // console.log(`Try new time start: ${event}`);
       const updatedEvent = dayjs(event);
       const time_end = updatedEvent.add(1, 'hour');
 

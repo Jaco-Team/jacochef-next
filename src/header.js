@@ -362,7 +362,7 @@ export default function Header() {
 									form: "autocomplete-form",
 								}}
 							/>}
-						autoComplete="off"
+						autoComplete={false}
   					autoHighlight={false}
   					clearOnBlur={false}
 					/>

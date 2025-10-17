@@ -1,5 +1,5 @@
 // $Roboto: var(--inter-font);
-@import 'fonts';
+@use 'fonts' as *;
 * {
   // font-family: $Roboto;
 }
