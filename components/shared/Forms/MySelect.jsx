@@ -15,6 +15,7 @@ export function MySelect(props) {
 
   // нормализуем event и пробрасываем его вверх
   const handleChange = (muiEvent) => {
+    console.log('handleChange', muiEvent.target.value)
     muiEvent.persist?.(); // на всякий случай для iOS/React 18
     const next = muiEvent.target.value;
 
@@ -36,19 +37,17 @@ export function MySelect(props) {
   const labelId = "my-select-label";
   const selectId = "my-select";
 
+  console.log('value', props.value, normalizedValue)
+
   return (
     <FormControl fullWidth variant="outlined" size="small" style={props.style}>
-      {props.label && <InputLabel id={labelId}>{props.label}</InputLabel>}
+      {props.label && <InputLabel >{props.label}</InputLabel>}
       <Select
-        id={selectId}
-        labelId={labelId}
         value={normalizedValue}              
         label={props.label}
         disabled={!!props.disabled}
         multiple={!!multiple}
         onChange={handleChange}
-        displayEmpty
-        MenuProps={{ disablePortal: true, disableScrollLock: true }} // iOS fix
       >
         {is_none && !multiple && (
           <MenuItem value="">
