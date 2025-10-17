@@ -347,15 +347,15 @@ class Lamps_Modal_Add_Active extends React.Component {
     this.props.onClose();
   }
 
-  changeDateRange(data, event) {
+  changeDateRange(data, newValue) {
     
     const time_end = this.state.time_end;
 
-    if(data === 'time_start' && !time_end && event) {
-      // console.log(`Try new time start: ${event}`);
-      const updatedEvent = dayjs(event);
+    if(data === 'time_start' && !time_end && newValue) {
+      // console.log(`Try new time start: ${newValue}`);
+      const updatedEvent = dayjs(newValue);
       const time_end = updatedEvent.add(1, 'hour');
-
+      // console.log(`Try new time end: ${time_end}`);
       this.setState({
         time_end,
       });
@@ -363,7 +363,7 @@ class Lamps_Modal_Add_Active extends React.Component {
     }
 
     this.setState({
-      [data]: event ? event : null,
+      [data]: newValue ? newValue : null,
     });
   }
 
