@@ -142,38 +142,113 @@
 //   );
 // }
 
-import React from "react";
+// import React from "react";
+// import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+
+// export class MySelect extends React.PureComponent {
+//   constructor(props) {
+//     super(props);
+
+//     this.state = {
+//     };
+//   }
+
+//   render(){
+//     return (
+//       <FormControl fullWidth variant="outlined" size="small" style={this.props.style}>
+//         <InputLabel>{this.props.label}</InputLabel>
+//         <Select
+//           value={this.props.value}
+//           label={this.props.label}
+//           disabled={ this.props.disabled || this.props.disabled === true ? true : false }
+//           onChange={ this.props.func }
+//           multiple={ this.props.multiple && this.props.multiple === true ? true : false }
+//           //style={{ zIndex: 9999 }}
+//         >
+//           {this.props.is_none === false ? null :
+//             <MenuItem value=""><em>None</em></MenuItem>
+//           }
+
+//           { this.props.data?.map( (item, key) =>
+//             <MenuItem key={key} value={item.id} style={{ color: item?.color ? item.color : null, zIndex: 9999 }}>{item.name}</MenuItem>
+//           ) }
+//         </Select>
+//       </FormControl>
+//     )
+//   }
+// }
+
+"use client";
+
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
-export class MySelect extends React.PureComponent {
-  constructor(props) {
-    super(props);
+export function MySelect(props) {
+  const { data = [], multiple, is_none = true } = props;
 
-    this.state = {
+  // 1) все id -> строки
+  const items = data.map((i) => ({ ...i, id: String(i.id) }));
+
+  // 2) value -> строка/массив строк
+  const normalizedValue = multiple
+    ? Array.isArray(props.value) ? props.value.map(String) : []
+    : props.value == null ? "" : String(props.value);
+
+  // 3) нормализуем событие и сохраняем его
+  const handleChange = (e) => {
+    console.log('handleChange')
+    e.persist?.(); // важно для iOS/React 18
+    const raw = e.target.value;
+    const normalized = Array.isArray(raw) ? raw.map(String) : String(raw);
+
+    // делаем event-лайк объект с target.value
+    const customEvent = {
+      ...e,
+      target: {
+        ...e.target,
+        value: normalized,
+      },
     };
-  }
+    props.func && props.func(customEvent);
+  };
 
-  render(){
-    return (
-      <FormControl fullWidth variant="outlined" size="small" style={this.props.style}>
-        <InputLabel>{this.props.label}</InputLabel>
-        <Select
-          value={this.props.value}
-          label={this.props.label}
-          disabled={ this.props.disabled || this.props.disabled === true ? true : false }
-          onChange={ this.props.func }
-          multiple={ this.props.multiple && this.props.multiple === true ? true : false }
-          //style={{ zIndex: 9999 }}
-        >
-          {this.props.is_none === false ? null :
-            <MenuItem value=""><em>None</em></MenuItem>
-          }
+  const labelId = "my-select-label-" + (props.label || "lbl");
+  const selectId = labelId + "-ctl";
 
-          { this.props.data?.map( (item, key) =>
-            <MenuItem key={key} value={item.id} style={{ color: item?.color ? item.color : null, zIndex: 9999 }}>{item.name}</MenuItem>
-          ) }
-        </Select>
-      </FormControl>
-    )
-  }
+  const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|Android/i.test(navigator.userAgent);
+
+  console.log('isMobile', isMobile)
+
+  return (
+    <FormControl fullWidth variant="outlined" size="small" style={props.style}>
+      {props.label && <InputLabel id={labelId}>{props.label}</InputLabel>}
+      <Select
+        id={selectId}
+        labelId={labelId}
+        value={normalizedValue}         // <= контролируем строкой
+        label={props.label}
+        disabled={!!props.disabled}
+        multiple={!!multiple}
+        onChange={handleChange}
+        displayEmpty
+        // 4) фикс портала и скролл-лока для iOS
+        MenuProps={{ disablePortal: true, disableScrollLock: true }}
+      >
+        {is_none && !multiple && (
+          <MenuItem value="">
+            <em>None</em>
+          </MenuItem>
+        )}
+
+        {items.map((item) => (
+          <MenuItem
+            key={item.id}
+            value={item.id}             // <= строка
+            style={{ color: item.color ?? undefined }}
+          >
+            {item.name}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
 }
