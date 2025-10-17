@@ -61,7 +61,7 @@ export function MySelect(props) {
             <MenuItem
               key={key}
               value={item.id}
-              sx={{ color: item?.color ? item.color : null}}
+              style={{ color: item?.color ? item.color : null }}
             >
               {item.name}
             </MenuItem>
@@ -71,3 +71,36 @@ export function MySelect(props) {
     </NoSsr>
   );
 }
+
+// export class MySelect extends React.PureComponent {
+//   constructor(props) {
+//     super(props);
+
+//     this.state = {
+//     };
+//   }
+
+//   render(){
+//     return (
+//       <FormControl fullWidth variant="outlined" size="small" style={this.props.style}>
+//         <InputLabel>{this.props.label}</InputLabel>
+//         <Select
+//           value={this.props.value}
+//           label={this.props.label}
+//           disabled={ this.props.disabled || this.props.disabled === true ? true : false }
+//           onChange={ this.props.func }
+//           multiple={ this.props.multiple && this.props.multiple === true ? true : false }
+//           //style={{ zIndex: 9999 }}
+//         >
+//           {this.props.is_none === false ? null :
+//             <MenuItem value=""><em>None</em></MenuItem>
+//           }
+
+//           { this.props.data?.map( (item, key) =>
+//             <MenuItem key={key} value={item.id} style={{ color: item?.color ? item.color : null, zIndex: 9999 }}>{item.name}</MenuItem>
+//           ) }
+//         </Select>
+//       </FormControl>
+//     )
+//   }
+// }
