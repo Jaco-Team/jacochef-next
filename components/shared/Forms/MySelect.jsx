@@ -38,6 +38,7 @@ export function MySelect(props) {
   const selectId = "my-select";
 
   console.log('value', props.value, normalizedValue)
+  console.log('items', items)
 
   return (
     <FormControl fullWidth variant="outlined" size="small" style={props.style}>
@@ -45,7 +46,7 @@ export function MySelect(props) {
       <Select
         value={normalizedValue}              
         label={props.label}
-        disabled={!!props.disabled}
+        //disabled={!!props.disabled}
         multiple={!!multiple}
         onChange={handleChange}
       >
