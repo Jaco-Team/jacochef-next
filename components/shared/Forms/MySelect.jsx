@@ -46,20 +46,7 @@ export function MySelect(props) {
         //onChange={handleChange}
         onChange={props.func}
         displayEmpty
-        renderValue={(selected) => {
-          if (multiple) {
-            const ids = selected || [];
-            if (ids.length === 0) return "None";
-            return items
-              .filter((i) => ids.includes(i.id))
-              .map((i) => i.name)
-              .join(", ");
-          } else {
-            if (selected === "" || selected == null) return "None";
-            const sel = items.find((i) => i.id === selected);
-            return sel ? sel.name : "None";
-          }
-        }}
+        
         // Иногда на мобильных помогает:
         // MenuProps={{ disablePortal: true }}
       >
