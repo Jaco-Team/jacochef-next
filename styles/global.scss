@@ -1,5 +1,5 @@
 // $Roboto: var(--inter-font);
-@import 'fonts';
+@use 'fonts' as *;
 * {
   // font-family: $Roboto;
 }
@@ -467,20 +467,20 @@ a{
   width: 100%;
 }
 .MuiBackdrop-root{
-  z-index: 999;
+  // z-index: 999;
   color: rgb(255, 255, 255)!important;
 }
 .MuiPaper-root.MuiDialog-paper{
-  z-index: 999;
+  // z-index: 999;
   width: 100%!important;
 }
 .Mui-disabled{
   background-color: #fff!important;
   opacity: 1!important;
 }
-.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.MuiMenu-paper.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation8.MuiPopover-paper{
-  z-index: 999;
-}
+// .MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.MuiMenu-paper.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation8.MuiPopover-paper{
+  // z-index: 999;
+// }
 .MyDaterange input{
   padding: 8.5px 14px!important;
 }

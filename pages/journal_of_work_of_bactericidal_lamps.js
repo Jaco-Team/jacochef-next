@@ -43,28 +43,33 @@ class DateWithEditableTimePicker extends React.PureComponent {
   handleTimeChange = (newTime) => {
     const { value, onChange } = this.props;
     if (!newTime) return;
-    if (value) {
-      const fixedDate = dayjs(value).format('YYYY-MM-DD');
-      const updated = dayjs(`${fixedDate} ${dayjs(newTime).format('HH:mm')}`);
-      onChange(updated);
-    }
+
+    const fixedDate = value ? dayjs(value).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD");
+    const updated = dayjs(`${fixedDate} ${dayjs(newTime).format("HH:mm")}`);
+    onChange(updated);
   };
 
   render() {
     const { value, labelDate, labelTime, disabled, ...rest } = this.props;
+    const dateValue = value ? dayjs(value) : null;
+
     return (
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
         <div style={{ display: 'flex', gap: 8 }}>
           <TextField
             label={labelDate || "Дата"}
             value={value ? dayjs(value).format("YYYY-MM-DD") : ''}
-            InputProps={{ readOnly: true }}
+            slotProps={{
+              input: {
+                readOnly: true,
+              },
+            }}
             size="small"
             fullWidth
           />
           <TimePicker
             label={labelTime || "Время"}
-            value={value || null}
+            value={dateValue}
             onChange={this.handleTimeChange}
             disabled={disabled}
             ampm={false}
@@ -75,7 +80,6 @@ class DateWithEditableTimePicker extends React.PureComponent {
                 inputProps: { readOnly: true },
               },
             }}
-            disableClearable
             {...rest}
           />
         </div>
@@ -343,15 +347,15 @@ class Lamps_Modal_Add_Active extends React.Component {
     this.props.onClose();
   }
 
-  changeDateRange(data, event) {
+  changeDateRange(data, newValue) {
     
     const time_end = this.state.time_end;
 
-    if(data === 'time_start' && !time_end && event) {
-
-      const updatedEvent = dayjs(event);
+    if(data === 'time_start' && !time_end && newValue) {
+      // console.log(`Try new time start: ${newValue}`);
+      const updatedEvent = dayjs(newValue);
       const time_end = updatedEvent.add(1, 'hour');
-
+      // console.log(`Try new time end: ${time_end}`);
       this.setState({
         time_end,
       });
@@ -359,7 +363,7 @@ class Lamps_Modal_Add_Active extends React.Component {
     }
 
     this.setState({
-      [data]: event ? event : null,
+      [data]: newValue ? newValue : null,
     });
   }
 
