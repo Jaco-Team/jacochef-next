@@ -21,6 +21,13 @@ import DatePicker from "react-multi-date-picker"
 import dayjs from 'dayjs';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 import { formatDate } from '@/src/helpers/ui/formatDate';
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import TableBody from "@mui/material/TableBody";
+import CloseIcon from "@mui/icons-material/Close";
+import TableFooter from "@mui/material/TableFooter";
 
 class MyDatePicker extends React.PureComponent {
   constructor(props) {
@@ -298,7 +305,8 @@ class SiteSale2_edit_ extends React.Component {
         promo_sale_list: res.promo_sale_list,
         promo_sale: res.promo_sale_list.find( (item) => parseInt(item.name) == parseInt(res.promo.count_promo)).id,
         type_sale: res.promo.promo_type_sale,
-
+        itemsAdd: JSON.parse(res.promo.promo__items) ? JSON.parse(res.promo.promo__items) : [],
+        itemsAddPrice: JSON.parse(res.promo.add_items_on_price) ? JSON.parse(res.promo.add_items_on_price) : [],
         date_start: dayjs(res.promo.date1),
         date_end: dayjs(res.promo.date2),
         time_start: res.promo.time1,
@@ -332,9 +340,6 @@ class SiteSale2_edit_ extends React.Component {
 
         type_order: res.promo.type_order,
 
-        promo_desc_true: res.promo.coment,
-        promo_desc_false: res.promo.condition_text,
-
         promo_id: res.promo.id,
 
         testDate: limDate,
@@ -353,10 +358,30 @@ class SiteSale2_edit_ extends React.Component {
 
     document.title = res.module_info.name;
 
+    function cleanString(str) {
+      return str
+        .replace(/\s+/g, ' ') // заменяем все пробельные символы на обычные пробелы
+        .replace(/[^\x20-\x7E]/g, '') // удаляем не-ASCII символы
+        .trim();
+    }
+
     setTimeout( () => {
-      this.generateTextDescFalse();
-      this.generateTextDescTrue();
-    }, 300 )
+      const false_p = this.generateTextDescFalse();
+      const true_f = this.generateTextDescTrue();
+      if (cleanString(res.promo.coment) !== cleanString(true_f)) {
+        this.setState({
+          promo_desc_true: res.promo.coment,
+        });
+      }
+
+      if (cleanString(res.promo.condition_text) !== cleanString(false_p)) {
+        this.setState({
+          promo_desc_false: res.promo.condition_text,
+          auto_text: false,
+        });
+      }
+
+    }, 800 )
   }
 
   async save(){
@@ -524,7 +549,7 @@ class SiteSale2_edit_ extends React.Component {
       [ type ]: event.target.checked
     })
 
-    if( type == 'once_number' || type == 'for_new' || type == 'for_registred' ){
+    if( type == 'once_number' || type == 'for_new' || type == 'for_registred' ) {
       if( type == 'once_number' && event.target.checked === true ){
         this.setState({
           for_new: false
@@ -664,6 +689,7 @@ class SiteSale2_edit_ extends React.Component {
       textSMS: textSMS,
       cert_text: textTrue
     })
+    return textTrue;
   }
 
   generateTextDescFalse(){
@@ -721,18 +747,42 @@ class SiteSale2_edit_ extends React.Component {
     this.setState({
       promo_desc_false: textFalse
     })
+    return textFalse;
 	}
+
+  delItemAdd(item){
+    let thisItems = this.state.itemsAdd;
+
+    let newItems = thisItems.filter( (it) => parseInt(it.item_id) != parseInt(item.item_id) );
+
+    let addItemAllPrice = 0;
+
+    newItems.map( (item) => {
+      addItemAllPrice += parseInt(item.price)
+    } )
+
+    this.setState({
+      itemsAdd: newItems,
+      addItemAllPrice: addItemAllPrice
+    })
+
+    setTimeout( () => {
+      this.generateTextDescFalse();
+      this.generateTextDescTrue();
+    }, 300 )
+  }
+
 
   addItemAdd(){
     let thisItems = this.state.itemsAdd;
 
-    let check = thisItems.find( (item) => parseInt(item.item_id) == parseInt(this.state.addItem) );
+    let check = thisItems.find( (item) => parseInt(item.item_id) == parseInt(this.state.addItem.id) );
 
     if( !check ){
-      let thisItem = this.state.items.find( (item) => parseInt(item.id) == parseInt(this.state.addItem) );
+      let thisItem = this.state.items.find( (item) => parseInt(item.id) == parseInt(this.state.addItem.id) );
 
       thisItems.push({
-        item_id: this.state.addItem,
+        item_id: this.state.addItem.id,
         name: thisItem.name,
         count: this.state.addItemCount,
         price: this.state.addItemPrice,
@@ -749,18 +799,21 @@ class SiteSale2_edit_ extends React.Component {
         addItemAllPrice: addItemAllPrice
       })
     }
+    setTimeout( () => {
+      this.generateTextDescFalse();
+      this.generateTextDescTrue();
+    }, 300 )
   }
 
   priceItemAdd(){
     let thisItems = this.state.itemsAddPrice;
-
     let check = thisItems.find( (item) => parseInt(item.item_id) == parseInt(this.state.priceItem) );
 
     if( !check ){
-      let thisItem = this.state.items.find( (item) => parseInt(item.id) == parseInt(this.state.priceItem) );
+      let thisItem = this.state.items.find( (item) => parseInt(item.id) == parseInt(this.state.priceItem.id) );
 
       thisItems.push({
-        id: this.state.priceItem,
+        id: this.state.priceItem.id,
         name: thisItem.name,
         price: this.state.addItemCount,
       })
@@ -769,6 +822,53 @@ class SiteSale2_edit_ extends React.Component {
         itemsAddPrice: thisItems
       })
     }
+    setTimeout( () => {
+      this.generateTextDescFalse();
+      this.generateTextDescTrue();
+    }, 300 )
+  }
+
+  delItemPrice(item){
+    let thisItems = this.state.itemsAddPrice;
+
+    let newItems = thisItems.filter( (it) => parseInt(it.id) != parseInt(item.id));
+
+    let addItemAllPrice = 0;
+
+    newItems.map( (item) => {
+      addItemAllPrice += parseInt(item.price)
+    } )
+
+    this.setState({
+      itemsAddPrice: newItems
+    })
+
+    setTimeout( () => {
+      this.generateTextDescFalse();
+      this.generateTextDescTrue();
+    }, 300 )
+  }
+
+  changeItemPrice(item, event){
+    let thisItems = this.state.itemsAddPrice;
+
+    let newItems = thisItems.map( (it) => {
+      if( parseInt(it.id) == parseInt(item.id) ){
+        it.price = event.target.value;
+      }
+
+      return it;
+    } )
+
+    this.setState({
+      itemsAddPrice: newItems
+    })
+
+    setTimeout( () => {
+      this.generateTextDescFalse();
+      this.generateTextDescTrue();
+    }, 300 )
+
   }
 
   render(){
@@ -954,6 +1054,153 @@ class SiteSale2_edit_ extends React.Component {
 
             </Grid>
           }
+          { parseInt(this.state.promo_action) !== 2 ? null :
+            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <MyAutocomplite data={this.state.items} value={this.state.addItem} func={ (event, data) => { this.changeDataData('addItem', data) } } label='Позиция' />
+              </Grid>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <MyTextInput value={this.state.addItemCount} func={ this.changeData.bind(this, 'addItemCount') } label='Количество' />
+              </Grid>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <MyTextInput value={this.state.addItemPrice} func={ this.changeData.bind(this, 'addItemPrice') } label='Цена за все' />
+              </Grid>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <Button variant="contained" onClick={this.addItemAdd.bind(this)}>Добавить</Button>
+              </Grid>
+
+            </Grid>
+          }
+
+          { parseInt(this.state.promo_action) !== 2 ? null :
+            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Позиция</TableCell>
+                      <TableCell>Количество</TableCell>
+                      <TableCell>Цена за все</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+
+                    { this.state.itemsAdd.map( (item, key) =>
+                      <TableRow key={key}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.count}</TableCell>
+                        <TableCell>{item.price}</TableCell>
+                        <TableCell> <CloseIcon onClick={this.delItemAdd.bind(this, item)} style={{ cursor: 'pointer' }} /> </TableCell>
+                      </TableRow>
+                    ) }
+
+
+                  </TableBody>
+
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell>{this.state.addItemAllPrice}</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableFooter>
+
+
+                </Table>
+              </Grid>
+            </Grid>
+          }
+
+          { parseInt(this.state.promo_action) !== 3 ? null :
+            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <MyAutocomplite data={this.state.items} value={this.state.priceItem} func={ (event, data) => { this.changeDataData('priceItem', data) } } label='Позиция' />
+              </Grid>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <MyTextInput value={this.state.addItemCount} func={ this.changeData.bind(this, 'addItemCount') } label='Цена за 1 ед' />
+              </Grid>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <Button variant="contained" onClick={this.priceItemAdd.bind(this)}>Добавить</Button>
+              </Grid>
+
+            </Grid>
+          }
+
+          { parseInt(this.state.promo_action) !== 3 ? null :
+            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Позиция</TableCell>
+                      <TableCell>Цена за 1 ед</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+
+                    { this.state.itemsAddPrice.map( (item, key) =>
+                      <TableRow key={key}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>
+                          <MyTextInput value={item.price} func={ this.changeItemPrice.bind(this, item) } />
+                        </TableCell>
+                        <TableCell> <CloseIcon onClick={this.delItemPrice.bind(this, item)} style={{ cursor: 'pointer' }} /> </TableCell>
+                      </TableRow>
+                    ) }
+
+                  </TableBody>
+                </Table>
+              </Grid>
+            </Grid>
+          }
+
+          <Divider style={{ width: '100%', marginTop: 20 }} />
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
