@@ -371,6 +371,7 @@ class SiteSale2_edit_ extends React.Component {
       if (cleanString(res.promo.coment) !== cleanString(true_f)) {
         this.setState({
           promo_desc_true: res.promo.coment,
+          auto_text: false,
         });
       }
 
@@ -420,7 +421,7 @@ class SiteSale2_edit_ extends React.Component {
         promo_len: this.state.promo_length,
         promo_name: this.state.promo_name,
         type_sale: this.state.type_sale,
-        promo_sale: parseInt( this.state.sale_type ) == 2 ? this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale)) : parseInt(this.state.promo_sale),
+        promo_sale: parseInt( this.state.sale_type ) == 2 ? this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale)) : parseInt(this.state.promo_sale) ?? 0,
         generate: this.state.generate_new ? 1 : 0,
         promo_in_count: this.state.count_action,
         promo_action: this.state.promo_action,
