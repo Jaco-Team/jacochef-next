@@ -94,8 +94,8 @@ const UserMenu = ({my, logOut}) => {
 						) : (
 							<Avatar
 								sx={{
-									width: 38,
-									height: 38,
+									width: { xs: 20, sm: 38 },
+									height: { xs: 20, sm: 38 },
 									bgcolor: 'primary.main',
 									boxShadow: 'none'
 								}}
@@ -112,6 +112,7 @@ const UserMenu = ({my, logOut}) => {
 								overflow: 'hidden',
 								textOverflow: 'ellipsis',
 								whiteSpace: 'nowrap',
+								display: { xs: 'none', sm: 'block' }
 							}}
 						>
 							{my.short_name}

@@ -10,51 +10,71 @@ const strokeSecondary = "#bb0025ff";
 const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false }) => {
   const mapRef = useRef(null);
   const isYm = useRef(false);
-
+  const polygonsRef = useRef([]); // Реф для хранения полигонов
 
   const handleClickCallback = (e) => {
-    const zoneIndex = mapRef.current?.geoObjects.indexOf(e.get("target"));
+    const target = e.get('target');
+    const zoneIndex = polygonsRef.current.findIndex(polygon => polygon === target);
+
     if (zoneIndex !== -1) {
       clickCallback(zoneIndex);
     }
   };
 
   const buildMainZones = () => {
-    zones.forEach((item) => {
+    zones.forEach((item, index) => {
       const coords = JSON.parse(item.zone);
       const isActive = !!item.is_active;
 
       const polygon = new ymaps.Polygon(
         [coords],
-        { geometry: { fillRule: "nonZero" } },
+        {
+          geometry: { fillRule: "nonZero" },
+          hintContent: `Зона ${index + 1}`
+        },
         {
           fillOpacity: 0.4,
           fillColor: isActive ? fillPrimaryActive : fillPrimaryInactive,
           strokeColor: isActive ? strokePrimaryActive : strokePrimaryInactive,
           strokeWidth: 5,
+          // Делаем основные зоны более кликабельными
+          interactivityModel: 'default#transparent',
+          cursor: 'pointer',
+          zIndex: isActive ? 1000 : 100, // Активные зоны поверх
         }
       );
 
+      if (!readonly) {
+        polygon.events.add('click', handleClickCallback);
+      }
+
       mapRef.current.geoObjects.add(polygon);
+      polygonsRef.current.push(polygon);
     });
   };
 
   const buildOtherZones = () => {
-    otherZones.forEach((item) => {
+    otherZones.forEach((item, index) => {
       const coords = JSON.parse(item.zone);
 
       const polygon = new ymaps.Polygon(
         [coords],
-        { hintContent: "" },
         {
-          fillOpacity: 0.4,
+          hintContent: `Другая зона ${index + 1}`,
+          // Отключаем взаимодействие для других зон
+          interactivityModel: 'default#silent'
+        },
+        {
+          fillOpacity: 0.3, // Более прозрачные
           fillColor: fillSecondary,
           strokeColor: strokeSecondary,
-          strokeWidth: 5,
+          strokeWidth: 3,
+          zIndex: 10, // Ниже основных зон
         }
       );
 
       mapRef.current.geoObjects.add(polygon);
+      polygonsRef.current.push(polygon);
     });
   };
 
@@ -82,14 +102,12 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
         }
       );
 
+      polygonsRef.current = []; // Очищаем реф
+
       // зоны доставки точки
       zones?.length && buildMainZones();
       // другие зоны доставки
       otherZones?.length && buildOtherZones();
-
-      if (!readonly) {
-        mapRef.current.geoObjects.events.add("click", handleClickCallback);
-      }
 
       isYm.current = true;
     });
@@ -99,11 +117,16 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
     if (!mapRef.current || !isYm.current) {
       return;
     }
+
+    // Удаляем все полигоны и очищаем реф
     mapRef.current.geoObjects.removeAll();
+    polygonsRef.current = [];
+
     const center = String(zones?.[0]?.xy_point || otherZones?.[0]?.xy_point);
     if (center) {
       mapRef.current.setCenter(JSON.parse(center));
     }
+
     // зоны доставки точки
     zones?.length && buildMainZones();
     // другие зоны доставки
@@ -116,6 +139,7 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
       mapRef.current?.destroy?.();
       mapRef.current = null;
       isYm.current = false;
+      polygonsRef.current = [];
     };
   }, []);
 
@@ -134,8 +158,3 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
 };
 
 export default memo(CafeEdit_ZonesMap);
-
-// its already added in _document.js
-// import Script from "next/script";
-// const YMAPS_API_KEY = "665f5b53-8905-4934-9502-4a6a7b06a900";
-// <Script src={`https://api-maps.yandex.ru/2.1/?apikey=${YMAPS_API_KEY}&lang=ru_RU`} />
