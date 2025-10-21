@@ -146,7 +146,7 @@ class SitePriceLevel_Modal_New extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    // console.log(this.props.item);
+    //console.log(this.props.item);
 
     if (!this.props.item) {
       return;
@@ -161,12 +161,9 @@ class SitePriceLevel_Modal_New extends React.Component {
 
   changeItem(data, event) {
     const item = this.state.item;
-
-    item.level[data] = event.target.value;
-
-    this.setState({
-      item,
-    });
+    const val = event.target.value;
+    item.level[data] = (val === 'none') ? '' : val;
+    this.setState({ item });
   }
 
   changeDateRange(data, event) {
@@ -183,26 +180,18 @@ class SitePriceLevel_Modal_New extends React.Component {
     let item = this.state.item;
     item = item.level;
 
-    if (!item.city_id) {
-
+    if (!item.city_id || item.city_id === 'none') {
       this.props.openAlert(false, 'Необходимо выбрать город');
-
       return;
-
-    } 
+    }
 
     if (!item.name) {
-
       this.props.openAlert(false, 'Необходимо указать название');
-
       return;
-
     } 
 
     if(!item.date_start) {
-
       this.props.openAlert(false, 'Необходимо указать дату');
-      
       return;
     } 
 
@@ -210,9 +199,7 @@ class SitePriceLevel_Modal_New extends React.Component {
     const date_start = dayjs(item.date_start);
 
     if(date_start.isBefore(date_now, 'day')){
-
       this.props.openAlert(false, 'Необходимо указать сегодняшнюю или будущую дату');
-      
       return;
     }
 
@@ -254,10 +241,13 @@ class SitePriceLevel_Modal_New extends React.Component {
                 sm: 12
               }}>
               <MySelect
-                is_none={false}
                 label="Город"
                 data={this.state.item ? this.state.item?.cities : []}
-                value={this.state.item ? this.state.item?.level?.city_id : ''}
+                value={
+                  this.state.item
+                    ? (this.state.item.level.city_id ? String(this.state.item.level.city_id) : 'none')
+                    : 'none'
+                }
                 func={this.changeItem.bind(this, 'city_id')}
               />
             </Grid>
@@ -581,7 +571,7 @@ class SitePriceLevel_Tab_Level extends React.Component {
     this.changeCity = this.changeCity.bind(this);
     this.openModal = this.openModal.bind(this);
     this.save = this.save.bind(this);
-    this.getOneLevel = this.getOneLevel.bind(this);
+    //this.getOneLevel = this.getOneLevel.bind(this);
     this.downLoad = this.downLoad.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
     this.delete_level = this.delete_level.bind(this);
@@ -667,14 +657,14 @@ class SitePriceLevel_Tab_Level extends React.Component {
     }
   }
 
-  getOneLevel(level_id) {
+  // getOneLevel(level_id) {
    
-    const link = document.createElement('a');
-    link.href = `/site_price_lavel/${level_id}`
-    link.target = '_blank'
-    link.click();
+  //   const link = document.createElement('a');
+  //   link.href = `/site_price_lavel/${level_id}`
+  //   link.target = '_blank'
+  //   link.click();
 
-  }
+  // }
 
   async downLoad() {
 
@@ -790,6 +780,7 @@ class SitePriceLevel_Tab_Level extends React.Component {
 
     return (
       <>
+
         <Dialog
           sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
           maxWidth="sm"
@@ -805,6 +796,7 @@ class SitePriceLevel_Tab_Level extends React.Component {
             <Button onClick={this.delete_level}>Удалить</Button>
           </DialogActions>
         </Dialog>
+
         <SitePriceLevel_Modal_New
           open={modalDialog}
           onClose={() => this.setState({ modalDialog: false })}
@@ -814,6 +806,7 @@ class SitePriceLevel_Tab_Level extends React.Component {
           fullScreen={fullScreen}
           openAlert={openAlert}
         />
+
         <SitePriceLevel_Modal_XLS
           open={modalDialog_XLS}
           onClose={() => this.setState({ modalDialog_XLS: false })}
@@ -822,9 +815,11 @@ class SitePriceLevel_Tab_Level extends React.Component {
           fullScreen={fullScreen}
           input_value={input_value}
         />
+
         <Backdrop style={{ zIndex: 999 }} open={is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+
         <Grid
           mb={10}
           size={12}>
@@ -888,15 +883,17 @@ class SitePriceLevel_Tab_Level extends React.Component {
                     </TableHead>
                     <TableBody>
                       {levels.map((level, index) => (
+        
                         <TableRow hover key={index}>
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>{level.name}</TableCell>
                           <TableCell>{level.date_start}</TableCell>
                           <TableCell>{level.city_name}</TableCell>
+
                           <TableCell>
-                            <a href={'/site_price_lavel/'+level.id} target='_blank'>
+                            <a href={'/site_price_lavel/'+level.id} target='_blank' rel="noopener noreferrer">
                               <IconButton /*onClick={() => this.getOneLevel(level.id)}*/>
-                                {parseInt(acces?.edit_level_access) && level?.edit ? (
+                                {parseInt(acces?.edit_level_access) ? (
                                   <Tooltip title={<Typography color="inherit">Редактировать</Typography>}>
                                     <EditIcon />
                                   </Tooltip>
@@ -907,8 +904,8 @@ class SitePriceLevel_Tab_Level extends React.Component {
                                 )}
                               </IconButton>
                             </a>
-                            
                           </TableCell>
+                
                           <TableCell>
                             {parseInt(acces?.delete_level_acceess) && level?.delete ? (
                               <IconButton onClick={() => this.setState({ confirmDialog: true, delete_level: level })}>
