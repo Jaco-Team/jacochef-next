@@ -75,13 +75,14 @@ export default function CompositionOfOrdersGraph({ data, rowName, metrics }) {
     // Series
     metrics.forEach(({ key, label, color }) => {
       const series = chart.series.push(
-        am5xy.LineSeries.new(root, {
+        am5xy.SmoothedXLineSeries.new(root, {
           name: label,
           xAxis,
           yAxis: axisMap[key],
           valueYField: key,
           valueXField: "date",
           stroke: am5.color(color),
+          tension: 0,
           tooltip: am5.Tooltip.new(root, {
             labelText: key.includes("percent")
               ? "{name}: {valueY.formatNumber('#.##')}%"
@@ -89,12 +90,14 @@ export default function CompositionOfOrdersGraph({ data, rowName, metrics }) {
           }),
         })
       );
-      series.strokes.template.setAll({ strokeWidth: 2 });
-      series.bullets.push(() =>
-        am5.Bullet.new(root, {
-          sprite: am5.Circle.new(root, { radius: 4, fill: am5.color(color) }),
-        })
-      );
+      series.strokes.template.setAll({
+        strokeWidth: 2,
+      });
+      // series.bullets.push(() =>
+      //   am5.Bullet.new(root, {
+      //     sprite: am5.Circle.new(root, { radius: 4, fill: am5.color(color) }),
+      //   })
+      // );
       series.data.setAll(seriesData);
     });
 
