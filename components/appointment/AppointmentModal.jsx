@@ -346,7 +346,7 @@ const AppointmentModal = (props) => {
                                       edge="end"
                                       onChange={(e) => changeActiveModule(key, k, e)}
                                       checked={!!+it.is_active}
-                                      disabled={!canEdit("module_active")}
+                                      disabled={!canEdit("module_active") || it.key_query === 'home' || it.key_query === 'lk'}
                                     />
                                   </TableCell>
                                 </TableRow>
