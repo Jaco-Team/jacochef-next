@@ -35,6 +35,9 @@ function LkPage() {
 			setModule(data.module_info);
 			setPoints(data.points);
 			setMy(data.my);
+			if (data.flag) {
+				setPoint(data.points[0]);
+			}
 		});
 	}, []);
 
@@ -56,6 +59,15 @@ function LkPage() {
 		}
 	}, [search, cats]);
 
+	useEffect(() => {
+		if (point.id) {
+			getData('get_this_stat_today', {point_id: point.id}).then((data) => {
+				setCats(data.cat_pf)
+			}
+		);
+		}
+	}, [point]);
+
 	const getData = async (method, data = {}) => {
 		setIsLoad(true);
 
@@ -71,13 +83,6 @@ function LkPage() {
 		setErrStatus(status);
 		setErrText(message);
 		setOpenAlert(true);
-	}
-
-	const showData = () => {
-		getData('get_this_stat_today', {point_id: point.id}).then((data) => {
-				setCats(data.cat_pf)
-			}
-		);
 	}
 
 	return (
@@ -131,13 +136,6 @@ function LkPage() {
 					xs: 12,
 					sm: 12
 				}}>
-				<Button variant="contained" color="primary" onClick={showData}>Показать</Button>
-			</Grid>
-			<Grid
-				size={{
-					xs: 12,
-					sm: 12
-				}}>
 				{cats.length ? (
 					<>
 						{cats.map((item) => {
@@ -164,7 +162,7 @@ function LkPage() {
 																	<TableCell>{it?.pf_name
 																	}</TableCell>
 																	<TableCell></TableCell>
-																	<TableCell>{it?.avg_count} - {it?.max_count} {it?.max_count}</TableCell>
+																	<TableCell>{it?.avg_count} - {it?.max_count} {it?.ed_izmer}</TableCell>
 																</TableRow>
 															);
 														})}
