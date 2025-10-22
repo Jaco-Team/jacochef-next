@@ -60,7 +60,7 @@ function LkPage() {
 		setIsLoad(true);
 
 		try {
-			const result = await api_laravel_local('ras_by_pf_mini', method, data);
+			const result = await api_laravel('ras_by_pf_mini', method, data);
 			return result.data;
 		} finally {
 			setIsLoad(false);
