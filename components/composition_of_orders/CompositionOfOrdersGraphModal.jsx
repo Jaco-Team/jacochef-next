@@ -88,7 +88,7 @@ export default function CompositionOfOrdersGraphModal({ open, onClose, data, row
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="md"
+      maxWidth="xl"
       fullWidth
     >
       <DialogTitle>{rowName}</DialogTitle>

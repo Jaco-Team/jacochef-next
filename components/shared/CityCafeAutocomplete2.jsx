@@ -9,9 +9,9 @@ import {
   autocompleteClasses,
   Typography,
 } from "@mui/material";
-import {ExpandMore, ExpandLess} from "@mui/icons-material";
+import { ExpandMore, ExpandLess } from "@mui/icons-material";
 
-// TODO: для того, чтобы это привести в порядок, Helper->getMyPointsList должен возвращать 
+// TODO: для того, чтобы это привести в порядок, Helper->getMyPointsList должен возвращать
 // атомарные данные cityId и cityName, но придется весь фронт обойти и автокомплиты привести
 // поэтому пока так
 const cityNames = {
@@ -70,7 +70,10 @@ export default function CityCafeAutocomplete2({
   }, [points]);
 
   const getNamesFromCafeName = (name = "") => {
-    const splitted = name?.split(",").map((s) => s.trim()).filter(Boolean);
+    const splitted = name
+      ?.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     return splitted.length > 1 ? [splitted[0], splitted[1]] : [name, name];
   };
 
@@ -116,21 +119,21 @@ export default function CityCafeAutocomplete2({
     const hasOthers = next.some((o) => o.id !== ALL_OPTION.id);
     const wasAll = (value ?? []).length === points.length; // parent holds full set when All active
 
-    let mapped = [];
     let cleanNext = [];
+    let mapped = [];
 
     if (hasAll && !hasOthers) {
       // Only All → expand to full
-      mapped = points;
       cleanNext = [ALL_OPTION];
+      mapped = points;
     } else if (wasAll && hasOthers) {
-      // All was active, user clicked another → replace All with just those
-      cleanNext = next.filter((o) => o.id !== ALL_OPTION.id);
+      // All was active, user clicked another → uncheck All and keep others selected
+      cleanNext = points.filter((o) => o.id !== ALL_OPTION.id && !next.map(n => n.id).includes(o.id));
       mapped = cleanNext.map((v) => pointsMap.get(v.id)).filter(Boolean);
     } else if (hasAll && hasOthers) {
       // User toggled All along with others → collapse back to All
-      mapped = points;
       cleanNext = [ALL_OPTION];
+      mapped = points;
     } else {
       // Normal case
       cleanNext = next.filter((o) => o.id !== ALL_OPTION.id);
@@ -248,7 +251,7 @@ export default function CityCafeAutocomplete2({
           >
             <Checkbox
               size="small"
-              checked={!allSelected && selected}
+              checked={allSelected || selected}
               onMouseDown={(e) => e.preventDefault()}
             />
             <ListItemText
@@ -335,7 +338,7 @@ export default function CityCafeAutocomplete2({
                 size="small"
                 sx={{ p: 0 }}
                 indeterminate={some && !all}
-                checked={all}
+                checked={all || allSelected}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={(e) => {
                   e.stopPropagation();
