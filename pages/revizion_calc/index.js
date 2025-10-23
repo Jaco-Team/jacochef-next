@@ -28,6 +28,7 @@ import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
 import Table from "@mui/material/Table";
+import dayjs from "dayjs";
 
 function LkPage() {
 	const [isLoad, setIsLoad] = useState(false);
@@ -41,6 +42,8 @@ function LkPage() {
 	const [revs, setRevs] = useState([]);
 	const [rev, setRev] = useState({});
 	const [events, setEvents] = useState([]);
+	const [dateStart, setDateStart] = useState('');
+	const [dateEnd, setDateEnd] = useState('');
 
 	useEffect(() => {
 		getData('get_all').then((data) => {
@@ -79,6 +82,8 @@ function LkPage() {
 	const showData = () => {
 		getData('get_events', {point_id: point.id, rev_id: rev.id}).then((data ) => {
 			setEvents(data.cat);
+			setDateStart(dayjs(data.date_start).format('DD.MM.YYYY'));
+			setDateEnd(dayjs(data.date_end).format('DD.MM.YYYY'));
 		}
 		);
 	}
@@ -161,6 +166,17 @@ function LkPage() {
 							<TableCell>От выбранной ревизии до последней (не включая день последней ревизии)</TableCell>
 							<TableCell>Последняя ревизия</TableCell>
 							<TableCell>Р.посл - (Р.выб + Нак - Рас - Спис) =</TableCell>
+							<TableCell></TableCell>
+						</TableRow>
+						<TableRow>
+							<TableCell></TableCell>
+							<TableCell></TableCell>
+							<TableCell>{dateStart}</TableCell>
+							<TableCell>{dateStart} - {dateEnd}</TableCell>
+							<TableCell>{dateStart} - {dateEnd}</TableCell>
+							<TableCell>{dateStart} - {dateEnd}</TableCell>
+							<TableCell>{dateEnd}</TableCell>
+							<TableCell></TableCell>
 							<TableCell></TableCell>
 						</TableRow>
 					</TableHead>
