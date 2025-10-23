@@ -28,6 +28,10 @@ import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
 import CloseIcon from "@mui/icons-material/Close";
 import TableFooter from "@mui/material/TableFooter";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import AccordionDetails from "@mui/material/AccordionDetails";
 
 class MyDatePicker extends React.PureComponent {
   constructor(props) {
@@ -149,6 +153,7 @@ class SiteSale2_edit_ extends React.Component {
 
       modalDialog: false,
       modalLink: '',
+      promo_history: [],
 
       where_promo_list: [
         {id: 1, name: 'Создать'},
@@ -299,6 +304,7 @@ class SiteSale2_edit_ extends React.Component {
       this.setState({
         points: res.points,
         cities: res.cities,
+        promo_history: res.promo_history,
         module_name: res.module_info.name,
         promo_action_list: res.promo_action_list,
         promo_action: res.promo_action_list.find( (item) => parseInt(item.id) == parseInt(res.promo.promo_action))?.id,
@@ -1396,6 +1402,45 @@ class SiteSale2_edit_ extends React.Component {
 
           <Grid container direction="row" justifyContent="end" style={{ paddingTop: 50 }} spacing={3}>
             <Button variant="contained" onClick={this.save.bind(this)}>Сохранить</Button>
+          </Grid>
+          <Grid container direction="row" justifyContent="end" style={{ paddingTop: 10 }} spacing={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
+              {(this.state.promo_history.length) &&
+                <Accordion style={{width: '100%'}}>
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon/>}
+                  >
+                    <Typography>История редактирования</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Table size={'small'} style={{marginTop: 15}}>
+                      <TableHead>
+                        <TableRow sx={{"& th": {fontWeight: "bold"}}}>
+                          <TableCell>#</TableCell>
+                          <TableCell>Создатель</TableCell>
+                          <TableCell>Тип</TableCell>
+                          <TableCell>Время</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {this.state.promo_history.map((item, key) =>
+                          <TableRow key={key}>
+                            <TableCell>{key + 1}</TableCell>
+                            <TableCell>{item.user_name}</TableCell>
+                            <TableCell>{item.type}</TableCell>
+														<TableCell>{item.date_create}</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </AccordionDetails>
+                </Accordion>
+              }
+            </Grid>
           </Grid>
 
         </Grid>
