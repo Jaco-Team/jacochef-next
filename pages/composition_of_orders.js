@@ -1,6 +1,6 @@
 import React from "react";
 
-import dynamic from "next/dynamic"
+import dynamic from "next/dynamic";
 
 import {
   MyCheckBox,
@@ -34,10 +34,11 @@ import CompositionOfOrdersRow from "@/components/composition_of_orders/Compositi
 import { formatNumber } from "@/src/helpers/utils/i18n";
 
 const CompositionOfOrdersGraphModal = dynamic(
-  () =>
-    import(
-      "@/components/composition_of_orders/CompositionOfOrdersGraphModal"
-    ),
+  () => import("@/components/composition_of_orders/CompositionOfOrdersGraphModal"),
+  { ssr: false }
+);
+const CompositionOfOrdersGroupGraphModal = dynamic(
+  () => import("@/components/composition_of_orders/CompositionOfOrdersGroupGraphModal"),
   { ssr: false }
 );
 
@@ -106,7 +107,10 @@ class CompositionOfOrders_ extends React.Component {
 
       graph: null,
       graphModal: false,
-      graphRowName: null
+      graphRowName: null,
+      groupGraph: null,
+      groupGraphModal: false,
+      groupGraphRowName: null,
     };
   }
 
@@ -205,7 +209,7 @@ class CompositionOfOrders_ extends React.Component {
       sort_count_percent: "asc",
       sort_price_percent: "desc",
       sort_price: "asc",
-      graph: null
+      graph: null,
     });
 
     this.resetOpenRows();
@@ -256,8 +260,7 @@ class CompositionOfOrders_ extends React.Component {
   }
 
   async getGraphData() {
-
-    if(this.state.graph) return;
+    if (this.state.graph) return;
 
     const { point, dow, date_start, date_end, pay, now_time, pred_time } = this.state;
 
@@ -283,7 +286,7 @@ class CompositionOfOrders_ extends React.Component {
     };
 
     const res = await this.getData("get_stat_graph", data);
-    if(!res?.graph) {
+    if (!res?.graph) {
       this.setState({
         openAlert: true,
         err_status: false,
@@ -295,9 +298,51 @@ class CompositionOfOrders_ extends React.Component {
       graph: res?.graph,
     });
   }
+  async getGroupGraphData(row_name, ids) {
+    const { point, dow, date_start, date_end, pay, now_time, pred_time } = this.state;
 
-  openGraphModal() {
-    this.setState({ graphModal: true });
+    if (!point.length) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Необходимо выбрать кафе",
+      });
+      return;
+    }
+    if (!date_start || !date_end) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Необходимо выбрать даты",
+      });
+      return;
+    }
+
+    const data = {
+      date_start: date_start ? dayjs(date_start).format("YYYY-MM-DD") : "",
+      date_end: date_end ? dayjs(date_end).format("YYYY-MM-DD") : "",
+      point,
+      dow,
+      pay,
+      now_time,
+      pred_time,
+      row_name,
+      item_ids: this.state.items?.map((i) => i.id),
+      full_group_ids: ids,
+    };
+
+    const res = await this.getData("get_group_stat_graph", data);
+    if (!res?.graph) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Ошибка получения данных графика",
+      });
+      return;
+    }
+    this.setState({
+      groupGraph: res?.graph,
+    });
   }
 
   get_new_type_sort(active) {
@@ -422,6 +467,12 @@ class CompositionOfOrders_ extends React.Component {
           rowName={this.state.graphRowName}
           onClose={() => this.setState({ graphModal: false })}
           data={this.state.graph}
+        />
+        <CompositionOfOrdersGroupGraphModal
+          open={this.state.groupGraphModal}
+          rowName={this.state.graphRowName}
+          onClose={() => this.setState({ groupGraphModal: false })}
+          data={this.state.groupGraph}
         />
         <Grid
           container
@@ -655,12 +706,19 @@ class CompositionOfOrders_ extends React.Component {
                         },
                       }));
                     }}
-                    openGraphModal={async() => {
+                    openGraphModal={async () => {
                       await this.getGraphData();
                       this.setState({
                         graphRowName: row.name,
-                        graphModal: true
-                      })
+                        graphModal: true,
+                      });
+                    }}
+                    openGroupGraphModal={async (title, ids) => {
+                      await this.getGroupGraphData(row?.name, ids);
+                      this.setState({
+                        groupGraphModal: true,
+                        graphRowName: title,
+                      });
                     }}
                   />
                 ))}

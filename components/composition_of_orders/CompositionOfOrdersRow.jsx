@@ -15,10 +15,14 @@ import {
   TableRow,
 } from "@mui/material";
 import CompositionOfOrdersTooltip from "./CompositionOfOrdersToolTip";
+import { useRef } from "react";
 
 export default function CompositionOfOrdersRow(props) {
-  const { row, open, onToggle, getDataRow, openGraphModal } = props;
+  const { row, open, onToggle, getDataRow, openGraphModal, openGroupGraphModal } = props;
   // console.log(`page: ${row.page}, perPage: ${row.perPage}, total: ${row.total}`);
+
+  const tableRef = useRef(null);
+
   const handleClick = () => {
     onToggle(row.name);
 
@@ -86,10 +90,11 @@ export default function CompositionOfOrdersRow(props) {
           >
             <Box sx={{ margin: 1 }}>
               <TableContainer>
-                <Table size="small">
+                <Table size="small" ref={tableRef}>
                   <TableHead style={{ backgroundColor: "#e6e6e6" }}>
                     <TableRow>
                       <TableCell>Группа</TableCell>
+                      <TableCell></TableCell>
                       <TableCell align="right">Заказов, шт.</TableCell>
                       <TableCell align="right">Доля в заказах</TableCell>
                       <TableCell align="right">Выручка, руб.</TableCell>
@@ -101,6 +106,11 @@ export default function CompositionOfOrdersRow(props) {
                     {row?.arr?.map((historyRow) => (
                       <TableRow key={historyRow.full_group}>
                         <TableCell>{historyRow.full_group}</TableCell>
+                        <TableCell>
+                          <IconButton onClick={() => openGroupGraphModal(historyRow.full_group, historyRow.full_group_ids)}>
+                            <QueryStats />
+                          </IconButton>
+                        </TableCell>
                         <TableCell
                           align="right"
                           style={{ paddingRight: 10 }}
@@ -144,8 +154,9 @@ export default function CompositionOfOrdersRow(props) {
                 rowsPerPage={props.row.perPage}
                 page={props.row.page}
                 count={props.row.total ?? 0}
-                onPageChange={(_, newPage) => {
-                  getDataRow(row.name, newPage, row.perPage);
+                onPageChange={async (_, newPage) => {
+                  await getDataRow(row.name, newPage, row.perPage);
+                  tableRef.current?.scrollIntoView({behavior: 'smooth'})
                 }}
                 onRowsPerPageChange={(event) => {
                   const newPerPage = parseInt(event.target.value, 10);
