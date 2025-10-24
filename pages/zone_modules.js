@@ -576,7 +576,7 @@ class ZoneModules_Modal extends React.Component {
   changePoint(data, event) {
     const item = this.state.item;
 
-    let point = item.points.find((point) => point.id === event.target.value);
+    let point = item.points.find((point) => parseInt(point.id) === parseInt(event.target.value));
 
     point.point_name = point.name;
 
