@@ -32,6 +32,7 @@ import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
+import {PromoEdit} from "@/components/site_sale_2/PromoEdit";
 
 class MyDatePicker extends React.PureComponent {
   constructor(props) {
@@ -150,10 +151,12 @@ class SiteSale2_edit_ extends React.Component {
       point: 0,
       cities: [],
       city: 0,
+      promo_copy_double: {},
 
       modalDialog: false,
       modalLink: '',
       promo_history: [],
+      promo_copy: {},
 
       where_promo_list: [
         {id: 1, name: 'Создать'},
@@ -200,6 +203,7 @@ class SiteSale2_edit_ extends React.Component {
 
       auto_text: true,
       where_promo: 1,
+      modalDialogEdit: false,
       promo_name: '',
       generate_new: false,
       count_action: 1,
@@ -265,6 +269,7 @@ class SiteSale2_edit_ extends React.Component {
 
       for_number: false,
       for_number_text: '',
+      promo_conditions_items: [],
     };
   }
 
@@ -291,10 +296,6 @@ class SiteSale2_edit_ extends React.Component {
     }
 
     setTimeout( () => {
-
-      console.log( 'conditionItems', items )
-      console.log( 'items', res.items )
-
       let limDate = [];
 
       res.limit.map( (item) => {
@@ -302,6 +303,7 @@ class SiteSale2_edit_ extends React.Component {
       } )
 
       this.setState({
+        promo_conditions_items: res.promo.promo_conditions_items,
         points: res.points,
         cities: res.cities,
         promo_history: res.promo_history,
@@ -510,6 +512,18 @@ class SiteSale2_edit_ extends React.Component {
     return res;
   };
 
+  openModalPromo = (item, key) => {
+    if (this.state.promo_history[key + 1]) {
+      this.setState({
+      promo_copy_double: this.state.promo_history[key + 1],
+    })
+    }
+    this.setState({
+      promo_copy: item,
+      modalDialogEdit: true
+    })
+  }
+
   changeData(type, event){
     this.setState({
       [ type ]: event.target.value
@@ -619,7 +633,6 @@ class SiteSale2_edit_ extends React.Component {
 
       let count_promo = 0;
 
-      console.log( 'this.state.promo_sale_list', this.state.promo_sale_list )
 
       if( parseInt( this.state.sale_type ) == 2 ){
         let check = this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale) );
@@ -884,6 +897,23 @@ class SiteSale2_edit_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+        {this.state.modalDialogEdit ? (
+          <PromoEdit
+            modalDialogEdit={this.state.modalDialogEdit}
+            promoName={this.state.promo_name}
+            promo_action_list={this.state.promo_action_list}
+            promo_sale_list={this.state.promo_sale_list}
+            promo_conditions_items={this.state.promo_conditions_items}
+            points={this.state.points}
+            cities={this.state.cities}
+            items={this.state.items}
+            cats={this.state.cats}
+            created={this.state.created}
+            promo={this.state.promo_copy}
+            promo_double={this.state.promo_copy_double}
+            onClose={ () => { this.setState({ modalDialogEdit: false }) } }
+          />
+        ) : null}
         <Dialog
           open={this.state.modalDialog}
           onClose={ () => { this.setState({ modalDialog: false, modalLink: '' }) } }
@@ -1427,7 +1457,7 @@ class SiteSale2_edit_ extends React.Component {
                       </TableHead>
                       <TableBody>
                         {this.state.promo_history.map((item, key) =>
-                          <TableRow key={key}>
+                          <TableRow key={key} style={{ cursor: 'pointer' }} hover onClick={() => this.openModalPromo(item, key)}>
                             <TableCell>{key + 1}</TableCell>
                             <TableCell>{item.user_name}</TableCell>
                             <TableCell>{item.type}</TableCell>

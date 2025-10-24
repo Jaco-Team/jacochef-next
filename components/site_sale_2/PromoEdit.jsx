@@ -20,7 +20,7 @@ import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Divider from "@mui/material/Divider";
 import DatePicker from "react-multi-date-picker";
-import { formatDate } from "@/src/helpers/ui/formatDate";
+import {formatDate} from "@/src/helpers/ui/formatDate";
 
 class MyDatePicker extends React.PureComponent {
 	constructor(props) {
@@ -35,14 +35,8 @@ class MyDatePicker extends React.PureComponent {
 				<Typography>{this.props.label}</Typography>
 				<DatePicker
 					format="YYYY-MM-DD"
-
 					multiple
 					sort
-
-					//mask="____/__/__"
-					//multiple={ this.props.multiple && this.props.multiple === true ? true : false }
-					//disableCloseOnSelect={true}
-					//inputFormat="yyyy-MM-dd"
 					style={{width: '100%'}}
 					label={this.props.label}
 					value={this.props.value}
@@ -262,572 +256,206 @@ export class PromoEdit extends React.Component {
 			for_registred: false,
 
 			created: '',
+			diff_ent: {},
 
 			for_number: false,
 			for_number_text: '',
 		};
 	}
 
-	async componentDidMount() {
-
-		let promo_id = this.props.promo_id;
-
-		let data = {
-			promo_id
-		}
-
-		let res = await this.getData('get_all_for_edit', data);
-
+	componentDidMount() {
 		let items = [];
 
-		if (res.promo.promo_conditions_items.length > 4) {
-			res.promo.promo_conditions_items = JSON.parse(res.promo.promo_conditions_items, true);
+    if( this.props.promo_conditions_items.length > 4 ){
+      this.props.promo_conditions_items = JSON.parse(this.props.promo_conditions_items, true);
 
-			res.promo.promo_conditions_items.map((item) => {
-				let findItem = res.items.find((it) => parseInt(it.id) == parseInt(item));
+      this.props.promo_conditions_items.map( (item) => {
+        let findItem = this.props.items.find( (it) => parseInt(it.id) == parseInt(item) );
 
-				items.push(findItem)
-			})
+        items.push(findItem)
+      } )
+    }
+		if (this.props.promo_double.date1) {
+			let original_promo = {
+        promo_action: this.props.promo_action_list.find( (item) => parseInt(item.id) == parseInt(this.props.promo.promo_action))?.id,
+        promo_sale: this.props.promo_sale_list.find( (item) => parseInt(item.name) == parseInt(this.props.promo.count_promo))?.id,
+        itemsAdd: JSON.parse(this.props.promo.promo__items) ? JSON.parse(this.props.promo.promo__items) : [],
+        itemsAddPrice: JSON.parse(this.props.promo.add_items_on_price) ? JSON.parse(this.props.promo.add_items_on_price) : [],
+        date_start: dayjs(this.props.promo.date1),
+        date_end: dayjs(this.props.promo.date2),
+        time_start: this.props.promo.time1,
+        time_end: this.props.promo.time2,
+				promo_desc_false: this.props.promo.condition_text,
+				promo_desc_true: this.props.promo.coment,
+        rangeDate: [dayjs(this.props.promo.date1), dayjs(this.props.promo.date2)],
+        day_1: parseInt(this.props.promo.d1) == 1 ? true : false,
+        day_2: parseInt(this.props.promo.d2) == 1 ? true : false,
+        day_3: parseInt(this.props.promo.d3) == 1 ? true : false,
+        day_4: parseInt(this.props.promo.d4) == 1 ? true : false,
+        day_5: parseInt(this.props.promo.d5) == 1 ? true : false,
+        day_6: parseInt(this.props.promo.d6) == 1 ? true : false,
+        day_7: parseInt(this.props.promo.d7) == 1 ? true : false,
+        count_action: this.props.promo.count,
+        promo_name: this.props.promo.name,
+        price_start: this.props.promo.promo_summ,
+        price_end: this.props.promo.promo_summ_to,
+        point: this.props.promo.point_id,
+        city: this.props.promo.city_id,
+        where_order: parseInt(this.props.promo.city_id) > 0 ? 1 : parseInt(this.props.promo.point_id) > 0 ? 2 : 1,
+        type_order: this.props.promo.type_order,
+        promo_id: this.props.promo.id,
+        for_new: parseInt(this.props.promo.only_first_order) == 1 ? true : false,
+        once_number: parseInt(this.props.promo.once_number) == 1 ? true : false,
+        for_registred: parseInt(this.props.promo.for_registred) == 1 ? true : false,
+        for_number: parseInt(this.props.promo.for_number) == 1 ? true : false,
+        for_number_text: this.props.promo.for_number_text,
 		}
 
-		setTimeout(() => {
-
-			console.log('conditionItems', items)
-			console.log('items', res.items)
-
-			let limDate = [];
-
-			res.limit.map((item) => {
-				limDate.push(new Date(item.date))
-			})
-			this.setState({
-				points: res.points,
-				cities: res.cities,
-				module_name: res.module_info.name,
-				promo_action_list: res.promo_action_list,
-				promo_sale_list: res.promo_sale_list,
-				type_sale: res.promo.promo_type_sale,
-				access: res.acces,
-
-				date_start: dayjs(res.promo.date1),
-				date_end: dayjs(res.promo.date2),
-				time_start: res.promo.time1,
-				time_end: res.promo.time2,
-				rangeDate: [dayjs(res.promo.date1), dayjs(res.promo.date2)],
-
-				items: res.items,
-				cats: res.cats,
-
-				day_1: parseInt(res.promo.d1) == 1 ? true : false,
-				day_2: parseInt(res.promo.d2) == 1 ? true : false,
-				day_3: parseInt(res.promo.d3) == 1 ? true : false,
-				day_4: parseInt(res.promo.d4) == 1 ? true : false,
-				day_5: parseInt(res.promo.d5) == 1 ? true : false,
-				day_6: parseInt(res.promo.d6) == 1 ? true : false,
-				day_7: parseInt(res.promo.d7) == 1 ? true : false,
-
-				count_action: res.promo.count,
-				promo_name: res.promo.name,
-
-				price_start: res.promo.promo_summ,
-				price_end: res.promo.promo_summ_to,
-
-				conditionItems: items,
-				promo_conditions: items.length > 0 ? 1 : 2,
-
-				point: res.promo.point_id,
-				city: res.promo.city_id,
-
-				where_order: parseInt(res.promo.city_id) > 0 ? 1 : parseInt(res.promo.point_id) > 0 ? 2 : 1,
-
-				type_order: res.promo.type_order,
-
-				promo_desc_true: res.promo.coment,
-				promo_desc_false: res.promo.condition_text,
-
-				promo_id: res.promo.id,
-
-				testDate: limDate,
-
-				for_new: parseInt(res.promo.only_first_order) == 1 ? true : false,
-				once_number: parseInt(res.promo.once_number) == 1 ? true : false,
-				for_registred: parseInt(res.promo.for_registred) == 1 ? true : false,
-
-				created: res.created,
-
-				for_number: parseInt(res.promo.for_number) == 1 ? true : false,
-				for_number_text: res.promo.for_number_text,
-			})
-		}, 300)
-
-
-		document.title = res.module_info.name;
-
-		setTimeout(() => {
-			this.generateTextDescFalse();
-			this.generateTextDescTrue();
-		}, 300)
-	}
-
-	async save() {
-
-		if (!this.click) {
-			this.click = true;
-
-			let conditionItems = [];
-
-			this.state.conditionItems.map((item) => {
-				conditionItems.push(item.id)
-			})
-
-
-			let promo_items = [];
-
-
-			let promo_cat = [];
-			let dateList = [];
-
-			this.state.testDate.map((item) => {
-				dateList.push((new Date(item).toISOString()).split('T')[0]);
-			})
-
-			dateList = dateList.join(',')
-
-			let data = {
-				promo_id: this.state.promo_id,
-				cert_text: this.state.cert_text,
-				addr: this.state.numberList,
-				where_promo: this.state.where_promo,
-				promo_count: this.state.promo_count,
-				promo_len: this.state.promo_length,
-				promo_name: this.state.promo_name,
-				type_sale: this.state.type_sale,
-				promo_sale: this.state.promo_sale,
-				generate: this.state.generate_new ? 1 : 0,
-				promo_in_count: this.state.count_action,
-				promo_action: this.state.promo_action,
-				promo_type_sale: this.state.type_sale,
-				promo_type: this.state.sale_type,
-				promo_conditions: this.state.promo_conditions,
-
-				promo_summ: this.state.price_start,
-				promo_summ_to: this.state.price_end,
-				promo_when: this.state.date_promo,
-
-				date_start: dayjs(this.state.date_start).format('YYYY-MM-DD'),
-				date_end: dayjs(this.state.date_end).format('YYYY-MM-DD'),
-				time_start: this.state.time_start,
-				time_end: this.state.time_end,
-
-				day_1: this.state.day_1 ? 1 : 0,
-				day_2: this.state.day_2 ? 1 : 0,
-				day_3: this.state.day_3 ? 1 : 0,
-				day_4: this.state.day_4 ? 1 : 0,
-				day_5: this.state.day_5 ? 1 : 0,
-				day_6: this.state.day_6 ? 1 : 0,
-				day_7: this.state.day_7 ? 1 : 0,
-
-				promo_type_order: this.state.type_order,
-				promo_where: this.state.where_order,
-
-				numberList: this.state.numberList,
-
-				promo_city: this.state.city,
-				promo_point: this.state.point,
-
-				about_promo_text: this.state.promo_desc_true,
-				condition_promo_text: this.state.promo_desc_false,
-				textSMS: this.state.textSMS,
-
-
-				promo_items: JSON.stringify(promo_items),
-				promo_cat: JSON.stringify(promo_cat),
-				promo_items_add: JSON.stringify(this.state.itemsAdd),
-				promo_items_sale: JSON.stringify(this.state.itemsAddPrice),
-				promo_conditions_items: JSON.stringify(conditionItems),
-
-				date_between: dateList,
-
-				for_new: this.state.for_new ? 1 : 0,
-				once_number: this.state.once_number ? 1 : 0,
-				for_registred: this.state.for_registred ? 1 : 0,
-				for_number: this.state.for_number ? 1 : 0,
-				for_number_text: this.state.for_number_text
-			};
-			console.log(data);
-
-			let res = await this.getData('save_edit_promo', data);
-
-			console.log(res)
-
-			this.setState({
-				modalDialog: true,
-				modalText: res.text
-			})
-
-			setTimeout(() => {
-				this.click = false;
-			}, 300)
+		let copy_promo = {
+        promo_action: this.props.promo_action_list.find( (item) => parseInt(item.id) == parseInt(this.props.promo_double.promo_action))?.id,
+        promo_sale: this.props.promo_sale_list.find( (item) => parseInt(item.name) == parseInt(this.props.promo_double.count_promo))?.id,
+        itemsAdd: JSON.parse(this.props.promo_double.promo__items) ? JSON.parse(this.props.promo_double.promo__items) : [],
+        itemsAddPrice: JSON.parse(this.props.promo_double.add_items_on_price) ? JSON.parse(this.props.promo_double.add_items_on_price) : [],
+        date_start: dayjs(this.props.promo_double.date1),
+        date_end: dayjs(this.props.promo_double.date2),
+        time_start: this.props.promo_double.time1,
+        time_end: this.props.promo_double.time2,
+				promo_desc_false: this.props.promo_double.condition_text,
+				promo_desc_true: this.props.promo_double.coment,
+        rangeDate: [dayjs(this.props.promo_double.date1), dayjs(this.props.promo_double.date2)],
+        day_1: parseInt(this.props.promo_double.d1) == 1 ? true : false,
+        day_2: parseInt(this.props.promo_double.d2) == 1 ? true : false,
+        day_3: parseInt(this.props.promo_double.d3) == 1 ? true : false,
+        day_4: parseInt(this.props.promo_double.d4) == 1 ? true : false,
+        day_5: parseInt(this.props.promo_double.d5) == 1 ? true : false,
+        day_6: parseInt(this.props.promo_double.d6) == 1 ? true : false,
+        day_7: parseInt(this.props.promo_double.d7) == 1 ? true : false,
+        count_action: this.props.promo_double.count,
+        promo_name: this.props.promo_double.name,
+        price_start: this.props.promo_double.promo_summ,
+        price_end: this.props.promo_double.promo_summ_to,
+        point: this.props.promo_double.point_id,
+        city: this.props.promo_double.city_id,
+        where_order: parseInt(this.props.promo_double.city_id) > 0 ? 1 : parseInt(this.props.promo_double.point_id) > 0 ? 2 : 1,
+        type_order: this.props.promo_double.type_order,
+        promo_id: this.props.promo_double.id,
+        for_new: parseInt(this.props.promo_double.only_first_order) == 1 ? true : false,
+        once_number: parseInt(this.props.promo_double.once_number) == 1 ? true : false,
+        for_registred: parseInt(this.props.promo_double.for_registred) == 1 ? true : false,
+        for_number: parseInt(this.props.promo_double.for_number) == 1 ? true : false,
+        for_number_text: this.props.promo_double.for_number_text,
 		}
-	}
-
-	getData = (method, data = {}) => {
-		this.setState({
-			is_load: true,
-		});
-
-		let res = api_laravel(this.state.module, method, data)
-			.then((result) => result.data)
-			.finally(() => {
-				setTimeout(() => {
-					this.setState({
-						is_load: false,
-					});
-				}, 500);
-			});
-
-		return res;
-	};
-
-	changeData(type, event) {
-		this.setState({
-			[type]: event.target.value
-		})
-
-		if (type == 'date_promo' && (event.target.value == 2 || event.target.value == 3)) {
-			let thisDay = new Date();
-			let nextDay = new Date();
-			nextDay.setDate(nextDay.getDate() + 14);
-
-			this.setState({
-				rangeDate: [formatDate(thisDay), formatDate(nextDay)],
-				date_start: formatDate(thisDay),
-				date_end: formatDate(nextDay),
-
-				time_start: event.target.value == 2 ? '10:00' : '00:00',
-				time_end: event.target.value == 2 ? '21:40' : '23:59',
-			})
-		}
-
-		if (type == 'date_promo' && (event.target.value == 4 || event.target.value == 5)) {
-			let thisDay = new Date();
-			let nextDay = new Date();
-			nextDay.setDate(nextDay.getDate() + 30);
-
-			this.setState({
-				rangeDate: [formatDate(thisDay), formatDate(nextDay)],
-				date_start: formatDate(thisDay),
-				date_end: formatDate(nextDay),
-
-				time_start: event.target.value == 4 ? '10:00' : '00:00',
-				time_end: event.target.value == 4 ? '21:40' : '23:59',
-			})
-		}
-
-		setTimeout(() => {
-			this.generateTextDescFalse();
-			this.generateTextDescTrue();
-		}, 300)
-	}
-
-	changeDataCheck(type, event) {
-		this.setState({
-			[type]: event.target.checked
-		})
-
-		if (type == 'once_number' || type == 'for_new' || type == 'for_registred') {
-			if (type == 'once_number' && event.target.checked === true) {
-				this.setState({
-					for_new: false
-				})
-			}
-			if (type == 'for_new' && event.target.checked === true) {
-				this.setState({
-					once_number: false,
-					for_registred: false
-				})
-			}
-			if (type == 'for_registred' && event.target.checked === true) {
-				this.setState({
-					for_new: false
-				})
-			}
-		}
-
-		setTimeout(() => {
-			this.generateTextDescFalse();
-			this.generateTextDescTrue();
-		}, 300)
-	}
-
-	changeDateRange(data, event) {
-		this.setState({
-			[data]: (event)
-		})
-
-		setTimeout(() => {
-			this.generateTextDescFalse();
-			this.generateTextDescTrue();
-		}, 300)
-	}
-
-	changeDataData(type, data) {
-		this.setState({
-			[type]: data
-		});
-
-		setTimeout(() => {
-			this.generateTextDescFalse();
-			this.generateTextDescTrue();
-		}, 300)
-	}
-
-	generateTextDescTrue() {
-
-		if (!this.state.auto_text) {
-			return;
-		}
-
-		let promo_action = this.state.promo_action;
-		let textTrue = '';
-
-		if (parseInt(promo_action) == 1) {//скидка
-			var promo_type_sale = this.state.type_sale,
-				//count_promo = this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale) )['name'],//размер скидки
-				promo_type = this.state.sale_type; //1 - рубли 2 %
-
-			let count_promo = 0;
-
-			console.log('this.state.promo_sale_list', this.state.promo_sale_list)
-
-			if (parseInt(this.state.sale_type) == 2) {
-				let check = this.state.promo_sale_list.find((item) => parseInt(item.id) == parseInt(this.state.promo_sale));
-
-				count_promo = check ? check['name'] : parseInt(this.state.promo_sale);//размер скидки
-			} else {
-				count_promo = parseInt(this.state.promo_sale);
-			}
-
-			if (parseInt(promo_type_sale) == 1) {//товары
-				var promo_items = this.state.saleItem,
-					items = '';
-
-				promo_items.map(function (item, key) {
-					items += item.name + ', ';
-				})
-
-				items = items.substring(0, items.length - 2);
-
-				textTrue = 'скидку на ' + items + ' в размере ' + count_promo + (parseInt(promo_type) == 1 ? 'руб.' : '%');
-			}
-			if (parseInt(promo_type_sale) == 2) {//категории
-				var promo_items = this.state.saleCat,
-					items = '';
-
-				promo_items.map(function (item, key) {
-					items += item.name + ', ';
-				})
-
-				items = items.substring(0, items.length - 2);
-
-				textTrue = 'скидку на ' + items + ' в размере ' + count_promo + (parseInt(promo_type) == 1 ? 'руб.' : '%');
-			}
-			if (parseInt(promo_type_sale) == 3) {//все
-				textTrue = 'скидку на всё меню, кроме напитков, соусов, приправ и палочек, в размере ' + count_promo + (parseInt(promo_type) == 1 ? 'руб.' : '%');
-			}
-			if (parseInt(promo_type_sale) == 7) {//все
-				textTrue = 'скидку на всё меню, в размере ' + count_promo + (parseInt(promo_type) == 1 ? 'руб.' : '%');
-			}
-		}
-
-		if (parseInt(promo_action) == 2) {//добавляет товар
-			var itemText = '';
-
-			this.state.itemsAdd.map((item, key) => {
-				if (parseInt(item['price']) == 0) {
-					itemText += 'бесплатную ' + item['name'] + ' ' + item['count'] + 'шт. ' + 'за ' + item['price'] + 'руб., ';
+		const d1 = Object.entries(copy_promo);
+		const diffEntries = [];
+		Object.entries(original_promo).map(([key, value], index) => {
+			if (value !== d1[index][1]) {
+				if (Array.isArray(d1[index][1])) {
+					if (value.length !== d1[index][1].length) {
+						diffEntries.push([key, {current: JSON.stringify(value), undo: JSON.stringify(d1[index][1])}]);
+					}
 				} else {
-					itemText += item['name'] + ' ' + item['count'] + 'шт. ' + 'за ' + item['price'] + 'руб., ';
+					if (key === 'date_start' || key === 'date_end') {
+						if (dayjs(value).format("HH:mm") !== dayjs(d1[index][1]).format("HH:mm")) {
+							diffEntries.push([key, {current: value, undo: d1[index][1]}]);
+						}
+					} else {
+						diffEntries.push([key, {current: value, undo: d1[index][1]}]);
+					}
 				}
-			})
-
-			itemText = itemText.substring(0, itemText.length - 2);
-
-			textTrue = this.state.itemsAdd.length == 1 ? 'позицию ' + itemText : 'позиции ' + itemText;
-		}
-
-		if (parseInt(promo_action) == 3) {//товар за цену
-			var itemText = '';
-
-			this.state.itemsAddPrice.map((item, key) => {
-				itemText += item['name'] + ' по ' + item['price'] + 'руб., ';
-			})
-
-			itemText = itemText.substring(0, itemText.length - 2);
-
-			textTrue = this.state.itemsAddPrice.length - 1 == 1 ? 'позицию ' + itemText : 'позиции ' + itemText;
-		}
-
-		let textSMS = 'Промокод --promo_name--, действует до ' + formatDateName(this.state.date_end) + '. Заказывай на jacofood.ru!'
-
-		this.setState({
-			promo_desc_true: textTrue,
-			textSMS: textSMS,
-			cert_text: textTrue
+			}
 		})
-	}
-
-	generateTextDescFalse() {
-
-		if (!this.state.auto_text) {
-			return;
-		}
-
-		var dop_text = '';
-
-		if (parseInt(this.state.where_order) == 1) {
-			//город
-			if (parseInt(this.state.city) != 0) {
-				let city_name = this.state.cities.find((item) => parseInt(item.id) == parseInt(this.state.city))['name'];
-
-				dop_text = ' в г. ' + city_name;
-			}
-		}
-
-		if (parseInt(this.state.where_order) == 2) {
-			//точка
-			if (parseInt(this.state.point) != 0) {
-				let point_name = this.state.points.find((item) => parseInt(item.id) == parseInt(this.state.point))['name'];
-
-				dop_text = ' в г. ' + point_name;
-			}
-		}
-
-		let dateStart = formatDateDot(this.state.date_start);
-		let dateEnd = formatDateDot(this.state.date_end);
-
-		let for_new = this.state.for_new;
-		let once_number = this.state.once_number;
-		let for_registred = this.state.for_registred;
-		let for_number = this.state.for_number;
-
-		let textFalse = 'Промокод действует c ' + dateStart + ' до ' + dateEnd + ' с ' + this.state.time_start + ' до ' + this.state.time_end + dop_text;
-
-		if (for_new === true) {
-			textFalse += ". Только на первый заказ.";
-		}
-
-		if (for_registred === true) {
-			textFalse += ". Только для зарегистрированных.";
-		}
-
-		if (once_number === true) {
-			textFalse += " Можно применить 1 раз.";
-		}
-
-		if (for_number === true) {
-			textFalse += " Привязан к номеру телефона.";
+		this.setState({
+			diff_ent: Object.fromEntries(diffEntries),
+		});
 		}
 
 		this.setState({
-			promo_desc_false: textFalse
-		})
+				cities: this.props.cities,
+				points:this.props.points,
+        promo_action_list: this.props.promo_action_list,
+        promo_action: this.props.promo_action_list.find( (item) => parseInt(item.id) == parseInt(this.props.promo.promo_action))?.id,
+        promo_sale_list: this.props.promo_sale_list,
+        promo_sale: this.props.promo_sale_list.find( (item) => parseInt(item.name) == parseInt(this.props.promo.count_promo))?.id,
+        type_sale: this.props.promo.promo_type_sale,
+        itemsAdd: JSON.parse(this.props.promo.promo__items) ? JSON.parse(this.props.promo.promo__items) : [],
+        itemsAddPrice: JSON.parse(this.props.promo.add_items_on_price) ? JSON.parse(this.props.promo.add_items_on_price) : [],
+        date_start: dayjs(this.props.promo.date1),
+        date_end: dayjs(this.props.promo.date2),
+        time_start: this.props.promo.time1,
+        time_end: this.props.promo.time2,
+				promo_desc_false: this.props.promo.condition_text,
+				promo_desc_true: this.props.promo.coment,
+        rangeDate: [dayjs(this.props.promo.date1), dayjs(this.props.promo.date2)],
+
+        items: this.props.items,
+        cats: this.props.cats,
+
+        day_1: parseInt(this.props.promo.d1) == 1 ? true : false,
+        day_2: parseInt(this.props.promo.d2) == 1 ? true : false,
+        day_3: parseInt(this.props.promo.d3) == 1 ? true : false,
+        day_4: parseInt(this.props.promo.d4) == 1 ? true : false,
+        day_5: parseInt(this.props.promo.d5) == 1 ? true : false,
+        day_6: parseInt(this.props.promo.d6) == 1 ? true : false,
+        day_7: parseInt(this.props.promo.d7) == 1 ? true : false,
+
+        count_action: this.props.promo.count,
+        promo_name: this.props.promo.name,
+
+        price_start: this.props.promo.promo_summ,
+        price_end: this.props.promo.promo_summ_to,
+
+        conditionItems: items,
+        promo_conditions: items.length > 0 ? 1 : 2,
+
+        point: this.props.promo.point_id,
+        city: this.props.promo.city_id,
+
+        where_order: parseInt(this.props.promo.city_id) > 0 ? 1 : parseInt(this.props.promo.point_id) > 0 ? 2 : 1,
+
+        type_order: this.props.promo.type_order,
+
+        promo_id: this.props.promo.id,
+
+        for_new: parseInt(this.props.promo.only_first_order) == 1 ? true : false,
+        once_number: parseInt(this.props.promo.once_number) == 1 ? true : false,
+        for_registred: parseInt(this.props.promo.for_registred) == 1 ? true : false,
+
+        created: this.props.created,
+
+        for_number: parseInt(this.props.promo.for_number) == 1 ? true : false,
+        for_number_text: this.props.promo.for_number_text,
+      })
 	}
 
-	addItemAdd() {
-		let thisItems = this.state.itemsAdd;
-
-		let check = thisItems.find((item) => parseInt(item.item_id) == parseInt(this.state.addItem));
-
-		if (!check) {
-			let thisItem = this.state.items.find((item) => parseInt(item.id) == parseInt(this.state.addItem));
-
-			thisItems.push({
-				item_id: this.state.addItem,
-				name: thisItem.name,
-				count: this.state.addItemCount,
-				price: this.state.addItemPrice,
-			})
-
-			let addItemAllPrice = 0;
-
-			thisItems.map((item) => {
-				addItemAllPrice += parseInt(item.price)
-			})
-
-			this.setState({
-				itemsAdd: thisItems,
-				addItemAllPrice: addItemAllPrice
-			})
-		}
-	}
-
-	priceItemAdd() {
-		let thisItems = this.state.itemsAddPrice;
-
-		let check = thisItems.find((item) => parseInt(item.item_id) == parseInt(this.state.priceItem));
-
-		if (!check) {
-			let thisItem = this.state.items.find((item) => parseInt(item.id) == parseInt(this.state.priceItem));
-
-			thisItems.push({
-				id: this.state.priceItem,
-				name: thisItem.name,
-				price: this.state.addItemCount,
-			})
-
-			this.setState({
-				itemsAddPrice: thisItems
-			})
+	diffUndo = (key) => {
+		if (this.state.diff_ent[key]) {
+			return 'highlighted-field'; // возвращаем имя класса
+		} else {
+			return '';
 		}
 	}
 
 	render() {
 		return (
-            <Dialog
+			<Dialog
 				open={this.props.modalDialogEdit}
 				onClose={this.props.onClose}
 				aria-labelledby="alert-dialog-title"
 				aria-describedby="alert-dialog-description"
 				maxWidth={'xl'}
 			>
-                <DialogTitle id="alert-dialog-title">Редактирование {this.props.promoName}</DialogTitle>
-                <DialogContent>
+				<DialogTitle id="alert-dialog-title">Редактирование {this.props.promoName}</DialogTitle>
+				<DialogContent>
 					<>
 						<Backdrop style={{zIndex: 99}} open={this.state.is_load}>
 							<CircularProgress color="inherit"/>
 						</Backdrop>
-						<Dialog
-							open={this.state.modalDialog}
-							onClose={() => {
-								this.setState({modalDialog: false, modalLink: ''})
-							}}
-							maxWidth={'xl'}
-							aria-labelledby="alert-dialog-title"
-							aria-describedby="alert-dialog-description"
-						>
-							<DialogTitle id="alert-dialog-title">Результат операции</DialogTitle>
-							<DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
-								<Typography>{this.state.modalText}</Typography>
-								<br/>
-								{this.state.modalLink == '' ? null :
-									<a href={this.state.modalLink} style={{color: 'red'}}>Скачать</a>
-								}
-							</DialogContent>
-							<DialogActions>
-								<Button color="primary" onClick={() => {
-									this.setState({modalDialog: false})
-								}}>Хорошо</Button>
-							</DialogActions>
-						</Dialog>
-
 						<Grid container style={{marginTop: '80px', paddingLeft: '24px'}}>
-
 							<Grid container direction="row" justifyContent="start" style={{paddingTop: 20}} spacing={3}>
 								<Grid
-                                    size={{
-                                        xs: 12
-                                    }}>
+									size={{
+										xs: 12
+									}}>
 									<Typography>Был создан: {this.state.created}</Typography>
 								</Grid>
 							</Grid>
@@ -835,25 +463,27 @@ export class PromoEdit extends React.Component {
 							<Grid container direction="row" justifyContent="start" style={{paddingTop: 20}} spacing={3}>
 
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
 									<Typography>Промокод: {this.state.promo_name}</Typography>
 								</Grid>
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
-									<MyTextInput value={this.state.count_action} disabled={this.state.access?.count_action_edit === 0} func={this.changeData.bind(this, 'count_action')} label='Количество активаций'/>
+									className={this.diffUndo('count_action')}
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
+									<MyTextInput value={this.state.count_action} disabled={true} label='Количество активаций'/>
 								</Grid>
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
-									<MyTextInput value={this.state.promo_count} disabled={this.state.access?.promo_count_edit === 0} func={this.changeData.bind(this, 'promo_count')} label='Количество промокодов'/>
+									className={this.diffUndo('promo_count')}
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
+									<MyTextInput value={this.state.promo_count} disabled={true} label='Количество промокодов'/>
 								</Grid>
 
 							</Grid>
@@ -861,32 +491,36 @@ export class PromoEdit extends React.Component {
 							<Grid container direction="column" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
-									<MyCheckBox value={this.state.for_new} disabled={this.state.access?.for_new_edit === 0} func={this.changeDataCheck.bind(this, 'for_new')} label='Для новых клиентов ( на первый заказ )'/>
+									className={this.diffUndo('for_new')}
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
+									<MyCheckBox value={this.state.for_new} disabled={true} label='Для новых клиентов ( на первый заказ )'/>
 								</Grid>
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
-									<MyCheckBox value={this.state.once_number} disabled={this.state.access?.once_number_edit === 0} func={this.changeDataCheck.bind(this, 'once_number')} label='1 раз на номер телефона'/>
+									className={this.diffUndo('once_number')}
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
+									<MyCheckBox value={this.state.once_number} disabled={true} label='1 раз на номер телефона'/>
 								</Grid>
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
-									<MyCheckBox value={this.state.for_registred}  disabled={this.state.access?.for_registred_edit === 0} func={this.changeDataCheck.bind(this, 'for_registred')} label='Только для зарегистрированных клиентов'/>
+									className={this.diffUndo('for_registred')}
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
+									<MyCheckBox value={this.state.for_registred} disabled={true} label='Только для зарегистрированных клиентов'/>
 								</Grid>
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
-									<MyCheckBox value={this.state.for_number} disabled={this.state.access?.for_number_edit === 0} func={this.changeDataCheck.bind(this, 'for_number')} label='Привязан к номеру телефона'/>
+									className={this.diffUndo('for_number')}
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
+									<MyCheckBox value={this.state.for_number} disabled={true} label='Привязан к номеру телефона'/>
 								</Grid>
 
 							</Grid>
@@ -894,10 +528,11 @@ export class PromoEdit extends React.Component {
 							<Grid container style={{paddingTop: 20}} spacing={3}>
 
 								{this.state.for_number && <Grid
-                                    size={{
-                                        xs: 3
-                                    }}>
-									<MyTextInput value={this.state.for_number_text} disabled={this.state.access?.for_number_text_edit === 0} func={this.changeData.bind(this, 'for_number_text')} label='Номер телефона'/>
+									className={this.diffUndo('for_number_text')}
+									size={{
+										xs: 3
+									}}>
+									<MyTextInput value={this.state.for_number_text} disabled={true} label='Номер телефона'/>
 								</Grid>}
 
 							</Grid>
@@ -907,11 +542,12 @@ export class PromoEdit extends React.Component {
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
-									<MySelect data={this.state.promo_action_list} disabled={this.state.access?.promo_action_list_edit === 0} value={this.state.promo_action} func={this.changeData.bind(this, 'promo_action')} label='Промокод дает:'/>
+									className={this.diffUndo('promo_action')}
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
+									<MySelect data={this.state.promo_action_list} disabled={true} value={this.state.promo_action} label='Промокод дает:'/>
 								</Grid>
 
 							</Grid>
@@ -920,61 +556,62 @@ export class PromoEdit extends React.Component {
 								<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
 									<Grid
-                                        size={{
-                                            xs: 12,
-                                            sm: 3
-                                        }}>
-										<MySelect data={this.state.sale_list} disabled={this.state.access?.sale_list_edit === 0} value={this.state.type_sale} func={this.changeData.bind(this, 'type_sale')} label='Скидка'/>
+										className={this.diffUndo('type_sale')}
+										size={{
+											xs: 12,
+											sm: 3
+										}}>
+										<MySelect data={this.state.sale_list} disabled={true} value={this.state.type_sale} label='Скидка'/>
 									</Grid>
 
 									{parseInt(this.state.type_sale) !== 1 ? null :
 										<Grid
-                                            size={{
-                                                xs: 12,
-                                                sm: 9
-                                            }}>
-											<MyAutocomplite data={this.state.items} disabled={this.state.access?.items_edit === 0} value={this.state.saleItem} func={(event, data) => {
-												this.changeDataData('saleItem', data)
-											}} multiple={true} label='Товары'/>
+											className={this.diffUndo('saleItem')}
+											size={{
+												xs: 12,
+												sm: 9
+											}}>
+											<MyAutocomplite data={this.state.items} disabled={true} value={this.state.saleItem} multiple={true} label='Товары'/>
 										</Grid>
 									}
 
 									{parseInt(this.state.type_sale) !== 2 ? null :
 										<Grid
-                                            size={{
-                                                xs: 12,
-                                                sm: 9
-                                            }}>
-											<MyAutocomplite data={this.state.cats}  disabled={this.state.access?.cats_edit === 0} value={this.state.saleCat} func={(event, data) => {
-												this.changeDataData('saleCat', data)
-											}} multiple={true} label='Категории'/>
+											className={this.diffUndo('saleCat')}
+											size={{
+												xs: 12,
+												sm: 9
+											}}>
+											<MyAutocomplite data={this.state.cats} disabled={true} value={this.state.saleCat} multiple={true} label='Категории'/>
 										</Grid>
 									}
-
 									{parseInt(this.state.sale_type) == 1 ?
 										<Grid
-                                            size={{
-                                                xs: 12,
-                                                sm: 3
-                                            }}>
-											<MyTextInput value={this.state.promo_sale} disabled={this.state.access?.promo_sale_edit === 0} func={this.changeData.bind(this, 'promo_sale')} label='Размер скидки'/>
+											className={this.diffUndo('promo_sale')}
+											size={{
+												xs: 12,
+												sm: 3
+											}}>
+											<MyTextInput value={this.state.promo_sale} disabled={true} label='Размер скидки'/>
 										</Grid>
 										:
 										<Grid
-                                            size={{
-                                                xs: 12,
-                                                sm: 3
-                                            }}>
-											<MySelect data={this.state.promo_sale_list}  disabled={this.state.access?.promo_sale_edit === 0} value={this.state.promo_sale} func={this.changeData.bind(this, 'promo_sale')} label='Размер скидки'/>
+											className={this.diffUndo('promo_sale')}
+											size={{
+												xs: 12,
+												sm: 3
+											}}>
+											<MySelect data={this.state.promo_sale_list} disabled={true} value={this.state.promo_sale}  label='Размер скидки'/>
 										</Grid>
 									}
 
 									<Grid
-                                        size={{
-                                            xs: 12,
-                                            sm: 3
-                                        }}>
-										<MySelect data={this.state.type_sale_list}  disabled={this.state.access?.sale_type_edit === 0} value={this.state.sale_type} func={this.changeData.bind(this, 'sale_type')} label='Какая скидка'/>
+										className={this.diffUndo('sale_type')}
+										size={{
+											xs: 12,
+											sm: 3
+										}}>
+										<MySelect data={this.state.type_sale_list} disabled={true} value={this.state.sale_type} label='Какая скидка'/>
 									</Grid>
 
 								</Grid>
@@ -983,41 +620,43 @@ export class PromoEdit extends React.Component {
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 4
-                                    }}>
-									<MySelect data={this.state.promo_conditions_list} disabled={this.state.access?.promo_conditions_edit === 0}  value={this.state.promo_conditions} func={this.changeData.bind(this, 'promo_conditions')} label='Условие'/>
+									className={this.diffUndo('promo_conditions')}
+									size={{
+										xs: 12,
+										sm: 4
+									}}>
+									<MySelect data={this.state.promo_conditions_list} disabled={true} value={this.state.promo_conditions} label='Условие'/>
 								</Grid>
 
 								{parseInt(this.state.promo_conditions) !== 1 ? null :
 									<Grid
-                                        size={{
-                                            xs: 12,
-                                            sm: 8
-                                        }}>
-										<MyAutocomplite data={this.state.items} disabled={this.state.access?.conditionItems_edit === 0} value={this.state.conditionItems} func={(event, data) => {
-											this.changeDataData('conditionItems', data)
-										}} multiple={true} label='Товары'/>
+										className={this.diffUndo('conditionItems')}
+										size={{
+											xs: 12,
+											sm: 8
+										}}>
+										<MyAutocomplite data={this.state.items} disabled={true} value={this.state.conditionItems} multiple={true} label='Товары'/>
 									</Grid>
 								}
 
 								{parseInt(this.state.promo_conditions) !== 2 ? null :
 									<>
 										<Grid
-                                            size={{
-                                                xs: 12,
-                                                sm: 4
-                                            }}>
-											<MyTextInput value={this.state.price_start} disabled={this.state.access?.price_start_edit === 0} func={this.changeData.bind(this, 'price_start')} label='Сумма от'/>
+											className={this.diffUndo('price_start')}
+											size={{
+												xs: 12,
+												sm: 4
+											}}>
+											<MyTextInput value={this.state.price_start} disabled={true} label='Сумма от'/>
 										</Grid>
 
 										<Grid
-                                            size={{
-                                                xs: 12,
-                                                sm: 4
-                                            }}>
-											<MyTextInput value={this.state.price_end} disabled={this.state.access?.price_end_edit === 0} func={this.changeData.bind(this, 'price_end')} label='Сумма до'/>
+											className={this.diffUndo('price_end')}
+											size={{
+												xs: 12,
+												sm: 4
+											}}>
+											<MyTextInput value={this.state.price_end} disabled={true} label='Сумма до'/>
 										</Grid>
 									</>
 								}
@@ -1029,11 +668,12 @@ export class PromoEdit extends React.Component {
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
-									<MySelect data={this.state.date_promo_list} disabled={this.state.access?.date_promo_edit === 0} value={this.state.date_promo} func={this.changeData.bind(this, 'date_promo')} label='Когда работает промокод'/>
+									className={this.diffUndo('date_promo')}
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
+									<MySelect data={this.state.date_promo_list} disabled={true} value={this.state.date_promo} label='Когда работает промокод'/>
 								</Grid>
 
 							</Grid>
@@ -1041,63 +681,68 @@ export class PromoEdit extends React.Component {
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
-									<MyDatePickerNew label="Дата от" value={this.state.date_start} disabled={this.state.access?.date_start_edit === 0} func={this.changeDateRange.bind(this, 'date_start')}/>
+									className={this.diffUndo('date_start')}
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
+									<MyDatePickerNew label="Дата от" value={this.state.date_start} disabled={true}/>
 								</Grid>
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
-									<MyDatePickerNew label="Дата до" value={this.state.date_end} disabled={this.state.access?.date_end_edit === 0} func={this.changeDateRange.bind(this, 'date_end')}/>
-								</Grid>
-
-								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
-									<MyTimePicker label="Время от" value={this.state.time_start} disabled={this.state.access?.time_start_edit === 0} func={this.changeData.bind(this, 'time_start')}/>
+									className={this.diffUndo('date_end')}
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
+									<MyDatePickerNew label="Дата до" value={this.state.date_end} disabled={true}/>
 								</Grid>
 
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 3
-                                    }}>
-									<MyTimePicker label="Время до" value={this.state.time_end} disabled={this.state.access?.time_end_edit === 0} func={this.changeData.bind(this, 'time_end')}/>
+									className={this.diffUndo('time_start')}
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
+									<MyTimePicker label="Время от" value={this.state.time_start} disabled={true}/>
+								</Grid>
+
+								<Grid
+									className={this.diffUndo('time_end')}
+									size={{
+										xs: 12,
+										sm: 3
+									}}>
+									<MyTimePicker label="Время до" value={this.state.time_end} disabled={true}/>
 								</Grid>
 
 							</Grid>
 
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 12
-                                    }}>
-									<MyDatePicker multiple={false} label={'Кроме дат'} disabled={this.state.access?.testDate_edit === 0} value={this.state.testDate} func={this.changeDataData.bind(this, 'testDate')}/>
+									className={this.diffUndo('testDate')}
+									size={{
+										xs: 12,
+										sm: 12
+									}}>
+									<MyDatePicker multiple={false} label={'Кроме дат'} disabled={true} value={this.state.testDate}/>
 								</Grid>
 							</Grid>
 
-							<Grid container direction="row" justifyContent="center" style={{marginTop: 20}} spacing={3}>
+							<Grid  container direction="row" justifyContent="center" style={{marginTop: 20}} spacing={3}>
 
-								<MyCheckBox value={this.state.day_1} disabled={this.state.access?.day_1_edit === 0} func={this.changeDataCheck.bind(this, 'day_1')} label='Понедельник'/>
+								<MyCheckBox value={this.state.day_1} disabled={true} label='Понедельник'/>
 
-								<MyCheckBox value={this.state.day_2} disabled={this.state.access?.day_2_edit === 0} func={this.changeDataCheck.bind(this, 'day_2')} label='Вторник'/>
+								<MyCheckBox value={this.state.day_2} disabled={true} label='Вторник'/>
 
-								<MyCheckBox value={this.state.day_3} disabled={this.state.access?.day_3_edit === 0} func={this.changeDataCheck.bind(this, 'day_3')} label='Среда'/>
+								<MyCheckBox value={this.state.day_3} disabled={true} label='Среда'/>
 
-								<MyCheckBox value={this.state.day_4} disabled={this.state.access?.day_4_edit === 0} func={this.changeDataCheck.bind(this, 'day_4')} label='Четверг'/>
+								<MyCheckBox value={this.state.day_4} disabled={true} label='Четверг'/>
 
-								<MyCheckBox value={this.state.day_5}  disabled={this.state.access?.day_5_edit === 0}func={this.changeDataCheck.bind(this, 'day_5')} label='Пятница'/>
+								<MyCheckBox value={this.state.day_5} disabled={true} label='Пятница'/>
 
-								<MyCheckBox value={this.state.day_6} disabled={this.state.access?.day_6_edit === 0} func={this.changeDataCheck.bind(this, 'day_6')} label='Суббота'/>
+								<MyCheckBox value={this.state.day_6} disabled={true} label='Суббота'/>
 
-								<MyCheckBox value={this.state.day_7} disabled={this.state.access?.day_7_edit === 0} func={this.changeDataCheck.bind(this, 'day_7')} label='Воскресенье'/>
+								<MyCheckBox value={this.state.day_7} disabled={true} label='Воскресенье'/>
 
 							</Grid>
 
@@ -1106,35 +751,39 @@ export class PromoEdit extends React.Component {
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 4
-                                    }}>
-									<MySelect data={this.state.type_order_list} disabled={this.state.access?.type_order_edit === 0} value={this.state.type_order} func={this.changeData.bind(this, 'type_order')} label='Тип заказа'/>
+									className={this.diffUndo('type_order')}
+									size={{
+										xs: 12,
+										sm: 4
+									}}>
+									<MySelect data={this.state.type_order_list} disabled={true} value={this.state.type_order} label='Тип заказа'/>
 								</Grid>
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 4
-                                    }}>
-									<MySelect data={this.state.where_order_list} disabled={this.state.access?.where_order_edit === 0} value={this.state.where_order} func={this.changeData.bind(this, 'where_order')} label='Где работает'/>
+									className={this.diffUndo('where_order')}
+									size={{
+										xs: 12,
+										sm: 4
+									}}>
+									<MySelect data={this.state.where_order_list} disabled={true} value={this.state.where_order} label='Где работает'/>
 								</Grid>
 								{parseInt(this.state.where_order) !== 1 ? null :
 									<Grid
-                                        size={{
-                                            xs: 12,
-                                            sm: 4
-                                        }}>
-										<MySelect data={this.state.cities} disabled={this.state.access?.city_edit === 0} value={this.state.city} func={this.changeData.bind(this, 'city')} label='Город'/>
+										className={this.diffUndo('city')}
+										size={{
+											xs: 12,
+											sm: 4
+										}}>
+										<MySelect data={this.state.cities} disabled={true} value={this.state.city} label='Город'/>
 									</Grid>
 								}
 								{parseInt(this.state.where_order) !== 2 ? null :
 									<Grid
-                                        size={{
-                                            xs: 12,
-                                            sm: 4
-                                        }}>
-										<MySelect data={this.state.points} disabled={this.state.access?.point_edit === 0} value={this.state.point} func={this.changeData.bind(this, 'point')} label='Точка'/>
+										className={this.diffUndo('point')}
+										size={{
+											xs: 12,
+											sm: 4
+										}}>
+										<MySelect data={this.state.points} disabled={true} value={this.state.point} label='Точка'/>
 									</Grid>
 								}
 
@@ -1145,45 +794,44 @@ export class PromoEdit extends React.Component {
 							<Grid container direction="row" justifyContent="center" style={{paddingTop: 20}} spacing={3}>
 
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 12
-                                    }}>
-									<MyCheckBox value={this.state.auto_text} disabled={this.state.access?.auto_text_edit === 0} func={this.changeDataCheck.bind(this, 'auto_text')} label='Авто-текст'/>
+									className={this.diffUndo('auto_text')}
+									size={{
+										xs: 12,
+										sm: 12
+									}}>
+									<MyCheckBox value={this.state.auto_text} disabled={true} label='Авто-текст'/>
 								</Grid>
 
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 12
-                                    }}>
-									<MyTextInput value={this.state.promo_desc_true} disabled={this.state.access?.promo_desc_true_edit === 0} func={this.changeData.bind(this, 'promo_desc_true')} label='Описание промокода после активации (Промокод дает: )'/>
+									className={this.diffUndo('promo_desc_true')}
+									size={{
+										xs: 12,
+										sm: 12
+									}}>
+									<MyTextInput value={this.state.promo_desc_true} disabled={true} label='Описание промокода после активации (Промокод дает: )'/>
 								</Grid>
 
 								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 12
-                                    }}>
-									<MyTextInput value={this.state.promo_desc_false} disabled={this.state.access?.promo_desc_false_edit === 0} func={this.changeData.bind(this, 'promo_desc_false')} label='Условие промокода, когда условия не соблюдены'/>
+									className={this.diffUndo('promo_desc_false')}
+									size={{
+										xs: 12,
+										sm: 12
+									}}>
+									<MyTextInput value={this.state.promo_desc_false} disabled={true} label='Условие промокода, когда условия не соблюдены'/>
 								</Grid>
 
 							</Grid>
 
-
-							<Grid container direction="row" justifyContent="end" style={{paddingTop: 50}} spacing={3}>
-								<Button variant="contained" onClick={this.save.bind(this)}>Сохранить</Button>
-							</Grid>
 
 						</Grid>
 					</>
 				</DialogContent>
-                <DialogActions>
+				<DialogActions>
 					<Button color="primary" onClick={() => {
-						this.setState({modalDialog: false})
-					}}>Хорошо</Button>
+						this.props.onClose()
+					}}>Закрыть</Button>
 				</DialogActions>
-            </Dialog>
-        );
+			</Dialog>
+		);
 	}
 }
