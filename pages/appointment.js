@@ -1,7 +1,7 @@
 import React from "react";
 
 import { MyTextInput } from "@/components/shared/Forms";
-import { api_laravel } from "@/src/api_new";
+import {api_laravel, api_laravel_local} from "@/src/api_new";
 import {
   Accordion,
   AccordionDetails,

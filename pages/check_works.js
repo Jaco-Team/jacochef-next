@@ -171,17 +171,22 @@ class CheckWorks_Modal_New extends React.Component {
       >
         <DialogTitle className="button">
           <Typography>{this.props.method}</Typography>
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
-            <CloseIcon />
+          <IconButton onClick={this.onClose.bind(this)} style={{cursor: 'pointer'}}>
+            <CloseIcon/>
           </IconButton>
         </DialogTitle>
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <List sx={{ pt: 0 }}>
-            {this.state.item.map((it, i) => 
+        <DialogContent style={{
+          paddingBottom: 10,
+          paddingTop: 10,
+          maxHeight: '400px', // или '70vh'
+          overflow: 'auto'
+        }}>
+          <List sx={{pt: 0}}>
+            {this.state.item.map((it, i) =>
               <ListItem key={i} autoFocus button onClick={this.save.bind(this, it)}>
                 <ListItemAvatar>
                   <Avatar>
-                    <AddCircleOutlineOutlinedIcon />
+                    <AddCircleOutlineOutlinedIcon/>
                   </Avatar>
                 </ListItemAvatar>
                 {it.name}
@@ -301,7 +306,7 @@ class CheckWorks_Modal_Edit extends React.Component {
                 {this.state.item ? this.state.item.manager_name ? this.state.item.manager_name : 'Не указано' : 'Не указано'}
               </Typography>
             </Grid>
-            
+
             <Grid
               display="flex"
               justifyContent="space-around"
@@ -450,7 +455,7 @@ class Checkworks_ extends React.Component {
     setTimeout(() => {
       this.getItems();
     }, 510)
-    
+
   }
 
   handleResize() {
@@ -466,7 +471,7 @@ class Checkworks_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
-        
+
     this.setState({
       is_load: true,
     });
@@ -507,9 +512,9 @@ class Checkworks_ extends React.Component {
 
       return;
     }
-    
+
     const point_id = points.find(item => parseInt(item.id) === parseInt(point));
-    
+
     const data = {
       point_id,
       date_start: dayjs(date_start).format('YYYY-MM-DD'),
@@ -678,7 +683,7 @@ class Checkworks_ extends React.Component {
       }, 300)
 
     }
-   
+
   }
 
   async openModal(mark, method, itemEdit) {
@@ -691,7 +696,7 @@ class Checkworks_ extends React.Component {
       };
 
       let res = await this.getData('get_add_work', data);
-   
+
       this.setState({
         modalDialogNew: true,
         works: res.works,
@@ -726,9 +731,9 @@ class Checkworks_ extends React.Component {
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
-          isOpen={this.state.openAlert} 
-          onClose={() => this.setState({ openAlert: false }) } 
-          status={this.state.err_status} 
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false }) }
+          status={this.state.err_status}
           text={this.state.err_text} />
         <CheckWorks_Confirm
           open={this.state.confirmDialog}
@@ -846,9 +851,9 @@ class Checkworks_ extends React.Component {
                   }}>
                   <TableContainer>
                     <Grid mb={5} mt={5}>
-                      <Button 
-                        variant="contained" 
-                        onClick={() => this.setState({ filter: !filter })} 
+                      <Button
+                        variant="contained"
+                        onClick={() => this.setState({ filter: !filter })}
                         style={{ backgroundColor: '#9e9e9e' }}
                       >
                         Только удаленные / Все
@@ -879,7 +884,7 @@ class Checkworks_ extends React.Component {
                             <TableCell  style={{ padding: 0 }}>
                               {item.manager_name || parseInt(item.is_delete) === 1 || this.state.check_cook ? item.manager_name ?? '' : (
                                 <Grid display="flex" sx={{ justifyContent: { sm: 'space-evenly', xs: 'space-around', width: 300 } }}>
-                                  
+
                                   <Button onClick={this.openConfirm.bind(this, item, 'clearWork')} style={{ cursor: 'pointer', backgroundColor: 'yellow' }} variant="contained">
                                     <KeyboardBackspaceIcon />
                                   </Button>
@@ -970,17 +975,17 @@ class Checkworks_ extends React.Component {
 
                       <TableBody>
                         {this.state.pf_list.map((item, key) => (
-                          <TableRow key={key} hover sx={{ '& td': {backgroundColor: parseInt(item.is_delete) === 1 ? '#eb4d4b' : null,  fontWeight: parseInt(item.is_delete) === 1 ? 700 : null, 
+                          <TableRow key={key} hover sx={{ '& td': {backgroundColor: parseInt(item.is_delete) === 1 ? '#eb4d4b' : null,  fontWeight: parseInt(item.is_delete) === 1 ? 700 : null,
                           color: parseInt(item.is_delete) === 1 ? '#fff' : null } }}>
-                            <TableCell 
-                              sx={{ cursor: parseInt(item.is_delete) === 1 ? 'default' : 'pointer', color: parseInt(item.is_delete) === 1 ? '#fff' : '#c03', fontWeight: 700 }} 
+                            <TableCell
+                              sx={{ cursor: parseInt(item.is_delete) === 1 ? 'default' : 'pointer', color: parseInt(item.is_delete) === 1 ? '#fff' : '#c03', fontWeight: 700 }}
                               onClick={parseInt(item.is_delete) === 1 ? null : this.openModal.bind(this, 'editItem', 'Редактирование заготовки', item)}
                             >
-                              {parseInt(item.is_delete) === 1 ? 
+                              {parseInt(item.is_delete) === 1 ?
                                 item.name_work
                                 :
                                 <Link variant="button" underline='none' color={parseInt(item.is_delete) === 1 ? "inherit" : "primary"} style={{ fontWeight: 700 }}>{item.name_work}</Link>
-                              } 
+                              }
                             </TableCell>
                             <TableCell >{item.date_time}</TableCell>
                             <TableCell >{item.count_pf}</TableCell>

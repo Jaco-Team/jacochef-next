@@ -26,6 +26,7 @@ export function MyTimePicker(props) {
       color="primary"
       label={props.label}
       type="time"
+      disabled={props.disabled}
       id={props.id ? props.id : null}
       value={props.func ? props.value : thisVal}
       style={{ width: "100%" }}

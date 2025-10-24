@@ -55,6 +55,20 @@ export function SiteSettingPages() {
     }
   }, [cityId]);
 
+  useEffect(() => {
+    const data = {
+      submodule,
+      city_id: cityId,
+    };
+    getData("get_page_text_data", data).then((response) => {
+      setModuleName(response.submodule.name);
+      setPages(response.pages);
+      setCategories(response.categories);
+    }).catch((e) => {
+      showAlert(`Fetch error: ${e}`, false);
+    })
+  }, [cityId]);
+
   const { saveNew, saveEdit, setPageItem } = useSavePage(
     closeModal,
     showAlert,
@@ -162,10 +176,8 @@ export function SiteSettingPages() {
                 <TableCell style={{ width: "15%" }}>Последнее обновление</TableCell>
               </TableRow>
             </TableHead>
-
             <TableBody>
               {pages
-                .filter((p) => cityId === -1 || [-1, cityId].includes(p.city_id))
                 .map((page, key) => (
                   <TableRow
                     key={page.id}

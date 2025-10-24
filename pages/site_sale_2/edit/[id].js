@@ -21,6 +21,18 @@ import DatePicker from "react-multi-date-picker"
 import dayjs from 'dayjs';
 import {api_laravel, api_laravel_local} from "@/src/api_new";
 import { formatDate } from '@/src/helpers/ui/formatDate';
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import TableBody from "@mui/material/TableBody";
+import CloseIcon from "@mui/icons-material/Close";
+import TableFooter from "@mui/material/TableFooter";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import {PromoEdit} from "@/components/site_sale_2/PromoEdit";
 
 class MyDatePicker extends React.PureComponent {
   constructor(props) {
@@ -139,9 +151,12 @@ class SiteSale2_edit_ extends React.Component {
       point: 0,
       cities: [],
       city: 0,
+      promo_copy_double: {},
 
       modalDialog: false,
       modalLink: '',
+      promo_history: [],
+      promo_copy: {},
 
       where_promo_list: [
         {id: 1, name: 'Создать'},
@@ -188,6 +203,7 @@ class SiteSale2_edit_ extends React.Component {
 
       auto_text: true,
       where_promo: 1,
+      modalDialogEdit: false,
       promo_name: '',
       generate_new: false,
       count_action: 1,
@@ -253,6 +269,7 @@ class SiteSale2_edit_ extends React.Component {
 
       for_number: false,
       for_number_text: '',
+      promo_conditions_items: [],
     };
   }
 
@@ -279,10 +296,6 @@ class SiteSale2_edit_ extends React.Component {
     }
 
     setTimeout( () => {
-
-      console.log( 'conditionItems', items )
-      console.log( 'items', res.items )
-
       let limDate = [];
 
       res.limit.map( (item) => {
@@ -290,15 +303,19 @@ class SiteSale2_edit_ extends React.Component {
       } )
 
       this.setState({
+        promo_conditions_items: res.promo.promo_conditions_items,
         points: res.points,
         cities: res.cities,
+        promo_history: res.promo_history,
         module_name: res.module_info.name,
         promo_action_list: res.promo_action_list,
         promo_action: res.promo_action_list.find( (item) => parseInt(item.id) == parseInt(res.promo.promo_action))?.id,
         promo_sale_list: res.promo_sale_list,
-        promo_sale: res.promo_sale_list.find( (item) => parseInt(item.name) == parseInt(res.promo.count_promo))?.id,
+        promo_sale: parseInt(res.promo.promo_type) == 1 ? parseInt(res.promo.count_promo) : res.promo_sale_list.find( (item) => parseInt(item.name) == parseInt(res.promo.count_promo))?.id,
+        sale_type: parseInt(res.promo.promo_type),
         type_sale: res.promo.promo_type_sale,
-
+        itemsAdd: JSON.parse(res.promo.promo__items) ? JSON.parse(res.promo.promo__items) : [],
+        itemsAddPrice: JSON.parse(res.promo.add_items_on_price) ? JSON.parse(res.promo.add_items_on_price) : [],
         date_start: dayjs(res.promo.date1),
         date_end: dayjs(res.promo.date2),
         time_start: res.promo.time1,
@@ -332,9 +349,6 @@ class SiteSale2_edit_ extends React.Component {
 
         type_order: res.promo.type_order,
 
-        promo_desc_true: res.promo.coment,
-        promo_desc_false: res.promo.condition_text,
-
         promo_id: res.promo.id,
 
         testDate: limDate,
@@ -353,10 +367,31 @@ class SiteSale2_edit_ extends React.Component {
 
     document.title = res.module_info.name;
 
+    function cleanString(str) {
+      return str
+        .replace(/\s+/g, ' ') // заменяем все пробельные символы на обычные пробелы
+        .replace(/[^\x20-\x7E]/g, '') // удаляем не-ASCII символы
+        .trim();
+    }
+
     setTimeout( () => {
-      this.generateTextDescFalse();
-      this.generateTextDescTrue();
-    }, 300 )
+      const false_p = this.generateTextDescFalse();
+      const true_f = this.generateTextDescTrue();
+      if (cleanString(res.promo.coment) !== cleanString(true_f)) {
+        this.setState({
+          promo_desc_true: res.promo.coment,
+          auto_text: false,
+        });
+      }
+
+      if (cleanString(res.promo.condition_text) !== cleanString(false_p)) {
+        this.setState({
+          promo_desc_false: res.promo.condition_text,
+          auto_text: false,
+        });
+      }
+
+    }, 800 )
   }
 
   async save(){
@@ -395,7 +430,7 @@ class SiteSale2_edit_ extends React.Component {
         promo_len: this.state.promo_length,
         promo_name: this.state.promo_name,
         type_sale: this.state.type_sale,
-        promo_sale: parseInt( this.state.sale_type ) == 2 ? this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale)) : parseInt(this.state.promo_sale),
+        promo_sale: parseInt( this.state.sale_type ) == 2 ? this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale)) : parseInt(this.state.promo_sale) ?? 0,
         generate: this.state.generate_new ? 1 : 0,
         promo_in_count: this.state.count_action,
         promo_action: this.state.promo_action,
@@ -478,6 +513,18 @@ class SiteSale2_edit_ extends React.Component {
     return res;
   };
 
+  openModalPromo = (item, key) => {
+    if (this.state.promo_history[key + 1]) {
+      this.setState({
+      promo_copy_double: this.state.promo_history[key + 1],
+    })
+    }
+    this.setState({
+      promo_copy: item,
+      modalDialogEdit: true
+    })
+  }
+
   changeData(type, event){
     this.setState({
       [ type ]: event.target.value
@@ -524,7 +571,7 @@ class SiteSale2_edit_ extends React.Component {
       [ type ]: event.target.checked
     })
 
-    if( type == 'once_number' || type == 'for_new' || type == 'for_registred' ){
+    if( type == 'once_number' || type == 'for_new' || type == 'for_registred' ) {
       if( type == 'once_number' && event.target.checked === true ){
         this.setState({
           for_new: false
@@ -587,7 +634,6 @@ class SiteSale2_edit_ extends React.Component {
 
       let count_promo = 0;
 
-      console.log( 'this.state.promo_sale_list', this.state.promo_sale_list )
 
       if( parseInt( this.state.sale_type ) == 2 ){
         let check = this.state.promo_sale_list.find( (item) => parseInt(item.id) == parseInt(this.state.promo_sale) );
@@ -664,6 +710,7 @@ class SiteSale2_edit_ extends React.Component {
       textSMS: textSMS,
       cert_text: textTrue
     })
+    return textTrue;
   }
 
   generateTextDescFalse(){
@@ -721,18 +768,42 @@ class SiteSale2_edit_ extends React.Component {
     this.setState({
       promo_desc_false: textFalse
     })
+    return textFalse;
 	}
+
+  delItemAdd(item){
+    let thisItems = this.state.itemsAdd;
+
+    let newItems = thisItems.filter( (it) => parseInt(it.item_id) != parseInt(item.item_id) );
+
+    let addItemAllPrice = 0;
+
+    newItems.map( (item) => {
+      addItemAllPrice += parseInt(item.price)
+    } )
+
+    this.setState({
+      itemsAdd: newItems,
+      addItemAllPrice: addItemAllPrice
+    })
+
+    setTimeout( () => {
+      this.generateTextDescFalse();
+      this.generateTextDescTrue();
+    }, 300 )
+  }
+
 
   addItemAdd(){
     let thisItems = this.state.itemsAdd;
 
-    let check = thisItems.find( (item) => parseInt(item.item_id) == parseInt(this.state.addItem) );
+    let check = thisItems.find( (item) => parseInt(item.item_id) == parseInt(this.state.addItem.id) );
 
     if( !check ){
-      let thisItem = this.state.items.find( (item) => parseInt(item.id) == parseInt(this.state.addItem) );
+      let thisItem = this.state.items.find( (item) => parseInt(item.id) == parseInt(this.state.addItem.id) );
 
       thisItems.push({
-        item_id: this.state.addItem,
+        item_id: this.state.addItem.id,
         name: thisItem.name,
         count: this.state.addItemCount,
         price: this.state.addItemPrice,
@@ -749,18 +820,21 @@ class SiteSale2_edit_ extends React.Component {
         addItemAllPrice: addItemAllPrice
       })
     }
+    setTimeout( () => {
+      this.generateTextDescFalse();
+      this.generateTextDescTrue();
+    }, 300 )
   }
 
   priceItemAdd(){
     let thisItems = this.state.itemsAddPrice;
-
     let check = thisItems.find( (item) => parseInt(item.item_id) == parseInt(this.state.priceItem) );
 
     if( !check ){
-      let thisItem = this.state.items.find( (item) => parseInt(item.id) == parseInt(this.state.priceItem) );
+      let thisItem = this.state.items.find( (item) => parseInt(item.id) == parseInt(this.state.priceItem.id) );
 
       thisItems.push({
-        id: this.state.priceItem,
+        id: this.state.priceItem.id,
         name: thisItem.name,
         price: this.state.addItemCount,
       })
@@ -769,6 +843,53 @@ class SiteSale2_edit_ extends React.Component {
         itemsAddPrice: thisItems
       })
     }
+    setTimeout( () => {
+      this.generateTextDescFalse();
+      this.generateTextDescTrue();
+    }, 300 )
+  }
+
+  delItemPrice(item){
+    let thisItems = this.state.itemsAddPrice;
+
+    let newItems = thisItems.filter( (it) => parseInt(it.id) != parseInt(item.id));
+
+    let addItemAllPrice = 0;
+
+    newItems.map( (item) => {
+      addItemAllPrice += parseInt(item.price)
+    } )
+
+    this.setState({
+      itemsAddPrice: newItems
+    })
+
+    setTimeout( () => {
+      this.generateTextDescFalse();
+      this.generateTextDescTrue();
+    }, 300 )
+  }
+
+  changeItemPrice(item, event){
+    let thisItems = this.state.itemsAddPrice;
+
+    let newItems = thisItems.map( (it) => {
+      if( parseInt(it.id) == parseInt(item.id) ){
+        it.price = event.target.value;
+      }
+
+      return it;
+    } )
+
+    this.setState({
+      itemsAddPrice: newItems
+    })
+
+    setTimeout( () => {
+      this.generateTextDescFalse();
+      this.generateTextDescTrue();
+    }, 300 )
+
   }
 
   render(){
@@ -777,6 +898,23 @@ class SiteSale2_edit_ extends React.Component {
         <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
           <CircularProgress color="inherit" />
         </Backdrop>
+        {this.state.modalDialogEdit ? (
+          <PromoEdit
+            modalDialogEdit={this.state.modalDialogEdit}
+            promoName={this.state.promo_name}
+            promo_action_list={this.state.promo_action_list}
+            promo_sale_list={this.state.promo_sale_list}
+            promo_conditions_items={this.state.promo_conditions_items}
+            points={this.state.points}
+            cities={this.state.cities}
+            items={this.state.items}
+            cats={this.state.cats}
+            created={this.state.created}
+            promo={this.state.promo_copy}
+            promo_double={this.state.promo_copy_double}
+            onClose={ () => { this.setState({ modalDialogEdit: false }) } }
+          />
+        ) : null}
         <Dialog
           open={this.state.modalDialog}
           onClose={ () => { this.setState({ modalDialog: false, modalLink: '' }) } }
@@ -954,6 +1092,153 @@ class SiteSale2_edit_ extends React.Component {
 
             </Grid>
           }
+          { parseInt(this.state.promo_action) !== 2 ? null :
+            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <MyAutocomplite data={this.state.items} value={this.state.addItem} func={ (event, data) => { this.changeDataData('addItem', data) } } label='Позиция' />
+              </Grid>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <MyTextInput value={this.state.addItemCount} func={ this.changeData.bind(this, 'addItemCount') } label='Количество' />
+              </Grid>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <MyTextInput value={this.state.addItemPrice} func={ this.changeData.bind(this, 'addItemPrice') } label='Цена за все' />
+              </Grid>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <Button variant="contained" onClick={this.addItemAdd.bind(this)}>Добавить</Button>
+              </Grid>
+
+            </Grid>
+          }
+
+          { parseInt(this.state.promo_action) !== 2 ? null :
+            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Позиция</TableCell>
+                      <TableCell>Количество</TableCell>
+                      <TableCell>Цена за все</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+
+                    { this.state.itemsAdd.map( (item, key) =>
+                      <TableRow key={key}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.count}</TableCell>
+                        <TableCell>{item.price}</TableCell>
+                        <TableCell> <CloseIcon onClick={this.delItemAdd.bind(this, item)} style={{ cursor: 'pointer' }} /> </TableCell>
+                      </TableRow>
+                    ) }
+
+
+                  </TableBody>
+
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell>{this.state.addItemAllPrice}</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableFooter>
+
+
+                </Table>
+              </Grid>
+            </Grid>
+          }
+
+          { parseInt(this.state.promo_action) !== 3 ? null :
+            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <MyAutocomplite data={this.state.items} value={this.state.priceItem} func={ (event, data) => { this.changeDataData('priceItem', data) } } label='Позиция' />
+              </Grid>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <MyTextInput value={this.state.addItemCount} func={ this.changeData.bind(this, 'addItemCount') } label='Цена за 1 ед' />
+              </Grid>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3
+                }}>
+                <Button variant="contained" onClick={this.priceItemAdd.bind(this)}>Добавить</Button>
+              </Grid>
+
+            </Grid>
+          }
+
+          { parseInt(this.state.promo_action) !== 3 ? null :
+            <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6
+                }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Позиция</TableCell>
+                      <TableCell>Цена за 1 ед</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+
+                    { this.state.itemsAddPrice.map( (item, key) =>
+                      <TableRow key={key}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>
+                          <MyTextInput value={item.price} func={ this.changeItemPrice.bind(this, item) } />
+                        </TableCell>
+                        <TableCell> <CloseIcon onClick={this.delItemPrice.bind(this, item)} style={{ cursor: 'pointer' }} /> </TableCell>
+                      </TableRow>
+                    ) }
+
+                  </TableBody>
+                </Table>
+              </Grid>
+            </Grid>
+          }
+
+          <Divider style={{ width: '100%', marginTop: 20 }} />
 
           <Grid container direction="row" justifyContent="center" style={{ paddingTop: 20 }} spacing={3}>
 
@@ -1147,6 +1432,45 @@ class SiteSale2_edit_ extends React.Component {
 
           <Grid container direction="row" justifyContent="end" style={{ paddingTop: 50 }} spacing={3}>
             <Button variant="contained" onClick={this.save.bind(this)}>Сохранить</Button>
+          </Grid>
+          <Grid container direction="row" justifyContent="end" style={{ paddingTop: 10 }} spacing={3}>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12
+              }}>
+              {(this.state.promo_history.length) &&
+                <Accordion style={{width: '100%'}}>
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon/>}
+                  >
+                    <Typography>История редактирования</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Table size={'small'} style={{marginTop: 15}}>
+                      <TableHead>
+                        <TableRow sx={{"& th": {fontWeight: "bold"}}}>
+                          <TableCell>#</TableCell>
+                          <TableCell>Создатель</TableCell>
+                          <TableCell>Тип</TableCell>
+                          <TableCell>Время</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {this.state.promo_history.map((item, key) =>
+                          <TableRow key={key} style={{ cursor: 'pointer' }} hover onClick={() => this.openModalPromo(item, key)}>
+                            <TableCell>{key + 1}</TableCell>
+                            <TableCell>{item.user_name}</TableCell>
+                            <TableCell>{item.type}</TableCell>
+														<TableCell>{item.date_create}</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </AccordionDetails>
+                </Accordion>
+              }
+            </Grid>
           </Grid>
 
         </Grid>

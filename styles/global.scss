@@ -94,6 +94,11 @@ th[class*='tableCelHead'] {
   align-items: flex-start !important;
 }
 
+.highlighted-field {
+    position: relative;
+    border: 2px solid red;
+}
+
 .datePicker {
   width: 100%;
 

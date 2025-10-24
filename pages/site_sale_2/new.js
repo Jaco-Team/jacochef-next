@@ -285,6 +285,8 @@ class SiteSale2_new_ extends React.Component {
       err_text: '',
 
       cert_text: '',
+      phoneInput: '',
+      cleanPhone: '',
 
       for_number: false,
       for_number_text: ''
@@ -1475,9 +1477,12 @@ class SiteSale2_new_ extends React.Component {
               <MySelect data={this.state.where_promo_list} value={this.state.where_promo} func={ this.changeData.bind(this, 'where_promo') } label='Что сделать с промокодом' />
             </Grid>
 
-            { parseInt(this.state.where_promo) == 1 || parseInt(this.state.where_promo) == 2 ? null :
+            {
+            parseInt(this.state.where_promo) == 1 ||
+            parseInt(this.state.where_promo) == 2 ||
+            parseInt(this.state.where_promo) == 7 ||
+            parseInt(this.state.where_promo) == 9 ? null :
               parseInt(this.state.where_promo) == 5 ?
-
                 <Grid
                   size={{
                     xs: 12,
@@ -1492,6 +1497,7 @@ class SiteSale2_new_ extends React.Component {
                     onChange={ this.changeData.bind(this, 'numberList') }
                     label="Куда отправить"
                     style={{ width: '100%' }}
+                    placeholder={'89999999999,89999999999'}
                   />
                 </Grid>
                   :
@@ -1500,7 +1506,21 @@ class SiteSale2_new_ extends React.Component {
                     xs: 12,
                     sm: 4
                   }}>
-                  <MyTextInput value={this.state.numberList} func={ this.changeData.bind(this, 'numberList') } label='Куда отправить' />
+                  <MyTextInput
+                    value={this.state.numberList}
+                    func={(event) => {
+                        this.changeData('numberList', event);
+                      }
+                    }
+                    placeholder={
+                      this.state.where_promo == 4
+                        ? '89999999999'
+                        : this.state.where_promo == 8
+                          ? `id юзера ВК`
+                          : 'example@mail.ru'
+                    }
+                    label="Куда отправить"
+                  />
                 </Grid>
 
             }
