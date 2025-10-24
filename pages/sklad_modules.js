@@ -10,7 +10,20 @@ import {api_laravel, api_laravel_local} from "@/src/api_new";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
 import Box from "@mui/material/Box";
-import { Backdrop, Button, CircularProgress, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
+import {
+	Backdrop,
+	Button,
+	CircularProgress,
+	Grid,
+	Table,
+	TableBody,
+	TableCell,
+	TableContainer,
+	TableHead,
+	TableRow,
+	Tooltip,
+	Typography
+} from '@mui/material';
 import JModal from '@/components/sklad_modules/JModal';
 import JParamModal from '@/components/sklad_modules/JParamModal';
 import handleUserAccess from '@/src/helpers/access/handleUserAccess';
@@ -94,7 +107,7 @@ class SkladModules_ extends React.Component {
 
 		let result = api_laravel(this.state.module, method, data)
 			.then((response) => response?.data)
-			.catch( (e) => {
+			.catch((e) => {
 				console.error("Error fetching data:", e);
 				return null;
 			})
@@ -219,17 +232,17 @@ class SkladModules_ extends React.Component {
 		const mark_param = this.state.mark_param;
 		let res;
 		const data = {
-				name: param.name,
-				category_new: param.categoryItem?.id === 0,
-				category: param.category,
-				category_name: param.category_name || '',
-				param: param.param,
-				type: param.type,
-				module_id: param.module_id.id,
-				access: param.access,
-				view: param.view,
-				edit: param.edit
-			};
+			name: param.name,
+			category_new: param.categoryItem?.id === 0,
+			category: param.category,
+			category_name: param.category_name || '',
+			param: param.param,
+			type: param.type,
+			module_id: param.module_id.id,
+			access: param.access,
+			view: param.view,
+			edit: param.edit
+		};
 
 		if (mark_param === 'add_param') {
 			res = await this.getData('save_new_param', data);
@@ -350,30 +363,32 @@ class SkladModules_ extends React.Component {
 	canView(key) {
 		return handleUserAccess(this.state.acces)?.userCan('view', key);
 	}
+
 	canEdit(key) {
 		return handleUserAccess(this.state.acces)?.userCan('edit', key);
 	}
+
 	canAccess(key) {
 		return handleUserAccess(this.state.acces)?.userCan('access', key);
 	}
 
 	render() {
 		return (
-            <>
-                <Backdrop open={this.state.is_load} style={{zIndex: 99}}>
+			<>
+				<Backdrop open={this.state.is_load} style={{zIndex: 99}}>
 					<CircularProgress color="inherit"/>
 				</Backdrop>
-                {/* <TestAccess 
+				{/* <TestAccess
 					access={this.state.acces}
-					setAccess={(acces) => this.setState({acces})} 
+					setAccess={(acces) => this.setState({acces})}
 				/> */}
-                <MyAlert
+				<MyAlert
 					isOpen={this.state.openAlert}
 					onClose={() => this.setState({openAlert: false})}
 					status={this.state.err_status}
 					text={this.state.err_text}
 				/>
-                <JParamModal
+				<JParamModal
 					open={this.state.modalDialog_param}
 					onClose={() => this.setState({modalDialog_param: false, param: null, param_name: '', method: ''})}
 					item={this.state.param}
@@ -383,7 +398,7 @@ class SkladModules_ extends React.Component {
 					param_name={this.state.param_name}
 					getData={this.getData}
 				/>
-                <JModal
+				<JModal
 					open={this.state.modalDialog}
 					onClose={() => this.setState({modalDialog: false, itemName: '', method: ''})}
 					mark={this.state.mark}
@@ -400,30 +415,30 @@ class SkladModules_ extends React.Component {
 					canEdit={this.canEdit.bind(this)}
 					canView={this.canView.bind(this)}
 				/>
-                <Grid container spacing={3} className='container_first_child'>
+				<Grid container spacing={3} className='container_first_child'>
 					<Grid
-                        size={{
-                            xs: 12,
-                            sm: 12
-                        }}>
+						size={{
+							xs: 12,
+							sm: 12
+						}}>
 						<h1>{this.state.module_name}</h1>
 					</Grid>
 
 					<Grid
-                        size={{
-                            xs: 12,
-                            sm: 4
-                        }}>
+						size={{
+							xs: 12,
+							sm: 4
+						}}>
 						<Button variant="contained" color="primary" style={{whiteSpace: 'nowrap'}} onClick={this.openModal.bind(this, 'add', null)}>
 							Добавить модуль
 						</Button>
 					</Grid>
 
 					<Grid
-                        size={{
-                            xs: 12,
-                            sm: 6
-                        }}>
+						size={{
+							xs: 12,
+							sm: 6
+						}}>
 						{this.canEdit('app_params') && (
 							<Button variant="contained" color="primary" style={{whiteSpace: 'nowrap'}} onClick={this.openModal_param.bind(this, 'add_param', null)}>
 								Добавить параметр модулю
@@ -433,11 +448,11 @@ class SkladModules_ extends React.Component {
 
 					{!this.state.list ? null : (
 						<Grid
-                            mb={10}
-                            size={{
-                                xs: 12,
-                                sm: 12
-                            }}>
+							mb={10}
+							size={{
+								xs: 12,
+								sm: 12
+							}}>
 							{parseInt(this.state.acces?.view_pos_access) == 1 ? (
 								<TableContainer>
 									<Table size="small">
@@ -496,8 +511,8 @@ class SkladModules_ extends React.Component {
 																			'&:hover': {backgroundColor: 'action.hover'},
 																		}}
 																	>
-																		<TableCell></TableCell>
-																		<TableCell 
+																		<TableCell>{item.sort}.{it.sort}</TableCell>
+																		<TableCell
 																			onClick={this.openModal.bind(this, 'edit', it.id)}
 																			sx={{paddingLeft: 10, alignItems: 'center'}}>
 																			<li>{it.name}</li>
@@ -582,7 +597,7 @@ class SkladModules_ extends React.Component {
 																				{this.canEdit('app_params') && (
 																					<Tooltip title={
 																						<Typography color="inherit">Редактирование параметра</Typography>}>
-																						<EditIcon 
+																						<EditIcon
 																							onClick={this.openModal_param.bind(this, 'edit_param', param.id)}
 																							sx={{paddingLeft: 20, cursor: 'pointer'}}
 																						/>
@@ -608,7 +623,7 @@ class SkladModules_ extends React.Component {
 																			}
 																		}}
 																	>
-																		<TableCell></TableCell>
+																		<TableCell>{item.sort}.{it.sort}</TableCell>
 																		<TableCell onClick={this.openModal.bind(this, 'edit', it.id)} sx={{
 																			paddingLeft: 10,
 																			alignItems: 'center',
@@ -846,8 +861,8 @@ class SkladModules_ extends React.Component {
 						</Grid>
 					)}
 				</Grid>
-            </>
-        );
+			</>
+		);
 	}
 }
 

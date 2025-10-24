@@ -94,8 +94,8 @@ const UserMenu = ({my, logOut}) => {
 						) : (
 							<Avatar
 								sx={{
-									width: { xs: 20, sm: 38 },
-									height: { xs: 20, sm: 38 },
+									width: {xs: 20, sm: 38},
+									height: {xs: 20, sm: 38},
 									bgcolor: 'primary.main',
 									boxShadow: 'none'
 								}}
@@ -112,7 +112,7 @@ const UserMenu = ({my, logOut}) => {
 								overflow: 'hidden',
 								textOverflow: 'ellipsis',
 								whiteSpace: 'nowrap',
-								display: { xs: 'none', sm: 'block' }
+								display: {xs: 'none', sm: 'block'}
 							}}
 						>
 							{my.short_name}
@@ -128,13 +128,13 @@ const UserMenu = ({my, logOut}) => {
 				onClose={handleMenuClose}
 				slotProps={{
 					paper: {
-					elevation: 3,
-					sx: {
-						mt: 1.5,
-						minWidth: 200,
-						borderRadius: 2,
-						zIndex: 9999
-					}
+						elevation: 3,
+						sx: {
+							mt: 1.5,
+							minWidth: 200,
+							borderRadius: 2,
+							zIndex: 9999
+						}
 					}
 				}}
 				transformOrigin={{horizontal: 'right', vertical: 'top'}}
@@ -300,8 +300,10 @@ export default function Header() {
 								)
 								: [];
 
+							// Используем комбинацию name и key_query для уникального ключа
+							const uniqueKey = `${option.name}_${option.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 							return (
-								<li {...props} key={option.name} style={{
+								<li {...props} key={uniqueKey} style={{
 									padding: '8px 16px',
 									fontSize: '14px',
 									display: 'flex',
@@ -322,14 +324,14 @@ export default function Header() {
 											gap: '4px',
 											marginTop: '4px',
 										}}>
-          <span style={{
-						fontSize: '12px',
-						color: '#666',
-						marginRight: '4px',
-					}}>↳</span>
+          					<span style={{
+										fontSize: '12px',
+										color: '#666',
+										marginRight: '4px',
+										}}>↳</span>
 											{option.navs_id.map((nav, index) => (
 												<i
-													key={index}
+													key={`${uniqueKey}_nav_${index}`}
 													style={{
 														padding: '2px 8px',
 														backgroundColor: '#e3f2fd',
@@ -348,6 +350,7 @@ export default function Header() {
 								</li>
 							);
 						}}
+						getOptionKey={(option) => `${option.name}_${option.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`}
 						renderInput={(params) =>
 							<TextField
 								{...params}
@@ -364,8 +367,8 @@ export default function Header() {
 								}}
 							/>}
 						autoComplete={false}
-  					autoHighlight={false}
-  					clearOnBlur={false}
+						autoHighlight={false}
+						clearOnBlur={false}
 					/>
 
 					<IconButton onClick={openMenu}>
@@ -377,7 +380,7 @@ export default function Header() {
 				<Divider/>
 
 				{CatMenu?.map((item, key) =>
-					<Accordion key={key}>
+					<Accordion key={`accordion_${key}`}>
 						<AccordionSummary
 							expandIcon={<ExpandMoreIcon/>}
 						>
@@ -388,7 +391,7 @@ export default function Header() {
 							<List style={{width: '100%'}}>
 
 								{item.chaild.map((it, k) =>
-									<Link href={`/${it.key_query}`} key={k} onClick={closeMenu}>
+									<Link href={`/${it.key_query}`} key={`child_${k}`} onClick={closeMenu}>
 										<ListItemButton style={{height: 50}}>
 											{it.name}
 										</ListItemButton>
@@ -402,7 +405,7 @@ export default function Header() {
 				)}
 
 
-				<Accordion>
+				<Accordion key="logout-accordion">
 					<AccordionSummary onClick={logOut}>
 						<Typography>Выйти из аккаунта</Typography>
 					</AccordionSummary>
