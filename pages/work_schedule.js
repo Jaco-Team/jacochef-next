@@ -72,6 +72,8 @@ import dayjs from "dayjs";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import TestAccess from "@/ui/TestAccess";
 import MyAlert from "@/ui/MyAlert";
+import { IconButton } from "@mui/material";
+import { Close } from "@mui/icons-material";
 
 function SimpleDialog(props) {
   const { onClose, selectedValue, open } = props;
@@ -2825,7 +2827,15 @@ class WorkSchedule_ extends React.Component {
           onClose={() => this.setState({ mainMenuAddUsers: false })}
           open={this.state.mainMenuAddUsers}
         >
-          <DialogTitle>Выбранные сотрудники {this.state.mounth}</DialogTitle>
+          <DialogTitle className="button">
+            Выбранные сотрудники {this.state.mounth}
+            <IconButton
+              onClick={() => this.setState({ mainMenuAddUsers: false })}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
 
           <List sx={{ pt: 0 }}>
             <ListItemButton
@@ -2858,9 +2868,17 @@ class WorkSchedule_ extends React.Component {
           open={this.state.mainMenuS}
         >
           {!this.state.chooseUser ? null : (
-            <DialogTitle>
+            <DialogTitle className="button">
               {this.state.chooseUser.full_app_name} {this.state.chooseUser.user_name}{" "}
               {this.state.mounth}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuS: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
           )}
 
@@ -2939,9 +2957,17 @@ class WorkSchedule_ extends React.Component {
           open={this.state.mainMenu}
         >
           {!this.state.chooseUser ? null : (
-            <DialogTitle>
+            <DialogTitle className="button">
               {this.state.chooseUser.full_app_name} {this.state.chooseUser.user_name}{" "}
               {this.state.mounth}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenu: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
           )}
 
@@ -3004,8 +3030,16 @@ class WorkSchedule_ extends React.Component {
           open={this.state.mainMenuH}
         >
           {!this.state.chooseUser ? null : (
-            <DialogTitle>
+            <DialogTitle className="button">
               Часы {this.state.chooseUser.user_name} {this.state.mounth}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuH: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
           )}
 
@@ -3050,8 +3084,16 @@ class WorkSchedule_ extends React.Component {
           open={this.state.mainMenuSmena}
         >
           {!this.state.chooseUser ? null : (
-            <DialogTitle>
+            <DialogTitle className="button">
               Смена {this.state.chooseUser.user_name} {this.state.mounth}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuSmena: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
           )}
 
@@ -3076,8 +3118,16 @@ class WorkSchedule_ extends React.Component {
           open={this.state.mainMenuPoints}
         >
           {!this.state.chooseUser ? null : (
-            <DialogTitle>
+            <DialogTitle className="button">
               Смена точка с сегоднешнего дня {this.state.chooseUser.user_name}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuPoints: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
           )}
 
@@ -3102,8 +3152,16 @@ class WorkSchedule_ extends React.Component {
           open={this.state.mainMenuPrice}
         >
           {!this.state.chooseUser ? null : (
-            <DialogTitle>
+            <DialogTitle className="button">
               Часовая ставка {this.state.chooseUser.user_name} {this.state.mounth}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuPrice: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
           )}
 
@@ -3134,7 +3192,17 @@ class WorkSchedule_ extends React.Component {
           onClose={() => this.setState({ mainMenuLVDIR: false })}
           open={this.state.mainMenuLVDIR}
         >
-          <DialogTitle>Изменение уровня дирекора {this.state.mounth}</DialogTitle>
+          <DialogTitle className="button">
+            Изменение уровня дирекора {this.state.mounth}
+            <IconButton
+              onClick={() => {
+                this.setState({ mainMenuLVDIR: false });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
 
           <List style={{ overflow: "scroll" }}>
             {this.state.arr_dir_lv.map((item, key) => (
@@ -3161,8 +3229,16 @@ class WorkSchedule_ extends React.Component {
           onClose={() => this.setState({ mainMenuDopBonus: false })}
           open={this.state.mainMenuDopBonus}
         >
-          <DialogTitle>
+          <DialogTitle className="button">
             Командный бонус {this.state.mounth}-{parseInt(this.state.tabTable) == 0 ? "01" : "16"}
+            <IconButton
+              onClick={() => {
+                this.setState({ mainMenuDopBonus: false });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
           </DialogTitle>
 
           <List sx={{ pt: 0 }}>
@@ -3195,9 +3271,17 @@ class WorkSchedule_ extends React.Component {
           onClose={() => this.setState({ mainMenuDopBonusUser: false })}
           open={this.state.mainMenuDopBonusUser}
         >
-          <DialogTitle>
+          <DialogTitle className="button">
             Командный бонус {this.state.mounth}-{parseInt(this.state.tabTable) == 0 ? "01" : "16"}{" "}
             {this.state.userDopBonus?.data.user_name ?? ""}
+            <IconButton
+              onClick={() => {
+                this.setState({ mainMenuDopBonusUser: false });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
           </DialogTitle>
 
           <List sx={{ pt: 0 }}>
@@ -3230,8 +3314,16 @@ class WorkSchedule_ extends React.Component {
             onClose={() => this.setState({ mainMenuZP: false, userInfo: null })}
             open={this.state.mainMenuZP}
           >
-            <DialogTitle>
+            <DialogTitle className="button">
               {this.state.userInfo.app} {this.state.userInfo.name} {this.state.userInfo.date}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuZP: false, userInfo: null });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
 
             <DialogContent>
@@ -3300,9 +3392,17 @@ class WorkSchedule_ extends React.Component {
             onClose={() => this.setState({ mainMenuZPCart: false, userInfo: null })}
             open={this.state.mainMenuZPCart}
           >
-            <DialogTitle>
+            <DialogTitle className="button">
               Перечислено на карту {this.state.userInfo.app} {this.state.userInfo.name}{" "}
               {this.state.userInfo.date}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuZPCart: false, userInfo: null });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
 
             <DialogContent>
@@ -3375,13 +3475,25 @@ class WorkSchedule_ extends React.Component {
             maxWidth={"md"}
             id={"OpenModalH"}
           >
-            <DialogTitle id="scroll-dialog-title">
+            <DialogTitle
+              className="button"
+              id="scroll-dialog-title"
+            >
               {this.state.userInfo.user.app_name +
                 " " +
                 this.state.userInfo.user.user_name +
                 " " +
                 this.state.userInfo.date}
+              <IconButton
+                onClick={() => {
+                  this.setState({ isOpenModalH: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
+
             <DialogContent>
               <Grid
                 container
@@ -3631,12 +3743,23 @@ class WorkSchedule_ extends React.Component {
             maxWidth={"md"}
             id={"OpenModalH"}
           >
-            <DialogTitle id="scroll-dialog-title">
+            <DialogTitle
+              className="button"
+              id="scroll-dialog-title"
+            >
               {this.state.userInfo.user.app_name +
                 " " +
                 this.state.userInfo.user.user_name +
                 " " +
                 this.state.userInfo.date}
+              <IconButton
+                onClick={() => {
+                  this.setState({ isOpenModalHMini: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
             <DialogContent>
               {this.state.userInfo.hours.map((item, key) => (
@@ -3695,8 +3818,16 @@ class WorkSchedule_ extends React.Component {
             maxWidth={"md"}
             id={"OpenModalM"}
           >
-            <DialogTitle>
+            <DialogTitle className="button">
               {this.state.userInfo.user.app_name + " " + this.state.userInfo.user.user_name}
+              <IconButton
+                onClick={() => {
+                  this.setState({ isOpenModalM: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
             <DialogContent>
               <Grid
@@ -3779,7 +3910,17 @@ class WorkSchedule_ extends React.Component {
             maxWidth={"md"}
             id={"OpenModalM"}
           >
-            <DialogTitle>Ошибка по заказу №{this.state.showErr.order_id}</DialogTitle>
+            <DialogTitle className="button">
+              Ошибка по заказу №{this.state.showErr.order_id}
+              <IconButton
+                onClick={() => {
+                  this.setState({ isShowErr: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
             <DialogContent>
               <Grid
                 container
@@ -3926,7 +4067,17 @@ class WorkSchedule_ extends React.Component {
             maxWidth={"md"}
             id={"OpenModalM"}
           >
-            <DialogTitle>Ошибка №{this.state.showErrCam.id}</DialogTitle>
+            <DialogTitle className="button">
+              Ошибка №{this.state.showErrCam.id}
+              <IconButton
+                onClick={() => {
+                  this.setState({ isShowErrCam: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
             <DialogContent>
               <Grid
                 container
@@ -4047,7 +4198,17 @@ class WorkSchedule_ extends React.Component {
           onClose={() => this.setState({ newSmena: false, newSmenaName: "" })}
           open={this.state.newSmena}
         >
-          <DialogTitle>Новая смена</DialogTitle>
+          <DialogTitle className="button">
+            Новая смена
+            <IconButton
+              onClick={() => {
+                this.setState({ newSmena: false, newSmenaName: "" });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
           <DialogContent>
             <Grid
               container
@@ -4110,7 +4271,17 @@ class WorkSchedule_ extends React.Component {
           open={this.state.editSmena}
           fullWidth={true}
         >
-          <DialogTitle>Редактирование смены</DialogTitle>
+          <DialogTitle className="button">
+            Редактирование смены
+            <IconButton
+              onClick={() => {
+                this.setState({ editSmena: false, newSmenaName: "" });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
           <DialogContent>
             <Grid
               container
@@ -4195,7 +4366,17 @@ class WorkSchedule_ extends React.Component {
           maxWidth={"md"}
           id={"OpenModalM"}
         >
-          <DialogTitle>Журнал здоровья</DialogTitle>
+          <DialogTitle className="button">
+            Журнал здоровья
+            <IconButton
+              onClick={() => {
+                this.setState({ isOpenHJ: false });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
           <DialogContent>
             <Grid
               container
@@ -4258,7 +4439,17 @@ class WorkSchedule_ extends React.Component {
           maxWidth={"md"}
           id={"OpenModalM"}
         >
-          <DialogTitle>График работ</DialogTitle>
+          <DialogTitle className="button">
+            График работ
+            <IconButton
+              onClick={() => {
+                this.setState({ isOpenWS: false });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
           <DialogContent>
             <Grid
               container
@@ -4317,8 +4508,16 @@ class WorkSchedule_ extends React.Component {
           onClose={() => this.setState({ isModalDirBonus: false, dir_bonus: 0 })}
           open={this.state.isModalDirBonus}
         >
-          <DialogTitle>
+          <DialogTitle className="button">
             Бонус директора {this.state?.userInfo?.name} {this.state?.userInfo?.date}
+            <IconButton
+              onClick={() => {
+                this.setState({ isModalDirBonus: false, dir_bonus: 0 });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
           </DialogTitle>
 
           <DialogContent>
