@@ -149,12 +149,12 @@ class Concenter_ extends React.Component {
 
     let data = event.target.value;
 
-    let need_points = this.state.point_list.filter( (item, key) => parseInt(item.city_id) == parseInt(data) );
+    let need_points = this.state.point_list?.filter( (item, key) => parseInt(item.city_id) == parseInt(data) );
 
     this.setState({
       city_id: data,
       need_point_list: need_points,
-      point_id: parseInt(need_points[0].id),
+      point_id: parseInt(need_points[0]?.id),
       indexTab: 0
     })
 
