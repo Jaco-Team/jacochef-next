@@ -14,6 +14,7 @@
     "sentry:sourcemaps": "sentry-cli --url https://sentry.jacochef.ru/ sourcemaps upload --org sentry --project jacosoft-dop-react ./.next --rewrite"
   },
   "dependencies": {
+    "@amcharts/amcharts5": "^5.14.3",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.4",

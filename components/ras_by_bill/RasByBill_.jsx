@@ -347,7 +347,7 @@ export default class RasByBill_ extends Component {
                     <TableHead>
                       <TableRow>
                         <TableCell>Наименование товара</TableCell>
-                        <TableCell>Объем товра</TableCell>
+                        <TableCell>Объем товара</TableCell>
                         <TableCell>Объем заготовки</TableCell>
                         <TableCell>Сумма</TableCell>
                         <TableCell>Кол-во накладных</TableCell>
@@ -358,12 +358,10 @@ export default class RasByBill_ extends Component {
                         <TableRow key={key}>
                           <TableCell> {item.name} </TableCell>
                           <TableCell>
-                            {" "}
-                            {formatNumber(item.count_item) + " " + item.ei_name}{" "}
+                            {formatNumber(item.count_item) + " " + item.ei_name}
                           </TableCell>
                           <TableCell>
-                            {" "}
-                            {formatNumber(item.count_pf) + " " + item.ei_name_pf}{" "}
+                            {formatNumber(item.count_pf) + " " + item.ei_name_pf}
                           </TableCell>
                           <TableCell> {formatNumber(item.sum)} </TableCell>
                           <TableCell> {formatNumber(item.count_bill, 0, 0)} </TableCell>
