@@ -1,4 +1,3 @@
-import { getDataSSR } from "@/src/api_backend/api";
 import CafeEdit from "@/components/cafe_edit/CafeEdit";
 
 export default function CafeEditPage({ initialData, initialPointData }) {
@@ -20,28 +19,7 @@ export async function getServerSideProps({ req, res }) {
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
-  const initial = { initialData: null, initialPointData: null };
-  try {
-    const data = await getDataSSR("cafe_edit", "get_all", req.headers.cookie);
-    if (data?.redirect) {
-      return data;
-    }
-    initial.initialData = data?.data || null;
-    if (data?.data?.points?.length) {
-      const point = data.data.points[0];
-      const pointData = await getDataSSR("cafe_edit", "get_one", req.headers.cookie, {
-        point_id: point.id,
-        city_id: point.city_id,
-      });
-      if (pointData?.redirect) {
-        return pointData;
-      }
-      initial.initialPointData = pointData?.data || null;
-    }
-    return {
-      props: initial,
-    };
-  } catch (e) {
-    console.error(e);
-  }
+  return {
+    props: {},
+  };
 }
