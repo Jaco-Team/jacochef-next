@@ -240,6 +240,7 @@ class HeaderItem extends React.Component {
           ))}
 
           <TableCell></TableCell>
+          <TableCell></TableCell>
 
           {this.props.dataKey > 0 ? (
             <>
@@ -318,6 +319,7 @@ class HeaderItem extends React.Component {
           ))}
 
           <TableCell style={{ textAlign: "center" }}>За 1ч</TableCell>
+          <TableCell style={{ textAlign: "center" }}>За 1ч + доплата</TableCell>
 
           <TableCell style={{ textAlign: "center" }}>Командный бонус</TableCell>
           <TableCell style={{ textAlign: "center" }}>За часы</TableCell>
@@ -562,6 +564,10 @@ class WorkSchedule_Table extends React.Component {
                     }
                   >
                     {item.data.price_p_h}
+                  </TableCell>
+
+                  <TableCell style={{ textAlign: "center", minWidth: 70 }}>
+                    {item.data.price_p_h_dop}
                   </TableCell>
 
                   <TableCell
@@ -986,6 +992,9 @@ class WorkSchedule_Table_without_functions extends React.Component {
                         // onClick={this.props.pricePerHour.bind(this, item.data)}
                       >
                         {item.data.price_p_h}
+                      </TableCell>
+                      <TableCell style={{ textAlign: "center", minWidth: 70 }}>
+                        {item.data.price_p_h_dop}
                       </TableCell>
 
                       <TableCell

@@ -26,6 +26,16 @@ import AppointmentModal from "@/components/appointment/AppointmentModal";
 import AppointmentUnitModal from "@/components/appointment/AppointmentUnitModal";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import MyAlert from "@/ui/MyAlert";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import { ModalAdd } from "@/components/general/ModalAdd";
+import { ModalAccept } from "@/components/general/ModalAccept";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Dialog from "@mui/material/Dialog";
+import Paper from "@mui/material/Paper";
+import TextSnippetOutlinedIcon from "@mui/icons-material/TextSnippetOutlined";
 
 class Appointment_ extends React.Component {
   constructor(props) {
@@ -41,6 +51,10 @@ class Appointment_ extends React.Component {
       method: "",
       item: [],
       fullScreen: false,
+      itemEdit: {},
+      itemEditName: "",
+      modalUsers: false,
+      pr: [],
 
       is_load: false,
 
@@ -57,7 +71,9 @@ class Appointment_ extends React.Component {
       openUnit: null,
       full_menu: [],
 
-      method: "",
+      modalCopy: false,
+      modalDelete: false,
+      new_app: "",
 
       // dataSelect: [
       //   {id: false, name: 'Без активности'},
@@ -275,6 +291,64 @@ class Appointment_ extends React.Component {
     });
   }
 
+  copyModalItem = async (item) => {
+    this.setState({
+      itemEdit: item,
+      itemEditName: `${item.name}_копия`,
+      modalCopy: true,
+    });
+  };
+
+  deleteModalItem = async (item) => {
+    const result = await this.getData("get_all_delete", { item });
+    if (result.pr?.length) {
+      this.setState({
+        itemEdit: item,
+        modalUsers: true,
+        pr: result.pr,
+      });
+    } else {
+      this.setState({
+        itemEdit: item,
+        modalDelete: true,
+      });
+    }
+  };
+
+  saveCopy = async (name) => {
+    const result = await this.getData("copy", { item: this.state.itemEdit, name });
+    if (result.st) {
+      this.setState({
+        openAlert: true,
+        err_status: true,
+        err_text: "Успешно скопирован",
+        modalCopy: false,
+      });
+      const res = await this.getData("get_all");
+      this.setState({
+        unitsWithItems: null,
+        items: res.apps,
+        units: res.units,
+      });
+    }
+  };
+
+  saveDelete = async () => {
+    const result = await this.getData("delete", { item: this.state.itemEdit });
+    this.setState({
+      openAlert: true,
+      err_status: true,
+      err_text: "Успешно удален",
+      modalDelete: false,
+    });
+    const res = await this.getData("get_all");
+    this.setState({
+      unitsWithItems: null,
+      items: res.apps,
+      units: res.units,
+    });
+  };
+
   async openUnitModal(unit_id = null, e) {
     if (!this.canView("units")) return;
 
@@ -394,12 +468,76 @@ class Appointment_ extends React.Component {
           >
             <h1>{this.state.module_name}</h1>
           </Grid>
+          {this.state.modalUsers ? (
+            <Dialog
+              sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
+              maxWidth="xs"
+              open={this.state.modalUsers}
+              onClose={() => this.setState({ modalUsers: false })}
+            >
+              <DialogTitle>Список пользователей с должностью</DialogTitle>
+              <DialogContent
+                align="center"
+                sx={{ fontWeight: "bold" }}
+              >
+                <TableContainer>
+                  <Table
+                    stickyHeader
+                    aria-label="sticky table"
+                  >
+                    <TableHead>
+                      <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                        <TableCell>#</TableCell>
+                        <TableCell>Пользователь</TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {this.state.pr
+                        .filter((it) => it.short_name)
+                        .map((it, key) => (
+                          <TableRow key={key}>
+                            <TableCell>{key + 1}</TableCell>
+                            <TableCell>{it.short_name}</TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  autoFocus
+                  onClick={() => this.setState({ modalUsers: false })}
+                >
+                  Закрыть
+                </Button>
+              </DialogActions>
+            </Dialog>
+          ) : null}
 
           <MyAlert
             isOpen={this.state.openAlert}
             onClose={() => this.setState({ openAlert: false })}
             status={this.state.err_status}
             text={this.state.err_text}
+          />
+          <ModalAdd
+            open={this.state.modalCopy}
+            onClose={() => {
+              this.setState({ modalCopy: false });
+            }}
+            title={`Скопировть ${this.state.itemEdit.name}`}
+            save={this.saveCopy}
+            defaultValue={this.state.itemEditName}
+          />
+          <ModalAccept
+            open={this.state.modalDelete}
+            onClose={() => {
+              this.setState({ modalDelete: false });
+            }}
+            save={this.saveDelete}
+            title={`Удалить ${this.state.itemEdit.name}`}
           />
 
           <AppointmentModal
@@ -487,6 +625,8 @@ class Appointment_ extends React.Component {
                           <TableCell style={{ width: "49%" }}>Должность</TableCell>
                           <TableCell style={{ width: "5%" }}>Старшенство</TableCell>
                           <TableCell style={{ width: "5%" }}>Сортировка</TableCell>
+                          <TableCell style={{ width: "5%" }}></TableCell>
+                          <TableCell style={{ width: "5%" }}></TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -525,6 +665,16 @@ class Appointment_ extends React.Component {
                                   func={this.changeItem.bind(this, "sort", item.id)}
                                   onBlur={() => this.applyAppsSortingChangeUI()}
                                 />
+                              </TableCell>
+                              <TableCell>
+                                <IconButton onClick={() => this.copyModalItem(item)}>
+                                  <ContentCopyIcon style={{ color: "blue" }} />
+                                </IconButton>
+                              </TableCell>
+                              <TableCell>
+                                <IconButton onClick={() => this.deleteModalItem(item)}>
+                                  <DeleteIcon style={{ color: "red" }} />
+                                </IconButton>
                               </TableCell>
                             </TableRow>
                           );

@@ -583,7 +583,7 @@ class SkladItemsModule_Modal_History_View extends React.Component {
               }}
             >
               <MyTextInput
-                label="Время ММ:SS (15:20)"
+                label="Время ММ:SS за 1кг / 1шт / 1л (15:20)"
                 value={
                   this.state.itemView
                     ? this.state.itemView.time_min_other?.color
@@ -781,18 +781,18 @@ class SkladItemsModule_Modal extends React.Component {
 
     let { this_storages } = item;
     if (
-      !name ||
-      !cat_id ||
-      !ed_izmer_id ||
-      !name_for_vendor ||
-      !pq ||
-      !art ||
-      !pf_id ||
-      !my_allergens.length ||
-      !my_allergens_other.length ||
-      !this_storages.length
+      (!name ||
+        !cat_id ||
+        !ed_izmer_id ||
+        !name_for_vendor ||
+        !pq ||
+        !art ||
+        !pf_id ||
+        !my_allergens.length ||
+        !my_allergens_other.length ||
+        !this_storages.length) &&
+      this.props.method !== "Редактирование товара"
     ) {
-      console.log(item.item);
       this.setState({
         openAlert: true,
         err_status: false,
@@ -800,6 +800,16 @@ class SkladItemsModule_Modal extends React.Component {
       });
 
       return;
+    } else {
+      if (!name) {
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: "Название должно быть заполнено",
+        });
+
+        return;
+      }
     }
 
     this.props.method === "Редактирование товара"
@@ -1050,25 +1060,13 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 12,
                 }}
               >
-                <MyAutocomplite
+                <MyTextInput
                   label="Состав"
-                  multiple={false}
-                  data={this.state.itemEdit ? this.state.itemEdit.pf_list : []}
-                  value={
-                    this.state.itemEdit
-                      ? this.state.itemEdit.item.pf_id === "0"
-                        ? ""
-                        : this.state.itemEdit.item.pf_id
-                      : ""
-                  }
+                  value={this.state.itemEdit ? this.state.itemEdit.item.pf_id : ""}
                   disabled={
                     this.props.method === "Редактирование товара" && !this.props.acces?.pf_list_edit
                   }
-                  func={(event, value) => {
-                    let this_storages = this.state.itemEdit;
-                    this_storages.item.pf_id = value;
-                    this.setState({ itemEdit: this_storages });
-                  }}
+                  func={this.changeItem.bind(this, "pf_id")}
                 />
               </Grid>
 
@@ -1188,7 +1186,7 @@ class SkladItemsModule_Modal extends React.Component {
                         }}
                       >
                         <MyTextInput
-                          label="Время ММ:SS (15:20)"
+                          label="Время ММ:SS за 1кг / 1шт / 1л (15:20)"
                           value={this.state.itemEdit ? this.state.itemEdit.item.time_min_other : ""}
                           disabled={
                             this.props.method === "Редактирование товара" &&
@@ -1369,7 +1367,6 @@ class SkladItemsModule_ extends React.Component {
 
     const res = await this.getData("get_one", data);
 
-    res.item.pf_id = res.pf_list.find((item) => item.id === res.item.pf_id);
     res.item.cat_id = res.cats.find((item) => item.id === res.item.cat_id);
 
     this.setState({
@@ -1445,7 +1442,7 @@ class SkladItemsModule_ extends React.Component {
   }
 
   async saveEditItem(itemEdit, main_item_id = 0) {
-    let pf_id = itemEdit.item.pf_id.id;
+    let pf_id = itemEdit.item.pf_id;
     let cat_id = itemEdit.item.cat_id.id;
 
     const data = {
@@ -1656,12 +1653,7 @@ class SkladItemsModule_ extends React.Component {
 
       for (let key in itemView) {
         if (itemView[key] !== itemView_old[key]) {
-          if (key === "pf_id") {
-            const name = (itemView.pf_id = itemView.pf_list.find(
-              (item) => item.id === itemView.pf_id,
-            )?.name);
-            itemView[key] = { key: name, color: "true" };
-          } else if (key === "cat_id") {
+          if (key === "cat_id") {
             const name = (itemView.cat_id = itemView.cats.find(
               (item) => item.id === itemView.cat_id,
             )?.name);
@@ -1678,10 +1670,7 @@ class SkladItemsModule_ extends React.Component {
             itemView[key] = { key: itemView[key], color: "true" };
           }
         } else {
-          if (key === "pf_id") {
-            itemView.pf_id =
-              itemView.pf_list.find((item) => item.id === itemView.pf_id)?.name ?? "";
-          } else if (key === "cat_id") {
+          if (key === "cat_id") {
             itemView.cat_id = itemView.cats.find((item) => item.id === itemView.cat_id)?.name ?? "";
           } else if (key === "app_id") {
             itemView.app_id = itemView.apps.find((item) => item.id === itemView.app_id)?.name ?? "";
@@ -1692,7 +1681,6 @@ class SkladItemsModule_ extends React.Component {
         }
       }
     } else {
-      itemView.pf_id = itemView.pf_list.find((item) => item.id === itemView.pf_id)?.name ?? "";
       itemView.cat_id = itemView.cats.find((item) => item.id === itemView.cat_id)?.name ?? "";
       itemView.app_id = itemView.apps.find((item) => item.id === itemView.app_id)?.name ?? "";
       itemView.ed_izmer_id =

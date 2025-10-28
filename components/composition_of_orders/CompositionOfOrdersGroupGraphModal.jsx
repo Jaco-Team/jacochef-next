@@ -11,9 +11,11 @@ import {
   Box,
   ToggleButtonGroup,
   ToggleButton,
+  IconButton,
 } from "@mui/material";
 import dayjs from "dayjs";
 import CompositionOfOrdersGroupGraph from "./CompositionOfOrdersGroupGraph";
+import { Close } from "@mui/icons-material";
 
 export default function CompositionOfOrdersGroupGraphModal({ open, onClose, data, rowName }) {
   const [selectedMetrics, setSelectedMetrics] = useState(["group_count"]);
@@ -74,7 +76,12 @@ export default function CompositionOfOrdersGroupGraphModal({ open, onClose, data
       maxWidth="xl"
       fullWidth
     >
-      <DialogTitle>{rowName}</DialogTitle>
+      <DialogTitle className="button">
+        {rowName}
+        <IconButton onClick={onClose}>
+          <Close />
+        </IconButton>
+      </DialogTitle>
       <DialogContent>
         <ToggleButtonGroup
           value={step}

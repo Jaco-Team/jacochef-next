@@ -31,12 +31,18 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 
-import { MyCheckBox, MyTextInput, MyAutocomplite, MyDatePickerNew, MySelect } from "@/ui/Forms";
+import {
+  MyCheckBox,
+  MyTextInput,
+  MyAutocomplite,
+  MyDatePickerNew,
+  MySelect,
+} from "@/components/shared/Forms";
 
 import { api_laravel_local, api_laravel } from "@/src/api_new";
 import dayjs from "dayjs";
 import { formatDate } from "@/src/helpers/ui/formatDate";
-import MyAlert from "@/ui/MyAlert";
+import MyAlert from "@/components/shared/MyAlert";
 
 function roundTo(n, digits) {
   if (n.length == 0) {
@@ -696,6 +702,8 @@ class ReceptModule_Modal_History extends React.Component {
 class ReceptModule_Modal extends React.Component {
   constructor(props) {
     super(props);
+    this.autocompleteRefs = [];
+    this.addAutocompleteRef = [];
 
     this.state = {
       name: "",
@@ -744,13 +752,19 @@ class ReceptModule_Modal extends React.Component {
         show_in_rev: this.props.rec?.show_in_rev,
         dop_time: this.props.rec?.time_min_dop,
       });
+      let list = [...this.props.list];
+      let all_w = list.reduce((sum, item) => sum + parseFloat(item.res || 0), 0);
+      all_w = roundTo(all_w, 3);
+      this.setState({ all_w });
     }
   }
 
-  chooseItem(event, data) {
-    let list = this.state.list;
+  chooseItem(event, value) {
+    if (!value) return;
 
-    const find_item = list.find((item) => parseInt(item.item_id.id) === parseInt(data.id));
+    let list = [...this.state.list];
+
+    const find_item = list.find((item) => parseInt(item.item_id?.id) === parseInt(value.id));
 
     if (find_item) {
       this.setState({
@@ -758,22 +772,43 @@ class ReceptModule_Modal extends React.Component {
         err_status: false,
         err_text: "Данная позиция уже добавлена",
       });
-
       return;
     }
-    list.push({
-      item_id: { id: data.id, name: data.name },
-      type_rec: data.type_rec,
-      ei_name: data.ei_name,
+
+    const obj = {
+      item_id: { id: value.id, name: value.name },
+      ei_name: value.ei_name,
+      type_rec: value.type_rec,
       brutto: 0,
       pr_1: 0,
       netto: 0,
       pr_2: 0,
       res: 0,
-    });
+    };
 
-    this.setState({ list });
+    const newList = [...list, obj];
+
+    this.setState({ list: newList }, () => {
+      this.forceResetAddField();
+    });
   }
+
+  forceResetAddField = () => {
+    setTimeout(() => {
+      if (this.addAutocompleteRef) {
+        this.addAutocompleteRef.clearValue?.();
+        this.addAutocompleteRef.blur?.();
+      }
+
+      const autocompleteInputs = document.querySelectorAll('[role="combobox"] input');
+      autocompleteInputs.forEach((input) => {
+        input.value = "";
+        input.blur();
+      });
+
+      document.activeElement?.blur();
+    }, 10);
+  };
 
   deleteItemData(key) {
     let list = this.state.list;
@@ -797,9 +832,9 @@ class ReceptModule_Modal extends React.Component {
 
   changeItemData(key, event, value) {
     if (value) {
-      let list = this.state.list;
+      let list = [...this.state.list];
 
-      const find_item = list.find((item) => parseInt(item.item_id.id) === parseInt(value.id));
+      const find_item = list.find((item) => parseInt(item.item_id?.id) === parseInt(value.id));
 
       if (find_item) {
         this.setState({
@@ -807,23 +842,28 @@ class ReceptModule_Modal extends React.Component {
           err_status: false,
           err_text: "Данная позиция уже добавлена",
         });
-
         return;
       }
-      const obj = {
-        item_id: { id: value.id, name: value.name },
-        ei_name: value.ei_name,
-        type_rec: value.type_rec,
-        brutto: list[key].brutto ? list[key].brutto : 0,
-        pr_1: list[key].pr_1 ? list[key].pr_1 : 0,
-        netto: list[key].netto ? list[key].netto : 0,
-        pr_2: list[key].pr_2 ? list[key].pr_2 : 0,
-        res: list[key].res ? list[key].res : 0,
-      };
 
-      list[key] = obj;
+      const newList = list.map((item, index) => {
+        if (index === key) {
+          return {
+            ...item,
+            item_id: { id: value.id, name: value.name },
+            ei_name: value.ei_name,
+            type_rec: value.type_rec,
+          };
+        }
+        return item;
+      });
 
-      this.setState({ list });
+      this.setState({ list: newList }, () => {
+        if (this.autocompleteRefs[key] && this.autocompleteRefs[key].inputRef) {
+          this.autocompleteRefs[key].inputRef.value = "";
+          this.addAutocompleteRef.clearValue();
+          this.addAutocompleteRef.blur();
+        }
+      });
     }
   }
 
@@ -1199,20 +1239,12 @@ class ReceptModule_Modal extends React.Component {
                             optionKey="id"
                             getOptionKey={(option) => `${option?.id}-${option?.name}`}
                             data={all_pf_list}
-                            isOptionEqualToValue={(option, value) => {
-                              const isEqual = option?.name === value?.name;
-
-                              if (isEqual) {
-                                console.log("Match found:");
-                                console.log("Option:", option);
-                                console.log("Value:", value);
-                              }
-
-                              return isEqual;
-                            }}
+                            isOptionEqualToValue={(option, value) => option?.name === value?.name}
                             value={item.item_id}
                             getOptionLabel={(option) => option?.name || ""}
                             func={this.changeItemData.bind(this, key)}
+                            autoFocus={false}
+                            disableAutoFocus={true}
                           />
                         </TableCell>
                         <TableCell>
@@ -1267,10 +1299,14 @@ class ReceptModule_Modal extends React.Component {
                     <TableRow>
                       <TableCell>
                         <MyAutocomplite
+                          ref={(ref) => (this.addAutocompleteRef = ref)}
                           multiple={false}
                           data={all_pf_list}
                           value={null}
                           func={this.chooseItem.bind(this)}
+                          autoFocus={false}
+                          key="add-new-item"
+                          disableAutoFocus={true}
                         />
                       </TableCell>
                       <TableCell>
