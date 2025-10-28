@@ -19,6 +19,8 @@ export function MyAutocomplite(props) {
           getOptionKey={props.getOptionKey}
           value={props.value}
           onChange={props.func}
+          autoFocus={props.autoFocus}
+    			disableAutoFocus={props.disableAutoFocus}
           onBlur={props.onBlur || undefined}
           filterSelectedOptions
           multiple={props.multiple && props.multiple === true ? true : false}
