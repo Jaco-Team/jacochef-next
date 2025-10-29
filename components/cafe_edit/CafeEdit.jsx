@@ -48,7 +48,7 @@ import CafeEditTabDrivers from "@/components/cafe_edit/tabs/CafeEditTabDrivers";
 import CafeEditTabKKT from "@/components/cafe_edit/tabs/CafeEditTabKKT";
 import HistDropDownTable from "@/components/cafe_edit/HistDropDownTable";
 
-export default function CafeEdit({ initialData, initialPointData }) {
+export default function CafeEdit() {
   const {
     module,
     module_name,
@@ -800,22 +800,7 @@ export default function CafeEdit({ initialData, initialPointData }) {
   };
 
   useEffect(() => {
-    if (initialData) {
-      setState({
-        acces: initialData.acces,
-        points: initialData.points,
-        point: initialData.points?.[0],
-        module_name: initialData.module_info?.name,
-      });
-      if (initialPointData) {
-        setPointStateFromData(initialPointData);
-      } else {
-        getDataPoint();
-      }
-      document.title = initialData.module_info?.name || "Cafe Edit";
-    } else {
-      getBaseData();
-    }
+    getBaseData();
   }, []);
 
   useEffect(() => {

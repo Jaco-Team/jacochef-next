@@ -25,7 +25,7 @@ import dayjs from "dayjs";
 import { api_laravel } from "@/src/api_new";
 import { formatNumber } from "@/src/helpers/utils/i18n";
 import { formatDate } from "@/src/helpers/ui/formatDate";
-import MyAlert from "../../ui/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 
 export default class RasBillAndCook_ extends Component {
   click = false;
@@ -33,17 +33,16 @@ export default class RasBillAndCook_ extends Component {
   constructor(props) {
     super(props);
 
-    const data = props.initialData?.data || null;
     this.state = {
       module: "ras_bill_and_cook",
-      module_name: data?.module_info?.name || "",
+      module_name: "",
       is_load: false,
 
-      points: data?.points || [],
-      point: data?.point || [],
+      points: [],
+      point: [],
 
-      rev_list: data?.rev_list || [],
-      rev: data?.rev || null,
+      rev_list: [],
+      rev: null,
       cats: [],
 
       date_end: formatDate(new Date()),
@@ -55,23 +54,20 @@ export default class RasBillAndCook_ extends Component {
   }
 
   async componentDidMount() {
-    // console.log(this.props.initialData);
-    if (!this.props.initialData) {
-      // console.log(`SSR failed, fetching`);
-      const data = await this.getData("get_all");
-      if (!data?.st) {
-        this.showAlert(data?.text || "Ошибка при получении базовых данных");
-        return;
-      }
-      this.setState({
-        points: data?.points,
-        module_name: data?.module_info?.name,
-      });
-
-      setTimeout(() => {
-        this.changePoint({ target: { value: data.points[0].id } });
-      }, 300);
+    const data = await this.getData("get_all");
+    if (!data?.st) {
+      this.showAlert(data?.text || "Ошибка при получении базовых данных");
+      return;
     }
+    this.setState({
+      points: data?.points,
+      module_name: data?.module_info?.name,
+    });
+
+    setTimeout(() => {
+      this.changePoint({ target: { value: data.points[0].id } });
+    }, 300);
+
     document.title = this.state.module_name;
   }
 

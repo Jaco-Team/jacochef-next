@@ -35,12 +35,10 @@ export default class RasByBill_ extends Component {
   constructor(props) {
     super(props);
 
-    const data = props.initialData?.data || null;
-
     this.state = {
       module: "ras_by_bill",
-      module_name: data?.module_info?.name || "",
-      access: data?.access || null,
+      module_name: "",
+      access: null,
       is_load: false,
 
       modalDialog: false,
@@ -49,14 +47,14 @@ export default class RasByBill_ extends Component {
       err_status: true,
       err_text: "",
 
-      points: data?.points || [],
+      points: [],
       point: [],
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
       rangeDate: [formatDate(new Date()), formatDate(new Date())],
-      items: data?.items || [],
-      cats: data?.cats || [],
-      items_cat: data?.items_cat || [],
+      items: [],
+      cats: [],
+      items_cat: [],
       item_cat: null,
 
       myItems: [],
@@ -66,11 +64,6 @@ export default class RasByBill_ extends Component {
   }
 
   async componentDidMount() {
-    if (this.props.initialData) {
-      document.title = this.state.module_name;
-      return;
-    }
-    console.log("SSR failed, fetching");
     const data = await this.getData("get_all");
     if (!data) {
       this.showAlert("Ошибка получения исходных данных");

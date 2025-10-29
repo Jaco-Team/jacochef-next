@@ -9,6 +9,7 @@ import theme, { font } from "@/src/theme";
 
 import "@/styles/global.scss";
 import "@/styles/tender.scss";
+import Head from "next/head";
 
 Sentry.init({
   dsn: "https://5f1483a8fb0efb009af305503f334119@sentry.jacochef.ru/6",
@@ -34,7 +35,12 @@ export default function MyApp(props) {
     <StyledEngineProvider injectFirst>
       <ThemeProvider theme={theme}>
         {/* <CssBaseline /> */}
-
+        <Head>
+          <meta
+            name="viewport"
+            content="initial-scale=1, width=device-width"
+          />
+        </Head>
         {isHeader && <Header suppressHydrationWarning />}
 
         <div className={font.className}>

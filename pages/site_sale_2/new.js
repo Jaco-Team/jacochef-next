@@ -38,6 +38,8 @@ import dayjs from "dayjs";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
+import { Close } from "@mui/icons-material";
+import { IconButton } from "@mui/material";
 
 class MyDatePicker extends React.PureComponent {
   constructor(props) {
@@ -1027,7 +1029,15 @@ class SiteSale2_new_ extends React.Component {
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
-          <DialogTitle id="alert-dialog-title">Результат операции</DialogTitle>
+          <DialogTitle
+            id="alert-dialog-title"
+            className="button"
+          >
+            Результат операции
+            <IconButton onClick={() => this.setState({ modalDialog: false, modalLink: "" })}>
+              <Close />
+            </IconButton>
+          </DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Typography>{this.state.modalText}</Typography>
 

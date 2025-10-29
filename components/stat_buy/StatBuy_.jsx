@@ -13,8 +13,8 @@ import dayjs from "dayjs";
 import { api_laravel } from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import { formatNumber } from "@/src/helpers/utils/i18n";
-import MyAlert from "@/ui/MyAlert";
 import { formatDate } from "@/src/helpers/ui/formatDate";
+import MyAlert from "@/ui/MyAlert";
 
 dayjs.locale("ru");
 
@@ -22,19 +22,16 @@ export default class Stat_buy_ extends React.Component {
   constructor(props) {
     super(props);
 
-    const data = props.initialData?.data || null;
-    // console.log("SSR DATA: ", data)
-
     this.state = {
       module: "stat_buy",
-      module_name: data?.module_info?.name || "",
-      access: data?.access || null,
+      module_name: "",
+      access: null,
       is_load: false,
 
-      points: data?.points || [],
+      points: [],
       point: [],
 
-      cats: data?.cats || [],
+      cats: [],
       cat: null,
 
       catsData: [],
@@ -55,18 +52,15 @@ export default class Stat_buy_ extends React.Component {
   }
 
   async componentDidMount() {
-    if (!this.props.initialData) {
-      console.log("SSR failed, refetching");
-      const data = await this.getData("get_all");
+    const data = await this.getData("get_all");
 
-      this.setState({
-        cats: data?.cats,
-        cat: data?.cats?.[0],
-        points: data?.points,
-        access: data.access,
-        module_name: data?.module_info?.name,
-      });
-    }
+    this.setState({
+      cats: data?.cats,
+      cat: data?.cats?.[0],
+      points: data?.points,
+      access: data.access,
+      module_name: data?.module_info?.name,
+    });
 
     document.title = this.state.module_name;
   }
