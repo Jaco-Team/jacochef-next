@@ -255,7 +255,7 @@ class CitiesModules_Modal extends React.Component {
 		};
 		this.state = {
 			item: null,
-			openHist: [{id: 1, name: 'Общее'}, {id: 2, name: 'Коэффициенты бонуса'}, {id: 3, name: 'Курьеры'}],
+			openHist: [{id: 1, name: 'Общее'}, {id: 3, name: 'Курьеры'}],
 			dateCoefs: getDateCoefs(),
 			dateCoef: null,
 			ItemTab1: 1,

@@ -9,7 +9,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
-import { MySelect, MyTextInput } from "@/components/shared/Forms";
+import {MyAutocomplite, MySelect, MyTextInput} from "@/components/shared/Forms";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 import Typography from "@mui/material/Typography";
 import Dialog from "@mui/material/Dialog";
@@ -111,8 +111,9 @@ class AppPerH_ extends React.Component {
       module: "app_per_h",
       module_name: "",
       is_load: false,
-      cities: [],
-      city: "",
+      points: [],
+      point: "",
+      point_chose: [],
       items: [],
       openAlert: false,
       err_status: true,
@@ -123,21 +124,24 @@ class AppPerH_ extends React.Component {
       openDelete: false,
       confirmDialog: false,
       app_history: {},
+      coefDialog: false,
+      k_pizza: '',
+      k_rolls: ''
     };
   }
 
   async componentDidMount() {
     const data = await this.getData("get_all");
-    const city = {
-      city_id: data.cities[0].id,
+    const point = {
+      point_id: data.points[0].id,
     };
 
-    const res = await this.getData("get_one", city);
+    const res = await this.getData("get_one", point);
 
     this.setState({
       items: res.lavel_price,
-      cities: data.cities,
-      city: data.cities[0].id,
+      points: data.points,
+      point: data.points[0],
       module_name: data.module_info.name,
       app_history: res.app_history,
     });
@@ -163,15 +167,15 @@ class AppPerH_ extends React.Component {
       });
   };
 
-  async changeCity(event) {
-    const data = {
-      city_id: event.target.value,
+  async changeCity(data, event, value) {
+    const datas = {
+      point_id: event.id,
     };
 
-    const res = await this.getData("get_one", data);
+    const res = await this.getData("get_one", datas);
 
     this.setState({
-      city: event.target.value,
+      point: event,
       items: res.lavel_price,
       app_history: res.app_history,
     });
@@ -192,10 +196,10 @@ class AppPerH_ extends React.Component {
   }
 
   async save() {
-    const { city, items } = this.state;
-    const dateStart = this.state.dateCoefs.find((item) => item.id === this.state.dateCoef);
+    const { items, point_chose } = this.state;
+    const dateStart = this.state.dateCoefs.find((item) => item.id == this.state.dateCoef);
     const data = {
-      city_id: city,
+      points: point_chose,
       app_list: items,
       dateStart,
     };
@@ -214,11 +218,31 @@ class AppPerH_ extends React.Component {
     );
   }
 
+  async saveCoef() {
+    const { point_chose, k_pizza, k_rolls } = this.state;
+    const dateStart = this.state.dateCoefs.find((item) => item.id == this.state.dateCoef);
+    const data = {
+      points: point_chose,
+      k_pizza,
+      k_rolls,
+      dateStart,
+    };
+    await this.getData("save_coef", data);
+
+    this.setState(
+      {
+        openAlert: true,
+        err_status: true,
+        err_text: "Обновлено",
+      }
+    );
+  }
+
   async update() {
-    const { city } = this.state;
+    const { point } = this.state;
 
     const data = {
-      city_id: city,
+      point_id: point,
     };
 
     const res = await this.getData("get_one", data);
@@ -227,10 +251,6 @@ class AppPerH_ extends React.Component {
       items: res.lavel_price,
       app_history: res.app_history,
     });
-  }
-
-  onSave(method) {
-    const dateStart = this.state.dateCoefs.find((item) => item.id === this.state.dateCoef);
   }
 
   changeCoef(data, event) {
@@ -252,7 +272,7 @@ class AppPerH_ extends React.Component {
   }
 
   render() {
-    const { is_load, items, openAlert, err_text, err_status, module_name, cities, city } =
+    const { is_load, items, openAlert, err_text, err_status, module_name, points, point, point_chose } =
       this.state;
     const itemsInGraph = items.filter((value) => value.is_graph === 1);
     const itemsNotGraph = items.filter((value) => value.is_graph === 0);
@@ -306,10 +326,71 @@ class AppPerH_ extends React.Component {
                 func={this.changeCoef.bind(this, "dateCoef")}
                 fullWidth
               />
+              <MyAutocomplite
+                label="Кафе"
+                style={{ marginTop: "10px" }}
+                multiple={true}
+                data={points}
+                value={point_chose}
+                func={(event, value) => this.setState({point_chose: value})}
+              />
             </DialogContent>
             <DialogActions>
               <Button onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
               <Button onClick={this.save.bind(this)}>Сохранить</Button>
+            </DialogActions>
+          </Dialog>
+        ) : null}
+        {this.state.coefDialog ? (
+          <Dialog
+            open={this.state.coefDialog}
+            onClose={() => this.setState({ coefDialog: false })}
+            maxWidth="sm"
+          >
+            <DialogTitle>Подтвердите действие</DialogTitle>
+            <DialogContent
+              align="center"
+              sx={{ fontWeight: "bold" }}
+            >
+              <MyAutocomplite
+                label="Кафе"
+                style={{ marginTop: "10px" }}
+                multiple={true}
+                data={points}
+                value={point_chose}
+                func={(event, value) => this.setState({point_chose: value})}
+              />
+              <MySelect
+                label="Период"
+                style={{ marginTop: "10px" }}
+                is_none={false}
+                data={this.state.dateCoefs || []}
+                value={this.state.dateCoef || ""}
+                func={this.changeCoef.bind(this, "dateCoef")}
+                fullWidth
+              />
+              <MyTextInput
+                label="Коэф. пиццы для бонуса"
+                style={{ marginTop: "10px" }}
+                value={this.state.k_pizza || ''}
+                func={(e) => this.setState({k_pizza: e.target.value })}
+                type="number"
+                step="0.01"
+                fullWidth
+              />
+              <MyTextInput
+                label="Коэф. роллов для бонуса"
+                style={{ marginTop: "10px" }}
+                value={this.state.k_rolls || ''}
+                func={(e) => this.setState({ k_rolls: e.target.value })}
+                type="number"
+                step="0.01"
+                fullWidth
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => this.setState({ coefDialog: false })}>Отмена</Button>
+              <Button onClick={this.saveCoef.bind(this)}>Сохранить</Button>
             </DialogActions>
           </Dialog>
         ) : null}
@@ -334,11 +415,11 @@ class AppPerH_ extends React.Component {
               sm: 3,
             }}
           >
-            <MySelect
-              label="Город"
-              is_none={false}
-              data={cities}
-              value={city}
+            <MyAutocomplite
+              label="Кафе"
+              multiple={false}
+              data={points}
+              value={point}
               func={this.changeCity.bind(this)}
             />
           </Grid>
@@ -346,14 +427,22 @@ class AppPerH_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 9,
+              sm: 6,
             }}
           >
             <Button
               onClick={() => this.setState({ confirmDialog: true })}
               variant="contained"
+              style={{marginRight: '10px', marginBottom: '10px'}}
             >
               Выбрать период
+            </Button>
+            <Button
+              onClick={() => this.setState({ coefDialog: true })}
+              variant="contained"
+              style={{marginRight: '10px', marginBottom: '10px'}}
+            >
+              Выбрать коэффициенты
             </Button>
           </Grid>
 

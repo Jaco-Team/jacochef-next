@@ -19,7 +19,7 @@ export function MyTextInput(props) {
       maxRows={props.maxRows || 1}
       type={props.type || "text"}
       min={props.min || 0}
-      style={{ width: "100%" }}
+      style={{width: "100%", ...props.style}}
       onKeyUp={props.enter}
       autoComplete={props.autoComplete ?? ''}
       autoCorrect={props.autoCorrect ?? ''}
