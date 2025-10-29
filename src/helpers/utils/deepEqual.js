@@ -16,10 +16,7 @@ export default function deepEqual(obj1, obj2) {
   if (keys1.length !== keys2.length) return false;
 
   for (let key of keys1) {
-    if (
-      !keys2.includes(key) ||
-      !deepEqual(normalizeValue(obj1[key]), normalizeValue(obj2[key]))
-    ) {
+    if (!keys2.includes(key) || !deepEqual(normalizeValue(obj1[key]), normalizeValue(obj2[key]))) {
       return false;
     }
   }

@@ -1,16 +1,33 @@
 import React, { useEffect, useState } from "react";
-import { MyAutocomplite, MyDatePickerNew } from "@/components/shared/Forms";
+import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
-import {api_laravel} from "@/src/api_new";
+import { api_laravel } from "@/src/api_new";
 import dayjs from "dayjs";
 
 import ModalAder from "@/components/settings/ModalAder";
 import ModalUpdateAder from "@/components/settings/ModalUpdateAder";
 import PromoCodeForm from "@/components/settings/PromoCodeForm";
-import { Backdrop, Button, Card, CardHeader, CircularProgress, Divider, Grid, Paper, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs } from "@mui/material";
+import {
+  Backdrop,
+  Button,
+  Card,
+  CardHeader,
+  CircularProgress,
+  Divider,
+  Grid,
+  Paper,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tabs,
+} from "@mui/material";
 import { TabContext, TabPanel } from "@mui/lab";
 import { formatDate } from "@/src/helpers/ui/formatDate";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 
 function SettingsPage() {
   const tabsData = {
@@ -35,7 +52,7 @@ function SettingsPage() {
   const [openUpdateAder, setOpenUpdateAder] = useState(false);
   const [activeAder, setActiveAder] = useState([]);
   const [disableAder, setDisableAder] = useState([]);
-  const [access, setAccess] = useState({})
+  const [access, setAccess] = useState({});
 
   useEffect(() => {
     getData("get_all").then((data) => {
@@ -43,7 +60,9 @@ function SettingsPage() {
       setModule(data.module_info);
       setPoints(data.points);
       setMockItems(data.items);
-      const tabsCheck = Object.entries(tabsData).filter(([key]) => parseInt(data.acces[key+'_access']) === 1);
+      const tabsCheck = Object.entries(tabsData).filter(
+        ([key]) => parseInt(data.acces[key + "_access"]) === 1,
+      );
       setAccess(data.acces);
       setTabs(Object.fromEntries(tabsCheck));
     });
@@ -128,12 +147,12 @@ function SettingsPage() {
         <Grid
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <h1>{module.name}</h1>
         </Grid>
-        <Grid
-          size={12}>
+        <Grid size={12}>
           <Paper>
             <TabContext value={value}>
               <Tabs
@@ -157,10 +176,11 @@ function SettingsPage() {
           style={{ paddingTop: 0 }}
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <TabContext value={value}>
-            {parseInt(access.birth_promo_access) == 1 &&
+            {parseInt(access.birth_promo_access) == 1 && (
               <TabPanel value="birth_promo">
                 <PromoCodeForm
                   mockItems={mockItems}
@@ -171,8 +191,8 @@ function SettingsPage() {
                   setOpenAlert={setOpenAlert}
                 />
               </TabPanel>
-            }
-            {parseInt(access.order_adver_access) == 1 &&
+            )}
+            {parseInt(access.order_adver_access) == 1 && (
               <TabPanel value="order_adver">
                 <Grid
                   container
@@ -182,8 +202,9 @@ function SettingsPage() {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 3
-                    }}>
+                      sm: 3,
+                    }}
+                  >
                     <MyAutocomplite
                       label="Точки"
                       data={points}
@@ -197,8 +218,9 @@ function SettingsPage() {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 2
-                    }}>
+                      sm: 2,
+                    }}
+                  >
                     <MyDatePickerNew
                       label="Дата начала"
                       value={dateStart}
@@ -208,8 +230,9 @@ function SettingsPage() {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 2
-                    }}>
+                      sm: 2,
+                    }}
+                  >
                     <MyDatePickerNew
                       label="Дата окончания"
                       value={dateEnd}
@@ -219,8 +242,9 @@ function SettingsPage() {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 3
-                    }}>
+                      sm: 3,
+                    }}
+                  >
                     <Button
                       variant="contained"
                       color="primary"
@@ -232,8 +256,9 @@ function SettingsPage() {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 2
-                    }}>
+                      sm: 2,
+                    }}
+                  >
                     <Button
                       variant="contained"
                       color="primary"
@@ -247,8 +272,9 @@ function SettingsPage() {
                   <Grid
                     style={{ marginBottom: "24px" }}
                     size={{
-                      xs: 12
-                    }}>
+                      xs: 12,
+                    }}
+                  >
                     <Card elevation={3}>
                       <CardHeader
                         title="Активные"
@@ -302,8 +328,9 @@ function SettingsPage() {
                   <Grid
                     style={{ marginBottom: "24px" }}
                     size={{
-                      xs: 12
-                    }}>
+                      xs: 12,
+                    }}
+                  >
                     <Card elevation={3}>
                       <CardHeader
                         title="Не активные"
@@ -353,7 +380,7 @@ function SettingsPage() {
                   </Grid>
                 ) : null}
               </TabPanel>
-            }
+            )}
           </TabContext>
         </Grid>
       </Grid>
@@ -370,7 +397,7 @@ export async function getServerSideProps({ res }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

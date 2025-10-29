@@ -2,7 +2,7 @@
 
 import { List, ListItem, ListItemButton, ListItemText, Paper } from "@mui/material";
 
-export default function CookPfTab({pf}) {
+export default function CookPfTab({ pf }) {
   return (
     <Paper>
       <List>

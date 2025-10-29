@@ -1,40 +1,45 @@
-import React from 'react';
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import React from "react";
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
 
-import CloseIcon from '@mui/icons-material/Close';
-import VisibilityIcon from '@mui/icons-material/Visibility';
+import CloseIcon from "@mui/icons-material/Close";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
-import {MyTextInput, MyCheckBox, MySelect, MyTimePicker, MyAutocomplite} from '@/components/shared/Forms';
+import { MyTextInput, MyCheckBox, MySelect, MyTimePicker, MyAutocomplite } from "@/ui/Forms";
 
-import { api_laravel_local, api_laravel } from '@/src/api_new';
-import MyAlert from '@/components/shared/MyAlert';
+import { api_laravel_local, api_laravel } from "@/src/api_new";
+import MyAlert from "@/ui/MyAlert";
+import { IconButton } from "@mui/material";
+import { Close } from "@mui/icons-material";
 
 class AppWorkTable extends React.Component {
   shouldComponentUpdate(nextProps) {
-
     var array1 = nextProps.items;
     var array2 = this.props.items;
 
-    var is_same = array1.length == array2.length && array1.every(function (element, index) { return element === array2[index] });
+    var is_same =
+      array1.length == array2.length &&
+      array1.every(function (element, index) {
+        return element === array2[index];
+      });
 
     return !is_same || nextProps.timeUpdate !== this.props.timeUpdate;
   }
@@ -64,14 +69,12 @@ class AppWorkTable extends React.Component {
             <TableRow key={key}>
               <TableCell
                 onClick={this.props.openWork.bind(this, item.id)}
-                style={{ color: '#c03', cursor: 'pointer', fontWeight: 'bold' }}
+                style={{ color: "#c03", cursor: "pointer", fontWeight: "bold" }}
               >
                 {item.work_name}
               </TableCell>
               <TableCell>{item.app_name}</TableCell>
-              <TableCell>
-                {item.time_min ? item.time_min + 'мин.' : ''}
-              </TableCell>
+              <TableCell>{item.time_min ? item.time_min + "мин." : ""}</TableCell>
               <TableCell>{item.dow_name}</TableCell>
               <TableCell>{item.times_open}</TableCell>
 
@@ -80,21 +83,21 @@ class AppWorkTable extends React.Component {
               <TableCell>
                 <MyCheckBox
                   value={parseInt(item.is_not_del) == 1 ? true : false}
-                  func={this.props.changeCheck.bind(this, key, 'is_not_del')}
+                  func={this.props.changeCheck.bind(this, key, "is_not_del")}
                   label=""
                 />
               </TableCell>
               <TableCell>
                 <MyCheckBox
                   value={parseInt(item.is_need) == 1 ? true : false}
-                  func={this.props.changeCheck.bind(this, key, 'is_need')}
+                  func={this.props.changeCheck.bind(this, key, "is_need")}
                   label=""
                 />
               </TableCell>
               <TableCell>
                 <MyCheckBox
                   value={parseInt(item.is_active) == 1 ? true : false}
-                  func={this.props.changeCheck.bind(this, key, 'is_active')}
+                  func={this.props.changeCheck.bind(this, key, "is_active")}
                   label=""
                 />
               </TableCell>
@@ -111,8 +114,8 @@ class AppWork_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'app_work',
-      module_name: '',
+      module: "app_work",
+      module_name: "",
       is_load: false,
 
       items: [],
@@ -121,28 +124,28 @@ class AppWork_ extends React.Component {
       modalDialogNew: false,
 
       dows: [
-        { id: 1, name: 'Понедельник' },
-        { id: 2, name: 'Вторник' },
-        { id: 3, name: 'Среда' },
-        { id: 4, name: 'Четверг' },
-        { id: 5, name: 'Пятница' },
-        { id: 6, name: 'Суббота' },
-        { id: 7, name: 'Воскресенье' },
+        { id: 1, name: "Понедельник" },
+        { id: 2, name: "Вторник" },
+        { id: 3, name: "Среда" },
+        { id: 4, name: "Четверг" },
+        { id: 5, name: "Пятница" },
+        { id: 6, name: "Суббота" },
+        { id: 7, name: "Воскресенье" },
 
-        { id: 10, name: 'Другое' },
-        { id: 11, name: 'Каждый день' },
-        { id: 12, name: 'Каждый день в конце смены' },
-        { id: 13, name: 'Ручное добавление' },
-        { id: 14, name: 'После выполнение уборки' },
+        { id: 10, name: "Другое" },
+        { id: 11, name: "Каждый день" },
+        { id: 12, name: "Каждый день в конце смены" },
+        { id: 13, name: "Ручное добавление" },
+        { id: 14, name: "После выполнение уборки" },
       ],
       types: [
-        { id: 0, name: 'Другое' },
-        { id: 1, name: 'Только 1 активная' },
-        { id: 2, name: 'Добавление без ограничений' },
+        { id: 0, name: "Другое" },
+        { id: 1, name: "Только 1 активная" },
+        { id: 2, name: "Добавление без ограничений" },
       ],
 
       itemsEdit: null,
-      nameWork: '',
+      nameWork: "",
 
       itemsNew: null,
       chengeItem1: null,
@@ -150,19 +153,19 @@ class AppWork_ extends React.Component {
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
 
       timeUpdate: new Date(),
     };
   }
 
   async componentDidMount() {
-    let data = await this.getData('get_all');
+    let data = await this.getData("get_all");
 
     data.items.map((item, key) => {
-      data.items[key]['dow_name'] = this.state.dows.find(
-        (it) => parseInt(it.id) == parseInt(item.dow)
-      )['name'];
+      data.items[key]["dow_name"] = this.state.dows.find(
+        (it) => parseInt(it.id) == parseInt(item.dow),
+      )["name"];
     });
 
     this.setState({
@@ -176,14 +179,13 @@ class AppWork_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
-    
     this.setState({
       is_load: true,
     });
 
     let res = api_laravel(this.state.module, method, data)
-      .then(result => result.data)
-      .finally( () => {
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
@@ -192,7 +194,7 @@ class AppWork_ extends React.Component {
       });
 
     return res;
-  }
+  };
 
   openCat(item) {
     this.setState({
@@ -204,79 +206,66 @@ class AppWork_ extends React.Component {
   }
 
   check_form(type) {
-
-    let item = type === 'new' ? this.state.itemsNew : this.state.itemsEdit;
+    let item = type === "new" ? this.state.itemsNew : this.state.itemsEdit;
 
     if (!item.item.name) {
-
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо выбрать наименование уборки'
+        err_text: "Необходимо выбрать наименование уборки",
       });
 
       return;
-
-    } 
-
-    if (!item.item.type_new) {
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо выбрать категорию уборки'
-      });
-
-      return;
-
-    } 
-
-    if (!item.item.app_id) {
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо выбрать должность'
-      });
-
-      return;
-
-    } 
-
-    if (!item.item.dow) {
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо выбрать день недели'
-      });
-
-      return;
-
-    } 
-
-    if (!item.item.type_time) {
-
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: 'Необходимо выбрать тип добавления'
-      });
-
-      return;
-
     }
 
-    if(type === 'new') {
+    if (!item.item.type_new) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Необходимо выбрать категорию уборки",
+      });
+
+      return;
+    }
+
+    if (!item.item.app_id) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Необходимо выбрать должность",
+      });
+
+      return;
+    }
+
+    if (!item.item.dow) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Необходимо выбрать день недели",
+      });
+
+      return;
+    }
+
+    if (!item.item.type_time) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Необходимо выбрать тип добавления",
+      });
+
+      return;
+    }
+
+    if (type === "new") {
       this.saveNew();
     } else {
       this.saveEdit();
     }
-
   }
 
   async saveEdit() {
-
     let itemsEdit = JSON.parse(JSON.stringify(this.state.itemsEdit));
 
     itemsEdit.item.type_new = itemsEdit?.item?.type_new?.id;
@@ -288,25 +277,22 @@ class AppWork_ extends React.Component {
       times_close: this.state.itemsEdit.times_close,
     };
 
-    let res = await this.getData('save_edit', data);
+    let res = await this.getData("save_edit", data);
 
     if (!res.st) {
-
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: res.text,
       });
-
     } else {
-
       this.setState({
         openAlert: true,
         err_status: true,
         err_text: res.text,
         modalDialog: false,
         itemsEdit: null,
-        nameWork: '',
+        nameWork: "",
       });
 
       this.update();
@@ -314,11 +300,10 @@ class AppWork_ extends React.Component {
   }
 
   async saveNew() {
-
     let itemsNew = JSON.parse(JSON.stringify(this.state.itemsNew));
 
-    itemsNew.item.type_new = itemsNew?.item?.type_new?.id
-    itemsNew.item.app_id = itemsNew?.item?.app_id?.id
+    itemsNew.item.type_new = itemsNew?.item?.type_new?.id;
+    itemsNew.item.app_id = itemsNew?.item?.app_id?.id;
 
     let data = {
       work: itemsNew.item,
@@ -326,18 +311,15 @@ class AppWork_ extends React.Component {
       times_close: this.state.itemsNew.times_close,
     };
 
-    let res = await this.getData('save_new', data);
+    let res = await this.getData("save_new", data);
 
     if (res.st === false) {
-
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: res.text,
       });
-
     } else {
-
       this.setState({
         openAlert: true,
         err_status: true,
@@ -355,23 +337,23 @@ class AppWork_ extends React.Component {
       id: id,
     };
 
-    let res = await this.getData('get_one', data);
+    let res = await this.getData("get_one", data);
 
-    res.item.type_new = res.cats.find(item => item.id === res.item.type_new)
-    res.item.app_id = res.apps.find(item => item.id === res.item.app_id)
+    res.item.type_new = res.cats.find((item) => item.id === res.item.type_new);
+    res.item.app_id = res.apps.find((item) => item.id === res.item.app_id);
 
     this.setState({
       itemsEdit: res,
       modalDialog: true,
       nameWork: res.item.name,
       chengeItem1: this.state.items_min.find(
-        (item, key) => parseInt(item.id) == parseInt(res.item.work_id)
+        (item, key) => parseInt(item.id) == parseInt(res.item.work_id),
       ),
     });
   }
 
   async openNewWork() {
-    let res = await this.getData('get_all_for_new');
+    let res = await this.getData("get_all_for_new");
 
     this.setState({
       itemsNew: res,
@@ -385,12 +367,12 @@ class AppWork_ extends React.Component {
 
     item.item[[type]] = data;
 
-    if (type == 'dow' && data == 12) {
-      item.times_add = [{ time_action: '19:00' }];
-      item.times_close = '23:00';
+    if (type == "dow" && data == 12) {
+      item.times_add = [{ time_action: "19:00" }];
+      item.times_close = "23:00";
     }
 
-    if (type == 'dow' && data == 13) {
+    if (type == "dow" && data == 13) {
       item.times_add = [];
     }
 
@@ -416,12 +398,12 @@ class AppWork_ extends React.Component {
 
     item.item[[type]] = data;
 
-    if (type == 'dow' && data == 12) {
-      item.times_add = [{ time_action: '19:00' }];
-      item.times_close = '23:00';
+    if (type == "dow" && data == 12) {
+      item.times_add = [{ time_action: "19:00" }];
+      item.times_close = "23:00";
     }
 
-    if (type == 'dow' && data == 13) {
+    if (type == "dow" && data == 13) {
       item.times_add = [];
     }
 
@@ -445,7 +427,7 @@ class AppWork_ extends React.Component {
     let data = event.target.value;
     let item = this.state.itemsEdit;
 
-    item.times_add[key]['time_action'] = data;
+    item.times_add[key]["time_action"] = data;
 
     this.setState({
       itemsEdit: item,
@@ -456,7 +438,7 @@ class AppWork_ extends React.Component {
     let data = event.target.value;
     let item = this.state.itemsNew;
 
-    item.times_add[key]['time_action'] = data;
+    item.times_add[key]["time_action"] = data;
 
     this.setState({
       itemsNew: item,
@@ -500,10 +482,10 @@ class AppWork_ extends React.Component {
   }
 
   addTime(event) {
-    let data = document.getElementById('timePikerNew').value;
+    let data = document.getElementById("timePikerNew").value;
     let item = this.state.itemsEdit;
 
-    if (data != '') {
+    if (data != "") {
       item.times_add.push({
         time_action: data,
       });
@@ -515,10 +497,10 @@ class AppWork_ extends React.Component {
   }
 
   addTimeNew(event) {
-    let data = document.getElementById('timePikerNew').value;
+    let data = document.getElementById("timePikerNew").value;
     let item = this.state.itemsNew;
 
-    if (data != '') {
+    if (data != "") {
       item.times_add.push({
         time_action: data,
       });
@@ -567,30 +549,26 @@ class AppWork_ extends React.Component {
       id: items[key].id,
     };
 
-    let res = await this.getData('save_check', data);
+    let res = await this.getData("save_check", data);
 
-    if(res.st) {
-
+    if (res.st) {
       this.update();
-
     } else {
-
       this.setState({
         openAlert: true,
         err_status: false,
         err_text: res.text,
       });
-
     }
   }
 
-  async update () {
-    let data = await this.getData('get_all');
+  async update() {
+    let data = await this.getData("get_all");
 
     data.items.map((item, key) => {
-      data.items[key]['dow_name'] = this.state.dows.find(
-        (it) => parseInt(it.id) == parseInt(item.dow)
-      )['name'];
+      data.items[key]["dow_name"] = this.state.dows.find(
+        (it) => parseInt(it.id) == parseInt(item.dow),
+      )["name"];
     });
 
     this.setState({
@@ -603,32 +581,53 @@ class AppWork_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
+        <Backdrop
+          open={this.state.is_load}
+          style={{ zIndex: 99 }}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         {!this.state.itemsEdit ? null : (
           <Dialog
             open={this.state.modalDialog}
-            maxWidth={'md'}
+            maxWidth={"md"}
             onClose={() => {
               this.setState({
                 modalDialog: false,
                 itemsEdit: null,
-                nameWork: '',
+                nameWork: "",
               });
             }}
           >
-            <DialogTitle>Уборка "{this.state.nameWork}"</DialogTitle>
+            <DialogTitle>
+              Уборка "{this.state.nameWork}"
+              <IconButton
+                onClick={() =>
+                  this.setState({
+                    modalDialog: false,
+                    itemsEdit: null,
+                    nameWork: "",
+                  })
+                }
+                style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
             <DialogContent style={{ paddingTop: 10 }}>
-              <Grid container spacing={3}>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MyTextInput
                     value={this.state.itemsEdit.item.name}
-                    func={this.chengeItem.bind(this, 'name')}
+                    func={this.chengeItem.bind(this, "name")}
                     label="Название уборки"
                   />
                 </Grid>
@@ -636,28 +635,35 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
-                   <MyAutocomplite 
-                    label='Категория уборки' 
-                    multiple={false} 
-                    data={this.state.itemsEdit.cats} 
-                    value={this.state.itemsEdit.item.type_new === 0 ? null : this.state.itemsEdit.item.type_new} 
-                    func={ (event, value) => { 
-                    let this_storages = this.state.itemsEdit; 
-                    this_storages.item.type_new = value;
-                    this.setState({ itemsEdit: this_storages }) } } 
-                    />
+                    sm: 4,
+                  }}
+                >
+                  <MyAutocomplite
+                    label="Категория уборки"
+                    multiple={false}
+                    data={this.state.itemsEdit.cats}
+                    value={
+                      this.state.itemsEdit.item.type_new === 0
+                        ? null
+                        : this.state.itemsEdit.item.type_new
+                    }
+                    func={(event, value) => {
+                      let this_storages = this.state.itemsEdit;
+                      this_storages.item.type_new = value;
+                      this.setState({ itemsEdit: this_storages });
+                    }}
+                  />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MyTextInput
                     value={this.state.itemsEdit.item.time_min}
-                    func={this.chengeItem.bind(this, 'time_min')}
+                    func={this.chengeItem.bind(this, "time_min")}
                     label="Время уборки (в минутах)"
                   />
                 </Grid>
@@ -665,11 +671,12 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 3
-                  }}>
+                    sm: 3,
+                  }}
+                >
                   <MyTextInput
                     value={this.state.itemsEdit.item.max_count}
-                    func={this.chengeItem.bind(this, 'max_count')}
+                    func={this.chengeItem.bind(this, "max_count")}
                     label="Количество активаций"
                   />
                 </Grid>
@@ -677,13 +684,14 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 9
-                  }}>
+                    sm: 9,
+                  }}
+                >
                   <MyTextInput
                     multiline={true}
                     maxRows={2}
                     value={this.state.itemsEdit.item.description}
-                    func={this.chengeItem.bind(this, 'description')}
+                    func={this.chengeItem.bind(this, "description")}
                     label="Описание (для внутренного использования)"
                   />
                 </Grid>
@@ -691,29 +699,36 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
-                  <MyAutocomplite 
-                    label='Должность' 
-                    multiple={false} 
-                    data={this.state.itemsEdit.apps} 
-                    value={this.state.itemsEdit.item.app_id === 0 ? null : this.state.itemsEdit.item.app_id} 
-                    func={ (event, value) => { 
-                    let this_storages = this.state.itemsEdit; 
-                    this_storages.item.app_id = value;
-                    this.setState({ itemsEdit: this_storages }) } } 
-                    />
+                    sm: 4,
+                  }}
+                >
+                  <MyAutocomplite
+                    label="Должность"
+                    multiple={false}
+                    data={this.state.itemsEdit.apps}
+                    value={
+                      this.state.itemsEdit.item.app_id === 0
+                        ? null
+                        : this.state.itemsEdit.item.app_id
+                    }
+                    func={(event, value) => {
+                      let this_storages = this.state.itemsEdit;
+                      this_storages.item.app_id = value;
+                      this.setState({ itemsEdit: this_storages });
+                    }}
+                  />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MySelect
                     data={this.state.dows}
                     value={this.state.itemsEdit.item.dow}
-                    func={this.chengeItem.bind(this, 'dow')}
+                    func={this.chengeItem.bind(this, "dow")}
                     label="День недели"
                     is_none={false}
                   />
@@ -722,12 +737,13 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MySelect
                     data={this.state.types}
                     value={this.state.itemsEdit.item.type_time}
-                    func={this.chengeItem.bind(this, 'type_time')}
+                    func={this.chengeItem.bind(this, "type_time")}
                     label="Тип добавления"
                     is_none={false}
                   />
@@ -736,18 +752,23 @@ class AppWork_ extends React.Component {
                 {parseInt(this.state.itemsEdit.item.dow) != 14 ? null : (
                   <Grid
                     size={{
-                      xs: 12
-                    }}>
-                    <Grid container spacing={3}>
+                      xs: 12,
+                    }}
+                  >
+                    <Grid
+                      container
+                      spacing={3}
+                    >
                       <Grid
                         size={{
                           xs: 12,
-                          sm: 6
-                        }}>
+                          sm: 6,
+                        }}
+                      >
                         <MyAutocomplite
                           data={this.state.items_min}
                           value={this.state.chengeItem1 === 0 ? null : this.state.chengeItem1}
-                          func={this.chengeItem1.bind(this, 'work_id')}
+                          func={this.chengeItem1.bind(this, "work_id")}
                           multiple={false}
                           label="Если эта уборка завершена"
                         />
@@ -759,35 +780,36 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <List>
-                    <ListItem style={{ borderBottom: '1px solid #e5e5e5' }}>
-                      <ListItemText primary={'Время добавления уборки'} />
+                    <ListItem style={{ borderBottom: "1px solid #e5e5e5" }}>
+                      <ListItemText primary={"Время добавления уборки"} />
                     </ListItem>
 
                     {this.state.itemsEdit.times_add.map((item, key) => (
                       <ListItem
                         key={key}
-                        style={{ borderBottom: '1px solid #e5e5e5' }}
+                        style={{ borderBottom: "1px solid #e5e5e5" }}
                       >
                         <MyTimePicker
-                          label={''}
+                          label={""}
                           value={item.time_action}
                           func={this.chengeTime.bind(this, key)}
                         />
                         <CloseIcon
-                          style={{ cursor: 'pointer' }}
+                          style={{ cursor: "pointer" }}
                           onClick={this.delTime.bind(this, key)}
                         />
                       </ListItem>
                     ))}
 
-                    <ListItem style={{ borderBottom: '1px solid #e5e5e5' }}>
+                    <ListItem style={{ borderBottom: "1px solid #e5e5e5" }}>
                       <MyTimePicker
                         id="timePikerNew"
-                        label={''}
-                        value={'00:00'}
+                        label={""}
+                        value={"00:00"}
                         onBlur={this.addTime.bind(this)}
                       />
                     </ListItem>
@@ -797,18 +819,17 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <List>
-                    <ListItem style={{ borderBottom: '1px solid #e5e5e5' }}>
-                      <ListItemText
-                        primary={'Время автоматического удаления'}
-                      />
+                    <ListItem style={{ borderBottom: "1px solid #e5e5e5" }}>
+                      <ListItemText primary={"Время автоматического удаления"} />
                     </ListItem>
 
-                    <ListItem style={{ borderBottom: '1px solid #e5e5e5' }}>
+                    <ListItem style={{ borderBottom: "1px solid #e5e5e5" }}>
                       <MyTimePicker
-                        label={''}
+                        label={""}
                         value={this.state.itemsEdit.times_close}
                         func={this.chengeTimeClose.bind(this)}
                       />
@@ -818,7 +839,10 @@ class AppWork_ extends React.Component {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button color="primary" onClick={this.check_form.bind(this, 'edit')}>
+              <Button
+                color="primary"
+                onClick={this.check_form.bind(this, "edit")}
+              >
                 Сохранить
               </Button>
             </DialogActions>
@@ -827,51 +851,76 @@ class AppWork_ extends React.Component {
         {!this.state.itemsNew ? null : (
           <Dialog
             open={this.state.modalDialogNew}
-            maxWidth={'md'}
+            maxWidth={"md"}
             onClose={() => {
               this.setState({ modalDialogNew: false });
             }}
           >
-            <DialogTitle>Новая уборка</DialogTitle>
+            <DialogTitle>
+              Новая уборка
+              <IconButton
+                onClick={() =>
+                  this.setState({
+                    modalDialog: false,
+                    itemsEdit: null,
+                    nameWork: "",
+                  })
+                }
+                style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
             <DialogContent style={{ paddingTop: 10 }}>
-              <Grid container spacing={3}>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MyTextInput
                     value={this.state.itemsNew.item.name}
-                    func={this.chengeItemNew.bind(this, 'name')}
+                    func={this.chengeItemNew.bind(this, "name")}
                     label="Название уборки"
                   />
-                </Grid>
-        
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 4
-                  }}>
-                   <MyAutocomplite 
-                    label='Категория уборки' 
-                    multiple={false} 
-                    data={this.state.itemsNew.cats} 
-                    value={this.state.itemsNew.item.type_new === 0 ? null : this.state.itemsNew.item.type_new} 
-                    func={ (event, value) => { 
-                      let this_storages = this.state.itemsNew; 
-                      this_storages.item.type_new = value;
-                      this.setState({ itemsNew: this_storages }) } } 
-                    />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
+                  <MyAutocomplite
+                    label="Категория уборки"
+                    multiple={false}
+                    data={this.state.itemsNew.cats}
+                    value={
+                      this.state.itemsNew.item.type_new === 0
+                        ? null
+                        : this.state.itemsNew.item.type_new
+                    }
+                    func={(event, value) => {
+                      let this_storages = this.state.itemsNew;
+                      this_storages.item.type_new = value;
+                      this.setState({ itemsNew: this_storages });
+                    }}
+                  />
+                </Grid>
+
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4,
+                  }}
+                >
                   <MyTextInput
                     value={this.state.itemsNew.item.time_min}
-                    func={this.chengeItemNew.bind(this, 'time_min')}
+                    func={this.chengeItemNew.bind(this, "time_min")}
                     label="Время уборки (в минутах)"
                   />
                 </Grid>
@@ -879,11 +928,12 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 3
-                  }}>
+                    sm: 3,
+                  }}
+                >
                   <MyTextInput
                     value={this.state.itemsNew.item.max_count}
-                    func={this.chengeItemNew.bind(this, 'max_count')}
+                    func={this.chengeItemNew.bind(this, "max_count")}
                     label="Количество активаций"
                   />
                 </Grid>
@@ -891,13 +941,14 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 9
-                  }}>
+                    sm: 9,
+                  }}
+                >
                   <MyTextInput
                     multiline={true}
                     maxRows={2}
                     value={this.state.itemsNew.item.description}
-                    func={this.chengeItemNew.bind(this, 'description')}
+                    func={this.chengeItemNew.bind(this, "description")}
                     label="Описание (для внутренного использования)"
                   />
                 </Grid>
@@ -905,29 +956,34 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
-                  <MyAutocomplite 
-                    label='Должность' 
-                    multiple={false} 
-                    data={this.state.itemsNew.apps} 
-                    value={this.state.itemsNew.item.app_id === 0 ? null : this.state.itemsNew.item.app_id} 
-                    func={ (event, value) => { 
-                    let this_storages = this.state.itemsNew; 
-                    this_storages.item.app_id = value;
-                    this.setState({ itemsNew: this_storages }) } } 
-                    />
+                    sm: 4,
+                  }}
+                >
+                  <MyAutocomplite
+                    label="Должность"
+                    multiple={false}
+                    data={this.state.itemsNew.apps}
+                    value={
+                      this.state.itemsNew.item.app_id === 0 ? null : this.state.itemsNew.item.app_id
+                    }
+                    func={(event, value) => {
+                      let this_storages = this.state.itemsNew;
+                      this_storages.item.app_id = value;
+                      this.setState({ itemsNew: this_storages });
+                    }}
+                  />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MySelect
                     data={this.state.dows}
-                    value={this.state.itemsNew.item.dow === 0 ? '' : this.state.itemsNew.item.dow}
-                    func={this.chengeItemNew.bind(this, 'dow')}
+                    value={this.state.itemsNew.item.dow === 0 ? "" : this.state.itemsNew.item.dow}
+                    func={this.chengeItemNew.bind(this, "dow")}
                     label="День недели"
                     is_none={false}
                   />
@@ -936,12 +992,17 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MySelect
                     data={this.state.types}
-                    value={this.state.itemsNew.item.type_time === 0 ? '' : this.state.itemsNew.item.type_time}
-                    func={this.chengeItemNew.bind(this, 'type_time')}
+                    value={
+                      this.state.itemsNew.item.type_time === 0
+                        ? ""
+                        : this.state.itemsNew.item.type_time
+                    }
+                    func={this.chengeItemNew.bind(this, "type_time")}
                     label="Тип добавления"
                     is_none={false}
                   />
@@ -950,18 +1011,23 @@ class AppWork_ extends React.Component {
                 {parseInt(this.state.itemsNew.item.dow) != 14 ? null : (
                   <Grid
                     size={{
-                      xs: 12
-                    }}>
-                    <Grid container spacing={3}>
+                      xs: 12,
+                    }}
+                  >
+                    <Grid
+                      container
+                      spacing={3}
+                    >
                       <Grid
                         size={{
                           xs: 12,
-                          sm: 6
-                        }}>
+                          sm: 6,
+                        }}
+                      >
                         <MyAutocomplite
                           data={this.state.items_min}
                           value={this.state.chengeItemNew1 === 0 ? null : this.state.chengeItemNew1}
-                          func={this.chengeItemNew1.bind(this, 'work_id')}
+                          func={this.chengeItemNew1.bind(this, "work_id")}
                           multiple={false}
                           label="Если эта уборка завершена"
                         />
@@ -973,35 +1039,36 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <List>
-                    <ListItem style={{ borderBottom: '1px solid #e5e5e5' }}>
-                      <ListItemText primary={'Время добавления уборки'} />
+                    <ListItem style={{ borderBottom: "1px solid #e5e5e5" }}>
+                      <ListItemText primary={"Время добавления уборки"} />
                     </ListItem>
 
                     {this.state.itemsNew.times_add.map((item, key) => (
                       <ListItem
                         key={key}
-                        style={{ borderBottom: '1px solid #e5e5e5' }}
+                        style={{ borderBottom: "1px solid #e5e5e5" }}
                       >
                         <MyTimePicker
-                          label={''}
+                          label={""}
                           value={item.time_action}
                           func={this.chengeTimeNew.bind(this, key)}
                         />
                         <CloseIcon
-                          style={{ cursor: 'pointer' }}
+                          style={{ cursor: "pointer" }}
                           onClick={this.delTimeNew.bind(this, key)}
                         />
                       </ListItem>
                     ))}
 
-                    <ListItem style={{ borderBottom: '1px solid #e5e5e5' }}>
+                    <ListItem style={{ borderBottom: "1px solid #e5e5e5" }}>
                       <MyTimePicker
                         id="timePikerNew"
-                        label={''}
-                        value={'00:00'}
+                        label={""}
+                        value={"00:00"}
                         onBlur={this.addTimeNew.bind(this)}
                       />
                     </ListItem>
@@ -1011,18 +1078,17 @@ class AppWork_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <List>
-                    <ListItem style={{ borderBottom: '1px solid #e5e5e5' }}>
-                      <ListItemText
-                        primary={'Время автоматического удаления'}
-                      />
+                    <ListItem style={{ borderBottom: "1px solid #e5e5e5" }}>
+                      <ListItemText primary={"Время автоматического удаления"} />
                     </ListItem>
 
-                    <ListItem style={{ borderBottom: '1px solid #e5e5e5' }}>
+                    <ListItem style={{ borderBottom: "1px solid #e5e5e5" }}>
                       <MyTimePicker
-                        label={''}
+                        label={""}
                         value={this.state.itemsNew.times_close}
                         func={this.chengeTimeCloseNew.bind(this)}
                       />
@@ -1032,33 +1098,42 @@ class AppWork_ extends React.Component {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button color="primary" onClick={this.check_form.bind(this, 'new')}>
+              <Button
+                color="primary"
+                onClick={this.check_form.bind(this, "new")}
+              >
                 Сохранить
               </Button>
             </DialogActions>
           </Dialog>
         )}
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <MyAlert 
-            isOpen={this.state.openAlert} 
-            onClose={() => this.setState({ openAlert: false }) } 
-            status={this.state.err_status} 
-            text={this.state.err_text} 
+          <MyAlert
+            isOpen={this.state.openAlert}
+            onClose={() => this.setState({ openAlert: false })}
+            status={this.state.err_status}
+            text={this.state.err_text}
           />
 
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
@@ -1071,17 +1146,17 @@ class AppWork_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
-
-          {this.state.items.length > 0 ?
-            <AppWorkTable 
-              items={this.state.items} 
-              openWork={this.openWork.bind(this)}
-              changeCheck={this.changeCheck.bind(this) }
-              timeUpdate={this.state.timeUpdate}
-            /> : null
-          }
+              sm: 12,
+            }}
+          >
+            {this.state.items.length > 0 ? (
+              <AppWorkTable
+                items={this.state.items}
+                openWork={this.openWork.bind(this)}
+                changeCheck={this.changeCheck.bind(this)}
+                timeUpdate={this.state.timeUpdate}
+              />
+            ) : null}
           </Grid>
         </Grid>
       </>
@@ -1094,13 +1169,16 @@ export default function AppWork() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

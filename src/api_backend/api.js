@@ -4,13 +4,7 @@ import axios from "axios";
 import { parse } from "cookie";
 import queryString from "query-string"; // ← исправлено
 
-export async function getDataSSR(
-  module,
-  method,
-  rawCookies = "",
-  data = {},
-  dop_type = {}
-) {
+export async function getDataSSR(module, method, rawCookies = "", data = {}, dop_type = {}) {
   let redirect = null;
 
   const cookies = parse(rawCookies || "");
@@ -40,10 +34,8 @@ export async function getDataSSR(
       ...dop_type,
     });
 
-    if (response.status === 401)
-      redirect = { destination: "/auth", permanent: false };
-    if (response.status === 403)
-      redirect = { destination: "/", permanent: false };
+    if (response.status === 401) redirect = { destination: "/auth", permanent: false };
+    if (response.status === 403) redirect = { destination: "/", permanent: false };
 
     if (redirect) return { redirect };
     return response.data;

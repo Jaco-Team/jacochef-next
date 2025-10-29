@@ -21,22 +21,27 @@ export function MyTimePicker(props) {
 
   return (
     <TextField
+      id={props.id ?? undefined}
+      label={props.label}
       variant="outlined"
       size="small"
       color="primary"
-      label={props.label}
       type="time"
       disabled={props.disabled}
-      id={props.id ? props.id : null}
-      value={props.func ? props.value : thisVal}
-      style={{ width: "100%" }}
+      value={props.func ? (props.value ?? "") : thisVal}
+      sx={{ width: "100%" }}
       onChange={props.func ? props.func : onChange}
-      onBlur={props.onBlur ? onBlur : null}
-      InputLabelProps={{
-        shrink: true,
-      }}
+      onBlur={props.onBlur ? onBlur : undefined}
       step={600}
-      inputProps={inputProps}
+      slotProps={{
+        input: {
+          step: 600,
+          ...(props.inputProps || {}),
+        },
+        inputLabel: {
+          shrink: true,
+        },
+      }}
     />
   );
 }

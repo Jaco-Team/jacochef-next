@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { memo, useCallback, useEffect, useState } from "react";
-import { MyAutocomplite, MyTextInput } from "@/components/shared/Forms";
+import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
 
 const AppointmentUnitModal = (props) => {
   const [unit, setUnit] = useState(props.unit);
@@ -63,8 +63,9 @@ const AppointmentUnitModal = (props) => {
           >
             <Grid
               size={{
-                xs: 8
-              }}>
+                xs: 8,
+              }}
+            >
               <MyTextInput
                 label="Название отдела"
                 value={unit?.name || ""}
@@ -76,8 +77,9 @@ const AppointmentUnitModal = (props) => {
             </Grid>
             <Grid
               size={{
-                xs: 4
-              }}>
+                xs: 4,
+              }}
+            >
               <MyTextInput
                 type="number"
                 inputProps={{ min: 0 }}
@@ -91,8 +93,9 @@ const AppointmentUnitModal = (props) => {
             </Grid>
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <MyAutocomplite
                 data={apps}
                 multiple={true}

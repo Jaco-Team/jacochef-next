@@ -1,6 +1,6 @@
 "use client";
 
-import { MySelect, MyTextInput } from "@/components/shared/Forms";
+import { MySelect, MyTextInput } from "@/ui/Forms";
 import { Button, Grid, Typography } from "@mui/material";
 import { useCallback, useEffect } from "react";
 import { useSocialStore } from "./useSocialStore";
@@ -9,10 +9,7 @@ import { useSiteSettingStore } from "../useSiteSettingStore";
 export function SiteSettingSocial() {
   const submodule = "social";
 
-  const [moduleName, dataInfo] = useSocialStore((state) => [
-    state.moduleName,
-    state.dataInfo,
-  ]);
+  const [moduleName, dataInfo] = useSocialStore((state) => [state.moduleName, state.dataInfo]);
 
   const { setDataInfo, setModuleName, getData } = useSocialStore.getState();
 
@@ -71,8 +68,9 @@ export function SiteSettingSocial() {
       <Grid
         sx={{ pb: 3 }}
         size={{
-          xs: 12
-        }}>
+          xs: 12,
+        }}
+      >
         <MySelect
           data={cities.filter((city) => city.id !== -1)}
           value={cityId}
@@ -93,15 +91,17 @@ export function SiteSettingSocial() {
           <Grid
             sx={{ pb: 3 }}
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <Typography variant="h5">{moduleName}</Typography>
           </Grid>
           {!!dataInfo && (
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <Grid
                 container
                 spacing={3}
@@ -109,8 +109,9 @@ export function SiteSettingSocial() {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Вконтакте"
                     disabled={acces.social_view && !acces.social_edit}
@@ -121,8 +122,9 @@ export function SiteSettingSocial() {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Инстаграм"
                     disabled={acces.social_view && !acces.social_edit}
@@ -134,8 +136,9 @@ export function SiteSettingSocial() {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Одноклассники"
                     value={dataInfo?.ok || ""}
@@ -146,8 +149,9 @@ export function SiteSettingSocial() {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Телеграм"
                     value={dataInfo?.tg || ""}
@@ -158,8 +162,9 @@ export function SiteSettingSocial() {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Facebook"
                     value={dataInfo?.fb || ""}
@@ -171,8 +176,9 @@ export function SiteSettingSocial() {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   {acces.social_edit ? (
                     <Button
                       variant="contained"

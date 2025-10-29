@@ -47,7 +47,7 @@ export default function CompositionOfOrdersRow(props) {
           component="th"
           scope="row"
         >
-          {row?.name} 
+          {row?.name}
           <CompositionOfOrdersTooltip title={row?.title} />
           <IconButton onClick={() => openGraphModal(row?.name)}>
             <QueryStats />
@@ -90,7 +90,10 @@ export default function CompositionOfOrdersRow(props) {
           >
             <Box sx={{ margin: 1 }}>
               <TableContainer>
-                <Table size="small" ref={tableRef}>
+                <Table
+                  size="small"
+                  ref={tableRef}
+                >
                   <TableHead style={{ backgroundColor: "#e6e6e6" }}>
                     <TableRow>
                       <TableCell>Группа</TableCell>
@@ -107,7 +110,11 @@ export default function CompositionOfOrdersRow(props) {
                       <TableRow key={historyRow.full_group}>
                         <TableCell>{historyRow.full_group}</TableCell>
                         <TableCell>
-                          <IconButton onClick={() => openGroupGraphModal(historyRow.full_group, historyRow.full_group_ids)}>
+                          <IconButton
+                            onClick={() =>
+                              openGroupGraphModal(historyRow.full_group, historyRow.full_group_ids)
+                            }
+                          >
                             <QueryStats />
                           </IconButton>
                         </TableCell>
@@ -156,7 +163,7 @@ export default function CompositionOfOrdersRow(props) {
                 count={props.row.total ?? 0}
                 onPageChange={async (_, newPage) => {
                   await getDataRow(row.name, newPage, row.perPage);
-                  tableRef.current?.scrollIntoView({behavior: 'smooth'})
+                  tableRef.current?.scrollIntoView({ behavior: "smooth" });
                 }}
                 onRowsPerPageChange={(event) => {
                   const newPerPage = parseInt(event.target.value, 10);

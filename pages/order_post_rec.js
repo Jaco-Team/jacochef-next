@@ -1,41 +1,50 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Typography from '@mui/material/Typography';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Snackbar from '@mui/material/Snackbar';
+import Snackbar from "@mui/material/Snackbar";
 
-import MuiAlert from '@mui/material/Alert';
+import MuiAlert from "@mui/material/Alert";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
-  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+  return (
+    <MuiAlert
+      elevation={6}
+      ref={ref}
+      variant="filled"
+      {...props}
+    />
+  );
 });
 
-import {MySelect, MyAutocomplite2, MyAutocomplite } from '@/components/shared/Forms';
+import { MySelect, MyAutocomplite2, MyAutocomplite } from "@/ui/Forms";
 
-import queryString from 'query-string';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import queryString from "query-string";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { IconButton } from "@mui/material";
+import { Close } from "@mui/icons-material";
 
 class OrderPostRec_Modal extends React.Component {
   constructor(props) {
@@ -68,8 +77,7 @@ class OrderPostRec_Modal extends React.Component {
   }
 
   save() {
-
-    this.props.save(this.state.point)
+    this.props.save(this.state.point);
 
     this.setState({
       points: this.props.points ? this.props.points : [],
@@ -92,15 +100,24 @@ class OrderPostRec_Modal extends React.Component {
         open={this.props.open}
         onClose={this.onClose.bind(this)}
         fullWidth={true}
-        maxWidth={'xs'}
+        maxWidth={"xs"}
       >
-        <DialogTitle>Где применить</DialogTitle>
+        <DialogTitle>
+          Где применить
+          <IconButton
+            onClick={this.onClose.bind(this)}
+            style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+          >
+            <Close />
+          </IconButton>
+        </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
           <Grid
             size={{
               xs: 12,
-              sm: 4
-            }}>
+              sm: 4,
+            }}
+          >
             <MyAutocomplite
               label="Точки"
               multiple={true}
@@ -111,9 +128,7 @@ class OrderPostRec_Modal extends React.Component {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={this.save.bind(this)}>
-            Сохранить
-          </Button>
+          <Button onClick={this.save.bind(this)}>Сохранить</Button>
         </DialogActions>
       </Dialog>
     );
@@ -121,21 +136,22 @@ class OrderPostRec_Modal extends React.Component {
 }
 
 class OrderPostRec_TableItem extends React.Component {
-
   shouldComponentUpdate(nextProps) {
-    return (nextProps.it.item_id_rec !== this.props.it.item_id_rec
-         || nextProps.it.vendor_id_rec !== this.props.it.vendor_id_rec);
+    return (
+      nextProps.it.item_id_rec !== this.props.it.item_id_rec ||
+      nextProps.it.vendor_id_rec !== this.props.it.vendor_id_rec
+    );
   }
 
-  render(){
+  render() {
     const it = this.props.it;
 
     let vendors = [];
-    let item = it.items.filter(el => el.id === it.item_id_rec);
+    let item = it.items.filter((el) => el.id === it.item_id_rec);
 
-    if( item.length > 0 ){
+    if (item.length > 0) {
       vendors = item[0].vendors;
-    }else{
+    } else {
       vendors = it.items[0].vendors;
     }
 
@@ -145,17 +161,17 @@ class OrderPostRec_TableItem extends React.Component {
       console.log( vendors )
     }*/
 
-    let pq = vendors.find(el => el.id === it.vendor_id_rec);
+    let pq = vendors.find((el) => el.id === it.vendor_id_rec);
 
-    if( pq ){
+    if (pq) {
       pq = pq.pq;
-    }else{
-      pq = '';
+    } else {
+      pq = "";
     }
 
-    return(
+    return (
       <TableRow
-        sx={{ '& td': { border: 0 } }}
+        sx={{ "& td": { border: 0 } }}
         hover={true}
       >
         <TableCell>{it.id}</TableCell>
@@ -168,7 +184,7 @@ class OrderPostRec_TableItem extends React.Component {
             <MySelect
               data={it.items}
               value={it.item_id_rec}
-              func={this.props.changeSelect.bind(this, it.id, 'item_id_rec', this.props.type)}
+              func={this.props.changeSelect.bind(this, it.id, "item_id_rec", this.props.type)}
             />
           )}
         </TableCell>
@@ -182,11 +198,11 @@ class OrderPostRec_TableItem extends React.Component {
             is_none={false}
             data={vendors}
             value={it.vendor_id_rec}
-            func={this.props.changeSelect.bind(this, it.id, 'vendor_id_rec', this.props.type)}
+            func={this.props.changeSelect.bind(this, it.id, "vendor_id_rec", this.props.type)}
           />
         </TableCell>
       </TableRow>
-    )
+    );
   }
 }
 
@@ -199,7 +215,7 @@ class OrderPostRec_Table extends React.Component {
       cats: [],
       freeItems: [],
 
-      search: ''
+      search: "",
     };
   }
 
@@ -209,9 +225,7 @@ class OrderPostRec_Table extends React.Component {
     }
 
     if (this.props !== prevProps) {
-
-      if(this.state.search) {
-
+      if (this.state.search) {
         const searchValue = this.state.search;
 
         const catsFilter = JSON.parse(JSON.stringify(this.props.cats));
@@ -223,7 +237,7 @@ class OrderPostRec_Table extends React.Component {
 
           cat.cats.map((el) => {
             el.items = el.items.filter((value) =>
-              value.name.toLowerCase().includes(searchValue.toLowerCase())
+              value.name.toLowerCase().includes(searchValue.toLowerCase()),
             );
 
             if (!el.items.length) {
@@ -239,7 +253,7 @@ class OrderPostRec_Table extends React.Component {
         });
 
         const freeItemsFilter = freeItems.filter((value) =>
-          value.name.toLowerCase().includes(searchValue.toLowerCase())
+          value.name.toLowerCase().includes(searchValue.toLowerCase()),
         );
 
         this.setState({
@@ -247,50 +261,44 @@ class OrderPostRec_Table extends React.Component {
           freeItems: freeItemsFilter,
           items: this.props.items,
         });
-
       } else {
-
         this.setState({
           cats: JSON.parse(JSON.stringify(this.props.cats)),
           freeItems: JSON.parse(JSON.stringify(this.props.freeItems)),
           items: this.props.items,
         });
-
       }
-
+    }
   }
-}
 
   search(event) {
-
     let searchValue;
 
     if (event.target.value) {
-      searchValue = event.target.value ?? '';
+      searchValue = event.target.value ?? "";
 
       this.setState({
-      search: searchValue
+        search: searchValue,
       });
-
     } else {
-      searchValue = event.target.innerText ?? '';
+      searchValue = event.target.innerText ?? "";
 
       this.setState({
-        search: searchValue
-        });
+        search: searchValue,
+      });
     }
 
     const catsFilter = this.state.cats;
 
     const freeItems = this.state.freeItems;
 
-    if (searchValue !== '' || searchValue.length > 1) {
+    if (searchValue !== "" || searchValue.length > 1) {
       catsFilter.map((cat) => {
         let arr = [];
 
         cat.cats.map((el) => {
           el.items = el.items.filter((value) =>
-            value.name.toLowerCase().includes(searchValue.toLowerCase())
+            value.name.toLowerCase().includes(searchValue.toLowerCase()),
           );
 
           if (!el.items.length) {
@@ -306,16 +314,14 @@ class OrderPostRec_Table extends React.Component {
       });
 
       const freeItemsFilter = freeItems.filter((value) =>
-        value.name.toLowerCase().includes(searchValue.toLowerCase())
+        value.name.toLowerCase().includes(searchValue.toLowerCase()),
       );
 
       this.setState({
         cats: catsFilter,
         freeItems: freeItemsFilter,
       });
-
     } else {
-
       this.setState({
         cats: JSON.parse(JSON.stringify(this.props.cats)),
         freeItems: JSON.parse(JSON.stringify(this.props.freeItems)),
@@ -324,15 +330,16 @@ class OrderPostRec_Table extends React.Component {
   }
 
   render() {
-    console.log( 'OrderPostRec_Table render' )
+    console.log("OrderPostRec_Table render");
 
     return (
       <>
         <Grid
           size={{
             xs: 12,
-            sm: 4
-          }}>
+            sm: 4,
+          }}
+        >
           <MyAutocomplite2
             label="Поиск"
             freeSolo={true}
@@ -346,9 +353,13 @@ class OrderPostRec_Table extends React.Component {
         <Grid
           size={{
             xs: 12,
-            sm: 4
-          }}>
-          <Button variant="contained" onClick={this.props.openModal.bind(this)}>
+            sm: 4,
+          }}
+        >
+          <Button
+            variant="contained"
+            onClick={this.props.openModal.bind(this)}
+          >
             Сохранить изменения
           </Button>
         </Grid>
@@ -356,8 +367,9 @@ class OrderPostRec_Table extends React.Component {
           mb={6}
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           {this.state.cats
             .filter((it) => it.all !== 0)
             .map((item, key) => (
@@ -373,39 +385,30 @@ class OrderPostRec_Table extends React.Component {
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                           <Typography>{category.name}</Typography>
                         </AccordionSummary>
-                        <AccordionDetails
-                          style={{ width: '100%', overflow: 'scroll' }}
-                        >
-
+                        <AccordionDetails style={{ width: "100%", overflow: "scroll" }}>
                           <TableContainer>
                             <Table>
                               <TableHead>
                                 <TableRow>
-                                  <TableCell style={{ width: '2%' }}>
-                                    #
-                                  </TableCell>
-                                  <TableCell style={{ width: '30%' }}>
-                                    Заготовка
-                                  </TableCell>
-                                  <TableCell style={{ width: '25%' }}>
-                                    Товар
-                                  </TableCell>
-                                  <TableCell style={{ width: '13%' }}>
-                                    Объем (упак.)
-                                  </TableCell>
-                                  <TableCell style={{ width: '30%' }}>
-                                    Поставщик
-                                  </TableCell>
+                                  <TableCell style={{ width: "2%" }}>#</TableCell>
+                                  <TableCell style={{ width: "30%" }}>Заготовка</TableCell>
+                                  <TableCell style={{ width: "25%" }}>Товар</TableCell>
+                                  <TableCell style={{ width: "13%" }}>Объем (упак.)</TableCell>
+                                  <TableCell style={{ width: "30%" }}>Поставщик</TableCell>
                                 </TableRow>
                               </TableHead>
                               <TableBody>
                                 {category.items.map((it, key) => (
-                                  <OrderPostRec_TableItem key={key} it={it} changeSelect={this.props.changeSelect} type={1}/>
+                                  <OrderPostRec_TableItem
+                                    key={key}
+                                    it={it}
+                                    changeSelect={this.props.changeSelect}
+                                    type={1}
+                                  />
                                 ))}
                               </TableBody>
                             </Table>
                           </TableContainer>
-
                         </AccordionDetails>
                       </Accordion>
                     ))}
@@ -418,28 +421,27 @@ class OrderPostRec_Table extends React.Component {
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>Без категории</Typography>
               </AccordionSummary>
-              <AccordionDetails style={{ width: '100%', overflow: 'scroll' }}>
+              <AccordionDetails style={{ width: "100%", overflow: "scroll" }}>
                 <TableContainer>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell style={{ width: '2%' }}>#</TableCell>
-                        <TableCell style={{ width: '30%' }}>
-                          Заготовка
-                        </TableCell>
-                        <TableCell style={{ width: '25%' }}>Товар</TableCell>
-                        <TableCell style={{ width: '13%' }}>
-                          Объем (упак.)
-                        </TableCell>
-                        <TableCell style={{ width: '30%' }}>
-                          Поставщик
-                        </TableCell>
+                        <TableCell style={{ width: "2%" }}>#</TableCell>
+                        <TableCell style={{ width: "30%" }}>Заготовка</TableCell>
+                        <TableCell style={{ width: "25%" }}>Товар</TableCell>
+                        <TableCell style={{ width: "13%" }}>Объем (упак.)</TableCell>
+                        <TableCell style={{ width: "30%" }}>Поставщик</TableCell>
                       </TableRow>
                     </TableHead>
 
                     <TableBody>
                       {this.state.freeItems.map((it, key) => (
-                        <OrderPostRec_TableItem key={key} it={it} changeSelect={this.props.changeSelect} type={2}/>
+                        <OrderPostRec_TableItem
+                          key={key}
+                          it={it}
+                          changeSelect={this.props.changeSelect}
+                          type={2}
+                        />
                       ))}
                     </TableBody>
                   </Table>
@@ -458,12 +460,12 @@ class OrderPostRec_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'order_post_rec',
-      module_name: '',
+      module: "order_post_rec",
+      module_name: "",
       is_load: false,
 
       points: [],
-      point: '0',
+      point: "0",
 
       items: [],
 
@@ -476,12 +478,12 @@ class OrderPostRec_ extends React.Component {
       modalDialog: false,
       snackbar: false,
       st: false,
-      error: ''
+      error: "",
     };
   }
 
   async componentDidMount() {
-    let data = await this.getData('get_all');
+    let data = await this.getData("get_all");
 
     console.log(data);
 
@@ -499,29 +501,29 @@ class OrderPostRec_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
-		this.setState({
-			is_load: true,
-		});
+    this.setState({
+      is_load: true,
+    });
 
-		let res = api_laravel(this.state.module, method, data)
-			.then(result => result.data)
-			.finally(() => {
-				setTimeout(() => {
-					this.setState({
-						is_load: false,
-					});
-				}, 500);
-			});
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
 
-		return res;
-	}
+    return res;
+  };
 
   async changePoint(event) {
     let data = {
-      point_id: event.target.value
-    }
+      point_id: event.target.value,
+    };
 
-    let res = await this.getData('get_all', data);
+    let res = await this.getData("get_all", data);
 
     this.setState({
       point: event.target.value,
@@ -538,20 +540,20 @@ class OrderPostRec_ extends React.Component {
     });
   }
 
-  findPQ(it){
+  findPQ(it) {
     let vendors = [];
-    let item = it.items.filter(el => el.id === it.item_id_rec);
+    let item = it.items.filter((el) => el.id === it.item_id_rec);
 
-    if( item.length > 0 ){
+    if (item.length > 0) {
       vendors = item[0].vendors;
     }
 
-    let pq = vendors.find(el => el.id === it.vendor_id_rec);
+    let pq = vendors.find((el) => el.id === it.vendor_id_rec);
 
-    if( pq ){
+    if (pq) {
       pq = pq.pq;
-    }else{
-      pq = '';
+    } else {
+      pq = "";
     }
 
     return pq;
@@ -567,12 +569,11 @@ class OrderPostRec_ extends React.Component {
         cat.cats.forEach((it) => {
           it.items.forEach((el) => {
             if (el.id === id) {
-
               el[key] = event.target.value;
 
-              if( key == 'vendor_id_rec' ){
+              if (key == "vendor_id_rec") {
                 //console.log( this.findPQ(el) )
-                el['pq'] = this.findPQ(el);
+                el["pq"] = this.findPQ(el);
               }
             }
           });
@@ -580,7 +581,7 @@ class OrderPostRec_ extends React.Component {
       });
 
       this.setState({
-        cats
+        cats,
       });
     }
 
@@ -594,7 +595,7 @@ class OrderPostRec_ extends React.Component {
       });
 
       this.setState({
-        freeItems
+        freeItems,
       });
     }
   }
@@ -605,17 +606,16 @@ class OrderPostRec_ extends React.Component {
     let data = {
       items: this.state.cats,
       items_free: this.state.freeItems,
-      points
+      points,
     };
 
     console.log(data);
 
-    let res = await this.getData('save_edit', data);
+    let res = await this.getData("save_edit", data);
 
     // console.log(res)
 
-    if(res.st) {
-
+    if (res.st) {
       this.setState({
         st: true,
         snackbar: true,
@@ -624,24 +624,20 @@ class OrderPostRec_ extends React.Component {
       setTimeout(() => {
         this.update();
       }, 300);
-
     } else {
-
       this.setState({
         error: res.text,
         snackbar: true,
       });
-
     }
-
   }
 
   async update() {
     let data = {
-      point_id: this.state.point
-    }
+      point_id: this.state.point,
+    };
 
-    let res = await this.getData('get_all', data);
+    let res = await this.getData("get_all", data);
 
     // console.log(data);
 
@@ -656,26 +652,31 @@ class OrderPostRec_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <Snackbar
           open={this.state.snackbar}
           autoHideDuration={30000}
           anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'center',
+            vertical: "top",
+            horizontal: "center",
           }}
           onClose={() => {
             this.setState({ snackbar: false });
-          }}>
+          }}
+        >
           <Alert
             onClose={() => {
-            this.setState({ snackbar: false });
+              this.setState({ snackbar: false });
             }}
-            severity={ this.state.st ? "success" : "error" }
-            sx={{ width: '100%' }}>
-             { this.state.st ? 'Данные успешно сохранены!' : `${this.state.error}` }
+            severity={this.state.st ? "success" : "error"}
+            sx={{ width: "100%" }}
+          >
+            {this.state.st ? "Данные успешно сохранены!" : `${this.state.error}`}
           </Alert>
         </Snackbar>
         <OrderPostRec_Modal
@@ -686,20 +687,25 @@ class OrderPostRec_ extends React.Component {
           points={this.state.points}
           save={this.save.bind(this)}
         />
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 4
-            }}>
+              sm: 4,
+            }}
+          >
             <MySelect
               data={this.state.points}
               value={this.state.point}
@@ -717,12 +723,17 @@ class OrderPostRec_ extends React.Component {
           />
 
           {!this.state.hist.length ? null : (
-            <Grid pb={1} container justifyContent="center">
+            <Grid
+              pb={1}
+              container
+              justifyContent="center"
+            >
               <Grid
                 size={{
                   xs: 10,
-                  sm: 6
-                }}>
+                  sm: 6,
+                }}
+              >
                 <Accordion>
                   <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
@@ -744,7 +755,7 @@ class OrderPostRec_ extends React.Component {
                                 <TableBody>
                                   <TableRow
                                     sx={{
-                                      '& td': {
+                                      "& td": {
                                         border: 0,
                                         paddingTop: 0,
                                         paddingBottom: 0,
@@ -752,18 +763,10 @@ class OrderPostRec_ extends React.Component {
                                     }}
                                     hover={true}
                                   >
-                                    <TableCell style={{ width: '30%' }}>
-                                      {it.item_name}
-                                    </TableCell>
-                                    <TableCell style={{ width: '30%' }}>
-                                      {it.pf_name}
-                                    </TableCell>
-                                    <TableCell style={{ width: '10%' }}>
-                                      {it.pq}
-                                    </TableCell>
-                                    <TableCell style={{ width: '30%' }}>
-                                      {it.vendor_name}
-                                    </TableCell>
+                                    <TableCell style={{ width: "30%" }}>{it.item_name}</TableCell>
+                                    <TableCell style={{ width: "30%" }}>{it.pf_name}</TableCell>
+                                    <TableCell style={{ width: "10%" }}>{it.pq}</TableCell>
+                                    <TableCell style={{ width: "30%" }}>{it.vendor_name}</TableCell>
                                   </TableRow>
                                 </TableBody>
                               </Table>
@@ -783,32 +786,29 @@ class OrderPostRec_ extends React.Component {
   }
 }
 
-
-
-
-class OrderPostRec_TableHist extends React.Component{
+class OrderPostRec_TableHist extends React.Component {
   shouldComponentUpdate(nextProps) {
-    return (nextProps.hist !== this.props.hist);
+    return nextProps.hist !== this.props.hist;
   }
 
-  render(){
+  render() {
     return (
       <>
-        { this.props.hist.map( (item, key) =>
+        {this.props.hist.map((item, key) => (
           <Accordion key={key}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>{item.date_time} {item.user_name}</Typography>
+              <Typography>
+                {item.date_time} {item.user_name}
+              </Typography>
             </AccordionSummary>
             <AccordionDetails>
-
               <TableContainer>
                 <Table>
-
                   <TableBody>
                     {item.items.map((it, item_k) => (
                       <TableRow
                         key={item_k}
-                        sx={{ '& td': { border: 0 } }}
+                        sx={{ "& td": { border: 0 } }}
                         hover={true}
                       >
                         <TableCell>{it.pf_name}</TableCell>
@@ -820,89 +820,95 @@ class OrderPostRec_TableHist extends React.Component{
                   </TableBody>
                 </Table>
               </TableContainer>
-
             </AccordionDetails>
           </Accordion>
-        ) }
+        ))}
       </>
-    )
+    );
   }
 }
 
 class OrderPostRec_TableItemNew extends React.Component {
-
-  render(){
+  render() {
     const it = this.props.item;
 
     const { main_key, dop_key, item_key } = this.props;
 
     let vendors = [];
-    const items = this.props.items.filter( item => parseInt(item.pf_id) == parseInt(it.id) );
+    const items = this.props.items.filter((item) => parseInt(item.pf_id) == parseInt(it.id));
 
-    let vendor = '';
-    let item = '';
+    let vendor = "";
+    let item = "";
 
-    if( items.length == 1 ){
+    if (items.length == 1) {
       item = items[0].name;
 
       let id = items[0].id;
 
-      vendors = this.props.vendors.filter( vendor => parseInt(vendor.item_id) == parseInt(id) )
+      vendors = this.props.vendors.filter((vendor) => parseInt(vendor.item_id) == parseInt(id));
 
-      if( vendors.length == 1 ){
-        vendor = vendors[0].name
+      if (vendors.length == 1) {
+        vendor = vendors[0].name;
       }
-    }else{
-      vendors = this.props.vendors.filter( vendor => parseInt(vendor.item_id) == parseInt(it.item_id_rec) )
+    } else {
+      vendors = this.props.vendors.filter(
+        (vendor) => parseInt(vendor.item_id) == parseInt(it.item_id_rec),
+      );
 
-      if( vendors.length == 1 ){
-        vendor = vendors[0].name
+      if (vendors.length == 1) {
+        vendor = vendors[0].name;
       }
     }
 
     // console.log( 'render_item' )
 
-    return(
+    return (
       <TableRow
-        sx={{ '& td': { border: 0 } }}
+        sx={{ "& td": { border: 0 } }}
         hover={true}
       >
         <TableCell>{it.id}</TableCell>
         <TableCell>{it.name}</TableCell>
 
         <TableCell>
-          { items.length == 1 ?
+          {items.length == 1 ? (
             item
-              :
+          ) : (
             <MySelect
               is_none={false}
               data={items}
               value={it.item_id_rec}
-              func={ this.props.changeSelect.bind(this, main_key, dop_key, item_key, 'item_id_rec') }
+              func={this.props.changeSelect.bind(this, main_key, dop_key, item_key, "item_id_rec")}
             />
-        }
-
+          )}
         </TableCell>
 
-        <TableCell>{it.pq} {it.ei_name}</TableCell>
+        <TableCell>
+          {it.pq} {it.ei_name}
+        </TableCell>
 
         <TableCell>
-          { vendor == '' ?
-            vendors.length > 0 ?
+          {vendor == "" ? (
+            vendors.length > 0 ? (
               <MySelect
                 is_none={false}
                 data={vendors}
                 value={it.vendor_id_rec}
-                func={ this.props.changeSelect.bind(this, main_key, dop_key, item_key, 'vendor_id_rec') }
+                func={this.props.changeSelect.bind(
+                  this,
+                  main_key,
+                  dop_key,
+                  item_key,
+                  "vendor_id_rec",
+                )}
               />
-                :
-              null
-              :
+            ) : null
+          ) : (
             vendor
-          }</TableCell>
-
+          )}
+        </TableCell>
       </TableRow>
-    )
+    );
   }
 }
 
@@ -911,13 +917,13 @@ class OrderPostRecNew_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'order_post_rec',
-      module_name: '',
+      module: "order_post_rec",
+      module_name: "",
       is_load: false,
 
       points: [],
       savePoints: [],
-      point: '',
+      point: "",
 
       items: [],
       vendors: [],
@@ -930,12 +936,12 @@ class OrderPostRecNew_ extends React.Component {
       modalDialog: false,
       snackbar: false,
       st: false,
-      error: ''
+      error: "",
     };
   }
 
   async componentDidMount() {
-    let data = await this.getData('get_all_new');
+    let data = await this.getData("get_all_new");
 
     this.setState({
       points: data.point_list,
@@ -946,29 +952,29 @@ class OrderPostRecNew_ extends React.Component {
   }
 
   getData = (method, data = {}) => {
-		this.setState({
-			is_load: true,
-		});
+    this.setState({
+      is_load: true,
+    });
 
-		let res = api_laravel(this.state.module, method, data)
-			.then(result => result.data)
-			.finally(() => {
-				setTimeout(() => {
-					this.setState({
-						is_load: false,
-					});
-				}, 500);
-			});
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
 
-		return res;
-	}
+    return res;
+  };
 
   async changePoint(event, value) {
     let data = {
-      point_id: value.id
-    }
+      point_id: value.id,
+    };
 
-    let res = await this.getData('get_data', data);
+    let res = await this.getData("get_data", data);
 
     // console.log( res );
 
@@ -979,98 +985,101 @@ class OrderPostRecNew_ extends React.Component {
       vendors: res.vendors,
       items: res.items,
 
-      hist: res.hist
+      hist: res.hist,
     });
   }
 
-  findPQ(item_id, vendor_id){
+  findPQ(item_id, vendor_id) {
     const vendors = this.state.vendors;
 
-    let myVendor = vendors.find( vendor => parseInt(vendor.id) == parseInt(vendor_id) && parseInt(vendor.item_id) == parseInt(item_id) );
+    let myVendor = vendors.find(
+      (vendor) =>
+        parseInt(vendor.id) == parseInt(vendor_id) && parseInt(vendor.item_id) == parseInt(item_id),
+    );
 
-    if( myVendor ){
+    if (myVendor) {
       myVendor = myVendor.pq;
-    }else{
-      myVendor = '';
+    } else {
+      myVendor = "";
     }
 
     return myVendor;
   }
 
-  findVendors(item_id){
-    const vendors = this.state.vendors.filter( vendor => parseInt(vendor.item_id) == parseInt(item_id) );
+  findVendors(item_id) {
+    const vendors = this.state.vendors.filter(
+      (vendor) => parseInt(vendor.item_id) == parseInt(item_id),
+    );
 
-    if( vendors.length == 1 ){
+    if (vendors.length == 1) {
       return vendors[0];
-    }else{
+    } else {
       return null;
     }
   }
 
-  changeSelect(main_key, dop_key, item_key, type, event){
+  changeSelect(main_key, dop_key, item_key, type, event) {
     let mainCats = this.state.mainCats;
     const value = event.target.value;
-    let item = mainCats[ main_key ]['cats'][ dop_key ]['items'][ item_key ];
+    let item = mainCats[main_key]["cats"][dop_key]["items"][item_key];
 
-    if( type == 'vendor_id_rec' ){
-      item[ 'pq' ] = this.findPQ( item.item_id_rec, value );
+    if (type == "vendor_id_rec") {
+      item["pq"] = this.findPQ(item.item_id_rec, value);
     }
 
-    if( type == 'item_id_rec' ){
+    if (type == "item_id_rec") {
       let vendor = this.findVendors(value);
 
-      console.log( value, vendor )
+      console.log(value, vendor);
 
-      if( vendor ){
-        item[ 'pq' ] = vendor.pq;
-        item[ 'vendor_id_rec' ] = vendor.id;
-      }else{
-        item[ 'pq' ] = '';
-        item[ 'vendor_id_rec' ] = '';
+      if (vendor) {
+        item["pq"] = vendor.pq;
+        item["vendor_id_rec"] = vendor.id;
+      } else {
+        item["pq"] = "";
+        item["vendor_id_rec"] = "";
       }
-
     }
 
-    item[ [type] ] = value;
+    item[[type]] = value;
 
     this.setState({
-      mainCats: mainCats
+      mainCats: mainCats,
     });
   }
 
-  changeSelectOther(main_key, dop_key, item_key, type, event){
+  changeSelectOther(main_key, dop_key, item_key, type, event) {
     let mainCats = this.state.freePf;
     const value = event.target.value;
-    let item = mainCats[ item_key ];
+    let item = mainCats[item_key];
 
-    if( type == 'vendor_id_rec' ){
-      item[ 'pq' ] = this.findPQ( item.item_id_rec, value );
+    if (type == "vendor_id_rec") {
+      item["pq"] = this.findPQ(item.item_id_rec, value);
     }
 
-    if( type == 'item_id_rec' ){
+    if (type == "item_id_rec") {
       let vendor = this.findVendors(value);
 
-      console.log( value, vendor )
+      console.log(value, vendor);
 
-      if( vendor ){
-        item[ 'pq' ] = vendor.pq;
-        item[ 'vendor_id_rec' ] = vendor.id;
-      }else{
-        item[ 'pq' ] = '';
-        item[ 'vendor_id_rec' ] = '';
+      if (vendor) {
+        item["pq"] = vendor.pq;
+        item["vendor_id_rec"] = vendor.id;
+      } else {
+        item["pq"] = "";
+        item["vendor_id_rec"] = "";
       }
-
     }
 
-    item[ [type] ] = value;
+    item[[type]] = value;
 
     this.setState({
-      freePf: mainCats
+      freePf: mainCats,
     });
   }
 
   openModal() {
-    let arr = this.state.points.filter( point => parseInt(point.id) == parseInt(this.state.point) );
+    let arr = this.state.points.filter((point) => parseInt(point.id) == parseInt(this.state.point));
 
     this.setState({
       savePoints: arr,
@@ -1090,42 +1099,46 @@ class OrderPostRecNew_ extends React.Component {
 
     let items = [];
 
-    mainCats.map( mainCat => {
-      mainCat.cats.map( cat => {
-        cat.items.map( item => {
-          items.push( item )
-        } )
-      } )
-    } )
+    mainCats.map((mainCat) => {
+      mainCat.cats.map((cat) => {
+        cat.items.map((item) => {
+          items.push(item);
+        });
+      });
+    });
 
-    freePf.map( item => {
-      items.push( item )
-    } )
+    freePf.map((item) => {
+      items.push(item);
+    });
 
-    let check = items.find( item => parseInt(item.vendor_id_rec) == 0 || item.vendor_id_rec == '' ||
-                        parseInt(item.item_id_rec) == 0 || item.item_id_rec == '' ||
-                        parseFloat(item.pq) == 0 || item.pq == '' );
+    let check = items.find(
+      (item) =>
+        parseInt(item.vendor_id_rec) == 0 ||
+        item.vendor_id_rec == "" ||
+        parseInt(item.item_id_rec) == 0 ||
+        item.item_id_rec == "" ||
+        parseFloat(item.pq) == 0 ||
+        item.pq == "",
+    );
 
-    if( check ){
-
+    if (check) {
       this.setState({
         st: false,
         snackbar: true,
-        error: 'Не заполнены данные у позиции "' + check.name + '"'
+        error: 'Не заполнены данные у позиции "' + check.name + '"',
       });
 
-      return ;
+      return;
     }
 
     let data = {
       items: items,
-      points: this.state.savePoints
+      points: this.state.savePoints,
     };
 
-    let res = await this.getData('save_edit_new', data);
+    let res = await this.getData("save_edit_new", data);
 
-    if(res.st) {
-
+    if (res.st) {
       this.setState({
         st: true,
         snackbar: true,
@@ -1134,56 +1147,72 @@ class OrderPostRecNew_ extends React.Component {
       setTimeout(() => {
         this.update();
       }, 300);
-
     } else {
-
       this.setState({
         st: false,
         error: res.text,
         snackbar: true,
       });
-
     }
-
   }
 
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <Snackbar
           open={this.state.snackbar}
           autoHideDuration={30000}
           anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'center',
+            vertical: "top",
+            horizontal: "center",
           }}
-          onClose={() => { this.setState({ snackbar: false }); }}
+          onClose={() => {
+            this.setState({ snackbar: false });
+          }}
         >
           <Alert
-            onClose={() => { this.setState({ snackbar: false }); }}
-            severity={ this.state.st ? "success" : "error" }
-            sx={{ width: '100%' }}
+            onClose={() => {
+              this.setState({ snackbar: false });
+            }}
+            severity={this.state.st ? "success" : "error"}
+            sx={{ width: "100%" }}
           >
-            { this.state.st ? 'Данные успешно сохранены!' : `${this.state.error}` }
+            {this.state.st ? "Данные успешно сохранены!" : `${this.state.error}`}
           </Alert>
         </Snackbar>
         <Dialog
           open={this.state.modalDialog}
-          onClose={() => { this.setState({ modalDialog: false }); }}
+          onClose={() => {
+            this.setState({ modalDialog: false });
+          }}
           fullWidth={true}
-          maxWidth={'xs'}
+          maxWidth={"xs"}
         >
-          <DialogTitle>Где применить</DialogTitle>
+          <DialogTitle>
+            Где применить
+            <IconButton
+              onClick={() => {
+                this.setState({ modalDialog: false });
+              }}
+              style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
 
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid
               size={{
                 xs: 12,
-                sm: 4
-              }}>
+                sm: 4,
+              }}
+            >
               <MyAutocomplite
                 label="Точки"
                 multiple={true}
@@ -1195,25 +1224,30 @@ class OrderPostRecNew_ extends React.Component {
           </DialogContent>
 
           <DialogActions>
-            <Button onClick={this.save.bind(this)}>
-              Сохранить
-            </Button>
+            <Button onClick={this.save.bind(this)}>Сохранить</Button>
           </DialogActions>
         </Dialog>
-        <Grid container spacing={3} style={{ paddingBottom: 50 }} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          style={{ paddingBottom: 50 }}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 4
-            }}>
+              sm: 4,
+            }}
+          >
             <MyAutocomplite
               label="Точка"
               data={this.state.points}
@@ -1225,121 +1259,115 @@ class OrderPostRecNew_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 4
-            }}>
-            <Button variant="contained" onClick={this.openModal.bind(this)}>
+              sm: 4,
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={this.openModal.bind(this)}
+            >
               Сохранить изменения
             </Button>
           </Grid>
 
           <Grid
             size={{
-              xs: 12
-            }}>
-            {this.state.mainCats.length ? this.state.mainCats.map((mainCat, key) => (
-              <Accordion key={key}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography>{mainCat.name}</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
+              xs: 12,
+            }}
+          >
+            {this.state.mainCats.length
+              ? this.state.mainCats.map((mainCat, key) => (
+                  <Accordion key={key}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>{mainCat.name}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      {mainCat.cats.map((cat, k) => (
+                        <Accordion key={k}>
+                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography>{cat.name}</Typography>
+                          </AccordionSummary>
+                          <AccordionDetails>
+                            <TableContainer>
+                              <Table>
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell style={{ width: "2%" }}>#</TableCell>
+                                    <TableCell style={{ width: "30%" }}>Заготовка</TableCell>
+                                    <TableCell style={{ width: "25%" }}>Товар</TableCell>
+                                    <TableCell style={{ width: "13%" }}>Объем (упак.)</TableCell>
+                                    <TableCell style={{ width: "30%" }}>Поставщик</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {cat.items.map((it, item_k) => (
+                                    <OrderPostRec_TableItemNew
+                                      key={item_k}
+                                      main_key={key}
+                                      dop_key={k}
+                                      item_key={item_k}
+                                      item={it}
+                                      vendors={this.state.vendors}
+                                      items={this.state.items}
+                                      changeSelect={this.changeSelect.bind(this)}
+                                    />
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          </AccordionDetails>
+                        </Accordion>
+                      ))}
+                    </AccordionDetails>
+                  </Accordion>
+                ))
+              : null}
 
-                  {mainCat.cats.map( (cat, k) =>
-                    <Accordion key={k}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography>{cat.name}</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-
-                        <TableContainer>
-                          <Table>
-                            <TableHead>
-                              <TableRow>
-                                <TableCell style={{ width: '2%' }}>#</TableCell>
-                                <TableCell style={{ width: '30%' }}>Заготовка</TableCell>
-                                <TableCell style={{ width: '25%' }}>Товар</TableCell>
-                                <TableCell style={{ width: '13%' }}>Объем (упак.)</TableCell>
-                                <TableCell style={{ width: '30%' }}>Поставщик</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {cat.items.map((it, item_k) => (
-                                <OrderPostRec_TableItemNew
-                                  key={item_k}
-
-                                  main_key={key}
-                                  dop_key={k}
-                                  item_key={item_k}
-
-                                  item={it}
-                                  vendors={this.state.vendors}
-                                  items={this.state.items}
-
-                                  changeSelect={this.changeSelect.bind(this)}
-                                />
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-
-                      </AccordionDetails>
-                    </Accordion>
-                  )}
-
-                </AccordionDetails>
-              </Accordion>
-            )) : null}
-
-            { this.state.freePf.length == 0 ? null :
+            {this.state.freePf.length == 0 ? null : (
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography>Без категории</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-
                   <TableContainer>
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell style={{ width: '2%' }}>#</TableCell>
-                          <TableCell style={{ width: '30%' }}>Заготовка</TableCell>
-                          <TableCell style={{ width: '25%' }}>Товар</TableCell>
-                          <TableCell style={{ width: '13%' }}>Объем (упак.)</TableCell>
-                          <TableCell style={{ width: '30%' }}>Поставщик</TableCell>
+                          <TableCell style={{ width: "2%" }}>#</TableCell>
+                          <TableCell style={{ width: "30%" }}>Заготовка</TableCell>
+                          <TableCell style={{ width: "25%" }}>Товар</TableCell>
+                          <TableCell style={{ width: "13%" }}>Объем (упак.)</TableCell>
+                          <TableCell style={{ width: "30%" }}>Поставщик</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {this.state.freePf.map((it, item_k) => (
                           <OrderPostRec_TableItemNew
                             key={it.id}
-
                             main_key={0}
                             dop_key={0}
                             item_key={item_k}
-
                             item={it}
                             vendors={this.state.vendors}
                             items={this.state.items}
-
                             changeSelect={this.changeSelectOther.bind(this)}
                           />
                         ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
-
                 </AccordionDetails>
               </Accordion>
-            }
-
+            )}
           </Grid>
 
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <OrderPostRec_TableHist hist={this.state.hist} />
           </Grid>
-
         </Grid>
       </>
     );
@@ -1351,13 +1379,16 @@ export default function OrderPostRec() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

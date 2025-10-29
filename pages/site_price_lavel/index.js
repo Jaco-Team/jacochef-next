@@ -1,45 +1,45 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
-import Typography from '@mui/material/Typography';
-import Tooltip from '@mui/material/Tooltip';
-import EditIcon from '@mui/icons-material/Edit';
-import VisibilityIcon from '@mui/icons-material/Visibility';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
+import Typography from "@mui/material/Typography";
+import Tooltip from "@mui/material/Tooltip";
+import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Paper from '@mui/material/Paper';
-import PropTypes from 'prop-types';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
+import Paper from "@mui/material/Paper";
+import PropTypes from "prop-types";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
-import { ExlIcon } from '@/ui/icons';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+import { ExlIcon } from "@/ui/icons";
 
-import { MySelect, MyTextInput, MyDatePickerNew } from '@/components/shared/Forms';
+import { MySelect, MyTextInput, MyDatePickerNew } from "@/ui/Forms";
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
-import {api_laravel} from "@/src/api_new";
+import { api_laravel } from "@/src/api_new";
 
-import axios from 'axios';
-import dayjs from 'dayjs';
-import { formatDate } from '@/src/helpers/ui/formatDate';
-import MyAlert from '@/components/shared/MyAlert';
+import axios from "axios";
+import dayjs from "dayjs";
+import { formatDate } from "@/src/helpers/ui/formatDate";
+import MyAlert from "@/ui/MyAlert";
 
 // ---------- Вспомогательные функции для переключения Табов ----------
 
@@ -54,9 +54,7 @@ function TabPanel(props) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>{children}</Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -70,16 +68,14 @@ TabPanel.propTypes = {
 function a11yProps(index) {
   return {
     id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
+    "aria-controls": `simple-tabpanel-${index}`,
   };
 }
 
 // ---------- Модальное окно Скачать/Загрузить файл XLS ----------
 class SitePriceLevel_Modal_XLS extends React.Component {
-
   render() {
-
-    const {onClose, open, fullScreen, downLoad, uploadFile, input_value} = this.props;
+    const { onClose, open, fullScreen, downLoad, uploadFile, input_value } = this.props;
 
     return (
       <Dialog
@@ -87,48 +83,68 @@ class SitePriceLevel_Modal_XLS extends React.Component {
         onClose={onClose}
         fullScreen={fullScreen}
         fullWidth={true}
-        maxWidth={'sm'}
+        maxWidth={"sm"}
       >
         <DialogTitle className="button">
           Скачать/Загрузить файл XLS
-          <IconButton onClick={onClose} style={{ cursor: 'pointer' }}>
+          <IconButton
+            onClick={onClose}
+            style={{ cursor: "pointer" }}
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3} style={{ display: 'flex', justifyContent: 'space-evenly' }}>
-
+          <Grid
+            container
+            spacing={3}
+            style={{ display: "flex", justifyContent: "space-evenly" }}
+          >
             <Grid
-              x={{ display: 'flex', alignItems: 'center' }}
+              x={{ display: "flex", alignItems: "center" }}
               size={{
                 xs: 12,
-                sm: 4
-              }}>
-              <Tooltip title={<Typography color="inherit">{'Скачать шаблон таблицы в Excel'}</Typography>}> 
-                <IconButton disableRipple sx={{ padding: 0 }} onClick={downLoad}>
+                sm: 4,
+              }}
+            >
+              <Tooltip
+                title={<Typography color="inherit">{"Скачать шаблон таблицы в Excel"}</Typography>}
+              >
+                <IconButton
+                  disableRipple
+                  sx={{ padding: 0 }}
+                  onClick={downLoad}
+                >
                   <ExlIcon />
                 </IconButton>
               </Tooltip>
             </Grid>
 
             <Grid
-              className='button_import'
+              className="button_import"
               size={{
                 xs: 12,
-                sm: 4
-              }}>
-              <Button variant="contained" component="label" style={{ whiteSpace: 'nowrap' }}>
+                sm: 4,
+              }}
+            >
+              <Button
+                variant="contained"
+                component="label"
+                style={{ whiteSpace: "nowrap" }}
+              >
                 Загрузить файл xls
-                <input type="file" hidden onChange={uploadFile} value={input_value} />
+                <input
+                  type="file"
+                  hidden
+                  onChange={uploadFile}
+                  value={input_value}
+                />
               </Button>
             </Grid>
-
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose}>
-            Закрыть
-          </Button>
+          <Button onClick={onClose}>Закрыть</Button>
         </DialogActions>
       </Dialog>
     );
@@ -162,17 +178,17 @@ class SitePriceLevel_Modal_New extends React.Component {
   changeItem(data, event) {
     const item = this.state.item;
     const val = event.target.value;
-    item.level[data] = (val === 'none') ? '' : val;
+    item.level[data] = val === "none" ? "" : val;
     this.setState({ item });
   }
 
   changeDateRange(data, event) {
     const item = this.state.item;
 
-    item.level[data] = event ? event : '';
+    item.level[data] = event ? event : "";
 
     this.setState({
-      item
+      item,
     });
   }
 
@@ -180,30 +196,30 @@ class SitePriceLevel_Modal_New extends React.Component {
     let item = this.state.item;
     item = item.level;
 
-    if (!item.city_id || item.city_id === 'none') {
-      this.props.openAlert(false, 'Необходимо выбрать город');
+    if (!item.city_id || item.city_id === "none") {
+      this.props.openAlert(false, "Необходимо выбрать город");
       return;
     }
 
     if (!item.name) {
-      this.props.openAlert(false, 'Необходимо указать название');
+      this.props.openAlert(false, "Необходимо указать название");
       return;
-    } 
+    }
 
-    if(!item.date_start) {
-      this.props.openAlert(false, 'Необходимо указать дату');
+    if (!item.date_start) {
+      this.props.openAlert(false, "Необходимо указать дату");
       return;
-    } 
+    }
 
     const date_now = dayjs();
     const date_start = dayjs(item.date_start);
 
-    if(date_start.isBefore(date_now, 'day')){
-      this.props.openAlert(false, 'Необходимо указать сегодняшнюю или будущую дату');
+    if (date_start.isBefore(date_now, "day")) {
+      this.props.openAlert(false, "Необходимо указать сегодняшнюю или будущую дату");
       return;
     }
 
-    item.date_start = dayjs(item.date_start).format('YYYY-MM-DD');
+    item.date_start = dayjs(item.date_start).format("YYYY-MM-DD");
 
     this.props.save(item);
 
@@ -211,7 +227,7 @@ class SitePriceLevel_Modal_New extends React.Component {
   }
 
   onClose() {
-    this.setState ({
+    this.setState({
       item: null,
     });
 
@@ -225,61 +241,74 @@ class SitePriceLevel_Modal_New extends React.Component {
         onClose={this.onClose.bind(this)}
         fullScreen={this.props.fullScreen}
         fullWidth={true}
-        maxWidth={'md'}
+        maxWidth={"md"}
       >
         <DialogTitle className="button">
           {this.props.method}
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer' }}>
+          <IconButton
+            onClick={this.onClose.bind(this)}
+            style={{ cursor: "pointer" }}
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3}>
+          <Grid
+            container
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MySelect
                 label="Город"
                 data={this.state.item ? this.state.item?.cities : []}
                 value={
                   this.state.item
-                    ? (this.state.item.level.city_id ? String(this.state.item.level.city_id) : 'none')
-                    : 'none'
+                    ? this.state.item.level.city_id
+                      ? String(this.state.item.level.city_id)
+                      : "none"
+                    : "none"
                 }
-                func={this.changeItem.bind(this, 'city_id')}
+                func={this.changeItem.bind(this, "city_id")}
               />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MyTextInput
                 label="Название"
-                value={this.state.item ? this.state.item?.level?.name : ''}
-                func={this.changeItem.bind(this, 'name')}
+                value={this.state.item ? this.state.item?.level?.name : ""}
+                func={this.changeItem.bind(this, "name")}
               />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MyDatePickerNew
                 label="Дата старта"
                 value={dayjs(this.state.item?.level?.date_start)}
-                func={this.changeDateRange.bind(this, 'date_start')}
+                func={this.changeDateRange.bind(this, "date_start")}
               />
             </Grid>
-
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" onClick={this.save.bind(this)}>
+          <Button
+            variant="contained"
+            onClick={this.save.bind(this)}
+          >
             Сохранить
           </Button>
         </DialogActions>
@@ -294,15 +323,14 @@ class StatSale_Tab_Dynamic extends React.Component {
     super(props);
 
     this.state = {
-      city: '',
+      city: "",
 
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
 
       columns: [],
-      cats: []
+      cats: [],
     };
-
   }
 
   changeCity = (event) => {
@@ -316,65 +344,59 @@ class StatSale_Tab_Dynamic extends React.Component {
   }
 
   get_data_dynamic = async () => {
-
     let { city, date_start, date_end } = this.state;
 
     if (!city) {
-      this.props.openAlert(false, 'Необходимо выбрать город');
-      
+      this.props.openAlert(false, "Необходимо выбрать город");
+
       return;
-    } 
+    }
 
     const data = {
-      date_start: dayjs(date_start).format('YYYY-MM-DD'),
-      date_end: dayjs(date_end).format('YYYY-MM-DD'),
-      city
+      date_start: dayjs(date_start).format("YYYY-MM-DD"),
+      date_end: dayjs(date_end).format("YYYY-MM-DD"),
+      city,
     };
 
-    const res = await this.props.getData('get_data_dynamic', data);
+    const res = await this.props.getData("get_data_dynamic", data);
 
     if (res.st) {
-
       this.setState({
         columns: res.columns,
-        cats: res.cats
+        cats: res.cats,
       });
-
     } else {
-
       this.props.openAlert(false, res.text);
 
       this.setState({
         columns: [],
-        cats: []
+        cats: [],
       });
-
     }
-  
   };
 
   downLoad = async () => {
     let { city, date_start, date_end } = this.state;
 
     if (!city) {
-      this.props.openAlert(false, 'Необходимо выбрать город');
+      this.props.openAlert(false, "Необходимо выбрать город");
       return;
-    } 
+    }
 
-    date_start = dayjs(date_start).format('YYYY-MM-DD');
-    date_end = dayjs(date_end).format('YYYY-MM-DD');
+    date_start = dayjs(date_start).format("YYYY-MM-DD");
+    date_end = dayjs(date_end).format("YYYY-MM-DD");
 
     const data = {
       date_start,
       date_end,
-      city
+      city,
     };
 
     const dop_type = {
-      responseType: 'blob',
+      responseType: "blob",
     };
 
-    const res = await this.props.getData('export_file_xls_dynamic', data, dop_type);
+    const res = await this.props.getData("export_file_xls_dynamic", data, dop_type);
 
     const url = window.URL.createObjectURL(new Blob([res]));
     const link = document.createElement("a");
@@ -383,56 +405,58 @@ class StatSale_Tab_Dynamic extends React.Component {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }
-
+  };
 
   render() {
-
     const { activeTab, cities } = this.props;
     const { columns, cats, city, date_start, date_end } = this.state;
-   
+
     const columnsCount = columns.length ?? 0;
     const totalCols = 2 + columnsCount;
 
     return (
-      <Grid
-        size={12}>
-        <TabPanel 
-          value={activeTab} 
-          index={1} 
+      <Grid size={12}>
+        <TabPanel
+          value={activeTab}
+          index={1}
           id="clients"
         >
-          <Grid container spacing={3}>
-
+          <Grid
+            container
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyDatePickerNew
                 label="Дата от"
                 value={date_start}
-                func={this.changeDateRange.bind(this, 'date_start')}
+                func={this.changeDateRange.bind(this, "date_start")}
               />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyDatePickerNew
                 label="Дата до"
                 value={date_end}
-                func={this.changeDateRange.bind(this, 'date_end')}
+                func={this.changeDateRange.bind(this, "date_end")}
               />
             </Grid>
 
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MySelect
                 is_none={false}
                 data={cities}
@@ -445,9 +469,13 @@ class StatSale_Tab_Dynamic extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 2
-              }}>
-              <Button variant="contained" onClick={this.get_data_dynamic}>
+                sm: 2,
+              }}
+            >
+              <Button
+                variant="contained"
+                onClick={this.get_data_dynamic}
+              >
                 Показать
               </Button>
             </Grid>
@@ -455,40 +483,78 @@ class StatSale_Tab_Dynamic extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 4
-              }}>
-              <Button variant={!(columns.length && cats.length) ? "outlined" : "contained"} onClick={this.downLoad} disabled={!(columns.length && cats.length)}>
+                sm: 4,
+              }}
+            >
+              <Button
+                variant={!(columns.length && cats.length) ? "outlined" : "contained"}
+                onClick={this.downLoad}
+                disabled={!(columns.length && cats.length)}
+              >
                 Скачать таблицу в XLS
               </Button>
             </Grid>
 
-            {columns.length && cats.length ?
+            {columns.length && cats.length ? (
               <Grid
                 mt={3}
                 mb={5}
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
-                <TableContainer sx={{ maxHeight: 650, maxWidth: '100%', overflow: 'auto', p: 0, m: 0 }}>
-                  <Table size="small" sx={{ borderCollapse: 'separate', borderSpacing: 0, '& .MuiTableCell-root': { textAlign: 'center', whiteSpace: 'nowrap' } }}>
+                  sm: 12,
+                }}
+              >
+                <TableContainer
+                  sx={{ maxHeight: 650, maxWidth: "100%", overflow: "auto", p: 0, m: 0 }}
+                >
+                  <Table
+                    size="small"
+                    sx={{
+                      borderCollapse: "separate",
+                      borderSpacing: 0,
+                      "& .MuiTableCell-root": { textAlign: "center", whiteSpace: "nowrap" },
+                    }}
+                  >
                     <TableHead>
-                      <TableRow sx={{ position: 'sticky', top: 0, zIndex: 100, backgroundColor: '#fff' }}>
-
-                        <TableCell sx={{ position: 'sticky', left: 0, zIndex: 98,  backgroundColor: '#fff',  borderLeft: 'none',  minWidth: 50, width: 50 }}>
+                      <TableRow
+                        sx={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "#fff" }}
+                      >
+                        <TableCell
+                          sx={{
+                            position: "sticky",
+                            left: 0,
+                            zIndex: 98,
+                            backgroundColor: "#fff",
+                            borderLeft: "none",
+                            minWidth: 50,
+                            width: 50,
+                          }}
+                        >
                           ID Товара
                         </TableCell>
 
-                        <TableCell sx={{ position: 'sticky', left: 104, zIndex: 95, backgroundColor: '#fff', borderLeft: 'none', minWidth: 200, width: 400 }}>
+                        <TableCell
+                          sx={{
+                            position: "sticky",
+                            left: 104,
+                            zIndex: 95,
+                            backgroundColor: "#fff",
+                            borderLeft: "none",
+                            minWidth: 200,
+                            width: 400,
+                          }}
+                        >
                           Название
                         </TableCell>
 
                         {columns.map((col) => (
-                          <TableCell key={col.id} sx={{ minWidth: 120 }}>
+                          <TableCell
+                            key={col.id}
+                            sx={{ minWidth: 120 }}
+                          >
                             {col.name}
                           </TableCell>
                         ))}
-
                       </TableRow>
                     </TableHead>
 
@@ -498,35 +564,84 @@ class StatSale_Tab_Dynamic extends React.Component {
 
                         return (
                           <React.Fragment key={cat.id}>
-
                             <TableRow>
-                              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', position: 'sticky', left: 0, zIndex: 80 }} />
-                              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', position: 'sticky', left: 104, zIndex: 80 }}>
+                              <TableCell
+                                sx={{
+                                  fontWeight: "bold",
+                                  backgroundColor: "#f5f5f5",
+                                  position: "sticky",
+                                  left: 0,
+                                  zIndex: 80,
+                                }}
+                              />
+                              <TableCell
+                                sx={{
+                                  fontWeight: "bold",
+                                  backgroundColor: "#f5f5f5",
+                                  position: "sticky",
+                                  left: 104,
+                                  zIndex: 80,
+                                }}
+                              >
                                 {cat.name}
                               </TableCell>
-                              <TableCell colSpan={totalCols} sx={{ backgroundColor: '#f5f5f5' }} />
+                              <TableCell
+                                colSpan={totalCols}
+                                sx={{ backgroundColor: "#f5f5f5" }}
+                              />
                             </TableRow>
 
                             {cat.items.map((item) => (
-                              <TableRow key={item.id} >
-                                <TableCell sx={{ position: 'sticky', left: 0, zIndex: 70, backgroundColor: '#fff', borderLeft: 'none', minWidth: 50, width: 50, textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                              <TableRow key={item.id}>
+                                <TableCell
+                                  sx={{
+                                    position: "sticky",
+                                    left: 0,
+                                    zIndex: 70,
+                                    backgroundColor: "#fff",
+                                    borderLeft: "none",
+                                    minWidth: 50,
+                                    width: 50,
+                                    textOverflow: "ellipsis",
+                                    overflow: "hidden",
+                                  }}
+                                >
                                   {item.id}
                                 </TableCell>
-                                <TableCell sx={{ position: 'sticky', left: 104, zIndex: 69, backgroundColor: '#fff', borderLeft: 'none', minWidth: 200, width: 400, textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                                <TableCell
+                                  sx={{
+                                    position: "sticky",
+                                    left: 104,
+                                    zIndex: 69,
+                                    backgroundColor: "#fff",
+                                    borderLeft: "none",
+                                    minWidth: 200,
+                                    width: 400,
+                                    textOverflow: "ellipsis",
+                                    overflow: "hidden",
+                                  }}
+                                >
                                   {item.name}
                                 </TableCell>
 
                                 {item.prices.map((price, idx) => {
                                   const cellColor = item.price_colors?.[idx] ?? null;
                                   return (
-                                    <TableCell key={idx} sx={{ minWidth: 120, ...(cellColor ? { backgroundColor: cellColor, fontWeight: 'bold' } : {}) }}>
-                                       {price ?? '0'}
+                                    <TableCell
+                                      key={idx}
+                                      sx={{
+                                        minWidth: 120,
+                                        ...(cellColor
+                                          ? { backgroundColor: cellColor, fontWeight: "bold" }
+                                          : {}),
+                                      }}
+                                    >
+                                      {price ?? "0"}
                                     </TableCell>
                                   );
                                 })}
                               </TableRow>
                             ))}
-
                           </React.Fragment>
                         );
                       })}
@@ -534,8 +649,7 @@ class StatSale_Tab_Dynamic extends React.Component {
                   </Table>
                 </TableContainer>
               </Grid>
-            : null}
-
+            ) : null}
           </Grid>
         </TabPanel>
       </Grid>
@@ -545,24 +659,23 @@ class StatSale_Tab_Dynamic extends React.Component {
 
 // ---------- Таб Уровни цен ----------
 class SitePriceLevel_Tab_Level extends React.Component {
-
   constructor(props) {
     super(props);
 
     this.state = {
       is_load: false,
-      city: '',
+      city: "",
       modalDialog: false,
       modalDialog_XLS: false,
       confirmDialog: false,
-      method: '',
+      method: "",
       item: null,
       delete_level: null,
-      input_value: '',
+      input_value: "",
       itemNew: {
-        name: '',
+        name: "",
         date_start: formatDate(new Date()),
-        city_id: '',
+        city_id: "",
       },
       levels: [],
       levelsCopy: [],
@@ -579,13 +692,11 @@ class SitePriceLevel_Tab_Level extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.levels !== prevProps.levels) {
-
       this.setState({
         levels: this.props.levels,
         levelsCopy: this.props.levels,
-        city: this.props.cities && this.props.cities.length > 0 ? this.props.cities[0].id : '',
+        city: this.props.cities && this.props.cities.length > 0 ? this.props.cities[0].id : "",
       });
-
     }
   }
 
@@ -597,28 +708,23 @@ class SitePriceLevel_Tab_Level extends React.Component {
     const filteredLevels = levelsCopy.filter((level) => {
       if (parseInt(selectedCity) === -1) return true;
 
-      return (
-        parseInt(level.city_id) === parseInt(selectedCity) || parseInt(level.city_id) === -1
-      );
-
+      return parseInt(level.city_id) === parseInt(selectedCity) || parseInt(level.city_id) === -1;
     });
 
     this.setState({
       city: selectedCity,
       levels: filteredLevels,
     });
-
   }
 
   async openModal(method) {
-
     if (this.props.handleResize) {
       this.props.handleResize();
     }
 
     const itemNewCopy = { ...this.state.itemNew };
 
-    const item = await this.props.getData('get_all_for_new');
+    const item = await this.props.getData("get_all_for_new");
 
     item.level = itemNewCopy;
 
@@ -634,31 +740,27 @@ class SitePriceLevel_Tab_Level extends React.Component {
       name: item.name,
       date_start: item.date_start,
       city_id: item.city_id,
-      type: 'new'
+      type: "new",
     };
 
-    const res = await this.props.getData('save_new', data);
+    const res = await this.props.getData("save_new", data);
 
     if (!res.st) {
-
       this.props.openAlert(res.st, res.text);
-
     } else {
-
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = `/site_price_lavel/${res?.level_id}`;
-      link.target = '_blank';
+      link.target = "_blank";
       link.click();
 
       setTimeout(() => {
         this.props.update();
       }, 100);
-      
     }
   }
 
   // getOneLevel(level_id) {
-   
+
   //   const link = document.createElement('a');
   //   link.href = `/site_price_lavel/${level_id}`
   //   link.target = '_blank'
@@ -667,14 +769,13 @@ class SitePriceLevel_Tab_Level extends React.Component {
   // }
 
   async downLoad() {
-
-    this.setState({ modalDialog_XLS: false })
+    this.setState({ modalDialog_XLS: false });
 
     const dop_type = {
-      responseType: 'blob',
-    }
+      responseType: "blob",
+    };
 
-    const res = await this.props.getData('export_file_xls', {}, dop_type);
+    const res = await this.props.getData("export_file_xls", {}, dop_type);
 
     const url = window.URL.createObjectURL(new Blob([res]));
     const link = document.createElement("a");
@@ -683,7 +784,6 @@ class SitePriceLevel_Tab_Level extends React.Component {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  
   }
 
   async uploadFile({ target }) {
@@ -694,23 +794,23 @@ class SitePriceLevel_Tab_Level extends React.Component {
 
     this.setState({
       modalDialog_XLS: false,
-      input_value: '',
+      input_value: "",
       is_load: true,
     });
 
     let formData = new FormData();
 
     //const urlApi_dev = 'http://127.0.0.1:8000/api/site_price_lavel/import_file_xls';
-    const urlApi_dev = 'https://apichef.jacochef.ru/api/site_price_lavel/import_file_xls';
+    const urlApi_dev = "https://apichef.jacochef.ru/api/site_price_lavel/import_file_xls";
 
-    formData.append('file', file);
-    formData.append('login', localStorage.getItem('token'));
-    formData.append('method', 'import_file_xls');
-    formData.append('module', 'site_price_lavel');
+    formData.append("file", file);
+    formData.append("login", localStorage.getItem("token"));
+    formData.append("method", "import_file_xls");
+    formData.append("module", "site_price_lavel");
 
     try {
       const response = await axios.post(urlApi_dev, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       const res = response.data.data;
@@ -718,24 +818,17 @@ class SitePriceLevel_Tab_Level extends React.Component {
       this.props.openAlert(res.st, res.text);
 
       if (res.st) {
-
         setTimeout(() => {
           this.props.update();
         }, 100);
-
       }
-
     } catch (error) {
-
       // console.error('Ошибка загрузки файла', error);
-      this.props.openAlert(false, 'Ошибка загрузки файла');
-
+      this.props.openAlert(false, "Ошибка загрузки файла");
     } finally {
-
       this.setState({
         is_load: false,
       });
-
     }
   }
 
@@ -747,12 +840,11 @@ class SitePriceLevel_Tab_Level extends React.Component {
       level_id: level.id,
     };
 
-    const res = await this.props.getData('delete_level', data);
+    const res = await this.props.getData("delete_level", data);
 
     this.props.openAlert(res.st, res.text);
 
     if (res.st) {
-
       this.setState({
         is_load: false,
         confirmDialog: false,
@@ -762,37 +854,49 @@ class SitePriceLevel_Tab_Level extends React.Component {
       setTimeout(() => {
         this.props.update();
       }, 100);
-
     } else {
-
       this.setState({
         is_load: false,
       });
-
     }
-
   }
 
   render() {
-
     const { activeTab, cities, acces, fullScreen, openAlert } = this.props;
-    const { levels, city, is_load, confirmDialog, modalDialog, modalDialog_XLS, method, item, input_value } = this.state;
+    const {
+      levels,
+      city,
+      is_load,
+      confirmDialog,
+      modalDialog,
+      modalDialog_XLS,
+      method,
+      item,
+      input_value,
+    } = this.state;
 
     return (
       <>
-
         <Dialog
-          sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+          sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
           maxWidth="sm"
           open={confirmDialog}
           onClose={() => this.setState({ confirmDialog: false, delete_level: null })}
         >
           <DialogTitle>Подтвердите действие</DialogTitle>
-          <DialogContent align="center" sx={{ fontWeight: 'bold' }}>
+          <DialogContent
+            align="center"
+            sx={{ fontWeight: "bold" }}
+          >
             <Typography>Вы действительно хотите удалить данный уровень цен?</Typography>
           </DialogContent>
           <DialogActions>
-            <Button autoFocus onClick={() => this.setState({ confirmDialog: false, delete_level: null })}>Отмена</Button>
+            <Button
+              autoFocus
+              onClick={() => this.setState({ confirmDialog: false, delete_level: null })}
+            >
+              Отмена
+            </Button>
             <Button onClick={this.delete_level}>Удалить</Button>
           </DialogActions>
         </Dialog>
@@ -816,21 +920,32 @@ class SitePriceLevel_Tab_Level extends React.Component {
           input_value={input_value}
         />
 
-        <Backdrop style={{ zIndex: 999 }} open={is_load}>
+        <Backdrop
+          style={{ zIndex: 999 }}
+          open={is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
 
         <Grid
           mb={10}
-          size={12}>
-          <TabPanel value={activeTab} index={0} id="clients">
-            <Grid container spacing={3}>
-
+          size={12}
+        >
+          <TabPanel
+            value={activeTab}
+            index={0}
+            id="clients"
+          >
+            <Grid
+              container
+              spacing={3}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 4
-                }}>
+                  sm: 4,
+                }}
+              >
                 <MySelect
                   is_none={false}
                   data={cities}
@@ -844,9 +959,13 @@ class SitePriceLevel_Tab_Level extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 2
-                  }}>
-                  <Button onClick={() => this.openModal('Новый уровень цен')} variant="contained">
+                    sm: 2,
+                  }}
+                >
+                  <Button
+                    onClick={() => this.openModal("Новый уровень цен")}
+                    variant="contained"
+                  >
                     Добавить
                   </Button>
                 </Grid>
@@ -856,9 +975,13 @@ class SitePriceLevel_Tab_Level extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
-                  <Button onClick={() => this.setState({ modalDialog_XLS: true })} variant="contained">
+                    sm: 4,
+                  }}
+                >
+                  <Button
+                    onClick={() => this.setState({ modalDialog_XLS: true })}
+                    variant="contained"
+                  >
                     Скачать/Загрузить файл XLS
                   </Button>
                 </Grid>
@@ -867,48 +990,63 @@ class SitePriceLevel_Tab_Level extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <TableContainer>
                   <Table>
                     <TableHead>
-                      <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                        <TableCell style={{ width: '3%' }}>#</TableCell>
-                        <TableCell style={{ width: '25%' }}>Наименование</TableCell>
-                        <TableCell style={{ width: '18%' }}>Дата старта</TableCell>
-                        <TableCell style={{ width: '18%' }}>Город</TableCell>
-                        <TableCell style={{ width: '18%' }}>Редактировать / Просмотр</TableCell>
-                        <TableCell style={{ width: '18%' }}>Удалить</TableCell>
+                      <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                        <TableCell style={{ width: "3%" }}>#</TableCell>
+                        <TableCell style={{ width: "25%" }}>Наименование</TableCell>
+                        <TableCell style={{ width: "18%" }}>Дата старта</TableCell>
+                        <TableCell style={{ width: "18%" }}>Город</TableCell>
+                        <TableCell style={{ width: "18%" }}>Редактировать / Просмотр</TableCell>
+                        <TableCell style={{ width: "18%" }}>Удалить</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {levels.map((level, index) => (
-        
-                        <TableRow hover key={index}>
+                        <TableRow
+                          hover
+                          key={index}
+                        >
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>{level.name}</TableCell>
                           <TableCell>{level.date_start}</TableCell>
                           <TableCell>{level.city_name}</TableCell>
 
                           <TableCell>
-                            <a href={'/site_price_lavel/'+level.id} target='_blank' rel="noopener noreferrer">
+                            <a
+                              href={"/site_price_lavel/" + level.id}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
                               <IconButton /*onClick={() => this.getOneLevel(level.id)}*/>
                                 {parseInt(acces?.edit_level_access) ? (
-                                  <Tooltip title={<Typography color="inherit">Редактировать</Typography>}>
+                                  <Tooltip
+                                    title={<Typography color="inherit">Редактировать</Typography>}
+                                  >
                                     <EditIcon />
                                   </Tooltip>
                                 ) : (
-                                  <Tooltip title={<Typography color="inherit">Просмотр</Typography>}>
+                                  <Tooltip
+                                    title={<Typography color="inherit">Просмотр</Typography>}
+                                  >
                                     <VisibilityIcon />
                                   </Tooltip>
                                 )}
                               </IconButton>
                             </a>
                           </TableCell>
-                
+
                           <TableCell>
                             {parseInt(acces?.delete_level_acceess) && level?.delete ? (
-                              <IconButton onClick={() => this.setState({ confirmDialog: true, delete_level: level })}>
+                              <IconButton
+                                onClick={() =>
+                                  this.setState({ confirmDialog: true, delete_level: level })
+                                }
+                              >
                                 <CloseIcon />
                               </IconButton>
                             ) : null}
@@ -929,18 +1067,17 @@ class SitePriceLevel_Tab_Level extends React.Component {
 
 // ---------- Стартовая / Основной компонент ----------
 class SitePriceLevel_ extends React.Component {
-
   constructor(props) {
     super(props);
 
     this.state = {
-      module: 'site_price_lavel',
-      module_name: '',
+      module: "site_price_lavel",
+      module_name: "",
       is_load: false,
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
 
       cities: [],
       fullScreen: false,
@@ -957,31 +1094,28 @@ class SitePriceLevel_ extends React.Component {
   }
 
   getData = (method, data = {}, dop_type = {}) => {
-    
     this.setState({
       is_load: true,
     });
 
     let res = api_laravel(this.state.module, method, data, dop_type)
-    .then(result => {
-
-      if(method === 'export_file_xls' || method === 'export_file_xls_dynamic') {
-        return result;
-      } else {
-        return result.data;
-      }
-
-    })
-    .finally( () => {
-      setTimeout(() => {
-        this.setState({
-          is_load: false,
-        });
-      }, 500);
-    });
+      .then((result) => {
+        if (method === "export_file_xls" || method === "export_file_xls_dynamic") {
+          return result;
+        } else {
+          return result.data;
+        }
+      })
+      .finally(() => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
 
     return res;
-  }
+  };
 
   handleResize = () => {
     this.setState({ fullScreen: window.innerWidth < 601 });
@@ -989,7 +1123,7 @@ class SitePriceLevel_ extends React.Component {
 
   update = async () => {
     try {
-      const data = await this.getData('get_all');
+      const data = await this.getData("get_all");
 
       if (data && data.levels) {
         const updatedLevels = data.levels.map((level) => {
@@ -998,8 +1132,8 @@ class SitePriceLevel_ extends React.Component {
 
           return {
             ...level,
-            delete: date_start.isAfter(date_now, 'day'),
-            edit: !date_start.isBefore(date_now, 'day'),
+            delete: date_start.isAfter(date_now, "day"),
+            edit: !date_start.isBefore(date_now, "day"),
           };
         });
 
@@ -1020,29 +1154,41 @@ class SitePriceLevel_ extends React.Component {
   };
 
   changeTab = (event, val) => {
-    if(parseInt(val) === 0) this.update();
+    if (parseInt(val) === 0) this.update();
 
     this.setState({ activeTab: val });
   };
 
   openAlert = (status, text) => {
-
     this.setState({
       openAlert: true,
       err_status: status,
-      err_text: text
+      err_text: text,
     });
-
   };
 
   render() {
-    const { is_load, openAlert, err_status, err_text, module_name, activeTab, fullScreen, cities, levels, acces } = this.state;
+    const {
+      is_load,
+      openAlert,
+      err_status,
+      err_text,
+      module_name,
+      activeTab,
+      fullScreen,
+      cities,
+      levels,
+      acces,
+    } = this.state;
 
-    const cities_city = cities.filter(city => city.id !== -1);
+    const cities_city = cities.filter((city) => city.id !== -1);
 
     return (
       <>
-        <Backdrop style={{ zIndex: 999 }} open={is_load}>
+        <Backdrop
+          style={{ zIndex: 999 }}
+          open={is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -1051,16 +1197,20 @@ class SitePriceLevel_ extends React.Component {
           status={err_status}
           text={err_text}
         />
-        <Grid container spacing={3} mb={3} className="container_first_child">
-
-          <Grid
-            size={12}>
+        <Grid
+          container
+          spacing={3}
+          mb={3}
+          className="container_first_child"
+        >
+          <Grid size={12}>
             <h1>{module_name}</h1>
           </Grid>
 
           <Grid
             style={{ paddingBottom: 24 }}
-            size={12}>
+            size={12}
+          >
             <Paper>
               <Tabs
                 value={activeTab}
@@ -1068,42 +1218,47 @@ class SitePriceLevel_ extends React.Component {
                 variant={fullScreen ? "scrollable" : "fullWidth"}
                 scrollButtons={false}
               >
-                <Tab label="Уровни цен" {...a11yProps(0)} sx={{ minWidth: "fit-content", flex: 1 }}>
-                </Tab>
-                <Tab label="Динамика" {...a11yProps(1)} sx={{ minWidth: "fit-content", flex: 1 }} />
+                <Tab
+                  label="Уровни цен"
+                  {...a11yProps(0)}
+                  sx={{ minWidth: "fit-content", flex: 1 }}
+                ></Tab>
+                <Tab
+                  label="Динамика"
+                  {...a11yProps(1)}
+                  sx={{ minWidth: "fit-content", flex: 1 }}
+                />
               </Tabs>
             </Paper>
           </Grid>
 
           {/* Уровни цен */}
-            {activeTab === 0 &&
-              <SitePriceLevel_Tab_Level
-                activeTab={activeTab}
-                fullScreen={fullScreen}
-                cities={cities}
-                openAlert={this.openAlert}
-                getData={this.getData}
-                levels={levels}
-                acces={acces}
-                handleResize={this.handleResize}
-                update={this.update}
-              />
-            }
+          {activeTab === 0 && (
+            <SitePriceLevel_Tab_Level
+              activeTab={activeTab}
+              fullScreen={fullScreen}
+              cities={cities}
+              openAlert={this.openAlert}
+              getData={this.getData}
+              levels={levels}
+              acces={acces}
+              handleResize={this.handleResize}
+              update={this.update}
+            />
+          )}
           {/* /Уровни цен */}
 
-
           {/* Динамика */}
-            {activeTab === 1 &&
-              <StatSale_Tab_Dynamic
-                activeTab={activeTab}
-                fullScreen={fullScreen}
-                cities={cities_city}
-                openAlert={this.openAlert}
-                getData={this.getData}
-              />
-            }
+          {activeTab === 1 && (
+            <StatSale_Tab_Dynamic
+              activeTab={activeTab}
+              fullScreen={fullScreen}
+              cities={cities_city}
+              openAlert={this.openAlert}
+              getData={this.getData}
+            />
+          )}
           {/* /Динамика */}
-
         </Grid>
       </>
     );

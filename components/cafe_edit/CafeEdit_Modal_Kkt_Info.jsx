@@ -1,13 +1,7 @@
 "use client";
 
 import { memo, useEffect, useState } from "react";
-import {
-  MyAutocomplite,
-  MyCheckBox,
-  MyDatePickerNew,
-  MySelect,
-  MyTextInput,
-} from "@/components/shared/Forms";
+import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
 import {
   Dialog,
   DialogTitle,
@@ -22,7 +16,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import dayjs from "dayjs";
 import CafeEdit_Modal_Kkt_Info_Add from "./CafeEdit_Modal_Kkt_Info_Add";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 
 const defaultKassRange = [
@@ -55,7 +49,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
     setAllFn(kkt?.all_fn ?? []);
     if (type === "update_kkt" || type === "view_kkt") {
       const name = `${kkt?.fn} ( с ${dayjs(kkt?.date_start).format("DD-MM-YYYY")} по ${dayjs(
-        kkt?.date_end
+        kkt?.date_end,
       ).format("DD-MM-YYYY")} )`;
 
       let kkt_fn = {
@@ -101,7 +95,7 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
     }
 
     const name = `${new_fn} ( с ${dayjs(date_start).format("DD-MM-YYYY")} по ${dayjs(
-      date_end
+      date_end,
     ).format("DD-MM-YYYY")} )`;
 
     const add_fn = {
@@ -203,8 +197,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Номер кассы"
                     value={kassa ?? ""}
@@ -215,8 +210,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Доп касса"
                     value={dopKassa ?? ""}
@@ -227,8 +223,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="РН ККТ"
                     value={rnKkt ?? ""}
@@ -239,8 +236,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="База"
                     value={base ?? ""}
@@ -251,8 +249,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MyTextInput
                     label="ФН"
                     value={fn?.name ?? ""}
@@ -263,8 +262,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Лицензия ОФД дата завершения"
                     value={dateLicense ?? ""}
@@ -275,8 +275,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MyTextInput
                     label="Активность"
                     value={parseInt(isActive) === 1 ? "Активна" : "Не активна"}
@@ -292,8 +293,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MySelect
                     is_none={false}
                     data={defaultKassRange}
@@ -306,8 +308,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MySelect
                     is_none={false}
                     data={defaultKassRange}
@@ -320,8 +323,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="РН ККТ"
                     value={rnKkt ?? ""}
@@ -332,8 +336,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="База"
                     value={base ?? ""}
@@ -344,8 +349,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MyAutocomplite
                     label="ФН"
                     multiple={false}
@@ -359,8 +365,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyDatePickerNew
                     label="Лицензия ОФД дата завершения"
                     value={dateLicense ?? ""}
@@ -371,8 +378,9 @@ const CafeEdit_Modal_Kkt_Info = (props) => {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MyCheckBox
                     value={parseInt(isActive) === 1 ? true : false}
                     disabled={!canEdit("edit_active")}

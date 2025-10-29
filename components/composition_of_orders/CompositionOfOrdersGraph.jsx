@@ -17,7 +17,7 @@ export default function CompositionOfOrdersGraph({ data, rowName, metrics }) {
     root.locale = am5locales_ru_RU;
 
     const chart = root.container.children.push(
-      am5xy.XYChart.new(root, { panX: true, wheelX: "panX", wheelY: "zoomX" })
+      am5xy.XYChart.new(root, { panX: true, wheelX: "panX", wheelY: "zoomX" }),
     );
 
     // X axis + date tooltip
@@ -25,7 +25,7 @@ export default function CompositionOfOrdersGraph({ data, rowName, metrics }) {
       am5xy.DateAxis.new(root, {
         baseInterval: { timeUnit: "day", count: 1 },
         renderer: am5xy.AxisRendererX.new(root, {}),
-      })
+      }),
     );
     const xTip = am5.Tooltip.new(root, { pointerOrientation: "horizontal" });
     xTip.label.setAll({ text: "{value.formatDate('dd MMM')}" });
@@ -36,13 +36,13 @@ export default function CompositionOfOrdersGraph({ data, rowName, metrics }) {
       am5xy.ValueAxis.new(root, {
         renderer: am5xy.AxisRendererY.new(root, {}),
         numberFormat: "#,###",
-      })
+      }),
     );
     const priceAxis = chart.yAxes.push(
       am5xy.ValueAxis.new(root, {
         renderer: am5xy.AxisRendererY.new(root, { opposite: true }),
         numberFormat: "#,###",
-      })
+      }),
     );
     const percentAxis = chart.yAxes.push(
       am5xy.ValueAxis.new(root, {
@@ -51,7 +51,7 @@ export default function CompositionOfOrdersGraph({ data, rowName, metrics }) {
         max: 100,
         strictMinMax: true,
         numberFormat: "#'%'",
-      })
+      }),
     );
     const axisMap = {
       count: countAxis,
@@ -88,7 +88,7 @@ export default function CompositionOfOrdersGraph({ data, rowName, metrics }) {
               ? "{name}: {valueY.formatNumber('#.##')}%"
               : "{name}: {valueY}",
           }),
-        })
+        }),
       );
       series.strokes.template.setAll({
         strokeWidth: 2,

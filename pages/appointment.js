@@ -1,7 +1,8 @@
 import React from "react";
 
-import { MyTextInput } from "@/components/shared/Forms";
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import { MyTextInput } from "@/ui/Forms";
+// import { api_laravel_local as api_laravel } from "@/src/api_new";
+import { api_laravel } from "@/src/api_new";
 import {
   Accordion,
   AccordionDetails,
@@ -25,7 +26,6 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AppointmentModal from "@/components/appointment/AppointmentModal";
 import AppointmentUnitModal from "@/components/appointment/AppointmentUnitModal";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
-import MyAlert from "@/components/shared/MyAlert";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import {ModalAdd} from "@/components/general/ModalAdd";
@@ -36,6 +36,7 @@ import DialogActions from "@mui/material/DialogActions";
 import Dialog from "@mui/material/Dialog";
 import Paper from "@mui/material/Paper";
 import TextSnippetOutlinedIcon from "@mui/icons-material/TextSnippetOutlined";
+import MyAlert from "@/ui/MyAlert";
 
 class Appointment_ extends React.Component {
   constructor(props) {
@@ -706,7 +707,7 @@ export async function getServerSideProps({ res }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

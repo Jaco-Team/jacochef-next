@@ -15,11 +15,10 @@ export function SiteSettingModal({
   children,
   customActions = null,
   fullScreen,
-  title = '',
+  title = "",
   closeModal,
   ...restProps
 }) {
-
   const onClose = closeModal || restProps.onClose;
 
   return (
@@ -28,12 +27,10 @@ export function SiteSettingModal({
       onClose={onClose}
       fullScreen={fullScreen}
       fullWidth={true}
-      maxWidth={'xl'}
+      maxWidth={"xl"}
       {...restProps}
     >
-      <DialogTitle className="button">
-        {!!title && `${title}`}
-      </DialogTitle>
+      <DialogTitle className="button">{!!title && `${title}`}</DialogTitle>
 
       <IconButton
         onClick={onClose}
@@ -42,8 +39,8 @@ export function SiteSettingModal({
         <CloseIcon />
       </IconButton>
 
-      <DialogContent style={{ paddingBlock: 10 }}>{children || 'no content'}</DialogContent>
-      
+      <DialogContent style={{ paddingBlock: 10 }}>{children || "no content"}</DialogContent>
+
       <DialogActions>
         {customActions || (
           <Button

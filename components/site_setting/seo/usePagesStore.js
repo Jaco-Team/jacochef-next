@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { useSiteSettingStore } from "../useSiteSettingStore";
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 import { translit } from "./pageTextUtils";
 
 let timer = null;
@@ -34,7 +34,7 @@ export const usePagesStore = create((set, get) => ({
     timer = setTimeout(() => {
       const q = query.toLowerCase();
       const filtered = get().pages.filter((p) =>
-        [p.title, p.description, p.content].some((val) => val.toLowerCase().includes(q))
+        [p.title, p.description, p.content].some((val) => val.toLowerCase().includes(q)),
       );
       set({ filteredPages: filtered });
     }, debounceDelay);

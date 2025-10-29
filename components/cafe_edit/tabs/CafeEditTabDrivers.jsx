@@ -1,12 +1,15 @@
 "use client";
 
-import { MyCheckBox, MyTextInput } from "@/components/shared/Forms";
+import { MyCheckBox, MyTextInput } from "@/ui/Forms";
 import { Button, Grid } from "@mui/material";
 import useCafeEditStore from "../useCafeEditStore";
 import HistDropDownTable from "../HistDropDownTable";
 
 function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
-  const [point_info, point_sett_driver_hist] = useCafeEditStore((s) => [s.point_info, s.point_sett_driver_hist]);
+  const [point_info, point_sett_driver_hist] = useCafeEditStore((s) => [
+    s.point_info,
+    s.point_sett_driver_hist,
+  ]);
   const changePointInfoData = useCafeEditStore((s) => s.changePointInfoData);
   const changeItemChecked = useCafeEditStore((s) => s.changeItemChecked);
   return (
@@ -14,9 +17,7 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
       container
       spacing={3}
     >
-      <Grid
-        size={{ xs: 12, sm: 4 }}
-      >
+      <Grid size={{ xs: 12, sm: 4 }}>
         <MyTextInput
           label="Количество заказов на руках (0 - без ограничений)"
           disabled={!canEdit("settings_driver")}
@@ -26,9 +27,7 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
         />
       </Grid>
 
-      <Grid
-        size={{ xs: 12, sm: 4 }}
-      >
+      <Grid size={{ xs: 12, sm: 4 }}>
         <MyTextInput
           value={point_info?.summ_driver ?? ""}
           disabled={!canEdit("settings_driver")}
@@ -38,9 +37,7 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
         />
       </Grid>
 
-      <Grid
-        size={{ xs: 12, sm: 4 }}
-      >
+      <Grid size={{ xs: 12, sm: 4 }}>
         <MyTextInput
           value={point_info?.summ_driver_min ?? ""}
           disabled={!canEdit("settings_driver")}
@@ -49,9 +46,7 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
           type="number"
         />
       </Grid>
-      <Grid
-        size={{ xs: 12, sm: 6 }}
-      >
+      <Grid size={{ xs: 12, sm: 6 }}>
         <MyCheckBox
           label="Необходима геолокация для завершения заказа"
           disabled={!canEdit("settings_driver")}

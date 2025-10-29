@@ -1,35 +1,35 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import {MyTextInput, MySelect, MyCheckBox, MyDatePickerNew} from '@/components/shared/Forms';
+import { MyTextInput, MySelect, MyCheckBox, MyDatePickerNew } from "@/ui/Forms";
 
-import {api_laravel, api_laravel_local} from '@/src/api_new';
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 
-import dayjs from 'dayjs';
+import dayjs from "dayjs";
 import Box from "@mui/material/Box";
 import TabList from "@mui/lab/TabList";
 import Tab from "@mui/material/Tab";
@@ -41,1001 +41,1120 @@ import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import DeleteIcon from "@mui/icons-material/Delete";
-import {ModalAccept} from "@/components/general/ModalAccept";
-import MyAlert from '@/components/shared/MyAlert';
+import { ModalAccept } from "@/components/general/ModalAccept";
+import MyAlert from "@/ui/MyAlert";
 
 class CitiesModules_Levels_Modal extends React.Component {
-	constructor(props) {
-		super(props);
+  constructor(props) {
+    super(props);
 
-		this.state = {
-			date_start: dayjs(),
-			selectedLevel: null,
-			levels: [
-				{id: 0, name: 'Не выбран'},
-				{id: 1, name: 'Уровень 1'},
-				{id: 2, name: 'Уровень 2'},
-				{id: 3, name: 'Уровень 3'},
-				{id: 4, name: 'Уровень 4'},
-				{id: 5, name: 'Уровень 5'},
-				{id: 6, name: 'Уровень 6'},
-				{id: 7, name: 'Уровень 7'},
-			],
-		};
+    this.state = {
+      date_start: dayjs(),
+      selectedLevel: null,
+      levels: [
+        { id: 0, name: "Не выбран" },
+        { id: 1, name: "Уровень 1" },
+        { id: 2, name: "Уровень 2" },
+        { id: 3, name: "Уровень 3" },
+        { id: 4, name: "Уровень 4" },
+        { id: 5, name: "Уровень 5" },
+        { id: 6, name: "Уровень 6" },
+        { id: 7, name: "Уровень 7" },
+      ],
+    };
+  }
 
-	}
+  componentDidUpdate(prevProps) {
+    const { kassir_lavel } = this.props;
 
-	componentDidUpdate(prevProps) {
-		const {kassir_lavel} = this.props;
+    if (kassir_lavel && prevProps.kassir_lavel !== kassir_lavel) {
+      this.setState({
+        date_start:
+          kassir_lavel.date_start && kassir_lavel.date_start !== "0000-00-00"
+            ? dayjs(kassir_lavel.date_start)
+            : dayjs(),
+        selectedLevel: kassir_lavel.kassir_lavel,
+      });
+    }
+  }
 
-		if (kassir_lavel && prevProps.kassir_lavel !== kassir_lavel) {
+  changeDate = (date) => {
+    this.setState({ date_start: date || dayjs() });
+  };
 
-			this.setState({
-				date_start: kassir_lavel.date_start && kassir_lavel.date_start !== '0000-00-00' ? dayjs(kassir_lavel.date_start) : dayjs(),
-				selectedLevel: kassir_lavel.kassir_lavel,
-			});
-		}
-	}
+  changeLevel = (event) => {
+    this.setState({ selectedLevel: event.target.value });
+  };
 
-	changeDate = (date) => {
-		this.setState({date_start: date || dayjs()});
-	};
+  save = () => {
+    const { date_start, selectedLevel } = this.state;
+    const { kassir_lavel, openAlert, onSave } = this.props;
 
-	changeLevel = (event) => {
-		this.setState({selectedLevel: event.target.value});
-	};
+    if (!date_start.isValid() || date_start.isBefore(dayjs(), "day")) {
+      openAlert(false, "Сохранение возможно только при указании сегодняшней или будущей даты");
 
-	save = () => {
-		const {date_start, selectedLevel} = this.state;
-		const {kassir_lavel, openAlert, onSave} = this.props;
+      return;
+    }
 
-		if (!date_start.isValid() || date_start.isBefore(dayjs(), 'day')) {
-			openAlert(false, 'Сохранение возможно только при указании сегодняшней или будущей даты');
+    let date = "";
 
-			return;
-		}
+    if (selectedLevel !== 0) {
+      date = date_start.format("YYYY-MM-DD");
+    }
 
-		let date = '';
+    const data = {
+      city_id: kassir_lavel.city_id,
+      date_start: date,
+      kassir_lavel: selectedLevel,
+    };
 
-		if (selectedLevel !== 0) {
-			date = date_start.format('YYYY-MM-DD');
-		}
+    onSave(data);
+    this.close();
+  };
 
-		const data = {
-			city_id: kassir_lavel.city_id,
-			date_start: date,
-			kassir_lavel: selectedLevel,
-		};
+  close = () => {
+    this.setState({ date_start: dayjs(), selectedLevel: null });
+    this.props.onClose();
+  };
 
-		onSave(data);
-		this.close();
-	};
+  render() {
+    const { open, fullScreen, kassir_lavel } = this.props;
+    const { date_start, levels, selectedLevel } = this.state;
 
-	close = () => {
-		this.setState({date_start: dayjs(), selectedLevel: null});
-		this.props.onClose();
-	};
+    return (
+      <Dialog
+        open={open}
+        onClose={this.close}
+        fullScreen={fullScreen}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>
+          Город: {kassir_lavel?.city_name ?? ""}
+          <br />
+          Выберите уровень кассира и укажите дату с которой будут действовать изменения
+          <IconButton
+            onClick={this.close}
+            sx={{ position: "absolute", top: 8, right: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2, pb: 2 }}>
+          <Grid
+            container
+            spacing={3}
+          >
+            <Grid
+              sx={{ mt: 2 }}
+              size={{
+                xs: 12,
+              }}
+            >
+              <MyDatePickerNew
+                label="Дата изменений"
+                value={date_start}
+                func={this.changeDate}
+              />
+            </Grid>
 
-	render() {
-		const {open, fullScreen, kassir_lavel} = this.props;
-		const {date_start, levels, selectedLevel} = this.state;
-
-		return (
-            <Dialog
-				open={open}
-				onClose={this.close}
-				fullScreen={fullScreen}
-				fullWidth
-				maxWidth="md"
-			>
-                <DialogTitle>
-					Город: {kassir_lavel?.city_name ?? ''}<br/>
-					Выберите уровень кассира и укажите дату с которой будут действовать изменения
-					<IconButton onClick={this.close} sx={{position: 'absolute', top: 8, right: 8}}>
-						<CloseIcon/>
-					</IconButton>
-				</DialogTitle>
-                <DialogContent sx={{pt: 2, pb: 2}}>
-					<Grid container spacing={3}>
-						<Grid
-                            sx={{mt: 2}}
-                            size={{
-                                xs: 12
-                            }}>
-							<MyDatePickerNew
-								label="Дата изменений"
-								value={date_start}
-								func={this.changeDate}
-							/>
-						</Grid>
-
-						<Grid
-                            size={{
-                                xs: 12
-                            }}>
-							<MySelect
-								label="Уровень кассира за регистрацию"
-								is_none={false}
-								data={levels}
-								value={selectedLevel}
-								func={this.changeLevel}
-							/>
-						</Grid>
-					</Grid>
-				</DialogContent>
-                <DialogActions>
-					<Button variant="contained" color="success" onClick={this.save}>
-						Сохранить изменения
-					</Button>
-				</DialogActions>
-            </Dialog>
-        );
-	}
+            <Grid
+              size={{
+                xs: 12,
+              }}
+            >
+              <MySelect
+                label="Уровень кассира за регистрацию"
+                is_none={false}
+                data={levels}
+                value={selectedLevel}
+                func={this.changeLevel}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={this.save}
+          >
+            Сохранить изменения
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
 }
 
 class CitiesModules_Modal extends React.Component {
-	constructor(props) {
-		super(props);
-		dayjs.locale('ru');
-		const getDateCoefs = () => {
-			const today = dayjs();
-			const currentDate = today.date();
+  constructor(props) {
+    super(props);
+    dayjs.locale("ru");
+    const getDateCoefs = () => {
+      const today = dayjs();
+      const currentDate = today.date();
 
-			const getPeriodName = (startDate, endDate) => {
-				if (startDate.date() === 1 && endDate.date() === 15) {
-					return `с 1 по 15 ${startDate.format('MMMM YYYY')} г.`;
-				} else {
-					return `с ${startDate.format('D')} по ${endDate.format('D MMMM YYYY')} г.`;
-				}
-			};
+      const getPeriodName = (startDate, endDate) => {
+        if (startDate.date() === 1 && endDate.date() === 15) {
+          return `с 1 по 15 ${startDate.format("MMMM YYYY")} г.`;
+        } else {
+          return `с ${startDate.format("D")} по ${endDate.format("D MMMM YYYY")} г.`;
+        }
+      };
 
-			if (currentDate <= 15) {
-				const period1Start = today.startOf('month');
-				const period1End = today.date(15);
+      if (currentDate <= 15) {
+        const period1Start = today.startOf("month");
+        const period1End = today.date(15);
 
-				const period2Start = today.date(16);
-				const period2End = today.endOf('month');
+        const period2Start = today.date(16);
+        const period2End = today.endOf("month");
 
-				const nextMonth = today.add(1, 'month');
-				const period3Start = nextMonth.startOf('month');
-				const period3End = nextMonth.date(15);
+        const nextMonth = today.add(1, "month");
+        const period3Start = nextMonth.startOf("month");
+        const period3End = nextMonth.date(15);
 
-				return [
-					{
-						id: 1,
-						name: getPeriodName(period1Start, period1End),
-						value: period1Start.format('YYYY-MM-DD'),
-						end_date: period1End.format('YYYY-MM-DD')
-					},
-					{
-						id: 2,
-						name: getPeriodName(period2Start, period2End),
-						value: period2Start.format('YYYY-MM-DD'),
-						end_date: period2End.format('YYYY-MM-DD')
-					},
-					{
-						id: 3,
-						name: getPeriodName(period3Start, period3End),
-						value: period3Start.format('YYYY-MM-DD'),
-						end_date: period3End.format('YYYY-MM-DD')
-					}
-				];
-			} else {
-				const period1Start = today.date(16);
-				const period1End = today.endOf('month');
+        return [
+          {
+            id: 1,
+            name: getPeriodName(period1Start, period1End),
+            value: period1Start.format("YYYY-MM-DD"),
+            end_date: period1End.format("YYYY-MM-DD"),
+          },
+          {
+            id: 2,
+            name: getPeriodName(period2Start, period2End),
+            value: period2Start.format("YYYY-MM-DD"),
+            end_date: period2End.format("YYYY-MM-DD"),
+          },
+          {
+            id: 3,
+            name: getPeriodName(period3Start, period3End),
+            value: period3Start.format("YYYY-MM-DD"),
+            end_date: period3End.format("YYYY-MM-DD"),
+          },
+        ];
+      } else {
+        const period1Start = today.date(16);
+        const period1End = today.endOf("month");
 
-				const nextMonth = today.add(1, 'month');
-				const period2Start = nextMonth.startOf('month');
-				const period2End = nextMonth.date(15);
+        const nextMonth = today.add(1, "month");
+        const period2Start = nextMonth.startOf("month");
+        const period2End = nextMonth.date(15);
 
-				const period3Start = nextMonth.date(16);
-				const period3End = nextMonth.endOf('month');
+        const period3Start = nextMonth.date(16);
+        const period3End = nextMonth.endOf("month");
 
-				return [
-					{
-						id: 1,
-						name: getPeriodName(period1Start, period1End),
-						value: period1Start.format('YYYY-MM-DD'),
-						end_date: period1End.format('YYYY-MM-DD')
-					},
-					{
-						id: 2,
-						name: getPeriodName(period2Start, period2End),
-						value: period2Start.format('YYYY-MM-DD'),
-						end_date: period2End.format('YYYY-MM-DD')
-					},
-					{
-						id: 3,
-						name: getPeriodName(period3Start, period3End),
-						value: period3Start.format('YYYY-MM-DD'),
-						end_date: period3End.format('YYYY-MM-DD')
-					}
-				];
-			}
-		};
-		this.state = {
-			item: null,
-			openHist: [{id: 1, name: 'Общее'}, {id: 3, name: 'Курьеры'}],
-			dateCoefs: getDateCoefs(),
-			dateCoef: null,
-			ItemTab1: 1,
-			confirmDialog: false,
-		};
-	}
+        return [
+          {
+            id: 1,
+            name: getPeriodName(period1Start, period1End),
+            value: period1Start.format("YYYY-MM-DD"),
+            end_date: period1End.format("YYYY-MM-DD"),
+          },
+          {
+            id: 2,
+            name: getPeriodName(period2Start, period2End),
+            value: period2Start.format("YYYY-MM-DD"),
+            end_date: period2End.format("YYYY-MM-DD"),
+          },
+          {
+            id: 3,
+            name: getPeriodName(period3Start, period3End),
+            value: period3Start.format("YYYY-MM-DD"),
+            end_date: period3End.format("YYYY-MM-DD"),
+          },
+        ];
+      }
+    };
+    this.state = {
+      item: null,
+      openHist: [
+        { id: 1, name: "Общее" },
+        { id: 2, name: "Коэффициенты бонуса" },
+        { id: 3, name: "Курьеры" },
+      ],
+      dateCoefs: getDateCoefs(),
+      dateCoef: null,
+      ItemTab1: 1,
+      confirmDialog: false,
+    };
+  }
 
-	componentDidUpdate(prevProps) {
-		// console.log(this.props.item);
+  componentDidUpdate(prevProps) {
+    // console.log(this.props.item);
 
-		if (!this.props.item) {
-			return;
-		}
+    if (!this.props.item) {
+      return;
+    }
 
-		if (this.props.item !== prevProps.item) {
-			this.setState({
-				item: this.props.item,
-			});
-		}
-	}
+    if (this.props.item !== prevProps.item) {
+      this.setState({
+        item: this.props.item,
+      });
+    }
+  }
 
-	changeItem(data, event) {
-		const item = this.state.item;
+  changeItem(data, event) {
+    const item = this.state.item;
 
-		item.city[data] = event.target.value;
+    item.city[data] = event.target.value;
 
-		this.setState({
-			item,
-		});
-	}
+    this.setState({
+      item,
+    });
+  }
 
-	changeCoef(data, event) {
-		this.setState({
-			dateCoef: event.target.value,
-		});
-	}
+  changeCoef(data, event) {
+    this.setState({
+      dateCoef: event.target.value,
+    });
+  }
 
-	changeItemChecked(data, event) {
-		const item = this.state.item;
+  changeItemChecked(data, event) {
+    const item = this.state.item;
 
-		item.city[data] = event.target.checked === true ? 1 : 0;
+    item.city[data] = event.target.checked === true ? 1 : 0;
 
-		this.setState({
-			item,
-		});
-	}
+    this.setState({
+      item,
+    });
+  }
 
-	save() {
-		const item = this.state.item;
+  save() {
+    const item = this.state.item;
 
-		const city = item.city;
+    const city = item.city;
 
-		if (this.props.mark === 'newItem') {
+    if (this.props.mark === "newItem") {
+      if (!city.name || city.name.trim() === "") {
+        this.props.openAlert(false, "Название города не указано");
 
-			if (!city.name || city.name.trim() === '') {
+        return;
+      }
 
-				this.props.openAlert(false, 'Название города не указано');
+      if (!city.name_2 || city.name_2.trim() === "") {
+        this.props.openAlert(false, "Склонение не указано");
 
-				return;
-			}
+        return;
+      }
 
-			if (!city.name_2 || city.name_2.trim() === '') {
+      if (!city.link || city.link.trim() === "") {
+        this.props.openAlert(false, "Адрес не указан");
+        return;
+      }
+    }
 
-				this.props.openAlert(false, 'Склонение не указано');
+    this.props.save(city);
 
-				return;
-			}
+    this.onClose();
+  }
 
-			if (!city.link || city.link.trim() === '') {
-				this.props.openAlert(false, 'Адрес не указан');
-				return;
-			}
+  onClose() {
+    this.setState({
+      item: null,
+    });
 
-		}
+    this.props.onClose();
+  }
 
-		this.props.save(city);
+  changeTab1(event, value) {
+    this.setState({
+      ItemTab1: value,
+    });
+  }
 
-		this.onClose();
-	}
+  onSave(method) {
+    const item = this.state.item;
+    const city = item.city;
+    const dateStart = this.state.dateCoefs.find((item) => item.id === this.state.dateCoef);
+    this.props.saveOne(city, method, dateStart?.value);
+    this.onClose();
+  }
 
-	onClose() {
-		this.setState({
-			item: null,
-		});
+  render() {
+    return (
+      <Dialog
+        open={this.props.open}
+        onClose={this.onClose.bind(this)}
+        fullScreen={this.props.fullScreen}
+        fullWidth={true}
+        maxWidth={"lg"}
+      >
+        {/*Модалка с кэфом бонуса и пмериодом*/}
+        {this.state.confirmDialog ? (
+          <Dialog
+            open={this.state.confirmDialog}
+            onClose={() => this.setState({ confirmDialog: false })}
+            maxWidth="sm"
+          >
+            <DialogTitle>Подтвердите действие</DialogTitle>
+            <DialogContent
+              align="center"
+              sx={{ fontWeight: "bold" }}
+            >
+              <MySelect
+                label="Период"
+                style={{ marginTop: "10px" }}
+                is_none={false}
+                data={this.state.dateCoefs || []}
+                value={this.state.dateCoef || ""}
+                func={this.changeCoef.bind(this, "dateCoef")}
+                fullWidth
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
+              <Button onClick={this.onSave.bind(this, "coef")}>Сохранить</Button>
+            </DialogActions>
+          </Dialog>
+        ) : null}
+        <DialogTitle className="button">
+          {this.props.method}
+          {this.props.itemName ? `: ${this.props.itemName}` : null}
+          <IconButton
+            onClick={this.onClose.bind(this)}
+            style={{ cursor: "pointer" }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          <Grid
+            container
+            spacing={3}
+            pl={1}
+          >
+            {this.props.mark === "newItem" ? (
+              <>
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4,
+                  }}
+                >
+                  <MyTextInput
+                    label="Название города"
+                    value={this.state.item ? this.state.item.city.name : ""}
+                    func={this.changeItem.bind(this, "name")}
+                  />
+                </Grid>
 
-		this.props.onClose();
-	}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4,
+                  }}
+                >
+                  <MyTextInput
+                    label="Склонение города (Меня нет в ...)"
+                    value={this.state.item ? this.state.item.city.name_2 : ""}
+                    func={this.changeItem.bind(this, "name_2")}
+                  />
+                </Grid>
 
-	changeTab1(event, value) {
-		this.setState({
-			ItemTab1: value
-		})
-	}
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4,
+                  }}
+                >
+                  <MyTextInput
+                    label="Адрес (URL)"
+                    value={this.state.item ? this.state.item.city.link : ""}
+                    func={this.changeItem.bind(this, "link")}
+                  />
+                </Grid>
+              </>
+            ) : null}
+            <TabContext value={this.state.ItemTab1}>
+              <Grid
+                container
+                spacing={2}
+              >
+                <Grid
+                  size={{
+                    xs: 12,
+                  }}
+                >
+                  <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                    <TabList
+                      onChange={this.changeTab1.bind(this)}
+                      variant="fullWidth"
+                      aria-label="настройки города"
+                    >
+                      {this.state.openHist.map((item, key) => (
+                        <Tab
+                          key={key}
+                          label={item.name}
+                          value={item.id}
+                        />
+                      ))}
+                    </TabList>
+                  </Box>
+                </Grid>
 
-	onSave(method) {
-		const item = this.state.item;
-		const city = item.city;
-		const dateStart = this.state.dateCoefs.find((item) => item.id === this.state.dateCoef);
-		this.props.saveOne(city, method, dateStart?.value);
-		this.onClose();
-	}
+                <Grid
+                  size={{
+                    xs: 12,
+                  }}
+                >
+                  <TabPanel
+                    value={1}
+                    sx={{ p: 0, pt: 2 }}
+                  >
+                    <Grid
+                      container
+                      spacing={3}
+                    >
+                      <Grid
+                        size={{
+                          xs: 12,
+                          sm: 6,
+                        }}
+                      >
+                        <MySelect
+                          label="Уровень цен"
+                          is_none={false}
+                          data={this.state.item?.lavel_price || []}
+                          value={this.state.item?.city?.price_lavel_id || ""}
+                          func={this.changeItem.bind(this, "price_lavel_id")}
+                          fullWidth
+                        />
+                      </Grid>
 
-	render() {
-		return (
-            <Dialog
-				open={this.props.open}
-				onClose={this.onClose.bind(this)}
-				fullScreen={this.props.fullScreen}
-				fullWidth={true}
-				maxWidth={'lg'}
-			>
-                {/*Модалка с кэфом бонуса и пмериодом*/}
-                {this.state.confirmDialog ? (
-					<Dialog
-						open={this.state.confirmDialog}
-						onClose={() => this.setState({confirmDialog: false})}
-						maxWidth="sm"
-					>
-						<DialogTitle>Подтвердите действие</DialogTitle>
-						<DialogContent align="center" sx={{fontWeight: 'bold'}}>
-							<MySelect
-								label="Период"
-								style={{marginTop: '10px'}}
-								is_none={false}
-								data={this.state.dateCoefs || []}
-								value={this.state.dateCoef || ''}
-								func={this.changeCoef.bind(this, 'dateCoef')}
-								fullWidth
-							/>
-						</DialogContent>
-						<DialogActions>
-							<Button onClick={() => this.setState({confirmDialog: false})}>Отмена</Button>
-							<Button onClick={this.onSave.bind(this, 'coef')}>Сохранить</Button>
-						</DialogActions>
-					</Dialog>
-				) : null}
-                <DialogTitle className="button">
-					{this.props.method}{this.props.itemName ? `: ${this.props.itemName}` : null}
-					<IconButton onClick={this.onClose.bind(this)} style={{cursor: 'pointer'}}>
-						<CloseIcon/>
-					</IconButton>
-				</DialogTitle>
-                <DialogContent style={{paddingBottom: 10, paddingTop: 10}}>
-					<Grid container spacing={3} pl={1}>
-						{this.props.mark === 'newItem' ? (
-							<>
-								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 4
-                                    }}>
-									<MyTextInput
-										label="Название города"
-										value={this.state.item ? this.state.item.city.name : ''}
-										func={this.changeItem.bind(this, 'name')}
-									/>
-								</Grid>
+                      <Grid
+                        size={{
+                          xs: 12,
+                          sm: 6,
+                        }}
+                      >
+                        <MyTextInput
+                          label="Телефон контакт-центра"
+                          value={this.state.item?.city?.phone || ""}
+                          func={this.changeItem.bind(this, "phone")}
+                          fullWidth
+                        />
+                      </Grid>
+                      {this.props.mark === "editItem" ? (
+                        <Grid
+                          size={{
+                            xs: 12,
+                            sm: 3,
+                          }}
+                        >
+                          <MyCheckBox
+                            label="Активность"
+                            value={
+                              this.state.item
+                                ? parseInt(this.state.item.city.is_show) == 1
+                                  ? true
+                                  : false
+                                : false
+                            }
+                            func={this.changeItemChecked.bind(this, "is_show")}
+                          />
+                        </Grid>
+                      ) : null}
+                    </Grid>
+                  </TabPanel>
 
-								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 4
-                                    }}>
-									<MyTextInput
-										label="Склонение города (Меня нет в ...)"
-										value={this.state.item ? this.state.item.city.name_2 : ''}
-										func={this.changeItem.bind(this, 'name_2')}
-									/>
-								</Grid>
+                  <TabPanel
+                    value={2}
+                    sx={{ p: 0, pt: 2 }}
+                  >
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid
+                        size={{
+                          xs: 12,
+                          sm: 6,
+                        }}
+                      >
+                        <MyTextInput
+                          label="Коэф. роллов для бонуса"
+                          value={this.state.item?.city?.k_rolls || ""}
+                          func={this.changeItem.bind(this, "k_rolls")}
+                          type="number"
+                          step="0.01"
+                          fullWidth
+                        />
+                      </Grid>
 
-								<Grid
-                                    size={{
-                                        xs: 12,
-                                        sm: 4
-                                    }}>
-									<MyTextInput
-										label="Адрес (URL)"
-										value={this.state.item ? this.state.item.city.link : ''}
-										func={this.changeItem.bind(this, 'link')}
-									/>
-								</Grid>
-							</>
-						) : null}
-						<TabContext value={this.state.ItemTab1}>
-							<Grid container spacing={2}>
-								<Grid
-                                    size={{
-                                        xs: 12
-                                    }}>
-									<Box sx={{borderBottom: 1, borderColor: 'divider'}}>
-										<TabList
-											onChange={this.changeTab1.bind(this)}
-											variant="fullWidth"
-											aria-label="настройки города"
-										>
-											{this.state.openHist.map((item, key) => (
-												<Tab
-													key={key}
-													label={item.name}
-													value={item.id}
-												/>
-											))}
-										</TabList>
-									</Box>
-								</Grid>
+                      <Grid
+                        size={{
+                          xs: 12,
+                          sm: 6,
+                        }}
+                      >
+                        <MyTextInput
+                          label="Коэф. пиццы для бонуса"
+                          value={this.state.item?.city?.k_pizza || ""}
+                          func={this.changeItem.bind(this, "k_pizza")}
+                          type="number"
+                          step="0.01"
+                          fullWidth
+                        />
+                      </Grid>
+                    </Grid>
+                  </TabPanel>
 
-								<Grid
-                                    size={{
-                                        xs: 12
-                                    }}>
-									<TabPanel value={1} sx={{p: 0, pt: 2}}>
-										<Grid container spacing={3}>
-											<Grid
-                                                size={{
-                                                    xs: 12,
-                                                    sm: 6
-                                                }}>
-												<MySelect
-													label="Уровень цен"
-													is_none={false}
-													data={this.state.item?.lavel_price || []}
-													value={this.state.item?.city?.price_lavel_id || ''}
-													func={this.changeItem.bind(this, 'price_lavel_id')}
-													fullWidth
-												/>
-											</Grid>
+                  <TabPanel
+                    value={3}
+                    sx={{ p: 0, pt: 2 }}
+                  >
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid
+                        size={{
+                          xs: 12,
+                          sm: 6,
+                        }}
+                      >
+                        <MyTextInput
+                          type="number"
+                          label="Сумма вознаграждения курьеру за завершенный заказ в радиусе"
+                          value={this.state.item?.city?.driver_dop_price || ""}
+                          func={this.changeItem.bind(this, "driver_dop_price")}
+                          InputProps={{
+                            endAdornment: <InputAdornment position="end">₽</InputAdornment>,
+                          }}
+                          fullWidth
+                        />
+                      </Grid>
 
-											<Grid
-                                                size={{
-                                                    xs: 12,
-                                                    sm: 6
-                                                }}>
-												<MyTextInput
-													label="Телефон контакт-центра"
-													value={this.state.item?.city?.phone || ''}
-													func={this.changeItem.bind(this, 'phone')}
-													fullWidth
-												/>
-											</Grid>
-											{this.props.mark === 'editItem' ? (
-												<Grid
-                                                    size={{
-                                                        xs: 12,
-                                                        sm: 3
-                                                    }}>
-													<MyCheckBox
-														label="Активность"
-														value={this.state.item ? parseInt(this.state.item.city.is_show) == 1 ? true : false : false}
-														func={this.changeItemChecked.bind(this, 'is_show')}
-													/>
-												</Grid>
-											) : null}
-										</Grid>
-									</TabPanel>
-
-									<TabPanel value={2} sx={{p: 0, pt: 2}}>
-										<Grid container spacing={2}>
-											<Grid
-                                                size={{
-                                                    xs: 12,
-                                                    sm: 6
-                                                }}>
-												<MyTextInput
-													label="Коэф. роллов для бонуса"
-													value={this.state.item?.city?.k_rolls || ''}
-													func={this.changeItem.bind(this, 'k_rolls')}
-													type="number"
-													step="0.01"
-													fullWidth
-												/>
-											</Grid>
-
-											<Grid
-                                                size={{
-                                                    xs: 12,
-                                                    sm: 6
-                                                }}>
-												<MyTextInput
-													label="Коэф. пиццы для бонуса"
-													value={this.state.item?.city?.k_pizza || ''}
-													func={this.changeItem.bind(this, 'k_pizza')}
-													type="number"
-													step="0.01"
-													fullWidth
-												/>
-											</Grid>
-										</Grid>
-									</TabPanel>
-
-									<TabPanel value={3} sx={{p: 0, pt: 2}}>
-										<Grid container spacing={2}>
-											<Grid
-                                                size={{
-                                                    xs: 12,
-                                                    sm: 6
-                                                }}>
-												<MyTextInput
-													type="number"
-													label="Сумма вознаграждения курьеру за завершенный заказ в радиусе"
-													value={this.state.item?.city?.driver_dop_price || ''}
-													func={this.changeItem.bind(this, 'driver_dop_price')}
-													InputProps={{
-														endAdornment: <InputAdornment position="end">₽</InputAdornment>,
-													}}
-													fullWidth
-												/>
-											</Grid>
-
-											<Grid
-                                                size={{
-                                                    xs: 12,
-                                                    sm: 6
-                                                }}>
-												<MyTextInput
-													type="number"
-													label="Радиус в метрах в пределах которого положено вознаграждение"
-													value={this.state.item?.city?.driver_dop_price_radius || ''}
-													func={this.changeItem.bind(this, 'driver_dop_price_radius')}
-													InputProps={{
-														endAdornment: <InputAdornment position="end">м</InputAdornment>,
-													}}
-													fullWidth
-												/>
-											</Grid>
-										</Grid>
-									</TabPanel>
-								</Grid>
-							</Grid>
-						</TabContext>
-					</Grid>
-				</DialogContent>
-                <DialogActions>
-					{this.props.mark === 'editItem' ? (
-						<Button variant="contained" color="success" onClick={() => {
-							if (this.state.ItemTab1 === 1) {
-								this.onSave('main');
-							}
-							if (this.state.ItemTab1 === 2) {
-								this.setState({confirmDialog: true})
-							}
-							if (this.state.ItemTab1 === 3) {
-								this.onSave('driver');
-							}
-						}
-						}>
-							{this.state.ItemTab1 === 2 ? 'Выбрать период' : 'Сохранить'}
-						</Button>
-					) : (
-						<Button variant="contained" color="success" onClick={this.save.bind(this)}>
-							Сохранить изменения
-						</Button>
-					)}
-				</DialogActions>
-            </Dialog>
-        );
-	}
+                      <Grid
+                        size={{
+                          xs: 12,
+                          sm: 6,
+                        }}
+                      >
+                        <MyTextInput
+                          type="number"
+                          label="Радиус в метрах в пределах которого положено вознаграждение"
+                          value={this.state.item?.city?.driver_dop_price_radius || ""}
+                          func={this.changeItem.bind(this, "driver_dop_price_radius")}
+                          InputProps={{
+                            endAdornment: <InputAdornment position="end">м</InputAdornment>,
+                          }}
+                          fullWidth
+                        />
+                      </Grid>
+                    </Grid>
+                  </TabPanel>
+                </Grid>
+              </Grid>
+            </TabContext>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          {this.props.mark === "editItem" ? (
+            <Button
+              variant="contained"
+              color="success"
+              onClick={() => {
+                if (this.state.ItemTab1 === 1) {
+                  this.onSave("main");
+                }
+                if (this.state.ItemTab1 === 2) {
+                  this.setState({ confirmDialog: true });
+                }
+                if (this.state.ItemTab1 === 3) {
+                  this.onSave("driver");
+                }
+              }}
+            >
+              {this.state.ItemTab1 === 2 ? "Выбрать период" : "Сохранить"}
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              color="success"
+              onClick={this.save.bind(this)}
+            >
+              Сохранить изменения
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+    );
+  }
 }
 
 class CitiesModules_ extends React.Component {
-	constructor(props) {
-		super(props);
+  constructor(props) {
+    super(props);
 
-		this.state = {
-			module: 'cities_modules',
-			module_name: '',
-			is_load: false,
+    this.state = {
+      module: "cities_modules",
+      module_name: "",
+      is_load: false,
 
-			cities: [],
+      cities: [],
 
-			fullScreen: false,
+      fullScreen: false,
 
-			modalDialog: false,
-			method: '',
-			mark: '',
-			item: null,
-			itemName: '',
-			openDelete: false,
+      modalDialog: false,
+      method: "",
+      mark: "",
+      item: null,
+      itemName: "",
+      openDelete: false,
 
-			itemNew: {
-				name: '',
-				name_2: '',
-				link: '',
-				price_lavel_id: '',
-				phone: '',
-				k_rolls: '',
-				k_pizza: '',
-			},
-			deleteItem: {},
-			coef_history: [],
+      itemNew: {
+        name: "",
+        name_2: "",
+        link: "",
+        price_lavel_id: "",
+        phone: "",
+        k_rolls: "",
+        k_pizza: "",
+      },
+      deleteItem: {},
+      coef_history: [],
 
-			openAlert: false,
-			err_status: false,
-			err_text: '',
+      openAlert: false,
+      err_status: false,
+      err_text: "",
 
-			modalDialog_lavel: false,
-			kassir_lavel: null,
-		};
-	}
+      modalDialog_lavel: false,
+      kassir_lavel: null,
+    };
+  }
 
-	async componentDidMount() {
-		const data = await this.getData('get_all');
+  async componentDidMount() {
+    const data = await this.getData("get_all");
 
-		this.setState({
-			cities: data.cities,
-			module_name: data.module_info.name,
-			coef_history: data.coef_history,
-		});
+    this.setState({
+      cities: data.cities,
+      module_name: data.module_info.name,
+      coef_history: data.coef_history,
+    });
 
-		document.title = data.module_info.name;
-	}
+    document.title = data.module_info.name;
+  }
 
-	getData = (method, data = {}) => {
-		this.setState({
-			is_load: true,
-		});
+  getData = (method, data = {}) => {
+    this.setState({
+      is_load: true,
+    });
 
-		let res = api_laravel(this.state.module, method, data)
-			.then(result => result.data)
-			.finally(() => {
-				setTimeout(() => {
-					this.setState({
-						is_load: false,
-					});
-				}, 500);
-			});
+    let res = api_laravel(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 500);
+      });
 
-		return res;
-	}
+    return res;
+  };
 
-	handleResize() {
-		if (window.innerWidth < 601) {
-			this.setState({
-				fullScreen: true,
-			});
-		} else {
-			this.setState({
-				fullScreen: false,
-			});
-		}
-	}
+  handleResize() {
+    if (window.innerWidth < 601) {
+      this.setState({
+        fullScreen: true,
+      });
+    } else {
+      this.setState({
+        fullScreen: false,
+      });
+    }
+  }
 
-	async save(item) {
+  async save(item) {
+    let res;
 
-		let res;
+    if (this.state.mark === "newItem") {
+      const data = item;
 
-		if (this.state.mark === 'newItem') {
+      res = await this.getData("save_new", data);
+    }
 
-			const data = item;
+    if (this.state.mark === "editItem") {
+      const data = {
+        city_id: item.id,
+        lavel_price: item.price_lavel_id,
+        phone: item.phone,
+        k_rolls: item.k_rolls,
+        k_pizza: item.k_pizza,
+        is_show: item.is_show,
+        driver_dop_price: item.driver_dop_price,
+        driver_dop_price_radius: item.driver_dop_price_radius,
+      };
 
-			res = await this.getData('save_new', data);
-		}
+      res = await this.getData("save_edit", data);
+    }
 
-		if (this.state.mark === 'editItem') {
+    this.openAlert(res.st, res.text);
 
-			const data = {
-				city_id: item.id,
-				lavel_price: item.price_lavel_id,
-				phone: item.phone,
-				k_rolls: item.k_rolls,
-				k_pizza: item.k_pizza,
-				is_show: item.is_show,
-				driver_dop_price: item.driver_dop_price,
-				driver_dop_price_radius: item.driver_dop_price_radius,
-			}
+    if (res.st) {
+      this.update();
+    }
+  }
 
-			res = await this.getData('save_edit', data);
-		}
+  async save_one(item, method, dateStart) {
+    let res;
 
-		this.openAlert(res.st, res.text);
+    if (this.state.mark === "editItem") {
+      const data = {
+        city_id: item.id,
+        lavel_price: item.price_lavel_id,
+        phone: item.phone,
+        k_rolls: item.k_rolls,
+        k_pizza: item.k_pizza,
+        is_show: item.is_show,
+        driver_dop_price: item.driver_dop_price,
+        driver_dop_price_radius: item.driver_dop_price_radius,
+        method,
+        dateStart,
+      };
 
-		if (res.st) {
-			this.update();
-		}
-	}
+      res = await this.getData("save_edit_one_param", data);
+    }
 
-	async save_one(item, method, dateStart) {
+    this.openAlert(res.st, res.text);
 
-		let res;
+    if (res.st) {
+      this.update();
+    }
+  }
 
-		if (this.state.mark === 'editItem') {
-			const data = {
-				city_id: item.id,
-				lavel_price: item.price_lavel_id,
-				phone: item.phone,
-				k_rolls: item.k_rolls,
-				k_pizza: item.k_pizza,
-				is_show: item.is_show,
-				driver_dop_price: item.driver_dop_price,
-				driver_dop_price_radius: item.driver_dop_price_radius,
-				method,
-				dateStart,
-			}
+  async update() {
+    const data = await this.getData("get_all");
 
-			res = await this.getData('save_edit_one_param', data);
-		}
+    this.setState({
+      cities: data.cities,
+    });
+  }
 
-		this.openAlert(res.st, res.text);
+  async openModal(mark, method, id) {
+    this.handleResize();
 
-		if (res.st) {
-			this.update();
-		}
-	}
+    if (mark === "newItem") {
+      const itemNew = JSON.parse(JSON.stringify(this.state.itemNew));
 
-	async update() {
-		const data = await this.getData('get_all');
+      const item = await this.getData("get_all_for_new");
 
-		this.setState({
-			cities: data.cities,
-		});
-	}
+      item.city = itemNew;
 
-	async openModal(mark, method, id) {
-		this.handleResize();
+      this.setState({
+        modalDialog: true,
+        method,
+        mark,
+        item,
+      });
+    }
 
-		if (mark === 'newItem') {
-			const itemNew = JSON.parse(JSON.stringify(this.state.itemNew));
+    if (mark === "editItem") {
+      const data = {
+        city_id: id,
+      };
 
-			const item = await this.getData('get_all_for_new');
+      const item = await this.getData("get_one", data);
 
-			item.city = itemNew;
+      this.setState({
+        itemName: item.city.name,
+        modalDialog: true,
+        method,
+        mark,
+        item,
+      });
+    }
+  }
 
-			this.setState({
-				modalDialog: true,
-				method,
-				mark,
-				item,
-			});
-		}
+  openAlert(status, text) {
+    this.setState({
+      openAlert: true,
+      err_status: status,
+      err_text: text,
+    });
+  }
 
-		if (mark === 'editItem') {
-			const data = {
-				city_id: id,
-			};
+  async openLevels(city_id) {
+    this.handleResize();
 
-			const item = await this.getData('get_one', data);
+    const city_name =
+      this.state.cities.find((item) => parseInt(item.id) === parseInt(city_id))?.name || "";
 
-			this.setState({
-				itemName: item.city.name,
-				modalDialog: true,
-				method,
-				mark,
-				item,
-			});
-		}
-	}
+    const data = {
+      city_id,
+    };
 
-	openAlert(status, text) {
-		this.setState({
-			openAlert: true,
-			err_status: status,
-			err_text: text
-		});
-	};
+    let res = await this.getData("get_kassir_lavel", data);
 
-	async openLevels(city_id) {
-		this.handleResize();
+    res.kassir_lavel.city_name = city_name;
 
-		const city_name = this.state.cities.find(item => parseInt(item.id) === parseInt(city_id))?.name || '';
+    this.setState({
+      modalDialog_lavel: true,
+      kassir_lavel: res.kassir_lavel,
+    });
+  }
 
-		const data = {
-			city_id,
-		};
+  async saveLevel() {
+    const res = await this.getData("save_kassir_lavel", data);
 
-		let res = await this.getData('get_kassir_lavel', data);
+    this.openAlert(res.st, res.text);
 
-		res.kassir_lavel.city_name = city_name;
+    if (res.st) {
+      this.update();
+    }
+  }
 
-		this.setState({
-			modalDialog_lavel: true,
-			kassir_lavel: res.kassir_lavel,
-		});
-
-	};
-
-	async saveLevel() {
-		const res = await this.getData('save_kassir_lavel', data);
-
-		this.openAlert(res.st, res.text);
-
-		if (res.st) {
-			this.update();
-		}
-	}
-
-	async saveLevel(data) {
-		const res = await this.getData('del_history', this.state.deleteItem);
-		this.openAlert(res.st, res.text);
-		if (res.st) {
-			setTimeout(() => {
-          this.update();
+  async saveLevel(data) {
+    const res = await this.getData("del_history", this.state.deleteItem);
+    this.openAlert(res.st, res.text);
+    if (res.st) {
+      setTimeout(() => {
+        this.update();
       }, 1300);
-		}
-	}
+    }
+  }
 
-	render() {
-		const {openDelete} = this.state;
-		return (
-            <>
-                <Backdrop style={{zIndex: 99}} open={this.state.is_load}>
-					<CircularProgress color="inherit"/>
-				</Backdrop>
-                <MyAlert
-					isOpen={this.state.openAlert}
-					onClose={() => this.setState({openAlert: false})}
-					status={this.state.err_status}
-					text={this.state.err_text}
-				/>
-                <CitiesModules_Levels_Modal
-					open={this.state.modalDialog_lavel}
-					kassir_lavel={this.state.kassir_lavel}
-					onSave={this.saveLevel.bind(this)}
-					onClose={() => this.setState({modalDialog_lavel: false})}
-					openAlert={this.openAlert.bind(this)}
-					fullScreen={this.state.fullScreen}
-				/>
-                <CitiesModules_Modal
-					open={this.state.modalDialog}
-					onClose={() => this.setState({modalDialog: false, itemName: ''})}
-					method={this.state.method}
-					mark={this.state.mark}
-					item={this.state.item}
-					itemName={this.state.itemName}
-					saveOne={this.save_one.bind(this)}
-					save={this.save.bind(this)}
-					fullScreen={this.state.fullScreen}
-					openAlert={this.openAlert.bind(this)}
-				/>
-                {openDelete &&
-					<ModalAccept
-						open={openDelete}
-						onClose={() => this.setState({openDelete: false})}
-						title="Удалить запись?"
-						save={() => {this.saveLevel();
-							this.setState({openDelete: false})}}
-					/>
-				}
-                <Grid container spacing={3} mb={3} className='container_first_child'>
-					<Grid
-                        size={{
-                            xs: 12,
-                            sm: 12
-                        }}>
-						<h1>{this.state.module_name}</h1>
-					</Grid>
+  render() {
+    const { openDelete } = this.state;
+    return (
+      <>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+        <CitiesModules_Levels_Modal
+          open={this.state.modalDialog_lavel}
+          kassir_lavel={this.state.kassir_lavel}
+          onSave={this.saveLevel.bind(this)}
+          onClose={() => this.setState({ modalDialog_lavel: false })}
+          openAlert={this.openAlert.bind(this)}
+          fullScreen={this.state.fullScreen}
+        />
+        <CitiesModules_Modal
+          open={this.state.modalDialog}
+          onClose={() => this.setState({ modalDialog: false, itemName: "" })}
+          method={this.state.method}
+          mark={this.state.mark}
+          item={this.state.item}
+          itemName={this.state.itemName}
+          saveOne={this.save_one.bind(this)}
+          save={this.save.bind(this)}
+          fullScreen={this.state.fullScreen}
+          openAlert={this.openAlert.bind(this)}
+        />
+        {openDelete && (
+          <ModalAccept
+            open={openDelete}
+            onClose={() => this.setState({ openDelete: false })}
+            title="Удалить запись?"
+            save={() => {
+              this.saveLevel();
+              this.setState({ openDelete: false });
+            }}
+          />
+        )}
+        <Grid
+          container
+          spacing={3}
+          mb={3}
+          className="container_first_child"
+        >
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12,
+            }}
+          >
+            <h1>{this.state.module_name}</h1>
+          </Grid>
 
-					<Grid
-                        size={{
-                            xs: 12,
-                            sm: 3
-                        }}>
-						<Button onClick={this.openModal.bind(this, 'newItem', 'Новый город')} variant="contained">
-							Добавить город
-						</Button>
-					</Grid>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3,
+            }}
+          >
+            <Button
+              onClick={this.openModal.bind(this, "newItem", "Новый город")}
+              variant="contained"
+            >
+              Добавить город
+            </Button>
+          </Grid>
 
-					<Grid
-                        size={{
-                            xs: 12,
-                            sm: 12
-                        }}>
-						<TableContainer>
-							<Table>
-								<TableHead>
-									<TableRow>
-										<TableCell style={{width: '8%'}}>#</TableCell>
-										<TableCell style={{width: '23%'}}>Название города</TableCell>
-										<TableCell style={{width: '23%'}}>Уровень цен</TableCell>
-										<TableCell style={{width: '23%'}}>Уровень кассира за регистрацию</TableCell>
-										<TableCell style={{width: '23%'}}>Активность</TableCell>
-									</TableRow>
-								</TableHead>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12,
+            }}
+          >
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell style={{ width: "8%" }}>#</TableCell>
+                    <TableCell style={{ width: "23%" }}>Название города</TableCell>
+                    <TableCell style={{ width: "23%" }}>Уровень цен</TableCell>
+                    <TableCell style={{ width: "23%" }}>Уровень кассира за регистрацию</TableCell>
+                    <TableCell style={{ width: "23%" }}>Активность</TableCell>
+                  </TableRow>
+                </TableHead>
 
-								<TableBody>
-									{this.state.cities.map((item, key) => (
-										<TableRow key={key} hover>
-											<TableCell>{key + 1}</TableCell>
-											<TableCell onClick={this.openModal.bind(this, 'editItem', 'Редактирование города', item.id)} style={{
-												fontWeight: 700,
-												cursor: 'pointer'
-											}}>
-												{item.name}
-											</TableCell>
-											<TableCell>{item.lavel_name}</TableCell>
-											<TableCell>
-												<IconButton onClick={this.openLevels.bind(this, item.id)} title='Редактировать уровень кассира' disableRipple disableFocusRipple>
-													<Typography component="span" sx={{
-														display: 'table-cell',
-														verticalAlign: 'inherit',
-														textAlign: 'left',
-														fontSize: '1rem !important',
-														color: 'rgba(0,0,0,0.87)',
-														fontWeight: 700
-													}}>
-														{item.actual_lavel == null ? 'Не выбран' : `Текущий - ${item.actual_lavel} уровень с ${item.actual_date}`}
-														<br/>
-														{item.next_lavel == null ? '' : `Будущий - ${item.next_lavel} уровень с ${item.next_date}`}
-													</Typography>
-												</IconButton>
-											</TableCell>
-											<TableCell>{parseInt(item.is_show) == 1 ? <VisibilityIcon/> : <VisibilityOffIcon/>}</TableCell>
-										</TableRow>
-									))}
-								</TableBody>
-							</Table>
-						</TableContainer>
-					</Grid>
-					{this.state.coef_history.length ? (
-						<Grid
-                            size={{
-                                xs: 12,
-                                sm: 12
-                            }}>
-							<Accordion style={{width: '100%'}}>
-								<AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-									<Typography style={{fontWeight: 'bold'}}>История изменений</Typography>
-								</AccordionSummary>
-								<AccordionDetails>
-									<Table>
-										<TableHead>
-											<TableRow>
-												<TableCell>#</TableCell>
-												<TableCell>Город</TableCell>
-												<TableCell>Дата изменения</TableCell>
-												<TableCell style={{ textAlign: 'center' }}>Коэф. роллов для бонуса</TableCell>
-												<TableCell style={{ textAlign: 'center' }}>Коэф. пиццы для бонуса</TableCell>
-												<TableCell style={{ textAlign: 'center' }}>Изменил</TableCell>
-												<TableCell style={{ textAlign: 'center' }}></TableCell>
-											</TableRow>
-										</TableHead>
-										<TableBody>
-											{this.state.coef_history.map((it, k) => (
-												<TableRow hover key={k}>
-													<TableCell>{k + 1}</TableCell>
-													<TableCell>{it.name}</TableCell>
-													<TableCell>{it.date_start}</TableCell>
-													<TableCell style={{ textAlign: 'center' }}>{it.k_rolls}</TableCell>
-													<TableCell style={{ textAlign: 'center' }}>{it.k_pizza}</TableCell>
-													<TableCell style={{ textAlign: 'center' }}>{it.creator}</TableCell>
-													<TableCell style={{ textAlign: 'center' }}>
-														<IconButton
-														size="small"
-														onClick={() => {
-															this.setState({deleteItem: it, openDelete: true})
-														}}
-														sx={{
-															color: 'text.secondary',
-															'&:hover': {
-																color: 'error.main',
-															},
-														}}
-													>
-														<DeleteIcon fontSize="small"/>
-													</IconButton>
-													</TableCell>
-												</TableRow>
-											))}
-										</TableBody>
-									</Table>
-								</AccordionDetails>
-							</Accordion>
-						</Grid>
-					) : null}
-				</Grid>
-            </>
-        );
-	}
+                <TableBody>
+                  {this.state.cities.map((item, key) => (
+                    <TableRow
+                      key={key}
+                      hover
+                    >
+                      <TableCell>{key + 1}</TableCell>
+                      <TableCell
+                        onClick={this.openModal.bind(
+                          this,
+                          "editItem",
+                          "Редактирование города",
+                          item.id,
+                        )}
+                        style={{
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {item.name}
+                      </TableCell>
+                      <TableCell>{item.lavel_name}</TableCell>
+                      <TableCell>
+                        <IconButton
+                          onClick={this.openLevels.bind(this, item.id)}
+                          title="Редактировать уровень кассира"
+                          disableRipple
+                          disableFocusRipple
+                        >
+                          <Typography
+                            component="span"
+                            sx={{
+                              display: "table-cell",
+                              verticalAlign: "inherit",
+                              textAlign: "left",
+                              fontSize: "1rem !important",
+                              color: "rgba(0,0,0,0.87)",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {item.actual_lavel == null
+                              ? "Не выбран"
+                              : `Текущий - ${item.actual_lavel} уровень с ${item.actual_date}`}
+                            <br />
+                            {item.next_lavel == null
+                              ? ""
+                              : `Будущий - ${item.next_lavel} уровень с ${item.next_date}`}
+                          </Typography>
+                        </IconButton>
+                      </TableCell>
+                      <TableCell>
+                        {parseInt(item.is_show) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
+          {this.state.coef_history.length ? (
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
+            >
+              <Accordion style={{ width: "100%" }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography style={{ fontWeight: "bold" }}>История изменений</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>#</TableCell>
+                        <TableCell>Город</TableCell>
+                        <TableCell>Дата изменения</TableCell>
+                        <TableCell style={{ textAlign: "center" }}>
+                          Коэф. роллов для бонуса
+                        </TableCell>
+                        <TableCell style={{ textAlign: "center" }}>
+                          Коэф. пиццы для бонуса
+                        </TableCell>
+                        <TableCell style={{ textAlign: "center" }}>Изменил</TableCell>
+                        <TableCell style={{ textAlign: "center" }}></TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {this.state.coef_history.map((it, k) => (
+                        <TableRow
+                          hover
+                          key={k}
+                        >
+                          <TableCell>{k + 1}</TableCell>
+                          <TableCell>{it.name}</TableCell>
+                          <TableCell>{it.date_start}</TableCell>
+                          <TableCell style={{ textAlign: "center" }}>{it.k_rolls}</TableCell>
+                          <TableCell style={{ textAlign: "center" }}>{it.k_pizza}</TableCell>
+                          <TableCell style={{ textAlign: "center" }}>{it.creator}</TableCell>
+                          <TableCell style={{ textAlign: "center" }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                this.setState({ deleteItem: it, openDelete: true });
+                              }}
+                              sx={{
+                                color: "text.secondary",
+                                "&:hover": {
+                                  color: "error.main",
+                                },
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </AccordionDetails>
+              </Accordion>
+            </Grid>
+          ) : null}
+        </Grid>
+      </>
+    );
+  }
 }
 
 export default function CitiesModules() {
-	return <CitiesModules_/>;
+  return <CitiesModules_ />;
 }
 
-export async function getServerSideProps({req, res, query}) {
-	res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-	res.setHeader('Access-Control-Allow-Origin', '*');
-	res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-	res.setHeader('Access-Control-Allow-Credentials', 'true');
-	res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+export async function getServerSideProps({ req, res, query }) {
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
-	return {
-		props: {},
-	}
+  return {
+    props: {},
+  };
 }

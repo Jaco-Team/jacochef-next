@@ -21,8 +21,8 @@ export function MySelect(props) {
       ? props.value.map(String)
       : []
     : props.value != null
-    ? String(props.value)
-    : "";
+      ? String(props.value)
+      : "";
 
   // force display of selected name
   const renderValue = (selected) => {

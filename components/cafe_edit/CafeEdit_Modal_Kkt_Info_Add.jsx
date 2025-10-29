@@ -1,11 +1,19 @@
 "use client";
 
-import { MyDatePickerNew, MyTextInput } from "@/components/shared/Forms";
+import { MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 import { memo, useState } from "react";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
-import CloseIcon from '@mui/icons-material/Close';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import useMyAlert from "@/src/hooks/useMyAlert";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 
 const CafeEdit_Modal_Kkt_Info_Add = (props) => {
@@ -18,7 +26,6 @@ const CafeEdit_Modal_Kkt_Info_Add = (props) => {
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
   const add_new_fn = () => {
-
     if (!date_start || !date_end) {
       showAlert("Указание дат обязательно", true);
       return;
@@ -73,8 +80,9 @@ const CafeEdit_Modal_Kkt_Info_Add = (props) => {
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyDatePickerNew
                 label="Дата регистрации"
                 value={date_start}
@@ -84,8 +92,9 @@ const CafeEdit_Modal_Kkt_Info_Add = (props) => {
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyDatePickerNew
                 label="Дата окончания"
                 value={date_end}
@@ -95,12 +104,13 @@ const CafeEdit_Modal_Kkt_Info_Add = (props) => {
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <MyTextInput
                 label="ФН"
                 value={new_fn}
-                func={ e => setNewFn(e.target.value) }
+                func={(e) => setNewFn(e.target.value)}
               />
             </Grid>
           </Grid>

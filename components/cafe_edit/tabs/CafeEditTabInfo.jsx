@@ -1,6 +1,6 @@
 "use client";
 
-import { MyCheckBox, MySelect, MyTextInput } from "@/components/shared/Forms";
+import { MyCheckBox, MySelect, MyTextInput } from "@/ui/Forms";
 import { ExpandMore } from "@mui/icons-material";
 import {
   Accordion,
@@ -37,9 +37,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
     >
       {canView("organization_point") && (
         <>
-          <Grid
-            size={{ xs: 12, sm: 3 }}
-          >
+          <Grid size={{ xs: 12, sm: 3 }}>
             <MySelect
               disabled={!canEdit("organization_point")}
               label="Город"
@@ -50,9 +48,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
             />
           </Grid>
 
-          <Grid
-            size={{ xs: 12, sm: 3 }}
-          >
+          <Grid size={{ xs: 12, sm: 3 }}>
             <MyTextInput
               disabled={!canEdit("organization_point")}
               label="Адрес"
@@ -61,9 +57,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
             />
           </Grid>
 
-          <Grid
-            size={{ xs: 12, sm: 3 }}
-          >
+          <Grid size={{ xs: 12, sm: 3 }}>
             <MyTextInput
               disabled={!canEdit("organization_point")}
               label="Район"
@@ -72,9 +66,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
             />
           </Grid>
 
-          <Grid
-            size={{ xs: 12, sm: 3 }}
-          >
+          <Grid size={{ xs: 12, sm: 3 }}>
             <MyTextInput
               disabled={!canEdit("organization_point")}
               label="Сортировка ( порядок точек во всех модулях и на сайте )"
@@ -83,9 +75,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
             />
           </Grid>
 
-          <Grid
-            size={{ xs: 12, sm: 3 }}
-          >
+          <Grid size={{ xs: 12, sm: 3 }}>
             <MyTextInput
               disabled={!canEdit("organization_point")}
               label="Организация"
@@ -94,9 +84,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
             />
           </Grid>
 
-          <Grid
-            size={{ xs: 12, sm: 3 }}
-          >
+          <Grid size={{ xs: 12, sm: 3 }}>
             <MyTextInput
               disabled={!canEdit("organization_point")}
               label="ИНН"
@@ -105,9 +93,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
             />
           </Grid>
 
-          <Grid
-            size={{ xs: 12, sm: 3 }}
-          >
+          <Grid size={{ xs: 12, sm: 3 }}>
             <MyTextInput
               disabled={!canEdit("organization_point")}
               label="ОГРН"
@@ -116,9 +102,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
             />
           </Grid>
 
-          <Grid
-            size={{ xs: 12, sm: 3 }}
-          >
+          <Grid size={{ xs: 12, sm: 3 }}>
             <MyTextInput
               disabled={!canEdit("organization_point")}
               label="КПП"
@@ -127,9 +111,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
             />
           </Grid>
 
-          <Grid
-            size={12}
-          >
+          <Grid size={12}>
             <MyTextInput
               disabled={!canEdit("organization_point")}
               label="Полный адрес"
@@ -141,9 +123,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
       )}
 
       {canView("active_point") && (
-        <Grid
-          size={12}
-        >
+        <Grid size={12}>
           <MyCheckBox
             label="Активность"
             disabled={!canEdit("active_point")}
@@ -155,9 +135,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
 
       {canView("telephone_point") && (
         <>
-          <Grid
-            size={{ xs: 12, sm: 4 }}
-          >
+          <Grid size={{ xs: 12, sm: 4 }}>
             <MyTextInput
               disabled={!canEdit("telephone_point")}
               label="Телефон управляющего"
@@ -166,9 +144,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
             />
           </Grid>
 
-          <Grid
-            size={{ xs: 12, sm: 4 }}
-          >
+          <Grid size={{ xs: 12, sm: 4 }}>
             <MyTextInput
               disabled={!canEdit("telephone_point")}
               label="Почта управляющего"
@@ -177,9 +153,7 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
             />
           </Grid>
 
-          <Grid
-           size={{ xs: 12, sm: 4 }}
-          >
+          <Grid size={{ xs: 12, sm: 4 }}>
             <MyTextInput
               disabled={!canEdit("telephone_point")}
               label="Телефон менеджера"

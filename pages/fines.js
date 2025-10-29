@@ -1,29 +1,31 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TableContainer from '@mui/material/TableContainer';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableContainer from "@mui/material/TableContainer";
 
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import { MyTextInput, MyCheckBox } from '@/components/shared/Forms';
+import { MyTextInput, MyCheckBox } from "@/ui/Forms";
 
-import queryString from 'query-string';
+import queryString from "query-string";
+import { IconButton } from "@mui/material";
+import { Close } from "@mui/icons-material";
 
 class Fines_Table_Сameras extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -42,23 +44,21 @@ class Fines_Table_Сameras extends React.Component {
   render() {
     return (
       <TableContainer>
-
-
-        <Grid sx={{fontWeight: 'bold' }} mt={3} mb={3}>Ошибки по камерам</Grid>
+        <Grid
+          sx={{ fontWeight: "bold" }}
+          mt={3}
+          mb={3}
+        >
+          Ошибки по камерам
+        </Grid>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell style={{ width: '35%' }}>Наименование</TableCell>
-              <TableCell style={{ width: '20%' }}>
-                Размер штрафа за первый раз
-              </TableCell>
-              <TableCell style={{ width: '20%' }}>
-                Размер штрафа за второй раз
-              </TableCell>
-              <TableCell style={{ width: '20%' }}>
-                Размер штрафа за третий и последующие
-              </TableCell>
-              <TableCell style={{ width: '5%' }}></TableCell>
+              <TableCell style={{ width: "35%" }}>Наименование</TableCell>
+              <TableCell style={{ width: "20%" }}>Размер штрафа за первый раз</TableCell>
+              <TableCell style={{ width: "20%" }}>Размер штрафа за второй раз</TableCell>
+              <TableCell style={{ width: "20%" }}>Размер штрафа за третий и последующие</TableCell>
+              <TableCell style={{ width: "5%" }}></TableCell>
             </TableRow>
           </TableHead>
 
@@ -66,12 +66,8 @@ class Fines_Table_Сameras extends React.Component {
             {this.props.cameras.map((item, i) => (
               <TableRow key={i}>
                 <TableCell
-                  style={{ cursor: 'pointer' }}
-                  onClick={this.props.openModal.bind(
-                    this,
-                    'Штраф по камерам',
-                    item.id
-                  )}
+                  style={{ cursor: "pointer" }}
+                  onClick={this.props.openModal.bind(this, "Штраф по камерам", item.id)}
                 >
                   {item.name}
                 </TableCell>
@@ -79,18 +75,13 @@ class Fines_Table_Сameras extends React.Component {
                 <TableCell>{item.price_two} руб</TableCell>
                 <TableCell>{item.price_tree} руб</TableCell>
                 <TableCell>
-                  {parseInt(item.is_active) == 1 ? (
-                    <VisibilityIcon />
-                  ) : (
-                    <VisibilityOffIcon />
-                  )}
+                  {parseInt(item.is_active) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon />}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
-      
     );
   }
 }
@@ -112,21 +103,21 @@ class Fines_Table_Reviews extends React.Component {
   render() {
     return (
       <TableContainer>
-        <Grid sx={{ fontWeight: 'bold' }} mt={3} mb={3}>Ошибки по отзывам</Grid>
+        <Grid
+          sx={{ fontWeight: "bold" }}
+          mt={3}
+          mb={3}
+        >
+          Ошибки по отзывам
+        </Grid>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell style={{ width: '35%' }}>Наименование</TableCell>
-              <TableCell style={{ width: '20%' }}>
-                Процент за первый раз
-              </TableCell>
-              <TableCell style={{ width: '20%' }}>
-                Процент за второй раз
-              </TableCell>
-              <TableCell style={{ width: '20%' }}>
-                Процент за третий и последующие
-              </TableCell>
-              <TableCell style={{ width: '5%' }}></TableCell>
+              <TableCell style={{ width: "35%" }}>Наименование</TableCell>
+              <TableCell style={{ width: "20%" }}>Процент за первый раз</TableCell>
+              <TableCell style={{ width: "20%" }}>Процент за второй раз</TableCell>
+              <TableCell style={{ width: "20%" }}>Процент за третий и последующие</TableCell>
+              <TableCell style={{ width: "5%" }}></TableCell>
             </TableRow>
           </TableHead>
 
@@ -135,13 +126,9 @@ class Fines_Table_Reviews extends React.Component {
               <React.Fragment key={item.id}>
                 <TableRow>
                   <TableCell
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                     rowSpan="2"
-                    onClick={this.props.openModal.bind(
-                      this,
-                      'Штраф по отзывам',
-                      item.id
-                    )}
+                    onClick={this.props.openModal.bind(this, "Штраф по отзывам", item.id)}
                   >
                     {item.name}
                   </TableCell>
@@ -149,11 +136,7 @@ class Fines_Table_Reviews extends React.Component {
                   <TableCell>{item.percent_two} %</TableCell>
                   <TableCell>{item.percent_tree} %</TableCell>
                   <TableCell rowSpan="2">
-                    {parseInt(item.is_active) == 1 ? (
-                      <VisibilityIcon />
-                    ) : (
-                      <VisibilityOffIcon />
-                    )}
+                    {parseInt(item.is_active) == 1 ? <VisibilityIcon /> : <VisibilityOffIcon />}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -175,7 +158,7 @@ class Fines_Modal extends React.Component {
     super(props);
 
     this.state = {
-      item: null
+      item: null,
     };
   }
 
@@ -210,7 +193,7 @@ class Fines_Modal extends React.Component {
 
   onClose() {
     this.setState({
-      item: null
+      item: null,
     });
 
     this.props.onClose();
@@ -222,148 +205,173 @@ class Fines_Modal extends React.Component {
         open={this.props.open}
         onClose={this.onClose.bind(this)}
         fullWidth={true}
-        maxWidth={'lg'}
+        maxWidth={"lg"}
       >
         <DialogTitle id="alert-dialog-title">
           {this.props.method}
-          {this.props.itemName ? `: ${this.props.itemName}` : ''}
+          {this.props.itemName ? `: ${this.props.itemName}` : ""}
+          <IconButton
+            onClick={this.onClose.bind(this)}
+            style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+          >
+            <Close />
+          </IconButton>
         </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3}>
+          <Grid
+            container
+            spacing={3}
+          >
             <Grid
               size={{
-                xs: 12
-              }}>
-              <Grid container spacing={3}>
+                xs: 12,
+              }}
+            >
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   mb={2}
                   size={{
                     xs: 12,
-                    sm: 8
-                  }}>
+                    sm: 8,
+                  }}
+                >
                   <MyTextInput
                     label="Наименование штрафа"
                     value={this.state.item.name}
-                    func={this.changeItem.bind(this, 'name')}
+                    func={this.changeItem.bind(this, "name")}
                   />
                 </Grid>
               </Grid>
-              {this.props.method === 'Новый штраф по отзывам' ||
-              this.props.method === 'Штраф по отзывам' ? (
-                <Grid container spacing={3}>
+              {this.props.method === "Новый штраф по отзывам" ||
+              this.props.method === "Штраф по отзывам" ? (
+                <Grid
+                  container
+                  spacing={3}
+                >
                   <Grid
                     mb={2}
                     size={{
                       xs: 12,
-                      sm: 4
-                    }}>
+                      sm: 4,
+                    }}
+                  >
                     <MyTextInput
                       label="Процент за первый раз"
                       value={this.state.item.percent_one}
-                      func={this.changeItem.bind(this, 'percent_one')}
+                      func={this.changeItem.bind(this, "percent_one")}
                     />
                   </Grid>
                   <Grid
                     mb={2}
                     size={{
                       xs: 12,
-                      sm: 4
-                    }}>
+                      sm: 4,
+                    }}
+                  >
                     <MyTextInput
                       label="Процент за второй раз"
                       value={this.state.item.percent_two}
-                      func={this.changeItem.bind(this, 'percent_two')}
+                      func={this.changeItem.bind(this, "percent_two")}
                     />
                   </Grid>
                   <Grid
                     mb={2}
                     size={{
                       xs: 12,
-                      sm: 4
-                    }}>
+                      sm: 4,
+                    }}
+                  >
                     <MyTextInput
                       label="Процент за третий и последующие"
                       value={this.state.item.percent_tree}
-                      func={this.changeItem.bind(this, 'percent_tree')}
+                      func={this.changeItem.bind(this, "percent_tree")}
                     />
                   </Grid>
                 </Grid>
               ) : null}
 
-              <Grid container spacing={3}>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   mb={2}
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MyTextInput
                     label="Размер штрафа за первый раз"
                     value={this.state.item.price_one}
-                    func={this.changeItem.bind(this, 'price_one')}
+                    func={this.changeItem.bind(this, "price_one")}
                   />
                 </Grid>
                 <Grid
                   mb={2}
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MyTextInput
                     label="Размер штрафа за второй раз"
                     value={this.state.item.price_two}
-                    func={this.changeItem.bind(this, 'price_two')}
+                    func={this.changeItem.bind(this, "price_two")}
                   />
                 </Grid>
                 <Grid
                   mb={2}
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MyTextInput
                     label="Размер штрафа за третий и последующие"
                     value={this.state.item.price_tree}
-                    func={this.changeItem.bind(this, 'price_tree')}
+                    func={this.changeItem.bind(this, "price_tree")}
                   />
                 </Grid>
               </Grid>
 
-              <Grid container spacing={3}>
-                {this.props.method === 'Новый штраф по камерам' ||
-                this.props.method === 'Штраф по камерам' ? (
-               
+              <Grid
+                container
+                spacing={3}
+              >
+                {this.props.method === "Новый штраф по камерам" ||
+                this.props.method === "Штраф по камерам" ? (
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 3
-                    }}>
+                      sm: 3,
+                    }}
+                  >
                     <MyCheckBox
                       label="Картинка"
-                      value={
-                        parseInt(this.state.item.img) == 1 ? true : false
-                      }
-                      func={this.changeItemChecked.bind(this, 'img')}
+                      value={parseInt(this.state.item.img) == 1 ? true : false}
+                      func={this.changeItemChecked.bind(this, "img")}
                     />
                   </Grid>
-          
                 ) : null}
 
-                {this.props.method === 'Штраф по отзывам' ||
-                this.props.method === 'Штраф по камерам' ? (
-
+                {this.props.method === "Штраф по отзывам" ||
+                this.props.method === "Штраф по камерам" ? (
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 3
-                    }}>
+                      sm: 3,
+                    }}
+                  >
                     <MyCheckBox
                       label="Активность"
                       value={parseInt(this.state.item.is_active) == 1 ? true : false}
-                      func={this.changeItemChecked.bind(this, 'is_active')}
+                      func={this.changeItemChecked.bind(this, "is_active")}
                     />
                   </Grid>
-
                 ) : null}
               </Grid>
             </Grid>
@@ -371,11 +379,7 @@ class Fines_Modal extends React.Component {
         </DialogContent>
         <DialogActions>
           <Button
-            onClick={this.props.save.bind(
-              this,
-              this.props.method,
-              this.state.item
-            )}
+            onClick={this.props.save.bind(this, this.props.method, this.state.item)}
             color="primary"
           >
             Сохранить
@@ -391,27 +395,27 @@ class Fines_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'fines',
-      module_name: '',
+      module: "fines",
+      module_name: "",
       is_load: false,
 
       modalDialog: false,
-      itemName: '',
+      itemName: "",
 
       cameras: [],
       reviews: [],
-      
+
       event: {},
-      method: '',
+      method: "",
 
       newFine: {
-        name: '',
-        percent_one: '',
-        percent_two: '',
-        percent_tree: '',
-        price_one: '',
-        price_two: '',
-        price_tree: '',
+        name: "",
+        percent_one: "",
+        percent_two: "",
+        percent_tree: "",
+        price_one: "",
+        price_two: "",
+        price_tree: "",
         is_active: 0,
         img: 0,
       },
@@ -419,14 +423,14 @@ class Fines_ extends React.Component {
   }
 
   async componentDidMount() {
-    let data = await this.getData('get_all');
+    let data = await this.getData("get_all");
 
     // console.log(data);
 
     this.setState({
       cameras: data.items,
       reviews: data.items_1,
-      module_name: data.module_info.name
+      module_name: data.module_info.name,
     });
 
     document.title = data.module_info.name;
@@ -437,28 +441,28 @@ class Fines_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: queryString.stringify({
         method: method,
         module: this.state.module,
         version: 2,
-        login: localStorage.getItem('token'),
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })
       .then((res) => res.json())
       .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/";
           return;
         }
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
           return;
         }
 
@@ -476,8 +480,7 @@ class Fines_ extends React.Component {
   };
 
   async openModal(method, id) {
-
-    if (method === 'Новый штраф по камерам') {
+    if (method === "Новый штраф по камерам") {
       this.setState({
         modalDialog: true,
         method,
@@ -485,7 +488,7 @@ class Fines_ extends React.Component {
       });
     }
 
-    if (method === 'Новый штраф по отзывам') {
+    if (method === "Новый штраф по отзывам") {
       this.setState({
         modalDialog: true,
         method,
@@ -493,13 +496,12 @@ class Fines_ extends React.Component {
       });
     }
 
-    if (method === 'Штраф по камерам') {
-
+    if (method === "Штраф по камерам") {
       const data = {
         id,
-      }
+      };
 
-      const item = await this.getData('get_one_cam', data);
+      const item = await this.getData("get_one_cam", data);
 
       this.setState({
         modalDialog: true,
@@ -509,13 +511,12 @@ class Fines_ extends React.Component {
       });
     }
 
-    if (method === 'Штраф по отзывам') {
-
+    if (method === "Штраф по отзывам") {
       const data = {
         id,
-      }
+      };
 
-      const item = await this.getData('get_one_orders', data);
+      const item = await this.getData("get_one_orders", data);
 
       this.setState({
         modalDialog: true,
@@ -527,34 +528,32 @@ class Fines_ extends React.Component {
   }
 
   async saveItem(method, data) {
-
     this.setState({
       modalDialog: false,
-      itemName: ''
+      itemName: "",
     });
 
-    if (method === 'Новый штраф по камерам') {
-      await this.getData('save_new_cam', data); 
+    if (method === "Новый штраф по камерам") {
+      await this.getData("save_new_cam", data);
     }
 
-    if (method === 'Новый штраф по отзывам') {
-      await this.getData('save_new_orders', data); 
+    if (method === "Новый штраф по отзывам") {
+      await this.getData("save_new_orders", data);
     }
 
-    if (method === 'Штраф по камерам') {
-      await this.getData('save_edit_cam', data); 
+    if (method === "Штраф по камерам") {
+      await this.getData("save_edit_cam", data);
     }
 
-    if (method === 'Штраф по отзывам') {
-      await this.getData('save_edit_orders', data); 
+    if (method === "Штраф по отзывам") {
+      await this.getData("save_edit_orders", data);
     }
 
     this.update();
   }
 
   async update() {
-
-    let data = await this.getData('get_all');
+    let data = await this.getData("get_all");
 
     // console.log(data);
 
@@ -562,31 +561,39 @@ class Fines_ extends React.Component {
       cameras: data.items,
       reviews: data.items_1,
     });
-
   }
 
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <Button
-              onClick={this.openModal.bind(this, 'Новый штраф по камерам')}
+              onClick={this.openModal.bind(this, "Новый штраф по камерам")}
               variant="contained"
             >
               Добавить ошибку по камерам
@@ -596,10 +603,11 @@ class Fines_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <Button
-              onClick={this.openModal.bind(this, 'Новый штраф по отзывам')}
+              onClick={this.openModal.bind(this, "Новый штраф по отзывам")}
               variant="contained"
             >
               Добавить ошибку по отзывам
@@ -609,20 +617,21 @@ class Fines_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <Fines_Table_Сameras
               cameras={this.state.cameras}
               openModal={this.openModal.bind(this)}
             />
           </Grid>
 
-
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <Fines_Table_Reviews
               reviews={this.state.reviews}
               openModal={this.openModal.bind(this)}
@@ -632,7 +641,7 @@ class Fines_ extends React.Component {
         <Fines_Modal
           open={this.state.modalDialog}
           onClose={() => {
-            this.setState({ modalDialog: false, itemName: '' });
+            this.setState({ modalDialog: false, itemName: "" });
           }}
           method={this.state.method}
           event={this.state.event}
@@ -649,13 +658,16 @@ export default function Fines() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

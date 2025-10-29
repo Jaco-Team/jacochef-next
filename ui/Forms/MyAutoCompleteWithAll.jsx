@@ -20,7 +20,7 @@ export function MyAutoCompleteWithAll({
   // include All option in dropdown
   const fullOptions = useMemo(
     () => (withAll ? [ALL_OPTION, ...options] : options),
-    [withAll, withAllLabel, options]
+    [withAll, withAllLabel, options],
   );
 
   // whether all real options are selected
@@ -45,7 +45,7 @@ export function MyAutoCompleteWithAll({
     const selectedSorted = keepOrder
       ? [...selected].sort(
           (a, b) =>
-            options.findIndex((o) => o.id === a.id) - options.findIndex((o) => o.id === b.id)
+            options.findIndex((o) => o.id === a.id) - options.findIndex((o) => o.id === b.id),
         )
       : selected;
     if (!withAll) {
@@ -86,7 +86,7 @@ export function MyAutoCompleteWithAll({
     return opts.filter(
       (o) =>
         !selectedIds.has(o.id) &&
-        (inputValue === "" || o.name.toLowerCase().includes(inputValue.toLowerCase()))
+        (inputValue === "" || o.name.toLowerCase().includes(inputValue.toLowerCase())),
     );
   };
 

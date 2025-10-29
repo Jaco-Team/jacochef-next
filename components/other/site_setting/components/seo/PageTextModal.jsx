@@ -1,6 +1,6 @@
 "use client";
 
-import { MyAutocomplite, MySelect, MyTextInput, TextEditor } from "@/components/shared/Forms";
+import { MyAutocomplite, MySelect, MyTextInput, TextEditor } from "@/ui/Forms";
 import { usePagesStore } from "./usePagesStore";
 import { Grid, Typography } from "@mui/material";
 
@@ -16,8 +16,9 @@ export function PageTextModal({ cities }) {
       <Grid
         size={{
           xs: 12,
-          sm: 6
-        }}>
+          sm: 6,
+        }}
+      >
         <MySelect
           is_none={false}
           label="Город"
@@ -29,8 +30,9 @@ export function PageTextModal({ cities }) {
       <Grid
         size={{
           xs: 12,
-          sm: 6
-        }}>
+          sm: 6,
+        }}
+      >
         <MyAutocomplite
           label="Категория"
           multiple={false}
@@ -43,8 +45,9 @@ export function PageTextModal({ cities }) {
       <Grid
         size={{
           xs: 12,
-          sm: 6
-        }}>
+          sm: 6,
+        }}
+      >
         <MyTextInput
           label="Страница"
           value={currentItem?.page_name || ""}
@@ -54,8 +57,9 @@ export function PageTextModal({ cities }) {
       <Grid
         size={{
           xs: 12,
-          sm: 6
-        }}>
+          sm: 6,
+        }}
+      >
         <MyTextInput
           label="Ссылка"
           value={currentItem?.link || ""}
@@ -65,8 +69,9 @@ export function PageTextModal({ cities }) {
       <Grid
         size={{
           xs: 12,
-          sm: 6
-        }}>
+          sm: 6,
+        }}
+      >
         <MyTextInput
           label="Заголовок (H1-H2)"
           value={currentItem?.page_h || ""}
@@ -76,8 +81,9 @@ export function PageTextModal({ cities }) {
       <Grid
         size={{
           xs: 12,
-          sm: 6
-        }}>
+          sm: 6,
+        }}
+      >
         <MyTextInput
           label="Заголовок (title)"
           value={currentItem?.title || ""}
@@ -87,8 +93,9 @@ export function PageTextModal({ cities }) {
       <Grid
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <MyTextInput
           label="Описание (description)"
           multiline={true}
@@ -100,8 +107,9 @@ export function PageTextModal({ cities }) {
       <Grid
         size={{
           xs: 12,
-          sm: 12
-        }}>
+          sm: 12,
+        }}
+      >
         <Typography gutterBottom>Текст на сайте</Typography>
         <TextEditor
           value={currentItem?.content || ""}

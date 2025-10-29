@@ -1,43 +1,50 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Dropzone from 'dropzone';
+import Dropzone from "dropzone";
 
-import { MyAutocomplite, MyDatePickerNew, MySelect, TextEditor, MyTextInput, MyCheckBox } from '@/components/shared/Forms';
+import {
+  MyAutocomplite,
+  MyDatePickerNew,
+  MySelect,
+  TextEditor,
+  MyTextInput,
+  MyCheckBox,
+} from "@/ui/Forms";
 
-import queryString from 'query-string';
+import queryString from "query-string";
 
-import dayjs from 'dayjs';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import dayjs from "dayjs";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 import TextField from "@mui/material/TextField";
-import { formatDate } from '@/src/helpers/ui/formatDate';
-import MyAlert from '@/components/shared/MyAlert';
+import { formatDate } from "@/src/helpers/ui/formatDate";
+import MyAlert from "@/ui/MyAlert";
 
 class SiteBaners_Modal extends React.Component {
   dropzoneOptions = {
@@ -46,9 +53,9 @@ class SiteBaners_Modal extends React.Component {
     maxFiles: 1,
     timeout: 0,
     parallelUploads: 10,
-    acceptedFiles: 'image/jpeg',
+    acceptedFiles: "image/jpeg",
     addRemoveLinks: true,
-    url: 'https://jacochef.ru/src/img/site_banners/upload_img_new.php',
+    url: "https://jacochef.ru/src/img/site_banners/upload_img_new.php",
   };
 
   myDropzone = null;
@@ -65,7 +72,7 @@ class SiteBaners_Modal extends React.Component {
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
 
       promo_list: [],
     };
@@ -83,8 +90,8 @@ class SiteBaners_Modal extends React.Component {
       });
 
       setTimeout(() => {
-        this.myDropzone = new Dropzone('#for_img_edit', this.dropzoneOptions);
-        this.myDropzone_m = new Dropzone('#for_img_edit_', this.dropzoneOptions);
+        this.myDropzone = new Dropzone("#for_img_edit", this.dropzoneOptions);
+        this.myDropzone_m = new Dropzone("#for_img_edit_", this.dropzoneOptions);
       }, 300);
     }
   }
@@ -94,15 +101,15 @@ class SiteBaners_Modal extends React.Component {
 
     banner.this_ban[data] = event.target.value;
 
-    if( data == 'city_id' ) {
+    if (data == "city_id") {
       const data = {
-        city_id: event.target.value
+        city_id: event.target.value,
       };
 
-      const res = await this.props.getData('get_active_promo', data);
+      const res = await this.props.getData("get_active_promo", data);
 
       this.setState({
-        promo_list: res.promos
+        promo_list: res.promos,
       });
     }
 
@@ -114,7 +121,7 @@ class SiteBaners_Modal extends React.Component {
   changeDateRange(data, event) {
     const banner = this.state.banner;
 
-    banner.this_ban[data] = event ? event : '';
+    banner.this_ban[data] = event ? event : "";
 
     this.setState({
       banner,
@@ -124,12 +131,12 @@ class SiteBaners_Modal extends React.Component {
   changeAutocomplite(data, event, value) {
     const banner = this.state.banner;
 
-    if( data == 'items' ) {
-      banner.this_ban['promo_id'] = null;
+    if (data == "items") {
+      banner.this_ban["promo_id"] = null;
     }
 
-    if( data == 'promo_id' ) {
-      banner.this_ban['items'] = [];
+    if (data == "promo_id") {
+      banner.this_ban["items"] = [];
     }
 
     banner.this_ban[data] = value;
@@ -165,51 +172,46 @@ class SiteBaners_Modal extends React.Component {
 
       let banner = this.state.banner;
 
-      banner.this_ban.items = banner.this_ban.items.reduce(
-        (saveItems, item) => {
-          item = { item_id: item.id };
+      banner.this_ban.items = banner.this_ban.items.reduce((saveItems, item) => {
+        item = { item_id: item.id };
 
-          saveItems = [...saveItems, ...[item]];
+        saveItems = [...saveItems, ...[item]];
 
-          return saveItems;
+        return saveItems;
       }, []);
 
-      banner.this_ban.date_start = dayjs(banner.this_ban.date_start).format('YYYY-MM-DD');
-      banner.this_ban.date_end = dayjs(banner.this_ban.date_end).format('YYYY-MM-DD');
+      banner.this_ban.date_start = dayjs(banner.this_ban.date_start).format("YYYY-MM-DD");
+      banner.this_ban.date_end = dayjs(banner.this_ban.date_end).format("YYYY-MM-DD");
 
       const data = banner.this_ban;
 
-      const res = await this.props.getData('save_new', data);
+      const res = await this.props.getData("save_new", data);
 
       if (!res.st) {
-
         this.setState({
           openAlert: true,
           err_status: res.st,
           err_text: res.text,
         });
-
       } else {
-
-        if(this.myDropzone.files.length && this.myDropzone_m.files.length) {
-
+        if (this.myDropzone.files.length && this.myDropzone_m.files.length) {
           let save_img = false;
           let save_img_m = false;
 
-          if (this.myDropzone['files'].length && this.isInit === false) {
+          if (this.myDropzone["files"].length && this.isInit === false) {
             this.isInit = true;
 
-            this.myDropzone.on('sending', (file, xhr, data) => {
-              data.append('name', banner.this_ban.name);
-              data.append('id', res.id);
-              data.append('type', 'full');
+            this.myDropzone.on("sending", (file, xhr, data) => {
+              data.append("name", banner.this_ban.name);
+              data.append("id", res.id);
+              data.append("type", "full");
             });
 
-            this.myDropzone.on('queuecomplete', (data) => {
+            this.myDropzone.on("queuecomplete", (data) => {
               var check_img = false;
 
-              this.myDropzone['files'].map((item, key) => {
-                if (item['status'] == 'error') {
+              this.myDropzone["files"].map((item, key) => {
+                if (item["status"] == "error") {
                   check_img = true;
                 }
               });
@@ -218,11 +220,10 @@ class SiteBaners_Modal extends React.Component {
                 this.setState({
                   openAlert: true,
                   err_status: false,
-                  err_text: 'Ошибка при загрузке фотографии',
+                  err_text: "Ошибка при загрузке фотографии",
                 });
 
                 return;
-
               } else {
                 save_img = true;
               }
@@ -230,20 +231,20 @@ class SiteBaners_Modal extends React.Component {
             });
           }
 
-          if (this.myDropzone_m['files'].length && this.isInit_m === false) {
+          if (this.myDropzone_m["files"].length && this.isInit_m === false) {
             this.isInit_m = true;
 
-            this.myDropzone_m.on('sending', (file, xhr, data1) => {
-              data1.append('name', banner.this_ban.name);
-              data1.append('id', res.id);
-              data1.append('type', 'mobile');
+            this.myDropzone_m.on("sending", (file, xhr, data1) => {
+              data1.append("name", banner.this_ban.name);
+              data1.append("id", res.id);
+              data1.append("type", "mobile");
             });
 
-            this.myDropzone_m.on('queuecomplete', (data) => {
+            this.myDropzone_m.on("queuecomplete", (data) => {
               var check_img = false;
 
-              this.myDropzone_m['files'].map((item, key) => {
-                if (item['status'] == 'error') {
+              this.myDropzone_m["files"].map((item, key) => {
+                if (item["status"] == "error") {
                   check_img = true;
                 }
               });
@@ -252,11 +253,10 @@ class SiteBaners_Modal extends React.Component {
                 this.setState({
                   openAlert: true,
                   err_status: false,
-                  err_text: 'Ошибка при загрузке фотографии',
+                  err_text: "Ошибка при загрузке фотографии",
                 });
 
                 return;
-
               } else {
                 save_img_m = true;
               }
@@ -265,32 +265,29 @@ class SiteBaners_Modal extends React.Component {
           }
 
           setTimeout(() => {
-            if(save_img && save_img_m) {
+            if (save_img && save_img_m) {
               this.onClose(true);
             }
           }, 3000);
 
           this.myDropzone.processQueue();
           this.myDropzone_m.processQueue();
-
-        } else if(this.myDropzone.files.length || this.myDropzone_m.files.length) {
-
-          if (this.myDropzone['files'].length > 0) {
-
-            if (this.myDropzone['files'].length > 0 && this.isInit === false) {
+        } else if (this.myDropzone.files.length || this.myDropzone_m.files.length) {
+          if (this.myDropzone["files"].length > 0) {
+            if (this.myDropzone["files"].length > 0 && this.isInit === false) {
               this.isInit = true;
 
-              this.myDropzone.on('sending', (file, xhr, data) => {
-                data.append('name', banner.this_ban.name);
-                data.append('id', res.id);
-                data.append('type', 'full');
+              this.myDropzone.on("sending", (file, xhr, data) => {
+                data.append("name", banner.this_ban.name);
+                data.append("id", res.id);
+                data.append("type", "full");
               });
 
-              this.myDropzone.on('queuecomplete', (data) => {
+              this.myDropzone.on("queuecomplete", (data) => {
                 var check_img = false;
 
-                this.myDropzone['files'].map((item, key) => {
-                  if (item['status'] == 'error') {
+                this.myDropzone["files"].map((item, key) => {
+                  if (item["status"] == "error") {
                     check_img = true;
                   }
                 });
@@ -299,44 +296,38 @@ class SiteBaners_Modal extends React.Component {
                   this.setState({
                     openAlert: true,
                     err_status: false,
-                    err_text: 'Ошибка при загрузке фотографии',
+                    err_text: "Ошибка при загрузке фотографии",
                   });
 
                   return;
-
                 } else {
-
                   setTimeout(() => {
                     this.onClose(true);
                   }, 1000);
-
                 }
 
                 this.isInit = false;
-
               });
             }
 
             this.myDropzone.processQueue();
-
           }
 
-          if (this.myDropzone_m['files'].length > 0) {
-
-            if (this.myDropzone_m['files'].length > 0 && this.isInit_m === false) {
+          if (this.myDropzone_m["files"].length > 0) {
+            if (this.myDropzone_m["files"].length > 0 && this.isInit_m === false) {
               this.isInit_m = true;
 
-              this.myDropzone_m.on('sending', (file, xhr, data1) => {
-                data1.append('name', banner.this_ban.name);
-                data1.append('id', res.id);
-                data1.append('type', 'mobile');
+              this.myDropzone_m.on("sending", (file, xhr, data1) => {
+                data1.append("name", banner.this_ban.name);
+                data1.append("id", res.id);
+                data1.append("type", "mobile");
               });
 
-              this.myDropzone_m.on('queuecomplete', (data) => {
+              this.myDropzone_m.on("queuecomplete", (data) => {
                 var check_img = false;
 
-                this.myDropzone_m['files'].map((item, key) => {
-                  if (item['status'] == 'error') {
+                this.myDropzone_m["files"].map((item, key) => {
+                  if (item["status"] == "error") {
                     check_img = true;
                   }
                 });
@@ -345,28 +336,22 @@ class SiteBaners_Modal extends React.Component {
                   this.setState({
                     openAlert: true,
                     err_status: false,
-                    err_text: 'Ошибка при загрузке фотографии',
+                    err_text: "Ошибка при загрузке фотографии",
                   });
 
                   return;
-
                 } else {
-
                   setTimeout(() => {
                     this.onClose(true);
                   }, 1000);
-
                 }
 
                 this.isInit_m = false;
-
               });
             }
 
             this.myDropzone_m.processQueue();
-
           }
-
         } else {
           this.onClose(true);
         }
@@ -375,7 +360,6 @@ class SiteBaners_Modal extends React.Component {
       setTimeout(() => {
         this.click = false;
       }, 300);
-
     }
   }
 
@@ -385,21 +369,20 @@ class SiteBaners_Modal extends React.Component {
 
       let banner = this.state.banner;
 
-      banner.this_ban.items = banner.this_ban.items.reduce(
-        (saveItems, item) => {
-          item = { item_id: item.id };
+      banner.this_ban.items = banner.this_ban.items.reduce((saveItems, item) => {
+        item = { item_id: item.id };
 
-          saveItems = [...saveItems, ...[item]];
+        saveItems = [...saveItems, ...[item]];
 
-          return saveItems;
+        return saveItems;
       }, []);
 
-      banner.this_ban.date_start = dayjs(banner.this_ban.date_start).format('YYYY-MM-DD');
-      banner.this_ban.date_end = dayjs(banner.this_ban.date_end).format('YYYY-MM-DD');
+      banner.this_ban.date_start = dayjs(banner.this_ban.date_start).format("YYYY-MM-DD");
+      banner.this_ban.date_end = dayjs(banner.this_ban.date_end).format("YYYY-MM-DD");
 
       const data = banner.this_ban;
 
-      const res = await this.props.getData('save_edit', data);
+      const res = await this.props.getData("save_edit", data);
 
       if (!res.st) {
         this.setState({
@@ -407,27 +390,23 @@ class SiteBaners_Modal extends React.Component {
           err_status: res.st,
           err_text: res.text,
         });
-
       } else {
-
-        if(this.myDropzone.files.length > 0 || this.myDropzone_m.files.length  > 0) {
-
-          if (this.myDropzone['files'].length > 0) {
-
-            if (this.myDropzone['files'].length > 0 && this.isInit === false) {
+        if (this.myDropzone.files.length > 0 || this.myDropzone_m.files.length > 0) {
+          if (this.myDropzone["files"].length > 0) {
+            if (this.myDropzone["files"].length > 0 && this.isInit === false) {
               this.isInit = true;
 
-              this.myDropzone.on('sending', (file, xhr, data) => {
-                data.append('name', banner.this_ban.name);
-                data.append('id', res.id);
-                data.append('type', 'full');
+              this.myDropzone.on("sending", (file, xhr, data) => {
+                data.append("name", banner.this_ban.name);
+                data.append("id", res.id);
+                data.append("type", "full");
               });
 
-              this.myDropzone.on('queuecomplete', (data) => {
+              this.myDropzone.on("queuecomplete", (data) => {
                 var check_img = false;
 
-                this.myDropzone['files'].map((item, key) => {
-                  if (item['status'] == 'error') {
+                this.myDropzone["files"].map((item, key) => {
+                  if (item["status"] == "error") {
                     check_img = true;
                   }
                 });
@@ -436,11 +415,10 @@ class SiteBaners_Modal extends React.Component {
                   this.setState({
                     openAlert: true,
                     err_status: false,
-                    err_text: 'Ошибка при загрузке фотографии',
+                    err_text: "Ошибка при загрузке фотографии",
                   });
 
                   return;
-
                 } else {
                   setTimeout(() => {
                     this.onClose(true);
@@ -448,29 +426,27 @@ class SiteBaners_Modal extends React.Component {
                 }
 
                 this.isInit = false;
-
               });
             }
 
             this.myDropzone.processQueue();
-
           }
 
-          if (this.myDropzone_m['files'].length > 0) {
-            if (this.myDropzone_m['files'].length > 0 && this.isInit_m === false) {
+          if (this.myDropzone_m["files"].length > 0) {
+            if (this.myDropzone_m["files"].length > 0 && this.isInit_m === false) {
               this.isInit_m = true;
 
-              this.myDropzone_m.on('sending', (file, xhr, data1) => {
-                data1.append('name', banner.this_ban.name);
-                data1.append('id', res.id);
-                data1.append('type', 'mobile');
+              this.myDropzone_m.on("sending", (file, xhr, data1) => {
+                data1.append("name", banner.this_ban.name);
+                data1.append("id", res.id);
+                data1.append("type", "mobile");
               });
 
-              this.myDropzone_m.on('queuecomplete', (data) => {
+              this.myDropzone_m.on("queuecomplete", (data) => {
                 var check_img = false;
 
-                this.myDropzone_m['files'].map((item, key) => {
-                  if (item['status'] == 'error') {
+                this.myDropzone_m["files"].map((item, key) => {
+                  if (item["status"] == "error") {
                     check_img = true;
                   }
                 });
@@ -479,11 +455,10 @@ class SiteBaners_Modal extends React.Component {
                   this.setState({
                     openAlert: true,
                     err_status: false,
-                    err_text: 'Ошибка при загрузке фотографии',
+                    err_text: "Ошибка при загрузке фотографии",
                   });
 
                   return;
-
                 } else {
                   setTimeout(() => {
                     this.onClose(true);
@@ -491,18 +466,14 @@ class SiteBaners_Modal extends React.Component {
                 }
 
                 this.isInit_m = false;
-
               });
             }
 
             this.myDropzone_m.processQueue();
-
           }
-
         } else {
           this.onClose(true);
         }
-
       }
 
       setTimeout(() => {
@@ -512,13 +483,12 @@ class SiteBaners_Modal extends React.Component {
   }
 
   onClose(is_reload = false) {
-
-    this.setState ({
+    this.setState({
       banner: null,
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
     });
 
     this.props.onClose(is_reload);
@@ -538,168 +508,223 @@ class SiteBaners_Modal extends React.Component {
           onClose={this.onClose.bind(this, false)}
           fullScreen={this.props.fullScreen}
           fullWidth={true}
-          maxWidth={'xl'}
+          maxWidth={"xl"}
         >
           <DialogTitle className="button">
             {this.props.method}
             {this.props.bannerName ? `: ${this.props.bannerName}` : null}
           </DialogTitle>
 
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+          <IconButton
+            onClick={this.onClose.bind(this)}
+            style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+          >
             <CloseIcon />
           </IconButton>
 
           {!this.state.banner ? null : (
             <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-              <Grid container spacing={3}>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Название банера (внутреннее)"
-                    value={ this.state.banner ? this.state.banner.this_ban.name : '' }
-                    func={this.changeItem.bind(this, 'name')}
+                    value={this.state.banner ? this.state.banner.this_ban.name : ""}
+                    func={this.changeItem.bind(this, "name")}
                   />
                 </Grid>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Заголовок"
-                    value={ this.state.banner ? this.state.banner.this_ban.title : '' }
-                    func={this.changeItem.bind(this, 'title')}
+                    value={this.state.banner ? this.state.banner.this_ban.title : ""}
+                    func={this.changeItem.bind(this, "title")}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MySelect
                     is_none={false}
                     label="Город"
                     data={this.state.banner ? this.state.banner.cities : []}
-                    value={this.state.banner ? this.state.banner.this_ban.city_id : ''}
-                    func={this.changeItem.bind(this, 'city_id')}
+                    value={this.state.banner ? this.state.banner.this_ban.city_id : ""}
+                    func={this.changeItem.bind(this, "city_id")}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}></Grid>
+                    sm: 6,
+                  }}
+                ></Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyDatePickerNew
                     label="Дата старта"
-                    value={this.state.banner ? dayjs(this.state.banner.this_ban.date_start) : ''}
-                    func={this.changeDateRange.bind(this, 'date_start')}
+                    value={this.state.banner ? dayjs(this.state.banner.this_ban.date_start) : ""}
+                    func={this.changeDateRange.bind(this, "date_start")}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyDatePickerNew
                     label="Дата окончания"
-                    value={this.state.banner ? dayjs(this.state.banner.this_ban.date_end) : ''}
-                    func={this.changeDateRange.bind(this, 'date_end')}
+                    value={this.state.banner ? dayjs(this.state.banner.this_ban.date_end) : ""}
+                    func={this.changeDateRange.bind(this, "date_end")}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MyAutocomplite
                     label="Позиции (вместо промика)"
                     multiple={true}
-                    data={this.state.banner ? this.state.banner.items ? this.state.banner.items : [] : []}
-                    value={this.state.banner ? this.state.banner.this_ban.items ? this.state.banner.this_ban.items : [] : []}
-                    func={this.changeAutocomplite.bind(this, 'items')}
+                    data={
+                      this.state.banner
+                        ? this.state.banner.items
+                          ? this.state.banner.items
+                          : []
+                        : []
+                    }
+                    value={
+                      this.state.banner
+                        ? this.state.banner.this_ban.items
+                          ? this.state.banner.this_ban.items
+                          : []
+                        : []
+                    }
+                    func={this.changeAutocomplite.bind(this, "items")}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyAutocomplite
                     label="Промокод (вместо позиций)"
                     multiple={false}
                     data={this.state.promo_list}
-                    value={this.state.banner ? this.state.banner.this_ban.promo_id ? this.state.banner.this_ban.promo_id : null : null}
-                    func={this.changeAutocomplite.bind(this, 'promo_id')}
+                    value={
+                      this.state.banner
+                        ? this.state.banner.this_ban.promo_id
+                          ? this.state.banner.this_ban.promo_id
+                          : null
+                        : null
+                    }
+                    func={this.changeAutocomplite.bind(this, "promo_id")}
                   />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 6,
-                    sm: 2
-                  }}>
+                    sm: 2,
+                  }}
+                >
                   <MyCheckBox
                     label="Активность"
-                    value={this.state.banner ? parseInt(this.state.banner.this_ban.is_active) == 1 ? true : false : false}
-                    func={this.changeItemChecked.bind(this, 'is_active')}
+                    value={
+                      this.state.banner
+                        ? parseInt(this.state.banner.this_ban.is_active) == 1
+                          ? true
+                          : false
+                        : false
+                    }
+                    func={this.changeItemChecked.bind(this, "is_active")}
                   />
                 </Grid>
                 <Grid
                   size={{
                     xs: 6,
-                    sm: 2
-                  }}>
+                    sm: 2,
+                  }}
+                >
                   <MyCheckBox
                     label="Показывать в акциях"
-                    value={this.state.banner ? parseInt(this.state.banner.this_ban.is_active_actii) == 1 ? true : false : false}
-                    func={this.changeItemChecked.bind(this, 'is_active_actii')}
+                    value={
+                      this.state.banner
+                        ? parseInt(this.state.banner.this_ban.is_active_actii) == 1
+                          ? true
+                          : false
+                        : false
+                    }
+                    func={this.changeItemChecked.bind(this, "is_active_actii")}
                   />
                 </Grid>
                 <Grid
                   size={{
                     xs: 6,
-                    sm: 2
-                  }}>
+                    sm: 2,
+                  }}
+                >
                   <MyCheckBox
                     label="Показывать на главной"
-                    value={this.state.banner ? parseInt(this.state.banner.this_ban.is_active_home) == 1 ? true : false : false}
-                    func={this.changeItemChecked.bind(this, 'is_active_home')}
+                    value={
+                      this.state.banner
+                        ? parseInt(this.state.banner.this_ban.is_active_home) == 1
+                          ? true
+                          : false
+                        : false
+                    }
+                    func={this.changeItemChecked.bind(this, "is_active_home")}
                   />
                 </Grid>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     label="Заголовок SEO"
-                    value={ this.state.banner ? this.state.banner.this_ban.seo_title : '' }
-                    func={this.changeItem.bind(this, 'seo_title')}
+                    value={this.state.banner ? this.state.banner.this_ban.seo_title : ""}
+                    func={this.changeItem.bind(this, "seo_title")}
                   />
                 </Grid>
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <TextField
                     label="Описание SEO"
-                    value={ this.state.banner ? this.state.banner.this_ban.seo_desc : '' }
-                    onChange={this.changeItem.bind(this, 'seo_desc')}
+                    value={this.state.banner ? this.state.banner.this_ban.seo_desc : ""}
+                    onChange={this.changeItem.bind(this, "seo_desc")}
                     multiline
                     rows={2}
                     maxRows={10}
@@ -708,54 +733,97 @@ class SiteBaners_Modal extends React.Component {
                   />
                 </Grid>
 
-
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <Typography>Картинка на ПК разрешением 3700x1000 только JPG</Typography>
 
                   {!this.state.banner || this.state.banner.this_ban.img.length == 0 ? null : (
-                    <div style={{ height: 400, display: 'flex' }}>
-                      <img style={{ width: '100%', height: 'auto', alignSelf: 'center', borderRadius: 20 }} src={'https://storage.yandexcloud.net/site-home-img/' + this.state.banner.this_ban.img + '_3700x1000.jpg?date_update=' + this.state.banner.this_ban.date_update}/>
+                    <div style={{ height: 400, display: "flex" }}>
+                      <img
+                        style={{
+                          width: "100%",
+                          height: "auto",
+                          alignSelf: "center",
+                          borderRadius: 20,
+                        }}
+                        src={
+                          "https://storage.yandexcloud.net/site-home-img/" +
+                          this.state.banner.this_ban.img +
+                          "_3700x1000.jpg?date_update=" +
+                          this.state.banner.this_ban.date_update
+                        }
+                      />
                     </div>
                   )}
 
-                  <div className="dropzone" id="for_img_edit" style={{ width: '100%', minHeight: 150 }}/>
+                  <div
+                    className="dropzone"
+                    id="for_img_edit"
+                    style={{ width: "100%", minHeight: 150 }}
+                  />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
-                  <Typography>Картинка мобильная соотношением 2:1 (например: 1000x500) только JPG</Typography>
+                    sm: 6,
+                  }}
+                >
+                  <Typography>
+                    Картинка мобильная соотношением 2:1 (например: 1000x500) только JPG
+                  </Typography>
 
                   {!this.state.banner || this.state.banner.this_ban.img.length == 0 ? null : (
-                    <div style={{ height: 400, display: 'flex' }}>
-                      <img style={{ width: '100%', height: 'auto', alignSelf: 'center', borderRadius: 40 }} src={'https://storage.yandexcloud.net/site-home-img/' + this.state.banner.this_ban.img + '_1000x500.jpg?date_update=' + this.state.banner.this_ban.date_update}/>
+                    <div style={{ height: 400, display: "flex" }}>
+                      <img
+                        style={{
+                          width: "100%",
+                          height: "auto",
+                          alignSelf: "center",
+                          borderRadius: 40,
+                        }}
+                        src={
+                          "https://storage.yandexcloud.net/site-home-img/" +
+                          this.state.banner.this_ban.img +
+                          "_1000x500.jpg?date_update=" +
+                          this.state.banner.this_ban.date_update
+                        }
+                      />
                     </div>
-                    )}
+                  )}
 
-                  <div className="dropzone" id="for_img_edit_" style={{ width: '100%', minHeight: 150 }}/>
+                  <div
+                    className="dropzone"
+                    id="for_img_edit_"
+                    style={{ width: "100%", minHeight: 150 }}
+                  />
                 </Grid>
 
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <TextEditor
-                    value={this.state.banner ? this.state.banner.this_ban.text : ''}
-                    func={this.changeItemText.bind(this, 'text')}
+                    value={this.state.banner ? this.state.banner.this_ban.text : ""}
+                    func={this.changeItemText.bind(this, "text")}
                   />
                 </Grid>
               </Grid>
             </DialogContent>
           )}
           <DialogActions>
-            <Button variant="contained" onClick={this.props.mark == 'bannerEdit' ? this.saveEdit.bind(this) : this.saveNew.bind(this)}>
+            <Button
+              variant="contained"
+              onClick={
+                this.props.mark == "bannerEdit" ? this.saveEdit.bind(this) : this.saveNew.bind(this)
+              }
+            >
               Сохранить
             </Button>
           </DialogActions>
@@ -770,12 +838,12 @@ class SiteBaners_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'site_baners',
-      module_name: '',
+      module: "site_baners",
+      module_name: "",
       is_load: false,
 
       cities: [],
-      city: '',
+      city: "",
 
       active: [],
       non_active: [],
@@ -783,17 +851,17 @@ class SiteBaners_ extends React.Component {
       fullScreen: false,
 
       modalDialog: false,
-      method: '',
-      mark: '',
+      method: "",
+      mark: "",
       banner: null,
-      bannerName: '',
+      bannerName: "",
 
       bannerNew: {
-        name: '',
-        text: '',
+        name: "",
+        text: "",
         items: [],
-        img: '',
-        city_id: '',
+        img: "",
+        city_id: "",
         date_start: formatDate(new Date()),
         date_end: formatDate(new Date()),
       },
@@ -803,7 +871,7 @@ class SiteBaners_ extends React.Component {
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     this.setState({
       cities: data.cities,
@@ -865,7 +933,7 @@ class SiteBaners_ extends React.Component {
       city_id,
     };
 
-    const res = await this.getData('get_banners', data);
+    const res = await this.getData("get_banners", data);
 
     this.setState({
       active: res.active,
@@ -876,10 +944,10 @@ class SiteBaners_ extends React.Component {
   async openModal(mark, method, banner_id) {
     this.handleResize();
 
-    if (mark === 'bannerNew') {
+    if (mark === "bannerNew") {
       const bannerNew = JSON.parse(JSON.stringify(this.state.bannerNew));
 
-      const banner = await this.getData('get_all_for_new');
+      const banner = await this.getData("get_all_for_new");
 
       banner.this_ban = bannerNew;
 
@@ -888,20 +956,20 @@ class SiteBaners_ extends React.Component {
         method,
         banner,
         modalDialog: true,
-        promos: []
+        promos: [],
       });
     }
 
-    if (mark === 'bannerEdit') {
+    if (mark === "bannerEdit") {
       const data = {
         banner_id,
       };
 
-      const banner = await this.getData('get_one', data);
+      const banner = await this.getData("get_one", data);
 
       banner.items.forEach((item) => {
         banner.this_ban.items = banner.this_ban.items.map((it) => {
-          if ( parseInt(it) === parseInt(item.id)) {
+          if (parseInt(it) === parseInt(item.id)) {
             it = { id: item.id, name: item.name, item_id: item.id };
           }
           return it;
@@ -924,7 +992,7 @@ class SiteBaners_ extends React.Component {
 
     active.forEach((item) => {
       if (item.id === it.id) {
-        if (data === 'sort') {
+        if (data === "sort") {
           item[data] = event.target.value;
         } else {
           item[data] = event.target.checked === true ? 1 : 0;
@@ -938,11 +1006,11 @@ class SiteBaners_ extends React.Component {
 
     const item = {
       id: it.id,
-      sort: data === 'sort' ? event.target.value : it.sort,
-      is_show: data === 'sort' ? it.is_active : event.target.checked === true ? 1 : 0,
+      sort: data === "sort" ? event.target.value : it.sort,
+      is_show: data === "sort" ? it.is_active : event.target.checked === true ? 1 : 0,
     };
 
-    await this.getData('save_sort', item);
+    await this.getData("save_sort", item);
 
     setTimeout(() => {
       this.update();
@@ -966,7 +1034,7 @@ class SiteBaners_ extends React.Component {
   onCloseModal(is_reload = false) {
     this.setState({
       modalDialog: false,
-      bannerName: '',
+      bannerName: "",
     });
 
     if (is_reload) {
@@ -977,7 +1045,10 @@ class SiteBaners_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <SiteBaners_Modal
@@ -991,18 +1062,26 @@ class SiteBaners_ extends React.Component {
           fullScreen={this.state.fullScreen}
           getData={this.getData.bind(this)}
         />
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}><h1>{this.state.module_name}</h1></Grid>
+              sm: 12,
+            }}
+          >
+            <h1>{this.state.module_name}</h1>
+          </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 4
-            }}>
+              sm: 4,
+            }}
+          >
             <MySelect
               is_none={false}
               label="Город"
@@ -1015,9 +1094,13 @@ class SiteBaners_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3
-            }}>
-            <Button onClick={this.openModal.bind(this, 'bannerNew', 'Новый банер')} variant="contained">
+              sm: 3,
+            }}
+          >
+            <Button
+              onClick={this.openModal.bind(this, "bannerNew", "Новый банер")}
+              variant="contained"
+            >
               Добавить банер
             </Button>
           </Grid>
@@ -1027,31 +1110,45 @@ class SiteBaners_ extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <TableContainer>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell colSpan={8}><h2>Активные</h2></TableCell>
+                      <TableCell colSpan={8}>
+                        <h2>Активные</h2>
+                      </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell style={{ width: '5%' }}>#</TableCell>
-                      <TableCell style={{ width: '20%' }}>Название</TableCell>
-                      <TableCell style={{ width: '20%' }}>Ссылка</TableCell>
-                      <TableCell style={{ width: '12%' }}>Сорт</TableCell>
-                      <TableCell style={{ width: '12%' }}>Город</TableCell>
-                      <TableCell style={{ width: '10%' }}>Дата старта</TableCell>
-                      <TableCell style={{ width: '10%' }}>Дата окончания</TableCell>
-                      <TableCell style={{ width: '10%' }}>Активность</TableCell>
+                      <TableCell style={{ width: "5%" }}>#</TableCell>
+                      <TableCell style={{ width: "20%" }}>Название</TableCell>
+                      <TableCell style={{ width: "20%" }}>Ссылка</TableCell>
+                      <TableCell style={{ width: "12%" }}>Сорт</TableCell>
+                      <TableCell style={{ width: "12%" }}>Город</TableCell>
+                      <TableCell style={{ width: "10%" }}>Дата старта</TableCell>
+                      <TableCell style={{ width: "10%" }}>Дата окончания</TableCell>
+                      <TableCell style={{ width: "10%" }}>Активность</TableCell>
                     </TableRow>
                   </TableHead>
 
                   <TableBody>
                     {this.state.active.map((item, key) => (
-                      <TableRow key={key} hover>
+                      <TableRow
+                        key={key}
+                        hover
+                      >
                         <TableCell>{key + 1}</TableCell>
-                        <TableCell onClick={this.openModal.bind(this, 'bannerEdit', 'Редактирование банера', item.id)} style={{ fontWeight: 700, cursor: 'pointer' }}>
+                        <TableCell
+                          onClick={this.openModal.bind(
+                            this,
+                            "bannerEdit",
+                            "Редактирование банера",
+                            item.id,
+                          )}
+                          style={{ fontWeight: 700, cursor: "pointer" }}
+                        >
                           {item.name}
                         </TableCell>
                         <TableCell>{item?.link}</TableCell>
@@ -1059,22 +1156,23 @@ class SiteBaners_ extends React.Component {
                           <Grid
                             size={{
                               xs: 12,
-                              sm: 6
-                            }}>
+                              sm: 6,
+                            }}
+                          >
                             <MyTextInput
                               value={item.sort}
                               func={this.changeSort.bind(this, item.id)}
-                              onBlur={this.changeBanner.bind(this, 'sort', item)}
+                              onBlur={this.changeBanner.bind(this, "sort", item)}
                             />
                           </Grid>
                         </TableCell>
-                        <TableCell>{item.city_name ?? 'Все города'}</TableCell>
+                        <TableCell>{item.city_name ?? "Все города"}</TableCell>
                         <TableCell>{item.date_start}</TableCell>
                         <TableCell>{item.date_end}</TableCell>
                         <TableCell>
                           <MyCheckBox
                             value={parseInt(item.is_active) == 1 ? true : false}
-                            func={this.changeBanner.bind(this, 'is_active', item)}
+                            func={this.changeBanner.bind(this, "is_active", item)}
                           />
                         </TableCell>
                       </TableRow>
@@ -1090,31 +1188,45 @@ class SiteBaners_ extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography sx={{ fontWeight: 'bold' }}>Законченные</Typography>
+                  <Typography sx={{ fontWeight: "bold" }}>Законченные</Typography>
                 </AccordionSummary>
-                <AccordionDetails style={{ width: '100%', overflow: 'hidden' }}>
+                <AccordionDetails style={{ width: "100%", overflow: "hidden" }}>
                   <TableContainer>
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell style={{ width: '5%' }}>#</TableCell>
-                          <TableCell style={{ width: '25%' }}>Название</TableCell>
-                          <TableCell style={{ width: '20%' }}>Город</TableCell>
-                          <TableCell style={{ width: '25%' }}>Дата старта</TableCell>
-                          <TableCell style={{ width: '25%' }}>Дата окончания</TableCell>
+                          <TableCell style={{ width: "5%" }}>#</TableCell>
+                          <TableCell style={{ width: "25%" }}>Название</TableCell>
+                          <TableCell style={{ width: "20%" }}>Город</TableCell>
+                          <TableCell style={{ width: "25%" }}>Дата старта</TableCell>
+                          <TableCell style={{ width: "25%" }}>Дата окончания</TableCell>
                         </TableRow>
                       </TableHead>
 
                       <TableBody>
                         {this.state.non_active.map((item, key) => (
-                          <TableRow key={key} hover>
+                          <TableRow
+                            key={key}
+                            hover
+                          >
                             <TableCell>{key + 1}</TableCell>
-                            <TableCell onClick={this.openModal.bind(this, 'bannerEdit', 'Редактирование банера', item.id)} style={{ fontWeight: 700, cursor: 'pointer' }}>{item.name}</TableCell>
-                            <TableCell>{item.city_name ?? 'Все города'}</TableCell>
+                            <TableCell
+                              onClick={this.openModal.bind(
+                                this,
+                                "bannerEdit",
+                                "Редактирование банера",
+                                item.id,
+                              )}
+                              style={{ fontWeight: 700, cursor: "pointer" }}
+                            >
+                              {item.name}
+                            </TableCell>
+                            <TableCell>{item.city_name ?? "Все города"}</TableCell>
                             <TableCell>{item.date_start}</TableCell>
                             <TableCell>{item.date_end}</TableCell>
                           </TableRow>
@@ -1137,13 +1249,16 @@ export default function SiteBaners() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

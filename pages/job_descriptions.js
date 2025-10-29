@@ -1,34 +1,39 @@
-import React from 'react';
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import React from "react";
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
 
-import CloseIcon from '@mui/icons-material/Close';
+import CloseIcon from "@mui/icons-material/Close";
 
-import {MyTextInput, TextEditor, MyAutocomplite} from '@/components/shared/Forms';
+import { MyTextInput, TextEditor, MyAutocomplite } from "@/ui/Forms";
 
-import queryString from 'query-string';
-import {api_laravel, api_laravel_local} from "@/src/api_new";
+import queryString from "query-string";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { IconButton } from "@mui/material";
+import { Close } from "@mui/icons-material";
 
 class AppWorkTable extends React.Component {
   shouldComponentUpdate(nextProps) {
-
     var array1 = nextProps.items;
     var array2 = this.props.items;
 
-    var is_same = array1.length == array2.length && array1.every(function (element, index) { return element === array2[index] });
+    var is_same =
+      array1.length == array2.length &&
+      array1.every(function (element, index) {
+        return element === array2[index];
+      });
 
     return !is_same;
   }
@@ -36,18 +41,26 @@ class AppWorkTable extends React.Component {
   render() {
     return (
       <Table>
-
         <TableBody>
           {this.props.items.map((item, key) => (
             <TableRow key={key}>
               <TableCell
                 onClick={this.props.openWork.bind(this, item.id)}
-                style={{ color: '#c03', cursor: 'pointer', fontWeight: 'bold', width: 50 }}
+                style={{ color: "#c03", cursor: "pointer", fontWeight: "bold", width: 50 }}
               >
                 {key + 1}
               </TableCell>
               <TableCell>
-                <a href={item.link} target="_blank" style={{ color: '#c03', cursor: 'pointer', fontWeight: 'bold', textDecoration: 'underline' }}>
+                <a
+                  href={item.link}
+                  target="_blank"
+                  style={{
+                    color: "#c03",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    textDecoration: "underline",
+                  }}
+                >
                   {item.name}
                 </a>
               </TableCell>
@@ -61,11 +74,14 @@ class AppWorkTable extends React.Component {
 
 class AppWorkTableNews extends React.Component {
   shouldComponentUpdate(nextProps) {
-
     var array1 = nextProps.news;
     var array2 = this.props.news;
 
-    var is_same = array1.length == array2.length && array1.every(function (element, index) { return element === array2[index] });
+    var is_same =
+      array1.length == array2.length &&
+      array1.every(function (element, index) {
+        return element === array2[index];
+      });
 
     return !is_same;
   }
@@ -73,18 +89,27 @@ class AppWorkTableNews extends React.Component {
   render() {
     return (
       <Table>
-
         <TableBody>
           {this.props.news.map((item, key) => (
             <TableRow key={key}>
               <TableCell>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', height: 30 }}>
-                    <span>{item.user}</span><span style={{ display: 'flex' }}>{item.date_time} { this.props.to_delete == 1 ? <CloseIcon style={{ marginLeft: 10, cursor: 'pointer', color: '#c03' }} onClick={this.props.deleteNews.bind(this, item.id)} /> : false }</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", height: 30 }}>
+                    <span>{item.user}</span>
+                    <span style={{ display: "flex" }}>
+                      {item.date_time}{" "}
+                      {this.props.to_delete == 1 ? (
+                        <CloseIcon
+                          style={{ marginLeft: 10, cursor: "pointer", color: "#c03" }}
+                          onClick={this.props.deleteNews.bind(this, item.id)}
+                        />
+                      ) : (
+                        false
+                      )}
+                    </span>
                   </div>
-                  <div dangerouslySetInnerHTML={{__html: item.text}} />
+                  <div dangerouslySetInnerHTML={{ __html: item.text }} />
                 </div>
-
               </TableCell>
             </TableRow>
           ))}
@@ -99,8 +124,8 @@ class JobDescriptions_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'job_descriptions',
-      module_name: '',
+      module: "job_descriptions",
+      module_name: "",
       is_load: false,
 
       items: [],
@@ -110,26 +135,26 @@ class JobDescriptions_ extends React.Component {
       modalDialogNews: false,
 
       itemsEdit: null,
-      nameWork: '',
+      nameWork: "",
 
       itemsNew: null,
       chengeItemNew1: null,
-      newText: '',
+      newText: "",
 
       kind: 999,
-      user: null
+      user: null,
     };
   }
 
   async componentDidMount() {
-    let data = await this.getData('get_all');
+    let data = await this.getData("get_all");
 
     this.setState({
       module_name: data.module_info.name,
       items: data.items,
       news: data.news,
       kind: data.user.kind,
-      user: data.user
+      user: data.user,
     });
 
     document.title = data.module_info.name;
@@ -163,14 +188,13 @@ class JobDescriptions_ extends React.Component {
   }
 
   async saveEdit() {
-
-    let itemsEdit = this.state.itemsEdit
+    let itemsEdit = this.state.itemsEdit;
 
     let data = {
       work: itemsEdit.item,
     };
 
-    let res = await this.getData('save_edit', data);
+    let res = await this.getData("save_edit", data);
 
     if (res.st === false) {
       alert(res.text);
@@ -178,10 +202,10 @@ class JobDescriptions_ extends React.Component {
       this.setState({
         modalDialog: false,
         itemsEdit: null,
-        nameWork: '',
+        nameWork: "",
       });
 
-      let data = await this.getData('get_all');
+      let data = await this.getData("get_all");
 
       this.setState({
         items: data.items,
@@ -191,14 +215,13 @@ class JobDescriptions_ extends React.Component {
   }
 
   async saveNew() {
-
-    let itemsNew = this.state.itemsNew
+    let itemsNew = this.state.itemsNew;
 
     let data = {
-      work: itemsNew.item
+      work: itemsNew.item,
     };
 
-    let res = await this.getData('save_new', data);
+    let res = await this.getData("save_new", data);
 
     if (res.st === false) {
       alert(res.text);
@@ -208,7 +231,7 @@ class JobDescriptions_ extends React.Component {
         itemsNew: null,
       });
 
-      let data = await this.getData('get_all');
+      let data = await this.getData("get_all");
 
       this.setState({
         items: data.items,
@@ -218,22 +241,21 @@ class JobDescriptions_ extends React.Component {
   }
 
   async saveNewNews() {
-
     let data = {
-      text: this.state.newText
+      text: this.state.newText,
     };
 
-    let res = await this.getData('save_new_news', data);
+    let res = await this.getData("save_new_news", data);
 
     if (res.st === false) {
       alert(res.text);
     } else {
       this.setState({
         modalDialogNews: false,
-        newText: '',
+        newText: "",
       });
 
-      let data = await this.getData('get_all');
+      let data = await this.getData("get_all");
 
       this.setState({
         items: data.items,
@@ -247,7 +269,7 @@ class JobDescriptions_ extends React.Component {
       id: id,
     };
 
-    let res = await this.getData('get_one', data);
+    let res = await this.getData("get_one", data);
 
     this.setState({
       itemsEdit: res,
@@ -257,26 +279,26 @@ class JobDescriptions_ extends React.Component {
   }
 
   async deleteNews(id) {
-    if(confirm("Удалить новость ?")) {
+    if (confirm("Удалить новость ?")) {
       let data = {
         id: id,
       };
 
-      let res = await this.getData('delete_news', data);
+      let res = await this.getData("delete_news", data);
 
-      setTimeout( async () => {
-        let data = await this.getData('get_all');
+      setTimeout(async () => {
+        let data = await this.getData("get_all");
 
         this.setState({
           items: data.items,
-          news: data.news
+          news: data.news,
         });
-      }, 300 )
+      }, 300);
     }
   }
 
   async openNewWork() {
-    let res = await this.getData('get_all_for_new');
+    let res = await this.getData("get_all_for_new");
 
     this.setState({
       itemsNew: res,
@@ -284,10 +306,10 @@ class JobDescriptions_ extends React.Component {
     });
   }
 
-  openNews(){
+  openNews() {
     this.setState({
       modalDialogNews: true,
-      newText: ''
+      newText: "",
     });
   }
 
@@ -297,12 +319,12 @@ class JobDescriptions_ extends React.Component {
 
     item.item[[type]] = data;
 
-    if (type == 'dow' && data == 12) {
-      item.times_add = [{ time_action: '19:00' }];
-      item.times_close = '23:00';
+    if (type == "dow" && data == 12) {
+      item.times_add = [{ time_action: "19:00" }];
+      item.times_close = "23:00";
     }
 
-    if (type == 'dow' && data == 13) {
+    if (type == "dow" && data == 13) {
       item.times_add = [];
     }
 
@@ -317,12 +339,12 @@ class JobDescriptions_ extends React.Component {
 
     item.item[[type]] = data;
 
-    if (type == 'dow' && data == 12) {
-      item.times_add = [{ time_action: '19:00' }];
-      item.times_close = '23:00';
+    if (type == "dow" && data == 12) {
+      item.times_add = [{ time_action: "19:00" }];
+      item.times_close = "23:00";
     }
 
-    if (type == 'dow' && data == 13) {
+    if (type == "dow" && data == 13) {
       item.times_add = [];
     }
 
@@ -345,32 +367,53 @@ class JobDescriptions_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
+        <Backdrop
+          open={this.state.is_load}
+          style={{ zIndex: 99 }}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         {!this.state.itemsEdit ? null : (
           <Dialog
             open={this.state.modalDialog}
-            maxWidth={'md'}
+            maxWidth={"md"}
             onClose={() => {
               this.setState({
                 modalDialog: false,
                 itemsEdit: null,
-                nameWork: '',
+                nameWork: "",
               });
             }}
           >
-            <DialogTitle>{this.state.nameWork}</DialogTitle>
+            <DialogTitle>
+              {this.state.nameWork}
+              <IconButton
+                onClick={() => {
+                  this.setState({
+                    modalDialog: false,
+                    itemsEdit: null,
+                    nameWork: "",
+                  });
+                }}
+                style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
             <DialogContent style={{ paddingTop: 10 }}>
-              <Grid container spacing={3}>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     value={this.state.itemsEdit.item.name}
-                    func={this.chengeItem.bind(this, 'name')}
+                    func={this.chengeItem.bind(this, "name")}
                     label="Название"
                   />
                 </Grid>
@@ -378,11 +421,12 @@ class JobDescriptions_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     value={this.state.itemsEdit.item.link}
-                    func={this.chengeItem.bind(this, 'link')}
+                    func={this.chengeItem.bind(this, "link")}
                     label="Ссылка"
                   />
                 </Grid>
@@ -390,24 +434,28 @@ class JobDescriptions_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
-                   <MyAutocomplite
-                    label='Должности'
+                    sm: 12,
+                  }}
+                >
+                  <MyAutocomplite
+                    label="Должности"
                     multiple={true}
                     data={this.state.itemsEdit.apps}
                     value={this.state.itemsEdit.item.app_id}
-                    func={ (event, value) => {
+                    func={(event, value) => {
                       let this_storages = this.state.itemsEdit;
                       this_storages.item.app_id = value;
-                      this.setState({ itemsEdit: this_storages }) } }
-                    />
+                      this.setState({ itemsEdit: this_storages });
+                    }}
+                  />
                 </Grid>
-
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button color="primary" onClick={this.saveEdit.bind(this)}>
+              <Button
+                color="primary"
+                onClick={this.saveEdit.bind(this)}
+              >
                 Сохранить
               </Button>
             </DialogActions>
@@ -416,22 +464,36 @@ class JobDescriptions_ extends React.Component {
         {!this.state.itemsNew ? null : (
           <Dialog
             open={this.state.modalDialogNew}
-            maxWidth={'md'}
+            maxWidth={"md"}
             onClose={() => {
               this.setState({ modalDialogNew: false });
             }}
           >
-            <DialogTitle>Новая инструкция</DialogTitle>
+            <DialogTitle>
+              Новая инструкция
+              <IconButton
+                onClick={() => {
+                  this.setState({ modalDialogNew: false });
+                }}
+                style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
             <DialogContent style={{ paddingTop: 10 }}>
-              <Grid container spacing={3}>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     value={this.state.itemsNew.item.name}
-                    func={this.chengeItemNew.bind(this, 'name')}
+                    func={this.chengeItemNew.bind(this, "name")}
                     label="Название"
                   />
                 </Grid>
@@ -439,11 +501,12 @@ class JobDescriptions_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyTextInput
                     value={this.state.itemsNew.item.link}
-                    func={this.chengeItemNew.bind(this, 'link')}
+                    func={this.chengeItemNew.bind(this, "link")}
                     label="Ссылка"
                   />
                 </Grid>
@@ -451,29 +514,28 @@ class JobDescriptions_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
-                   <MyAutocomplite
-                    label='Должности'
+                    sm: 12,
+                  }}
+                >
+                  <MyAutocomplite
+                    label="Должности"
                     multiple={true}
                     data={this.state.itemsNew.apps}
                     value={this.state.itemsNew.item.app_id}
-                    func={ (event, value) => {
+                    func={(event, value) => {
                       let this_storages = this.state.itemsNew;
                       this_storages.item.app_id = value;
-                      this.setState({ itemsNew: this_storages }) } }
-                    />
+                      this.setState({ itemsNew: this_storages });
+                    }}
+                  />
                 </Grid>
-
-
-
-
-
-
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button color="primary" onClick={this.saveNew.bind(this)}>
+              <Button
+                color="primary"
+                onClick={this.saveNew.bind(this)}
+              >
                 Сохранить
               </Button>
             </DialogActions>
@@ -481,49 +543,72 @@ class JobDescriptions_ extends React.Component {
         )}
         <Dialog
           open={this.state.modalDialogNews}
-          maxWidth={'md'}
+          maxWidth={"md"}
           onClose={() => {
             this.setState({ modalDialogNews: false });
           }}
         >
-          <DialogTitle>Новая новость</DialogTitle>
+          <DialogTitle>
+            Новая новость
+            <IconButton
+              onClick={() => {
+                this.setState({ modalDialogNews: false });
+              }}
+              style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
           <DialogContent style={{ paddingTop: 10 }}>
-            <Grid container spacing={3}>
+            <Grid
+              container
+              spacing={3}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <TextEditor
                   value={this.state.newText}
-                  func={ (text) => { this.setState({ newText: text }); } }
-
+                  func={(text) => {
+                    this.setState({ newText: text });
+                  }}
                 />
               </Grid>
-
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button color="primary" onClick={this.saveNewNews.bind(this)}>
+            <Button
+              color="primary"
+              onClick={this.saveNewNews.bind(this)}
+            >
               Сохранить
             </Button>
           </DialogActions>
         </Dialog>
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          { parseInt(this.state.kind) >= 3 || this.state.user?.app_type == 'dir' ? null :
+          {parseInt(this.state.kind) >= 3 || this.state.user?.app_type == "dir" ? null : (
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <Button
                 variant="contained"
                 color="primary"
@@ -532,14 +617,15 @@ class JobDescriptions_ extends React.Component {
                 Добавить инструкцию
               </Button>
             </Grid>
-          }
+          )}
 
-          { parseInt(this.state.kind) >= 3 || this.state.user?.app_type == 'dir' ? null :
+          {parseInt(this.state.kind) >= 3 || this.state.user?.app_type == "dir" ? null : (
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <Button
                 variant="contained"
                 color="primary"
@@ -548,38 +634,47 @@ class JobDescriptions_ extends React.Component {
                 Добавить новость
               </Button>
             </Grid>
-          }
+          )}
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
-
-            { this.state.items.length > 0 ?
+              sm: 6,
+            }}
+          >
+            {this.state.items.length > 0 ? (
               <AppWorkTable
                 items={this.state.items}
-                openWork={ parseInt(this.state.kind) >= 3 || this.state.user?.app_type == 'dir' ? () => {} : this.openWork.bind(this)}
+                openWork={
+                  parseInt(this.state.kind) >= 3 || this.state.user?.app_type == "dir"
+                    ? () => {}
+                    : this.openWork.bind(this)
+                }
                 kind={this.state.kind}
-              /> : null
-            }
+              />
+            ) : null}
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
-
-            { this.state.news.length > 0 ?
+              sm: 6,
+            }}
+          >
+            {this.state.news.length > 0 ? (
               <AppWorkTableNews
                 news={this.state.news}
-                deleteNews={ parseInt(this.state.kind) >= 3 || this.state.user?.app_type == 'dir' ? () => {} : this.deleteNews.bind(this)}
-                to_delete={ parseInt(this.state.kind) >= 3 || this.state.user?.app_type == 'dir' ? 0 : 1 }
-              /> : null
-            }
+                deleteNews={
+                  parseInt(this.state.kind) >= 3 || this.state.user?.app_type == "dir"
+                    ? () => {}
+                    : this.deleteNews.bind(this)
+                }
+                to_delete={
+                  parseInt(this.state.kind) >= 3 || this.state.user?.app_type == "dir" ? 0 : 1
+                }
+              />
+            ) : null}
           </Grid>
-
         </Grid>
       </>
     );
@@ -591,13 +686,16 @@ export default function JobDescriptions() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

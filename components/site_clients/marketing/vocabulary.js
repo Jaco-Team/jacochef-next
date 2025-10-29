@@ -11,11 +11,11 @@ const trafficMap = {
   email: "Email",
   social: "Соцсети",
   maps: "Карты",
-  none: "Не определено"
-}
+  none: "Не определено",
+};
 
 export default function vocabulary(term) {
-  if (!term) return term
-  const key = term.toString().toLowerCase().trim()
-  return trafficMap[key] || term
+  if (!term) return term;
+  const key = term.toString().toLowerCase().trim();
+  return trafficMap[key] || term;
 }

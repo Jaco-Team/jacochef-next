@@ -13,8 +13,8 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
   const polygonsRef = useRef([]); // Реф для хранения полигонов
 
   const handleClickCallback = (e) => {
-    const target = e.get('target');
-    const zoneIndex = polygonsRef.current.findIndex(polygon => polygon === target);
+    const target = e.get("target");
+    const zoneIndex = polygonsRef.current.findIndex((polygon) => polygon === target);
 
     if (zoneIndex !== -1) {
       clickCallback(zoneIndex);
@@ -30,7 +30,7 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
         [coords],
         {
           geometry: { fillRule: "nonZero" },
-          hintContent: `Зона ${index + 1}`
+          hintContent: `Зона ${index + 1}`,
         },
         {
           fillOpacity: 0.4,
@@ -38,14 +38,14 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
           strokeColor: isActive ? strokePrimaryActive : strokePrimaryInactive,
           strokeWidth: 5,
           // Делаем основные зоны более кликабельными
-          interactivityModel: 'default#transparent',
-          cursor: 'pointer',
+          interactivityModel: "default#transparent",
+          cursor: "pointer",
           zIndex: isActive ? 1000 : 100, // Активные зоны поверх
-        }
+        },
       );
 
       if (!readonly) {
-        polygon.events.add('click', handleClickCallback);
+        polygon.events.add("click", handleClickCallback);
       }
 
       mapRef.current.geoObjects.add(polygon);
@@ -62,7 +62,7 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
         {
           hintContent: `Другая зона ${index + 1}`,
           // Отключаем взаимодействие для других зон
-          interactivityModel: 'default#silent'
+          interactivityModel: "default#silent",
         },
         {
           fillOpacity: 0.3, // Более прозрачные
@@ -70,7 +70,7 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
           strokeColor: strokeSecondary,
           strokeWidth: 3,
           zIndex: 10, // Ниже основных зон
-        }
+        },
       );
 
       mapRef.current.geoObjects.add(polygon);
@@ -99,7 +99,7 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
         },
         {
           searchControlProvider: "yandex#search",
-        }
+        },
       );
 
       polygonsRef.current = []; // Очищаем реф

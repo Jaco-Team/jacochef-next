@@ -1,69 +1,79 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Table from '@mui/material/Table';
-import TableHead from '@mui/material/TableHead';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableRow from '@mui/material/TableRow';
-import TableFooter from '@mui/material/TableFooter';
-import Paper from '@mui/material/Paper';
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableRow from "@mui/material/TableRow";
+import TableFooter from "@mui/material/TableFooter";
+import Paper from "@mui/material/Paper";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import Typography from '@mui/material/Typography';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import CloseIcon from '@mui/icons-material/Close';
-import AddIcon from '@mui/icons-material/Add';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import Typography from "@mui/material/Typography";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import CloseIcon from "@mui/icons-material/Close";
+import AddIcon from "@mui/icons-material/Add";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
 
-import PropTypes from 'prop-types';
-import Avatar from '@mui/material/Avatar';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemText from '@mui/material/ListItemText';
-import ListItemButton from '@mui/material/ListItemButton';
+import PropTypes from "prop-types";
+import Avatar from "@mui/material/Avatar";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemAvatar from "@mui/material/ListItemAvatar";
+import ListItemText from "@mui/material/ListItemText";
+import ListItemButton from "@mui/material/ListItemButton";
 
-import HomeWorkIcon from '@mui/icons-material/HomeWork';
-import SyncAltIcon from '@mui/icons-material/SyncAlt';
+import HomeWorkIcon from "@mui/icons-material/HomeWork";
+import SyncAltIcon from "@mui/icons-material/SyncAlt";
 
-import LooksOneIcon from '@mui/icons-material/LooksOne';
-import LooksTwoIcon from '@mui/icons-material/LooksTwo';
-import Looks3Icon from '@mui/icons-material/Looks3';
-import Looks4Icon from '@mui/icons-material/Looks4';
+import LooksOneIcon from "@mui/icons-material/LooksOne";
+import LooksTwoIcon from "@mui/icons-material/LooksTwo";
+import Looks3Icon from "@mui/icons-material/Looks3";
+import Looks4Icon from "@mui/icons-material/Looks4";
 
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import CheckIcon from '@mui/icons-material/Check';
-import SendIcon from '@mui/icons-material/Send';
-import TimeToLeaveIcon from '@mui/icons-material/TimeToLeave';
-import InfoIcon from '@mui/icons-material/Info';
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import CheckIcon from "@mui/icons-material/Check";
+import SendIcon from "@mui/icons-material/Send";
+import TimeToLeaveIcon from "@mui/icons-material/TimeToLeave";
+import InfoIcon from "@mui/icons-material/Info";
 
-import { MyDatePickerGraph, MySelect, MyTextInput, MyTimePicker, MyCheckBox, MyAutocomplite2, MyDatePickerNew } from '@/components/shared/Forms';
-import { PickersDay } from '@mui/x-date-pickers/PickersDay';
+import {
+  MyDatePickerGraph,
+  MySelect,
+  MyTextInput,
+  MyTimePicker,
+  MyCheckBox,
+  MyAutocomplite2,
+  MyDatePickerNew,
+} from "@/ui/Forms";
+import { PickersDay } from "@mui/x-date-pickers/PickersDay";
 
-import queryString from 'query-string';
+import queryString from "query-string";
 
-import dayjs from 'dayjs';
-import handleUserAccess from '@/src/helpers/access/handleUserAccess';
-import TestAccess from '@/components/shared/TestAccess';
-import MyAlert from '@/components/shared/MyAlert';
+import dayjs from "dayjs";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import TestAccess from "@/ui/TestAccess";
+import MyAlert from "@/ui/MyAlert";
+import { IconButton } from "@mui/material";
+import { Close } from "@mui/icons-material";
 
 function SimpleDialog(props) {
   const { onClose, selectedValue, open } = props;
@@ -77,12 +87,15 @@ function SimpleDialog(props) {
   };
 
   return (
-    <Dialog onClose={handleClose} open={open}>
+    <Dialog
+      onClose={handleClose}
+      open={open}
+    >
       <List sx={{ pt: 0 }}>
         <ListItem
           autoFocus
           button
-          onClick={() => handleListItemClick('addAccount')}
+          onClick={() => handleListItemClick("addAccount")}
         >
           <ListItemAvatar>
             <Avatar>
@@ -95,7 +108,7 @@ function SimpleDialog(props) {
         <ListItem
           autoFocus
           button
-          onClick={() => handleListItemClick('addAccount')}
+          onClick={() => handleListItemClick("addAccount")}
         >
           <ListItemAvatar>
             <Avatar>
@@ -107,7 +120,7 @@ function SimpleDialog(props) {
         <ListItem
           autoFocus
           button
-          onClick={() => handleListItemClick('addAccount')}
+          onClick={() => handleListItemClick("addAccount")}
         >
           <ListItemAvatar>
             <Avatar>
@@ -152,12 +165,11 @@ TabPanel.propTypes = {
 function a11yProps(index) {
   return {
     id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
+    "aria-controls": `simple-tabpanel-${index}`,
   };
 }
 
 class WorkSchedule_Confirm extends React.Component {
-
   onClose() {
     this.props.methodConfirm();
 
@@ -173,19 +185,24 @@ class WorkSchedule_Confirm extends React.Component {
         onClose={this.props.onClose.bind(this)}
       >
         <DialogTitle>Подтвердите действие</DialogTitle>
-        <DialogContent align="center" style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Typography style={{ fontWeight: 'bold' }}>
-            {this.props.textConfirm}
-          </Typography>
+        <DialogContent
+          align="center"
+          style={{ paddingBottom: 10, paddingTop: 10 }}
+        >
+          <Typography style={{ fontWeight: "bold" }}>{this.props.textConfirm}</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={this.props.onClose.bind(this)}>Отмена</Button>
-          <Button onClick={this.onClose.bind(this)} color="success">Ok</Button>
+          <Button
+            onClick={this.onClose.bind(this)}
+            color="success"
+          >
+            Ok
+          </Button>
         </DialogActions>
       </Dialog>
     );
   }
-
 }
 
 class HeaderItem extends React.Component {
@@ -198,89 +215,146 @@ class HeaderItem extends React.Component {
           <TableCell style={{ minWidth: 140, minHeight: 38 }}></TableCell>
           <TableCell style={{ minWidth: 165, minHeight: 38 }}>Число месяца</TableCell>
 
-          {this.props.kind == 'manager' || this.props.kind == 'other' ? null : (
-            <TableCell style={{ textAlign: 'center' }}>
-              <SyncAltIcon style={{ cursor: 'pointer', display: 'block', margin: 'auto' }} onClick={this.props.openAddUser.bind(this)}/>
+          {this.props.kind == "manager" || this.props.kind == "other" ? null : (
+            <TableCell style={{ textAlign: "center" }}>
+              <SyncAltIcon
+                style={{ cursor: "pointer", display: "block", margin: "auto" }}
+                onClick={this.props.openAddUser.bind(this)}
+              />
             </TableCell>
           )}
 
-          {this.props.kind == 'manager' || this.props.kind == 'other' ? null : <TableCell />}
+          {this.props.kind == "manager" || this.props.kind == "other" ? null : <TableCell />}
 
           {this.props.days.map((item, key) => (
-            <TableCell className="min_block" style={{ backgroundColor: item.day == 'Пт' || item.day == 'Сб' || item.day == 'Вс' ? '#ffe9bd' : '#fff' }} key={key}>
+            <TableCell
+              className="min_block"
+              style={{
+                backgroundColor:
+                  item.day == "Пт" || item.day == "Сб" || item.day == "Вс" ? "#ffe9bd" : "#fff",
+              }}
+              key={key}
+            >
               {item.date}
             </TableCell>
           ))}
 
           <TableCell></TableCell>
+          <TableCell></TableCell>
 
           {this.props.dataKey > 0 ? (
             <>
-              <TableCell style={{ textAlign: 'center' }}></TableCell>
-              <TableCell style={{ textAlign: 'center' }}></TableCell>
+              <TableCell style={{ textAlign: "center" }}></TableCell>
+              <TableCell style={{ textAlign: "center" }}></TableCell>
             </>
           ) : (
             <>
-              <TableCell style={{ textAlign: 'center', cursor: 'pointer' }}
-                onClick={this.props.kind == 'manager' || this.props.kind == 'dir' ? () => {} : this.props.bonus_other ? () => {} : this.props.changeDopBonus}
+              <TableCell
+                style={{ textAlign: "center", cursor: "pointer" }}
+                onClick={
+                  this.props.kind == "manager" || this.props.kind == "dir"
+                    ? () => {}
+                    : this.props.bonus_other
+                      ? () => {}
+                      : this.props.changeDopBonus
+                }
               >
-                {!this.props.bonus_other ? '+ / -' : parseInt(this.props.bonus_other) == 1 ? <AddIcon style={{ fontSize: 30, color: 'green' }} /> :
-                  <CloseIcon style={{ fontSize: 30, color: 'red' }} />}
+                {!this.props.bonus_other ? (
+                  "+ / -"
+                ) : parseInt(this.props.bonus_other) == 1 ? (
+                  <AddIcon style={{ fontSize: 30, color: "green" }} />
+                ) : (
+                  <CloseIcon style={{ fontSize: 30, color: "red" }} />
+                )}
               </TableCell>
-              <TableCell style={{ textAlign: 'center', cursor: 'pointer' }} onClick={this.props.kind == 'manager' || this.props.kind == 'dir' ? () => {} : this.props.changeLVDir}>
-
-              </TableCell>
+              <TableCell
+                style={{ textAlign: "center", cursor: "pointer" }}
+                onClick={
+                  this.props.kind == "manager" || this.props.kind == "dir"
+                    ? () => {}
+                    : this.props.changeLVDir
+                }
+              ></TableCell>
             </>
           )}
 
-          <TableCell style={{ textAlign: 'center' }}></TableCell>
-          <TableCell style={{ textAlign: 'center' }}></TableCell>
-          <TableCell style={{ textAlign: 'center' }}></TableCell>
-          <TableCell style={{ textAlign: 'center' }}></TableCell>
+          <TableCell style={{ textAlign: "center" }}></TableCell>
+          <TableCell style={{ textAlign: "center" }}></TableCell>
+          <TableCell style={{ textAlign: "center" }}></TableCell>
+          <TableCell style={{ textAlign: "center" }}></TableCell>
 
-          <TableCell style={{ textAlign: 'center' }}></TableCell>
-          <TableCell style={{ textAlign: 'center' }}></TableCell>
-          { this.props.kind == 'manager' || this.props.kind == 'dir' ? false :
-            this.props.part == 1 ? false :
-            <TableCell style={{ textAlign: 'center' }}></TableCell>
-          }
+          <TableCell style={{ textAlign: "center" }}></TableCell>
+          <TableCell style={{ textAlign: "center" }}></TableCell>
+          {this.props.kind == "manager" || this.props.kind == "dir" ? (
+            false
+          ) : this.props.part == 1 ? (
+            false
+          ) : (
+            <TableCell style={{ textAlign: "center" }}></TableCell>
+          )}
         </TableRow>
 
         <TableRow>
           <TableCell style={{ minWidth: 140, minHeight: 38 }}>Сотрудник</TableCell>
           <TableCell style={{ minWidth: 165, minHeight: 38 }}>Должность</TableCell>
 
-          {this.props.kind == 'manager' || this.props.kind == 'other' ? null : <TableCell></TableCell>}
-          {this.props.kind == 'manager' || this.props.kind == 'other' ? null : <TableCell></TableCell>}
+          {this.props.kind == "manager" || this.props.kind == "other" ? null : (
+            <TableCell></TableCell>
+          )}
+          {this.props.kind == "manager" || this.props.kind == "other" ? null : (
+            <TableCell></TableCell>
+          )}
 
           {this.props.days.map((item, key) => (
-            <TableCell className="min_block" style={{ backgroundColor: item.day == 'Пт' || item.day == 'Сб' || item.day == 'Вс' ? '#ffe9bd' : '#fff'}} key={key}>
+            <TableCell
+              className="min_block"
+              style={{
+                backgroundColor:
+                  item.day == "Пт" || item.day == "Сб" || item.day == "Вс" ? "#ffe9bd" : "#fff",
+              }}
+              key={key}
+            >
               {item.day}
             </TableCell>
           ))}
 
           <TableCell style={{ textAlign: 'center' }}>За 1ч</TableCell>
+          <TableCell style={{ textAlign: 'center' }}>За 1ч + доплата</TableCell>
 
-          <TableCell style={{ textAlign: 'center' }}>Командный бонус</TableCell>
-          <TableCell style={{ textAlign: 'center' }}>За часы</TableCell>
-          <TableCell style={{ textAlign: 'center' }}>Ошибки</TableCell>
-          <TableCell style={{ textAlign: 'center' }}>Бонус</TableCell>
+          <TableCell style={{ textAlign: "center" }}>Командный бонус</TableCell>
+          <TableCell style={{ textAlign: "center" }}>За часы</TableCell>
+          <TableCell style={{ textAlign: "center" }}>Ошибки</TableCell>
+          <TableCell style={{ textAlign: "center" }}>Бонус</TableCell>
 
-          {this.props.show_zp == 1 || this.props.show_zp == 0 ? <TableCell style={{ textAlign: 'center' }}>Всего</TableCell> : null}
+          {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+            <TableCell style={{ textAlign: "center" }}>Всего</TableCell>
+          ) : null}
 
-          <TableCell style={{ textAlign: 'center' }}>Выдано</TableCell>
+          <TableCell style={{ textAlign: "center" }}>Выдано</TableCell>
 
-          <TableCell style={{ textAlign: 'center' }}>Перечислено на карты</TableCell>
-          <TableCell style={{ textAlign: 'center' }}>Сумма к выплате</TableCell>
-          { this.props.kind == 'manager' || this.props.kind == 'dir' ? false :
-            this.props.part == 1 ? false :
-            <TableCell style={{ textAlign: 'center' }}>Премия по ведомости</TableCell>
-          }
+          <TableCell style={{ textAlign: "center" }}>Перечислено на карты</TableCell>
+          <TableCell style={{ textAlign: "center" }}>Сумма к выплате</TableCell>
+          {this.props.kind == "manager" || this.props.kind == "dir" ? (
+            false
+          ) : this.props.part == 1 ? (
+            false
+          ) : (
+            <TableCell style={{ textAlign: "center" }}>Премия по ведомости</TableCell>
+          )}
         </TableRow>
 
-        <TableRow style={{ backgroundColor: '#e5e5e5' }}>
-          <TableCell style={{ textAlign: 'center', cursor: 'pointer' }} colSpan={this.props.days.length + 3 + 8 + 2}
-            onClick={this.props.kind == 'manager' ? () => {} : this.props.editSmena ? this.props.editSmena.bind(this, this.props.item.smena_id) : () => console.log('no_edit_smena')}>
+        <TableRow style={{ backgroundColor: "#e5e5e5" }}>
+          <TableCell
+            style={{ textAlign: "center", cursor: "pointer" }}
+            colSpan={this.props.days.length + 3 + 8 + 2}
+            onClick={
+              this.props.kind == "manager"
+                ? () => {}
+                : this.props.editSmena
+                  ? this.props.editSmena.bind(this, this.props.item.smena_id)
+                  : () => console.log("no_edit_smena")
+            }
+          >
             {this.props.item.data}
           </TableCell>
         </TableRow>
@@ -290,7 +364,6 @@ class HeaderItem extends React.Component {
 }
 
 class WorkSchedule_Table extends React.Component {
-
   constructor(props) {
     super(props);
 
@@ -308,40 +381,52 @@ class WorkSchedule_Table extends React.Component {
     this.setState({
       index: newIndex,
     });
-
   }
 
   shouldComponentUpdate(nextProps, nextState) {
     var array1 = nextProps.test;
     var array2 = this.props.test;
 
-    var is_same = array1.length == array2.length && array1.every(function (element, index) { return element === array2[index] }) && nextState.index === this.state.index;
+    var is_same =
+      array1.length == array2.length &&
+      array1.every(function (element, index) {
+        return element === array2[index];
+      }) &&
+      nextState.index === this.state.index;
 
     return !is_same;
- }
+  }
 
   render() {
-    let check_period = this.props.test.find((item) => item.row !== 'header' && parseInt(item.data.check_period) == 0);
+    let check_period = this.props.test.find(
+      (item) => item.row !== "header" && parseInt(item.data.check_period) == 0,
+    );
 
     //this.props.openModalDirBonus;
 
     // console.log('this.props', this.props);
 
     return (
-      <TableContainer component={Paper} style={{ paddingRight: 0 }}>
-        <Table id={this.props.numberChoose === 1 ? 'table_graph_one' : 'table_graph_two'}>
+      <TableContainer
+        component={Paper}
+        style={{ paddingRight: 0 }}
+      >
+        <Table id={this.props.numberChoose === 1 ? "table_graph_one" : "table_graph_two"}>
           <TableBody>
             {!check_period ? null : (
               <TableRow>
-                <TableCell colSpan={this.props.number.days.length + 3 + 8 + 2} style={{ textAlign: 'center', color: 'red', fontSize: '3rem'}}>
-                  Чтобы увидеть зарплату, надо закрыть все ошибки в модуле
-                  "Регистрация ошибок кухни"
+                <TableCell
+                  colSpan={this.props.number.days.length + 3 + 8 + 2}
+                  style={{ textAlign: "center", color: "red", fontSize: "3rem" }}
+                >
+                  Чтобы увидеть зарплату, надо закрыть все ошибки в модуле "Регистрация ошибок
+                  кухни"
                 </TableCell>
               </TableRow>
             )}
 
             {this.props.test.map((item, key) =>
-              item.row == 'header' ? (
+              item.row == "header" ? (
                 <React.Fragment key={key}>
                   <HeaderItem
                     bonus_other={this.props.number.bonus_other}
@@ -362,90 +447,188 @@ class WorkSchedule_Table extends React.Component {
                   />
 
                   {parseInt(key) == 0 &&
-                  this.props.kind !== 'manager' &&
-                  this.props.kind !== 'other' ? (
+                  this.props.kind !== "manager" &&
+                  this.props.kind !== "other" ? (
                     <TableRow>
-                      <TableCell colSpan={this.props.number.days.length + 3 + 8 + 2} style={{ textAlign: 'left', fontSize: '3rem', cursor: 'pointer' }}
-                        onClick={this.props.addSmena.bind(this)}>
+                      <TableCell
+                        colSpan={this.props.number.days.length + 3 + 8 + 2}
+                        style={{ textAlign: "left", fontSize: "3rem", cursor: "pointer" }}
+                        onClick={this.props.addSmena.bind(this)}
+                      >
                         Добавить смену
                       </TableCell>
                     </TableRow>
                   ) : null}
                 </React.Fragment>
               ) : (
-                <TableRow key={key} style={{ backgroundColor: item?.color ? '#D3D3D3' : '#fff'}}>
-
-                  <TableCell className="name_pinning"
+                <TableRow
+                  key={key}
+                  style={{ backgroundColor: item?.color ? "#D3D3D3" : "#fff" }}
+                >
+                  <TableCell
+                    className="name_pinning"
                     style={{
-                      background: item?.color ? '#D3D3D3' : parseInt(item.data.type) == 0 ? '#fff' : parseInt(item.data.type) == 1 ? '#fff' : parseInt(item.data.type) == 2 ? '#ffcc00' : '#c03',
-                      color: item?.color ? '#000' : parseInt(item.data.type) == 0 ? '#000' : parseInt(item.data.type) == 1 ? '#000' : parseInt(item.data.type) == 2 ? '#000' : '#fff'
+                      background: item?.color
+                        ? "#D3D3D3"
+                        : parseInt(item.data.type) == 0
+                          ? "#fff"
+                          : parseInt(item.data.type) == 1
+                            ? "#fff"
+                            : parseInt(item.data.type) == 2
+                              ? "#ffcc00"
+                              : "#c03",
+                      color: item?.color
+                        ? "#000"
+                        : parseInt(item.data.type) == 0
+                          ? "#000"
+                          : parseInt(item.data.type) == 1
+                            ? "#000"
+                            : parseInt(item.data.type) == 2
+                              ? "#000"
+                              : "#fff",
                     }}
-                    onClick={this.props.kind == 'manager' ? () => {} : this.props.openM.bind(this, item.data)}>
+                    onClick={
+                      this.props.kind == "manager"
+                        ? () => {}
+                        : this.props.openM.bind(this, item.data)
+                    }
+                  >
                     {item.data.user_name}
                   </TableCell>
 
-                  <TableCell style={{ minWidth: 165, minHeight: 38, cursor: 'pointer' }} onClick={this.clickAppName.bind(this, key)}>{item.data.app_name}</TableCell>
+                  <TableCell
+                    style={{ minWidth: 165, minHeight: 38, cursor: "pointer" }}
+                    onClick={this.clickAppName.bind(this, key)}
+                  >
+                    {item.data.app_name}
+                  </TableCell>
 
-                  {this.props.kind == 'manager' ? null : item.data.smena_id === '-1' ? <TableCell /> : (
+                  {this.props.kind == "manager" ? null : item.data.smena_id === "-1" ? (
+                    <TableCell />
+                  ) : (
                     <TableCell className="checkBox">
-                      <MyCheckBox style={{ justifyContent: 'center' }} func={this.props.addUser.bind(this, item.data)} size={'small'} defaultChecked={false} />
+                      <MyCheckBox
+                        style={{ justifyContent: "center" }}
+                        func={this.props.addUser.bind(this, item.data)}
+                        size={"small"}
+                        defaultChecked={false}
+                      />
                     </TableCell>
                   )}
 
-                  {this.props.kind == 'manager' ? null : item.data.smena_id === '-1' ? <TableCell /> : (
-                    <TableCell style={{ textAlign: 'center' }}>
-                      <SyncAltIcon style={{ cursor: 'pointer', display: 'block', margin: 'auto' }} onClick={this.props.mix.bind(this, item.data)}/>
+                  {this.props.kind == "manager" ? null : item.data.smena_id === "-1" ? (
+                    <TableCell />
+                  ) : (
+                    <TableCell style={{ textAlign: "center" }}>
+                      <SyncAltIcon
+                        style={{ cursor: "pointer", display: "block", margin: "auto" }}
+                        onClick={this.props.mix.bind(this, item.data)}
+                      />
                     </TableCell>
                   )}
 
                   {item.data.dates.map((date, date_k) => (
-                    <TableCell onClick={this.props.openH.bind(this, item.data, date.date)}
+                    <TableCell
+                      onClick={this.props.openH.bind(this, item.data, date.date)}
                       className="min_block"
-                      sx={item.data?.smena_id === '-1' ? {
-                        opacity: 0.5,
-                        pointerEvents: 'none',
-                        cursor: 'not-allowed',
-                      } : null}
+                      sx={
+                        item.data?.smena_id === "-1"
+                          ? {
+                              opacity: 0.5,
+                              pointerEvents: "none",
+                              cursor: "not-allowed",
+                            }
+                          : null
+                      }
                       style={{
-                        backgroundColor: item?.color ? '#D3D3D3' : date.info ? date.info.color : '#fff',
-                        color: item?.color ? '#000' : date.info ? date.info.colorT : '#000',
-                        cursor: 'pointer' }}
+                        backgroundColor: item?.color
+                          ? "#D3D3D3"
+                          : date.info
+                            ? date.info.color
+                            : "#fff",
+                        color: item?.color ? "#000" : date.info ? date.info.colorT : "#000",
+                        cursor: "pointer",
+                      }}
                       key={date_k}
                     >
-                      {date.info ? date.info.hours : ''}
+                      {date.info ? date.info.hours : ""}
                     </TableCell>
                   ))}
 
-                  <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}
-                    onClick={this.props.kind == 'manager' ? () => {} : this.props.pricePerHour.bind(this, item.data)}
+                  <TableCell
+                    style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                    onClick={
+                      this.props.kind == "manager"
+                        ? () => {}
+                        : this.props.pricePerHour.bind(this, item.data)
+                    }
                   >
                     {item.data.price_p_h}
+                  </TableCell>
+
+                  <TableCell style={{ textAlign: 'center', minWidth: 70 }}>
+                    {item.data.price_p_h_dop}
                   </TableCell>
 
                   <TableCell style={{ textAlign: 'center', cursor: 'pointer' }}
                     onClick={this.props.kind == 'manager' ? () => {} : this.props.changeDopBonusUser.bind(this, item)}
                   >
-                    {parseInt(item.data.check_period) == 1 ? item.data.dop_bonus : ' - '}
+                    {parseInt(item.data.check_period) == 1 ? item.data.dop_bonus : " - "}
                   </TableCell>
 
-                  <TableCell style={{ textAlign: 'center' }}>
-                    {parseInt(item.data.check_period) == 1 ? item.data.h_price : ' - '}
+                  <TableCell style={{ textAlign: "center" }}>
+                    {parseInt(item.data.check_period) == 1 ? item.data.h_price : " - "}
                   </TableCell>
 
-                  <TableCell style={{ textAlign: 'center' }}>
-                    {parseInt(item.data.check_period) == 1 ? item.data.err_price : ' - '}
+                  <TableCell style={{ textAlign: "center" }}>
+                    {parseInt(item.data.check_period) == 1 ? item.data.err_price : " - "}
                   </TableCell>
 
                   <TableCell
-                    style={{ textAlign: 'center', cursor: item.data.app_type == 'dir' && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') ? 'pointer' : 'default', backgroundColor: this.props.numberChoose == 2 && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') && item.data.app_type == 'dir' ? '#e5e5e5' : '#fff' }}
-                    onClick={ this.props.numberChoose == 2 && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') && item.data.app_type == 'dir' ? this.props.openModalDirBonus.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data) : () => { console.log( this.props.numberChoose, this.props.kind, item.data.app_type, this.props.numberChoose == 2 && (this.props.kind == 'dir' || this.props.kind == 'mega_dir') && item.data.app_type == 'dir' ) } }
+                    style={{
+                      textAlign: "center",
+                      cursor:
+                        item.data.app_type == "dir" &&
+                        (this.props.kind == "dir" || this.props.kind == "mega_dir")
+                          ? "pointer"
+                          : "default",
+                      backgroundColor:
+                        this.props.numberChoose == 2 &&
+                        (this.props.kind == "dir" || this.props.kind == "mega_dir") &&
+                        item.data.app_type == "dir"
+                          ? "#e5e5e5"
+                          : "#fff",
+                    }}
+                    onClick={
+                      this.props.numberChoose == 2 &&
+                      (this.props.kind == "dir" || this.props.kind == "mega_dir") &&
+                      item.data.app_type == "dir"
+                        ? this.props.openModalDirBonus.bind(
+                            this,
+                            item.data.id,
+                            item.data.smena_id,
+                            item.data.app_id,
+                            this.props.numberChoose,
+                            item.data,
+                          )
+                        : () => {
+                            console.log(
+                              this.props.numberChoose,
+                              this.props.kind,
+                              item.data.app_type,
+                              this.props.numberChoose == 2 &&
+                                (this.props.kind == "dir" || this.props.kind == "mega_dir") &&
+                                item.data.app_type == "dir",
+                            );
+                          }
+                    }
                     //onClick={ item.data.app_type == 'dir' || this.props.kind == 'dir' ? () => {} : this.props.openZPCart.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data)}
                   >
-                    {parseInt(item.data.check_period) == 1 ? item.data.my_bonus : ' - '}
+                    {parseInt(item.data.check_period) == 1 ? item.data.my_bonus : " - "}
                   </TableCell>
 
                   {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                    <TableCell style={{ textAlign: 'center' }}>
+                    <TableCell style={{ textAlign: "center" }}>
                       {parseInt(item.data.check_period) == 1
                         ? parseInt(item.data.dop_bonus) +
                           parseInt(item.data.dir_price) +
@@ -454,35 +637,55 @@ class WorkSchedule_Table extends React.Component {
                           parseInt(item.data.h_price) +
                           parseInt(item.data.my_bonus) -
                           parseInt(item.data.err_price) +
-                          ''
-                        : ' - '}
+                          ""
+                        : " - "}
                     </TableCell>
                   ) : null}
 
-                  {item.data.app_type == 'driver' ? (
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                  {item.data.app_type == "driver" ? (
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
                   ) : (
-                    <TableCell style={{ textAlign: 'center', cursor: 'pointer' }}
-                      onClick={this.props.openZP.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data)}
+                    <TableCell
+                      style={{ textAlign: "center", cursor: "pointer" }}
+                      onClick={this.props.openZP.bind(
+                        this,
+                        item.data.id,
+                        item.data.smena_id,
+                        item.data.app_id,
+                        this.props.numberChoose,
+                        item.data,
+                      )}
                     >
                       {item.data.given}
                     </TableCell>
                   )}
 
-                  {item.data.app_type == 'driver' ? (
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                  {item.data.app_type == "driver" ? (
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
                   ) : (
-                    <TableCell style={{ textAlign: 'center', cursor: 'pointer' }}
-                      onClick={ this.props.kind == 'manager' || this.props.kind == 'dir' ? () => {} : this.props.openZPCart.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data)}
+                    <TableCell
+                      style={{ textAlign: "center", cursor: "pointer" }}
+                      onClick={
+                        this.props.kind == "manager" || this.props.kind == "dir"
+                          ? () => {}
+                          : this.props.openZPCart.bind(
+                              this,
+                              item.data.id,
+                              item.data.smena_id,
+                              item.data.app_id,
+                              this.props.numberChoose,
+                              item.data,
+                            )
+                      }
                     >
                       {item.data.given_cart}
                     </TableCell>
                   )}
 
-                  {item.data.app_type == 'driver' ? (
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                  {item.data.app_type == "driver" ? (
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
                   ) : (
-                    <TableCell style={{ textAlign: 'center' }}>
+                    <TableCell style={{ textAlign: "center" }}>
                       {parseInt(item.data.check_period) == 1
                         ? parseInt(item.data.dop_bonus) +
                           parseInt(item.data.dir_price) +
@@ -492,60 +695,79 @@ class WorkSchedule_Table extends React.Component {
                           parseInt(item.data.my_bonus) -
                           parseInt(item.data.err_price) -
                           parseInt(item.data.given_cart) +
-                          ''
-                        : ' - '}
+                          ""
+                        : " - "}
                     </TableCell>
                   )}
 
-                  { this.props.kind == 'manager' || this.props.kind == 'dir' ? false :
-                    this.props.numberChoose == 1 ? false :
-                    <TableCell style={{ textAlign: 'center', backgroundColor: parseInt(item.data.acc_to_kas) == 1 ? '#c03' : '#fff', color: parseInt(item.data.acc_to_kas) == 1 ? '#fff' : '#000' }}>{ parseInt(item.data.test_all_price) }</TableCell>
-                  }
+                  {this.props.kind == "manager" || this.props.kind == "dir" ? (
+                    false
+                  ) : this.props.numberChoose == 1 ? (
+                    false
+                  ) : (
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        backgroundColor: parseInt(item.data.acc_to_kas) == 1 ? "#c03" : "#fff",
+                        color: parseInt(item.data.acc_to_kas) == 1 ? "#fff" : "#000",
+                      }}
+                    >
+                      {parseInt(item.data.test_all_price)}
+                    </TableCell>
+                  )}
                 </TableRow>
-              )
+              ),
             )}
           </TableBody>
 
-          {this.props.kind == 'other' ? null : (
-            <TableFooter sx={{ '& td': { color: 'rgba(0, 0, 0, 0.87)' } }}>
+          {this.props.kind == "other" ? null : (
+            <TableFooter sx={{ "& td": { color: "rgba(0, 0, 0, 0.87)" } }}>
               <TableRow>
                 <TableCell></TableCell>
                 <TableCell></TableCell>
 
-                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
-                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
+                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
 
                 {this.props.number.bonus.map((item, key) => (
-                  <TableCell className="min_block min_size" style={{ backgroundColor: item.type == 'cur' ? '#98e38d' : '#fff' }} key={key}>{item.res}</TableCell>
+                  <TableCell
+                    className="min_block min_size"
+                    style={{ backgroundColor: item.type == "cur" ? "#98e38d" : "#fff" }}
+                    key={key}
+                  >
+                    {item.res}
+                  </TableCell>
                 ))}
 
-                {this.props.kind == 'manager' ? null : (
+                {this.props.kind == "manager" ? null : (
                   <>
-                    <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}></TableCell>
+                    <TableCell
+                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                    ></TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}>
+                    <TableCell style={{ textAlign: "center" }}>
                       {this.props.number.other_summ.sum_dop_bonus_price}
                     </TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}>
+                    <TableCell style={{ textAlign: "center" }}>
                       {this.props.number.other_summ.sum_h_price}
                     </TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}>
+                    <TableCell style={{ textAlign: "center" }}>
                       {this.props.number.other_summ.sum_err_price}
                     </TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}>
+                    <TableCell style={{ textAlign: "center" }}>
                       {this.props.number.other_summ.sum_bonus_price}
                     </TableCell>
 
                     {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                      <TableCell style={{ textAlign: 'center' }}>
+                      <TableCell style={{ textAlign: "center" }}>
                         {this.props.number.other_summ.sum_to_given_price}
                       </TableCell>
                     ) : null}
 
-                    <TableCell style={{ textAlign: 'center' }}>
+                    <TableCell style={{ textAlign: "center" }}>
                       {this.props.number.other_summ.sum_given_price}
                     </TableCell>
                   </>
@@ -556,23 +778,34 @@ class WorkSchedule_Table extends React.Component {
                 <TableCell></TableCell>
                 <TableCell>Роллов</TableCell>
 
-                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
-                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
+                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
 
-                {this.props.number.bonus.map((item, key) => <TableCell className="min_block min_size" key={key}>{item.count_rolls}</TableCell>)}
+                {this.props.number.bonus.map((item, key) => (
+                  <TableCell
+                    className="min_block min_size"
+                    key={key}
+                  >
+                    {item.count_rolls}
+                  </TableCell>
+                ))}
 
-                {this.props.kind == 'manager' ? null : (
+                {this.props.kind == "manager" ? null : (
                   <>
-                    <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}></TableCell>
+                    <TableCell
+                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                    ></TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
 
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? <TableCell style={{ textAlign: 'center' }}></TableCell> : null}
+                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                      <TableCell style={{ textAlign: "center" }}></TableCell>
+                    ) : null}
 
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
                   </>
                 )}
               </TableRow>
@@ -581,23 +814,34 @@ class WorkSchedule_Table extends React.Component {
                 <TableCell></TableCell>
                 <TableCell>Пиццы</TableCell>
 
-                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
-                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
+                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
 
-                {this.props.number.bonus.map((item, key) => <TableCell className="min_block min_size" key={key}>{item.count_pizza}</TableCell>)}
+                {this.props.number.bonus.map((item, key) => (
+                  <TableCell
+                    className="min_block min_size"
+                    key={key}
+                  >
+                    {item.count_pizza}
+                  </TableCell>
+                ))}
 
-                {this.props.kind == 'manager' ? null : (
+                {this.props.kind == "manager" ? null : (
                   <>
-                    <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}></TableCell>
+                    <TableCell
+                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                    ></TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
 
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? <TableCell style={{ textAlign: 'center' }}></TableCell> : null}
+                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                      <TableCell style={{ textAlign: "center" }}></TableCell>
+                    ) : null}
 
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
                   </>
                 )}
               </TableRow>
@@ -606,23 +850,34 @@ class WorkSchedule_Table extends React.Component {
                 <TableCell></TableCell>
                 <TableCell className="min_size">Заказы готовились больше 40 минут</TableCell>
 
-                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
-                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
+                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
 
-                {this.props.number.order_stat.map((item, key) => <TableCell className="min_block min_size" key={key}>{item.count_false}</TableCell>)}
+                {this.props.number.order_stat.map((item, key) => (
+                  <TableCell
+                    className="min_block min_size"
+                    key={key}
+                  >
+                    {item.count_false}
+                  </TableCell>
+                ))}
 
-                {this.props.kind == 'manager' ? null : (
+                {this.props.kind == "manager" ? null : (
                   <>
-                    <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}></TableCell>
+                    <TableCell
+                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                    ></TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
 
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? <TableCell style={{ textAlign: 'center' }}></TableCell> : null}
+                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                      <TableCell style={{ textAlign: "center" }}></TableCell>
+                    ) : null}
 
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
                   </>
                 )}
               </TableRow>
@@ -654,10 +909,10 @@ class WorkSchedule_Table_without_functions extends React.Component {
   render() {
     return (
       <TableContainer component={Paper}>
-        <Table id={this.props.numberChoose === 1 ? 'table_graph_one' : 'table_graph_two'}>
+        <Table id={this.props.numberChoose === 1 ? "table_graph_one" : "table_graph_two"}>
           <TableBody>
             {this.props.test.map((item, key) =>
-              item.row == 'header' ? (
+              item.row == "header" ? (
                 <HeaderItem
                   key={key}
                   bonus_other={this.props.number.bonus_other}
@@ -677,56 +932,87 @@ class WorkSchedule_Table_without_functions extends React.Component {
                 />
               ) : (
                 <TableRow key={key}>
-                  <TableCell className="name_pinning"
-                    style={{ background: parseInt(item.data.type) == 0 ? '#fff' : parseInt(item.data.type) == 1 ? '#fff' : parseInt(item.data.type) == 2 ? '#ffcc00' : '#c03',
-                    color: parseInt(item.data.type) == 0 ? '#000' : parseInt(item.data.type) == 1 ? '#000' : parseInt(item.data.type) == 2 ? '#000' : '#fff' }}
+                  <TableCell
+                    className="name_pinning"
+                    style={{
+                      background:
+                        parseInt(item.data.type) == 0
+                          ? "#fff"
+                          : parseInt(item.data.type) == 1
+                            ? "#fff"
+                            : parseInt(item.data.type) == 2
+                              ? "#ffcc00"
+                              : "#c03",
+                      color:
+                        parseInt(item.data.type) == 0
+                          ? "#000"
+                          : parseInt(item.data.type) == 1
+                            ? "#000"
+                            : parseInt(item.data.type) == 2
+                              ? "#000"
+                              : "#fff",
+                    }}
                     // onClick={this.props.openM.bind(this, item.data)}
                   >
                     {item.data.user_name}
                   </TableCell>
 
-                  <TableCell style={{ minWidth: 165, minHeight: 38 }}>{item.data.app_name}</TableCell>
+                  <TableCell style={{ minWidth: 165, minHeight: 38 }}>
+                    {item.data.app_name}
+                  </TableCell>
 
-                  {this.props.kind == 'manager' || this.props.kind == 'other' ? null : <TableCell style={{ textAlign: 'center' }} />}
+                  {this.props.kind == "manager" || this.props.kind == "other" ? null : (
+                    <TableCell style={{ textAlign: "center" }} />
+                  )}
 
                   {item.data.dates.map((date, date_k) => (
-                    <TableCell onClick={this.props.openH.bind(this, item.data, date.date)}
+                    <TableCell
+                      onClick={this.props.openH.bind(this, item.data, date.date)}
                       className="min_block"
-                      style={{ backgroundColor: date.info ? date.info.color : '#fff', color: date.info ? date.info.colorT : '#000', cursor: 'pointer' }}
+                      style={{
+                        backgroundColor: date.info ? date.info.color : "#fff",
+                        color: date.info ? date.info.colorT : "#000",
+                        cursor: "pointer",
+                      }}
                       key={date_k}
                     >
-                      {date.info ? date.info.hours : ''}
+                      {date.info ? date.info.hours : ""}
                     </TableCell>
                   ))}
 
-                  {this.props.kind == 'manager' ? null : (
+                  {this.props.kind == "manager" ? null : (
                     <>
-                      <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}
+                      <TableCell
+                        style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
                         // onClick={this.props.pricePerHour.bind(this, item.data)}
                       >
                         {item.data.price_p_h}
                       </TableCell>
+                      <TableCell style={{ textAlign: 'center', minWidth: 70 }}>
+                        {item.data.price_p_h_dop}
+                      </TableCell>
 
-                      <TableCell style={{ textAlign: 'center', сursor: 'pointer' }}
+                      <TableCell
+                        style={{ textAlign: "center", сursor: "pointer" }}
                         // onClick={this.props.changeDopBonusUser.bind(this, item)}
                       >
-                        {parseInt(item.data.check_period) == 1 ? item.data.dop_bonus : ' - '}
+                        {parseInt(item.data.check_period) == 1 ? item.data.dop_bonus : " - "}
                       </TableCell>
 
-                      <TableCell style={{ textAlign: 'center' }}>
-                        {parseInt(item.data.check_period) == 1 ? item.data.h_price : ' - '}
+                      <TableCell style={{ textAlign: "center" }}>
+                        {parseInt(item.data.check_period) == 1 ? item.data.h_price : " - "}
                       </TableCell>
 
-                      <TableCell style={{ textAlign: 'center' }}>
-                        {parseInt(item.data.check_period) == 1 ? item.data.err_price : ' - '}
+                      <TableCell style={{ textAlign: "center" }}>
+                        {parseInt(item.data.check_period) == 1 ? item.data.err_price : " - "}
                       </TableCell>
 
-                      <TableCell style={{ textAlign: 'center' }}>
-                        {parseInt(item.data.check_period) == 1 ? item.data.my_bonus : ' - '}
+                      <TableCell style={{ textAlign: "center" }}>
+                        {parseInt(item.data.check_period) == 1 ? item.data.my_bonus : " - "}
                       </TableCell>
 
                       {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                        <TableCell style={{ textAlign: 'center' }}>
+                        <TableCell style={{ textAlign: "center" }}>
                           {parseInt(item.data.check_period) == 1
                             ? parseInt(item.data.dop_bonus) +
                               parseInt(item.data.dir_price) +
@@ -735,71 +1021,73 @@ class WorkSchedule_Table_without_functions extends React.Component {
                               parseInt(item.data.h_price) +
                               parseInt(item.data.my_bonus) -
                               parseInt(item.data.err_price) +
-                              ''
-                            : ' - '}
+                              ""
+                            : " - "}
                         </TableCell>
                       ) : null}
 
-                      {item.data.app_type == 'driver' ? <TableCell style={{ textAlign: 'center' }}></TableCell> :
-                        <TableCell style={{ textAlign: 'center' }}>
-                          {item.data.given}
-                        </TableCell>
-                      }
+                      {item.data.app_type == "driver" ? (
+                        <TableCell style={{ textAlign: "center" }}></TableCell>
+                      ) : (
+                        <TableCell style={{ textAlign: "center" }}>{item.data.given}</TableCell>
+                      )}
 
-                      <TableCell style={{ textAlign: 'center' }}>
-                        {item.data.given_cart}
-                      </TableCell>
-                      <TableCell style={{ textAlign: 'center' }}>
-
-                      </TableCell>
+                      <TableCell style={{ textAlign: "center" }}>{item.data.given_cart}</TableCell>
+                      <TableCell style={{ textAlign: "center" }}></TableCell>
                     </>
                   )}
                 </TableRow>
-              )
+              ),
             )}
           </TableBody>
 
-          {this.props.kind == 'other' ? null : (
-            <TableFooter sx={{ '& td': { color: 'rgba(0, 0, 0, 0.87)' } }}>
+          {this.props.kind == "other" ? null : (
+            <TableFooter sx={{ "& td": { color: "rgba(0, 0, 0, 0.87)" } }}>
               <TableRow>
                 <TableCell></TableCell>
                 <TableCell></TableCell>
 
-                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
 
                 {this.props.number.bonus.map((item, key) => (
-                  <TableCell className="min_block min_size" style={{ backgroundColor: item.type == 'cur' ? '#98e38d' : '#fff' }} key={key}>
+                  <TableCell
+                    className="min_block min_size"
+                    style={{ backgroundColor: item.type == "cur" ? "#98e38d" : "#fff" }}
+                    key={key}
+                  >
                     {item.res}
                   </TableCell>
                 ))}
 
-                {this.props.kind == 'manager' ? null : (
+                {this.props.kind == "manager" ? null : (
                   <>
-                    <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}></TableCell>
+                    <TableCell
+                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                    ></TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}>
+                    <TableCell style={{ textAlign: "center" }}>
                       {this.props.number.other_summ.sum_dop_bonus_price}
                     </TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}>
+                    <TableCell style={{ textAlign: "center" }}>
                       {this.props.number.other_summ.sum_h_price}
                     </TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}>
+                    <TableCell style={{ textAlign: "center" }}>
                       {this.props.number.other_summ.sum_err_price}
                     </TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}>
+                    <TableCell style={{ textAlign: "center" }}>
                       {this.props.number.other_summ.sum_bonus_price}
                     </TableCell>
 
                     {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                      <TableCell style={{ textAlign: 'center' }}>
+                      <TableCell style={{ textAlign: "center" }}>
                         {this.props.number.other_summ.sum_to_given_price}
                       </TableCell>
                     ) : null}
 
-                    <TableCell style={{ textAlign: 'center' }}>
+                    <TableCell style={{ textAlign: "center" }}>
                       {this.props.number.other_summ.sum_given_price}
                     </TableCell>
                   </>
@@ -810,22 +1098,33 @@ class WorkSchedule_Table_without_functions extends React.Component {
                 <TableCell></TableCell>
                 <TableCell>Роллов</TableCell>
 
-                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
 
-                {this.props.number.bonus.map((item, key) => <TableCell className="min_block min_size" key={key}>{item.count_rolls}</TableCell>)}
+                {this.props.number.bonus.map((item, key) => (
+                  <TableCell
+                    className="min_block min_size"
+                    key={key}
+                  >
+                    {item.count_rolls}
+                  </TableCell>
+                ))}
 
-                {this.props.kind == 'manager' ? null : (
+                {this.props.kind == "manager" ? null : (
                   <>
-                    <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}></TableCell>
+                    <TableCell
+                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                    ></TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
 
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? <TableCell style={{ textAlign: 'center' }}></TableCell> : null}
+                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                      <TableCell style={{ textAlign: "center" }}></TableCell>
+                    ) : null}
 
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
                   </>
                 )}
               </TableRow>
@@ -834,22 +1133,33 @@ class WorkSchedule_Table_without_functions extends React.Component {
                 <TableCell></TableCell>
                 <TableCell>Пиццы</TableCell>
 
-                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
 
-                {this.props.number.bonus.map((item, key) => <TableCell className="min_block min_size" key={key}>{item.count_pizza}</TableCell>)}
+                {this.props.number.bonus.map((item, key) => (
+                  <TableCell
+                    className="min_block min_size"
+                    key={key}
+                  >
+                    {item.count_pizza}
+                  </TableCell>
+                ))}
 
-                {this.props.kind == 'manager' ? null : (
+                {this.props.kind == "manager" ? null : (
                   <>
-                    <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}></TableCell>
+                    <TableCell
+                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                    ></TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
 
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? <TableCell style={{ textAlign: 'center' }}></TableCell> : null}
+                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                      <TableCell style={{ textAlign: "center" }}></TableCell>
+                    ) : null}
 
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
                   </>
                 )}
               </TableRow>
@@ -858,22 +1168,33 @@ class WorkSchedule_Table_without_functions extends React.Component {
                 <TableCell></TableCell>
                 <TableCell className="min_size">Заказы готовились больше 40 минут</TableCell>
 
-                {this.props.kind == 'manager' ? null : <TableCell></TableCell>}
+                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
 
-                {this.props.number.order_stat.map((item, key) => <TableCell className="min_block min_size" key={key}>{item.count_false}</TableCell>)}
+                {this.props.number.order_stat.map((item, key) => (
+                  <TableCell
+                    className="min_block min_size"
+                    key={key}
+                  >
+                    {item.count_false}
+                  </TableCell>
+                ))}
 
-                {this.props.kind == 'manager' ? null : (
+                {this.props.kind == "manager" ? null : (
                   <>
-                    <TableCell style={{ textAlign: 'center', minWidth: 70, cursor: 'pointer' }}></TableCell>
+                    <TableCell
+                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                    ></TableCell>
 
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
 
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? <TableCell style={{ textAlign: 'center' }}></TableCell> : null}
+                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                      <TableCell style={{ textAlign: "center" }}></TableCell>
+                    ) : null}
 
-                    <TableCell style={{ textAlign: 'center' }}></TableCell>
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
                   </>
                 )}
               </TableRow>
@@ -890,15 +1211,15 @@ class WorkSchedule_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'work_schedule',
-      module_name: '',
+      module: "work_schedule",
+      module_name: "",
       access: null,
       is_load: false,
 
       points: [],
       mounths: [],
-      point: '',
-      mounth: '',
+      point: "",
+      mounth: "",
 
       one: null,
       two: null,
@@ -914,15 +1235,15 @@ class WorkSchedule_ extends React.Component {
       hList: [],
       mList: [],
 
-      newTimeStart: '10:00',
-      newTimeEnd: '22:00',
+      newTimeStart: "10:00",
+      newTimeEnd: "22:00",
 
       openNewTimeAdd: false,
 
       otherAppList: [],
-      otherApp: '',
+      otherApp: "",
 
-      testVal: '',
+      testVal: "",
       testOpen: false,
 
       mainMenu: false,
@@ -942,7 +1263,7 @@ class WorkSchedule_ extends React.Component {
 
       show_zp_one: 0,
       show_zp_two: 0,
-      kind: '',
+      kind: "",
 
       myOtherPoints: [],
       myOtherSmens: [],
@@ -975,11 +1296,11 @@ class WorkSchedule_ extends React.Component {
       editSmena: false,
       allUsers: [],
       smena: null,
-      newSmenaName: '',
+      newSmenaName: "",
 
       operAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
 
       addUsers: [],
       mainMenuAddUsers: false,
@@ -987,9 +1308,9 @@ class WorkSchedule_ extends React.Component {
       mainMenuAddUsersMounth: false,
 
       dataType: [
-        {id: 1, name: 'Выходной'},
-        {id: 2, name: 'Здоров'},
-        {id: 3, name: 'Больничный лист'},
+        { id: 1, name: "Выходной" },
+        { id: 2, name: "Здоров" },
+        { id: 3, name: "Больничный лист" },
       ],
 
       isOpenHJ: false,
@@ -998,21 +1319,21 @@ class WorkSchedule_ extends React.Component {
 
       confirmDialog: false,
       methodConfirm: null,
-      textConfirm: '',
+      textConfirm: "",
 
       isOpenWS: false,
       date_start_ws: dayjs(Date.now()),
       date_end_ws: dayjs(Date.now()),
 
       isModalDirBonus: false,
-      dir_bonus: 0
+      dir_bonus: 0,
     };
   }
 
   async componentDidMount() {
     let data = {};
 
-    let res = await this.getData('get_all', data);
+    let res = await this.getData("get_all", data);
 
     let hList = [];
     let mList = [];
@@ -1031,7 +1352,7 @@ class WorkSchedule_ extends React.Component {
       // access: res.access,
 
       mounths: res.mounths,
-      mounth: res.mounths.find((item) => parseInt(item.is_active) == 1)['id'],
+      mounth: res.mounths.find((item) => parseInt(item.is_active) == 1)["id"],
 
       hList: hList,
       mList: mList,
@@ -1065,28 +1386,28 @@ class WorkSchedule_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: queryString.stringify({
         method: method,
         module: this.state.module,
         version: 2,
-        login: localStorage.getItem('token'),
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })
       .then((res) => res.json())
       .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/";
           return;
         }
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
           return;
         }
 
@@ -1122,14 +1443,14 @@ class WorkSchedule_ extends React.Component {
       two: null,
       test_one: [],
       test_two: [],
-    })
+    });
 
     let data = {
       point_id: this.state.point,
       mounth: this.state.mounth,
     };
 
-    let res = await this.getData('get_graph', data);
+    let res = await this.getData("get_graph", data);
 
     // console.log(res);
 
@@ -1158,7 +1479,10 @@ class WorkSchedule_ extends React.Component {
       isShowErr: false,
       showErr: null,
 
-      tabTable: localStorage.getItem('tabTable') ? parseInt(localStorage.getItem('tabTable')) : parseInt(res.part) - 1});
+      tabTable: localStorage.getItem("tabTable")
+        ? parseInt(localStorage.getItem("tabTable"))
+        : parseInt(res.part) - 1,
+    });
   }
 
   async openH(item, this_date) {
@@ -1170,7 +1494,7 @@ class WorkSchedule_ extends React.Component {
       date_start: item.date,
     };
 
-    let res = await this.getData('get_user_day', data);
+    let res = await this.getData("get_user_day", data);
 
     // console.log(res);
 
@@ -1191,7 +1515,7 @@ class WorkSchedule_ extends React.Component {
       date_start: item.date,
     };
 
-    let res = await this.getData('get_user_day', data);
+    let res = await this.getData("get_user_day", data);
 
     // console.log(res);
 
@@ -1216,7 +1540,7 @@ class WorkSchedule_ extends React.Component {
 
     // console.log(data);
 
-    let res = await this.getData('get_user_month', data);
+    let res = await this.getData("get_user_month", data);
 
     // console.log(res);
 
@@ -1248,7 +1572,6 @@ class WorkSchedule_ extends React.Component {
   }
 
   async saveDayHourse() {
-
     //let dataType = this.state.dataType.find( el => parseInt(el.id) == parseInt(this.state.userInfo.dataType) );
 
     let data = {
@@ -1266,9 +1589,9 @@ class WorkSchedule_ extends React.Component {
       point_id: this.state.point,
     };
 
-    let res = await this.getData('save_user_day', data);
+    let res = await this.getData("save_user_day", data);
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
         mainMenu: false,
         mainMenuH: false,
@@ -1295,7 +1618,10 @@ class WorkSchedule_ extends React.Component {
   addTime() {
     let userInfo = this.state.userInfo;
 
-    let check = userInfo.hours.find((item) => item.time_start == this.state.newTimeStart && item.time_end == this.state.newTimeEnd);
+    let check = userInfo.hours.find(
+      (item) =>
+        item.time_start == this.state.newTimeStart && item.time_end == this.state.newTimeEnd,
+    );
 
     if (check) {
       this.setState({
@@ -1313,7 +1639,7 @@ class WorkSchedule_ extends React.Component {
     });
   }
 
-  async saveFastTimeWeekOne(type){
+  async saveFastTimeWeekOne(type) {
     let data = {
       type: type,
       user_id: this.state.chooseUser.id,
@@ -1322,11 +1648,11 @@ class WorkSchedule_ extends React.Component {
       date: this.state.mounth,
     };
 
-    let res = await this.getData('save_fastTimeWeekOne', data);
+    let res = await this.getData("save_fastTimeWeekOne", data);
 
     // console.log( res );
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
         mainMenu: false,
         mainMenuS: false,
@@ -1358,11 +1684,11 @@ class WorkSchedule_ extends React.Component {
       date: this.state.mounth,
     };
 
-    let res = await this.getData('save_fastTime', data);
+    let res = await this.getData("save_fastTime", data);
 
     // console.log( res );
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
         mainMenu: false,
         mainMenuH: false,
@@ -1395,9 +1721,9 @@ class WorkSchedule_ extends React.Component {
       part: this.state.tabTable,
     };
 
-    let res = await this.getData('save_fastSmena', data);
+    let res = await this.getData("save_fastSmena", data);
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
         mainMenu: false,
         mainMenuH: false,
@@ -1430,11 +1756,11 @@ class WorkSchedule_ extends React.Component {
       part: this.state.tabTable,
     };
 
-    let res = await this.getData('save_userPriceH', data);
+    let res = await this.getData("save_userPriceH", data);
 
     // console.log( res );
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
         mainMenu: false,
         mainMenuH: false,
@@ -1461,7 +1787,7 @@ class WorkSchedule_ extends React.Component {
     this.setState({
       confirmDialog: true,
       methodConfirm: this.fastPoint.bind(this, point.point_id, point.smena_id),
-      textConfirm: 'Точно сменить точку с сегоднешнего дня ?',
+      textConfirm: "Точно сменить точку с сегоднешнего дня ?",
     });
   }
 
@@ -1474,11 +1800,11 @@ class WorkSchedule_ extends React.Component {
       smena_id: this.state.chooseUser.smena_id,
     };
 
-    let res = await this.getData('save_fastPoint', data);
+    let res = await this.getData("save_fastPoint", data);
 
     // console.log( res );
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
         mainMenu: false,
         mainMenuPoints: false,
@@ -1511,7 +1837,7 @@ class WorkSchedule_ extends React.Component {
     this.setState({
       confirmDialog: true,
       methodConfirm: this.newLvDir.bind(this, LV),
-      textConfirm: 'Точно изменить уровень директора ?',
+      textConfirm: "Точно изменить уровень директора ?",
     });
   }
 
@@ -1522,11 +1848,11 @@ class WorkSchedule_ extends React.Component {
       dir_lv: LV,
     };
 
-    let res = await this.getData('save_dir_lv', data);
+    let res = await this.getData("save_dir_lv", data);
 
     // console.log( res );
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
         mainMenuLVDIR: false,
 
@@ -1564,7 +1890,7 @@ class WorkSchedule_ extends React.Component {
     this.setState({
       confirmDialog: true,
       methodConfirm: this.dop_bonus.bind(this, type),
-      textConfirm: 'Точно ?',
+      textConfirm: "Точно ?",
     });
   }
 
@@ -1583,7 +1909,7 @@ class WorkSchedule_ extends React.Component {
         point_id: this.state.point,
       };
 
-      res = await this.getData('del_dop_bonus_user', data);
+      res = await this.getData("del_dop_bonus_user", data);
 
       // console.log( res );
     } else {
@@ -1594,12 +1920,12 @@ class WorkSchedule_ extends React.Component {
         type: type,
       };
 
-      res = await this.getData('save_dop_bonus', data);
+      res = await this.getData("save_dop_bonus", data);
 
       // console.log( res );
     }
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
         mainMenuDopBonus: false,
         mainMenuDopBonusUser: false,
@@ -1620,25 +1946,24 @@ class WorkSchedule_ extends React.Component {
   }
 
   renderWeekPickerDay = (props) => {
-
-    const date = dayjs(props.day).format('YYYY-MM-DD');
+    const date = dayjs(props.day).format("YYYY-MM-DD");
 
     let arr = this.state.arrTimeAdd;
     let res = arr.find((item) => item.date === date);
 
     if (res) {
-      let backgroundColor = '#fff';
+      let backgroundColor = "#fff";
 
       if (parseInt(res.type) == 0) {
-        backgroundColor = '#98e38d';
+        backgroundColor = "#98e38d";
       } else {
         if (parseInt(res.type) == 1) {
-          backgroundColor = '#3dcef2';
+          backgroundColor = "#3dcef2";
         } else {
           if (parseInt(res.type) == 2) {
-            backgroundColor = '#1560bd';
+            backgroundColor = "#1560bd";
           } else {
-            backgroundColor = '#926eae';
+            backgroundColor = "#926eae";
           }
         }
       }
@@ -1646,7 +1971,7 @@ class WorkSchedule_ extends React.Component {
       return (
         <PickersDay
           {...props}
-          style={{ backgroundColor: backgroundColor, color: '#fff' }}
+          style={{ backgroundColor: backgroundColor, color: "#fff" }}
           onClick={this.chooseDay.bind(this, date)}
         />
       );
@@ -1655,39 +1980,38 @@ class WorkSchedule_ extends React.Component {
     return (
       <PickersDay
         {...props}
-        style={{ backgroundColor: '#fff', color: 'rgba(0, 0, 0, 0.87)' }}
+        style={{ backgroundColor: "#fff", color: "rgba(0, 0, 0, 0.87)" }}
         onClick={this.chooseDay.bind(this, date)}
       />
     );
   };
 
   chooseDay(newValue, event) {
-
     let arr = this.state.arrTimeAdd;
 
     let res = arr.find((item) => item.date === newValue);
 
     if (!res) {
-      let time_start = '';
-      let time_end = '';
+      let time_start = "";
+      let time_end = "";
 
       if (parseInt(this.state.typeTimeAdd) == 0) {
-        time_start = '10:00';
-        time_end = '22:00';
+        time_start = "10:00";
+        time_end = "22:00";
       }
 
       if (parseInt(this.state.typeTimeAdd) == 1) {
-        time_start = '10:00';
-        time_end = '16:00';
+        time_start = "10:00";
+        time_end = "16:00";
       }
 
       if (parseInt(this.state.typeTimeAdd) == 2) {
-        time_start = '16:00';
-        time_end = '22:00';
+        time_start = "16:00";
+        time_end = "22:00";
       }
 
       arr.push({
-        date: dayjs(newValue).format('YYYY-MM-DD'),
+        date: dayjs(newValue).format("YYYY-MM-DD"),
         type: this.state.typeTimeAdd,
         time_start: time_start,
         time_end: time_end,
@@ -1697,22 +2021,18 @@ class WorkSchedule_ extends React.Component {
         arrTimeAdd: arr,
       });
     } else {
-
-      if(res.type === this.state.typeTimeAdd) {
-
+      if (res.type === this.state.typeTimeAdd) {
         let newArr = arr.filter((item) => item.date !== newValue);
 
         this.setState({
           arrTimeAdd: newArr,
         });
-
       } else {
-
-        arr.forEach(item => {
-          if(item.date === newValue) {
-            item.type = this.state.typeTimeAdd
+        arr.forEach((item) => {
+          if (item.date === newValue) {
+            item.type = this.state.typeTimeAdd;
           }
-        })
+        });
 
         this.setState({
           arrTimeAdd: arr,
@@ -1738,11 +2058,11 @@ class WorkSchedule_ extends React.Component {
       app_id: this.state.userInfo.user.app_id,
     };
 
-    let res = await this.getData('save_user_month', data);
+    let res = await this.getData("save_user_month", data);
 
     // console.log( res );
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
         isOpenModalM: false,
         userInfo: null,
@@ -1783,7 +2103,7 @@ class WorkSchedule_ extends React.Component {
         app: user.full_app_name,
         fullPrice: fullPrice,
         given: user.given_cash,
-        date: this.state.mounth + (parseInt(part) == 1 ? '-01' : '-16'),
+        date: this.state.mounth + (parseInt(part) == 1 ? "-01" : "-16"),
         user_id: user_id,
         smena_id: smena_id,
         app_id: app_id,
@@ -1809,7 +2129,7 @@ class WorkSchedule_ extends React.Component {
         app: user.full_app_name,
         fullPrice: fullPrice,
         given: user.given_cart,
-        date: this.state.mounth + (parseInt(part) == 1 ? '-01' : '-16'),
+        date: this.state.mounth + (parseInt(part) == 1 ? "-01" : "-16"),
         user_id: user_id,
         smena_id: smena_id,
         app_id: app_id,
@@ -1826,11 +2146,11 @@ class WorkSchedule_ extends React.Component {
       give_price: this.state.userInfo.given,
     };
 
-    let res = await this.getData('save_user_give_price', data);
+    let res = await this.getData("save_user_give_price", data);
 
     // console.log( res );
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
         mainMenuZP: false,
         userInfo: null,
@@ -1861,11 +2181,11 @@ class WorkSchedule_ extends React.Component {
       give_price: this.state.userInfo.given,
     };
 
-    let res = await this.getData('save_user_give_cart_price', data);
+    let res = await this.getData("save_user_give_cart_price", data);
 
     // console.log( res );
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
         mainMenuZPCart: false,
         userInfo: null,
@@ -1909,7 +2229,7 @@ class WorkSchedule_ extends React.Component {
       row_id: row_id,
     };
 
-    let res = await this.getData('get_my_err_order', data);
+    let res = await this.getData("get_my_err_order", data);
 
     // console.log(res);
 
@@ -1923,7 +2243,7 @@ class WorkSchedule_ extends React.Component {
     this.setState({
       confirmDialog: true,
       methodConfirm: this.saveFakeOrders.bind(this),
-      textConfirm: 'Точно обжаловать ?',
+      textConfirm: "Точно обжаловать ?",
     });
   }
 
@@ -1937,9 +2257,9 @@ class WorkSchedule_ extends React.Component {
 
     // console.log(data);
 
-    let res = await this.getData('save_fake_orders', data);
+    let res = await this.getData("save_fake_orders", data);
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
         isShowErr: false,
         showErr: null,
@@ -1966,7 +2286,7 @@ class WorkSchedule_ extends React.Component {
       id: id,
     };
 
-    let res = await this.getData('get_my_err_cam', data);
+    let res = await this.getData("get_my_err_cam", data);
 
     // console.log(res);
 
@@ -1980,7 +2300,7 @@ class WorkSchedule_ extends React.Component {
     this.setState({
       confirmDialog: true,
       methodConfirm: this.saveFakeCam.bind(this),
-      textConfirm: 'Точно обжаловать ?',
+      textConfirm: "Точно обжаловать ?",
     });
   }
 
@@ -1990,7 +2310,7 @@ class WorkSchedule_ extends React.Component {
       text: this.state.showErrCam.text_one,
     };
 
-    let res = await this.getData('save_fake_cam', data);
+    let res = await this.getData("save_fake_cam", data);
 
     // console.log(res);
 
@@ -2009,13 +2329,13 @@ class WorkSchedule_ extends React.Component {
       point_id: this.state.point,
     };
 
-    let res = await this.getData('getAllForNewSmena', data);
+    let res = await this.getData("getAllForNewSmena", data);
 
     // console.log(res);
 
     this.setState({
       newSmena: true,
-      newSmenaName: '',
+      newSmenaName: "",
       allUsers: res.free_users,
     });
   }
@@ -2026,8 +2346,7 @@ class WorkSchedule_ extends React.Component {
       point_id: this.state.point,
     };
 
-
-    let res = await this.getData('getOneSmena', data);
+    let res = await this.getData("getOneSmena", data);
 
     this.setState({
       editSmena: true,
@@ -2044,13 +2363,13 @@ class WorkSchedule_ extends React.Component {
       users: this.state.allUsers,
     };
 
-    let res = await this.getData('saveNewSmena', data);
+    let res = await this.getData("saveNewSmena", data);
 
     // console.log(res);
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
-        newSmenaName: '',
+        newSmenaName: "",
         newSmena: false,
         allUsers: [],
 
@@ -2079,11 +2398,11 @@ class WorkSchedule_ extends React.Component {
       users: this.state.allUsers,
     };
 
-    let res = await this.getData('saveEditSmena', data);
+    let res = await this.getData("saveEditSmena", data);
 
-    if (res['st'] == true) {
+    if (res["st"] == true) {
       this.setState({
-        newSmenaName: '',
+        newSmenaName: "",
         editSmena: false,
         smena: null,
         allUsers: [],
@@ -2109,43 +2428,43 @@ class WorkSchedule_ extends React.Component {
     this.setState({
       confirmDialog: true,
       methodConfirm: this.deleteSmena.bind(this),
-      textConfirm: 'Удалить смену ?',
+      textConfirm: "Удалить смену ?",
     });
   }
 
   async deleteSmena() {
-      let data = {
-        id: this.state.smena.id,
-        point_id: this.state.point,
-        users: this.state.allUsers,
-      };
+    let data = {
+      id: this.state.smena.id,
+      point_id: this.state.point,
+      users: this.state.allUsers,
+    };
 
-      let res = await this.getData('deleteSmena', data);
+    let res = await this.getData("deleteSmena", data);
 
-      // console.log(res);
+    // console.log(res);
 
-      if (res['st'] == true) {
-        this.setState({
-          newSmenaName: '',
-          editSmena: false,
-          smena: null,
-          allUsers: [],
+    if (res["st"] == true) {
+      this.setState({
+        newSmenaName: "",
+        editSmena: false,
+        smena: null,
+        allUsers: [],
 
-          operAlert: true,
-          err_status: res.st,
-          err_text: res.text,
-        });
+        operAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
 
-        setTimeout(() => {
-          this.updateData();
-        }, 300);
-      } else {
-        this.setState({
-          operAlert: true,
-          err_status: res.st,
-          err_text: res.text,
-        });
-      }
+      setTimeout(() => {
+        this.updateData();
+      }, 300);
+    } else {
+      this.setState({
+        operAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    }
   }
 
   changeNewSmenaUsers(user_id) {
@@ -2153,7 +2472,7 @@ class WorkSchedule_ extends React.Component {
 
     userList.map((item, key) => {
       if (parseInt(item.id) == parseInt(user_id)) {
-        userList[key]['is_my'] = parseInt(item.is_my) == 1 ? 0 : 1;
+        userList[key]["is_my"] = parseInt(item.is_my) == 1 ? 0 : 1;
       }
     });
 
@@ -2183,7 +2502,7 @@ class WorkSchedule_ extends React.Component {
       users: this.state.addUsers,
     };
 
-    const res = await this.getData('save_fastTime_arr_two_week', data);
+    const res = await this.getData("save_fastTime_arr_two_week", data);
 
     // console.log( res );
 
@@ -2215,7 +2534,7 @@ class WorkSchedule_ extends React.Component {
       users: this.state.addUsers,
     };
 
-    const res = await this.getData('save_fastTime_arr_mounth', data);
+    const res = await this.getData("save_fastTime_arr_mounth", data);
 
     // console.log( res );
 
@@ -2242,79 +2561,78 @@ class WorkSchedule_ extends React.Component {
 
   changeDateRange(data, event) {
     this.setState({
-      [data]: event ? (event) : '',
+      [data]: event ? event : "",
     });
   }
 
-  async downloadHJ(){
+  async downloadHJ() {
     let data = {
-      date_start  : dayjs(this.state.date_start).format('YYYY-MM-DD'),
-      date_end    : dayjs(this.state.date_end).format('YYYY-MM-DD'),
+      date_start: dayjs(this.state.date_start).format("YYYY-MM-DD"),
+      date_end: dayjs(this.state.date_end).format("YYYY-MM-DD"),
       point_id: this.state.point,
     };
 
-    const res =  await this.getData('downloadHJ', data);
+    const res = await this.getData("downloadHJ", data);
 
     // правка 26.12 скачивания файла в один клик
-    if( res.url){
-      const link = document.createElement('a');
+    if (res.url) {
+      const link = document.createElement("a");
       link.href = res.url;
       link.click();
     }
   }
 
-  async downloadWS(){
+  async downloadWS() {
     const data = {
-      date_start  : dayjs(this.state.date_start_ws).format('YYYY-MM-DD'),
-      date_end    : dayjs(this.state.date_end_ws).format('YYYY-MM-DD'),
+      date_start: dayjs(this.state.date_start_ws).format("YYYY-MM-DD"),
+      date_end: dayjs(this.state.date_end_ws).format("YYYY-MM-DD"),
       point_id: this.state.point,
     };
 
-    const res =  await this.getData('downloadWS', data);
+    const res = await this.getData("downloadWS", data);
 
-    if(res.url){
-      const link = document.createElement('a');
+    if (res.url) {
+      const link = document.createElement("a");
       link.href = res.url;
       link.click();
     }
   }
 
   clickAppNameUser(index, numberChoose) {
-    if(numberChoose === 1) {
+    if (numberChoose === 1) {
       const test_one = this.state.test_one;
 
       test_one.forEach((item, i) => {
-        if(index === i) {
-          item.color = item?.color ? !item?.color : true
+        if (index === i) {
+          item.color = item?.color ? !item?.color : true;
         } else {
-          item.color = false
+          item.color = false;
         }
-      })
+      });
 
       this.setState({
         test_one,
       });
     }
 
-    if(numberChoose === 2) {
+    if (numberChoose === 2) {
       const test_two = this.state.test_two;
 
       test_two.forEach((item, i) => {
-        if(index === i) {
-          item.color = item?.color ? !item?.color : true
+        if (index === i) {
+          item.color = item?.color ? !item?.color : true;
         } else {
-          item.color = false
+          item.color = false;
         }
-      })
+      });
 
       this.setState({
         test_two,
       });
     }
-
   }
 
-  openModalDirBonus(user_id, smena_id, app_id, part, user){
+  openModalDirBonus(user_id, smena_id, app_id, part, user) {
     console.log(user_id, smena_id, app_id, part, user);
 
     this.setState({
@@ -2324,7 +2642,7 @@ class WorkSchedule_ extends React.Component {
         name: user.user_name,
         app: user.full_app_name,
         given: user.given_cash,
-        date: this.state.mounth + (parseInt(part) == 1 ? '-01' : '-16'),
+        date: this.state.mounth + (parseInt(part) == 1 ? "-01" : "-16"),
         user_id: user_id,
         smena_id: smena_id,
         app_id: app_id,
@@ -2332,20 +2650,20 @@ class WorkSchedule_ extends React.Component {
     });
   }
 
-  async saveDirBonus(){
+  async saveDirBonus() {
     const data = {
       date: this.state.mounth,
       bonus: this.state.dir_bonus,
       user_id: this.state.userInfo.user_id,
     };
 
-    const res = await this.getData('save_dirBonus', data);
+    const res = await this.getData("save_dirBonus", data);
 
     if (res.st) {
       this.setState({
         isModalDirBonus: false,
         userInfo: {},
-        dir_bonus: '',
+        dir_bonus: "",
         operAlert: true,
         err_status: res.st,
         err_text: res.text,
@@ -2371,7 +2689,10 @@ class WorkSchedule_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop open={this.state.is_load} style={{ zIndex: 999 }}>
+        <Backdrop
+          open={this.state.is_load}
+          style={{ zIndex: 999 }}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         {/* <TestAccess access={this.state.access} setAccess={(access) => this.setState({ access })} /> */}
@@ -2384,11 +2705,16 @@ class WorkSchedule_ extends React.Component {
         {/* конфирм */}
         <WorkSchedule_Confirm
           open={this.state.confirmDialog}
-          onClose={() => this.setState({ confirmDialog: false, textConfirm: '', methodConfirm: null })}
+          onClose={() =>
+            this.setState({ confirmDialog: false, textConfirm: "", methodConfirm: null })
+          }
           textConfirm={this.state.textConfirm}
           methodConfirm={this.state.methodConfirm}
         />
-        <Dialog onClose={() => this.setState({ mainMenuAddUsersMounth: false })} open={this.state.mainMenuAddUsersMounth}>
+        <Dialog
+          onClose={() => this.setState({ mainMenuAddUsersMounth: false })}
+          open={this.state.mainMenuAddUsersMounth}
+        >
           <List sx={{ pt: 0 }}>
             <ListItemButton onClick={this.saveFastTimeMounth.bind(this, 1)}>
               <ListItemAvatar>
@@ -2396,7 +2722,7 @@ class WorkSchedule_ extends React.Component {
                   <LooksOneIcon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={'С 1 числа 2/2 с 10 до 22 на месяц'}/>
+              <ListItemText primary={"С 1 числа 2/2 с 10 до 22 на месяц"} />
             </ListItemButton>
 
             <ListItemButton onClick={this.saveFastTimeMounth.bind(this, 2)}>
@@ -2405,7 +2731,7 @@ class WorkSchedule_ extends React.Component {
                   <LooksTwoIcon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={'С 2 числа 2/2 с 10 до 22 на месяц'}/>
+              <ListItemText primary={"С 2 числа 2/2 с 10 до 22 на месяц"} />
             </ListItemButton>
 
             <ListItemButton onClick={this.saveFastTimeMounth.bind(this, 3)}>
@@ -2414,7 +2740,7 @@ class WorkSchedule_ extends React.Component {
                   <Looks3Icon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={'С 3 числа 2/2 с 10 до 22 на месяц'}/>
+              <ListItemText primary={"С 3 числа 2/2 с 10 до 22 на месяц"} />
             </ListItemButton>
 
             <ListItemButton onClick={this.saveFastTimeMounth.bind(this, 4)}>
@@ -2423,54 +2749,104 @@ class WorkSchedule_ extends React.Component {
                   <Looks4Icon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={'С 4 числа 2/2 с 10 до 22 на месяц'}/>
+              <ListItemText primary={"С 4 числа 2/2 с 10 до 22 на месяц"} />
             </ListItemButton>
           </List>
         </Dialog>
-        <Dialog onClose={() => this.setState({ mainMenuAddUsersWeek: false })} open={this.state.mainMenuAddUsersWeek}>
+        <Dialog
+          onClose={() => this.setState({ mainMenuAddUsersWeek: false })}
+          open={this.state.mainMenuAddUsersWeek}
+        >
           <List sx={{ pt: 0 }}>
-            <ListItemButton onClick={this.saveFastTimeWeek.bind(this, this.state.tabTable === 0 ? 1 : 16)}>
+            <ListItemButton
+              onClick={this.saveFastTimeWeek.bind(this, this.state.tabTable === 0 ? 1 : 16)}
+            >
               <ListItemAvatar>
                 <Avatar>
                   <LooksOneIcon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={this.state.tabTable === 0 ? 'С 1 числа 2/2 с 10 до 22 на две недели' : 'С 16 числа 2/2 с 10 до 22 на две недели'}/>
+              <ListItemText
+                primary={
+                  this.state.tabTable === 0
+                    ? "С 1 числа 2/2 с 10 до 22 на две недели"
+                    : "С 16 числа 2/2 с 10 до 22 на две недели"
+                }
+              />
             </ListItemButton>
 
-            <ListItemButton onClick={this.saveFastTimeWeek.bind(this, this.state.tabTable === 0 ? 2 : 17)}>
+            <ListItemButton
+              onClick={this.saveFastTimeWeek.bind(this, this.state.tabTable === 0 ? 2 : 17)}
+            >
               <ListItemAvatar>
                 <Avatar>
                   <LooksTwoIcon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={this.state.tabTable === 0 ? 'С 2 числа 2/2 с 10 до 22 на две недели' : 'С 17 числа 2/2 с 10 до 22 на две недели'}/>
+              <ListItemText
+                primary={
+                  this.state.tabTable === 0
+                    ? "С 2 числа 2/2 с 10 до 22 на две недели"
+                    : "С 17 числа 2/2 с 10 до 22 на две недели"
+                }
+              />
             </ListItemButton>
 
-            <ListItemButton onClick={this.saveFastTimeWeek.bind(this, this.state.tabTable === 0 ? 3 : 18)}>
+            <ListItemButton
+              onClick={this.saveFastTimeWeek.bind(this, this.state.tabTable === 0 ? 3 : 18)}
+            >
               <ListItemAvatar>
                 <Avatar>
                   <Looks3Icon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={this.state.tabTable === 0 ? 'С 3 числа 2/2 с 10 до 22 на две недели' : 'С 18 числа 2/2 с 10 до 22 на две недели'}/>
+              <ListItemText
+                primary={
+                  this.state.tabTable === 0
+                    ? "С 3 числа 2/2 с 10 до 22 на две недели"
+                    : "С 18 числа 2/2 с 10 до 22 на две недели"
+                }
+              />
             </ListItemButton>
 
-            <ListItemButton onClick={this.saveFastTimeWeek.bind(this, this.state.tabTable === 0 ? 4 : 19)}>
+            <ListItemButton
+              onClick={this.saveFastTimeWeek.bind(this, this.state.tabTable === 0 ? 4 : 19)}
+            >
               <ListItemAvatar>
                 <Avatar>
                   <Looks4Icon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={this.state.tabTable === 0 ? 'С 4 числа 2/2 с 10 до 22 на две недели' : 'С 19 числа 2/2 с 10 до 22 на две недели'}/>
+              <ListItemText
+                primary={
+                  this.state.tabTable === 0
+                    ? "С 4 числа 2/2 с 10 до 22 на две недели"
+                    : "С 19 числа 2/2 с 10 до 22 на две недели"
+                }
+              />
             </ListItemButton>
           </List>
         </Dialog>
-        <Dialog onClose={() => this.setState({ mainMenuAddUsers: false })} open={this.state.mainMenuAddUsers}>
-          <DialogTitle>Выбранные сотрудники {this.state.mounth}</DialogTitle>
+        <Dialog
+          onClose={() => this.setState({ mainMenuAddUsers: false })}
+          open={this.state.mainMenuAddUsers}
+        >
+          <DialogTitle className="button">
+            Выбранные сотрудники {this.state.mounth}
+            <IconButton
+              onClick={() => this.setState({ mainMenuAddUsers: false })}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
 
           <List sx={{ pt: 0 }}>
-            <ListItemButton onClick={() => this.setState({ mainMenuAddUsers: false, mainMenuAddUsersMounth: true })}>
+            <ListItemButton
+              onClick={() =>
+                this.setState({ mainMenuAddUsers: false, mainMenuAddUsersMounth: true })
+              }
+            >
               <ListItemAvatar>
                 <Avatar>
                   <AccessTimeIcon />
@@ -2479,7 +2855,9 @@ class WorkSchedule_ extends React.Component {
               <ListItemText primary="Сменить часы на месяц" />
             </ListItemButton>
 
-            <ListItemButton onClick={() => this.setState({ mainMenuAddUsers: false, mainMenuAddUsersWeek: true })}>
+            <ListItemButton
+              onClick={() => this.setState({ mainMenuAddUsers: false, mainMenuAddUsersWeek: true })}
+            >
               <ListItemAvatar>
                 <Avatar>
                   <SyncAltIcon />
@@ -2489,57 +2867,111 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
           </List>
         </Dialog>
-        <Dialog onClose={() => this.setState({ mainMenuS: false })} open={this.state.mainMenuS}>
+        <Dialog
+          onClose={() => this.setState({ mainMenuS: false })}
+          open={this.state.mainMenuS}
+        >
           {!this.state.chooseUser ? null : (
-            <DialogTitle>
-              {this.state.chooseUser.full_app_name}{' '}
-              {this.state.chooseUser.user_name} {this.state.mounth}
+            <DialogTitle className="button">
+              {this.state.chooseUser.full_app_name} {this.state.chooseUser.user_name}{" "}
+              {this.state.mounth}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuS: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
           )}
 
           <List sx={{ pt: 0 }}>
-            <ListItemButton onClick={this.saveFastTimeWeekOne.bind(this, this.state.tabTable === 0 ? 1 : 16)}>
+            <ListItemButton
+              onClick={this.saveFastTimeWeekOne.bind(this, this.state.tabTable === 0 ? 1 : 16)}
+            >
               <ListItemAvatar>
                 <Avatar>
                   <LooksOneIcon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={this.state.tabTable === 0 ? 'С 1 числа 2/2 с 10 до 22 на две недели' : 'С 16 числа 2/2 с 10 до 22 на две недели'}/>
+              <ListItemText
+                primary={
+                  this.state.tabTable === 0
+                    ? "С 1 числа 2/2 с 10 до 22 на две недели"
+                    : "С 16 числа 2/2 с 10 до 22 на две недели"
+                }
+              />
             </ListItemButton>
 
-            <ListItemButton onClick={this.saveFastTimeWeekOne.bind(this, this.state.tabTable === 0 ? 2 : 17)}>
+            <ListItemButton
+              onClick={this.saveFastTimeWeekOne.bind(this, this.state.tabTable === 0 ? 2 : 17)}
+            >
               <ListItemAvatar>
                 <Avatar>
                   <LooksTwoIcon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={this.state.tabTable === 0 ? 'С 2 числа 2/2 с 10 до 22 на две недели' : 'С 17 числа 2/2 с 10 до 22 на две недели'}/>
+              <ListItemText
+                primary={
+                  this.state.tabTable === 0
+                    ? "С 2 числа 2/2 с 10 до 22 на две недели"
+                    : "С 17 числа 2/2 с 10 до 22 на две недели"
+                }
+              />
             </ListItemButton>
 
-            <ListItemButton onClick={this.saveFastTimeWeekOne.bind(this, this.state.tabTable === 0 ? 3 : 18)}>
+            <ListItemButton
+              onClick={this.saveFastTimeWeekOne.bind(this, this.state.tabTable === 0 ? 3 : 18)}
+            >
               <ListItemAvatar>
                 <Avatar>
                   <Looks3Icon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={this.state.tabTable === 0 ? 'С 3 числа 2/2 с 10 до 22 на две недели' : 'С 18 числа 2/2 с 10 до 22 на две недели'}/>
+              <ListItemText
+                primary={
+                  this.state.tabTable === 0
+                    ? "С 3 числа 2/2 с 10 до 22 на две недели"
+                    : "С 18 числа 2/2 с 10 до 22 на две недели"
+                }
+              />
             </ListItemButton>
 
-            <ListItemButton onClick={this.saveFastTimeWeekOne.bind(this, this.state.tabTable === 0 ? 4 : 19)}>
+            <ListItemButton
+              onClick={this.saveFastTimeWeekOne.bind(this, this.state.tabTable === 0 ? 4 : 19)}
+            >
               <ListItemAvatar>
                 <Avatar>
                   <Looks4Icon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={this.state.tabTable === 0 ? 'С 4 числа 2/2 с 10 до 22 на две недели' : 'С 19 числа 2/2 с 10 до 22 на две недели'}/>
+              <ListItemText
+                primary={
+                  this.state.tabTable === 0
+                    ? "С 4 числа 2/2 с 10 до 22 на две недели"
+                    : "С 19 числа 2/2 с 10 до 22 на две недели"
+                }
+              />
             </ListItemButton>
           </List>
         </Dialog>
-        <Dialog onClose={() => this.setState({ mainMenu: false })} open={this.state.mainMenu}>
+        <Dialog
+          onClose={() => this.setState({ mainMenu: false })}
+          open={this.state.mainMenu}
+        >
           {!this.state.chooseUser ? null : (
-            <DialogTitle>
-              {this.state.chooseUser.full_app_name}{' '}
-              {this.state.chooseUser.user_name} {this.state.mounth}
+            <DialogTitle className="button">
+              {this.state.chooseUser.full_app_name} {this.state.chooseUser.user_name}{" "}
+              {this.state.mounth}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenu: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
           )}
 
@@ -2563,7 +2995,14 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
 
             <ListItemButton
-              onClick={() => this.setState({ mainMenu: false, mainMenuSmena: true, myOtherSmens: this.state.chooseUser.other_smens })}>
+              onClick={() =>
+                this.setState({
+                  mainMenu: false,
+                  mainMenuSmena: true,
+                  myOtherSmens: this.state.chooseUser.other_smens,
+                })
+              }
+            >
               <ListItemAvatar>
                 <Avatar>
                   <SyncAltIcon />
@@ -2573,7 +3012,14 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
 
             <ListItemButton
-              onClick={() => this.setState({ mainMenu: false, mainMenuPoints: true, myOtherPoints: this.state.chooseUser.other_points })}>
+              onClick={() =>
+                this.setState({
+                  mainMenu: false,
+                  mainMenuPoints: true,
+                  myOtherPoints: this.state.chooseUser.other_points,
+                })
+              }
+            >
               <ListItemAvatar>
                 <Avatar>
                   <HomeWorkIcon />
@@ -2583,8 +3029,23 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
           </List>
         </Dialog>
-        <Dialog onClose={() => this.setState({ mainMenuH: false })} open={this.state.mainMenuH}>
-          {!this.state.chooseUser ? null : <DialogTitle>Часы {this.state.chooseUser.user_name} {this.state.mounth}</DialogTitle>}
+        <Dialog
+          onClose={() => this.setState({ mainMenuH: false })}
+          open={this.state.mainMenuH}
+        >
+          {!this.state.chooseUser ? null : (
+            <DialogTitle className="button">
+              Часы {this.state.chooseUser.user_name} {this.state.mounth}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuH: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
+          )}
 
           <List sx={{ pt: 0 }}>
             <ListItemButton onClick={this.fastTime.bind(this, 1)}>
@@ -2622,12 +3083,30 @@ class WorkSchedule_ extends React.Component {
             </ListItemButton>
           </List>
         </Dialog>
-        <Dialog onClose={() => this.setState({ mainMenuSmena: false })} open={this.state.mainMenuSmena}>
-          {!this.state.chooseUser ? null : <DialogTitle>Смена {this.state.chooseUser.user_name} {this.state.mounth}</DialogTitle>}
+        <Dialog
+          onClose={() => this.setState({ mainMenuSmena: false })}
+          open={this.state.mainMenuSmena}
+        >
+          {!this.state.chooseUser ? null : (
+            <DialogTitle className="button">
+              Смена {this.state.chooseUser.user_name} {this.state.mounth}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuSmena: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
+          )}
 
           <List sx={{ pt: 0 }}>
             {this.state.myOtherSmens.map((item, key) => (
-              <ListItemButton key={key} onClick={this.fastSmena.bind(this, item.id)}>
+              <ListItemButton
+                key={key}
+                onClick={this.fastSmena.bind(this, item.id)}
+              >
                 <ListItemAvatar>
                   <Avatar>
                     <AssessmentIcon />
@@ -2638,12 +3117,30 @@ class WorkSchedule_ extends React.Component {
             ))}
           </List>
         </Dialog>
-        <Dialog onClose={() => this.setState({ mainMenuPoints: false })} open={this.state.mainMenuPoints}>
-          {!this.state.chooseUser ? null : <DialogTitle>Смена точка с сегоднешнего дня {this.state.chooseUser.user_name}</DialogTitle>}
+        <Dialog
+          onClose={() => this.setState({ mainMenuPoints: false })}
+          open={this.state.mainMenuPoints}
+        >
+          {!this.state.chooseUser ? null : (
+            <DialogTitle className="button">
+              Смена точка с сегоднешнего дня {this.state.chooseUser.user_name}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuPoints: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
+          )}
 
           <List sx={{ pt: 0 }}>
             {this.state.myOtherPoints.map((item, key) => (
-              <ListItemButton key={key} onClick={this.checkFastPoint.bind(this, item)}>
+              <ListItemButton
+                key={key}
+                onClick={this.checkFastPoint.bind(this, item)}
+              >
                 <ListItemAvatar>
                   <Avatar>
                     <HomeWorkIcon />
@@ -2654,14 +3151,36 @@ class WorkSchedule_ extends React.Component {
             ))}
           </List>
         </Dialog>
-        <Dialog onClose={() => this.setState({ mainMenuPrice: false })} open={this.state.mainMenuPrice}>
-          {!this.state.chooseUser ? null : <DialogTitle>Часовая ставка {this.state.chooseUser.user_name} {this.state.mounth}</DialogTitle>}
+        <Dialog
+          onClose={() => this.setState({ mainMenuPrice: false })}
+          open={this.state.mainMenuPrice}
+        >
+          {!this.state.chooseUser ? null : (
+            <DialogTitle className="button">
+              Часовая ставка {this.state.chooseUser.user_name} {this.state.mounth}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuPrice: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
+          )}
 
           {!this.state.chooseUser ? null : (
             <List sx={{ pt: 0 }}>
               {this.state.chooseUser.price_arr.map((item, key) => (
-                <ListItemButton key={key} onClick={this.changePriceH.bind(this, item)}
-                  style={parseFloat(this.state.chooseUser.price_p_h) == parseFloat(item) ? { backgroundColor: 'green', color: '#fff' } : {}}>
+                <ListItemButton
+                  key={key}
+                  onClick={this.changePriceH.bind(this, item)}
+                  style={
+                    parseFloat(this.state.chooseUser.price_p_h) == parseFloat(item)
+                      ? { backgroundColor: "green", color: "#fff" }
+                      : {}
+                  }
+                >
                   <ListItemAvatar>
                     <Avatar>
                       <AssessmentIcon />
@@ -2673,83 +3192,156 @@ class WorkSchedule_ extends React.Component {
             </List>
           )}
         </Dialog>
-        <Dialog onClose={() => this.setState({ mainMenuLVDIR: false })} open={this.state.mainMenuLVDIR}>
-          <DialogTitle>Изменение уровня дирекора {this.state.mounth}</DialogTitle>
+        <Dialog
+          onClose={() => this.setState({ mainMenuLVDIR: false })}
+          open={this.state.mainMenuLVDIR}
+        >
+          <DialogTitle className="button">
+            Изменение уровня дирекора {this.state.mounth}
+            <IconButton
+              onClick={() => {
+                this.setState({ mainMenuLVDIR: false });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
 
-          <List style={{ overflow: 'scroll' }}>
+          <List style={{ overflow: "scroll" }}>
             {this.state.arr_dir_lv.map((item, key) => (
-              <ListItemButton key={key} style={parseFloat(this.state.add_lv) == parseFloat(item) ? { backgroundColor: 'green', color: '#fff' } : {}}
-                onClick={this.checkNewLvDir.bind(this, item)}>
+              <ListItemButton
+                key={key}
+                style={
+                  parseFloat(this.state.add_lv) == parseFloat(item)
+                    ? { backgroundColor: "green", color: "#fff" }
+                    : {}
+                }
+                onClick={this.checkNewLvDir.bind(this, item)}
+              >
                 <ListItemAvatar>
                   <Avatar>
                     <AssessmentIcon />
                   </Avatar>
                 </ListItemAvatar>
-                <ListItemText primary={item + ' уровень'} />
+                <ListItemText primary={item + " уровень"} />
               </ListItemButton>
             ))}
           </List>
         </Dialog>
-        <Dialog onClose={() => this.setState({ mainMenuDopBonus: false })} open={this.state.mainMenuDopBonus}>
-          <DialogTitle>Командный бонус {this.state.mounth}-{parseInt(this.state.tabTable) == 0 ? '01' : '16'}</DialogTitle>
-
-          <List sx={{ pt: 0 }}>
-            <ListItemButton>
-              <ListItemAvatar>
-                <Avatar style={{ backgroundColor: 'green' }}>
-                  <CheckIcon style={{ color: '#fff' }} />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={'Выдать'} onClick={this.checkDopBonus.bind(this, 1)}/>
-            </ListItemButton>
-            <ListItemButton>
-              <ListItemAvatar>
-                <Avatar style={{ backgroundColor: 'red' }}>
-                  <CloseIcon style={{ color: '#fff' }} />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={'Отказать'} onClick={this.checkDopBonus.bind(this, 2)}/>
-            </ListItemButton>
-          </List>
-        </Dialog>
-        {/* Лишение бонуса конкретного сотрудника */}
-        <Dialog onClose={() => this.setState({ mainMenuDopBonusUser: false })} open={this.state.mainMenuDopBonusUser}>
-          <DialogTitle>
-            Командный бонус {this.state.mounth}-{parseInt(this.state.tabTable) == 0 ? '01' : '16'} {this.state.userDopBonus?.data.user_name ?? ''}
+        <Dialog
+          onClose={() => this.setState({ mainMenuDopBonus: false })}
+          open={this.state.mainMenuDopBonus}
+        >
+          <DialogTitle className="button">
+            Командный бонус {this.state.mounth}-{parseInt(this.state.tabTable) == 0 ? "01" : "16"}
+            <IconButton
+              onClick={() => {
+                this.setState({ mainMenuDopBonus: false });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
           </DialogTitle>
 
           <List sx={{ pt: 0 }}>
             <ListItemButton>
               <ListItemAvatar>
-                <Avatar style={{ backgroundColor: 'green' }}>
-                  <CloseIcon style={{ color: '#fff' }} />
+                <Avatar style={{ backgroundColor: "green" }}>
+                  <CheckIcon style={{ color: "#fff" }} />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={'Отмена'} onClick={() => this.setState({ mainMenuDopBonusUser: false })}/>
+              <ListItemText
+                primary={"Выдать"}
+                onClick={this.checkDopBonus.bind(this, 1)}
+              />
             </ListItemButton>
             <ListItemButton>
               <ListItemAvatar>
-                <Avatar style={{ backgroundColor: 'red' }}>
-                  <CheckIcon style={{ color: '#fff' }} />
+                <Avatar style={{ backgroundColor: "red" }}>
+                  <CloseIcon style={{ color: "#fff" }} />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={'Лишить'} onClick={this.checkDopBonus.bind(this, 3)}/>
+              <ListItemText
+                primary={"Отказать"}
+                onClick={this.checkDopBonus.bind(this, 2)}
+              />
+            </ListItemButton>
+          </List>
+        </Dialog>
+        {/* Лишение бонуса конкретного сотрудника */}
+        <Dialog
+          onClose={() => this.setState({ mainMenuDopBonusUser: false })}
+          open={this.state.mainMenuDopBonusUser}
+        >
+          <DialogTitle className="button">
+            Командный бонус {this.state.mounth}-{parseInt(this.state.tabTable) == 0 ? "01" : "16"}{" "}
+            {this.state.userDopBonus?.data.user_name ?? ""}
+            <IconButton
+              onClick={() => {
+                this.setState({ mainMenuDopBonusUser: false });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
+
+          <List sx={{ pt: 0 }}>
+            <ListItemButton>
+              <ListItemAvatar>
+                <Avatar style={{ backgroundColor: "green" }}>
+                  <CloseIcon style={{ color: "#fff" }} />
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={"Отмена"}
+                onClick={() => this.setState({ mainMenuDopBonusUser: false })}
+              />
+            </ListItemButton>
+            <ListItemButton>
+              <ListItemAvatar>
+                <Avatar style={{ backgroundColor: "red" }}>
+                  <CheckIcon style={{ color: "#fff" }} />
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={"Лишить"}
+                onClick={this.checkDopBonus.bind(this, 3)}
+              />
             </ListItemButton>
           </List>
         </Dialog>
         {!this.state.userInfo || this.state.mainMenuZP === false ? null : (
-          <Dialog onClose={() => this.setState({ mainMenuZP: false, userInfo: null })} open={this.state.mainMenuZP}>
-            <DialogTitle>
+          <Dialog
+            onClose={() => this.setState({ mainMenuZP: false, userInfo: null })}
+            open={this.state.mainMenuZP}
+          >
+            <DialogTitle className="button">
               {this.state.userInfo.app} {this.state.userInfo.name} {this.state.userInfo.date}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuZP: false, userInfo: null });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
 
             <DialogContent>
-              <Grid container spacing={3} style={{ marginTop: 10 }}>
+              <Grid
+                container
+                spacing={3}
+                style={{ marginTop: 10 }}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MyTextInput
                     label="Выданная сумма"
                     value={this.state.userInfo.given}
@@ -2764,10 +3356,12 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <span>Вся сумма: </span>
-                  <span style={{ color: '#c03', borderBottom: '1px dotted #c03', cursor: 'pointer' }}
+                  <span
+                    style={{ color: "#c03", borderBottom: "1px dotted #c03", cursor: "pointer" }}
                     onClick={() => {
                       let userInfo = this.state.userInfo;
                       userInfo.given = userInfo.fullPrice;
@@ -2779,25 +3373,54 @@ class WorkSchedule_ extends React.Component {
                 </Grid>
               </Grid>
             </DialogContent>
-            <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.saveGive.bind(this)}>Сохранить</Button>
-              <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ mainMenuZP: false, userInfo: null })}>Отмена</Button>
+            <DialogActions
+              style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Button
+                style={{ backgroundColor: "green", color: "#fff" }}
+                onClick={this.saveGive.bind(this)}
+              >
+                Сохранить
+              </Button>
+              <Button
+                style={{ backgroundColor: "red", color: "#fff" }}
+                onClick={() => this.setState({ mainMenuZP: false, userInfo: null })}
+              >
+                Отмена
+              </Button>
             </DialogActions>
           </Dialog>
         )}
         {!this.state.userInfo || this.state.mainMenuZPCart === false ? null : (
-          <Dialog onClose={() => this.setState({ mainMenuZPCart: false, userInfo: null })} open={this.state.mainMenuZPCart}>
-            <DialogTitle>
-              Перечислено на карту {this.state.userInfo.app} {this.state.userInfo.name} {this.state.userInfo.date}
+          <Dialog
+            onClose={() => this.setState({ mainMenuZPCart: false, userInfo: null })}
+            open={this.state.mainMenuZPCart}
+          >
+            <DialogTitle className="button">
+              Перечислено на карту {this.state.userInfo.app} {this.state.userInfo.name}{" "}
+              {this.state.userInfo.date}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuZPCart: false, userInfo: null });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
 
             <DialogContent>
-              <Grid container spacing={3} style={{ marginTop: 10 }}>
+              <Grid
+                container
+                spacing={3}
+                style={{ marginTop: 10 }}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <MyTextInput
                     label="Выданная сумма"
                     value={this.state.userInfo.given}
@@ -2812,10 +3435,12 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <span>Вся сумма: </span>
-                  <span style={{ color: '#c03', borderBottom: '1px dotted #c03', cursor: 'pointer' }}
+                  <span
+                    style={{ color: "#c03", borderBottom: "1px dotted #c03", cursor: "pointer" }}
                     onClick={() => {
                       let userInfo = this.state.userInfo;
                       userInfo.given = userInfo.fullPrice;
@@ -2827,9 +3452,21 @@ class WorkSchedule_ extends React.Component {
                 </Grid>
               </Grid>
             </DialogContent>
-            <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.saveGiveCart.bind(this)}>Сохранить</Button>
-              <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ mainMenuZPCart: false, userInfo: null })}>Отмена</Button>
+            <DialogActions
+              style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Button
+                style={{ backgroundColor: "green", color: "#fff" }}
+                onClick={this.saveGiveCart.bind(this)}
+              >
+                Сохранить
+              </Button>
+              <Button
+                style={{ backgroundColor: "red", color: "#fff" }}
+                onClick={() => this.setState({ mainMenuZPCart: false, userInfo: null })}
+              >
+                Отмена
+              </Button>
             </DialogActions>
           </Dialog>
         )}
@@ -2839,22 +3476,44 @@ class WorkSchedule_ extends React.Component {
             onClose={() => this.setState({ isOpenModalH: false })}
             scroll="paper"
             fullWidth={true}
-            maxWidth={'md'}
-            id={'OpenModalH'}
+            maxWidth={"md"}
+            id={"OpenModalH"}
           >
-            <DialogTitle id="scroll-dialog-title">
-              {this.state.userInfo.user.app_name + ' ' + this.state.userInfo.user.user_name + ' ' + this.state.userInfo.date}
+            <DialogTitle
+              className="button"
+              id="scroll-dialog-title"
+            >
+              {this.state.userInfo.user.app_name +
+                " " +
+                this.state.userInfo.user.user_name +
+                " " +
+                this.state.userInfo.date}
+              <IconButton
+                onClick={() => {
+                  this.setState({ isOpenModalH: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
-            <DialogContent>
-              <Grid container spacing={3}>
 
+            <DialogContent>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <Typography style={{ marginBottom: 10 }}>
-                    {'Нагрузка: ' + this.state.userInfo.user.my_load_h + ' / Средняя нагрузка: ' + this.state.userInfo.user.all_load_h}
+                    {"Нагрузка: " +
+                      this.state.userInfo.user.my_load_h +
+                      " / Средняя нагрузка: " +
+                      this.state.userInfo.user.all_load_h}
                   </Typography>
                 </Grid>
 
@@ -2862,9 +3521,12 @@ class WorkSchedule_ extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 12
-                    }}>
-                    <Typography style={{ marginBottom: 10 }}>{'Бонус: ' + this.state.userInfo.user.bonus}</Typography>
+                      sm: 12,
+                    }}
+                  >
+                    <Typography style={{ marginBottom: 10 }}>
+                      {"Бонус: " + this.state.userInfo.user.bonus}
+                    </Typography>
                   </Grid>
                 )}
 
@@ -2872,8 +3534,9 @@ class WorkSchedule_ extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 12
-                    }}>
+                      sm: 12,
+                    }}
+                  >
                     <MySelect
                       data={this.state.otherAppList}
                       value={this.state.userInfo.new_app}
@@ -2891,8 +3554,9 @@ class WorkSchedule_ extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 12
-                    }}>
+                      sm: 12,
+                    }}
+                  >
                     <MySelect
                       data={this.state.userInfo.mentor_list}
                       value={this.state.userInfo.mentor_id}
@@ -2909,21 +3573,22 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MyAutocomplite2
-                    data={ [ {id: 1, name: '36,6'} ] }
+                    data={[{ id: 1, name: "36,6" }]}
                     value={this.state.userInfo.user_temp}
                     freeSolo={true}
                     func={(event, data) => {
-                      console.log( event, data )
+                      console.log(event, data);
 
                       let userInfo = this.state.userInfo;
                       userInfo.user_temp = data;
                       this.setState({ userInfo: userInfo });
                     }}
                     onBlur={(event, data) => {
-                      console.log( event.target.value, data )
+                      console.log(event.target.value, data);
 
                       let userInfo = this.state.userInfo;
                       userInfo.user_temp = event.target.value;
@@ -2936,8 +3601,9 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <MySelect
                     data={this.state.dataType}
                     value={this.state.userInfo.type_healf}
@@ -2954,8 +3620,9 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   <Accordion
                     style={{ marginTop: 20 }}
                     expanded={this.state.openNewTimeAdd}
@@ -2965,20 +3632,28 @@ class WorkSchedule_ extends React.Component {
                       <AccessTimeIcon style={{ marginRight: 10 }} />
                       <Typography>Добавить время</Typography>
                     </AccordionSummary>
-                    <AccordionDetails style={{ display: 'flex', flexDirection: 'row' }}>
+                    <AccordionDetails style={{ display: "flex", flexDirection: "row" }}>
                       <MyTimePicker
                         value={this.state.newTimeStart}
                         func={(event) => this.setState({ newTimeStart: event.target.value })}
                         label="Время начала работы"
                       />
-                      <Typography width={'3%'}></Typography>
+                      <Typography width={"3%"}></Typography>
                       <MyTimePicker
                         value={this.state.newTimeEnd}
                         func={(event) => this.setState({ newTimeEnd: event.target.value })}
                         label="Время окончания работы"
                       />
-                      <Typography width={'3%'}></Typography>
-                      <Button style={{ minWidth: '12%', backgroundColor: 'red', color: '#fff', cursor: 'pointer' }} onClick={this.addTime.bind(this)}>
+                      <Typography width={"3%"}></Typography>
+                      <Button
+                        style={{
+                          minWidth: "12%",
+                          backgroundColor: "red",
+                          color: "#fff",
+                          cursor: "pointer",
+                        }}
+                        onClick={this.addTime.bind(this)}
+                      >
                         Добавить
                       </Button>
 
@@ -2988,20 +3663,22 @@ class WorkSchedule_ extends React.Component {
 
                   {this.state.userInfo.hours.map((item, key) => (
                     <Accordion key={key}>
-                      <AccordionSummary expandIcon={<CloseIcon onClick={this.delTime.bind(this, key)} />}>
+                      <AccordionSummary
+                        expandIcon={<CloseIcon onClick={this.delTime.bind(this, key)} />}
+                      >
                         <AccessTimeIcon style={{ marginRight: 10 }} />
-                        <Typography>{item.time_start + ' - ' + item.time_end}</Typography>
+                        <Typography>{item.time_start + " - " + item.time_end}</Typography>
                       </AccordionSummary>
-                      <AccordionDetails style={{ display: 'flex', flexDirection: 'row' }}>
+                      <AccordionDetails style={{ display: "flex", flexDirection: "row" }}>
                         <MyTimePicker
                           value={item.time_start}
-                          func={this.changeHourse.bind(this, 'time_start', key)}
+                          func={this.changeHourse.bind(this, "time_start", key)}
                           label="Время начала работы"
                         />
-                        <Typography width={'3%'}></Typography>
+                        <Typography width={"3%"}></Typography>
                         <MyTimePicker
                           value={item.time_end}
-                          func={this.changeHourse.bind(this, 'time_end', key)}
+                          func={this.changeHourse.bind(this, "time_end", key)}
                           label="Время окончания работы"
                         />
                       </AccordionDetails>
@@ -3012,10 +3689,14 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 12
-                  }}>
+                    sm: 12,
+                  }}
+                >
                   {!this.state.userInfo.hist.length ? null : (
-                    <Accordion style={{ marginTop: 50 }} disabled>
+                    <Accordion
+                      style={{ marginTop: 50 }}
+                      disabled
+                    >
                       <AccordionSummary>
                         <Typography>История</Typography>
                       </AccordionSummary>
@@ -3024,53 +3705,81 @@ class WorkSchedule_ extends React.Component {
                   {this.state.userInfo.hist.map((item, key) => (
                     <Accordion key={key}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography>{item.date + ' - ' + item.user_name}</Typography>
+                        <Typography>{item.date + " - " + item.user_name}</Typography>
                       </AccordionSummary>
-                      <AccordionDetails style={{ display: 'flex', flexDirection: 'column' }}>
+                      <AccordionDetails style={{ display: "flex", flexDirection: "column" }}>
                         {item.items.map((it, k) => (
                           <Typography key={k}>
-                            {it.time_start + ' - ' + it.time_end}{' '}
-                            {it.app_name == '' ? '' : ' - ' + it.app_name}{' '}
+                            {it.time_start + " - " + it.time_end}{" "}
+                            {it.app_name == "" ? "" : " - " + it.app_name}{" "}
                           </Typography>
                         ))}
                       </AccordionDetails>
                     </Accordion>
                   ))}
                 </Grid>
-
               </Grid>
             </DialogContent>
-            <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.saveDayHourse.bind(this)}>Сохранить</Button>
-              <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ isOpenModalH: false })}>Отмена</Button>
+            <DialogActions
+              style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Button
+                style={{ backgroundColor: "green", color: "#fff" }}
+                onClick={this.saveDayHourse.bind(this)}
+              >
+                Сохранить
+              </Button>
+              <Button
+                style={{ backgroundColor: "red", color: "#fff" }}
+                onClick={() => this.setState({ isOpenModalH: false })}
+              >
+                Отмена
+              </Button>
             </DialogActions>
           </Dialog>
         )}
-        {!this.state.userInfo ||
-        this.state.isOpenModalHMini === false ? null : (
+        {!this.state.userInfo || this.state.isOpenModalHMini === false ? null : (
           <Dialog
             open={this.state.isOpenModalHMini}
             onClose={() => this.setState({ isOpenModalHMini: false })}
             scroll="paper"
             fullWidth={true}
-            maxWidth={'md'}
-            id={'OpenModalH'}
+            maxWidth={"md"}
+            id={"OpenModalH"}
           >
-            <DialogTitle id="scroll-dialog-title">
-              {this.state.userInfo.user.app_name + ' ' + this.state.userInfo.user.user_name + ' ' + this.state.userInfo.date}
+            <DialogTitle
+              className="button"
+              id="scroll-dialog-title"
+            >
+              {this.state.userInfo.user.app_name +
+                " " +
+                this.state.userInfo.user.user_name +
+                " " +
+                this.state.userInfo.date}
+              <IconButton
+                onClick={() => {
+                  this.setState({ isOpenModalHMini: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
             <DialogContent>
               {this.state.userInfo.hours.map((item, key) => (
                 <Accordion key={key}>
                   <AccordionSummary>
                     <AccessTimeIcon style={{ marginRight: 10 }} />
-                    <Typography>{item.time_start + ' - ' + item.time_end}</Typography>
+                    <Typography>{item.time_start + " - " + item.time_end}</Typography>
                   </AccordionSummary>
                 </Accordion>
               ))}
 
               {!this.state.userInfo.hist.length ? null : (
-                <Accordion style={{ marginTop: 50 }} disabled>
+                <Accordion
+                  style={{ marginTop: 50 }}
+                  disabled
+                >
                   <AccordionSummary>
                     <Typography>История</Typography>
                   </AccordionSummary>
@@ -3079,21 +3788,26 @@ class WorkSchedule_ extends React.Component {
               {this.state.userInfo.hist.map((item, key) => (
                 <Accordion key={key}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography>{item.date + ' - ' + item.user_name}</Typography>
+                    <Typography>{item.date + " - " + item.user_name}</Typography>
                   </AccordionSummary>
-                  <AccordionDetails style={{ display: 'flex', flexDirection: 'column' }}>
+                  <AccordionDetails style={{ display: "flex", flexDirection: "column" }}>
                     {item.items.map((it, k) => (
                       <Typography key={k}>
-                        {it.time_start + ' - ' + it.time_end}{' '}
-                        {it.app_name == '' ? '' : ' - ' + it.app_name}{' '}
+                        {it.time_start + " - " + it.time_end}{" "}
+                        {it.app_name == "" ? "" : " - " + it.app_name}{" "}
                       </Typography>
                     ))}
                   </AccordionDetails>
                 </Accordion>
               ))}
             </DialogContent>
-            <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={() => this.setState({ isOpenModalHMini: false })}>
+            <DialogActions
+              style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Button
+                style={{ backgroundColor: "green", color: "#fff" }}
+                onClick={() => this.setState({ isOpenModalHMini: false })}
+              >
                 Закрыть
               </Button>
             </DialogActions>
@@ -3105,33 +3819,57 @@ class WorkSchedule_ extends React.Component {
             onClose={() => this.setState({ isOpenModalM: false })}
             scroll="paper"
             fullWidth={true}
-            maxWidth={'md'}
-            id={'OpenModalM'}
+            maxWidth={"md"}
+            id={"OpenModalM"}
           >
-            <DialogTitle>{this.state.userInfo.user.app_name + ' ' + this.state.userInfo.user.user_name}
+            <DialogTitle className="button">
+              {this.state.userInfo.user.app_name + " " + this.state.userInfo.user.user_name}
+              <IconButton
+                onClick={() => {
+                  this.setState({ isOpenModalM: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
             <DialogContent>
-              <Grid container spacing={3}>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <List component="nav">
-                    <ListItemButton onClick={this.chooseType.bind(this, 0)} style={{ backgroundColor: '#98e38d', color: '#fff' }}>
-                      <ListItemText primary="10:00 - 22:00" />{this.state.typeTimeAdd === 0 ? <SendIcon /> : null}
+                    <ListItemButton
+                      onClick={this.chooseType.bind(this, 0)}
+                      style={{ backgroundColor: "#98e38d", color: "#fff" }}
+                    >
+                      <ListItemText primary="10:00 - 22:00" />
+                      {this.state.typeTimeAdd === 0 ? <SendIcon /> : null}
                     </ListItemButton>
 
-                    <ListItemButton onClick={this.chooseType.bind(this, 1)} style={{ backgroundColor: '#3dcef2', color: '#fff' }}>
-                      <ListItemText primary="10:00 - 16:00" />{this.state.typeTimeAdd === 1 ? <SendIcon /> : null}
+                    <ListItemButton
+                      onClick={this.chooseType.bind(this, 1)}
+                      style={{ backgroundColor: "#3dcef2", color: "#fff" }}
+                    >
+                      <ListItemText primary="10:00 - 16:00" />
+                      {this.state.typeTimeAdd === 1 ? <SendIcon /> : null}
                     </ListItemButton>
 
-                    <ListItemButton onClick={this.chooseType.bind(this, 2)} style={{ backgroundColor: '#1560bd', color: '#fff' }}>
+                    <ListItemButton
+                      onClick={this.chooseType.bind(this, 2)}
+                      style={{ backgroundColor: "#1560bd", color: "#fff" }}
+                    >
                       <ListItemText primary="16:00 - 22:00" />
                       {this.state.typeTimeAdd === 2 ? <SendIcon /> : null}
                     </ListItemButton>
 
-                    <ListItemButton style={{ backgroundColor: '#926eae', color: '#fff' }}>
+                    <ListItemButton style={{ backgroundColor: "#926eae", color: "#fff" }}>
                       <ListItemText primary="Другое" />
                     </ListItemButton>
                   </List>
@@ -3139,15 +3877,31 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
-                  <MyDatePickerGraph year={this.state.mounth} renderWeekPickerDay={this.renderWeekPickerDay}/>
+                    sm: 6,
+                  }}
+                >
+                  <MyDatePickerGraph
+                    year={this.state.mounth}
+                    renderWeekPickerDay={this.renderWeekPickerDay}
+                  />
                 </Grid>
               </Grid>
             </DialogContent>
-            <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.saveUserM.bind(this)}>Сохранить</Button>
-              <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ isOpenModalM: false })}>Отмена</Button>
+            <DialogActions
+              style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Button
+                style={{ backgroundColor: "green", color: "#fff" }}
+                onClick={this.saveUserM.bind(this)}
+              >
+                Сохранить
+              </Button>
+              <Button
+                style={{ backgroundColor: "red", color: "#fff" }}
+                onClick={() => this.setState({ isOpenModalM: false })}
+              >
+                Отмена
+              </Button>
             </DialogActions>
           </Dialog>
         )}
@@ -3157,20 +3911,32 @@ class WorkSchedule_ extends React.Component {
             onClose={() => this.setState({ isShowErr: false })}
             scroll="paper"
             fullWidth={true}
-            maxWidth={'md'}
-            id={'OpenModalM'}
+            maxWidth={"md"}
+            id={"OpenModalM"}
           >
-            <DialogTitle>
+            <DialogTitle className="button">
               Ошибка по заказу №{this.state.showErr.order_id}
+              <IconButton
+                onClick={() => {
+                  this.setState({ isShowErr: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
             </DialogTitle>
             <DialogContent>
-              <Grid container spacing={3}>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   className="cellErr"
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <b>Ошибка заказа</b>
                   <span>{this.state.showErr.order_desc}</span>
                 </Grid>
@@ -3178,8 +3944,9 @@ class WorkSchedule_ extends React.Component {
                   className="cellErr"
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <b>Дата заказа</b>
                   <span>{this.state.showErr.date_time_order}</span>
                 </Grid>
@@ -3188,8 +3955,9 @@ class WorkSchedule_ extends React.Component {
                   className="cellErr"
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <b>Позиция</b>
                   <span>{this.state.showErr.item_name}</span>
                 </Grid>
@@ -3197,8 +3965,9 @@ class WorkSchedule_ extends React.Component {
                   className="cellErr"
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <b>Ошибка</b>
                   <span>{this.state.showErr.pr_name}</span>
                 </Grid>
@@ -3206,19 +3975,28 @@ class WorkSchedule_ extends React.Component {
                   className="cellErr"
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <b>Сумма</b>
                   <span>{this.state.showErr.my_price}</span>
                 </Grid>
 
                 <Grid
                   size={{
-                    xs: 12
-                  }}>
+                    xs: 12,
+                  }}
+                >
                   {this.state.showErr.imgs.map((item, key) => (
-                    <a key={key} href={'https://jacochef.ru/src/img/err_orders/uploads/' + item} target="_blank">
-                      <img src={'https://jacochef.ru/src/img/err_orders/uploads/' + item} style={{ maxHeight: 150, maxWidth: 150, margin: 10 }}/>
+                    <a
+                      key={key}
+                      href={"https://jacochef.ru/src/img/err_orders/uploads/" + item}
+                      target="_blank"
+                    >
+                      <img
+                        src={"https://jacochef.ru/src/img/err_orders/uploads/" + item}
+                        style={{ maxHeight: 150, maxWidth: 150, margin: 10 }}
+                      />
                     </a>
                   ))}
                 </Grid>
@@ -3226,9 +4004,11 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
-                  {this.state.showErr.new_text_1.length > 0 && parseInt(this.state.showErr.is_edit) == 0 ? (
+                    sm: 6,
+                  }}
+                >
+                  {this.state.showErr.new_text_1.length > 0 &&
+                  parseInt(this.state.showErr.is_edit) == 0 ? (
                     <div className="cellErr">
                       <b>Причина обжалования</b>
                       <span>{this.state.showErr.new_text_1}</span>
@@ -3251,8 +4031,9 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   {this.state.showErr.new_text_2.length == 0 ? null : (
                     <div className="cellErr">
                       <b>Ответ обжалования</b>
@@ -3264,10 +4045,17 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
-                  {this.state.showErr.new_text_1.length > 0 && parseInt(this.state.showErr.is_edit) == 1 ? (
-                    <Button variant="contained" onClick={this.fakeOrders.bind(this)}>Обжаловать</Button>
+                    sm: 6,
+                  }}
+                >
+                  {this.state.showErr.new_text_1.length > 0 &&
+                  parseInt(this.state.showErr.is_edit) == 1 ? (
+                    <Button
+                      variant="contained"
+                      onClick={this.fakeOrders.bind(this)}
+                    >
+                      Обжаловать
+                    </Button>
                   ) : null}
                 </Grid>
               </Grid>
@@ -3280,18 +4068,32 @@ class WorkSchedule_ extends React.Component {
             onClose={() => this.setState({ isShowErrCam: false })}
             scroll="paper"
             fullWidth={true}
-            maxWidth={'md'}
-            id={'OpenModalM'}
+            maxWidth={"md"}
+            id={"OpenModalM"}
           >
-            <DialogTitle>Ошибка №{this.state.showErrCam.id}</DialogTitle>
+            <DialogTitle className="button">
+              Ошибка №{this.state.showErrCam.id}
+              <IconButton
+                onClick={() => {
+                  this.setState({ isShowErrCam: false });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
             <DialogContent>
-              <Grid container spacing={3}>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid
                   className="cellErr"
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <b>Ошибка</b>
                   <span>{this.state.showErrCam.fine_name}</span>
                 </Grid>
@@ -3299,8 +4101,9 @@ class WorkSchedule_ extends React.Component {
                   className="cellErr"
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   <b>Дата время ошибки</b>
                   <span>{this.state.showErrCam.date_time_fine}</span>
                 </Grid>
@@ -3308,19 +4111,28 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   className="cellErr"
                   size={{
-                    xs: 12
-                  }}>
+                    xs: 12,
+                  }}
+                >
                   <b>Комментарий</b>
                   <span>{this.state.showErrCam.comment}</span>
                 </Grid>
 
                 <Grid
                   size={{
-                    xs: 12
-                  }}>
+                    xs: 12,
+                  }}
+                >
                   {this.state.showErrCam.imgs.map((item, key) => (
-                    <a key={key} href={'https://jacochef.ru/src/img/fine_err/uploads/' + item} target="_blank">
-                      <img src={'https://jacochef.ru/src/img/fine_err/uploads/' + item} style={{ maxHeight: 150, maxWidth: 150, margin: 10 }}/>
+                    <a
+                      key={key}
+                      href={"https://jacochef.ru/src/img/fine_err/uploads/" + item}
+                      target="_blank"
+                    >
+                      <img
+                        src={"https://jacochef.ru/src/img/fine_err/uploads/" + item}
+                        style={{ maxHeight: 150, maxWidth: 150, margin: 10 }}
+                      />
                     </a>
                   ))}
                 </Grid>
@@ -3328,9 +4140,11 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
-                  {this.state.showErrCam.text_one.length > 0 && parseInt(this.state.showErrCam.is_edit) == 0 ? (
+                    sm: 6,
+                  }}
+                >
+                  {this.state.showErrCam.text_one.length > 0 &&
+                  parseInt(this.state.showErrCam.is_edit) == 0 ? (
                     <div className="cellErr">
                       <b>Причина обжалования</b>
                       <span>{this.state.showErrCam.text_one}</span>
@@ -3353,8 +4167,9 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
+                    sm: 6,
+                  }}
+                >
                   {this.state.showErrCam.text_two.length == 0 ? null : (
                     <div className="cellErr">
                       <b>Ответ обжалования</b>
@@ -3366,25 +4181,50 @@ class WorkSchedule_ extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 6
-                  }}>
-                  {this.state.showErrCam.text_one.length > 0 && parseInt(this.state.showErrCam.is_edit) == 1 ? (
-                    <Button variant="contained" onClick={this.fakeCam.bind(this)}>Обжаловать</Button>
+                    sm: 6,
+                  }}
+                >
+                  {this.state.showErrCam.text_one.length > 0 &&
+                  parseInt(this.state.showErrCam.is_edit) == 1 ? (
+                    <Button
+                      variant="contained"
+                      onClick={this.fakeCam.bind(this)}
+                    >
+                      Обжаловать
+                    </Button>
                   ) : null}
                 </Grid>
               </Grid>
             </DialogContent>
           </Dialog>
         )}
-        <Dialog onClose={() => this.setState({ newSmena: false, newSmenaName: '' })} open={this.state.newSmena}>
-          <DialogTitle>Новая смена</DialogTitle>
+        <Dialog
+          onClose={() => this.setState({ newSmena: false, newSmenaName: "" })}
+          open={this.state.newSmena}
+        >
+          <DialogTitle className="button">
+            Новая смена
+            <IconButton
+              onClick={() => {
+                this.setState({ newSmena: false, newSmenaName: "" });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
           <DialogContent>
-            <Grid container spacing={3} style={{ marginTop: 10 }}>
+            <Grid
+              container
+              spacing={3}
+              style={{ marginTop: 10 }}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <MyTextInput
                   label="Название смены"
                   value={this.state.newSmenaName}
@@ -3395,8 +4235,9 @@ class WorkSchedule_ extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <List className="userSmenalist">
                   {this.state.allUsers.map((item, key) => (
                     <ListItemButton
@@ -3412,28 +4253,61 @@ class WorkSchedule_ extends React.Component {
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.saveNewSmena.bind(this)}>Сохранить</Button>
-            <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ newSmena: false })}>Отмена</Button>
+          <DialogActions
+            style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+          >
+            <Button
+              style={{ backgroundColor: "green", color: "#fff" }}
+              onClick={this.saveNewSmena.bind(this)}
+            >
+              Сохранить
+            </Button>
+            <Button
+              style={{ backgroundColor: "red", color: "#fff" }}
+              onClick={() => this.setState({ newSmena: false })}
+            >
+              Отмена
+            </Button>
           </DialogActions>
         </Dialog>
-        <Dialog onClose={() => this.setState({ editSmena: false, newSmenaName: '' })} open={this.state.editSmena} fullWidth={true}>
-          <DialogTitle>Редактирование смены</DialogTitle>
+        <Dialog
+          onClose={() => this.setState({ editSmena: false, newSmenaName: "" })}
+          open={this.state.editSmena}
+          fullWidth={true}
+        >
+          <DialogTitle className="button">
+            Редактирование смены
+            <IconButton
+              onClick={() => {
+                this.setState({ editSmena: false, newSmenaName: "" });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
           <DialogContent>
-            <Grid container spacing={3}>
+            <Grid
+              container
+              spacing={3}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
-                <span style={{ color: 'red', fontWeight: 'bold' }}>Все изменения применяются сразу</span>
+                  sm: 12,
+                }}
+              >
+                <span style={{ color: "red", fontWeight: "bold" }}>
+                  Все изменения применяются сразу
+                </span>
               </Grid>
 
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <MyTextInput
                   label="Название смены"
                   value={this.state.newSmenaName}
@@ -3444,8 +4318,9 @@ class WorkSchedule_ extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <List className="userSmenalist">
                   {this.state.allUsers.map((item, key) => (
                     <ListItemButton
@@ -3470,9 +4345,21 @@ class WorkSchedule_ extends React.Component {
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={this.saveEditSmena.bind(this)}>Сохранить</Button>
-            <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ editSmena: false })}>Отмена</Button>
+          <DialogActions
+            style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+          >
+            <Button
+              style={{ backgroundColor: "green", color: "#fff" }}
+              onClick={this.saveEditSmena.bind(this)}
+            >
+              Сохранить
+            </Button>
+            <Button
+              style={{ backgroundColor: "red", color: "#fff" }}
+              onClick={() => this.setState({ editSmena: false })}
+            >
+              Отмена
+            </Button>
           </DialogActions>
         </Dialog>
         <Dialog
@@ -3480,51 +4367,69 @@ class WorkSchedule_ extends React.Component {
           onClose={() => this.setState({ isOpenHJ: false })}
           scroll="paper"
           fullWidth={true}
-          maxWidth={'md'}
-          id={'OpenModalM'}
+          maxWidth={"md"}
+          id={"OpenModalM"}
         >
-          <DialogTitle>Журнал здоровья</DialogTitle>
+          <DialogTitle className="button">
+            Журнал здоровья
+            <IconButton
+              onClick={() => {
+                this.setState({ isOpenHJ: false });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
           <DialogContent>
-            <Grid container spacing={3} style={{ marginTop: 2 }}>
+            <Grid
+              container
+              spacing={3}
+              style={{ marginTop: 2 }}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
+                  sm: 6,
+                }}
+              >
                 <MyDatePickerNew
                   label="Дата от"
                   value={dayjs(this.state.date_start)}
-                  func={this.changeDateRange.bind(this, 'date_start')}
+                  func={this.changeDateRange.bind(this, "date_start")}
                   minDate={dayjs("2023-05-01")}
                 />
               </Grid>
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
+                  sm: 6,
+                }}
+              >
                 <MyDatePickerNew
                   label="Дата до"
                   value={dayjs(this.state.date_end)}
-                  func={this.changeDateRange.bind(this, 'date_end')}
+                  func={this.changeDateRange.bind(this, "date_end")}
                   minDate={dayjs("2023-05-01")}
                 />
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-            {this.canAccess('export_excel') && (
-              <Button 
-              style={{ backgroundColor: 'green', color: '#fff' }} 
-              onClick={this.downloadHJ.bind(this)}
+          <DialogActions
+            style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+          >
+            {this.canAccess("export_excel") && (
+              <Button
+                style={{ backgroundColor: "green", color: "#fff" }}
+                onClick={this.downloadHJ.bind(this)}
               >
                 Скачать
               </Button>
             )}
-            <Button 
-              style={{ backgroundColor: 'red', color: '#fff' }} 
+            <Button
+              style={{ backgroundColor: "red", color: "#fff" }}
               onClick={() => this.setState({ isOpenHJ: false })}
-              >
+            >
               Отмена
             </Button>
           </DialogActions>
@@ -3535,49 +4440,67 @@ class WorkSchedule_ extends React.Component {
           onClose={() => this.setState({ isOpenWS: false })}
           scroll="paper"
           fullWidth={true}
-          maxWidth={'md'}
-          id={'OpenModalM'}
+          maxWidth={"md"}
+          id={"OpenModalM"}
         >
-          <DialogTitle>График работ</DialogTitle>
+          <DialogTitle className="button">
+            График работ
+            <IconButton
+              onClick={() => {
+                this.setState({ isOpenWS: false });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
           <DialogContent>
-            <Grid container spacing={3} style={{ marginTop: 2 }}>
+            <Grid
+              container
+              spacing={3}
+              style={{ marginTop: 2 }}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
+                  sm: 6,
+                }}
+              >
                 <MyDatePickerNew
                   label="Дата от"
                   value={dayjs(this.state.date_start_ws)}
-                  func={this.changeDateRange.bind(this, 'date_start_ws')}
+                  func={this.changeDateRange.bind(this, "date_start_ws")}
                   minDate={dayjs("2023-05-01")}
                 />
               </Grid>
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
+                  sm: 6,
+                }}
+              >
                 <MyDatePickerNew
                   label="Дата до"
                   value={dayjs(this.state.date_end_ws)}
-                  func={this.changeDateRange.bind(this, 'date_end_ws')}
+                  func={this.changeDateRange.bind(this, "date_end_ws")}
                   minDate={dayjs("2023-05-01")}
                 />
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-            {this.canAccess('export_excel') && (
-              <Button 
-                style={{ backgroundColor: 'green', color: '#fff' }} 
+          <DialogActions
+            style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+          >
+            {this.canAccess("export_excel") && (
+              <Button
+                style={{ backgroundColor: "green", color: "#fff" }}
                 onClick={this.downloadWS.bind(this)}
               >
                 Скачать
               </Button>
             )}
-            <Button 
-              style={{ backgroundColor: 'red', color: '#fff' }} 
+            <Button
+              style={{ backgroundColor: "red", color: "#fff" }}
               onClick={() => this.setState({ isOpenWS: false })}
             >
               Отмена
@@ -3585,46 +4508,79 @@ class WorkSchedule_ extends React.Component {
           </DialogActions>
         </Dialog>
         {/* бонус директора */}
-        <Dialog onClose={() => this.setState({ isModalDirBonus: false, dir_bonus: 0 })} open={this.state.isModalDirBonus}>
-          <DialogTitle>Бонус директора {this.state?.userInfo?.name} {this.state?.userInfo?.date}</DialogTitle>
+        <Dialog
+          onClose={() => this.setState({ isModalDirBonus: false, dir_bonus: 0 })}
+          open={this.state.isModalDirBonus}
+        >
+          <DialogTitle className="button">
+            Бонус директора {this.state?.userInfo?.name} {this.state?.userInfo?.date}
+            <IconButton
+              onClick={() => {
+                this.setState({ isModalDirBonus: false, dir_bonus: 0 });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
 
           <DialogContent>
-            <Grid container spacing={3} style={{ marginTop: 10 }}>
-
+            <Grid
+              container
+              spacing={3}
+              style={{ marginTop: 10 }}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <MyTextInput
                   label="Сумма"
                   value={this.state.dir_bonus}
                   func={(event) => this.setState({ dir_bonus: event.target.value })}
                 />
               </Grid>
-
-
             </Grid>
           </DialogContent>
-          <DialogActions style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Button style={{ backgroundColor: 'green', color: '#fff' }} onClick={ this.saveDirBonus.bind(this) }>Сохранить</Button>
-            <Button style={{ backgroundColor: 'red', color: '#fff' }} onClick={() => this.setState({ isModalDirBonus: false })}>Отмена</Button>
+          <DialogActions
+            style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+          >
+            <Button
+              style={{ backgroundColor: "green", color: "#fff" }}
+              onClick={this.saveDirBonus.bind(this)}
+            >
+              Сохранить
+            </Button>
+            <Button
+              style={{ backgroundColor: "red", color: "#fff" }}
+              onClick={() => this.setState({ isModalDirBonus: false })}
+            >
+              Отмена
+            </Button>
           </DialogActions>
         </Dialog>
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MySelect
               is_none={false}
               data={this.state.points}
@@ -3637,8 +4593,9 @@ class WorkSchedule_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
+              sm: 6,
+            }}
+          >
             <MySelect
               is_none={false}
               data={this.state.mounths}
@@ -3649,17 +4606,24 @@ class WorkSchedule_ extends React.Component {
           </Grid>
 
           <Grid
-            display='flex'
-            justifyContent='space-between'
+            display="flex"
+            justifyContent="space-between"
             size={{
               xs: 12,
-              sm: 6
-            }}>
-            <Button variant="contained" onClick={this.updateData.bind(this)}>
+              sm: 6,
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={this.updateData.bind(this)}
+            >
               Обновить данные
             </Button>
 
-            <Button variant="contained" onClick={() => this.setState({ isOpenWS: true })}>
+            <Button
+              variant="contained"
+              onClick={() => this.setState({ isOpenWS: true })}
+            >
               Распечатать
             </Button>
           </Grid>
@@ -3667,33 +4631,49 @@ class WorkSchedule_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6
-            }}>
-            <Button variant="contained" onClick={ () => { this.setState({ isOpenHJ: true }) } }>
+              sm: 6,
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={() => {
+                this.setState({ isOpenHJ: true });
+              }}
+            >
               Журнал здоровья
             </Button>
           </Grid>
 
-          <Box sx={{ width: '100%' }}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Box sx={{ width: "100%" }}>
+            <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
               <Tabs
                 value={this.state.tabTable}
                 onChange={(event, data) => {
-                  localStorage.setItem('tabTable', data);
+                  localStorage.setItem("tabTable", data);
                   this.setState({
                     tabTable: data,
-                    addUsers: []
+                    addUsers: [],
                   });
                 }}
                 centered
               >
-                <Tab label="С 1 по 15 числа" {...a11yProps(0)} />
-                <Tab label="С 16 по конец месяца" {...a11yProps(1)} />
+                <Tab
+                  label="С 1 по 15 числа"
+                  {...a11yProps(0)}
+                />
+                <Tab
+                  label="С 16 по конец месяца"
+                  {...a11yProps(1)}
+                />
               </Tabs>
             </Box>
 
-            {this.state.kind == 'other' ? (
-              <TabPanel value={this.state.tabTable} index={0} style={{ paddingRight: 0 }}>
+            {this.state.kind == "other" ? (
+              <TabPanel
+                value={this.state.tabTable}
+                index={0}
+                style={{ paddingRight: 0 }}
+              >
                 {!this.state.one ? null : (
                   <WorkSchedule_Table_without_functions
                     number={this.state.one}
@@ -3714,7 +4694,6 @@ class WorkSchedule_ extends React.Component {
                     openZPCart={this.openZPCart.bind(this)}
                     mix={this.mix.bind(this)}
                     pricePerHour={this.pricePerHour.bind(this)}
-
                     addSmena={this.addSmena.bind(this)}
                     editSmena={this.editSmena.bind(this)}
                     addUser={this.addUser.bind(this)}
@@ -3723,7 +4702,11 @@ class WorkSchedule_ extends React.Component {
                 )}
               </TabPanel>
             ) : (
-              <TabPanel value={this.state.tabTable} index={0} style={{ paddingRight: 0 }}>
+              <TabPanel
+                value={this.state.tabTable}
+                index={0}
+                style={{ paddingRight: 0 }}
+              >
                 {!this.state.one ? null : (
                   <WorkSchedule_Table
                     number={this.state.one}
@@ -3744,22 +4727,23 @@ class WorkSchedule_ extends React.Component {
                     openZPCart={this.openZPCart.bind(this)}
                     mix={this.mix.bind(this)}
                     pricePerHour={this.pricePerHour.bind(this)}
-
                     addSmena={this.addSmena.bind(this)}
                     editSmena={this.editSmena.bind(this)}
                     addUser={this.addUser.bind(this)}
                     openAddUser={() => this.setState({ mainMenuAddUsers: true })}
-
                     clickAppNameUser={this.clickAppNameUser.bind(this)}
-
                     openModalDirBonus={this.openModalDirBonus.bind(this)}
                   />
                 )}
               </TabPanel>
             )}
 
-            {this.state.kind == 'other' ? (
-              <TabPanel value={this.state.tabTable} index={1} style={{ paddingRight: 0 }}>
+            {this.state.kind == "other" ? (
+              <TabPanel
+                value={this.state.tabTable}
+                index={1}
+                style={{ paddingRight: 0 }}
+              >
                 {!this.state.two ? null : (
                   <WorkSchedule_Table_without_functions
                     number={this.state.two}
@@ -3780,7 +4764,6 @@ class WorkSchedule_ extends React.Component {
                     openZPCart={this.openZPCart.bind(this)}
                     mix={this.mix.bind(this)}
                     pricePerHour={this.pricePerHour.bind(this)}
-
                     addSmena={this.addSmena.bind(this)}
                     editSmena={this.editSmena.bind(this)}
                     addUser={this.addUser.bind(this)}
@@ -3789,7 +4772,11 @@ class WorkSchedule_ extends React.Component {
                 )}
               </TabPanel>
             ) : (
-              <TabPanel value={this.state.tabTable} index={1} style={{ paddingRight: 0 }}>
+              <TabPanel
+                value={this.state.tabTable}
+                index={1}
+                style={{ paddingRight: 0 }}
+              >
                 {!this.state.two ? null : (
                   <WorkSchedule_Table
                     number={this.state.two}
@@ -3814,7 +4801,6 @@ class WorkSchedule_ extends React.Component {
                     editSmena={this.editSmena.bind(this)}
                     addUser={this.addUser.bind(this)}
                     openAddUser={() => this.setState({ mainMenuAddUsers: true })}
-
                     clickAppNameUser={this.clickAppNameUser.bind(this)}
                     openModalDirBonus={this.openModalDirBonus.bind(this)}
                   />
@@ -3824,10 +4810,11 @@ class WorkSchedule_ extends React.Component {
           </Box>
 
           <Grid
-            style={{overflow: 'auto'}}
+            style={{ overflow: "auto" }}
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <Table>
               <TableHead>
                 <TableRow>
@@ -3842,23 +4829,11 @@ class WorkSchedule_ extends React.Component {
               {parseInt(this.state.tabTable) == 0 ? (
                 <TableBody>
                   {this.state.errOrdersOneOrders.map((item, key) => (
-                    <TableRow key={key} onClick={this.showErrOrder.bind(this, item.id, item.row_id)} style={{ backgroundColor: parseInt(item.is_delete) == 1 ? 'red' : '#fff' }}>
-                      <TableCell>{item.order_id}</TableCell>
-                      <TableCell>{item.date_time_order}</TableCell>
-                      <TableCell>{item.err_name}</TableCell>
-                      <TableCell>{parseInt(item.new_order_id) == 0 ? null : <TimeToLeaveIcon />}
-                      </TableCell>
-                      <TableCell>{item.my_price}</TableCell>
-                      <TableCell>
-                        {' '}{parseInt(item.new_status) == 1 && parseInt(item.is_edit) == 1 ? <InfoIcon /> : null}{' '}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              ) : (
-                <TableBody>
-                  {this.state.errOrdersTwoOrders.map((item, key) => (
-                    <TableRow key={key} onClick={this.showErrOrder.bind(this, item.id, item.row_id)} style={{ backgroundColor: parseInt(item.is_delete) == 1 ? 'red' : '#fff' }}>
+                    <TableRow
+                      key={key}
+                      onClick={this.showErrOrder.bind(this, item.id, item.row_id)}
+                      style={{ backgroundColor: parseInt(item.is_delete) == 1 ? "red" : "#fff" }}
+                    >
                       <TableCell>{item.order_id}</TableCell>
                       <TableCell>{item.date_time_order}</TableCell>
                       <TableCell>{item.err_name}</TableCell>
@@ -3867,7 +4842,34 @@ class WorkSchedule_ extends React.Component {
                       </TableCell>
                       <TableCell>{item.my_price}</TableCell>
                       <TableCell>
-                        {' '}{parseInt(item.new_status) == 1 && parseInt(item.is_edit) == 1 ? <InfoIcon /> : null}{' '}
+                        {" "}
+                        {parseInt(item.new_status) == 1 && parseInt(item.is_edit) == 1 ? (
+                          <InfoIcon />
+                        ) : null}{" "}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              ) : (
+                <TableBody>
+                  {this.state.errOrdersTwoOrders.map((item, key) => (
+                    <TableRow
+                      key={key}
+                      onClick={this.showErrOrder.bind(this, item.id, item.row_id)}
+                      style={{ backgroundColor: parseInt(item.is_delete) == 1 ? "red" : "#fff" }}
+                    >
+                      <TableCell>{item.order_id}</TableCell>
+                      <TableCell>{item.date_time_order}</TableCell>
+                      <TableCell>{item.err_name}</TableCell>
+                      <TableCell>
+                        {parseInt(item.new_order_id) == 0 ? null : <TimeToLeaveIcon />}
+                      </TableCell>
+                      <TableCell>{item.my_price}</TableCell>
+                      <TableCell>
+                        {" "}
+                        {parseInt(item.new_status) == 1 && parseInt(item.is_edit) == 1 ? (
+                          <InfoIcon />
+                        ) : null}{" "}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -3887,8 +4889,9 @@ class WorkSchedule_ extends React.Component {
           </Grid>
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <Table>
               <TableHead>
                 <TableRow>
@@ -3902,29 +4905,32 @@ class WorkSchedule_ extends React.Component {
               {parseInt(this.state.tabTable) == 0 ? (
                 <TableBody>
                   {this.state.errOrdersOneCam.map((item, key) => (
-                    <TableRow key={key} onClick={this.showErrCam.bind(this, item.id)} style={{ backgroundColor: parseInt(item.is_delete) == 1 ? 'red' : '#fff' }}>
+                    <TableRow
+                      key={key}
+                      onClick={this.showErrCam.bind(this, item.id)}
+                      style={{ backgroundColor: parseInt(item.is_delete) == 1 ? "red" : "#fff" }}
+                    >
                       <TableCell>{key + 1}</TableCell>
                       <TableCell>{item.date_time_fine}</TableCell>
                       <TableCell>{item.fine_name}</TableCell>
                       <TableCell>{item.price}</TableCell>
-                      <TableCell>
-                        {' '}{parseInt(item.is_edit) == 1 ? <InfoIcon /> : null}{' '}
-                      </TableCell>
+                      <TableCell> {parseInt(item.is_edit) == 1 ? <InfoIcon /> : null} </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               ) : (
                 <TableBody>
                   {this.state.errOrdersTwoCam.map((item, key) => (
-                    <TableRow key={key} onClick={this.showErrCam.bind(this, item.id)} style={{ backgroundColor: parseInt(item.is_delete) == 1 ? 'red' : '#fff' }}>
+                    <TableRow
+                      key={key}
+                      onClick={this.showErrCam.bind(this, item.id)}
+                      style={{ backgroundColor: parseInt(item.is_delete) == 1 ? "red" : "#fff" }}
+                    >
                       <TableCell>{key + 1}</TableCell>
                       <TableCell>{item.date_time_fine}</TableCell>
                       <TableCell>{item.fine_name}</TableCell>
                       <TableCell>{item.price}</TableCell>
-                      <TableCell>
-                        {' '}
-                        {parseInt(item.is_edit) == 1 ? <InfoIcon /> : null}{' '}
-                      </TableCell>
+                      <TableCell> {parseInt(item.is_edit) == 1 ? <InfoIcon /> : null} </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -3950,15 +4956,17 @@ export default function WorkSchedule() {
   return <WorkSchedule_ />;
 }
 
-
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

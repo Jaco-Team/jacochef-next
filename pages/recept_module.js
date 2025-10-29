@@ -1,36 +1,38 @@
-import React from 'react';
+import React from "react";
 
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import TabList from '@mui/lab/TabList';
-import Tab from '@mui/material/Tab';
-import TabContext from '@mui/lab/TabContext';
+import TabList from "@mui/lab/TabList";
+import Tab from "@mui/material/Tab";
+import TabContext from "@mui/lab/TabContext";
 
-import AddIcon from '@mui/icons-material/Add';
-import CloseIcon from '@mui/icons-material/Close';
+import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-import {MyCheckBox, MyTextInput, MyAutocomplite, MyDatePickerNew} from '@/components/shared/Forms';
+import { MyCheckBox, MyTextInput, MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 
-import queryString from 'query-string';
+import queryString from "query-string";
 
-import dayjs from 'dayjs';
-import MyAlert from '@/components/shared/MyAlert';
+import dayjs from "dayjs";
+import MyAlert from "@/ui/MyAlert";
+import { IconButton } from "@mui/material";
+import { Close } from "@mui/icons-material";
 
 class ReceptModule_Modal_Container extends React.Component {
   constructor(props) {
@@ -38,12 +40,11 @@ class ReceptModule_Modal_Container extends React.Component {
 
     this.state = {
       item: null,
-      searchValue: '',
+      searchValue: "",
     };
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
-
     if (!nextProps.event) {
       return null;
     }
@@ -61,59 +62,86 @@ class ReceptModule_Modal_Container extends React.Component {
   }
 
   render() {
-    const { rec, allCount, storages, apps, pf_list, all_pf_list, changeItem, changeItemData, changeItemChecked, addIngredientsRecipe, dellIngredientsRecipe } = this.props;
+    const {
+      rec,
+      allCount,
+      storages,
+      apps,
+      pf_list,
+      all_pf_list,
+      changeItem,
+      changeItemData,
+      changeItemChecked,
+      addIngredientsRecipe,
+      dellIngredientsRecipe,
+    } = this.props;
 
     return (
-      <Grid container spacing={3} mt={3}>
-        <Grid
-          size={12}>
-          <Grid container spacing={3} mb={2}>
+      <Grid
+        container
+        spacing={3}
+        mt={3}
+      >
+        <Grid size={12}>
+          <Grid
+            container
+            spacing={3}
+            mb={2}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyTextInput
                 label="Наименование рецепта"
                 value={rec.name}
-                func={changeItem.bind(this, 'name')}
+                func={changeItem.bind(this, "name")}
               />
             </Grid>
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyTextInput
                 label="Время приготовления 1кг (ММ:СС)"
                 value={rec.time_min}
-                func={changeItem.bind(this, 'time_min')}
+                func={changeItem.bind(this, "time_min")}
               />
             </Grid>
           </Grid>
-          <Grid container spacing={3} mb={2}>
+          <Grid
+            container
+            spacing={3}
+            mb={2}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyTextInput
                 label="Срок хранения"
                 value={rec.shelf_life}
-                func={changeItem.bind(this, 'shelf_life')}
+                func={changeItem.bind(this, "shelf_life")}
               />
             </Grid>
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyAutocomplite
                 label="Должность на кухне"
                 multiple={false}
                 data={apps}
                 value={rec.app_id}
-                func={changeItemData.bind(this, 'app_id')}
+                func={changeItemData.bind(this, "app_id")}
               />
             </Grid>
           </Grid>
@@ -121,34 +149,40 @@ class ReceptModule_Modal_Container extends React.Component {
           <Grid
             mb={3}
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <MyAutocomplite
               label="Места хранения"
               multiple={true}
               data={storages}
               value={rec.storages}
-              func={changeItemData.bind(this, 'storages')}
+              func={changeItemData.bind(this, "storages")}
             />
           </Grid>
 
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <MyCheckBox
               label="Активность"
               value={parseInt(rec.is_show) == 1 ? true : false}
-              func={changeItemChecked.bind(this, 'is_show')}
+              func={changeItemChecked.bind(this, "is_show")}
             />
           </Grid>
-          
-          <Grid container spacing={3}>
+
+          <Grid
+            container
+            spacing={3}
+          >
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -164,7 +198,7 @@ class ReceptModule_Modal_Container extends React.Component {
                       <TableCell>
                         <MyTextInput
                           type="number"
-                          id={'item_for_add_'+item.id}
+                          id={"item_for_add_" + item.id}
                           //defaultValue={''}
                           //func={changeQuantity.bind(this)}
                         />
@@ -173,7 +207,7 @@ class ReceptModule_Modal_Container extends React.Component {
                       <TableCell>
                         <AddIcon
                           onClick={addIngredientsRecipe.bind(this, item)}
-                          style={{ cursor: 'pointer' }}
+                          style={{ cursor: "pointer" }}
                         />
                       </TableCell>
                     </TableRow>
@@ -185,8 +219,9 @@ class ReceptModule_Modal_Container extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -200,17 +235,19 @@ class ReceptModule_Modal_Container extends React.Component {
                   {pf_list.map((item, key) => (
                     <TableRow key={key}>
                       <TableCell>{item.name}</TableCell>
-                      <TableCell>{item.count} {item.ei_name}</TableCell>
+                      <TableCell>
+                        {item.count} {item.ei_name}
+                      </TableCell>
                       <TableCell>{item.percent} %</TableCell>
                       <TableCell>
                         <CloseIcon
                           onClick={dellIngredientsRecipe.bind(this, item)}
-                          style={{ cursor: 'pointer' }}
+                          style={{ cursor: "pointer" }}
                         />
                       </TableCell>
                     </TableRow>
                   ))}
-                  <TableRow sx={{ '& td': { border: 0 } }}>
+                  <TableRow sx={{ "& td": { border: 0 } }}>
                     <TableCell>Всего:</TableCell>
                     <TableCell>{allCount}</TableCell>
                   </TableRow>
@@ -231,11 +268,11 @@ class ReceptModule_Modal_Edit extends React.Component {
     this.state = {
       item: null,
 
-      ItemTab: '0',
+      ItemTab: "0",
 
-      quantity: '',
+      quantity: "",
 
-      total: ''
+      total: "",
     };
   }
 
@@ -256,23 +293,42 @@ class ReceptModule_Modal_Edit extends React.Component {
       ItemTab: value,
     });
 
-    if( parseInt(value) === -1 ){
+    if (parseInt(value) === -1) {
       this.props.openModalHistNew();
     }
 
-    if( parseInt(value) === 0 ){
-      console.log('Edit', this.props.rec && this.props.rec.rec_id ? this.props.rec.rec_id : this.props.rec.id)
-      this.props.openModalEdit( this.props.rec && this.props.rec.rec_id ? this.props.rec.rec_id : this.props.rec.id );
+    if (parseInt(value) === 0) {
+      console.log(
+        "Edit",
+        this.props.rec && this.props.rec.rec_id ? this.props.rec.rec_id : this.props.rec.id,
+      );
+      this.props.openModalEdit(
+        this.props.rec && this.props.rec.rec_id ? this.props.rec.rec_id : this.props.rec.id,
+      );
     }
 
-    if( parseInt(value) > 0 ){
-      console.log('HistEdit', value)
+    if (parseInt(value) > 0) {
+      console.log("HistEdit", value);
       this.props.openModalHistEdit(value);
     }
   }
 
   render() {
-    const { isOpen, onClose, changeItem, changeItemData, changeItemChecked, addIngredientsRecipe, dellIngredientsRecipe, rec, storages, apps, pf_list, all_pf_list, allCount } = this.props;
+    const {
+      isOpen,
+      onClose,
+      changeItem,
+      changeItemData,
+      changeItemChecked,
+      addIngredientsRecipe,
+      dellIngredientsRecipe,
+      rec,
+      storages,
+      apps,
+      pf_list,
+      all_pf_list,
+      allCount,
+    } = this.props;
 
     const { changeDate, dateUpdate, saveNewHist, saveEditHist, hist } = this.props;
 
@@ -280,50 +336,76 @@ class ReceptModule_Modal_Edit extends React.Component {
       <Dialog
         open={isOpen}
         fullWidth={true}
-        maxWidth={'lg'}
+        maxWidth={"lg"}
         onClose={onClose.bind(this)}
       >
-        <DialogTitle>{ this.props.type == 'new' ? 'Новый рецепт' : 'Редактирование рецепта' }</DialogTitle>
+        <DialogTitle>
+          {this.props.type == "new" ? "Новый рецепт" : "Редактирование рецепта"}
+          <IconButton
+            onClick={onClose.bind(this)}
+            style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+          >
+            <Close />
+          </IconButton>
+        </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid container spacing={3}>
+          <Grid
+            container
+            spacing={3}
+          >
             <Grid
               size={{
-                xs: 12
-              }}>
+                xs: 12,
+              }}
+            >
               <TabContext value={this.state.ItemTab}>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                   <TabList
                     onChange={this.changeTab.bind(this)}
                     variant="fullWidth"
                   >
-                    { hist.map( (item, key) =>
-                      <Tab key={key} label={item.date_start} value={item.id} />
-                    ) }
-                    <Tab label="Текущая" value="0" />
-                    <Tab label="Добавить" value="-1" />
+                    {hist.map((item, key) => (
+                      <Tab
+                        key={key}
+                        label={item.date_start}
+                        value={item.id}
+                      />
+                    ))}
+                    <Tab
+                      label="Текущая"
+                      value="0"
+                    />
+                    <Tab
+                      label="Добавить"
+                      value="-1"
+                    />
                   </TabList>
                 </Box>
 
-                <Grid container spacing={3} style={{ marginTop: 5 }}>
-                  { parseInt(this.state.ItemTab) == -1 || parseInt(this.state.ItemTab) > 0 ?
+                <Grid
+                  container
+                  spacing={3}
+                  style={{ marginTop: 5 }}
+                >
+                  {parseInt(this.state.ItemTab) == -1 || parseInt(this.state.ItemTab) > 0 ? (
                     <Grid
                       size={{
-                        xs: 4
-                      }}>
+                        xs: 4,
+                      }}
+                    >
                       <MyDatePickerNew
                         label="Дата обновления"
                         value={dateUpdate}
                         func={changeDate.bind(this)}
                       />
                     </Grid>
-                      :
-                    null
-                  }
+                  ) : null}
 
                   <Grid
                     size={{
-                      xs: 12
-                    }}>
+                      xs: 12,
+                    }}
+                  >
                     <ReceptModule_Modal_Container
                       rec={rec}
                       allCount={allCount}
@@ -337,45 +419,41 @@ class ReceptModule_Modal_Edit extends React.Component {
                       addIngredientsRecipe={addIngredientsRecipe.bind(this)}
                       dellIngredientsRecipe={dellIngredientsRecipe.bind(this)}
                     />
-                  </Grid>  
+                  </Grid>
                 </Grid>
-                  
-                
               </TabContext>
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          { parseInt( this.state.ItemTab ) == -1 ?
+          {parseInt(this.state.ItemTab) == -1 ? (
             <Button
-              onClick={saveNewHist.bind(this) }
+              onClick={saveNewHist.bind(this)}
               color="primary"
             >
               Сохранить
             </Button>
-              :
-            null
-          }
-          { parseInt( this.state.ItemTab ) == 0 ?
+          ) : null}
+          {parseInt(this.state.ItemTab) == 0 ? (
             <Button
-              onClick={ this.props.type == 'new' ? this.props.saveNew.bind(this, this.state.item) : this.props.saveEdit.bind(this, this.state.item) }
+              onClick={
+                this.props.type == "new"
+                  ? this.props.saveNew.bind(this, this.state.item)
+                  : this.props.saveEdit.bind(this, this.state.item)
+              }
               color="primary"
             >
-              { this.props.type == 'new' ? 'Сохранить' : 'Обновить' }
+              {this.props.type == "new" ? "Сохранить" : "Обновить"}
             </Button>
-              :
-            null
-          }
-          { parseInt( this.state.ItemTab ) > 0 ?
+          ) : null}
+          {parseInt(this.state.ItemTab) > 0 ? (
             <Button
-              onClick={saveEditHist.bind(this) }
+              onClick={saveEditHist.bind(this)}
               color="primary"
             >
               Сохранить
             </Button>
-              :
-            null
-          }
+          ) : null}
         </DialogActions>
       </Dialog>
     );
@@ -390,36 +468,36 @@ class ReceptModule_Table extends React.Component {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell style={{ width: '2%' }}>#</TableCell>
-            <TableCell style={{ width: '3%' }}>Активность</TableCell>
-            <TableCell style={{ width: '3%' }}>Ревизия</TableCell>
-            <TableCell style={{ width: '10%' }}>Обновление</TableCell>
-            <TableCell style={{ width: '25%' }}>Название</TableCell>
-            <TableCell style={{ width: '59%' }}>Место хранения</TableCell>
+            <TableCell style={{ width: "2%" }}>#</TableCell>
+            <TableCell style={{ width: "3%" }}>Активность</TableCell>
+            <TableCell style={{ width: "3%" }}>Ревизия</TableCell>
+            <TableCell style={{ width: "10%" }}>Обновление</TableCell>
+            <TableCell style={{ width: "25%" }}>Название</TableCell>
+            <TableCell style={{ width: "59%" }}>Место хранения</TableCell>
           </TableRow>
         </TableHead>
 
         <TableBody>
           {recipes.map((item, key) => (
             <TableRow key={key}>
-              <TableCell>{key+1}</TableCell>
+              <TableCell>{key + 1}</TableCell>
               <TableCell>
                 <MyCheckBox
                   label=""
                   value={parseInt(item.is_show) == 1 ? true : false}
-                  func={ changeTableCheck.bind(this, item.id, 'is_show') }
+                  func={changeTableCheck.bind(this, item.id, "is_show")}
                 />
               </TableCell>
               <TableCell>
                 <MyCheckBox
                   label=""
                   value={parseInt(item.show_in_rev) == 1 ? true : false}
-                  func={ changeTableCheck.bind(this, item.id, 'show_in_rev') }
+                  func={changeTableCheck.bind(this, item.id, "show_in_rev")}
                 />
               </TableCell>
               <TableCell>{item.date_update}</TableCell>
               <TableCell
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: "pointer" }}
                 onClick={openModalEdit.bind(this, item.id)}
               >
                 {item.name}
@@ -438,8 +516,8 @@ class ReceptModule_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'recept_module',
-      module_name: '',
+      module: "recept_module",
+      module_name: "",
       is_load: false,
 
       rec: null,
@@ -460,28 +538,28 @@ class ReceptModule_ extends React.Component {
 
       operAlert: false,
       err_status: false,
-      err_text: '',
+      err_text: "",
 
-      type: 'new'
+      type: "new",
     };
   }
 
   async componentDidMount() {
-    let res = await this.getData('get_all');
+    let res = await this.getData("get_all");
 
     this.setState({
       module_name: res.module_info.name,
-      items: res.items
+      items: res.items,
     });
 
     document.title = res.module_info.name;
   }
 
-  async getItems(){
-    let res = await this.getData('get_all');
+  async getItems() {
+    let res = await this.getData("get_all");
 
     this.setState({
-      items: res.items
+      items: res.items,
     });
   }
 
@@ -490,28 +568,28 @@ class ReceptModule_ extends React.Component {
       is_load: true,
     });
 
-    return fetch('https://jacochef.ru/api/index_new.php', {
-      method: 'POST',
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: queryString.stringify({
         method: method,
         module: this.state.module,
         version: 2,
-        login: localStorage.getItem('token'),
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })
       .then((res) => res.json())
       .then((json) => {
-        if (json.st === false && json.type == 'redir') {
-          window.location.pathname = '/';
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/";
           return;
         }
 
-        if (json.st === false && json.type == 'auth') {
-          window.location.pathname = '/auth';
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
           return;
         }
 
@@ -531,7 +609,7 @@ class ReceptModule_ extends React.Component {
   openModalRecipes(method, id) {
     // const item = this.state.item.find(el => el.id === id)
 
-    if (method === 'new') {
+    if (method === "new") {
       // let res = await this.getData('get_all_for_new');
 
       // console.log(res)
@@ -542,8 +620,6 @@ class ReceptModule_ extends React.Component {
         // item:
       });
     } else {
-      
-
       this.setState({
         modalDialogEdit: true,
         method,
@@ -551,18 +627,18 @@ class ReceptModule_ extends React.Component {
     }
   }
 
-  async openModalNew(){
+  async openModalNew() {
     let data = {
-      id: 0
+      id: 0,
     };
-  
-    let res = await this.getData('get_one', data);
+
+    let res = await this.getData("get_one", data);
 
     let allCount = 0;
 
-    res.pf_list.map( ( it ) => { 
-      allCount += parseFloat(it.count) 
-    } )
+    res.pf_list.map((it) => {
+      allCount += parseFloat(it.count);
+    });
 
     this.setState({
       modalDialogEdit: true,
@@ -572,24 +648,24 @@ class ReceptModule_ extends React.Component {
       all_pf_list: res.all_pf_list,
       storages: res.all_storages,
       allCount: allCount,
-      type: 'new'
+      type: "new",
     });
   }
 
-  async openModalHistNew(){
+  async openModalHistNew() {
     let data = {
-      id: this.state.rec.rec_id ? this.state.rec.rec_id : this.state.rec.id
+      id: this.state.rec.rec_id ? this.state.rec.rec_id : this.state.rec.id,
     };
-  
-    let res = await this.getData('get_one', data);
+
+    let res = await this.getData("get_one", data);
 
     let allCount = 0;
 
-    res.pf_list.map( ( it ) => { 
-      allCount += parseFloat(it.count) 
-    } )
+    res.pf_list.map((it) => {
+      allCount += parseFloat(it.count);
+    });
 
-    res.rec.app_id = res.apps.find( app => parseInt(app.id) == parseInt(res.rec.app_id) );
+    res.rec.app_id = res.apps.find((app) => parseInt(app.id) == parseInt(res.rec.app_id));
 
     this.setState({
       modalDialogEdit: true,
@@ -599,24 +675,24 @@ class ReceptModule_ extends React.Component {
       all_pf_list: res.all_pf_list,
       storages: res.all_storages,
       allCount: allCount,
-      type: 'edit'
+      type: "edit",
     });
   }
 
-  async openModalEdit(id){
+  async openModalEdit(id) {
     let data = {
-      id: id
+      id: id,
     };
-  
-    let res = await this.getData('get_one', data);
+
+    let res = await this.getData("get_one", data);
 
     let allCount = 0;
 
-    res.pf_list.map( ( it ) => { 
-      allCount += parseFloat(it.count) 
-    } )
+    res.pf_list.map((it) => {
+      allCount += parseFloat(it.count);
+    });
 
-    res.rec.app_id = res.apps.find( app => parseInt(app.id) == parseInt(res.rec.app_id) );
+    res.rec.app_id = res.apps.find((app) => parseInt(app.id) == parseInt(res.rec.app_id));
 
     this.setState({
       modalDialogEdit: true,
@@ -627,25 +703,25 @@ class ReceptModule_ extends React.Component {
       storages: res.all_storages,
       allCount: allCount,
       hist: res.hist,
-      type: 'edit'
+      type: "edit",
     });
   }
 
-  async openModalHistEdit(id){
+  async openModalHistEdit(id) {
     let data = {
       rec_id: this.state.rec.id,
-      hist_id: id
+      hist_id: id,
     };
-  
-    let res = await this.getData('get_one_hist', data);
+
+    let res = await this.getData("get_one_hist", data);
 
     let allCount = 0;
 
-    res.pf_list.map( ( it ) => { 
-      allCount += parseFloat(it.count) 
-    } )
+    res.pf_list.map((it) => {
+      allCount += parseFloat(it.count);
+    });
 
-    res.rec.app_id = res.apps.find( app => parseInt(app.id) == parseInt(res.rec.app_id) );
+    res.rec.app_id = res.apps.find((app) => parseInt(app.id) == parseInt(res.rec.app_id));
 
     this.setState({
       modalDialogEdit: true,
@@ -657,19 +733,19 @@ class ReceptModule_ extends React.Component {
       allCount: allCount,
       hist: res.hist,
       dateUpdate: res.rec.date_start,
-      type: 'edit'
+      type: "edit",
     });
   }
 
   async saveNewItem() {
     let data = {
       rec: this.state.rec,
-      pf_list: this.state.pf_list
+      pf_list: this.state.pf_list,
     };
-  
-    let res = await this.getData('save_new', data);
 
-    if (res['st'] == true) {
+    let res = await this.getData("save_new", data);
+
+    if (res["st"] == true) {
       this.setState({
         modalDialogEdit: false,
 
@@ -686,19 +762,19 @@ class ReceptModule_ extends React.Component {
         operAlert: true,
         err_status: res.st,
         err_text: res.text,
-      })
+      });
     }
   }
 
   async saveEditItem() {
     let data = {
       rec: this.state.rec,
-      pf_list: this.state.pf_list
+      pf_list: this.state.pf_list,
     };
-  
-    let res = await this.getData('save_edit', data);
 
-    if (res['st'] == true) {
+    let res = await this.getData("save_edit", data);
+
+    if (res["st"] == true) {
       this.setState({
         modalDialogEdit: false,
 
@@ -715,20 +791,20 @@ class ReceptModule_ extends React.Component {
         operAlert: true,
         err_status: res.st,
         err_text: res.text,
-      })
+      });
     }
   }
 
   async saveNewHist() {
     let data = {
-      date_update: dayjs(this.state.dateUpdate).format('YYYY-MM-DD'),
+      date_update: dayjs(this.state.dateUpdate).format("YYYY-MM-DD"),
       rec: this.state.rec,
-      pf_list: this.state.pf_list
+      pf_list: this.state.pf_list,
     };
-  
-    let res = await this.getData('save_new_hist', data);
 
-    if (res['st'] == true) {
+    let res = await this.getData("save_new_hist", data);
+
+    if (res["st"] == true) {
       this.setState({
         modalDialogEdit: false,
 
@@ -745,20 +821,20 @@ class ReceptModule_ extends React.Component {
         operAlert: true,
         err_status: res.st,
         err_text: res.text,
-      })
+      });
     }
   }
 
-  async saveEditHist(){
+  async saveEditHist() {
     let data = {
-      date_update: dayjs(this.state.dateUpdate).format('YYYY-MM-DD'),
+      date_update: dayjs(this.state.dateUpdate).format("YYYY-MM-DD"),
       rec: this.state.rec,
-      pf_list: this.state.pf_list
+      pf_list: this.state.pf_list,
     };
-  
-    let res = await this.getData('save_edit_hist', data);
 
-    if (res['st'] == true) {
+    let res = await this.getData("save_edit_hist", data);
+
+    if (res["st"] == true) {
       this.setState({
         modalDialogEdit: false,
 
@@ -775,17 +851,17 @@ class ReceptModule_ extends React.Component {
         operAlert: true,
         err_status: res.st,
         err_text: res.text,
-      })
+      });
     }
   }
 
-  changeItem(type, event){
+  changeItem(type, event) {
     let rec = this.state.rec;
-    rec[ type ] = event.target.value;
+    rec[type] = event.target.value;
 
     this.setState({
-      rec: rec
-    })
+      rec: rec,
+    });
   }
 
   changeItemData(type, event, data) {
@@ -806,16 +882,15 @@ class ReceptModule_ extends React.Component {
     });
   }
 
-  addIngredientsRecipe(item){
+  addIngredientsRecipe(item) {
     let pf_list = [...this.state.pf_list];
 
     let check = pf_list.find((el) => el.id === item.id);
 
-    let quantity = document.getElementById('item_for_add_'+item.id).value;
+    let quantity = document.getElementById("item_for_add_" + item.id).value;
 
-    if( check || quantity < 1) {
-
-      document.getElementById('item_for_add_'+item.id).value = '';
+    if (check || quantity < 1) {
+      document.getElementById("item_for_add_" + item.id).value = "";
       return;
     }
 
@@ -825,60 +900,60 @@ class ReceptModule_ extends React.Component {
       item_id: item.id,
       name: item.name,
       percent: 0,
-      recipies_id: this.state.rec.id
-    })
+      recipies_id: this.state.rec.id,
+    });
 
     let allCount = 0;
 
-    pf_list.map( ( it ) => { 
-      allCount += parseFloat(it.count) 
-    } )
+    pf_list.map((it) => {
+      allCount += parseFloat(it.count);
+    });
 
-    pf_list.map(el => el.percent = ( 100 / ( allCount / parseFloat(el.count) ) ).toFixed(2));
+    pf_list.map((el) => (el.percent = (100 / (allCount / parseFloat(el.count))).toFixed(2)));
 
-    document.getElementById('item_for_add_'+item.id).value = '';
+    document.getElementById("item_for_add_" + item.id).value = "";
 
     this.setState({
       pf_list: pf_list,
-      allCount: allCount
+      allCount: allCount,
     });
   }
 
-  dellIngredientsRecipe(item){
+  dellIngredientsRecipe(item) {
     let pf_list = [...this.state.pf_list];
 
     pf_list = pf_list.filter((el) => el.id !== item.id);
 
     let allCount = 0;
 
-    pf_list.map( ( it ) => { 
-      allCount += parseFloat(it.count) 
-    } )
+    pf_list.map((it) => {
+      allCount += parseFloat(it.count);
+    });
 
-    pf_list.map(el => el.percent = ( 100 / ( allCount / parseFloat(el.count) ) ).toFixed(2));
+    pf_list.map((el) => (el.percent = (100 / (allCount / parseFloat(el.count))).toFixed(2)));
 
     this.setState({
       pf_list: pf_list,
-      allCount: allCount
+      allCount: allCount,
     });
   }
 
-  changeDate(data, event){
+  changeDate(data, event) {
     this.setState({
-      dateUpdate: (data)
-    })
+      dateUpdate: data,
+    });
   }
 
-  async changeTableCheck(id, type, event, value){
+  async changeTableCheck(id, type, event, value) {
     let data = {
       type: type,
       rec_id: id,
-      value: value ? 1 : 0
+      value: value ? 1 : 0,
     };
-  
-    let res = await this.getData('save_check', data);
 
-    if (res['st'] == true) {
+    let res = await this.getData("save_check", data);
+
+    if (res["st"] == true) {
       setTimeout(() => {
         this.getItems();
       }, 300);
@@ -887,27 +962,38 @@ class ReceptModule_ extends React.Component {
         operAlert: true,
         err_status: res.st,
         err_text: res.text,
-      })
+      });
     }
   }
 
   render() {
     return (
       <>
-        <Backdrop style={{ zIndex: 99 }} open={this.state.is_load}>
+        <Backdrop
+          style={{ zIndex: 99 }}
+          open={this.state.is_load}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
-          isOpen={this.state.operAlert} 
-          onClose={() => { this.setState({ operAlert: false }); }} 
-          status={this.state.err_status} 
-          text={this.state.err_text} />
-        <Grid container spacing={3} className='container_first_child'>
+          isOpen={this.state.operAlert}
+          onClose={() => {
+            this.setState({ operAlert: false });
+          }}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
@@ -915,8 +1001,9 @@ class ReceptModule_ extends React.Component {
             mb={3}
             size={{
               xs: 12,
-              sm: 3
-            }}>
+              sm: 3,
+            }}
+          >
             <Button
               onClick={this.openModalNew.bind(this)}
               variant="contained"
@@ -927,7 +1014,9 @@ class ReceptModule_ extends React.Component {
 
           <ReceptModule_Modal_Edit
             isOpen={this.state.modalDialogEdit}
-            onClose={() => { this.setState({ modalDialogEdit: false }); }}
+            onClose={() => {
+              this.setState({ modalDialogEdit: false });
+            }}
             changeItem={this.changeItem.bind(this)}
             changeItemData={this.changeItemData.bind(this)}
             changeItemChecked={this.changeItemChecked.bind(this)}
@@ -954,17 +1043,19 @@ class ReceptModule_ extends React.Component {
 
           <Grid
             size={{
-              xs: 12
-            }}>
+              xs: 12,
+            }}
+          >
             <ReceptModule_Table
               recipes={this.state.items}
               isOpen={this.state.modalDialogEdit}
-              onClose={ () => { this.setState({ modalDialogEdit: false }) } }
+              onClose={() => {
+                this.setState({ modalDialogEdit: false });
+              }}
               openModalEdit={this.openModalEdit.bind(this)}
               changeTableCheck={this.changeTableCheck.bind(this)}
             />
           </Grid>
-
         </Grid>
       </>
     );
@@ -976,13 +1067,16 @@ export default function ReceptModule() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

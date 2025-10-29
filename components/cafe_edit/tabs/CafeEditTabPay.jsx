@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Grid } from "@mui/material";
-import { MyTextInput } from "@/components/shared/Forms";
+import { MyTextInput } from "@/ui/Forms";
 import HistDropDownTable from "../HistDropDownTable";
 import useCafeEditStore from "../useCafeEditStore";
 
@@ -20,9 +20,7 @@ function CafeEditTabPay({ canView, canEdit, openHistModal }) {
       container
       spacing={3}
     >
-      <Grid
-        size={{ xs: 12, sm: 4 }}
-      >
+      <Grid size={{ xs: 12, sm: 4 }}>
         <MyTextInput
           label="Оклад директора на 2 недели"
           value={point_info?.dir_price ?? ""}
@@ -31,9 +29,7 @@ function CafeEditTabPay({ canView, canEdit, openHistModal }) {
         />
       </Grid>
 
-      <Grid
-        size={{ xs: 12, sm: 4 }}
-      >
+      <Grid size={{ xs: 12, sm: 4 }}>
         <MyTextInput
           label="Бонус от уровня директору"
           value={point_info?.price_per_lv ?? ""}
@@ -42,9 +38,7 @@ function CafeEditTabPay({ canView, canEdit, openHistModal }) {
         />
       </Grid>
 
-      <Grid
-        size={{ xs: 12, sm: 4 }}
-      >
+      <Grid size={{ xs: 12, sm: 4 }}>
         <MyTextInput
           label="Часовая ставка курьера"
           value={point_info?.driver_price ?? ""}

@@ -17,7 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { MyAutocomplite } from "@/components/shared/Forms";
+import { MyAutocomplite } from "@/ui/Forms";
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import { api_laravel } from "@/src/api_new";
@@ -30,16 +30,16 @@ import CafeEdit_Modal_History from "@/components/cafe_edit/CafeEdit_Modal_Histor
 import CafeEdit_Modal_Edit from "@/components/cafe_edit/CafeEdit_Modal_Edit";
 import CafeEdit_Modal_New from "@/components/cafe_edit/CafeEdit_Modal_New";
 import CafeEdit_Modal_Zone from "@/components/cafe_edit/CafeEdit_Modal_Zone";
-import TabPanel from "@/components/shared/TabPanel/TabPanel";
-import a11yProps from "@/components/shared/TabPanel/a11yProps";
+import TabPanel from "@/ui/TabPanel/TabPanel";
+import a11yProps from "@/ui/TabPanel/a11yProps";
 import CafeEdit_ZonesMap from "@/components/cafe_edit/CafeEdit_ZonesMap";
 import deepEqual from "@/src/helpers/utils/deepEqual";
-import TestAccess from "@/components/shared/TestAccess";
+import TestAccess from "@/ui/TestAccess";
 import useCafeEditStore from "@/components/cafe_edit/useCafeEditStore";
 import useCafeEditModalsStore from "@/components/cafe_edit/useCafeEditModalsStore";
 import useFullScreen from "@/src/hooks/useFullScreen";
 import CafeEditTabInfo from "@/components/cafe_edit/tabs/CafeEditTabInfo";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import CafeEditTabRates from "@/components/cafe_edit/tabs/CafeEditTabRates";
 import CafeEditTabPay from "@/components/cafe_edit/tabs/CafeEditTabPay";
@@ -303,7 +303,7 @@ export default function CafeEdit({ initialData, initialPointData }) {
       name: pointData.point_info.manager_name,
     };
     const upr = pointData.upr_list.find(
-      (upr) => parseInt(upr.id) === parseInt(pointData.point_info?.manager_id?.id)
+      (upr) => parseInt(upr.id) === parseInt(pointData.point_info?.manager_id?.id),
     );
     if (!upr) pointData.upr_list.push(pointData.point_info?.manager_id);
     const today = dayjs();
@@ -1078,9 +1078,7 @@ export default function CafeEdit({ initialData, initialPointData }) {
           </Grid>
         )}
         {activeTab === index_driver && (
-          <Grid
-            size={12}
-          >
+          <Grid size={12}>
             <TabPanel
               value={activeTab}
               index={index_driver}

@@ -23,9 +23,9 @@ import EditIcon from "@mui/icons-material/Edit";
 import AppointmentParamModal from "@/components/appointment/AppointmentParamModal";
 import AppointmentModalInput from "@/components/appointment/AppointmentModalInput";
 import { Fragment, memo, useCallback, useEffect, useState } from "react";
-import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/components/shared/Forms";
+import { MyAutocomplite, MyCheckBox, MyTextInput } from "@/ui/Forms";
 import { useAppointmentModalStore } from "@/components/appointment/store/useAppointmentModalStore";
-import TextFilter from "../shared/TextFilter";
+import TextFilter from "../../ui/TextFilter";
 import { useDebounce } from "@/src/hooks/useDebounce";
 
 const AppointmentModal = (props) => {
@@ -56,11 +56,12 @@ const AppointmentModal = (props) => {
   const [fullMenuFiltered, setFullMenuFiltered] = useState(full_menu);
   const filterFullMenu = () => {
     const filtered = moduleNameFilter
-      ? full_menu?.map((item) => ({...item, chaild:
-          item.chaild?.filter((child) =>
-            child.name?.toLowerCase()?.includes(moduleNameFilter?.toLowerCase())
-          )})
-        )
+      ? full_menu?.map((item) => ({
+          ...item,
+          chaild: item.chaild?.filter((child) =>
+            child.name?.toLowerCase()?.includes(moduleNameFilter?.toLowerCase()),
+          ),
+        }))
       : full_menu;
     setFullMenuFiltered(filtered);
   };
@@ -171,8 +172,9 @@ const AppointmentModal = (props) => {
             <Grid
               size={{
                 xs: 6,
-                md: 4
-              }}>
+                md: 4,
+              }}
+            >
               <MyTextInput
                 label="Норма бонусов"
                 type="number"
@@ -184,8 +186,9 @@ const AppointmentModal = (props) => {
             <Grid
               size={{
                 xs: 6,
-                md: 4
-              }}>
+                md: 4,
+              }}
+            >
               <MyAutocomplite
                 data={units}
                 disabled={!canEdit("app") || !canEdit("units")}
@@ -199,8 +202,9 @@ const AppointmentModal = (props) => {
             <Grid
               size={{
                 xs: 12,
-                md: 4
-              }}>
+                md: 4,
+              }}
+            >
               <MyCheckBox
                 func={(e) => changeItemChecked("is_graph", e)}
                 value={parseInt(item?.is_graph) == 1 ? true : false}
@@ -214,8 +218,9 @@ const AppointmentModal = (props) => {
                 mb={10}
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <TableContainer sx={{ maxHeight: { xs: "none", sm: 630 } }}>
                   <Table
                     size="small"
@@ -265,7 +270,7 @@ const AppointmentModal = (props) => {
                                           `Редактирование параметров модуля: ${it.name}`,
                                           key,
                                           k,
-                                          "one"
+                                          "one",
                                         )
                                       }
                                     >
@@ -305,7 +310,7 @@ const AppointmentModal = (props) => {
                                           `Редактирование параметров модуля: ${it.name}`,
                                           key,
                                           k,
-                                          "two"
+                                          "two",
                                         )
                                       }
                                     >
@@ -346,11 +351,15 @@ const AppointmentModal = (props) => {
                                       edge="end"
                                       onChange={(e) => changeActiveModule(key, k, e)}
                                       checked={!!+it.is_active}
-                                      disabled={!canEdit("module_active") || it.key_query === 'home' || it.key_query === 'lk'}
+                                      disabled={
+                                        !canEdit("module_active") ||
+                                        it.key_query === "home" ||
+                                        it.key_query === "lk"
+                                      }
                                     />
                                   </TableCell>
                                 </TableRow>
-                              )
+                              ),
                             )}
                           </Fragment>
                         ) : (
@@ -367,7 +376,7 @@ const AppointmentModal = (props) => {
                               {item?.parent?.name}
                             </TableCell>
                           </TableRow>
-                        )
+                        ),
                       )}
                     </TableBody>
                   </Table>

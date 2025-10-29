@@ -32,7 +32,9 @@ export default function DownloadButton({ children, url = null, ...restProps }) {
   };
 
   return (
-    <Tooltip title={`${(restProps.title || "Скачать Excel файл")}${loading ? " (ждите ответа...)" : ""}`}>
+    <Tooltip
+      title={`${restProps.title || "Скачать Excel файл"}${loading ? " (ждите ответа...)" : ""}`}
+    >
       <span>
         <IconButton
           size="small"

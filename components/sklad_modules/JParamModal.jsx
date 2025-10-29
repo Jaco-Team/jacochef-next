@@ -14,8 +14,8 @@ import {
   TextField,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { MyAutocomplite, MyCheckBox, MySelect, MyTextInput } from "@/components/shared/Forms";
-import MyAlert from "@/components/shared/MyAlert";
+import { MyAutocomplite, MyCheckBox, MySelect, MyTextInput } from "@/ui/Forms";
+import MyAlert from "@/ui/MyAlert";
 
 export default function JParamModal({
   open,
@@ -81,11 +81,11 @@ export default function JParamModal({
         !!prev
           ? {
               ...prev,
-              category: value?.id || '',
+              category: value?.id || "",
               category_name: value?.id !== 0 ? value?.name : "",
               categoryItem: value,
             }
-          : prev
+          : prev,
       );
     } else {
       setItem((prev) => (!!prev ? { ...prev, [key]: value } : prev));
@@ -160,8 +160,9 @@ export default function JParamModal({
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
+                  sm: 6,
+                }}
+              >
                 <MyTextInput
                   label="Название"
                   value={item.name || ""}
@@ -172,8 +173,9 @@ export default function JParamModal({
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
+                  sm: 6,
+                }}
+              >
                 <MyTextInput
                   label="Параметр (ключ)"
                   value={item.param || ""}
@@ -183,8 +185,9 @@ export default function JParamModal({
 
               <Grid
                 size={{
-                  xs: 12
-                }}>
+                  xs: 12,
+                }}
+              >
                 <MyAutocomplite
                   label="Модуль"
                   disableCloseOnSelect={false}
@@ -197,8 +200,9 @@ export default function JParamModal({
 
               <Grid
                 size={{
-                  xs: 12
-                }}>
+                  xs: 12,
+                }}
+              >
                 <MySelect
                   is_none={false}
                   label="Тип"
@@ -210,37 +214,41 @@ export default function JParamModal({
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6
-                }}>
-               {item?.module_id && (
-                <MyAutocomplite
-                  disabled={isLoadingCategories}
-                  label="Категория параметра"
-                  multiple={false}
-                  disableCloseOnSelect={false}
-                  data={item?.categories?.length > 0 ? item?.categories : []}
-                  value={item?.categoryItem || ""}
-                  isOptionEqualToValue={(option, value) => option?.id === value?.id || option?.name === value?.category_name}
-                  func={(_, value) => changeAutoComplete("category", value)}
-                  renderInput={
-                    (params) => (
-                       <TextField
+                  sm: 6,
+                }}
+              >
+                {item?.module_id && (
+                  <MyAutocomplite
+                    disabled={isLoadingCategories}
+                    label="Категория параметра"
+                    multiple={false}
+                    disableCloseOnSelect={false}
+                    data={item?.categories?.length > 0 ? item?.categories : []}
+                    value={item?.categoryItem || ""}
+                    isOptionEqualToValue={(option, value) =>
+                      option?.id === value?.id || option?.name === value?.category_name
+                    }
+                    func={(_, value) => changeAutoComplete("category", value)}
+                    renderInput={(params) => (
+                      <TextField
                         {...params}
                         InputProps={{
                           ...params.InputProps,
                           endAdornment: (
                             <>
                               {isLoadingCategories ? (
-                                <CircularProgress color="inherit" size={20} />
+                                <CircularProgress
+                                  color="inherit"
+                                  size={20}
+                                />
                               ) : null}
                               {params.InputProps.endAdornment}
                             </>
                           ),
                         }}
                       />
-                    )
-                  }
-                />
+                    )}
+                  />
                 )}
 
                 {item.categoryItem?.id === 0 && (
@@ -267,8 +275,9 @@ export default function JParamModal({
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 4
-                  }}>
+                    sm: 4,
+                  }}
+                >
                   <MyCheckBox
                     label="Доступ"
                     value={parseInt(item?.access) === 1}
@@ -285,7 +294,7 @@ export default function JParamModal({
                     func={(e) => changeItem("edit", e.target.checked)}
                   />
                 </Grid>
-              )}  
+              )}
             </Grid>
           </DialogContent>
         )}

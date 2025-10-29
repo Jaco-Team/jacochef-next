@@ -1,11 +1,10 @@
 "use client";
 
-import { MyTextInput } from "@/components/shared/Forms";
+import { MyTextInput } from "@/ui/Forms";
 import { Grid } from "@mui/material";
 import { memo, useState } from "react";
 
-const AppointmentModalInput = ({data, type, label, changeItem, ...restArgs}) => {
-
+const AppointmentModalInput = ({ data, type, label, changeItem, ...restArgs }) => {
   const [item, setItem] = useState(data);
 
   const save_data_input = () => {
@@ -16,12 +15,13 @@ const AppointmentModalInput = ({data, type, label, changeItem, ...restArgs}) => 
     <Grid
       size={{
         xs: 12,
-        md: 6
-      }}>
+        md: 6,
+      }}
+    >
       <MyTextInput
         label={label}
         value={item}
-        func={({target: {value}}) => setItem(value)}
+        func={({ target: { value } }) => setItem(value)}
         onBlur={save_data_input}
         {...restArgs}
       />
@@ -29,4 +29,4 @@ const AppointmentModalInput = ({data, type, label, changeItem, ...restArgs}) => 
   );
 };
 
-export default memo(AppointmentModalInput)
+export default memo(AppointmentModalInput);

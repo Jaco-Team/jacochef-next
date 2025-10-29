@@ -1,7 +1,7 @@
 "use server";
 
 import dynamic from "next/dynamic";
-import { getDataSSR } from "@/backend/api";
+import { getDataSSR } from "@/src/api_backend/api";
 
 const RasBillAndCook_ = dynamic(() => import("@/components/ras_bill_and_cook/RasBillAndCook_"), {
   ssr: false,

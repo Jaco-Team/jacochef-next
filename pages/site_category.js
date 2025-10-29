@@ -1,28 +1,28 @@
-import React from 'react';
-import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
+import React from "react";
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
-import CloseIcon from '@mui/icons-material/Close';
-import IconButton from '@mui/material/IconButton';
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+import CloseIcon from "@mui/icons-material/Close";
+import IconButton from "@mui/material/IconButton";
 
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 
-import TableContainer from '@mui/material/TableContainer';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import TableContainer from "@mui/material/TableContainer";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import { MyTextInput, MySelect } from '@/components/shared/Forms';
+import { MyTextInput, MySelect } from "@/ui/Forms";
 
-import { api_laravel_local, api_laravel } from '@/src/api_new';
-import MyAlert from '@/components/shared/MyAlert';
+import { api_laravel_local, api_laravel } from "@/src/api_new";
+import MyAlert from "@/ui/MyAlert";
 
 class SiteCategory_Modal extends React.Component {
   constructor(props) {
@@ -33,7 +33,7 @@ class SiteCategory_Modal extends React.Component {
       listCat: null,
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
     };
   }
 
@@ -66,15 +66,14 @@ class SiteCategory_Modal extends React.Component {
     const item = this.state.item;
 
     if (!item.name) {
-
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: 'Необходимо указать название'
+        err_text: "Необходимо указать название",
       });
 
       return;
-    } 
+    }
 
     this.props.save(item);
 
@@ -87,7 +86,7 @@ class SiteCategory_Modal extends React.Component {
       listCat: null,
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
     });
 
     this.props.onClose();
@@ -114,54 +113,66 @@ class SiteCategory_Modal extends React.Component {
             {this.props.itemName ? `: ${this.props.itemName}` : null}
           </DialogTitle>
 
-          <IconButton onClick={this.onClose.bind(this)} style={{ cursor: 'pointer', position: 'absolute', top: 0, right: 0, padding: 20 }}>
+          <IconButton
+            onClick={this.onClose.bind(this)}
+            style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+          >
             <CloseIcon />
           </IconButton>
 
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid container spacing={3}>
+            <Grid
+              container
+              spacing={3}
+            >
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <MyTextInput
                   label="Название категории"
-                  value={this.state.item ? this.state.item.name : ''}
-                  func={this.changeItem.bind(this, 'name')}
+                  value={this.state.item ? this.state.item.name : ""}
+                  func={this.changeItem.bind(this, "name")}
                 />
               </Grid>
 
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <MyTextInput
                   label="Сроки хранения"
                   multiline={true}
                   maxRows={4}
-                  value={this.state.item ? this.state.item.shelf_life : ''}
-                  func={this.changeItem.bind(this, 'shelf_life')}
+                  value={this.state.item ? this.state.item.shelf_life : ""}
+                  func={this.changeItem.bind(this, "shelf_life")}
                 />
               </Grid>
 
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12
-                }}>
+                  sm: 12,
+                }}
+              >
                 <MySelect
                   label="Дочерняя категория"
                   data={this.state.listCat ? this.state.listCat : []}
-                  value={this.state.item ? this.state.item.parent_id : ''}
-                  func={this.changeItem.bind(this, 'parent_id')}
+                  value={this.state.item ? this.state.item.parent_id : ""}
+                  func={this.changeItem.bind(this, "parent_id")}
                 />
               </Grid>
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button variant="contained" onClick={this.save.bind(this)}>
+            <Button
+              variant="contained"
+              onClick={this.save.bind(this)}
+            >
               Сохранить
             </Button>
           </DialogActions>
@@ -176,8 +187,8 @@ class SiteCategory_ extends React.Component {
     super(props);
 
     this.state = {
-      module: 'site_category',
-      module_name: '',
+      module: "site_category",
+      module_name: "",
       is_load: false,
 
       fullScreen: false,
@@ -190,21 +201,21 @@ class SiteCategory_ extends React.Component {
       item: null,
 
       itemNew: {
-        name: '',
-        shelf_life: '',
+        name: "",
+        shelf_life: "",
       },
 
-      method: '',
-      itemName: '',
+      method: "",
+      itemName: "",
 
       openAlert: false,
       err_status: true,
-      err_text: '',
+      err_text: "",
     };
   }
 
   async componentDidMount() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     this.setState({
       main: data.main,
@@ -220,8 +231,8 @@ class SiteCategory_ extends React.Component {
     });
 
     let res = api_laravel(this.state.module, method, data)
-      .then(result => result.data)
-      .finally( () => {
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
@@ -230,7 +241,7 @@ class SiteCategory_ extends React.Component {
       });
 
     return res;
-  }
+  };
 
   handleResize() {
     if (window.innerWidth < 601) {
@@ -247,24 +258,24 @@ class SiteCategory_ extends React.Component {
   async openModal(mark, id) {
     this.handleResize();
 
-    if (mark === 'add') {
-      const res = await this.getData('get_all_for_new');
+    if (mark === "add") {
+      const res = await this.getData("get_all_for_new");
 
       this.setState({
         mark,
         item: JSON.parse(JSON.stringify(this.state.itemNew)),
         listCat: res.category,
         modalDialog: true,
-        method: 'Новая категория',
+        method: "Новая категория",
       });
     }
 
-    if (mark === 'edit') {
+    if (mark === "edit") {
       const data = {
         id,
       };
 
-      const res = await this.getData('get_one', data);
+      const res = await this.getData("get_one", data);
 
       this.setState({
         mark,
@@ -272,7 +283,7 @@ class SiteCategory_ extends React.Component {
         itemName: res.item.name,
         listCat: res.category,
         modalDialog: true,
-        method: 'Редактирование категории',
+        method: "Редактирование категории",
       });
     }
   }
@@ -282,17 +293,17 @@ class SiteCategory_ extends React.Component {
 
     let res;
 
-    if (mark === 'add') {
+    if (mark === "add") {
       const data = {
         name: item.name,
         shelf_life: item.shelf_life,
         cat_id: item?.parent_id ?? 0,
       };
 
-      res = await this.getData('save_new', data);
+      res = await this.getData("save_new", data);
     }
 
-    if (mark === 'edit') {
+    if (mark === "edit") {
       const data = {
         id: item.id,
         name: item.name,
@@ -300,7 +311,7 @@ class SiteCategory_ extends React.Component {
         cat_id: item.parent_id,
       };
 
-      res = await this.getData('save_edit', data);
+      res = await this.getData("save_edit", data);
     }
 
     if (!res.st) {
@@ -319,7 +330,7 @@ class SiteCategory_ extends React.Component {
   changeSort(index, cat, id, event) {
     const main = this.state.main;
 
-    if (cat === 'subCat') {
+    if (cat === "subCat") {
       main.forEach((item) => {
         if (item.id === id) {
           item.items[index].sort = event.target.value;
@@ -340,7 +351,7 @@ class SiteCategory_ extends React.Component {
       sort: event.target.value,
     };
 
-    const res = await this.getData('save_sort', data);
+    const res = await this.getData("save_sort", data);
 
     if (!res.st) {
       this.setState({
@@ -356,7 +367,7 @@ class SiteCategory_ extends React.Component {
   }
 
   async update() {
-    const data = await this.getData('get_all');
+    const data = await this.getData("get_all");
 
     this.setState({
       main: data.main,
@@ -366,7 +377,10 @@ class SiteCategory_ extends React.Component {
   render() {
     return (
       <>
-        <Backdrop open={this.state.is_load} style={{ zIndex: 99 }}>
+        <Backdrop
+          open={this.state.is_load}
+          style={{ zIndex: 99 }}
+        >
           <CircularProgress color="inherit" />
         </Backdrop>
         <MyAlert
@@ -377,7 +391,7 @@ class SiteCategory_ extends React.Component {
         />
         <SiteCategory_Modal
           open={this.state.modalDialog}
-          onClose={() => this.setState({ modalDialog: false, itemName: '', method: '' })}
+          onClose={() => this.setState({ modalDialog: false, itemName: "", method: "" })}
           mark={this.state.mark}
           item={this.state.item}
           listCat={this.state.listCat}
@@ -386,25 +400,31 @@ class SiteCategory_ extends React.Component {
           fullScreen={this.state.fullScreen}
           save={this.save.bind(this)}
         />
-        <Grid container spacing={3} className='container_first_child'>
+        <Grid
+          container
+          spacing={3}
+          className="container_first_child"
+        >
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <h1>{this.state.module_name}</h1>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
-              sm: 12
-            }}>
+              sm: 12,
+            }}
+          >
             <Button
               variant="contained"
               color="primary"
-              style={{ whiteSpace: 'nowrap' }}
-              onClick={this.openModal.bind(this, 'add', null)}
+              style={{ whiteSpace: "nowrap" }}
+              onClick={this.openModal.bind(this, "add", null)}
             >
               Добавить
             </Button>
@@ -415,25 +435,32 @@ class SiteCategory_ extends React.Component {
               mb={10}
               size={{
                 xs: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <TableContainer>
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
+                    <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                       <TableCell>#</TableCell>
-                      <TableCell sx={{ minWidth: '300px' }}>Название</TableCell>
+                      <TableCell sx={{ minWidth: "300px" }}>Название</TableCell>
                       <TableCell>Сортировка</TableCell>
-                      <TableCell sx={{ minWidth: '500px' }}>Сроки хранения</TableCell>
+                      <TableCell sx={{ minWidth: "500px" }}>Сроки хранения</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {this.state.main.map((item, index) =>
                       item.items.length ? (
                         <React.Fragment key={index}>
-                          <TableRow hover sx={{ '& th': { border: 'none' } }}>
+                          <TableRow
+                            hover
+                            sx={{ "& th": { border: "none" } }}
+                          >
                             <TableCell>{index + 1}</TableCell>
-                            <TableCell onClick={this.openModal.bind(this, 'edit', item.id)} sx={{ fontWeight: 'bold', cursor: 'pointer', color: '#c03' }}>
+                            <TableCell
+                              onClick={this.openModal.bind(this, "edit", item.id)}
+                              sx={{ fontWeight: "bold", cursor: "pointer", color: "#c03" }}
+                            >
                               {item.name}
                             </TableCell>
                             <TableCell>
@@ -441,16 +468,27 @@ class SiteCategory_ extends React.Component {
                                 type="number"
                                 label=""
                                 value={item.sort}
-                                func={this.changeSort.bind(this, index, 'cat', null)}
+                                func={this.changeSort.bind(this, index, "cat", null)}
                                 onBlur={this.saveSort.bind(this, item.id)}
                               />
                             </TableCell>
-                            <TableCell sx={{ minWidth: '500px' }}>{item.shelf_life}</TableCell>
+                            <TableCell sx={{ minWidth: "500px" }}>{item.shelf_life}</TableCell>
                           </TableRow>
                           {item.items.map((it, key) => (
-                            <TableRow hover key={key}>
+                            <TableRow
+                              hover
+                              key={key}
+                            >
                               <TableCell></TableCell>
-                              <TableCell onClick={this.openModal.bind(this, 'edit', it.id)} sx={{ paddingLeft: 10, alignItems: 'center', minWidth: '300px', cursor: 'pointer'}}>
+                              <TableCell
+                                onClick={this.openModal.bind(this, "edit", it.id)}
+                                sx={{
+                                  paddingLeft: 10,
+                                  alignItems: "center",
+                                  minWidth: "300px",
+                                  cursor: "pointer",
+                                }}
+                              >
                                 <li>{it.name}</li>
                               </TableCell>
                               <TableCell>
@@ -458,31 +496,38 @@ class SiteCategory_ extends React.Component {
                                   type="number"
                                   label=""
                                   value={it.sort}
-                                  func={this.changeSort.bind(this, key, 'subCat', item.id)}
+                                  func={this.changeSort.bind(this, key, "subCat", item.id)}
                                   onBlur={this.saveSort.bind(this, it.id)}
                                 />
                               </TableCell>
-                              <TableCell sx={{ minWidth: '500px' }}>{it.shelf_life}</TableCell>
+                              <TableCell sx={{ minWidth: "500px" }}>{it.shelf_life}</TableCell>
                             </TableRow>
                           ))}
                         </React.Fragment>
                       ) : (
-                        <TableRow hover key={index} sx={{ '& th': { border: 'none' } }}>
+                        <TableRow
+                          hover
+                          key={index}
+                          sx={{ "& th": { border: "none" } }}
+                        >
                           <TableCell>{index + 1}</TableCell>
-                          <TableCell onClick={this.openModal.bind(this, 'edit', item.id)} sx={{ fontWeight: 'bold', cursor: 'pointer', color: '#c03'}}>
+                          <TableCell
+                            onClick={this.openModal.bind(this, "edit", item.id)}
+                            sx={{ fontWeight: "bold", cursor: "pointer", color: "#c03" }}
+                          >
                             {item.name}
                           </TableCell>
                           <TableCell>
                             <MyTextInput
                               label=""
                               value={item.sort}
-                              func={this.changeSort.bind(this, index, 'cat', null)}
+                              func={this.changeSort.bind(this, index, "cat", null)}
                               onBlur={this.saveSort.bind(this, item.id)}
                             />
                           </TableCell>
-                          <TableCell sx={{ minWidth: '500px' }}>{item.shelf_life}</TableCell>
+                          <TableCell sx={{ minWidth: "500px" }}>{item.shelf_life}</TableCell>
                         </TableRow>
-                      )
+                      ),
                     )}
                   </TableBody>
                 </Table>
@@ -500,13 +545,16 @@ export default function SiteCategory() {
 }
 
 export async function getServerSideProps({ req, res, query }) {
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
 
   return {
     props: {},
-  }
+  };
 }

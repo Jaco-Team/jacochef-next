@@ -23,9 +23,10 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import IconButton from "@mui/material/IconButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { ModalAccept } from "@/components/general/ModalAccept";
-import MyAlert from "@/components/shared/MyAlert";
+import MyAlert from "@/ui/MyAlert";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
+import { Close } from "@mui/icons-material";
 dayjs.locale("ru");
 
 class AppPerH_ extends React.Component {
@@ -213,8 +214,8 @@ class AppPerH_ extends React.Component {
         err_text: "Обновлено",
       },
       () => {
-        this.update(), this.setState({ confirmDialog: false });
-      }
+        (this.update(), this.setState({ confirmDialog: false }));
+      },
     );
   }
 
@@ -267,7 +268,7 @@ class AppPerH_ extends React.Component {
         err_status: true,
         err_text: "Обновлено",
       },
-      () => this.update()
+      () => this.update(),
     );
   }
 
@@ -312,7 +313,15 @@ class AppPerH_ extends React.Component {
             onClose={() => this.setState({ confirmDialog: false })}
             maxWidth="sm"
           >
-            <DialogTitle>Подтвердите действие</DialogTitle>
+            <DialogTitle>
+              Подтвердите действие
+              <IconButton
+                onClick={() => this.setState({ confirmDialog: false })}
+                style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
             <DialogContent
               align="center"
               sx={{ fontWeight: "bold" }}
@@ -669,7 +678,7 @@ export async function getServerSideProps({ req, res, query }) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");

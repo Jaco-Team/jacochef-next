@@ -1,38 +1,40 @@
-.tender{
-
-  & th:first-child, tr:first-child, td:first-child {
+.tender {
+  & th:first-child,
+  tr:first-child,
+  td:first-child {
     position: -webkit-sticky;
     position: sticky;
     left: 0;
     border-right: none;
   }
 
-  & td, th {
+  & td,
+  th {
     border-right: solid 1px #e5e5e5;
   }
 
-  & .tdprice{
+  & .tdprice {
     white-space: nowrap;
-    text-align: center!important;
+    text-align: center !important;
   }
 
-  & .tdcity{
+  & .tdcity {
     width: 80%;
   }
 
-  & .minPriceCell{
+  & .minPriceCell {
     background-color: green;
     color: #fff;
-    font-weight: 700!important;
+    font-weight: 700 !important;
   }
-  & .maxPriceCell{
+  & .maxPriceCell {
     background-color: red;
     color: #fff;
-    font-weight: 700!important;
+    font-weight: 700 !important;
   }
-  & .chooseCell{
-    background-color: #ffcc00!important;
-    color: #333!important;
-    font-weight: 700!important;
+  & .chooseCell {
+    background-color: #ffcc00 !important;
+    color: #333 !important;
+    font-weight: 700 !important;
   }
 }

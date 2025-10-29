@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { MyAutocomplite, MyDatePickerNew } from "@/components/shared/Forms";
+import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 import { Button, Grid, Stack, Tab, Tabs } from "@mui/material";
 import dayjs from "dayjs";
 import useMarketingTabStore from "./useMarketingTabStore";
 import ModalOrder from "../ModalOrder";
-import a11yProps from "@/components/shared/TabPanel/a11yProps";
-import TabPanel from "@/components/shared/TabPanel/TabPanel";
+import a11yProps from "@/ui/TabPanel/a11yProps";
+import TabPanel from "@/ui/TabPanel/TabPanel";
 import InnerTabStats from "./InnerTabStats";
 import InnerTabSources from "./InnerTabSources";
 import SiteClientsMarketingOrdersTable from "./SiteClientsMarketingOrdersTable";
@@ -76,7 +76,10 @@ export default function SiteClientsMarketingTab(props) {
   };
 
   return (
-    <LoadingProvider isLoading={isLoading} setIsLoading={setIsLoading}>
+    <LoadingProvider
+      isLoading={isLoading}
+      setIsLoading={setIsLoading}
+    >
       <SiteClientsMarketingOrdersModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -88,7 +91,7 @@ export default function SiteClientsMarketingTab(props) {
             openClient={openClient}
             showAlert={showAlert}
             getData={getData}
-            canExport={canAccess('export_items')}
+            canExport={canAccess("export_items")}
           />
         </>
       </SiteClientsMarketingOrdersModal>
@@ -114,8 +117,9 @@ export default function SiteClientsMarketingTab(props) {
         <Grid
           size={{
             xs: 12,
-            sm: 4
-          }}>
+            sm: 4,
+          }}
+        >
           <MyAutocomplite
             label="Кафе"
             multiple={true}
@@ -129,8 +133,9 @@ export default function SiteClientsMarketingTab(props) {
         <Grid
           size={{
             xs: 12,
-            sm: 6
-          }}>
+            sm: 6,
+          }}
+        >
           <Grid
             container
             spacing={1}
@@ -138,8 +143,9 @@ export default function SiteClientsMarketingTab(props) {
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyDatePickerNew
                 label="Дата от"
                 customActions={true}
@@ -151,8 +157,9 @@ export default function SiteClientsMarketingTab(props) {
             <Grid
               size={{
                 xs: 12,
-                sm: 6
-              }}>
+                sm: 6,
+              }}
+            >
               <MyDatePickerNew
                 label="Дата до"
                 customActions={true}
@@ -166,8 +173,9 @@ export default function SiteClientsMarketingTab(props) {
         <Grid
           size={{
             xs: 12,
-            sm: 2
-          }}>
+            sm: 2,
+          }}
+        >
           <Stack
             spacing={1}
             alignContent={"stretch"}
@@ -186,8 +194,9 @@ export default function SiteClientsMarketingTab(props) {
           style={{ paddingBottom: 24 }}
           size={{
             xs: 12,
-            sm: 12
-          }}>
+            sm: 12,
+          }}
+        >
           <Tabs
             value={activeTab}
             onChange={(_, val) => setActiveTab(val)}
@@ -225,8 +234,9 @@ export default function SiteClientsMarketingTab(props) {
         {/* статистика */}
         <Grid
           size={{
-            xs: 12
-          }}>
+            xs: 12,
+          }}
+        >
           <TabPanel
             value={activeTab}
             index={0}
@@ -242,8 +252,9 @@ export default function SiteClientsMarketingTab(props) {
         {/* источники */}
         <Grid
           size={{
-            xs: 12
-          }}>
+            xs: 12,
+          }}
+        >
           <TabPanel
             value={activeTab}
             index={1}
@@ -252,7 +263,7 @@ export default function SiteClientsMarketingTab(props) {
             <InnerTabSources
               getData={getData}
               showAlert={showAlert}
-              canExport={canAccess('export_items')}
+              canExport={canAccess("export_items")}
             />
           </TabPanel>
         </Grid>
@@ -260,8 +271,9 @@ export default function SiteClientsMarketingTab(props) {
         {/* utm */}
         <Grid
           size={{
-            xs: 12
-          }}>
+            xs: 12,
+          }}
+        >
           <TabPanel
             value={activeTab}
             index={2}
@@ -270,7 +282,7 @@ export default function SiteClientsMarketingTab(props) {
             <InnerTabUtm
               getData={getData}
               showAlert={showAlert}
-              canExport={canAccess('export_items')}
+              canExport={canAccess("export_items")}
             />
           </TabPanel>
         </Grid>
@@ -278,8 +290,9 @@ export default function SiteClientsMarketingTab(props) {
         {/* промокоды */}
         <Grid
           size={{
-            xs: 12
-          }}>
+            xs: 12,
+          }}
+        >
           <TabPanel
             value={activeTab}
             index={3}
@@ -288,7 +301,7 @@ export default function SiteClientsMarketingTab(props) {
             <InnerTabPromo
               getData={getData}
               showAlert={showAlert}
-              canExport={canAccess('export_items')}
+              canExport={canAccess("export_items")}
             />
           </TabPanel>
         </Grid>

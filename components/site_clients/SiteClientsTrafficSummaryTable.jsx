@@ -1,16 +1,12 @@
 "use client";
-import {
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-} from "@mui/material";
+import { Paper, Table, TableBody, TableCell, TableContainer, TableRow } from "@mui/material";
 
 export default function SiteClientsTrafficSummaryTable({ data }) {
   return (
-    <TableContainer sx={{ maxHeight: { xs: 'none', sm: 570 }, marginTop: '1em' }} component={Paper}>
+    <TableContainer
+      sx={{ maxHeight: { xs: "none", sm: 570 }, marginTop: "1em" }}
+      component={Paper}
+    >
       <Table>
         <TableBody>
           <TableRow hover>
