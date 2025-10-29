@@ -9,7 +9,6 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
-import {MyAutocomplite, MySelect, MyTextInput} from "@/components/shared/Forms";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 import Typography from "@mui/material/Typography";
 import Dialog from "@mui/material/Dialog";
@@ -27,6 +26,7 @@ import MyAlert from "@/ui/MyAlert";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import { Close } from "@mui/icons-material";
+import {MyAutocomplite, MySelect, MyTextInput} from "@/ui/Forms";
 dayjs.locale("ru");
 
 class AppPerH_ extends React.Component {
@@ -513,7 +513,7 @@ class AppPerH_ extends React.Component {
                                   <TableHead>
                                     <TableRow>
                                       <TableCell>#</TableCell>
-                                      <TableCell>Город</TableCell>
+                                      <TableCell>Точка</TableCell>
                                       <TableCell>Дата изменения</TableCell>
                                       <TableCell>Дата создания</TableCell>
                                       <TableCell style={{ textAlign: "center" }}>Оклад</TableCell>
