@@ -12,6 +12,7 @@ import "@/styles/tender.scss";
 // import '@/components/rich_text/LexKitTemplate/styles.css';
 // import "@blocknote/core/fonts/inter.css";
 // import "@blocknote/mantine/style.css";
+import "textcrafter/dist/styles.min.css";
 import Head from "next/head";
 
 Sentry.init({

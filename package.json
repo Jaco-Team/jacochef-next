@@ -76,6 +76,7 @@
     "react-draggable": "^4.5.0",
     "react-modal-image": "^2.6.0",
     "react-multi-date-picker": "^4.5.2",
+    "textcrafter": "^1.0.0-stable-2",
     "tinymce": "^7.9.1",
     "tr46": "^5.1.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz",

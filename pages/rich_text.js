@@ -4,17 +4,15 @@
 import { Grid, Typography } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
-import fs from "fs";
-
-const defaultText = fs.readFileSync("@/components/rich_text/README.md", "utf-8");
 
 const TextEditor1 = dynamic(() => import("@/components/rich_text/CK"), { ssr: false });
 // const TextEditor = dynamic(() => import('@/components/rich_text/TipTap'), { ssr: false });
 // const TextEditor = dynamic(() => import('@/components/rich_text/LexKit'), { ssr: false });
 // const TextEditor = dynamic(() => import("@/components/rich_text/BlockNote"), { ssr: false });
 const TextEditor = dynamic(() => import("@/components/rich_text/Jodit"), { ssr: false });
+const TextEditor3 = dynamic(() => import("@/components/rich_text/TextCrafter"), { ssr: false });
 export default function WysiwygEditor() {
-  const [content, setContent] = useState(defaultText);
+  const [content, setContent] = useState("<p>Hello</p>");
   const editorRef = useRef(null);
   return (
     <Grid
@@ -52,7 +50,14 @@ export default function WysiwygEditor() {
           language="ru"
         />
       </Grid>
-      <Grid size={12}>{/* <textarea value={() => JSON.stringify(content)} /> */}</Grid>
+      <Grid size={12}>
+        <Typography variant="h6">TextCrafter</Typography>
+        <TextEditor3
+          value={content}
+          onChange={setContent}
+          language="ru"
+        />
+      </Grid>
     </Grid>
   );
 }
