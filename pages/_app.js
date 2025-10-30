@@ -10,8 +10,8 @@ import theme, { font } from "@/src/theme";
 import "@/styles/global.scss";
 import "@/styles/tender.scss";
 // import '@/components/rich_text/LexKitTemplate/styles.css';
-import "@blocknote/core/fonts/inter.css";
-import "@blocknote/mantine/style.css";
+// import "@blocknote/core/fonts/inter.css";
+// import "@blocknote/mantine/style.css";
 import Head from "next/head";
 
 Sentry.init({
