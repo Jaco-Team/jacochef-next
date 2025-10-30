@@ -1,5 +1,5 @@
 - [x] fix Select warnings on empty set when default is not '' (added props.data.length check)
-- [ ] run npx prettier --write ./pages... ./components...
+- [x] run npx prettier --write ./pages... ./components...
 - [ ] add dictionary (centralize tooltip, general error text etc.)
 - [ ] move MUI components global styling to theme.js (partially done)
 - [x] journal_of_work_of_bactericidal_lamps.js - Datepicker padding
