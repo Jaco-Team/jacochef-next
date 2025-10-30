@@ -5,10 +5,10 @@ import { Grid } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
 
-// const TextEditor = dynamic(() => import('@/components/rich_text/CK'), { ssr: false });
+const TextEditor = dynamic(() => import("@/components/rich_text/CK"), { ssr: false });
 // const TextEditor = dynamic(() => import('@/components/rich_text/TipTap'), { ssr: false });
 // const TextEditor = dynamic(() => import('@/components/rich_text/LexKit'), { ssr: false });
-const TextEditor = dynamic(() => import("@/components/rich_text/BlockNote"), { ssr: false });
+// const TextEditor = dynamic(() => import("@/components/rich_text/BlockNote"), { ssr: false });
 export default function WysiwygEditor() {
   const [content, setContent] = useState("<p>Hello world!</p>");
   const editorRef = useRef(null);
@@ -35,6 +35,7 @@ export default function WysiwygEditor() {
           language="ru"
         />
       </Grid>
+      <Grid size={12}>{/* <textarea value={() => JSON.stringify(content)} /> */}</Grid>
     </Grid>
   );
 }

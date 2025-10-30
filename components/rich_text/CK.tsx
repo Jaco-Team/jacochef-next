@@ -1,5 +1,7 @@
 "use client";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
+import "@ckeditor/ckeditor5-build-classic/build/translations/ru.js";
+import { RemoveFormat } from "@ckeditor/ckeditor5-remove-format/src/removeformat";
 
 // interface mismatch hack
 import ClassicEditorType from "@ckeditor/ckeditor5-build-classic";
@@ -46,6 +48,7 @@ export default function TextEditor({ value, onChange }) {
             "sourceEditing",
           ],
           table: { contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"] },
+          licenseKey: "GPL",
         }}
         onChange={(_, editor) => onChange(editor.getData())}
       />
