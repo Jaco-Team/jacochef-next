@@ -13,6 +13,10 @@ import "@/styles/tender.scss";
 // import "@blocknote/core/fonts/inter.css";
 // import "@blocknote/mantine/style.css";
 import "textcrafter/dist/styles.min.css";
+import { MantineProvider } from "@mantine/core";
+import "@mantine/core/styles.css";
+import "@mantine/tiptap/styles.css";
+
 import Head from "next/head";
 
 Sentry.init({
@@ -38,21 +42,23 @@ export default function MyApp(props) {
   return (
     <StyledEngineProvider injectFirst>
       <ThemeProvider theme={theme}>
-        {/* <CssBaseline /> */}
-        <Head>
-          <meta
-            name="viewport"
-            content="initial-scale=1, width=device-width"
-          />
-        </Head>
-        {isHeader && <Header suppressHydrationWarning />}
+        <MantineProvider defaultColorScheme="light">
+          {/* <CssBaseline /> */}
+          <Head>
+            <meta
+              name="viewport"
+              content="initial-scale=1, width=device-width"
+            />
+          </Head>
+          {isHeader && <Header suppressHydrationWarning />}
 
-        <div className={font.className}>
-          <Component
-            {...pageProps}
-            router={router}
-          />
-        </div>
+          <div className={font.className}>
+            <Component
+              {...pageProps}
+              router={router}
+            />
+          </div>
+        </MantineProvider>
       </ThemeProvider>
     </StyledEngineProvider>
   );

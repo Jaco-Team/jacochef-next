@@ -1,242 +1,266 @@
 "use client";
 
-import { RefObject, useEffect, useState } from "react";
-import { Box, IconButton, Paper, Tooltip, Divider, useTheme } from "@mui/material";
-
-import {
-  FormatBold,
-  FormatItalic,
-  FormatListBulleted,
-  FormatListNumbered,
-  Link as LinkIcon,
-  Image as ImageIcon,
-  Code,
-  Undo,
-  Redo,
-  TableChart,
-  Add,
-  DeleteOutline,
-} from "@mui/icons-material";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useState, useEffect } from "react";
+import { RichTextEditor } from "@mantine/tiptap";
+import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { Table, TableRow, TableCell, TableHeader } from "@tiptap/extension-table";
-import Image from "@tiptap/extension-image";
+import Placeholder from "@tiptap/extension-placeholder";
+import Underline from "@tiptap/extension-underline";
+import TextAlign from "@tiptap/extension-text-align";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Color from "@tiptap/extension-color";
+import FontFamily from "@tiptap/extension-font-family";
 import Link from "@tiptap/extension-link";
-import { BulletList, OrderedList, ListItem } from "@tiptap/extension-list";
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import CharacterCount from "@tiptap/extension-character-count";
+import Image from "@tiptap/extension-image";
+import { Extension } from "@tiptap/core";
 
-// Highlight / Lowlight setup
-import { createLowlight } from "lowlight";
-import javascript from "highlight.js/lib/languages/javascript";
-import xml from "highlight.js/lib/languages/xml";
-import css from "highlight.js/lib/languages/css";
-import json from "highlight.js/lib/languages/json";
-import typescript from "highlight.js/lib/languages/typescript";
+/* ---- Font size extension ---- */
+const FontSize = Extension.create({
+  name: "fontSize",
+  addGlobalAttributes() {
+    return [
+      {
+        types: ["textStyle"],
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: (el) => el.style.fontSize?.replace("px", ""),
+            renderHTML: (attrs) =>
+              attrs.fontSize ? { style: `font-size:${attrs.fontSize}px` } : {},
+          },
+        },
+      },
+    ];
+  },
+  addCommands() {
+    return {
+      setFontSize:
+        (size: string) =>
+        ({ chain }) => {
+          const px = size.endsWith("px") ? size : `${size}px`;
+          return chain().setMark("textStyle", { fontSize: px }).run();
+        },
+    };
+  },
+});
+/* ------------------------------ */
 
-// Create one shared lowlight instance
-const lowlight = createLowlight();
-lowlight.register("javascript", javascript);
-lowlight.register("xml", xml);
-lowlight.register("css", css);
-lowlight.register("json", json);
-lowlight.register("typescript", typescript);
-
-interface TextEditorProps {
-  value: string;
-  onChange: (html: string) => void;
-  language?: string;
+interface Props {
+  value?: string;
+  placeholder?: string;
+  onChange?: (html: string) => void;
 }
 
-export function TextEditor({ value, onChange, language = "ru" }: TextEditorProps) {
-  const theme = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+export default function TextEditor({ value = "", placeholder, onChange }: Props) {
+  const [content, setContent] = useState(value);
+  useEffect(() => setContent(value), [value]);
 
   const editor = useEditor({
-    immediatelyRender: false,
     extensions: [
-      StarterKit.configure({ codeBlock: false }),
-      CodeBlockLowlight.configure({ lowlight }),
-      Link.configure({ openOnClick: false }),
+      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+      Placeholder.configure({
+        placeholder: placeholder || "Начните печатать...",
+      }),
+      Underline,
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      TextStyle,
+      Color,
+      FontFamily,
+      FontSize,
       Image,
-      Table.configure({ resizable: true }),
-      TableRow,
-      TableHeader,
-      TableCell,
-      CharacterCount,
+      Link.configure({ openOnClick: false }),
     ],
-    content: value,
-    editorProps: {
-      attributes: {
-        lang: language,
-        style: `
-          font-family: Inter, Helvetica, Arial, sans-serif;
-          font-size: 15px;
-          line-height: 1.6;
-        `,
-      },
-    },
-    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    content,
+    immediatelyRender: false,
+    onUpdate: ({ editor }) => setContent(editor.getHTML()),
   });
 
-  if (!mounted || !editor) return null;
+  const handleBlur = () => onChange?.(content);
+  if (!editor) return null;
 
-  const toolbarBtn = (icon: React.ReactNode, title: string, action: () => void, active = false) => (
-    <Tooltip
-      title={title}
-      key={title}
-    >
-      <IconButton
-        size="small"
-        color={active ? "primary" : "default"}
-        onClick={action}
-        sx={{
-          borderRadius: 1,
-          "&:hover": {
-            backgroundColor:
-              theme.palette.mode === "light" ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.08)",
-          },
-        }}
-      >
-        {icon}
-      </IconButton>
-    </Tooltip>
-  );
+  const fontSizes = [12, 14, 16, 18, 24, 32];
+
+  const startSpeech = () => {
+    const SR = (window as any).webkitSpeechRecognition;
+    if (!SR) return alert("Speech recognition unsupported");
+    const rec = new SR();
+    rec.lang = "ru-RU";
+    rec.onresult = (e: any) => {
+      const text = Array.from(e.results)
+        .map((r) => r[0].transcript)
+        .join(" ");
+      editor.chain().focus().insertContent(text).run();
+    };
+    rec.start();
+  };
+
+  const printHTML = () => {
+    const html = editor.getHTML();
+    const win = window.open("", "_blank");
+    win?.document.write(html);
+    win?.document.close();
+    win?.print();
+  };
+
+  const toggleFullscreen = () => {
+    document.querySelector(".mantine-RichTextEditor-root")?.classList.toggle("fixed");
+  };
 
   return (
-    <Paper
-      variant="outlined"
-      sx={{
-        borderRadius: 2,
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
+    <RichTextEditor
+      editor={editor}
+      onBlur={handleBlur}
     >
-      {/* Toolbar */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexWrap: "wrap",
-          px: 1,
-          py: 0.5,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          backgroundColor:
-            theme.palette.mode === "light" ? theme.palette.grey[50] : theme.palette.grey[900],
-        }}
+      <RichTextEditor.Toolbar
+        sticky
+        stickyOffset={0}
       >
-        {toolbarBtn(<Undo fontSize="small" />, "Undo", () => editor.chain().focus().undo().run())}
-        {toolbarBtn(<Redo fontSize="small" />, "Redo", () => editor.chain().focus().redo().run())}
-        <Divider
-          orientation="vertical"
-          flexItem
-          sx={{ mx: 1 }}
-        />
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.Undo />
+          <RichTextEditor.Redo />
+        </RichTextEditor.ControlsGroup>
 
-        {toolbarBtn(
-          <FormatBold fontSize="small" />,
-          "Bold",
-          () => editor.chain().focus().toggleBold().run(),
-          editor.isActive("bold"),
-        )}
-        {toolbarBtn(
-          <FormatItalic fontSize="small" />,
-          "Italic",
-          () => editor.chain().focus().toggleItalic().run(),
-          editor.isActive("italic"),
-        )}
-        <Divider
-          orientation="vertical"
-          flexItem
-          sx={{ mx: 1 }}
-        />
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.H1 />
+          <RichTextEditor.H2 />
+          <RichTextEditor.H3 />
+          <RichTextEditor.Control
+            title="Paragraph"
+            onClick={() => editor.chain().focus().setParagraph().run()}
+          >
+            ¶
+          </RichTextEditor.Control>
+        </RichTextEditor.ControlsGroup>
 
-        {toolbarBtn(
-          <FormatListBulleted fontSize="small" />,
-          "Bullet list",
-          () => editor.chain().focus().toggleBulletList().run(),
-          editor.isActive("bulletList"),
-        )}
-        {toolbarBtn(
-          <FormatListNumbered fontSize="small" />,
-          "Numbered list",
-          () => editor.chain().focus().toggleOrderedList().run(),
-          editor.isActive("orderedList"),
-        )}
-        <Divider
-          orientation="vertical"
-          flexItem
-          sx={{ mx: 1 }}
-        />
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.Bold />
+          <RichTextEditor.Italic />
+          <RichTextEditor.Strikethrough />
+          <RichTextEditor.Underline />
+          <RichTextEditor.ClearFormatting />
+        </RichTextEditor.ControlsGroup>
 
-        {toolbarBtn(
-          <LinkIcon fontSize="small" />,
-          "Add link",
-          () =>
-            editor
-              .chain()
-              .focus()
-              .toggleLink({ href: prompt("URL?") || "" })
-              .run(),
-          editor.isActive("link"),
-        )}
-        {toolbarBtn(<ImageIcon fontSize="small" />, "Insert image", () =>
-          editor
-            .chain()
-            .focus()
-            .setImage({ src: prompt("Image URL?") || "" })
-            .run(),
-        )}
-        {toolbarBtn(<Code fontSize="small" />, "Code block", () =>
-          editor.chain().focus().toggleCodeBlock().run(),
-        )}
-        <Divider
-          orientation="vertical"
-          flexItem
-          sx={{ mx: 1 }}
-        />
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.BulletList />
+          <RichTextEditor.OrderedList />
+        </RichTextEditor.ControlsGroup>
 
-        {toolbarBtn(<TableChart fontSize="small" />, "Insert table", () =>
-          editor.chain().focus().insertTable({ rows: 2, cols: 2, withHeaderRow: true }).run(),
-        )}
-        {toolbarBtn(<Add fontSize="small" />, "Add row", () =>
-          editor.chain().focus().addRowAfter().run(),
-        )}
-        {toolbarBtn(<DeleteOutline fontSize="small" />, "Delete table", () =>
-          editor.chain().focus().deleteTable().run(),
-        )}
-      </Box>
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.AlignLeft />
+          <RichTextEditor.AlignCenter />
+          <RichTextEditor.AlignRight />
+          <RichTextEditor.AlignJustify />
+        </RichTextEditor.ControlsGroup>
 
-      {/* Content area */}
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 300,
-          px: 2,
-          py: 1.5,
-          "& .ProseMirror": {
-            outline: "none",
-            minHeight: 280,
-          },
-        }}
-      >
-        <EditorContent editor={editor} />
-      </Box>
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.ColorPicker
+            colors={[
+              "#000000",
+              "#666666",
+              "#999999",
+              "#FF0000",
+              "#FF9900",
+              "#FFFF00",
+              "#00FF00",
+              "#00FFFF",
+              "#0000FF",
+              "#9900FF",
+            ]}
+          />
+          <select
+            onChange={(e) => editor.chain().focus().setFontFamily(e.target.value).run()}
+            defaultValue=""
+            style={{
+              background: "transparent",
+              border: "none",
+              fontSize: 13,
+              padding: "2px 4px",
+            }}
+          >
+            <option
+              value=""
+              disabled
+            >
+              Font
+            </option>
+            <option value="Inter">Inter</option>
+            <option value="Arial">Arial</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Courier New">Courier New</option>
+          </select>
+          <select
+            onChange={(e) => editor.chain().focus().setFontSize(`${e.target.value}px`).run()}
+            defaultValue=""
+            style={{
+              background: "transparent",
+              border: "none",
+              fontSize: 13,
+              padding: "2px 4px",
+            }}
+          >
+            <option
+              value=""
+              disabled
+            >
+              Size
+            </option>
+            {fontSizes.map((s) => (
+              <option
+                key={s}
+                value={s}
+              >
+                {s}px
+              </option>
+            ))}
+          </select>
+        </RichTextEditor.ControlsGroup>
 
-      {/* Footer */}
-      <Box
-        sx={{
-          fontSize: 13,
-          px: 2,
-          py: 1,
-          borderTop: `1px solid ${theme.palette.divider}`,
-          color: theme.palette.text.secondary,
-        }}
-      >
-        Characters: {editor.storage.characterCount.characters()}
-      </Box>
-    </Paper>
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.Link />
+          <RichTextEditor.Unlink />
+          <RichTextEditor.Control
+            title="Insert image"
+            onClick={() => {
+              const url = prompt("Image URL:");
+              if (url) {
+                editor.chain().focus().setImage({ src: url }).run();
+              }
+            }}
+          >
+            🖼
+          </RichTextEditor.Control>
+        </RichTextEditor.ControlsGroup>
+
+        <RichTextEditor.ControlsGroup>
+          <RichTextEditor.Control
+            title="Speech input"
+            onClick={startSpeech}
+          >
+            🎙
+          </RichTextEditor.Control>
+          <RichTextEditor.Control
+            title="View source"
+            onClick={() => alert(editor.getHTML())}
+          >
+            {"</>"}
+          </RichTextEditor.Control>
+          <RichTextEditor.Control
+            title="Print"
+            onClick={printHTML}
+          >
+            🖨
+          </RichTextEditor.Control>
+          <RichTextEditor.Control
+            title="Fullscreen"
+            onClick={toggleFullscreen}
+          >
+            ⛶
+          </RichTextEditor.Control>
+        </RichTextEditor.ControlsGroup>
+      </RichTextEditor.Toolbar>
+
+      <RichTextEditor.Content />
+    </RichTextEditor>
   );
 }

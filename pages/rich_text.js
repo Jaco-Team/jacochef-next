@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
 
 const TextEditor1 = dynamic(() => import("@/components/rich_text/CK"), { ssr: false });
-// const TextEditor = dynamic(() => import('@/components/rich_text/TipTap'), { ssr: false });
+const TextEditor2 = dynamic(() => import("@/components/rich_text/TipTap"), { ssr: false });
 // const TextEditor = dynamic(() => import('@/components/rich_text/LexKit'), { ssr: false });
 // const TextEditor = dynamic(() => import("@/components/rich_text/BlockNote"), { ssr: false });
 const TextEditor = dynamic(() => import("@/components/rich_text/Jodit"), { ssr: false });
@@ -43,6 +43,16 @@ export default function WysiwygEditor() {
       <Grid size={12}>
         <Typography variant="h6">CKEditor</Typography>
         <TextEditor1
+          value={content}
+          onChange={setContent}
+          toolbar
+          menubar
+          language="ru"
+        />
+      </Grid>
+      <Grid size={12}>
+        <Typography variant="h6">Mantine TipTap</Typography>
+        <TextEditor2
           value={content}
           onChange={setContent}
           toolbar
