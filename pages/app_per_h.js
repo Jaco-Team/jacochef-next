@@ -394,6 +394,7 @@ class AppPerH_ extends React.Component {
                 func={(e) => this.setState({k_pizza: e.target.value })}
                 type="number"
                 step="0.01"
+                onWheel={(e) => e.target.blur()}
                 fullWidth
               />
           </Grid>
@@ -409,6 +410,7 @@ class AppPerH_ extends React.Component {
                 value={this.state.k_rolls || ''}
                 func={(e) => this.setState({ k_rolls: e.target.value })}
                 type="number"
+                onWheel={(e) => e.target.blur()}
                 step="0.01"
                 fullWidth
               />
