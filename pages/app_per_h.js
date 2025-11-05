@@ -26,7 +26,7 @@ import MyAlert from "@/ui/MyAlert";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import { Close } from "@mui/icons-material";
-import {MyAutocomplite, MySelect, MyTextInput} from "@/ui/Forms";
+import { MyAutocomplite, MySelect, MyTextInput } from "@/ui/Forms";
 dayjs.locale("ru");
 
 class AppPerH_ extends React.Component {
@@ -126,8 +126,8 @@ class AppPerH_ extends React.Component {
       confirmDialog: false,
       app_history: {},
       coefDialog: false,
-      k_pizza: '',
-      k_rolls: ''
+      k_pizza: "",
+      k_rolls: "",
     };
   }
 
@@ -207,7 +207,8 @@ class AppPerH_ extends React.Component {
       points: point_chose,
       app_list: items,
       dateStart,
-      k_pizza, k_rolls
+      k_pizza,
+      k_rolls,
     };
 
     await this.getData("save_edit", data);
@@ -260,8 +261,17 @@ class AppPerH_ extends React.Component {
   }
 
   render() {
-    const { is_load, items, openAlert, err_text, err_status, module_name, points, point, point_chose } =
-      this.state;
+    const {
+      is_load,
+      items,
+      openAlert,
+      err_text,
+      err_status,
+      module_name,
+      points,
+      point,
+      point_chose,
+    } = this.state;
     const itemsInGraph = items.filter((value) => value.is_graph === 1);
     const itemsNotGraph = items.filter((value) => value.is_graph === 0);
     const { openDelete } = this.state;
@@ -328,7 +338,7 @@ class AppPerH_ extends React.Component {
                 multiple={true}
                 data={points}
                 value={point_chose}
-                func={(event, value) => this.setState({point_chose: value})}
+                func={(event, value) => this.setState({ point_chose: value })}
               />
             </DialogContent>
             <DialogActions>
@@ -376,7 +386,7 @@ class AppPerH_ extends React.Component {
             <Button
               onClick={() => this.setState({ confirmDialog: true })}
               variant="contained"
-              style={{marginRight: '10px', marginBottom: '10px'}}
+              style={{ marginRight: "10px", marginBottom: "10px" }}
             >
               Выбрать период
             </Button>
@@ -388,15 +398,15 @@ class AppPerH_ extends React.Component {
             }}
           >
             <MyTextInput
-                label="Коэф. пиццы для бонуса"
-                style={{ marginTop: "10px" }}
-                value={this.state.k_pizza || ''}
-                func={(e) => this.setState({k_pizza: e.target.value })}
-                type="number"
-                step="0.01"
-                onWheel={(e) => e.target.blur()}
-                fullWidth
-              />
+              label="Коэф. пиццы для бонуса"
+              style={{ marginTop: "10px" }}
+              value={this.state.k_pizza || ""}
+              func={(e) => this.setState({ k_pizza: e.target.value })}
+              type="number"
+              step="0.01"
+              onWheel={(e) => e.target.blur()}
+              fullWidth
+            />
           </Grid>
           <Grid
             size={{
@@ -405,15 +415,15 @@ class AppPerH_ extends React.Component {
             }}
           >
             <MyTextInput
-                label="Коэф. роллов для бонуса"
-                style={{ marginTop: "10px" }}
-                value={this.state.k_rolls || ''}
-                func={(e) => this.setState({ k_rolls: e.target.value })}
-                type="number"
-                onWheel={(e) => e.target.blur()}
-                step="0.01"
-                fullWidth
-              />
+              label="Коэф. роллов для бонуса"
+              style={{ marginTop: "10px" }}
+              value={this.state.k_rolls || ""}
+              func={(e) => this.setState({ k_rolls: e.target.value })}
+              type="number"
+              onWheel={(e) => e.target.blur()}
+              step="0.01"
+              fullWidth
+            />
           </Grid>
 
           <SectionHeader title="В графике работы" />

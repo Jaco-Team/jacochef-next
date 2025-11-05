@@ -1194,7 +1194,7 @@ class OrderPostRecNew_ extends React.Component {
           fullWidth={true}
           maxWidth={"xs"}
         >
-          <DialogTitle>
+          <DialogTitle className="button">
             Где применить
             <IconButton
               onClick={() => {

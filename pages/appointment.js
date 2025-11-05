@@ -28,8 +28,8 @@ import AppointmentUnitModal from "@/components/appointment/AppointmentUnitModal"
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import {ModalAdd} from "@/components/general/ModalAdd";
-import {ModalAccept} from "@/components/general/ModalAccept";
+import { ModalAdd } from "@/components/general/ModalAdd";
+import { ModalAccept } from "@/components/general/ModalAccept";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
@@ -53,7 +53,7 @@ class Appointment_ extends React.Component {
       item: [],
       fullScreen: false,
       itemEdit: {},
-      itemEditName: '',
+      itemEditName: "",
       modalUsers: false,
       pr: [],
 
@@ -74,7 +74,7 @@ class Appointment_ extends React.Component {
 
       modalCopy: false,
       modalDelete: false,
-      new_app: '',
+      new_app: "",
 
       // dataSelect: [
       //   {id: false, name: 'Без активности'},
@@ -293,37 +293,36 @@ class Appointment_ extends React.Component {
   }
 
   copyModalItem = async (item) => {
-      this.setState({
-        itemEdit: item,
-        itemEditName: `${item.name}_копия`,
-        modalCopy: true,
-      });
-  }
-
+    this.setState({
+      itemEdit: item,
+      itemEditName: `${item.name}_копия`,
+      modalCopy: true,
+    });
+  };
 
   deleteModalItem = async (item) => {
-    const result = await this.getData("get_all_delete", {item});
+    const result = await this.getData("get_all_delete", { item });
     if (result.pr?.length) {
       this.setState({
         itemEdit: item,
         modalUsers: true,
-        pr: result.pr
-      })
+        pr: result.pr,
+      });
     } else {
       this.setState({
         itemEdit: item,
         modalDelete: true,
-      })
+      });
     }
-  }
+  };
 
   saveCopy = async (name) => {
-    const result = await this.getData("copy", {item: this.state.itemEdit, name});
+    const result = await this.getData("copy", { item: this.state.itemEdit, name });
     if (result.st) {
       this.setState({
         openAlert: true,
         err_status: true,
-        err_text: 'Успешно скопирован',
+        err_text: "Успешно скопирован",
         modalCopy: false,
       });
       const res = await this.getData("get_all");
@@ -333,14 +332,14 @@ class Appointment_ extends React.Component {
         units: res.units,
       });
     }
-  }
+  };
 
   saveDelete = async () => {
-    const result = await this.getData("delete", {item: this.state.itemEdit});
+    const result = await this.getData("delete", { item: this.state.itemEdit });
     this.setState({
       openAlert: true,
       err_status: true,
-      err_text: 'Успешно удален',
+      err_text: "Успешно удален",
       modalDelete: false,
     });
     const res = await this.getData("get_all");
@@ -349,7 +348,7 @@ class Appointment_ extends React.Component {
       items: res.apps,
       units: res.units,
     });
-  }
+  };
 
   async openUnitModal(unit_id = null, e) {
     if (!this.canView("units")) return;
@@ -472,38 +471,46 @@ class Appointment_ extends React.Component {
           </Grid>
           {this.state.modalUsers ? (
             <Dialog
-              sx={{'& .MuiDialog-paper': {width: '80%', maxHeight: 435}}}
+              sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
               maxWidth="xs"
               open={this.state.modalUsers}
-              onClose={() => this.setState({modalUsers: false})}
+              onClose={() => this.setState({ modalUsers: false })}
             >
               <DialogTitle>Список пользователей с должностью</DialogTitle>
-              <DialogContent align="center" sx={{fontWeight: 'bold'}}>
+              <DialogContent
+                align="center"
+                sx={{ fontWeight: "bold" }}
+              >
                 <TableContainer>
                   <Table
                     stickyHeader
                     aria-label="sticky table"
                   >
                     <TableHead>
-                      <TableRow sx={{"& th": {fontWeight: "bold"}}}>
+                      <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                         <TableCell>#</TableCell>
                         <TableCell>Пользователь</TableCell>
                       </TableRow>
                     </TableHead>
 
                     <TableBody>
-                      {this.state.pr.filter((it) => it.short_name).map((it, key) => (
-                        <TableRow key={key}>
-                          <TableCell>{key + 1}</TableCell>
-                          <TableCell>{it.short_name}</TableCell>
-                        </TableRow>
-                      ))}
+                      {this.state.pr
+                        .filter((it) => it.short_name)
+                        .map((it, key) => (
+                          <TableRow key={key}>
+                            <TableCell>{key + 1}</TableCell>
+                            <TableCell>{it.short_name}</TableCell>
+                          </TableRow>
+                        ))}
                     </TableBody>
                   </Table>
                 </TableContainer>
               </DialogContent>
               <DialogActions>
-                <Button autoFocus onClick={() => this.setState({modalUsers: false})}>
+                <Button
+                  autoFocus
+                  onClick={() => this.setState({ modalUsers: false })}
+                >
                   Закрыть
                 </Button>
               </DialogActions>
@@ -518,14 +525,18 @@ class Appointment_ extends React.Component {
           />
           <ModalAdd
             open={this.state.modalCopy}
-            onClose={() => {this.setState({modalCopy: false})}}
+            onClose={() => {
+              this.setState({ modalCopy: false });
+            }}
             title={`Скопировть ${this.state.itemEdit.name}`}
             save={this.saveCopy}
             defaultValue={this.state.itemEditName}
           />
           <ModalAccept
             open={this.state.modalDelete}
-            onClose={() => {this.setState({modalDelete: false})}}
+            onClose={() => {
+              this.setState({ modalDelete: false });
+            }}
             save={this.saveDelete}
             title={`Удалить ${this.state.itemEdit.name}`}
           />
@@ -600,7 +611,10 @@ class Appointment_ extends React.Component {
                       {unit.name}
                     </Typography>
                     {unit.id !== null && this.canEdit("units") && (
-                      <IconButton onClick={(e) => this.openUnitModal(unit.id, e)}>
+                      <IconButton
+                        component="span"
+                        onClick={(e) => this.openUnitModal(unit.id, e)}
+                      >
                         <EditIcon />
                       </IconButton>
                     )}
@@ -658,7 +672,7 @@ class Appointment_ extends React.Component {
                               </TableCell>
                               <TableCell>
                                 <IconButton onClick={() => this.copyModalItem(item)}>
-                                  <ContentCopyIcon style={{ color: "blue" }}/>
+                                  <ContentCopyIcon style={{ color: "blue" }} />
                                 </IconButton>
                               </TableCell>
                               <TableCell>

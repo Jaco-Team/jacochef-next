@@ -123,7 +123,7 @@ export const useAppointmentModalStore = create(
           features[fi] = { ...features[fi], [key]: value };
 
           // on view off - edit off
-          if (key === "view" && value === 0) {
+          if (key === "view" && value === 0 && features[fi].edit !== undefined) {
             features[fi] = { ...features[fi], edit: 0 };
           }
           // on edit on - view on
