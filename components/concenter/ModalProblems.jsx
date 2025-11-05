@@ -104,6 +104,7 @@ export const ModalProblems = ({
 				<MyAutocomplite
 					value={solution}
 					data={solutions}
+					label={'Решение ошибки'}
 					func={(event, data) => setSolution(data)}
 					multiple={false}
 				/>
@@ -113,8 +114,9 @@ export const ModalProblems = ({
 							<MyTextInput
 								value={comment}
 								multiline={true}
+								rows={4}
 								func={(e) => setComment(e.target.value)}
-								label="Комментарий (опционально)"
+								label="Комментарий"
 							/>
 						</Grid>
 						<Box sx={{display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center', p: 2}}>
@@ -135,6 +137,7 @@ export const ModalProblems = ({
 											top: 8,
 											right: 8,
 											backgroundColor: 'white',
+											border: '2px solid red',
 											'&:hover': {backgroundColor: 'grey.100'}
 										}}
 									>
@@ -143,6 +146,7 @@ export const ModalProblems = ({
 								</Box>
 							) : (
 								<Avatar
+									component="label"
 									sx={{
 										width: 200,
 										height: 200,
@@ -153,6 +157,13 @@ export const ModalProblems = ({
 									variant="rounded"
 								>
 									<AddPhotoAlternate sx={{fontSize: 48, color: 'grey.400'}}/>
+									<input
+										id="image-input"
+										type="file"
+										accept="image/*"
+										hidden
+										onChange={handleImageUpload}
+									/>
 								</Avatar>
 							)}
 
@@ -171,14 +182,6 @@ export const ModalProblems = ({
 									onChange={handleImageUpload}
 								/>
 							</Button>
-
-							{selectedImage && (
-								<Typography variant="body2" color="text.secondary" align="center">
-									Файл: {selectedImage.name}<br/>
-									Размер: {(selectedImage.size / 1024 / 1024).toFixed(2)} MB<br/>
-									Тип: {selectedImage.type}
-								</Typography>
-							)}
 						</Box>
 					</>
 				) : null}

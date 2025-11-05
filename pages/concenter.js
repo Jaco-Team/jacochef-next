@@ -514,9 +514,9 @@ class Concenter_ extends React.Component {
 
 	saveProblems = (solutions) => {
 		const positions = this.state.positions;
-		const problem_arr = [];
+		const problem_arr = [...this.state.problem_arr];
 		positions.map((pos) => {
-			problem_arr.push({...pos, problem_id: solutions.id});
+			problem_arr.push({...pos, problem_id: solutions.id, problem_name: solutions.name});
 		});
 
 		this.setState({problem_arr: problem_arr, modalDialogProblem: false});
@@ -537,7 +537,7 @@ class Concenter_ extends React.Component {
 						}}
 						aria-labelledby="alert-dialog-title"
 						aria-describedby="alert-dialog-description"
-						maxWidth="md"
+						maxWidth="lg"
 						fullWidth={true}
 					>
 						<DialogTitle style={{textAlign: 'center'}}>
@@ -610,7 +610,7 @@ class Concenter_ extends React.Component {
 										</div>
 									) : null}
 									{
-										this.state.problem_arr.length && this.state.problem_arr.find((item) => item?.problem_id === 3).problem_id ? (
+										this.state.problem_arr.length && this.state.problem_arr.find((item) => item?.problem_id === 3)?.problem_id ? (
 											<div>
 												<MyCheckBox
 													label="На тот же адрес"
@@ -834,14 +834,24 @@ class Concenter_ extends React.Component {
 									}}>
 									<div style={{display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between'}}>
 										<h3>Состав заказа</h3>
-										{Object.entries(this.state.checkedKey).length ? (
-											<Button variant='contained' onClick={this.openProblems}>Проблема для {Object.entries(this.state.checkedKey).length} позиций</Button>) : null}
+										{Object.entries(this.state.checkedKey).filter((item) => item[1]).length ? (
+											<Button variant='contained' onClick={this.openProblems}>Проблема для {Object.entries(this.state.checkedKey).filter((item) => item[1]).length} позиций</Button>) : null}
 									</div>
-									<Table size={'small'} style={{marginTop: 15, borderSpacing: '0 6px', borderCollapse: 'separate'}}>
-										<TableBody>
-											{this.state.showOrder.order_items.map((item, key) =>
-												<TableRow key={key} style={{border: 'none', backgroundColor: '#f6f6f6', borderRadius: '12px'}}>
-													<TableCell style={{borderRadius: '10px 0 0 10px', border: 'none', marginBottom: '10px'}}>
+									<div style={{height: '400px', overflow: 'auto'}}>
+										<Table size={'small'} style={{
+											marginTop: 15,
+											borderSpacing: '0 6px',
+											borderCollapse: 'separate',
+											height: '400px'
+										}}>
+											<TableBody>
+												{this.state.showOrder.order_items.map((item, key) =>
+													<TableRow key={key} style={{
+														border: 'none',
+														backgroundColor: '#f6f6f6',
+														borderRadius: '12px'
+													}}>
+														<TableCell style={{borderRadius: '10px 0 0 10px', border: 'none', marginBottom: '10px'}}>
 														<span style={{display: 'flex', alignItems: 'center'}}>
 															{this.state.checkedError ? (<span>
 																<MyCheckBox
@@ -855,77 +865,127 @@ class Concenter_ extends React.Component {
 																	style={{padding: '0'}}
 																/>
 															</span>) : null}
-															{item.name}
+															{this.state.problem_arr.find((it) => it?.item_id === item.item_id)?.problem_name ? (
+																<span
+																	style={{
+																		color: '#fff',
+																		border: '1px solid red',
+																		borderRadius: '4px',
+																		backgroundColor: '#cc0033',
+																		padding: '3px',
+																		marginRight: '4px'
+																}}
+																>{this.state.problem_arr.find((it) => it?.item_id === item.item_id)?.problem_name}</span>
+															) : null}
+															<span
+																style={{cursor: 'pointer',}}
+																onClick={() => {
+																this.setState({
+																	checkedKey: {
+																		...{},
+																		[key]: true
+																	}
+																}, () => {this.openProblems()})
+															}}
+															>{item.name}</span>
 														</span>
-													</TableCell>
-													<TableCell style={{border: 'none', marginBottom: '10px'}}>{item.count}</TableCell>
+														</TableCell>
+														<TableCell
+															onClick={() => {
+																this.setState({
+																	checkedKey: {
+																		...{},
+																		[key]: true
+																	}
+																}, () => {this.openProblems()})
+															}}
+															style={{border: 'none', marginBottom: '10px', cursor: 'pointer',}}>{item.count}</TableCell>
+														<TableCell style={{
+															borderRadius: '0  10px 10px 0',
+															border: 'none',
+															marginBottom: '10px',
+															cursor: 'pointer',
+														}} onClick={() => {
+																this.setState({
+																	checkedKey: {
+																		...{},
+																		[key]: true
+																	}
+																}, () => {this.openProblems()})
+															}}>{item.price} р</TableCell>
+													</TableRow>
+												)}
+											</TableBody>
+											<TableFooter>
+												<TableRow>
 													<TableCell style={{
-														borderRadius: '0  10px 10px 0',
+														fontWeight: 'bold',
+														color: '#000',
 														border: 'none',
-														marginBottom: '10px'
-													}}>{item.price} р</TableCell>
+														float: 'right'
+													}}>Сумма закза</TableCell>
+													<TableCell style={{
+														border: 'none'
+													}}></TableCell>
+													<TableCell style={{
+														color: '#000',
+														border: 'none'
+													}}>{this.state.showOrder.order.sum_order} р</TableCell>
 												</TableRow>
-											)}
-										</TableBody>
-										<TableFooter>
-											<TableRow>
-												<TableCell style={{
-													fontWeight: 'bold',
-													color: '#000',
-													border: 'none',
-													float: 'right'
-												}}>Сумма закза</TableCell>
-												<TableCell style={{
-													border: 'none'
-												}}></TableCell>
-												<TableCell style={{
-													color: '#000',
-													border: 'none'
-												}}>{this.state.showOrder.order.sum_order} р</TableCell>
-											</TableRow>
-										</TableFooter>
-									</Table>
-									{(this.hasAccess(acces?.disband_access)) &&
-										<Accordion
-											style={{width: '100%', borderRadius: '16px', boxShadow: 'none', border: '2px solid #d4d4d4'}}
-											sx={{
-												'& .MuiAccordionSummary-root': {
-													minHeight: '30px',
-													padding: '0 12px',
-												},
-												'& .MuiAccordionSummary-content': {
-													margin: '8px 0',
-												},
-												'& .MuiAccordionDetails-root': {
-													padding: '8px 16px',
-												}
-											}}
-										>
-											<AccordionSummary
+											</TableFooter>
+										</Table>
+										{(this.hasAccess(acces?.disband_access)) &&
+											<Accordion
+												style={{
+													width: '98%',
+													borderRadius: '16px',
+													marginTop: '10px',
+													boxShadow: 'none',
+													border: '2px solid #d4d4d4'
+												}}
 												sx={{
-													margin: '0',
+													'& .MuiAccordionSummary-root': {
+														minHeight: '30px',
+														padding: '0 12px',
+													},
 													'& .MuiAccordionSummary-content': {
-														margin: '0 !important'
+														margin: '8px 0',
+													},
+													'& .MuiAccordionDetails-root': {
+														padding: '8px 16px',
+													},
+													":before": {
+														height: 0
 													}
 												}}
-												expandIcon={<ExpandMoreIcon/>}
 											>
-												<Typography>Расформировка</Typography>
-											</AccordionSummary>
-											<AccordionDetails>
-												<Table size={'small'} style={{marginTop: 15}}>
-													<TableBody>
-														{this.state.showOrder.order_items_.map((item, key) =>
-															<TableRow key={key}>
-																<TableCell>{item.name}</TableCell>
-																<TableCell style={{backgroundColor: parseInt(item.ready) > 0 ? '#6ab04c' : '#eb4d4b'}}></TableCell>
-															</TableRow>
-														)}
-													</TableBody>
-												</Table>
-											</AccordionDetails>
-										</Accordion>
-									}
+												<AccordionSummary
+													sx={{
+														margin: '0',
+														'& .MuiAccordionSummary-content': {
+															margin: '0 !important'
+														}
+													}}
+													expandIcon={<ExpandMoreIcon/>}
+												>
+													<Typography>Расформировка</Typography>
+												</AccordionSummary>
+												<AccordionDetails>
+													<Table size={'small'} style={{marginTop: 15}}>
+														<TableBody>
+															{this.state.showOrder.order_items_.map((item, key) =>
+																<TableRow key={key}>
+																	<TableCell>{item.name}</TableCell>
+																	<TableCell style={{backgroundColor: parseInt(item.ready) > 0 ? '#6ab04c' : '#eb4d4b'}}></TableCell>
+																</TableRow>
+															)}
+														</TableBody>
+													</Table>
+												</AccordionDetails>
+											</Accordion>
+										}
+									</div>
+
 									{(this.hasAccess(acces?.list_driver_access) && this.state.showOrder.order.type_order_ === 1 && this.state.showOrder.driver_stat.length > 0) &&
 										<Accordion style={{width: '100%'}}>
 											<AccordionSummary
