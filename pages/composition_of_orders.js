@@ -139,17 +139,17 @@ class CompositionOfOrders_ extends React.Component {
     return res;
   };
 
-  handleResize() {
-    if (window.innerWidth < 601) {
-      this.setState({
-        fullScreen: true,
-      });
-    } else {
-      this.setState({
-        fullScreen: false,
-      });
-    }
-  }
+  // handleResize() {
+  //   if (window.innerWidth < 601) {
+  //     this.setState({
+  //       fullScreen: true,
+  //     });
+  //   } else {
+  //     this.setState({
+  //       fullScreen: false,
+  //     });
+  //   }
+  // }
 
   changeAutocomplite(data, event, value) {
     this.setState({

@@ -8,12 +8,16 @@ import {
   Box,
   autocompleteClasses,
   Typography,
+  Button,
+  Paper,
+  ButtonGroup,
 } from "@mui/material";
 import { ExpandMore, ExpandLess } from "@mui/icons-material";
 
 // TODO: для того, чтобы это привести в порядок, Helper->getMyPointsList должен возвращать
 // атомарные данные cityId и cityName, но придется весь фронт обойти и автокомплиты привести
 // поэтому пока так
+
 const cityNames = {
   1: "Тольятти",
   2: "Самара",
@@ -34,47 +38,43 @@ export default function CityCafeAutocomplete2({
   withAll = false,
   withAllSelected = false,
 }) {
-  // prepare map to update parent point []
+  // map for fast lookup
   const pointsMap = useMemo(() => {
     const map = new Map();
-    for (const p of points) {
-      map.set(p.id, p);
-    }
+    for (const p of points) map.set(p.id, p);
     return map;
   }, [points]);
 
-  // adapter for common points structure
+  // group points by city
   const cities = useMemo(() => {
-    const citiesMap =
-      points.length > 0
-        ? points.reduce((acc, p) => {
-            const cityId = p.city_id;
-            if (!acc[cityId]) acc[cityId] = [];
-            acc[cityId].push({
-              id: p.id,
-              base: p.base,
-              name: p.name,
-              cityId,
-              cityName: cityNames[cityId], // will be overwritten below
-            });
-            return acc;
-          }, {})
-        : {};
-    return (
-      Object.entries(citiesMap).map(([id, cafes]) => ({
-        id: Number(id),
-        name: cityNames[id],
-        cafes,
-      })) || []
-    );
+    if (!points?.length) return [];
+    const citiesMap = points.reduce((acc, p) => {
+      if (!acc[p.city_id]) acc[p.city_id] = [];
+      acc[p.city_id].push({
+        id: p.id,
+        base: p.base,
+        name: p.name,
+        cityId: p.city_id,
+        cityName: cityNames[p.city_id],
+        organization: p.organization,
+      });
+      return acc;
+    }, {});
+    return Object.entries(citiesMap).map(([id, cafes]) => ({
+      id: Number(id),
+      name: cityNames[id],
+      cafes,
+    }));
   }, [points]);
 
+  const [groupMode, setGroupMode] = useState("city"); // "city" | "org"
+
   const getNamesFromCafeName = (name = "") => {
-    const splitted = name
-      ?.split(",")
+    const parts = name
+      .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
-    return splitted.length > 1 ? [splitted[0], splitted[1]] : [name, name];
+    return parts.length > 1 ? [parts[0], parts[1]] : [name, name];
   };
 
   const allCafes = useMemo(() => {
@@ -88,19 +88,23 @@ export default function CityCafeAutocomplete2({
             cityId: c.id,
             cityName: cityName || cityNames[c.id],
             base: k.base,
+            organization: k.organization,
           };
         }),
       ) || [];
     return withAll ? [ALL_OPTION, ...cafes] : cafes;
   }, [cities, withAll]);
 
-  const [innerValue, setInnerValue] = useState(() => defaultValue || []);
-
+  const [innerValue, setInnerValue] = useState(defaultValue || []);
   const actualValue = useMemo(() => {
     if (withAll && value) {
       const isAll = value.length === points.length;
-      if (isAll) return [ALL_OPTION]; // collapse to single All chip
-      return value.map((v) => ({ ...v, cityId: v.city_id, cityName: cityNames[v.city_id] }));
+      if (isAll) return [ALL_OPTION];
+      return value.map((v) => ({
+        ...v,
+        cityId: v.city_id,
+        cityName: cityNames[v.city_id],
+      }));
     }
     return innerValue;
   }, [value, points, innerValue]);
@@ -146,13 +150,14 @@ export default function CityCafeAutocomplete2({
     if (value === undefined) setInnerValue(cleanNext);
   };
 
+  // expanded state: key = cityId | orgName
   const [expanded, setExpanded] = useState(new Set(cities.map((c) => c.id)));
 
-  const toggleCityExpanded = (cityId) => {
+  const toggleGroupExpanded = (key) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(cityId)) next.delete(cityId);
-      else next.add(cityId);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
@@ -166,42 +171,134 @@ export default function CityCafeAutocomplete2({
     return map;
   }, [allCafes]);
 
+  const cafesByOrganization = useMemo(() => {
+    const map = new Map();
+    for (const cafe of allCafes) {
+      if (!cafe.organization) continue;
+      const org = cafe.organization;
+      if (!map.has(org)) map.set(org, []);
+      map.get(org).push(cafe);
+    }
+    return map;
+  }, [allCafes]);
+
   const selectedIds = useMemo(() => new Set(actualValue.map((v) => v.id)), [actualValue]);
 
-  const citySelectState = useCallback(
-    (cityId) => {
-      const cityCafes = cafesByCity.get(cityId) ?? [];
-      const total = cityCafes.length;
-      const selectedCount = cityCafes.filter((c) => selectedIds.has(c.id)).length;
+  const groupSelectState = useCallback(
+    (key, byOrg = false) => {
+      const group = byOrg ? (cafesByOrganization.get(key) ?? []) : (cafesByCity.get(key) ?? []);
+      const total = group.length;
+      const selectedCount = group.filter((c) => selectedIds.has(c.id)).length;
       return {
         all: total > 0 && selectedCount === total,
         none: selectedCount === 0,
         some: selectedCount > 0 && selectedCount < total,
       };
     },
-    [cafesByCity, selectedIds],
+    [cafesByCity, cafesByOrganization, selectedIds],
   );
 
-  const handleToggleCity = (cityId) => {
-    const { all } = citySelectState(cityId);
-    const cityCafes = cafesByCity.get(cityId) ?? [];
+  const handleToggleGroup = (key, byOrg = false) => {
+    const { all } = groupSelectState(key, byOrg);
+    const group = byOrg ? (cafesByOrganization.get(key) ?? []) : (cafesByCity.get(key) ?? []);
+
     if (all) {
-      const next = actualValue.filter((c) => c.cityId !== cityId);
+      const next = actualValue.filter((c) => (byOrg ? c.organization !== key : c.cityId !== key));
       setValueSafe(next);
     } else {
-      const add = cityCafes.filter((c) => !selectedIds.has(c.id));
+      const add = group.filter((c) => !selectedIds.has(c.id));
       const next = [...actualValue, ...add];
       setValueSafe(next);
     }
   };
 
   useEffect(() => {
-    setExpanded(new Set(cities.map((c) => c.id)));
-  }, [cities]);
+    const initKeys =
+      groupMode === "city" ? cities.map((c) => c.id) : Array.from(cafesByOrganization.keys());
+    setExpanded(new Set(initKeys));
+  }, [cities, cafesByOrganization, groupMode]);
 
   useEffect(() => {
     withAll && withAllSelected && setValueSafe([ALL_OPTION]);
   }, [withAll, allCafes]);
+
+  const groupBy = useCallback(
+    (opt) => {
+      if (opt.id === ALL_OPTION.id) return "GALL";
+      return groupMode === "city" ? opt.cityName : opt.organization || "Без организации";
+    },
+    [groupMode],
+  );
+
+  const CustomPaper = React.forwardRef(function CustomPaper(props, ref) {
+    if (!cafesByOrganization.size) return null;
+    const { children, ...other } = props;
+
+    return (
+      <Paper
+        ref={ref}
+        {...other}
+      >
+        <Box
+          sx={{
+            px: 1.5,
+            py: 1,
+            // mb: 0.5,
+            display: "flex",
+            justifyContent: "center",
+            // borderBottom: "1px solid",
+            // borderColor: "divider",
+            position: "sticky",
+            top: 0,
+            backgroundColor: "background.paper",
+            zIndex: 2,
+          }}
+        >
+          <ButtonGroup
+            size="small"
+            variant="outlined"
+            fullWidth
+            sx={{
+              "& .MuiButton-root": {
+                textTransform: "none",
+                minWidth: 100,
+              },
+            }}
+          >
+            <Button
+              variant={groupMode === "city" ? "contained" : "outlined"}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setGroupMode("city");
+              }}
+            >
+              По городам
+            </Button>
+            <Button
+              variant={groupMode === "org" ? "contained" : "outlined"}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setGroupMode("org");
+              }}
+            >
+              По организациям
+            </Button>
+          </ButtonGroup>
+        </Box>
+        {children}
+      </Paper>
+    );
+  });
 
   return (
     <Autocomplete
@@ -211,7 +308,7 @@ export default function CityCafeAutocomplete2({
       value={actualValue}
       onChange={(_, next) => setValueSafe(next)}
       getOptionLabel={(opt) => opt.name}
-      groupBy={(opt) => (opt.id === ALL_OPTION.id ? "GALL" : opt.cityName)}
+      groupBy={groupBy}
       isOptionEqualToValue={(a, b) => a.id === b.id}
       disabled={disabled}
       autoFocus={autoFocus}
@@ -228,28 +325,10 @@ export default function CityCafeAutocomplete2({
       renderOption={(props, option, { selected }) => {
         const isAll = option.id === ALL_OPTION.id;
         const { key, ...restProps } = props;
-        if (isAll) {
-          return (
-            <li
-              key={key}
-              {...restProps}
-              // key={ALL_OPTION.id}
-            >
-              <Checkbox
-                size="small"
-                checked={allSelected}
-                onMouseDown={(e) => e.preventDefault()}
-              />
-              <ListItemText primary={<Typography noWrap>{option.name}</Typography>} />
-            </li>
-          );
-        }
-
         return (
           <li
             key={key}
             {...restProps}
-            // key={`${option.id}-${option.cityId}`}
           >
             <Checkbox
               size="small"
@@ -279,7 +358,7 @@ export default function CityCafeAutocomplete2({
             <Box
               key={groupParams.key}
               component="li"
-              sx={{ borderTop: "1px solid", borderColor: "divider" }}
+              // sx={{ borderTop: "1px solid", borderColor: "divider" }}
             >
               <ul
                 className={autocompleteClasses.groupUl}
@@ -290,10 +369,14 @@ export default function CityCafeAutocomplete2({
             </Box>
           );
         }
-        const city = cities.find((c) => c.name === groupParams.group);
-        const cityId = city?.id ?? "";
-        const isOpen = cityId ? expanded.has(cityId) : true;
-        const { all, some } = cityId ? citySelectState(cityId) : { all: false, some: false };
+
+        const isCityMode = groupMode === "city";
+        const entityName = groupParams.group;
+        const entityKey = isCityMode
+          ? (cities.find((c) => c.name === entityName)?.id ?? "")
+          : entityName;
+        const isOpen = expanded.has(entityKey);
+        const { all, some } = groupSelectState(entityKey, !isCityMode);
 
         return (
           <Box
@@ -306,7 +389,7 @@ export default function CityCafeAutocomplete2({
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
-                py: 1,
+                // py: 1,
                 cursor: "pointer",
                 "&:hover": { backgroundColor: "action.hover" },
               },
@@ -322,7 +405,7 @@ export default function CityCafeAutocomplete2({
               className={autocompleteClasses.groupLabel}
               onClick={(e) => {
                 e.stopPropagation();
-                cityId && handleToggleCity(cityId);
+                handleToggleGroup(entityKey, !isCityMode);
               }}
             >
               <IconButton
@@ -330,7 +413,7 @@ export default function CityCafeAutocomplete2({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={(e) => {
                   e.stopPropagation();
-                  cityId && toggleCityExpanded(cityId);
+                  toggleGroupExpanded(entityKey);
                 }}
               >
                 {isOpen ? <ExpandLess /> : <ExpandMore />}
@@ -344,39 +427,30 @@ export default function CityCafeAutocomplete2({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={(e) => {
                   e.stopPropagation();
-                  cityId && handleToggleCity(cityId);
+                  handleToggleGroup(entityKey, !isCityMode);
                 }}
               />
-              <ListItemText
-                primary={<Typography fontWeight={600}>{groupParams.group}</Typography>}
-              />
+              <ListItemText primary={<Typography fontWeight={600}>{entityName}</Typography>} />
             </div>
 
             <ul className={autocompleteClasses.groupUl}>{groupParams.children}</ul>
           </Box>
         );
       }}
+      slots={{
+        paper: CustomPaper,
+      }}
       slotProps={{
         paper: {
           sx: {
-            [`& .${autocompleteClasses.option}`]: {
-              py: 0,
-              px: 1,
-            },
-            [`& .${autocompleteClasses.groupLabel}`]: {
-              py: 1,
-              px: 0,
-            },
-            maxHeight: 420,
+            [`& .${autocompleteClasses.option}`]: { py: 0, px: 1 },
+            [`& .${autocompleteClasses.groupLabel}`]: { py: 1, px: 0 },
+            [`& .${autocompleteClasses.listbox}`]: { maxHeight: 420 },
+            position: "relative",
           },
           elevation: 3,
         },
-        popper: {
-          sx: {
-            zIndex: 1300,
-            // maxWidth: 400
-          },
-        },
+        popper: { sx: { zIndex: 1300 } },
         tag: { size: "small" },
       }}
     />
