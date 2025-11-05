@@ -9,7 +9,6 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
-import { MySelect, MyTextInput } from "@/ui/Forms";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 import Typography from "@mui/material/Typography";
 import Dialog from "@mui/material/Dialog";
@@ -27,6 +26,7 @@ import MyAlert from "@/ui/MyAlert";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import { Close } from "@mui/icons-material";
+import { MyAutocomplite, MySelect, MyTextInput } from "@/ui/Forms";
 dayjs.locale("ru");
 
 class AppPerH_ extends React.Component {
@@ -112,8 +112,9 @@ class AppPerH_ extends React.Component {
       module: "app_per_h",
       module_name: "",
       is_load: false,
-      cities: [],
-      city: "",
+      points: [],
+      point: "",
+      point_chose: [],
       items: [],
       openAlert: false,
       err_status: true,
@@ -124,21 +125,26 @@ class AppPerH_ extends React.Component {
       openDelete: false,
       confirmDialog: false,
       app_history: {},
+      coefDialog: false,
+      k_pizza: "",
+      k_rolls: "",
     };
   }
 
   async componentDidMount() {
     const data = await this.getData("get_all");
-    const city = {
-      city_id: data.cities[0].id,
+    const point = {
+      point_id: data.points[0].id,
     };
 
-    const res = await this.getData("get_one", city);
+    const res = await this.getData("get_one", point);
 
     this.setState({
       items: res.lavel_price,
-      cities: data.cities,
-      city: data.cities[0].id,
+      points: data.points,
+      point: data.points[0],
+      k_pizza: res.ps?.k_pizza,
+      k_rolls: res.ps?.k_rolls,
       module_name: data.module_info.name,
       app_history: res.app_history,
     });
@@ -164,17 +170,19 @@ class AppPerH_ extends React.Component {
       });
   };
 
-  async changeCity(event) {
-    const data = {
-      city_id: event.target.value,
+  async changeCity(data, event, value) {
+    const datas = {
+      point_id: event.id,
     };
 
-    const res = await this.getData("get_one", data);
+    const res = await this.getData("get_one", datas);
 
     this.setState({
-      city: event.target.value,
+      point: event,
       items: res.lavel_price,
       app_history: res.app_history,
+      k_pizza: res.ps?.k_pizza,
+      k_rolls: res.ps?.k_rolls,
     });
   }
 
@@ -193,12 +201,14 @@ class AppPerH_ extends React.Component {
   }
 
   async save() {
-    const { city, items } = this.state;
-    const dateStart = this.state.dateCoefs.find((item) => item.id === this.state.dateCoef);
+    const { items, point_chose, k_pizza, k_rolls } = this.state;
+    const dateStart = this.state.dateCoefs.find((item) => item.id == this.state.dateCoef);
     const data = {
-      city_id: city,
+      points: point_chose,
       app_list: items,
       dateStart,
+      k_pizza,
+      k_rolls,
     };
 
     await this.getData("save_edit", data);
@@ -216,10 +226,10 @@ class AppPerH_ extends React.Component {
   }
 
   async update() {
-    const { city } = this.state;
+    const { point } = this.state;
 
     const data = {
-      city_id: city,
+      point_id: point,
     };
 
     const res = await this.getData("get_one", data);
@@ -227,11 +237,9 @@ class AppPerH_ extends React.Component {
     this.setState({
       items: res.lavel_price,
       app_history: res.app_history,
+      k_pizza: res.ps?.k_pizza,
+      k_rolls: res.ps?.k_rolls,
     });
-  }
-
-  onSave(method) {
-    const dateStart = this.state.dateCoefs.find((item) => item.id === this.state.dateCoef);
   }
 
   changeCoef(data, event) {
@@ -253,8 +261,17 @@ class AppPerH_ extends React.Component {
   }
 
   render() {
-    const { is_load, items, openAlert, err_text, err_status, module_name, cities, city } =
-      this.state;
+    const {
+      is_load,
+      items,
+      openAlert,
+      err_text,
+      err_status,
+      module_name,
+      points,
+      point,
+      point_chose,
+    } = this.state;
     const itemsInGraph = items.filter((value) => value.is_graph === 1);
     const itemsNotGraph = items.filter((value) => value.is_graph === 0);
     const { openDelete } = this.state;
@@ -315,6 +332,14 @@ class AppPerH_ extends React.Component {
                 func={this.changeCoef.bind(this, "dateCoef")}
                 fullWidth
               />
+              <MyAutocomplite
+                label="Кафе"
+                style={{ marginTop: "10px" }}
+                multiple={true}
+                data={points}
+                value={point_chose}
+                func={(event, value) => this.setState({ point_chose: value })}
+              />
             </DialogContent>
             <DialogActions>
               <Button onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
@@ -343,11 +368,11 @@ class AppPerH_ extends React.Component {
               sm: 3,
             }}
           >
-            <MySelect
-              label="Город"
-              is_none={false}
-              data={cities}
-              value={city}
+            <MyAutocomplite
+              label="Кафе"
+              multiple={false}
+              data={points}
+              value={point}
               func={this.changeCity.bind(this)}
             />
           </Grid>
@@ -361,9 +386,44 @@ class AppPerH_ extends React.Component {
             <Button
               onClick={() => this.setState({ confirmDialog: true })}
               variant="contained"
+              style={{ marginRight: "10px", marginBottom: "10px" }}
             >
               Выбрать период
             </Button>
+          </Grid>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3,
+            }}
+          >
+            <MyTextInput
+              label="Коэф. пиццы для бонуса"
+              style={{ marginTop: "10px" }}
+              value={this.state.k_pizza || ""}
+              func={(e) => this.setState({ k_pizza: e.target.value })}
+              type="number"
+              step="0.01"
+              onWheel={(e) => e.target.blur()}
+              fullWidth
+            />
+          </Grid>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3,
+            }}
+          >
+            <MyTextInput
+              label="Коэф. роллов для бонуса"
+              style={{ marginTop: "10px" }}
+              value={this.state.k_rolls || ""}
+              func={(e) => this.setState({ k_rolls: e.target.value })}
+              type="number"
+              onWheel={(e) => e.target.blur()}
+              step="0.01"
+              fullWidth
+            />
           </Grid>
 
           <SectionHeader title="В графике работы" />
@@ -424,7 +484,7 @@ class AppPerH_ extends React.Component {
                                   <TableHead>
                                     <TableRow>
                                       <TableCell>#</TableCell>
-                                      <TableCell>Город</TableCell>
+                                      <TableCell>Точка</TableCell>
                                       <TableCell>Дата изменения</TableCell>
                                       <TableCell>Дата создания</TableCell>
                                       <TableCell style={{ textAlign: "center" }}>Оклад</TableCell>

@@ -282,6 +282,7 @@ class HeaderItem extends React.Component {
           <TableCell style={{ textAlign: "center" }}></TableCell>
           <TableCell style={{ textAlign: "center" }}></TableCell>
           <TableCell style={{ textAlign: "center" }}></TableCell>
+          <TableCell style={{ textAlign: "center" }}></TableCell>
 
           <TableCell style={{ textAlign: "center" }}></TableCell>
           <TableCell style={{ textAlign: "center" }}></TableCell>
@@ -318,8 +319,8 @@ class HeaderItem extends React.Component {
             </TableCell>
           ))}
 
-          <TableCell style={{ textAlign: 'center' }}>За 1ч</TableCell>
-          <TableCell style={{ textAlign: 'center' }}>За 1ч + доплата</TableCell>
+          <TableCell style={{ textAlign: "center" }}>За 1ч</TableCell>
+          <TableCell style={{ textAlign: "center" }}>За 1ч + доплата</TableCell>
 
           <TableCell style={{ textAlign: "center" }}>Командный бонус</TableCell>
           <TableCell style={{ textAlign: "center" }}>За часы</TableCell>
@@ -332,6 +333,7 @@ class HeaderItem extends React.Component {
 
           <TableCell style={{ textAlign: "center" }}>Выдано</TableCell>
 
+          <TableCell style={{ textAlign: "center" }}>Удержано по исп. листу</TableCell>
           <TableCell style={{ textAlign: "center" }}>Перечислено на карты</TableCell>
           <TableCell style={{ textAlign: "center" }}>Сумма к выплате</TableCell>
           {this.props.kind == "manager" || this.props.kind == "dir" ? (
@@ -540,13 +542,34 @@ class WorkSchedule_Table extends React.Component {
                             }
                           : null
                       }
+                      // style={{
+                      //   border: item.data.holydays[date.date] ? '1px solid red' : '',
+                      //   backgroundColor: item?.color
+                      //     ? "#D3D3D3"
+                      //     : date.info
+                      //       ? date.info.color
+                      //       : "#fff",
+                      //   color: item?.color ? "#000" : date.info ? date.info.colorT : "#000",
+                      //   cursor: "pointer",
+                      // }}
                       style={{
-                        backgroundColor: item?.color
-                          ? "#D3D3D3"
-                          : date.info
-                            ? date.info.color
-                            : "#fff",
+                        background: item.data.holydays?.[date.date]
+                          ? `
+                            repeating-linear-gradient(
+                              -45deg,
+                              ${item?.color ? "#D3D3D3" : date.info ? date.info.color : "#fff"},
+                              ${item?.color ? "#D3D3D3" : date.info ? date.info.color : "#fff"} 8px,
+                              rgba(255, 0, 0, 0.3) 8px,
+                              rgba(255, 0, 0, 0.3) 12px
+                            )
+                          `
+                          : item?.color
+                            ? "#D3D3D3"
+                            : date.info
+                              ? date.info.color
+                              : "#fff",
                         color: item?.color ? "#000" : date.info ? date.info.colorT : "#000",
+                        //border: item.data.holydays?.[date.date] ? '1px solid red' : '',
                         cursor: "pointer",
                       }}
                       key={date_k}
@@ -566,12 +589,17 @@ class WorkSchedule_Table extends React.Component {
                     {item.data.price_p_h}
                   </TableCell>
 
-                  <TableCell style={{ textAlign: 'center', minWidth: 70 }}>
+                  <TableCell style={{ textAlign: "center", minWidth: 70 }}>
                     {item.data.price_p_h_dop}
                   </TableCell>
 
-                  <TableCell style={{ textAlign: 'center', cursor: 'pointer' }}
-                    onClick={this.props.kind == 'manager' ? () => {} : this.props.changeDopBonusUser.bind(this, item)}
+                  <TableCell
+                    style={{ textAlign: "center", cursor: "pointer" }}
+                    onClick={
+                      this.props.kind == "manager"
+                        ? () => {}
+                        : this.props.changeDopBonusUser.bind(this, item)
+                    }
                   >
                     {parseInt(item.data.check_period) == 1 ? item.data.dop_bonus : " - "}
                   </TableCell>
@@ -636,7 +664,8 @@ class WorkSchedule_Table extends React.Component {
                           parseInt(item.data.dir_price_dop) +
                           parseInt(item.data.h_price) +
                           parseInt(item.data.my_bonus) -
-                          parseInt(item.data.err_price) +
+                          parseInt(item.data.err_price) -
+                          parseInt(item.data.withheld) +
                           ""
                         : " - "}
                     </TableCell>
@@ -678,6 +707,24 @@ class WorkSchedule_Table extends React.Component {
                             )
                       }
                     >
+                      {item.data.withheld} - ТУТ
+                    </TableCell>
+                  )}
+
+                  {item.data.app_type == "driver" ? (
+                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                  ) : (
+                    <TableCell
+                      style={{ textAlign: "center", cursor: "pointer" }}
+                      onClick={this.props.openZPCart.bind(
+                        this,
+                        item.data.id,
+                        item.data.smena_id,
+                        item.data.app_id,
+                        this.props.numberChoose,
+                        item.data,
+                      )}
+                    >
                       {item.data.given_cart}
                     </TableCell>
                   )}
@@ -694,7 +741,8 @@ class WorkSchedule_Table extends React.Component {
                           parseInt(item.data.h_price) +
                           parseInt(item.data.my_bonus) -
                           parseInt(item.data.err_price) -
-                          parseInt(item.data.given_cart) +
+                          parseInt(item.data.given_cart) -
+                          parseInt(item.data.withheld) +
                           ""
                         : " - "}
                     </TableCell>
@@ -988,7 +1036,7 @@ class WorkSchedule_Table_without_functions extends React.Component {
                       >
                         {item.data.price_p_h}
                       </TableCell>
-                      <TableCell style={{ textAlign: 'center', minWidth: 70 }}>
+                      <TableCell style={{ textAlign: "center", minWidth: 70 }}>
                         {item.data.price_p_h_dop}
                       </TableCell>
 
@@ -1020,7 +1068,8 @@ class WorkSchedule_Table_without_functions extends React.Component {
                               parseInt(item.data.dir_price_dop) +
                               parseInt(item.data.h_price) +
                               parseInt(item.data.my_bonus) -
-                              parseInt(item.data.err_price) +
+                              parseInt(item.data.err_price) -
+                              parseInt(item.data.withheld) +
                               ""
                             : " - "}
                         </TableCell>
@@ -1030,6 +1079,12 @@ class WorkSchedule_Table_without_functions extends React.Component {
                         <TableCell style={{ textAlign: "center" }}></TableCell>
                       ) : (
                         <TableCell style={{ textAlign: "center" }}>{item.data.given}</TableCell>
+                      )}
+
+                      {item.data.app_type == "driver" ? (
+                        <TableCell style={{ textAlign: "center" }}></TableCell>
+                      ) : (
+                        <TableCell style={{ textAlign: "center" }}>{item.data.withheld}</TableCell>
                       )}
 
                       <TableCell style={{ textAlign: "center" }}>{item.data.given_cart}</TableCell>
@@ -2094,7 +2149,8 @@ class WorkSchedule_ extends React.Component {
       parseInt(user.dir_price_dop) +
       parseInt(user.dop_bonus) -
       parseInt(user.err_price) -
-      parseInt(user.given_cart);
+      parseInt(user.given_cart) -
+      parseInt(user.withheld);
 
     this.setState({
       mainMenuZP: true,
@@ -2120,7 +2176,8 @@ class WorkSchedule_ extends React.Component {
       parseInt(user.dir_price) +
       parseInt(user.dir_price_dop) +
       parseInt(user.dop_bonus) -
-      parseInt(user.err_price);
+      parseInt(user.err_price) -
+      parseInt(user.withheld);
 
     this.setState({
       mainMenuZPCart: true,

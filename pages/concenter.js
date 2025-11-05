@@ -9,6 +9,7 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 
 import TableCell from "@mui/material/TableCell";
+
 const Table = dynamic(() => import("@mui/material/Table"), { ssr: true });
 const TableBody = dynamic(() => import("@mui/material/TableBody"), { ssr: true });
 const TableHead = dynamic(() => import("@mui/material/TableHead"), { ssr: true });
@@ -33,8 +34,6 @@ import TextField from "@mui/material/TextField";
 
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
-
-import { MySelect, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 import Typography from "@mui/material/Typography";
 
 import { api, api_laravel, api_laravel_local } from "@/src/api_new";
@@ -44,10 +43,13 @@ import dynamic from "next/dynamic";
 import Paper from "@mui/material/Paper";
 import TableContainer from "@mui/material/TableContainer";
 import Checkbox from "@mui/material/Checkbox";
-import DriversMap from "@/ui/DriversMap/DriversMap";
 import { formatDate } from "@/src/helpers/ui/formatDate";
-import { IconButton } from "@mui/material";
-import { Close } from "@mui/icons-material";
+import DriversMap from "@/ui/DriversMap/DriversMap";
+import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
+import { styled, Switch } from "@mui/material";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
+import { ModalProblems } from "@/components/concenter/ModalProblems";
 
 function a11yProps(index) {
   return {
@@ -55,6 +57,71 @@ function a11yProps(index) {
     "aria-controls": `simple-tabpanel-${index}`,
   };
 }
+
+const IOSSwitch = styled((props) => (
+  <Switch
+    focusVisibleClassName=".Mui-focusVisible"
+    disableRipple
+    {...props}
+  />
+))(({ theme }) => ({
+  width: 42,
+  height: 26,
+  marginRight: 5,
+  padding: 0,
+  "& .MuiSwitch-switchBase": {
+    padding: 0,
+    margin: 2,
+    transitionDuration: "300ms",
+    "&.Mui-checked": {
+      transform: "translateX(16px)",
+      color: "#fff",
+      "& + .MuiSwitch-track": {
+        backgroundColor: "#e82d2d",
+        opacity: 1,
+        border: 0,
+        ...theme.applyStyles("dark", {
+          backgroundColor: "#ec1919",
+        }),
+      },
+      "&.Mui-disabled + .MuiSwitch-track": {
+        opacity: 0.5,
+      },
+    },
+    "&.Mui-focusVisible .MuiSwitch-thumb": {
+      color: "#ec1919",
+      border: "6px solid #fff",
+    },
+    "&.Mui-disabled .MuiSwitch-thumb": {
+      color: theme.palette.grey[100],
+      ...theme.applyStyles("dark", {
+        color: theme.palette.grey[600],
+      }),
+    },
+    "&.Mui-disabled + .MuiSwitch-track": {
+      opacity: 0.7,
+      ...theme.applyStyles("dark", {
+        opacity: 0.3,
+      }),
+    },
+  },
+  "& .MuiSwitch-thumb": {
+    boxSizing: "border-box",
+    width: 22,
+    height: 22,
+  },
+  "& .MuiSwitch-track": {
+    borderRadius: 26 / 2,
+    backgroundColor: "#E9E9EA",
+    opacity: 1,
+    transition: theme.transitions.create(["background-color"], {
+      duration: 500,
+    }),
+    ...theme.applyStyles("dark", {
+      backgroundColor: "#39393D",
+    }),
+  },
+}));
 
 class Concenter_ extends React.Component {
   constructor(props) {
@@ -67,14 +134,21 @@ class Concenter_ extends React.Component {
       acces: {},
       err_info: {},
       sort: false,
-
+      modalDialogProblem: false,
       modalDialog: false,
       modalDialogDel: false,
       modalDialogDriver: false,
       modalDialogDelDriver: false,
       confirmDialog: false,
       confirmDialogDel: false,
-
+      checkedKey: {},
+      problem_arr: [],
+      checkedDiffOrder: false,
+      checkAddress: false,
+      orderDiff: "",
+      positions: [],
+      address: "",
+      point: {},
       cities: [],
       city_id: "",
       text: "",
@@ -87,6 +161,7 @@ class Concenter_ extends React.Component {
       orders: [],
       ordersRender: [],
       showOrder: null,
+      checkedError: false,
 
       radiogroup_options: [
         { id: "0", label: "Решили отредактировать заказ", value: 0 },
@@ -105,6 +180,11 @@ class Concenter_ extends React.Component {
 
   async componentDidMount() {
     let data = await this.getData("get_all");
+    const checked = localStorage.getItem("checkedError");
+    console.log(checked === "1");
+    this.setState({
+      checkedError: checked === "1",
+    });
 
     let need_points = data.points.filter(
       (item) => parseInt(item.city_id) == parseInt(data.cities[0].id),
@@ -420,6 +500,34 @@ class Concenter_ extends React.Component {
 
   hasAccess = (flag) => flag === "1" || flag === 1;
 
+  onError = () => {
+    const checked = !this.state.checkedError === true ? "1" : "0";
+    localStorage.setItem("checkedError", checked);
+    this.setState({
+      checkedError: !this.state.checkedError,
+    });
+  };
+
+  openProblems = () => {
+    const positions = [];
+    this.state.showOrder.order_items.map((item, key) => {
+      if (this.state.checkedKey[key]) {
+        positions.push(item);
+      }
+    });
+    this.setState({ positions: positions, modalDialogProblem: true });
+  };
+
+  saveProblems = (solutions) => {
+    const positions = this.state.positions;
+    const problem_arr = [];
+    positions.map((pos) => {
+      problem_arr.push({ ...pos, problem_id: solutions.id });
+    });
+
+    this.setState({ problem_arr: problem_arr, modalDialogProblem: false });
+  };
+
   render() {
     const { acces, err_info } = this.state;
     return (
@@ -438,279 +546,511 @@ class Concenter_ extends React.Component {
             }}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
+            maxWidth="md"
+            fullWidth={true}
           >
             <DialogTitle style={{ textAlign: "center" }}>
-              Заказ #{this.state.showOrder.order.order_id}
-              <IconButton
-                onClick={() => this.setState({ modalDialog: false })}
-                style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+              <span
+                style={{
+                  backgroundColor: "#f5f5f5",
+                  padding: "8px",
+                  borderRadius: "16px",
+                  fontWeight: "bold",
+                  marginRight: "28px",
+                }}
               >
-                <Close />
-              </IconButton>
+                Заказ #{this.state.showOrder.order.order_id}
+              </span>
             </DialogTitle>
+            {this.hasAccess(acces?.err_order_mod_access) ? (
+              <div
+                style={{
+                  backgroundColor: "#f5f5f8",
+                  margin: "10px",
+                  display: "flex",
+                  borderRadius: "12px",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "10px",
+                }}
+              >
+                <div
+                  style={{
+                    backgroundColor: "#f5f5f8",
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <ReportProblemOutlinedIcon
+                    style={{ marginLeft: "10px", marginRight: "10px", color: "red" }}
+                  />
+                  <span>Режим описания ошибок</span>
+                </div>
+                <FormControlLabel
+                  control={
+                    <IOSSwitch
+                      onClick={this.onError}
+                      checked={this.state.checkedError}
+                      color="secondary"
+                      size="medium"
+                    />
+                  }
+                  labelPlacement="right"
+                  style={{ marginLeft: "auto" }}
+                />
+              </div>
+            ) : null}
+            {this.state.checkedError && this.hasAccess(acces?.err_order_mod_access) ? (
+              <Grid
+                container
+                spacing={0}
+                style={{ padding: "12px" }}
+              >
+                <Grid
+                  style={{ marginBottom: "12px" }}
+                  size={{
+                    xs: 12,
+                  }}
+                >
+                  <MyCheckBox
+                    label="Привезли другой заказ"
+                    value={this.state.checkedDiffOrder}
+                    func={() => this.setState({ checkedDiffOrder: !this.state.checkedDiffOrder })}
+                  />
+                  {this.state.checkedDiffOrder ? (
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <MyTextInput
+                        placeholder={"Введите номер привезенного заказа"}
+                        label=""
+                        value={this.state.orderDiff}
+                        func={(e) => this.setState({ orderDiff: e.target.value })}
+                      />
+                      <Button
+                        variant="contained"
+                        style={{ marginLeft: "12px" }}
+                      >
+                        Сохранить
+                      </Button>
+                    </div>
+                  ) : null}
+                  {this.state.problem_arr.length &&
+                  this.state.problem_arr.find((item) => item?.problem_id === 3).problem_id ? (
+                    <div>
+                      <MyCheckBox
+                        label="На тот же адрес"
+                        value={this.state.checkAddress}
+                        func={() => {
+                          if (!this.state.checkAddress === true) {
+                            this.setState({
+                              checkAddress: true,
+                              address: this.state.showOrder.order.type_order_addr_new,
+                            });
+                          } else {
+                            this.setState({
+                              checkAddress: false,
+                              address: "",
+                            });
+                          }
+                        }}
+                      />
+                      <MyAutocomplite
+                        multiple={false}
+                        data={this.state.point_list}
+                        value={this.state.point}
+                        func={(e, value) => this.setState({ point: e })}
+                        style={{ marginBottom: "12px" }}
+                        label="Выбрать кафе"
+                      />
+                      <MyTextInput
+                        placeholder={"Введите номер привезенного заказа"}
+                        label="Или введите адрес"
+                        value={this.state.address}
+                      />
+                      <Button
+                        variant="contained"
+                        style={{ marginTop: "12px" }}
+                      >
+                        Сохранить
+                      </Button>
+                    </div>
+                  ) : null}
+                </Grid>
+              </Grid>
+            ) : null}
             <DialogContent>
               <Grid
                 container
                 spacing={0}
               >
-                <Grid
-                  size={{
-                    xs: 12,
-                  }}
-                >
-                  <span>
-                    {this.state.showOrder.order.type_order}:{" "}
-                    {this.state.showOrder.order.type_order_addr_new}
-                  </span>
-                </Grid>
-                {parseInt(this.state.showOrder.order.type_order_) == 1 ? (
-                  parseInt(this.state.showOrder.order.fake_dom) == 0 ? (
-                    <Grid
-                      size={{
-                        xs: 12,
-                      }}
-                    >
-                      <b style={{ color: "red", fontWeight: 900 }}>Домофон не работает</b>
-                    </Grid>
-                  ) : (
-                    <Grid
-                      size={{
-                        xs: 12,
-                      }}
-                    >
-                      <b style={{ color: "green", fontWeight: 900 }}>Домофон работает</b>
-                    </Grid>
-                  )
-                ) : null}
-                <Grid
-                  size={{
-                    xs: 12,
-                  }}
-                >
-                  <span>
-                    {this.state.showOrder.order.time_order_name}:{" "}
-                    {this.state.showOrder.order.time_order}
-                  </span>
-                </Grid>
-
-                {this.state.showOrder.order.number.length > 1 &&
-                this.hasAccess(acces?.tel_access) ? (
+                <Grid size={{ xs: 5 }}>
                   <Grid
-                    size={{
-                      xs: 12,
-                    }}
-                  >
-                    <b>Телефон: </b>
-                    <span>{this.state.showOrder.order.number}</span>
-                  </Grid>
-                ) : null}
-
-                {this.state.showOrder.order.delete_reason.length > 0 ? (
-                  <Grid
-                    size={{
-                      xs: 12,
-                    }}
-                  >
-                    <span style={{ color: "red" }}>
-                      Удален: {this.state.showOrder.order.date_time_delete}
-                    </span>
-                  </Grid>
-                ) : null}
-                {this.state.showOrder.order.delete_reason.length > 0 ? (
-                  <Grid
-                    size={{
-                      xs: 12,
-                    }}
-                  >
-                    <span style={{ color: "red" }}>{this.state.showOrder.order.delete_reason}</span>
-                  </Grid>
-                ) : null}
-
-                {parseInt(this.state.showOrder.order.is_preorder) == 1 ? null : (
-                  <Grid
+                    style={{ marginBottom: "12px" }}
                     size={{
                       xs: 12,
                     }}
                   >
                     <span>
-                      {this.state.showOrder.order.text_time}
-                      {this.state.showOrder.order.time_to_client}
+                      <b>{this.state.showOrder.order.type_order}</b> <br />{" "}
+                      {this.state.showOrder.order.type_order_addr_new}
                     </span>
                   </Grid>
-                )}
+                  {parseInt(this.state.showOrder.order.type_order_) == 1 ? (
+                    parseInt(this.state.showOrder.order.fake_dom) == 0 ? (
+                      <Grid
+                        style={{ marginBottom: "12px" }}
+                        size={{
+                          xs: 12,
+                        }}
+                      >
+                        <b style={{ color: "red", fontWeight: 900 }}>Домофон не работает</b>
+                      </Grid>
+                    ) : (
+                      <Grid
+                        style={{ marginBottom: "12px" }}
+                        size={{
+                          xs: 12,
+                        }}
+                      >
+                        <b style={{ color: "green", fontWeight: 900 }}>Домофон работает</b>
+                      </Grid>
+                    )
+                  ) : null}
+                  <Grid
+                    style={{ marginBottom: "12px" }}
+                    size={{
+                      xs: 12,
+                    }}
+                  >
+                    <span>
+                      <b>{this.state.showOrder.order.time_order_name}</b>
+                      <br /> {this.state.showOrder.order.time_order}
+                    </span>
+                  </Grid>
 
-                <Grid
-                  size={{
-                    xs: 12,
-                  }}
-                >
-                  <span>{this.state.showOrder.order.textTime}</span>
-                </Grid>
-
-                {this.state.showOrder.order.promo_name == null ||
-                this.state.showOrder.order.promo_name.length == 0 ? null : (
-                  <>
+                  {this.state.showOrder.order.number.length > 1 &&
+                  this.hasAccess(acces?.tel_access) ? (
                     <Grid
+                      style={{ marginBottom: "12px" }}
                       size={{
                         xs: 12,
                       }}
                     >
-                      <b>Промокод: </b>
-                      <span>{this.state.showOrder.order.promo_name}</span>
+                      <b>Телефон </b> <br />
+                      <span>{this.state.showOrder.order.number}</span>
                     </Grid>
+                  ) : null}
+
+                  {this.state.showOrder.order.delete_reason.length > 0 ? (
                     <Grid
+                      style={{ marginBottom: "12px" }}
                       size={{
                         xs: 12,
                       }}
                     >
-                      <span className="noSpace">{this.state.showOrder.order.promo_text}</span>
+                      <span style={{ color: "red" }}>
+                        <b>Удален</b>
+                        <br /> {this.state.showOrder.order.date_time_delete}
+                      </span>
                     </Grid>
-                  </>
-                )}
-
-                {this.state.showOrder.order.comment == null ||
-                this.state.showOrder.order.comment.length == 0 ? null : (
-                  <Grid
-                    size={{
-                      xs: 12,
-                    }}
-                  >
-                    <b>Комментарий: </b>
-                    <span>{this.state.showOrder.order.comment}</span>
-                  </Grid>
-                )}
-
-                {this.state.showOrder.order.sdacha == null ||
-                parseInt(this.state.showOrder.order.sdacha) == 0 ? null : (
-                  <Grid
-                    size={{
-                      xs: 12,
-                    }}
-                  >
-                    <b>Сдача: </b>
-                    <span>{this.state.showOrder.order.sdacha}</span>
-                  </Grid>
-                )}
-
-                {this.state.showOrder.order.client_name && (
-                  <Grid
-                    size={{
-                      xs: 12,
-                    }}
-                  >
-                    Клиент:
-                    <span> {this.state.showOrder.order.client_name}</span>
-                  </Grid>
-                )}
-
-                {this.state.showOrder.order.driver_name && (
-                  <Grid
-                    size={{
-                      xs: 12,
-                    }}
-                  >
-                    Курьер:
-                    <span> {this.state.showOrder.order.driver_name}</span>
-                  </Grid>
-                )}
-
-                {this.state.showOrder.order.type_pay &&
-                  this.hasAccess(acces?.type_order_access) && (
+                  ) : null}
+                  {this.state.showOrder.order.delete_reason.length > 0 ? (
                     <Grid
+                      style={{ marginBottom: "12px" }}
                       size={{
                         xs: 12,
                       }}
                     >
-                      Тип оплаты:
-                      <span> {this.state.showOrder.order.type_pay}</span>
+                      <span style={{ color: "red" }}>
+                        {this.state.showOrder.order.delete_reason}
+                      </span>
+                    </Grid>
+                  ) : null}
+
+                  {parseInt(this.state.showOrder.order.is_preorder) == 1 ? null : (
+                    <Grid
+                      style={{ marginBottom: "12px" }}
+                      size={{
+                        xs: 12,
+                      }}
+                    >
+                      <span>
+                        {this.state.showOrder.order.text_time}
+                        {this.state.showOrder.order.time_to_client}
+                      </span>
                     </Grid>
                   )}
 
-                <Grid
-                  size={{
-                    xs: 12,
-                  }}
-                >
-                  <b>Сумма заказа: </b>
-                  <span>{this.state.showOrder.order.sum_order} р</span>
-                </Grid>
-
-                {this.state.showOrder.order.check_pos_drive == null ||
-                !this.state.showOrder.order.check_pos_drive ? null : (
                   <Grid
+                    style={{ marginBottom: "12px" }}
                     size={{
                       xs: 12,
                     }}
                   >
-                    <b>Довоз оформлен: </b>
-                    <span>{this.state.showOrder.order.check_pos_drive.comment}</span>
+                    <span>{this.state.showOrder.order.textTime}</span>
                   </Grid>
-                )}
 
+                  {this.state.showOrder.order.promo_name == null ||
+                  this.state.showOrder.order.promo_name.length == 0 ? null : (
+                    <>
+                      <Grid
+                        style={{ marginBottom: "12px" }}
+                        size={{
+                          xs: 12,
+                        }}
+                      >
+                        <b>Промокод</b> <br />
+                        <span>{this.state.showOrder.order.promo_name}</span>
+                      </Grid>
+                      <Grid
+                        style={{ marginBottom: "12px" }}
+                        size={{
+                          xs: 12,
+                        }}
+                      >
+                        <span className="noSpace">{this.state.showOrder.order.promo_text}</span>
+                      </Grid>
+                    </>
+                  )}
+
+                  {this.state.showOrder.order.comment == null ||
+                  this.state.showOrder.order.comment.length == 0 ? null : (
+                    <Grid
+                      style={{ marginBottom: "12px" }}
+                      size={{
+                        xs: 12,
+                      }}
+                    >
+                      <b>Комментарий </b>
+                      <br />
+                      <span>{this.state.showOrder.order.comment}</span>
+                    </Grid>
+                  )}
+
+                  {this.state.showOrder.order.sdacha == null ||
+                  parseInt(this.state.showOrder.order.sdacha) == 0 ? null : (
+                    <Grid
+                      style={{ marginBottom: "12px" }}
+                      size={{
+                        xs: 12,
+                      }}
+                    >
+                      <b>Сдача </b>
+                      <br />
+                      <span>{this.state.showOrder.order.sdacha}</span>
+                    </Grid>
+                  )}
+
+                  {this.state.showOrder.order.client_name && (
+                    <Grid
+                      style={{ marginBottom: "12px" }}
+                      size={{
+                        xs: 12,
+                      }}
+                    >
+                      <b>Клиент</b> <br />
+                      <span> {this.state.showOrder.order.client_name}</span>
+                    </Grid>
+                  )}
+
+                  {this.state.showOrder.order.driver_name && (
+                    <Grid
+                      style={{ marginBottom: "12px" }}
+                      size={{
+                        xs: 12,
+                      }}
+                    >
+                      <b>Курьер</b> <br />
+                      <span> {this.state.showOrder.order.driver_name}</span>
+                    </Grid>
+                  )}
+
+                  {this.state.showOrder.order.type_pay &&
+                    this.hasAccess(acces?.type_order_access) && (
+                      <Grid
+                        style={{ marginBottom: "12px" }}
+                        size={{
+                          xs: 12,
+                        }}
+                      >
+                        <b>Тип оплаты</b> <br />
+                        <span> {this.state.showOrder.order.type_pay}</span>
+                      </Grid>
+                    )}
+
+                  <Grid
+                    style={{ marginBottom: "12px" }}
+                    size={{
+                      xs: 12,
+                    }}
+                  >
+                    <b>Сумма заказа </b>
+                    <br />
+                    <span style={{ marginBottom: "12px" }}>
+                      {this.state.showOrder.order.sum_order} р
+                    </span>
+                  </Grid>
+
+                  {this.state.showOrder.order.check_pos_drive == null ||
+                  !this.state.showOrder.order.check_pos_drive ? null : (
+                    <Grid
+                      style={{ marginBottom: "12px" }}
+                      size={{
+                        xs: 12,
+                      }}
+                    >
+                      <b>Довоз оформлен </b>
+                      <br />
+                      <span>{this.state.showOrder.order.check_pos_drive.comment}</span>
+                    </Grid>
+                  )}
+                </Grid>
+                <ModalProblems
+                  positions={this.state.positions}
+                  open={this.state.modalDialogProblem}
+                  onClose={() => this.setState({ modalDialogProblem: false })}
+                  title={`Проблема с ${Object.entries(this.state.checkedKey).length} позициями`}
+                  save={this.saveProblems}
+                />
                 <Grid
                   size={{
-                    xs: 12,
+                    xs: 7,
                   }}
                 >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <h3>Состав заказа</h3>
+                    {Object.entries(this.state.checkedKey).length ? (
+                      <Button
+                        variant="contained"
+                        onClick={this.openProblems}
+                      >
+                        Проблема для {Object.entries(this.state.checkedKey).length} позиций
+                      </Button>
+                    ) : null}
+                  </div>
                   <Table
                     size={"small"}
-                    style={{ marginTop: 15 }}
+                    style={{ marginTop: 15, borderSpacing: "0 6px", borderCollapse: "separate" }}
                   >
                     <TableBody>
                       {this.state.showOrder.order_items.map((item, key) => (
-                        <TableRow key={key}>
-                          <TableCell>{item.name}</TableCell>
-                          <TableCell>{item.count}</TableCell>
-                          <TableCell>{item.price} р</TableCell>
+                        <TableRow
+                          key={key}
+                          style={{
+                            border: "none",
+                            backgroundColor: "#f6f6f6",
+                            borderRadius: "12px",
+                          }}
+                        >
+                          <TableCell
+                            style={{
+                              borderRadius: "10px 0 0 10px",
+                              border: "none",
+                              marginBottom: "10px",
+                            }}
+                          >
+                            <span style={{ display: "flex", alignItems: "center" }}>
+                              {this.state.checkedError ? (
+                                <span>
+                                  <MyCheckBox
+                                    value={this.state.checkedKey[key]}
+                                    func={(e) =>
+                                      this.setState({
+                                        checkedKey: {
+                                          ...this.state.checkedKey,
+                                          [key]: e.target.checked,
+                                        },
+                                      })
+                                    }
+                                    style={{ padding: "0" }}
+                                  />
+                                </span>
+                              ) : null}
+                              {item.name}
+                            </span>
+                          </TableCell>
+                          <TableCell style={{ border: "none", marginBottom: "10px" }}>
+                            {item.count}
+                          </TableCell>
+                          <TableCell
+                            style={{
+                              borderRadius: "0  10px 10px 0",
+                              border: "none",
+                              marginBottom: "10px",
+                            }}
+                          >
+                            {item.price} р
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                     <TableFooter>
                       <TableRow>
-                        <TableCell style={{ fontWeight: "bold", color: "#000" }}>
+                        <TableCell
+                          style={{
+                            fontWeight: "bold",
+                            color: "#000",
+                            border: "none",
+                            float: "right",
+                          }}
+                        >
                           Сумма закза
                         </TableCell>
-                        <TableCell></TableCell>
-                        <TableCell style={{ fontWeight: "bold", color: "#000" }}>
+                        <TableCell
+                          style={{
+                            border: "none",
+                          }}
+                        ></TableCell>
+                        <TableCell
+                          style={{
+                            color: "#000",
+                            border: "none",
+                          }}
+                        >
                           {this.state.showOrder.order.sum_order} р
                         </TableCell>
                       </TableRow>
                     </TableFooter>
                   </Table>
-                </Grid>
-
-                {this.hasAccess(acces?.disband_access) && (
-                  <Accordion style={{ width: "100%" }}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>Расформировка</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Table
-                        size={"small"}
-                        style={{ marginTop: 15 }}
+                  {this.hasAccess(acces?.disband_access) && (
+                    <Accordion
+                      style={{
+                        width: "100%",
+                        borderRadius: "16px",
+                        boxShadow: "none",
+                        border: "2px solid #d4d4d4",
+                      }}
+                      sx={{
+                        "& .MuiAccordionSummary-root": {
+                          minHeight: "30px",
+                          padding: "0 12px",
+                        },
+                        "& .MuiAccordionSummary-content": {
+                          margin: "8px 0",
+                        },
+                        "& .MuiAccordionDetails-root": {
+                          padding: "8px 16px",
+                        },
+                      }}
+                    >
+                      <AccordionSummary
+                        sx={{
+                          margin: "0",
+                          "& .MuiAccordionSummary-content": {
+                            margin: "0 !important",
+                          },
+                        }}
+                        expandIcon={<ExpandMoreIcon />}
                       >
-                        <TableBody>
-                          {this.state.showOrder.order_items_.map((item, key) => (
-                            <TableRow key={key}>
-                              <TableCell>{item.name}</TableCell>
-                              <TableCell
-                                style={{
-                                  backgroundColor: parseInt(item.ready) > 0 ? "#6ab04c" : "#eb4d4b",
-                                }}
-                              ></TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </AccordionDetails>
-                  </Accordion>
-                )}
-                {this.hasAccess(acces?.list_driver_access) &&
-                  this.state.showOrder.order.type_order_ === 1 &&
-                  this.state.showOrder.driver_stat.length > 0 && (
-                    <Accordion style={{ width: "100%" }}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography>Курьеры</Typography>
+                        <Typography>Расформировка</Typography>
                       </AccordionSummary>
                       <AccordionDetails>
                         <Table
@@ -718,11 +1058,15 @@ class Concenter_ extends React.Component {
                           style={{ marginTop: 15 }}
                         >
                           <TableBody>
-                            {this.state.showOrder.driver_stat.map((item, key) => (
+                            {this.state.showOrder.order_items_.map((item, key) => (
                               <TableRow key={key}>
-                                <TableCell>{item.date_time}</TableCell>
-                                <TableCell>{item.type}</TableCell>
-                                <TableCell>{item.driver}</TableCell>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell
+                                  style={{
+                                    backgroundColor:
+                                      parseInt(item.ready) > 0 ? "#6ab04c" : "#eb4d4b",
+                                  }}
+                                ></TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
@@ -730,13 +1074,41 @@ class Concenter_ extends React.Component {
                       </AccordionDetails>
                     </Accordion>
                   )}
+                  {this.hasAccess(acces?.list_driver_access) &&
+                    this.state.showOrder.order.type_order_ === 1 &&
+                    this.state.showOrder.driver_stat.length > 0 && (
+                      <Accordion style={{ width: "100%" }}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography>Курьеры</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          <Table
+                            size={"small"}
+                            style={{ marginTop: 15 }}
+                          >
+                            <TableBody>
+                              {this.state.showOrder.driver_stat.map((item, key) => (
+                                <TableRow key={key}>
+                                  <TableCell>{item.date_time}</TableCell>
+                                  <TableCell>{item.type}</TableCell>
+                                  <TableCell>{item.driver}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </AccordionDetails>
+                      </Accordion>
+                    )}
+                </Grid>
               </Grid>
             </DialogContent>
 
             {parseInt(this.state.showOrder.order.is_delete) == 0 &&
             parseInt(this.state.showOrder.order.status_order) !== 6 &&
             parseInt(acces?.del_ord_access) ? (
-              <DialogActions style={{ justifyContent: "flex-end", padding: "15px 0px" }}>
+              <DialogActions
+                style={{ justifyContent: "center", padding: "15px 0px", marginLeft: "40px" }}
+              >
                 <ButtonGroup
                   disableElevation={true}
                   disableRipple={true}
@@ -745,6 +1117,7 @@ class Concenter_ extends React.Component {
                   style={{ marginRight: 24 }}
                 >
                   <Button
+                    style={{ borderRadius: "12px" }}
                     variant="contained"
                     className="BtnCardMain CardInCardItem"
                     onClick={this.closeOrder.bind(this)}
@@ -813,12 +1186,6 @@ class Concenter_ extends React.Component {
           >
             <DialogTitle style={{ textAlign: "center" }}>
               Отмена заказа {this.state.showOrder.order.order_id}
-              <IconButton
-                onClick={() => this.setState({ modalDialogDel: false })}
-                style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
-              >
-                <Close />
-              </IconButton>
             </DialogTitle>
             <DialogContent>
               <FormControl component="fieldset">
@@ -902,7 +1269,7 @@ class Concenter_ extends React.Component {
             sx={{ fontWeight: "bold" }}
           >
             <p style={{ marginBottom: 20 }}>
-              Курьер, предположительно, находится далеко от клиента, точно оформить довоз?
+              Курьер, предположительно, находиться далеко от клиента, точно оформить довоз?
             </p>
 
             <MyTextInput
@@ -1257,7 +1624,11 @@ class Concenter_ extends React.Component {
                       key={key}
                       style={
                         parseInt(item.is_delete) == 1 && this.hasAccess(acces?.late_access)
-                          ? { backgroundColor: "red", color: "#fff", fontWeight: "bold" }
+                          ? {
+                              backgroundColor: "red",
+                              color: "#fff",
+                              fontWeight: "bold",
+                            }
                           : {}
                       }
                     >
@@ -1270,7 +1641,11 @@ class Concenter_ extends React.Component {
                                 cursor: "pointer",
                                 fontWeight: "inherit",
                               }
-                            : { color: "inherit", cursor: "pointer", fontWeight: "inherit" }
+                            : {
+                                color: "inherit",
+                                cursor: "pointer",
+                                fontWeight: "inherit",
+                              }
                         }
                         onClick={this.showOrder.bind(this, item.id)}
                       >
@@ -1287,7 +1662,12 @@ class Concenter_ extends React.Component {
                         </TableCell>
                       )}
                       {this.hasAccess(acces?.address_access) && (
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                        <TableCell
+                          style={{
+                            color: "inherit",
+                            fontWeight: "inherit",
+                          }}
+                        >
                           {item.street} {item.home}
                         </TableCell>
                       )}
@@ -1364,7 +1744,12 @@ class Concenter_ extends React.Component {
                         </TableCell>
                       )}
                       {this.hasAccess(acces?.time_promise_access) && (
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                        <TableCell
+                          style={{
+                            color: "inherit",
+                            fontWeight: "inherit",
+                          }}
+                        >
                           {item.unix_time_to_client == "0" ||
                           this.hasAccess(item.is_preorder_access) == 1
                             ? ""
