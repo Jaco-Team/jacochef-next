@@ -13,10 +13,10 @@ export function MyTextInput(props) {
       disabled={!!props.disabled}
       variant="outlined"
       size="small"
-      rows={props.rows ?? 1}
+      rows={!props.maxRows && !props.minRows && (props.rows ?? 1)}
       placeholder={props.placeholder}
       color="primary"
-      multiline={props.multiline ?? false}
+      multiline={!props.rows && (props.multiline ?? false)}
       maxRows={props.maxRows ?? 1}
       type={props.type ?? "text"}
       sx={{ width: "100%" }}
