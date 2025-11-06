@@ -148,6 +148,7 @@ class Concenter_ extends React.Component {
       orderDiff: "",
       positions: [],
       address: "",
+      comment: "",
       point: {},
       cities: [],
       city_id: "",
@@ -510,7 +511,7 @@ class Concenter_ extends React.Component {
 
   openProblems = () => {
     const positions = [];
-    this.state.showOrder.order_items.map((item, key) => {
+    this.state.showOrder.order_items_.map((item, key) => {
       if (this.state.checkedKey[key]) {
         positions.push(item);
       }
@@ -522,7 +523,7 @@ class Concenter_ extends React.Component {
     const positions = this.state.positions;
     const problem_arr = [...this.state.problem_arr];
     positions.map((pos) => {
-      problem_arr.push({ ...pos, problem_id: solutions.id, problem_name: solutions.name });
+      problem_arr.push({ ...pos, problem_name: solutions });
     });
 
     this.setState({ problem_arr: problem_arr, modalDialogProblem: false });
@@ -630,47 +631,6 @@ class Concenter_ extends React.Component {
                       <Button
                         variant="contained"
                         style={{ marginLeft: "12px" }}
-                      >
-                        Сохранить
-                      </Button>
-                    </div>
-                  ) : null}
-                  {this.state.problem_arr.length &&
-                  this.state.problem_arr.find((item) => item?.problem_id === 3)?.problem_id ? (
-                    <div>
-                      <MyCheckBox
-                        label="На тот же адрес"
-                        value={this.state.checkAddress}
-                        func={() => {
-                          if (!this.state.checkAddress === true) {
-                            this.setState({
-                              checkAddress: true,
-                              address: this.state.showOrder.order.type_order_addr_new,
-                            });
-                          } else {
-                            this.setState({
-                              checkAddress: false,
-                              address: "",
-                            });
-                          }
-                        }}
-                      />
-                      <MyAutocomplite
-                        multiple={false}
-                        data={this.state.point_list}
-                        value={this.state.point}
-                        func={(e, value) => this.setState({ point: e })}
-                        style={{ marginBottom: "12px" }}
-                        label="Выбрать кафе"
-                      />
-                      <MyTextInput
-                        placeholder={"Введите номер привезенного заказа"}
-                        label="Или введите адрес"
-                        value={this.state.address}
-                      />
-                      <Button
-                        variant="contained"
-                        style={{ marginTop: "12px" }}
                       >
                         Сохранить
                       </Button>
@@ -938,161 +898,204 @@ class Concenter_ extends React.Component {
                       </Button>
                     ) : null}
                   </div>
-                  <div style={{ height: "400px", overflow: "auto" }}>
-                    <Table
-                      size={"small"}
-                      style={{
-                        marginTop: 15,
-                        borderSpacing: "0 6px",
-                        borderCollapse: "separate",
-                        height: "400px",
-                      }}
-                    >
-                      <TableBody>
-                        {this.state.showOrder.order_items.map((item, key) => (
-                          <TableRow
-                            key={key}
-                            style={{
-                              border: "none",
-                              backgroundColor: "#f6f6f6",
-                              borderRadius: "12px",
-                            }}
-                          >
+                  <div>
+                    {!this.state.checkedError ? (
+                      <Table
+                        size={"small"}
+                        style={{
+                          marginTop: 15,
+                          borderSpacing: "0 6px",
+                          borderCollapse: "separate",
+                          height: "400px",
+                        }}
+                      >
+                        <TableBody>
+                          {this.state.showOrder.order_items.map((item, key) => (
+                            <TableRow
+                              key={key}
+                              style={{
+                                border: "none",
+                                backgroundColor: "#f6f6f6",
+                                borderRadius: "12px",
+                              }}
+                            >
+                              <TableCell
+                                style={{
+                                  borderRadius: "10px 0 0 10px",
+                                  border: "none",
+                                  marginBottom: "10px",
+                                  height: "32px",
+                                }}
+                              >
+                                <span>{item.name}</span>
+                              </TableCell>
+                              <TableCell
+                                style={{ border: "none", marginBottom: "10px", height: "32px" }}
+                              >
+                                {item.count}
+                              </TableCell>
+                              <TableCell
+                                style={{
+                                  borderRadius: "0  10px 10px 0",
+                                  border: "none",
+                                  marginBottom: "10px",
+                                  height: "32px",
+                                }}
+                              >
+                                {item.price} р
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                        <TableFooter>
+                          <TableRow>
                             <TableCell
                               style={{
-                                borderRadius: "10px 0 0 10px",
+                                fontWeight: "bold",
+                                color: "#000",
                                 border: "none",
-                                marginBottom: "10px",
+                                float: "right",
                               }}
                             >
-                              <span style={{ display: "flex", alignItems: "center" }}>
-                                {this.state.checkedError ? (
-                                  <span>
-                                    <MyCheckBox
-                                      value={this.state.checkedKey[key]}
-                                      func={(e) =>
-                                        this.setState({
-                                          checkedKey: {
-                                            ...this.state.checkedKey,
-                                            [key]: e.target.checked,
-                                          },
-                                        })
-                                      }
-                                      style={{ padding: "0" }}
-                                    />
-                                  </span>
-                                ) : null}
-                                {this.state.problem_arr.find((it) => it?.item_id === item.item_id)
-                                  ?.problem_name ? (
-                                  <span
-                                    style={{
-                                      color: "#fff",
-                                      border: "1px solid red",
-                                      borderRadius: "12px",
-                                      backgroundColor: "#e12a58",
-                                      padding: "3px",
-                                      marginRight: "4px",
-                                    }}
-                                  >
-                                    {
-                                      this.state.problem_arr.find(
-                                        (it) => it?.item_id === item.item_id,
-                                      )?.problem_name
-                                    }
-                                  </span>
-                                ) : null}
-                                <span
-                                  style={{ cursor: "pointer" }}
-                                  onClick={() => {
-                                    this.setState(
-                                      {
-                                        checkedKey: {
-                                          ...{},
-                                          [key]: true,
-                                        },
-                                      },
-                                      () => {
-                                        this.openProblems();
-                                      },
-                                    );
-                                  }}
-                                >
-                                  {item.name}
-                                </span>
-                              </span>
-                            </TableCell>
-                            <TableCell
-                              onClick={() => {
-                                this.setState(
-                                  {
-                                    checkedKey: {
-                                      ...{},
-                                      [key]: true,
-                                    },
-                                  },
-                                  () => {
-                                    this.openProblems();
-                                  },
-                                );
-                              }}
-                              style={{ border: "none", marginBottom: "10px", cursor: "pointer" }}
-                            >
-                              {item.count}
+                              Сумма закза
                             </TableCell>
                             <TableCell
                               style={{
-                                borderRadius: "0  10px 10px 0",
                                 border: "none",
-                                marginBottom: "10px",
-                                cursor: "pointer",
                               }}
-                              onClick={() => {
-                                this.setState(
-                                  {
-                                    checkedKey: {
-                                      ...{},
-                                      [key]: true,
-                                    },
-                                  },
-                                  () => {
-                                    this.openProblems();
-                                  },
-                                );
+                            ></TableCell>
+                            <TableCell
+                              style={{
+                                color: "#000",
+                                border: "none",
                               }}
                             >
-                              {item.price} р
+                              {this.state.showOrder.order.sum_order} р
                             </TableCell>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                      <TableFooter>
-                        <TableRow>
-                          <TableCell
-                            style={{
-                              fontWeight: "bold",
-                              color: "#000",
-                              border: "none",
-                              float: "right",
-                            }}
-                          >
-                            Сумма закза
-                          </TableCell>
-                          <TableCell
-                            style={{
-                              border: "none",
-                            }}
-                          ></TableCell>
-                          <TableCell
-                            style={{
-                              color: "#000",
-                              border: "none",
-                            }}
-                          >
-                            {this.state.showOrder.order.sum_order} р
-                          </TableCell>
-                        </TableRow>
-                      </TableFooter>
-                    </Table>
+                        </TableFooter>
+                      </Table>
+                    ) : (
+                      <Table
+                        size={"small"}
+                        style={{
+                          marginTop: 15,
+                          borderSpacing: "0 6px",
+                          borderCollapse: "separate",
+                          height: "400px",
+                        }}
+                      >
+                        <TableBody>
+                          {this.state.showOrder.order_items_.map((item, key) => (
+                            <TableRow
+                              key={key}
+                              style={{
+                                border: "none",
+                                backgroundColor: "#f6f6f6",
+                                borderRadius: "12px",
+                              }}
+                            >
+                              <TableCell
+                                style={{
+                                  borderRadius: "10px 0 0 10px",
+                                  border: "none",
+                                  marginBottom: "10px",
+                                }}
+                              >
+                                <span style={{ display: "flex", alignItems: "center" }}>
+                                  {this.state.checkedError ? (
+                                    <span>
+                                      <MyCheckBox
+                                        value={this.state.checkedKey[key]}
+                                        func={(e) =>
+                                          this.setState({
+                                            checkedKey: {
+                                              ...this.state.checkedKey,
+                                              [key]: e.target.checked,
+                                            },
+                                          })
+                                        }
+                                        style={{ padding: 0.5 }}
+                                      />
+                                    </span>
+                                  ) : null}
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      justifyContent: "flex-start",
+                                    }}
+                                  >
+                                    <span
+                                      style={{ cursor: "pointer" }}
+                                      onClick={() => {
+                                        this.setState(
+                                          {
+                                            checkedKey: {
+                                              ...{},
+                                              [key]: true,
+                                            },
+                                          },
+                                          () => {
+                                            this.openProblems();
+                                          },
+                                        );
+                                      }}
+                                    >
+                                      {item.name}
+                                    </span>
+                                    {this.state.problem_arr.find((it) => it?.name === item.name)
+                                      ?.problem_name ? (
+                                      <span
+                                        style={{
+                                          color: "#fff",
+                                          border: "1px solid red",
+                                          borderRadius: "12px",
+                                          backgroundColor: "#e12a58",
+                                          padding: "2px",
+                                          width: "max-content",
+                                        }}
+                                        className="special-badge"
+                                      >
+                                        {
+                                          this.state.problem_arr.find(
+                                            (it) => it?.name === item.name,
+                                          )?.problem_name
+                                        }
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </span>
+                              </TableCell>
+                              <TableCell
+                                onClick={() => {
+                                  this.setState(
+                                    {
+                                      checkedKey: {
+                                        ...{},
+                                        [key]: true,
+                                      },
+                                    },
+                                    () => {
+                                      this.openProblems();
+                                    },
+                                  );
+                                }}
+                                style={{
+                                  borderRadius: "0  10px 10px 0",
+                                  border: "none",
+                                  marginBottom: "10px",
+                                  cursor: "pointer",
+                                  height: "32px",
+                                }}
+                              >
+                                {item.count}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
                     {this.hasAccess(acces?.disband_access) && (
                       <Accordion
                         style={{
@@ -1179,6 +1182,60 @@ class Concenter_ extends React.Component {
                       </Accordion>
                     )}
                 </Grid>
+                {this.state.problem_arr.length &&
+                this.state.problem_arr.find((item) => item?.problem_id === 3)?.problem_id ? (
+                  <Grid
+                    size={{
+                      xs: 12,
+                    }}
+                  >
+                    <MyCheckBox
+                      label="На тот же адрес"
+                      value={this.state.checkAddress}
+                      func={() => {
+                        if (!this.state.checkAddress === true) {
+                          this.setState({
+                            checkAddress: true,
+                            address: this.state.showOrder.order.type_order_addr_new,
+                          });
+                        } else {
+                          this.setState({
+                            checkAddress: false,
+                            address: "",
+                          });
+                        }
+                      }}
+                    />
+                    <MyAutocomplite
+                      multiple={false}
+                      data={this.state.point_list}
+                      value={this.state.point}
+                      func={(e, value) => this.setState({ point: e })}
+                      style={{ marginBottom: "12px" }}
+                      label="Выбрать кафе"
+                    />
+                    <MyTextInput
+                      style={{ marginBottom: "12px" }}
+                      placeholder={"Введите номер привезенного заказа"}
+                      label="Или введите адрес"
+                      value={this.state.address}
+                    />
+                    <MyTextInput
+                      multiline={true}
+                      rows={4}
+                      style={{ marginBottom: "12px" }}
+                      value={this.state.comment}
+                      func={(e) => this.setState({ comment: e.target.value })}
+                      label={"Комментарий ко всему заказу"}
+                    />
+                    <Button
+                      variant="contained"
+                      style={{ marginTop: "12px" }}
+                    >
+                      Сохранить
+                    </Button>
+                  </Grid>
+                ) : null}
               </Grid>
             </DialogContent>
 

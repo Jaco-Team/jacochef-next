@@ -15,6 +15,10 @@ export function MyCheckBox(props) {
             checked={props.value}
             onChange={props.func}
             color="primary"
+            sx={{
+              padding: props.style?.padding !== undefined ? props.style.padding : 1,
+              ...props.style,
+            }}
             size={props.size ? props.size : "medium"}
           />
         }

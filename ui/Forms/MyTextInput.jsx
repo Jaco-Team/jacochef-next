@@ -20,6 +20,7 @@ export function MyTextInput(props) {
       maxRows={props.maxRows ?? 1}
       type={props.type ?? "text"}
       sx={{ width: "100%" }}
+      style={props.style ?? {}}
       onKeyUp={props.enter}
       autoComplete={props.autoComplete ?? ""}
       autoCorrect={props.autoCorrect ?? ""}
