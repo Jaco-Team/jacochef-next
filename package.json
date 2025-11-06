@@ -3,9 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,css,md}": [
-      "prettier --write"
-    ]
+    "*.{js,jsx,ts,tsx,json,md,yml,yaml,css,scss,html,mjs,cjs}": "prettier --write"
   },
   "scripts": {
     "dev": "next dev --turbopack",
