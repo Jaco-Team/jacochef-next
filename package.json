@@ -51,7 +51,6 @@
     "react": "19.2.0",
     "react-dev-utils": "^12.0.1",
     "react-dom": "19.2.0",
-    "react-draggable": "^4.5.0",
     "react-modal-image": "^2.6.0",
     "react-multi-date-picker": "^4.5.2",
     "tinymce": "^7.9.1",
