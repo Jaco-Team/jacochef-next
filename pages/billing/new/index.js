@@ -2738,6 +2738,7 @@ class Billing_Modal extends React.Component {
     super(props);
 
     this.state = {
+      drag: { x: 0, y: 0 },
       rotate: 0,
       scaleX: 1,
       scaleY: 1,
@@ -2894,7 +2895,16 @@ class Billing_Modal extends React.Component {
 
   render() {
     return (
-      <DndContext>
+      <DndContext
+        onDragEnd={({ delta }) => {
+          this.setState((prev) => ({
+            drag: {
+              x: prev.drag.x + delta.x,
+              y: prev.drag.y + delta.y,
+            },
+          }));
+        }}
+      >
         <div className="modal_btn">
           <MyTooltip name="Повернуть на 90 градусов влево">
             <IconButton onClick={this.setLeftRotate.bind(this)}>
@@ -2965,6 +2975,8 @@ class Billing_Modal extends React.Component {
               scaleY={this.state.scaleY}
               image={this.props.image}
               rotate={this.state.rotate}
+              x={this.state.drag.x}
+              y={this.state.drag.y}
             />
           </div>
         ) : null}
@@ -2985,6 +2997,8 @@ class Billing_Modal extends React.Component {
               scaleY={this.state.scaleY}
               image={this.props.image}
               rotate={this.state.rotate}
+              x={this.state.drag.x}
+              y={this.state.drag.y}
             />
           </div>
         ) : null}

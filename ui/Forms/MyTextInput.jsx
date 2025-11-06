@@ -13,7 +13,7 @@ export function MyTextInput(props) {
       disabled={!!props.disabled}
       variant="outlined"
       size="small"
-      rows={!props.maxRows && !props.minRows && (props.rows ?? 1)}
+      rows={!props.maxRows && !props.minRows ? (props.rows ?? 1) : undefined}
       placeholder={props.placeholder}
       color="primary"
       multiline={!props.rows && (props.multiline ?? false)}
