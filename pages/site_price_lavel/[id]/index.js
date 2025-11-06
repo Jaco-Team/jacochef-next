@@ -16,7 +16,9 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 import { MySelect, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 
-import { api_laravel_local, api_laravel } from "@/src/api_new";
+//import {api_laravel_local as api_laravel} from "@/src/api_new";
+import { api_laravel } from "@/src/api_new";
+
 import dayjs from "dayjs";
 import MyAlert from "@/ui/MyAlert";
 
@@ -288,8 +290,7 @@ class SitePriceLevelEdit_ extends React.Component {
   };
 
   async handleSave() {
-    const { level_id, level_name, city, date_start, cats, acces, initialCity, initialDate } =
-      this.state;
+    const { level_id, level_name, city, date_start, cats, initialCity, initialDate } = this.state;
 
     if (!city || !level_name || !date_start) {
       const err_text = !city
@@ -368,7 +369,7 @@ class SitePriceLevelEdit_ extends React.Component {
     }
 
     // иначе Редактируем существующий уровень
-    const isCityChanged = city !== initialCity;
+    const isCityChanged = Number(city) !== Number(initialCity);
     const isDateChanged = !current.isSame(dayjs(initialDate), "day");
     const typeValue = !isCityChanged && !isDateChanged ? "edit" : "check";
 
