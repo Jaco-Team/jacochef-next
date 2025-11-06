@@ -1,4 +1,7 @@
 "use client";
+
+import dynamic from "next/dynamic";
+
 export * from "./MyAutocomplite";
 export * from "./MyAutocomplite2";
 export * from "./MyAutoCompleteWithAll";
@@ -13,3 +16,7 @@ export * from "./MyDatePickerNewViews";
 export * from "./MyDatePickerGraph";
 export * from "./TextEditor";
 export * from "./TextEditor22";
+
+export const TextEditor = dynamic(() => import("./TextEditor"), {
+  ssr: false,
+});
