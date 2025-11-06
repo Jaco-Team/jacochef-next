@@ -6,6 +6,7 @@
     "*.{js,jsx,ts,tsx,json,md,yml,yaml,css,scss,html,mjs,cjs}": "prettier --write"
   },
   "scripts": {
+    "postinstall": "mkdir -p public/tinymce/skins/ui/oxide && cp -r node_modules/tinymce/skins/ui/oxide/* public/tinymce/skins/ui/oxide/",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",

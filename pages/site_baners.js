@@ -29,22 +29,14 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 import Dropzone from "dropzone";
 
-import {
-  MyAutocomplite,
-  MyDatePickerNew,
-  MySelect,
-  TextEditor,
-  MyTextInput,
-  MyCheckBox,
-} from "@/ui/Forms";
-
-import queryString from "query-string";
-
 import dayjs from "dayjs";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 import TextField from "@mui/material/TextField";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
+
+const { MyAutocomplite, MyDatePickerNew, MySelect, MyTextInput, MyCheckBox, TextEditor } =
+  await import("@/ui/Forms");
 
 class SiteBaners_Modal extends React.Component {
   dropzoneOptions = {
