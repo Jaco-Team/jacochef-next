@@ -35,7 +35,7 @@ import TextField from "@mui/material/TextField";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 
-const { MyAutocomplite, MyDatePickerNew, MySelect, TextEditor, MyTextInput, MyCheckBox } =
+const { MyAutocomplite, MyDatePickerNew, MySelect, MyTextInput, MyCheckBox, TextEditor } =
   await import("@/ui/Forms");
 
 class SiteBaners_Modal extends React.Component {

@@ -407,15 +407,26 @@ div.css-19kzrtu {
   }
 }
 
+// .modal {
+//   background-color: rgba(0, 0, 0, 0.6);
+//   position: fixed;
+//   top: 0;
+//   left: 0;
+//   opacity: 1;
+//   transition: all 0.5s ease 0s;
+//   z-index: 1000;
+//   overflow-y: auto;
+// }
 .modal {
   background-color: rgba(0, 0, 0, 0.6);
   position: fixed;
   top: 0;
   left: 0;
-  opacity: 1;
-  transition: all 0.5s ease 0s;
+  width: 100%;
+  height: 100%;
   z-index: 1000;
-  overflow-y: auto;
+  overflow: hidden auto;
+  transition: all 0.5s ease 0s;
 }
 
 .modal_btn {
@@ -448,18 +459,13 @@ div.css-19kzrtu {
   }
 }
 
-.modal_content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: all 0.5s ease 0s;
-}
-
 .image_bill {
-  max-width: 70%;
-  cursor: pointer;
-  width: auto;
+  // max-width: 70%;
   height: auto;
+  display: block;
+  transform-origin: center center;
+  user-select: none;
+  pointer-events: none; /* optional if you drag by wrapper */
 }
 
 .img_modal_bill {

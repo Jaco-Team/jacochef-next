@@ -59,7 +59,10 @@ import DialogTitle from "@mui/material/DialogTitle";
 
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 
-import Draggable from "react-draggable";
+// import Draggable from "react-draggable";
+
+import { DndContext } from "@dnd-kit/core";
+import DraggableImage from "@/components/billing/DraggableImage";
 
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
@@ -3130,6 +3133,7 @@ class Billing_Modal extends React.Component {
     super(props);
 
     this.state = {
+      drag: { x: 0, y: 0 },
       rotate: 0,
       scaleX: 1,
       scaleY: 1,
@@ -3286,7 +3290,16 @@ class Billing_Modal extends React.Component {
 
   render() {
     return (
-      <>
+      <DndContext
+        onDragEnd={({ delta }) => {
+          this.setState((prev) => ({
+            drag: {
+              x: prev.drag.x + delta.x,
+              y: prev.drag.y + delta.y,
+            },
+          }));
+        }}
+      >
         <div className="modal_btn">
           {this.props.isDelImg === true ? (
             <MyTooltip name="Удалить">
@@ -3364,24 +3377,14 @@ class Billing_Modal extends React.Component {
               height: this.state.horizontal ? "50vh" : "100vh",
             }}
           >
-            <Draggable>
-              <div>
-                <div
-                  className="modal_content"
-                  style={{
-                    transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`,
-                  }}
-                >
-                  <img
-                    src={this.props.image}
-                    alt="Image bill"
-                    className="image_bill"
-                    onClick={(e) => e.stopPropagation()}
-                    draggable="false"
-                  />
-                </div>
-              </div>
-            </Draggable>
+            <DraggableImage
+              scaleX={this.state.scaleX}
+              scaleY={this.state.scaleY}
+              image={this.props.image}
+              rotate={this.state.rotate}
+              x={this.state.drag.x}
+              y={this.state.drag.y}
+            />
           </div>
         ) : null}
 
@@ -3396,27 +3399,17 @@ class Billing_Modal extends React.Component {
               top: this.state.horizontal ? "50%" : 0,
             }}
           >
-            <Draggable>
-              <div>
-                <div
-                  className="modal_content"
-                  style={{
-                    transform: `rotate(${this.state.rotate}deg) scale(${this.state.scaleX}, ${this.state.scaleY})`,
-                  }}
-                >
-                  <img
-                    src={this.props.image}
-                    alt="Image bill"
-                    className="image_bill"
-                    draggable="false"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
-              </div>
-            </Draggable>
+            <DraggableImage
+              scaleX={this.state.scaleX}
+              scaleY={this.state.scaleY}
+              image={this.props.image}
+              rotate={this.state.rotate}
+              x={this.state.drag.x}
+              y={this.state.drag.y}
+            />
           </div>
         ) : null}
-      </>
+      </DndContext>
     );
   }
 }
@@ -4236,9 +4229,8 @@ class Billing_Edit_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={10}
+          className="container_first_child"
           style={{
-            marginTop: "64px",
             maxWidth: is_vertical ? "50%" : "100%",
             marginBottom: is_horizontal ? 700 : 30,
           }}

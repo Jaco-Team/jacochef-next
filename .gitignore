@@ -38,4 +38,7 @@ next-env.d.ts
 # Sentry Config File
 .sentryclirc
 
+# TinyMCE postinstall public assets
+/public/tinymce/skins/**/*
+
 .husky/*.cmd
