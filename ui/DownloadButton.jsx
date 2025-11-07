@@ -37,6 +37,7 @@ export default function DownloadButton({ children, url = null, ...restProps }) {
     >
       <span>
         <IconButton
+          component="span"
           size="small"
           onClick={handleDownload}
           disabled={loading}
