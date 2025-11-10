@@ -209,13 +209,27 @@ class HeaderItem extends React.Component {
   render() {
     //Ур. кафе: {this.props.lv_cafe}
     //Ур. дира: {this.props.lv_dir_new}
+
+    //fast_2_week_access / fast_month_access / fast_point_access / fast_smena_access
+
+    let is_fast = true;
+
+    if (
+      parseInt(this.props.access["fast_2_week_access"]) == 0 &&
+      parseInt(this.props.access["fast_month_access"]) == 0 &&
+      parseInt(this.props.access["fast_point_access"]) == 0 &&
+      parseInt(this.props.access["fast_smena_access"]) == 0
+    ) {
+      is_fast = false;
+    }
+
     return (
       <>
         <TableRow>
           <TableCell style={{ minWidth: 140, minHeight: 38 }}></TableCell>
           <TableCell style={{ minWidth: 165, minHeight: 38 }}>Число месяца</TableCell>
 
-          {this.props.kind == "manager" || this.props.kind == "other" ? null : (
+          {is_fast && (
             <TableCell style={{ textAlign: "center" }}>
               <SyncAltIcon
                 style={{ cursor: "pointer", display: "block", margin: "auto" }}
@@ -224,7 +238,7 @@ class HeaderItem extends React.Component {
             </TableCell>
           )}
 
-          {this.props.kind == "manager" || this.props.kind == "other" ? null : <TableCell />}
+          {is_fast && <TableCell />}
 
           {this.props.days.map((item, key) => (
             <TableCell
@@ -239,20 +253,43 @@ class HeaderItem extends React.Component {
             </TableCell>
           ))}
 
-          <TableCell></TableCell>
-          <TableCell></TableCell>
+          <TableCell
+            style={{ display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none" }}
+          ></TableCell>
+          <TableCell
+            style={{
+              display: parseInt(this.props.access["1h_plus_view"]) == 1 ? "table-cell" : "none",
+            }}
+          ></TableCell>
 
           {this.props.dataKey > 0 ? (
             <>
-              <TableCell style={{ textAlign: "center" }}></TableCell>
-              <TableCell style={{ textAlign: "center" }}></TableCell>
+              <TableCell
+                style={{
+                  textAlign: "center",
+                  display:
+                    parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+                }}
+              ></TableCell>
+              <TableCell
+                style={{
+                  textAlign: "center",
+                  display: parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+                }}
+              ></TableCell>
             </>
           ) : (
             <>
               <TableCell
-                style={{ textAlign: "center", cursor: "pointer" }}
+                style={{
+                  textAlign: "center",
+                  cursor:
+                    parseInt(this.props.access["com_bonus_edit"]) == 1 ? "pointer" : "default",
+                  display:
+                    parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+                }}
                 onClick={
-                  this.props.kind == "manager" || this.props.kind == "dir"
+                  parseInt(this.props.access["com_bonus_edit"]) == 0
                     ? () => {}
                     : this.props.bonus_other
                       ? () => {}
@@ -268,30 +305,73 @@ class HeaderItem extends React.Component {
                 )}
               </TableCell>
               <TableCell
-                style={{ textAlign: "center", cursor: "pointer" }}
-                onClick={
-                  this.props.kind == "manager" || this.props.kind == "dir"
-                    ? () => {}
-                    : this.props.changeLVDir
-                }
+                style={{
+                  textAlign: "center",
+                  cursor: "pointer",
+                  display: parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+                }}
+                // onClick={
+                //   this.props.kind == "manager" || this.props.kind == "dir"
+                //     ? () => {}
+                //     : this.props.changeLVDir
+                // }
               ></TableCell>
             </>
           )}
 
-          <TableCell style={{ textAlign: "center" }}></TableCell>
-          <TableCell style={{ textAlign: "center" }}></TableCell>
-          <TableCell style={{ textAlign: "center" }}></TableCell>
-          <TableCell style={{ textAlign: "center" }}></TableCell>
-          <TableCell style={{ textAlign: "center" }}></TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["errors_view"]) == 1 ? "table-cell" : "none",
+            }}
+          ></TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
+            }}
+          ></TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["all_price_view"]) == 1 ? "table-cell" : "none",
+            }}
+          ></TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+            }}
+          ></TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+            }}
+          ></TableCell>
 
-          <TableCell style={{ textAlign: "center" }}></TableCell>
-          <TableCell style={{ textAlign: "center" }}></TableCell>
-          {this.props.kind == "manager" || this.props.kind == "dir" ? (
-            false
-          ) : this.props.part == 1 ? (
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+            }}
+          ></TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display:
+                parseInt(this.props.access["test_all_price_view"]) == 1 ? "table-cell" : "none",
+            }}
+          ></TableCell>
+          {this.props.part == 1 ? (
             false
           ) : (
-            <TableCell style={{ textAlign: "center" }}></TableCell>
+            <TableCell
+              style={{
+                textAlign: "center",
+                display: parseInt(this.props.access["premia_view"]) == 1 ? "table-cell" : "none",
+              }}
+            ></TableCell>
           )}
         </TableRow>
 
@@ -299,12 +379,8 @@ class HeaderItem extends React.Component {
           <TableCell style={{ minWidth: 140, minHeight: 38 }}>Сотрудник</TableCell>
           <TableCell style={{ minWidth: 165, minHeight: 38 }}>Должность</TableCell>
 
-          {this.props.kind == "manager" || this.props.kind == "other" ? null : (
-            <TableCell></TableCell>
-          )}
-          {this.props.kind == "manager" || this.props.kind == "other" ? null : (
-            <TableCell></TableCell>
-          )}
+          {is_fast && <TableCell></TableCell>}
+          {is_fast && <TableCell></TableCell>}
 
           {this.props.days.map((item, key) => (
             <TableCell
@@ -319,38 +395,121 @@ class HeaderItem extends React.Component {
             </TableCell>
           ))}
 
-          <TableCell style={{ textAlign: "center" }}>За 1ч</TableCell>
-          <TableCell style={{ textAlign: "center" }}>За 1ч + доплата</TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none",
+            }}
+          >
+            За 1ч
+          </TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["1h_plus_view"]) == 1 ? "table-cell" : "none",
+            }}
+          >
+            За 1ч + доплата
+          </TableCell>
 
-          <TableCell style={{ textAlign: "center" }}>Командный бонус</TableCell>
-          <TableCell style={{ textAlign: "center" }}>За часы</TableCell>
-          <TableCell style={{ textAlign: "center" }}>Ошибки</TableCell>
-          <TableCell style={{ textAlign: "center" }}>Бонус</TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+            }}
+          >
+            Командный бонус
+          </TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+            }}
+          >
+            За часы
+          </TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["errors_view"]) == 1 ? "table-cell" : "none",
+            }}
+          >
+            Ошибки
+          </TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
+            }}
+          >
+            Бонус
+          </TableCell>
 
           {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-            <TableCell style={{ textAlign: "center" }}>Всего</TableCell>
+            <TableCell
+              style={{
+                textAlign: "center",
+                display: parseInt(this.props.access["all_price_view"]) == 1 ? "table-cell" : "none",
+              }}
+            >
+              Всего
+            </TableCell>
           ) : null}
 
-          <TableCell style={{ textAlign: "center" }}>Выдано</TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+            }}
+          >
+            Выдано
+          </TableCell>
 
-          <TableCell style={{ textAlign: "center" }}>Удержано по исп. листу</TableCell>
-          <TableCell style={{ textAlign: "center" }}>Перечислено на карты</TableCell>
-          <TableCell style={{ textAlign: "center" }}>Сумма к выплате</TableCell>
-          {this.props.kind == "manager" || this.props.kind == "dir" ? (
-            false
-          ) : this.props.part == 1 ? (
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+            }}
+          >
+            Удержано по исп. листу
+          </TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+            }}
+          >
+            Перечислено на карты
+          </TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display:
+                parseInt(this.props.access["test_all_price_view"]) == 1 ? "table-cell" : "none",
+            }}
+          >
+            Сумма к выплате
+          </TableCell>
+          {this.props.part == 1 ? (
             false
           ) : (
-            <TableCell style={{ textAlign: "center" }}>Премия по ведомости</TableCell>
+            <TableCell
+              style={{
+                textAlign: "center",
+                display: parseInt(this.props.access["premia_view"]) == 1 ? "table-cell" : "none",
+              }}
+            >
+              Премия по ведомости
+            </TableCell>
           )}
         </TableRow>
 
         <TableRow style={{ backgroundColor: "#e5e5e5" }}>
           <TableCell
             style={{ textAlign: "center", cursor: "pointer" }}
-            colSpan={this.props.days.length + 3 + 8 + 2}
+            colSpan={this.props.days.length + 3 + 8 + 4}
             onClick={
-              this.props.kind == "manager"
+              parseInt(this.props.access["create_edit_smena_access"]) == 0
                 ? () => {}
                 : this.props.editSmena
                   ? this.props.editSmena.bind(this, this.props.item.smena_id)
@@ -406,7 +565,18 @@ class WorkSchedule_Table extends React.Component {
 
     //this.props.openModalDirBonus;
 
-    // console.log('this.props', this.props);
+    console.log("this.props", this.props);
+
+    let is_fast = true;
+
+    if (
+      parseInt(this.props.access["fast_2_week_access"]) == 0 &&
+      parseInt(this.props.access["fast_month_access"]) == 0 &&
+      parseInt(this.props.access["fast_point_access"]) == 0 &&
+      parseInt(this.props.access["fast_smena_access"]) == 0
+    ) {
+      is_fast = false;
+    }
 
     return (
       <TableContainer
@@ -446,14 +616,14 @@ class WorkSchedule_Table extends React.Component {
                     editSmena={this.props.editSmena.bind(this)}
                     openAddUser={this.props.openAddUser.bind(this)}
                     part={this.props.numberChoose}
+                    access={this.props.access}
                   />
 
                   {parseInt(key) == 0 &&
-                  this.props.kind !== "manager" &&
-                  this.props.kind !== "other" ? (
+                  parseInt(this.props.access["create_edit_smena_access"]) == 1 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={this.props.number.days.length + 3 + 8 + 2}
+                        colSpan={this.props.number.days.length + 3 + 8 + 4}
                         style={{ textAlign: "left", fontSize: "3rem", cursor: "pointer" }}
                         onClick={this.props.addSmena.bind(this)}
                       >
@@ -490,7 +660,7 @@ class WorkSchedule_Table extends React.Component {
                               : "#fff",
                     }}
                     onClick={
-                      this.props.kind == "manager"
+                      parseInt(this.props.access["full_month_access"]) == 0
                         ? () => {}
                         : this.props.openM.bind(this, item.data)
                     }
@@ -505,7 +675,7 @@ class WorkSchedule_Table extends React.Component {
                     {item.data.app_name}
                   </TableCell>
 
-                  {this.props.kind == "manager" ? null : item.data.smena_id === "-1" ? (
+                  {!is_fast ? null : item.data.smena_id === "-1" ? (
                     <TableCell />
                   ) : (
                     <TableCell className="checkBox">
@@ -518,7 +688,7 @@ class WorkSchedule_Table extends React.Component {
                     </TableCell>
                   )}
 
-                  {this.props.kind == "manager" ? null : item.data.smena_id === "-1" ? (
+                  {!is_fast ? null : item.data.smena_id === "-1" ? (
                     <TableCell />
                   ) : (
                     <TableCell style={{ textAlign: "center" }}>
@@ -579,24 +749,41 @@ class WorkSchedule_Table extends React.Component {
                   ))}
 
                   <TableCell
-                    style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
-                    onClick={
-                      this.props.kind == "manager"
-                        ? () => {}
-                        : this.props.pricePerHour.bind(this, item.data)
-                    }
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                    // onClick={
+                    //   this.props.kind == "manager"
+                    //     ? () => {}
+                    //     : this.props.pricePerHour.bind(this, item.data)
+                    // }
                   >
                     {item.data.price_p_h}
                   </TableCell>
 
-                  <TableCell style={{ textAlign: "center", minWidth: 70 }}>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      display:
+                        parseInt(this.props.access["1h_plus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
                     {item.data.price_p_h_dop}
                   </TableCell>
 
                   <TableCell
-                    style={{ textAlign: "center", cursor: "pointer" }}
+                    style={{
+                      textAlign: "center",
+                      cursor: "pointer",
+                      display:
+                        parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
                     onClick={
-                      this.props.kind == "manager"
+                      parseInt(this.props.access["com_bonus_edit"]) == 0
                         ? () => {}
                         : this.props.changeDopBonusUser.bind(this, item)
                     }
@@ -604,33 +791,44 @@ class WorkSchedule_Table extends React.Component {
                     {parseInt(item.data.check_period) == 1 ? item.data.dop_bonus : " - "}
                   </TableCell>
 
-                  <TableCell style={{ textAlign: "center" }}>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
                     {parseInt(item.data.check_period) == 1 ? item.data.h_price : " - "}
                   </TableCell>
 
-                  <TableCell style={{ textAlign: "center" }}>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["errors_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
                     {parseInt(item.data.check_period) == 1 ? item.data.err_price : " - "}
                   </TableCell>
 
                   <TableCell
                     style={{
                       textAlign: "center",
+                      display:
+                        parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
                       cursor:
-                        item.data.app_type == "dir" &&
-                        (this.props.kind == "dir" || this.props.kind == "mega_dir")
+                        this.props.numberChoose == 2 &&
+                        parseInt(this.props.access["bonus_edit"]) == 1
                           ? "pointer"
                           : "default",
                       backgroundColor:
                         this.props.numberChoose == 2 &&
-                        (this.props.kind == "dir" || this.props.kind == "mega_dir") &&
-                        item.data.app_type == "dir"
+                        parseInt(this.props.access["bonus_edit"]) == 1
                           ? "#e5e5e5"
                           : "#fff",
                     }}
                     onClick={
-                      this.props.numberChoose == 2 &&
-                      (this.props.kind == "dir" || this.props.kind == "mega_dir") &&
-                      item.data.app_type == "dir"
+                      this.props.numberChoose == 2 && parseInt(this.props.access["bonus_edit"]) == 1
                         ? this.props.openModalDirBonus.bind(
                             this,
                             item.data.id,
@@ -656,7 +854,15 @@ class WorkSchedule_Table extends React.Component {
                   </TableCell>
 
                   {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                    <TableCell style={{ textAlign: "center" }}>
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    >
                       {parseInt(item.data.check_period) == 1
                         ? parseInt(item.data.dop_bonus) +
                           parseInt(item.data.dir_price) +
@@ -672,30 +878,83 @@ class WorkSchedule_Table extends React.Component {
                   ) : null}
 
                   {item.data.app_type == "driver" ? (
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                      }}
+                    ></TableCell>
                   ) : (
                     <TableCell
-                      style={{ textAlign: "center", cursor: "pointer" }}
-                      onClick={this.props.openZP.bind(
-                        this,
-                        item.data.id,
-                        item.data.smena_id,
-                        item.data.app_id,
-                        this.props.numberChoose,
-                        item.data,
-                      )}
+                      style={{
+                        textAlign: "center",
+                        cursor: "pointer",
+                        display:
+                          parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                      }}
+                      onClick={
+                        parseInt(this.props.access["given_edit"]) == 0
+                          ? () => {}
+                          : this.props.openZP.bind(
+                              this,
+                              item.data.id,
+                              item.data.smena_id,
+                              item.data.app_id,
+                              this.props.numberChoose,
+                              item.data,
+                            )
+                      }
                     >
                       {item.data.given}
                     </TableCell>
                   )}
 
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      cursor: "pointer",
+                      display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                    onClick={
+                      parseInt(this.props.access["withheld_edit"]) == 0
+                        ? () => {}
+                        : this.props.openWithheld.bind(
+                            this,
+                            item.data.id,
+                            item.data.smena_id,
+                            item.data.app_id,
+                            this.props.numberChoose,
+                            item.data,
+                          )
+                    }
+                  >
+                    {item.data.withheld}
+                  </TableCell>
+
                   {item.data.app_type == "driver" ? (
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["given_cart_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    ></TableCell>
                   ) : (
                     <TableCell
-                      style={{ textAlign: "center", cursor: "pointer" }}
+                      style={{
+                        textAlign: "center",
+                        cursor: "pointer",
+                        display:
+                          parseInt(this.props.access["given_cart_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
                       onClick={
-                        this.props.kind == "manager" || this.props.kind == "dir"
+                        parseInt(this.props.access["given_cart_edit"]) == 0
                           ? () => {}
                           : this.props.openZPCart.bind(
                               this,
@@ -707,32 +966,30 @@ class WorkSchedule_Table extends React.Component {
                             )
                       }
                     >
-                      {item.data.withheld} - ТУТ
-                    </TableCell>
-                  )}
-
-                  {item.data.app_type == "driver" ? (
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                  ) : (
-                    <TableCell
-                      style={{ textAlign: "center", cursor: "pointer" }}
-                      onClick={this.props.openZPCart.bind(
-                        this,
-                        item.data.id,
-                        item.data.smena_id,
-                        item.data.app_id,
-                        this.props.numberChoose,
-                        item.data,
-                      )}
-                    >
                       {item.data.given_cart}
                     </TableCell>
                   )}
 
                   {item.data.app_type == "driver" ? (
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["test_all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    ></TableCell>
                   ) : (
-                    <TableCell style={{ textAlign: "center" }}>
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["test_all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    >
                       {parseInt(item.data.check_period) == 1
                         ? parseInt(item.data.dop_bonus) +
                           parseInt(item.data.dir_price) +
@@ -748,14 +1005,14 @@ class WorkSchedule_Table extends React.Component {
                     </TableCell>
                   )}
 
-                  {this.props.kind == "manager" || this.props.kind == "dir" ? (
-                    false
-                  ) : this.props.numberChoose == 1 ? (
+                  {this.props.numberChoose == 1 ? (
                     false
                   ) : (
                     <TableCell
                       style={{
                         textAlign: "center",
+                        display:
+                          parseInt(this.props.access["premia_view"]) == 1 ? "table-cell" : "none",
                         backgroundColor: parseInt(item.data.acc_to_kas) == 1 ? "#c03" : "#fff",
                         color: parseInt(item.data.acc_to_kas) == 1 ? "#fff" : "#000",
                       }}
@@ -768,169 +1025,516 @@ class WorkSchedule_Table extends React.Component {
             )}
           </TableBody>
 
-          {this.props.kind == "other" ? null : (
-            <TableFooter sx={{ "& td": { color: "rgba(0, 0, 0, 0.87)" } }}>
-              <TableRow>
-                <TableCell></TableCell>
-                <TableCell></TableCell>
+          <TableFooter sx={{ "& td": { color: "rgba(0, 0, 0, 0.87)" } }}>
+            <TableRow>
+              <TableCell></TableCell>
+              <TableCell></TableCell>
 
-                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
-                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
+              {is_fast && <TableCell></TableCell>}
+              {is_fast && <TableCell></TableCell>}
 
-                {this.props.number.bonus.map((item, key) => (
-                  <TableCell
-                    className="min_block min_size"
-                    style={{ backgroundColor: item.type == "cur" ? "#98e38d" : "#fff" }}
-                    key={key}
-                  >
-                    {item.res}
-                  </TableCell>
-                ))}
-
-                {this.props.kind == "manager" ? null : (
-                  <>
+              {parseInt(this.props.access["bonus_of_day_view"]) == 1
+                ? this.props.number.bonus.map((item, key) => (
                     <TableCell
-                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
-                    ></TableCell>
-
-                    <TableCell style={{ textAlign: "center" }}>
-                      {this.props.number.other_summ.sum_dop_bonus_price}
+                      className="min_block min_size"
+                      style={{ backgroundColor: item.type == "cur" ? "#98e38d" : "#fff" }}
+                      key={key}
+                    >
+                      {item.res}
                     </TableCell>
-
-                    <TableCell style={{ textAlign: "center" }}>
-                      {this.props.number.other_summ.sum_h_price}
-                    </TableCell>
-
-                    <TableCell style={{ textAlign: "center" }}>
-                      {this.props.number.other_summ.sum_err_price}
-                    </TableCell>
-
-                    <TableCell style={{ textAlign: "center" }}>
-                      {this.props.number.other_summ.sum_bonus_price}
-                    </TableCell>
-
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                      <TableCell style={{ textAlign: "center" }}>
-                        {this.props.number.other_summ.sum_to_given_price}
-                      </TableCell>
-                    ) : null}
-
-                    <TableCell style={{ textAlign: "center" }}>
-                      {this.props.number.other_summ.sum_given_price}
-                    </TableCell>
-                  </>
-                )}
-              </TableRow>
-
-              <TableRow>
-                <TableCell></TableCell>
-                <TableCell>Роллов</TableCell>
-
-                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
-                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
-
-                {this.props.number.bonus.map((item, key) => (
-                  <TableCell
-                    className="min_block min_size"
-                    key={key}
-                  >
-                    {item.count_rolls}
-                  </TableCell>
-                ))}
-
-                {this.props.kind == "manager" ? null : (
-                  <>
+                  ))
+                : this.props.number.bonus.map((item, key) => (
                     <TableCell
-                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                      className="min_block min_size"
+                      key={key}
                     ></TableCell>
+                  ))}
 
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                      <TableCell style={{ textAlign: "center" }}></TableCell>
-                    ) : null}
-
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                  </>
-                )}
-              </TableRow>
-
-              <TableRow>
-                <TableCell></TableCell>
-                <TableCell>Пиццы</TableCell>
-
-                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
-                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
-
-                {this.props.number.bonus.map((item, key) => (
+              {parseInt(this.props.access["sums_all_view"]) == 1 && (
+                <>
                   <TableCell
-                    className="min_block min_size"
-                    key={key}
-                  >
-                    {item.count_pizza}
-                  </TableCell>
-                ))}
-
-                {this.props.kind == "manager" ? null : (
-                  <>
-                    <TableCell
-                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
-                    ></TableCell>
-
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                      <TableCell style={{ textAlign: "center" }}></TableCell>
-                    ) : null}
-
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                  </>
-                )}
-              </TableRow>
-
-              <TableRow>
-                <TableCell></TableCell>
-                <TableCell className="min_size">Заказы готовились больше 40 минут</TableCell>
-
-                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
-                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
-
-                {this.props.number.order_stat.map((item, key) => (
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
                   <TableCell
-                    className="min_block min_size"
-                    key={key}
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display:
+                        parseInt(this.props.access["1h_plus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
                   >
-                    {item.count_false}
+                    {this.props.number.other_summ.sum_dop_bonus_price}
                   </TableCell>
-                ))}
 
-                {this.props.kind == "manager" ? null : (
-                  <>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {this.props.number.other_summ.sum_h_price}
+                  </TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["errors_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {this.props.number.other_summ.sum_err_price}
+                  </TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {this.props.number.other_summ.sum_bonus_price}
+                  </TableCell>
+
+                  {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
                     <TableCell
-                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    >
+                      {this.props.number.other_summ.sum_to_given_price}
+                    </TableCell>
+                  ) : null}
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {this.props.number.other_summ.sum_given_price}
+                  </TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["test_all_price_view"]) == 1
+                          ? "table-cell"
+                          : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["premia_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                </>
+              )}
+            </TableRow>
+
+            <TableRow
+              style={{
+                display: parseInt(this.props.access["rolls_view"]) == 1 ? "table-row" : "none",
+              }}
+            >
+              <TableCell></TableCell>
+              <TableCell>Роллов</TableCell>
+
+              {is_fast && <TableCell></TableCell>}
+              {is_fast && <TableCell></TableCell>}
+
+              {this.props.number.bonus.map((item, key) => (
+                <TableCell
+                  className="min_block min_size"
+                  key={key}
+                >
+                  {item.count_rolls}
+                </TableCell>
+              ))}
+
+              {parseInt(this.props.access["sums_all_view"]) == 1 && (
+                <>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display:
+                        parseInt(this.props.access["1h_plus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["errors_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
                     ></TableCell>
+                  ) : null}
 
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["test_all_price_view"]) == 1
+                          ? "table-cell"
+                          : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["premia_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                </>
+              )}
+            </TableRow>
 
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                      <TableCell style={{ textAlign: "center" }}></TableCell>
-                    ) : null}
+            <TableRow
+              style={{
+                display: parseInt(this.props.access["pizza_view"]) == 1 ? "table-row" : "none",
+              }}
+            >
+              <TableCell></TableCell>
+              <TableCell>Пиццы</TableCell>
 
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                  </>
-                )}
-              </TableRow>
-            </TableFooter>
-          )}
+              {is_fast && <TableCell></TableCell>}
+              {is_fast && <TableCell></TableCell>}
+
+              {this.props.number.bonus.map((item, key) => (
+                <TableCell
+                  className="min_block min_size"
+                  key={key}
+                >
+                  {item.count_pizza}
+                </TableCell>
+              ))}
+
+              {parseInt(this.props.access["sums_all_view"]) == 1 && (
+                <>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display:
+                        parseInt(this.props.access["1h_plus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["errors_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    ></TableCell>
+                  ) : null}
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["test_all_price_view"]) == 1
+                          ? "table-cell"
+                          : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["premia_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                </>
+              )}
+            </TableRow>
+
+            <TableRow
+              style={{
+                display:
+                  parseInt(this.props.access["over_40_min_view"]) == 1 ? "table-row" : "none",
+              }}
+            >
+              <TableCell></TableCell>
+              <TableCell className="min_size">Заказы готовились больше 40 минут</TableCell>
+
+              {is_fast && <TableCell></TableCell>}
+              {is_fast && <TableCell></TableCell>}
+
+              {this.props.number.order_stat.map((item, key) => (
+                <TableCell
+                  className="min_block min_size"
+                  key={key}
+                >
+                  {item.count_false}
+                </TableCell>
+              ))}
+
+              {parseInt(this.props.access["sums_all_view"]) == 1 && (
+                <>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display:
+                        parseInt(this.props.access["1h_plus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["errors_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    ></TableCell>
+                  ) : null}
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["test_all_price_view"]) == 1
+                          ? "table-cell"
+                          : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["premia_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                </>
+              )}
+            </TableRow>
+          </TableFooter>
         </Table>
       </TableContainer>
     );
@@ -955,6 +1559,17 @@ class WorkSchedule_Table_without_functions extends React.Component {
   }
 
   render() {
+    let is_fast = true;
+
+    if (
+      parseInt(this.props.access["fast_2_week_access"]) == 0 &&
+      parseInt(this.props.access["fast_month_access"]) == 0 &&
+      parseInt(this.props.access["fast_point_access"]) == 0 &&
+      parseInt(this.props.access["fast_smena_access"]) == 0
+    ) {
+      is_fast = false;
+    }
+
     return (
       <TableContainer component={Paper}>
         <Table id={this.props.numberChoose === 1 ? "table_graph_one" : "table_graph_two"}>
@@ -977,6 +1592,7 @@ class WorkSchedule_Table_without_functions extends React.Component {
                   item={item}
                   openAddUser={this.props.openAddUser.bind(this)}
                   part={this.props.numberChoose}
+                  access={this.props.access}
                 />
               ) : (
                 <TableRow key={key}>
@@ -1009,8 +1625,11 @@ class WorkSchedule_Table_without_functions extends React.Component {
                     {item.data.app_name}
                   </TableCell>
 
-                  {this.props.kind == "manager" || this.props.kind == "other" ? null : (
-                    <TableCell style={{ textAlign: "center" }} />
+                  {is_fast && (
+                    <>
+                      <TableCell style={{ textAlign: "center" }} />
+                      <TableCell style={{ textAlign: "center" }} />
+                    </>
                   )}
 
                   {item.data.dates.map((date, date_k) => (
@@ -1028,233 +1647,668 @@ class WorkSchedule_Table_without_functions extends React.Component {
                     </TableCell>
                   ))}
 
-                  {this.props.kind == "manager" ? null : (
-                    <>
-                      <TableCell
-                        style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
-                        // onClick={this.props.pricePerHour.bind(this, item.data)}
-                      >
-                        {item.data.price_p_h}
-                      </TableCell>
-                      <TableCell style={{ textAlign: "center", minWidth: 70 }}>
-                        {item.data.price_p_h_dop}
-                      </TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                    // onClick={this.props.pricePerHour.bind(this, item.data)}
+                  >
+                    {item.data.price_p_h}
+                  </TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      display:
+                        parseInt(this.props.access["1h_plus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {item.data.price_p_h_dop}
+                  </TableCell>
 
-                      <TableCell
-                        style={{ textAlign: "center", сursor: "pointer" }}
-                        // onClick={this.props.changeDopBonusUser.bind(this, item)}
-                      >
-                        {parseInt(item.data.check_period) == 1 ? item.data.dop_bonus : " - "}
-                      </TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      сursor: "pointer",
+                      display:
+                        parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                    // onClick={this.props.changeDopBonusUser.bind(this, item)}
+                  >
+                    {parseInt(item.data.check_period) == 1 ? item.data.dop_bonus : " - "}
+                  </TableCell>
 
-                      <TableCell style={{ textAlign: "center" }}>
-                        {parseInt(item.data.check_period) == 1 ? item.data.h_price : " - "}
-                      </TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {parseInt(item.data.check_period) == 1 ? item.data.h_price : " - "}
+                  </TableCell>
 
-                      <TableCell style={{ textAlign: "center" }}>
-                        {parseInt(item.data.check_period) == 1 ? item.data.err_price : " - "}
-                      </TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["errors_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {parseInt(item.data.check_period) == 1 ? item.data.err_price : " - "}
+                  </TableCell>
 
-                      <TableCell style={{ textAlign: "center" }}>
-                        {parseInt(item.data.check_period) == 1 ? item.data.my_bonus : " - "}
-                      </TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {parseInt(item.data.check_period) == 1 ? item.data.my_bonus : " - "}
+                  </TableCell>
 
-                      {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                        <TableCell style={{ textAlign: "center" }}>
-                          {parseInt(item.data.check_period) == 1
-                            ? parseInt(item.data.dop_bonus) +
-                              parseInt(item.data.dir_price) +
-                              parseInt(item.data.register_price) +
-                              parseInt(item.data.dir_price_dop) +
-                              parseInt(item.data.h_price) +
-                              parseInt(item.data.my_bonus) -
-                              parseInt(item.data.err_price) -
-                              parseInt(item.data.withheld) +
-                              ""
-                            : " - "}
-                        </TableCell>
-                      ) : null}
+                  {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    >
+                      {parseInt(item.data.check_period) == 1
+                        ? parseInt(item.data.dop_bonus) +
+                          parseInt(item.data.dir_price) +
+                          parseInt(item.data.register_price) +
+                          parseInt(item.data.dir_price_dop) +
+                          parseInt(item.data.h_price) +
+                          parseInt(item.data.my_bonus) -
+                          parseInt(item.data.err_price) -
+                          parseInt(item.data.withheld) +
+                          ""
+                        : " - "}
+                    </TableCell>
+                  ) : null}
 
-                      {item.data.app_type == "driver" ? (
-                        <TableCell style={{ textAlign: "center" }}></TableCell>
-                      ) : (
-                        <TableCell style={{ textAlign: "center" }}>{item.data.given}</TableCell>
-                      )}
-
-                      {item.data.app_type == "driver" ? (
-                        <TableCell style={{ textAlign: "center" }}></TableCell>
-                      ) : (
-                        <TableCell style={{ textAlign: "center" }}>{item.data.withheld}</TableCell>
-                      )}
-
-                      <TableCell style={{ textAlign: "center" }}>{item.data.given_cart}</TableCell>
-                      <TableCell style={{ textAlign: "center" }}></TableCell>
-                    </>
-                  )}
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {item.data.given}
+                  </TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {item.data.withheld}
+                  </TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {item.data.given_cart}
+                  </TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["test_all_price_view"]) == 1
+                          ? "table-cell"
+                          : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["premia_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
                 </TableRow>
               ),
             )}
           </TableBody>
 
-          {this.props.kind == "other" ? null : (
-            <TableFooter sx={{ "& td": { color: "rgba(0, 0, 0, 0.87)" } }}>
-              <TableRow>
-                <TableCell></TableCell>
-                <TableCell></TableCell>
+          <TableFooter sx={{ "& td": { color: "rgba(0, 0, 0, 0.87)" } }}>
+            <TableRow>
+              <TableCell></TableCell>
+              <TableCell></TableCell>
 
-                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
+              {is_fast && (
+                <>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                </>
+              )}
 
-                {this.props.number.bonus.map((item, key) => (
-                  <TableCell
-                    className="min_block min_size"
-                    style={{ backgroundColor: item.type == "cur" ? "#98e38d" : "#fff" }}
-                    key={key}
-                  >
-                    {item.res}
-                  </TableCell>
-                ))}
-
-                {this.props.kind == "manager" ? null : (
-                  <>
+              {parseInt(this.props.access["bonus_of_day_view"]) == 1
+                ? this.props.number.bonus.map((item, key) => (
                     <TableCell
-                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
-                    ></TableCell>
-
-                    <TableCell style={{ textAlign: "center" }}>
-                      {this.props.number.other_summ.sum_dop_bonus_price}
+                      className="min_block min_size"
+                      style={{ backgroundColor: item.type == "cur" ? "#98e38d" : "#fff" }}
+                      key={key}
+                    >
+                      {item.res}
                     </TableCell>
-
-                    <TableCell style={{ textAlign: "center" }}>
-                      {this.props.number.other_summ.sum_h_price}
-                    </TableCell>
-
-                    <TableCell style={{ textAlign: "center" }}>
-                      {this.props.number.other_summ.sum_err_price}
-                    </TableCell>
-
-                    <TableCell style={{ textAlign: "center" }}>
-                      {this.props.number.other_summ.sum_bonus_price}
-                    </TableCell>
-
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                      <TableCell style={{ textAlign: "center" }}>
-                        {this.props.number.other_summ.sum_to_given_price}
-                      </TableCell>
-                    ) : null}
-
-                    <TableCell style={{ textAlign: "center" }}>
-                      {this.props.number.other_summ.sum_given_price}
-                    </TableCell>
-                  </>
-                )}
-              </TableRow>
-
-              <TableRow>
-                <TableCell></TableCell>
-                <TableCell>Роллов</TableCell>
-
-                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
-
-                {this.props.number.bonus.map((item, key) => (
-                  <TableCell
-                    className="min_block min_size"
-                    key={key}
-                  >
-                    {item.count_rolls}
-                  </TableCell>
-                ))}
-
-                {this.props.kind == "manager" ? null : (
-                  <>
+                  ))
+                : this.props.number.bonus.map((item, key) => (
                     <TableCell
-                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                      className="min_block min_size"
+                      key={key}
                     ></TableCell>
+                  ))}
 
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                      <TableCell style={{ textAlign: "center" }}></TableCell>
-                    ) : null}
-
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                  </>
-                )}
-              </TableRow>
-
-              <TableRow>
-                <TableCell></TableCell>
-                <TableCell>Пиццы</TableCell>
-
-                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
-
-                {this.props.number.bonus.map((item, key) => (
+              {parseInt(this.props.access["sums_all_view"]) == 1 && (
+                <>
                   <TableCell
-                    className="min_block min_size"
-                    key={key}
-                  >
-                    {item.count_pizza}
-                  </TableCell>
-                ))}
-
-                {this.props.kind == "manager" ? null : (
-                  <>
-                    <TableCell
-                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
-                    ></TableCell>
-
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                      <TableCell style={{ textAlign: "center" }}></TableCell>
-                    ) : null}
-
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                  </>
-                )}
-              </TableRow>
-
-              <TableRow>
-                <TableCell></TableCell>
-                <TableCell className="min_size">Заказы готовились больше 40 минут</TableCell>
-
-                {this.props.kind == "manager" ? null : <TableCell></TableCell>}
-
-                {this.props.number.order_stat.map((item, key) => (
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
                   <TableCell
-                    className="min_block min_size"
-                    key={key}
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display:
+                        parseInt(this.props.access["1h_plus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
                   >
-                    {item.count_false}
+                    {this.props.number.other_summ.sum_dop_bonus_price}
                   </TableCell>
-                ))}
 
-                {this.props.kind == "manager" ? null : (
-                  <>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {this.props.number.other_summ.sum_h_price}
+                  </TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["errors_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {this.props.number.other_summ.sum_err_price}
+                  </TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {this.props.number.other_summ.sum_bonus_price}
+                  </TableCell>
+
+                  {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
                     <TableCell
-                      style={{ textAlign: "center", minWidth: 70, cursor: "pointer" }}
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    >
+                      {this.props.number.other_summ.sum_to_given_price}
+                    </TableCell>
+                  ) : null}
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {this.props.number.other_summ.sum_given_price}
+                  </TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["test_all_price_view"]) == 1
+                          ? "table-cell"
+                          : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["premia_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                </>
+              )}
+            </TableRow>
+
+            <TableRow
+              style={{
+                display: parseInt(this.props.access["rolls_view"]) == 1 ? "table-row" : "none",
+              }}
+            >
+              <TableCell></TableCell>
+              <TableCell>Роллов</TableCell>
+
+              {is_fast && (
+                <>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                </>
+              )}
+
+              {this.props.number.bonus.map((item, key) => (
+                <TableCell
+                  className="min_block min_size"
+                  key={key}
+                >
+                  {item.count_rolls}
+                </TableCell>
+              ))}
+
+              {parseInt(this.props.access["sums_all_view"]) == 1 && (
+                <>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display:
+                        parseInt(this.props.access["1h_plus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["errors_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
                     ></TableCell>
+                  ) : null}
 
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["test_all_price_view"]) == 1
+                          ? "table-cell"
+                          : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["premia_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                </>
+              )}
+            </TableRow>
 
-                    {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
-                      <TableCell style={{ textAlign: "center" }}></TableCell>
-                    ) : null}
+            <TableRow
+              style={{
+                display: parseInt(this.props.access["pizza_view"]) == 1 ? "table-row" : "none",
+              }}
+            >
+              <TableCell></TableCell>
+              <TableCell>Пиццы</TableCell>
 
-                    <TableCell style={{ textAlign: "center" }}></TableCell>
-                  </>
-                )}
-              </TableRow>
-            </TableFooter>
-          )}
+              {is_fast && (
+                <>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                </>
+              )}
+
+              {this.props.number.bonus.map((item, key) => (
+                <TableCell
+                  className="min_block min_size"
+                  key={key}
+                >
+                  {item.count_pizza}
+                </TableCell>
+              ))}
+
+              {parseInt(this.props.access["sums_all_view"]) == 1 && (
+                <>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display:
+                        parseInt(this.props.access["1h_plus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["errors_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    ></TableCell>
+                  ) : null}
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["test_all_price_view"]) == 1
+                          ? "table-cell"
+                          : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["premia_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                </>
+              )}
+            </TableRow>
+
+            <TableRow
+              style={{
+                display:
+                  parseInt(this.props.access["over_40_min_view"]) == 1 ? "table-row" : "none",
+              }}
+            >
+              <TableCell></TableCell>
+              <TableCell className="min_size">Заказы готовились больше 40 минут</TableCell>
+
+              {is_fast && (
+                <>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                </>
+              )}
+
+              {this.props.number.order_stat.map((item, key) => (
+                <TableCell
+                  className="min_block min_size"
+                  key={key}
+                >
+                  {item.count_false}
+                </TableCell>
+              ))}
+
+              {parseInt(this.props.access["sums_all_view"]) == 1 && (
+                <>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      minWidth: 70,
+                      cursor: "pointer",
+                      display:
+                        parseInt(this.props.access["1h_plus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["com_bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["full_h_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["errors_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  {this.props.show_zp == 1 || this.props.show_zp == 0 ? (
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    ></TableCell>
+                  ) : null}
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["test_all_price_view"]) == 1
+                          ? "table-cell"
+                          : "none",
+                    }}
+                  ></TableCell>
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["premia_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+                </>
+              )}
+            </TableRow>
+          </TableFooter>
         </Table>
       </TableContainer>
     );
@@ -1312,6 +2366,7 @@ class WorkSchedule_ extends React.Component {
       mainMenuZP: false,
       mainMenuZPCart: false,
       mainMenuPoints: false,
+      mainMenuWithheld: false,
 
       mainMenuDopBonusUser: false,
       userDopBonus: null,
@@ -1404,7 +2459,7 @@ class WorkSchedule_ extends React.Component {
     this.setState({
       points: res.point_list,
       point: res.point_list[0].id,
-      // access: res.access,
+      access: res.access,
 
       mounths: res.mounths,
       mounth: res.mounths.find((item) => parseInt(item.is_active) == 1)["id"],
@@ -2194,6 +3249,23 @@ class WorkSchedule_ extends React.Component {
     });
   }
 
+  openWithheld(user_id, smena_id, app_id, part, user) {
+    // console.log(user_id, smena_id, app_id, part, user)
+
+    this.setState({
+      mainMenuWithheld: true,
+      userInfo: {
+        name: user.user_name,
+        app: user.full_app_name,
+        withheld: user.withheld,
+        date: this.state.mounth + (parseInt(part) == 1 ? "-01" : "-16"),
+        user_id: user_id,
+        smena_id: smena_id,
+        app_id: app_id,
+      },
+    });
+  }
+
   async saveGive() {
     let data = {
       date: this.state.userInfo.date,
@@ -2239,6 +3311,41 @@ class WorkSchedule_ extends React.Component {
     };
 
     let res = await this.getData("save_user_give_cart_price", data);
+
+    // console.log( res );
+
+    if (res["st"] == true) {
+      this.setState({
+        mainMenuZPCart: false,
+        userInfo: null,
+
+        operAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+      setTimeout(() => {
+        this.updateData();
+      }, 300);
+    } else {
+      this.setState({
+        operAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    }
+  }
+
+  async saveWithheld() {
+    let data = {
+      date: this.state.userInfo.date,
+      user_id: this.state.userInfo.user_id,
+      smena_id: this.state.userInfo.smena_id,
+      app_id: this.state.userInfo.app_id,
+      withheld: this.state.userInfo.withheld,
+    };
+
+    let res = await this.getData("save_user_withheld", data);
 
     // console.log( res );
 
@@ -2899,29 +4006,35 @@ class WorkSchedule_ extends React.Component {
           </DialogTitle>
 
           <List sx={{ pt: 0 }}>
-            <ListItemButton
-              onClick={() =>
-                this.setState({ mainMenuAddUsers: false, mainMenuAddUsersMounth: true })
-              }
-            >
-              <ListItemAvatar>
-                <Avatar>
-                  <AccessTimeIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary="Сменить часы на месяц" />
-            </ListItemButton>
+            {parseInt(this.state.access?.fast_month_access) == 1 && (
+              <ListItemButton
+                onClick={() =>
+                  this.setState({ mainMenuAddUsers: false, mainMenuAddUsersMounth: true })
+                }
+              >
+                <ListItemAvatar>
+                  <Avatar>
+                    <AccessTimeIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText primary="Сменить часы на месяц" />
+              </ListItemButton>
+            )}
 
-            <ListItemButton
-              onClick={() => this.setState({ mainMenuAddUsers: false, mainMenuAddUsersWeek: true })}
-            >
-              <ListItemAvatar>
-                <Avatar>
-                  <SyncAltIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary="Сменить часы на 2 недели" />
-            </ListItemButton>
+            {parseInt(this.state.access?.fast_2_week_access) == 1 && (
+              <ListItemButton
+                onClick={() =>
+                  this.setState({ mainMenuAddUsers: false, mainMenuAddUsersWeek: true })
+                }
+              >
+                <ListItemAvatar>
+                  <Avatar>
+                    <SyncAltIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText primary="Сменить часы на 2 недели" />
+              </ListItemButton>
+            )}
           </List>
         </Dialog>
         <Dialog
@@ -3033,57 +4146,65 @@ class WorkSchedule_ extends React.Component {
           )}
 
           <List sx={{ pt: 0 }}>
-            <ListItemButton onClick={() => this.setState({ mainMenu: false, mainMenuH: true })}>
-              <ListItemAvatar>
-                <Avatar>
-                  <AccessTimeIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary="Сменить часы на месяц" />
-            </ListItemButton>
+            {parseInt(this.state.access?.fast_month_access) == 1 && (
+              <ListItemButton onClick={() => this.setState({ mainMenu: false, mainMenuH: true })}>
+                <ListItemAvatar>
+                  <Avatar>
+                    <AccessTimeIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText primary="Сменить часы на месяц" />
+              </ListItemButton>
+            )}
 
-            <ListItemButton onClick={() => this.setState({ mainMenu: false, mainMenuS: true })}>
-              <ListItemAvatar>
-                <Avatar>
-                  <AccessTimeIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary="Сменить часы на 2 недели" />
-            </ListItemButton>
+            {parseInt(this.state.access?.fast_2_week_access) == 1 && (
+              <ListItemButton onClick={() => this.setState({ mainMenu: false, mainMenuS: true })}>
+                <ListItemAvatar>
+                  <Avatar>
+                    <AccessTimeIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText primary="Сменить часы на 2 недели" />
+              </ListItemButton>
+            )}
 
-            <ListItemButton
-              onClick={() =>
-                this.setState({
-                  mainMenu: false,
-                  mainMenuSmena: true,
-                  myOtherSmens: this.state.chooseUser.other_smens,
-                })
-              }
-            >
-              <ListItemAvatar>
-                <Avatar>
-                  <SyncAltIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary="Сменить смену" />
-            </ListItemButton>
+            {parseInt(this.state.access?.fast_smena_access) == 1 && (
+              <ListItemButton
+                onClick={() =>
+                  this.setState({
+                    mainMenu: false,
+                    mainMenuSmena: true,
+                    myOtherSmens: this.state.chooseUser.other_smens,
+                  })
+                }
+              >
+                <ListItemAvatar>
+                  <Avatar>
+                    <SyncAltIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText primary="Сменить смену" />
+              </ListItemButton>
+            )}
 
-            <ListItemButton
-              onClick={() =>
-                this.setState({
-                  mainMenu: false,
-                  mainMenuPoints: true,
-                  myOtherPoints: this.state.chooseUser.other_points,
-                })
-              }
-            >
-              <ListItemAvatar>
-                <Avatar>
-                  <HomeWorkIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary="Сменить точку" />
-            </ListItemButton>
+            {parseInt(this.state.access?.fast_point_access) == 1 && (
+              <ListItemButton
+                onClick={() =>
+                  this.setState({
+                    mainMenu: false,
+                    mainMenuPoints: true,
+                    myOtherPoints: this.state.chooseUser.other_points,
+                  })
+                }
+              >
+                <ListItemAvatar>
+                  <Avatar>
+                    <HomeWorkIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText primary="Сменить точку" />
+              </ListItemButton>
+            )}
           </List>
         </Dialog>
         <Dialog
@@ -3527,6 +4648,68 @@ class WorkSchedule_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
+
+        {!this.state.userInfo || this.state.mainMenuWithheld === false ? null : (
+          <Dialog
+            onClose={() => this.setState({ mainMenuWithheld: false, userInfo: null })}
+            open={this.state.mainMenuWithheld}
+          >
+            <DialogTitle className="button">
+              Удержано по исполнительному листу {this.state.userInfo.app} {this.state.userInfo.name}{" "}
+              {this.state.userInfo.date}
+              <IconButton
+                onClick={() => {
+                  this.setState({ mainMenuWithheld: false, userInfo: null });
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                <Close />
+              </IconButton>
+            </DialogTitle>
+
+            <DialogContent>
+              <Grid
+                container
+                spacing={3}
+                style={{ marginTop: 10 }}
+              >
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 12,
+                  }}
+                >
+                  <MyTextInput
+                    label="Удержанная сумма"
+                    value={this.state.userInfo.withheld}
+                    func={(event) => {
+                      let userInfo = this.state.userInfo;
+                      userInfo.withheld = event.target.value;
+                      this.setState({ userInfo: userInfo });
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </DialogContent>
+            <DialogActions
+              style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Button
+                style={{ backgroundColor: "green", color: "#fff" }}
+                onClick={this.saveWithheld.bind(this)}
+              >
+                Сохранить
+              </Button>
+              <Button
+                style={{ backgroundColor: "red", color: "#fff" }}
+                onClick={() => this.setState({ mainMenuWithheld: false, userInfo: null })}
+              >
+                Отмена
+              </Button>
+            </DialogActions>
+          </Dialog>
+        )}
+
         {!this.state.userInfo || this.state.isOpenModalH === false ? null : (
           <Dialog
             open={this.state.isOpenModalH}
@@ -4749,12 +5932,14 @@ class WorkSchedule_ extends React.Component {
                     openH={this.openHMini.bind(this)}
                     openZP={this.openZP.bind(this)}
                     openZPCart={this.openZPCart.bind(this)}
+                    openWithheld={this.openWithheld.bind(this)}
                     mix={this.mix.bind(this)}
                     pricePerHour={this.pricePerHour.bind(this)}
                     addSmena={this.addSmena.bind(this)}
                     editSmena={this.editSmena.bind(this)}
                     addUser={this.addUser.bind(this)}
                     openAddUser={() => this.setState({ mainMenuAddUsers: true })}
+                    access={this.state.access}
                   />
                 )}
               </TabPanel>
@@ -4782,6 +5967,7 @@ class WorkSchedule_ extends React.Component {
                     openH={this.openH.bind(this)}
                     openZP={this.openZP.bind(this)}
                     openZPCart={this.openZPCart.bind(this)}
+                    openWithheld={this.openWithheld.bind(this)}
                     mix={this.mix.bind(this)}
                     pricePerHour={this.pricePerHour.bind(this)}
                     addSmena={this.addSmena.bind(this)}
@@ -4790,6 +5976,7 @@ class WorkSchedule_ extends React.Component {
                     openAddUser={() => this.setState({ mainMenuAddUsers: true })}
                     clickAppNameUser={this.clickAppNameUser.bind(this)}
                     openModalDirBonus={this.openModalDirBonus.bind(this)}
+                    access={this.state.access}
                   />
                 )}
               </TabPanel>
@@ -4819,12 +6006,14 @@ class WorkSchedule_ extends React.Component {
                     openH={this.openHMini.bind(this)}
                     openZP={this.openZP.bind(this)}
                     openZPCart={this.openZPCart.bind(this)}
+                    openWithheld={this.openWithheld.bind(this)}
                     mix={this.mix.bind(this)}
                     pricePerHour={this.pricePerHour.bind(this)}
                     addSmena={this.addSmena.bind(this)}
                     editSmena={this.editSmena.bind(this)}
                     addUser={this.addUser.bind(this)}
                     openAddUser={() => this.setState({ mainMenuAddUsers: true })}
+                    access={this.state.access}
                   />
                 )}
               </TabPanel>
@@ -4852,6 +6041,7 @@ class WorkSchedule_ extends React.Component {
                     openH={this.openH.bind(this)}
                     openZP={this.openZP.bind(this)}
                     openZPCart={this.openZPCart.bind(this)}
+                    openWithheld={this.openWithheld.bind(this)}
                     mix={this.mix.bind(this)}
                     pricePerHour={this.pricePerHour.bind(this)}
                     addSmena={this.addSmena.bind(this)}
@@ -4860,6 +6050,7 @@ class WorkSchedule_ extends React.Component {
                     openAddUser={() => this.setState({ mainMenuAddUsers: true })}
                     clickAppNameUser={this.clickAppNameUser.bind(this)}
                     openModalDirBonus={this.openModalDirBonus.bind(this)}
+                    access={this.state.access}
                   />
                 )}
               </TabPanel>

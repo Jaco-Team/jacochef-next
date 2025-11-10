@@ -18,8 +18,8 @@ import { MyDatePickerNew, MyAutocomplite, MyTextInput } from "@/ui/Forms";
 
 import dayjs from "dayjs";
 import queryString from "query-string";
-// import {api_laravel} from "@/src/api_new";
-import { api_laravel_local as api_laravel } from "@/src/api_new";
+import { api_laravel } from "@/src/api_new";
+// import { api_laravel_local as api_laravel } from "@/src/api_new";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 

@@ -29,6 +29,8 @@ import queryString from "query-string";
 import dayjs from "dayjs";
 import MyAlert from "@/ui/MyAlert";
 
+import { formatDate } from "@/src/helpers/ui/formatDate";
+
 class TabletRepair_Modal extends React.Component {
   constructor(props) {
     super(props);

@@ -20,7 +20,7 @@
     "sentry:sourcemaps": "sentry-cli --url https://sentry.jacochef.ru/ sourcemaps upload --org sentry --project jacosoft-dop-react ./.next --rewrite"
   },
   "dependencies": {
-    "@amcharts/amcharts5": "^5.14.3",
+    "@amcharts/amcharts5": "^5.14.4",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
@@ -28,22 +28,22 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@hello-pangea/dnd": "^18.0.1",
-    "@mui/icons-material": "^7.3.4",
+    "@mui/icons-material": "^7.3.5",
     "@mui/lab": "^7.0.1-beta.18",
-    "@mui/material": "^7.3.4",
-    "@mui/x-date-pickers": "^8.15.0",
-    "@sentry/cli": "^2.57.0",
-    "@sentry/react": "^10.22.0",
+    "@mui/material": "^7.3.5",
+    "@mui/x-date-pickers": "^8.17.0",
+    "@sentry/cli": "^2.58.0",
+    "@sentry/react": "^10.24.0",
     "@tinymce/tinymce-react": "^6.3.0",
-    "axios": "^1.13.1",
+    "axios": "^1.13.2",
     "childprocess": "^2.0.2",
     "common-es": "^1.1.0",
     "cookie": "^1.0.2",
-    "dayjs": "^1.11.18",
+    "dayjs": "^1.11.19",
     "dropzone": "^6.0.0-beta.2",
     "file-saver": "^2.0.5",
     "js-cookie": "^3.0.5",
-    "mathjs": "^15.0.0",
+    "mathjs": "^15.1.0",
     "moment": "^2.30.1",
     "next": "16.0.1",
     "node-tls": "^0.10.2",
@@ -66,6 +66,6 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
     "prettier": "^3.6.2",
-    "sass": "^1.93.2"
+    "sass": "^1.93.3"
   }
 }
