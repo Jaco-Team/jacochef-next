@@ -57,11 +57,6 @@ function SettingsPage() {
       date_end: dayjs(dateEnd).format("YYYY-MM-DD"),
     }).then((data) => {
       setData(data);
-      if (!data.st) {
-        setErrStatus(data.st);
-        setErrText(data.text);
-        setOpenAlert(true);
-      }
     });
   };
 
@@ -70,14 +65,16 @@ function SettingsPage() {
       id,
       status,
       answer,
-    }).then((data) => {
-      if (!data.st) {
-        setErrStatus(data.st);
-        setErrText(data.text);
-        setOpenAlert(true);
-      }
-      getTable();
-    });
+    })
+      .then((data) => {
+        if (!data.st) {
+          setErrStatus(data.st);
+          setErrText(data.text);
+          setOpenAlert(true);
+        }
+        getTable();
+      })
+      .finally(() => setOpenUpdateAder(false));
   };
 
   const getData = async (method, data = {}) => {

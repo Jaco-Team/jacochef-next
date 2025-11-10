@@ -6,7 +6,7 @@ import Button from "@mui/material/Button";
 import React, { useEffect, useState } from "react";
 import { MyAutocomplite, MySelect, MyTextInput } from "@/ui/Forms";
 import Grid from "@mui/material/Grid";
-import { Stack } from "@mui/material";
+import { Stack, TextField } from "@mui/material";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
@@ -36,7 +36,7 @@ export const ModalEditDriversFeedback = ({ open, onClose, save, item }) => {
       </DialogTitle>
       <DialogContent sx={{ textAlign: "center", fontWeight: "bold" }}>
         <Stack spacing={2}>
-          <Box>
+          <Box sx={{ textAlign: "left" }}>
             <Typography
               variant="body1"
               gutterBottom
@@ -112,6 +112,16 @@ export const ModalEditDriversFeedback = ({ open, onClose, save, item }) => {
               {item.description}
             </Typography>
           </Box>
+          {item.link ? (
+            <Grid>
+              <div style={{ height: 400, display: "flex" }}>
+                <img
+                  style={{ width: "100%", height: "auto", alignSelf: "center", borderRadius: 20 }}
+                  src={item.link}
+                />
+              </div>
+            </Grid>
+          ) : null}
           <Grid
             item
             xs={4}
@@ -131,12 +141,16 @@ export const ModalEditDriversFeedback = ({ open, onClose, save, item }) => {
             item
             xs={12}
           >
-            <MyTextInput
-              value={comment}
-              disabled={item.status_id === 3 || item.status_id === 4}
-              func={(e) => setComment(e.target.value)}
-              label="Комментарий"
+            <TextField
               fullWidth
+              label="Комментарий"
+              name="description"
+              multiline
+              size="small"
+              rows={3}
+              disabled={item.status_id === 3 || item.status_id === 4}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
             />
           </Grid>
         </Stack>
