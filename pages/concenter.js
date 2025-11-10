@@ -142,6 +142,7 @@ class Concenter_ extends React.Component {
       confirmDialog: false,
       confirmDialogDel: false,
       checkedKey: {},
+      current_name: "",
       problem_arr: [],
       checkedDiffOrder: false,
       checkAddress: false,
@@ -523,10 +524,16 @@ class Concenter_ extends React.Component {
     const positions = this.state.positions;
     const problem_arr = [...this.state.problem_arr];
     positions.map((pos) => {
-      problem_arr.push({ ...pos, problem_name: solutions });
+      problem_arr.push({
+        ...pos,
+        problem_name: solutions.value,
+        problem_comment: solutions.comment,
+        problem_solution: solutions.solution,
+        previewUrl: solutions.previewUrl,
+      });
     });
 
-    this.setState({ problem_arr: problem_arr, modalDialogProblem: false });
+    this.setState({ problem_arr: problem_arr, modalDialogProblem: false, checkedKey: {} });
   };
 
   render() {
@@ -868,7 +875,9 @@ class Concenter_ extends React.Component {
                 </Grid>
                 <ModalProblems
                   positions={this.state.positions}
+                  problem_arr={this.state.problem_arr}
                   open={this.state.modalDialogProblem}
+                  current_name={this.state.current_name}
                   onClose={() => this.setState({ modalDialogProblem: false })}
                   title={`Проблема с ${Object.entries(this.state.checkedKey).length} позициями`}
                   save={this.saveProblems}
@@ -1012,6 +1021,7 @@ class Concenter_ extends React.Component {
                                             checkedKey: {
                                               ...this.state.checkedKey,
                                               [key]: e.target.checked,
+                                              current_name: "",
                                             },
                                           })
                                         }
@@ -1035,6 +1045,7 @@ class Concenter_ extends React.Component {
                                               ...{},
                                               [key]: true,
                                             },
+                                            current_name: item.name,
                                           },
                                           () => {
                                             this.openProblems();
@@ -1052,7 +1063,7 @@ class Concenter_ extends React.Component {
                                           border: "1px solid red",
                                           borderRadius: "12px",
                                           backgroundColor: "#e12a58",
-                                          padding: "2px",
+                                          padding: "2px 10px",
                                           width: "max-content",
                                         }}
                                         className="special-badge"

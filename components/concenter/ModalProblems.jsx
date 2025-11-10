@@ -27,6 +27,8 @@ export const ModalProblems = ({
   onClose,
   save,
   positions,
+  problem_arr = [],
+  current_name,
   title = "Проблема с позициями",
 }) => {
   const [comment, setComment] = useState("");
@@ -65,12 +67,33 @@ export const ModalProblems = ({
     setValue(event.target.value);
   };
 
+  useEffect(() => {
+    const positionNames = new Set(positions.map((p) => p.name));
+
+    const matchingItem = problem_arr.find(
+      (item) => positionNames.has(item.name) && (item.name === current_name || item.name === ""),
+    );
+
+    if (matchingItem) {
+      setValue(matchingItem.problem_name);
+      setComment(matchingItem.problem_comment);
+      setSolution(matchingItem.problem_solution);
+      setPreviewUrl(matchingItem.previewUrl);
+    } else {
+      setValue("Нет проблем");
+      setComment("");
+      setSolution({});
+      setPreviewUrl("");
+    }
+  }, [problem_arr, positions, current_name]);
+
   const handleSave = () => {
-    setValue("no");
+    setValue("Нет проблем");
     setComment("");
     setPreviewUrl("");
     setSelectedImage(null);
-    save(value);
+    let data = { value, comment, solution, previewUrl };
+    save(data);
   };
 
   return (
