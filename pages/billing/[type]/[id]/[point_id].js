@@ -3128,6 +3128,7 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
 }
 
 // модалка просмотра фото/картинок документов
+const ZOOM_STEP = 0.2; // 0..1
 class Billing_Modal extends React.Component {
   constructor(props) {
     super(props);
@@ -3203,19 +3204,18 @@ class Billing_Modal extends React.Component {
   }
 
   setZoomIn() {
-    let scaleY = this.state.scaleY;
-    let scaleX = this.state.scaleX;
+    let { scaleX, scaleY } = this.state;
 
-    if (scaleY < 0) {
-      scaleY = scaleY - 0.5;
+    if (scaleY >= 5) {
+      scaleY = scaleY;
     } else {
-      scaleY = scaleY + 0.5;
+      scaleY = scaleY + ZOOM_STEP;
     }
 
-    if (scaleX < 0) {
-      scaleX = scaleX - 0.5;
+    if (scaleX >= 5) {
+      scaleX = scaleX;
     } else {
-      scaleX = scaleX + 0.5;
+      scaleX = scaleX + ZOOM_STEP;
     }
 
     this.setState({
@@ -3225,19 +3225,18 @@ class Billing_Modal extends React.Component {
   }
 
   setZoomOut() {
-    let scaleY = this.state.scaleY;
-    let scaleX = this.state.scaleX;
+    let { scaleX, scaleY } = this.state;
 
-    if (scaleY < 0) {
-      scaleY = scaleY + 0.5;
+    if (scaleY < ZOOM_STEP * 2) {
+      scaleY = ZOOM_STEP;
     } else {
-      scaleY = scaleY - 0.5;
+      scaleY = scaleY - ZOOM_STEP;
     }
 
-    if (scaleX < 0) {
-      scaleX = scaleX + 0.5;
+    if (scaleX < ZOOM_STEP * 2) {
+      scaleX = ZOOM_STEP;
     } else {
-      scaleX = scaleX - 0.5;
+      scaleX = scaleX - ZOOM_STEP;
     }
 
     this.setState({
