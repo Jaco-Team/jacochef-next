@@ -16,8 +16,8 @@ import Typography from "@mui/material/Typography";
 
 import dayjs from "dayjs";
 
-// import {api_laravel} from "@/src/api_new";
-import { api_laravel_local as api_laravel } from "@/src/api_new";
+import { api_laravel } from "@/src/api_new";
+// import { api_laravel_local as api_laravel } from "@/src/api_new";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 
 class SiteSale2_AnaliticList_ extends React.Component {
