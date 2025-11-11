@@ -40,6 +40,7 @@ import Box from "@mui/material/Box";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import MyAlert from "@/ui/MyAlert";
+import { formatDate } from "@/src/helpers/ui/formatDate";
 
 class SiteUserManagerTable extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -202,6 +203,7 @@ class SiteUserManager_ extends React.Component {
       graphModal: false,
       graphType: 0,
       show_access: 0,
+      date_start_day: formatDate(new Date()),
 
       openAlert: false,
       err_status: true,
@@ -522,6 +524,7 @@ class SiteUserManager_ extends React.Component {
       let data = {
         user: { user },
         textDel: this.state.textDel,
+        date_start_day: dayjs(this.state.date_start_day).format("YYYY-MM-DD"),
         graphType: graphType,
       };
       let res = await this.getData("saveEditUser", data);
@@ -843,6 +846,12 @@ class SiteUserManager_ extends React.Component {
     }
   }
 
+  changeDateRange_days(data, event) {
+    this.setState({
+      [data]: event ? event : "",
+    });
+  }
+
   render() {
     return (
       <>
@@ -869,7 +878,10 @@ class SiteUserManager_ extends React.Component {
             </IconButton>
           </DialogTitle>
           <DialogContent>
-            <DialogContentText>Увольнение происходит не сразу, а в полночь</DialogContentText>
+            <DialogContentText>
+              Если выбрано сегодня - увольнение происходит сразу, если завтра и далее - сотрудник
+              будет уволен в полночь этого дня
+            </DialogContentText>
             <Grid
               container
               spacing={3}
@@ -884,6 +896,18 @@ class SiteUserManager_ extends React.Component {
                   label="Причина увольнения"
                   value={this.state.textDel}
                   func={(event) => this.setState({ textDel: event.target.value })}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                }}
+              >
+                <MyDatePickerNew
+                  label="Дата от"
+                  minDate={formatDate(new Date())}
+                  value={this.state.date_start_day}
+                  func={this.changeDateRange_days.bind(this, "date_start_day")}
                 />
               </Grid>
             </Grid>
