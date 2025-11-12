@@ -253,12 +253,6 @@ export default function JModal({
       <DialogTitle className="button">
         {method}
         {itemName ? `: ${itemName}` : null}
-        <IconButton
-          onClick={onClose}
-          style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
-        >
-          <Close />
-        </IconButton>
       </DialogTitle>
       {openNewTagNavModal && (
         <ModalNewTagNav
