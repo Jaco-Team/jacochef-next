@@ -6,7 +6,7 @@ import * as am5xy from "@amcharts/amcharts5/xy";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import am5locales_ru_RU from "@amcharts/amcharts5/locales/ru_RU";
 
-export default function CompositionOfOrdersGroupGraph({ data, metrics }) {
+export default function CompositionOfOrdersGroupGraph({ data, metrics, step }) {
   const chartRef = useRef(null);
 
   useLayoutEffect(() => {
@@ -21,21 +21,28 @@ export default function CompositionOfOrdersGroupGraph({ data, metrics }) {
         panX: true,
         wheelX: "panX",
         wheelY: "zoomX",
+        layout: root.verticalLayout,
       }),
     );
+
+    // Detect step to adjust axis granularity
+    const isWeekly = step === "week";
+    const baseInterval = isWeekly ? { timeUnit: "week", count: 1 } : { timeUnit: "day", count: 1 };
 
     // X axis
     const xAxis = chart.xAxes.push(
       am5xy.DateAxis.new(root, {
-        baseInterval: { timeUnit: "day", count: 1 },
-        renderer: am5xy.AxisRendererX.new(root, {}),
+        baseInterval,
+        groupData: true,
+        renderer: am5xy.AxisRendererX.new(root, { minGridDistance: 60 }),
+        tooltip: am5.Tooltip.new(root, { pointerOrientation: "horizontal" }),
       }),
     );
-    const xTip = am5.Tooltip.new(root, { pointerOrientation: "horizontal" });
-    xTip.label.setAll({ text: "{value.formatDate('dd MMM')}" });
-    xAxis.set("tooltip", xTip);
+    xAxis.get("tooltip").label.setAll({
+      text: isWeekly ? "{value.formatDate('dd MMM')} неделя" : "{value.formatDate('dd MMM')}",
+    });
 
-    // Y axis for numeric values
+    // Y axis (values)
     const valueAxis = chart.yAxes.push(
       am5xy.ValueAxis.new(root, {
         renderer: am5xy.AxisRendererY.new(root, {}),
@@ -44,7 +51,7 @@ export default function CompositionOfOrdersGroupGraph({ data, metrics }) {
       }),
     );
 
-    // Y axis for percents
+    // Y axis (percents)
     const percentAxis = chart.yAxes.push(
       am5xy.ValueAxis.new(root, {
         renderer: am5xy.AxisRendererY.new(root, { opposite: true }),
@@ -62,7 +69,6 @@ export default function CompositionOfOrdersGroupGraph({ data, metrics }) {
       sum_percent: percentAxis,
     };
 
-    // Leave raw values as-is (no normalization)
     const seriesData = data?.map((d) => ({
       date: new Date(d.date).getTime(),
       group_count: d.group_count,
@@ -87,19 +93,29 @@ export default function CompositionOfOrdersGroupGraph({ data, metrics }) {
         }),
       );
 
-      series.strokes.template.setAll({ strokeWidth: 2 });
+      // lines
+      series.strokes.template.setAll({ strokeWidth: 2, stroke: am5.color(color) });
+
+      // points
+      series.bullets.push(() =>
+        am5.Bullet.new(root, {
+          sprite: am5.Circle.new(root, {
+            radius: 4,
+            fill: am5.color(color),
+            strokeWidth: 1,
+            stroke: root.interfaceColors.get("background"),
+          }),
+        }),
+      );
+
       series.data.setAll(seriesData);
     });
 
-    // Cursor and legend
-    const cursor = chart.set("cursor", am5xy.XYCursor.new(root, { behavior: "none" }));
-    cursor.snapToSeries = chart.series.values;
-    cursor.lineY.set("visible", false);
-
+    chart.set("cursor", am5xy.XYCursor.new(root, { behavior: "none" }));
     chart.children.push(am5.Legend.new(root, { centerX: am5.p50, x: am5.p50 }));
 
     return () => root.dispose();
-  }, [data, metrics]);
+  }, [data, metrics, step]);
 
   return (
     <div
