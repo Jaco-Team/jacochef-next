@@ -782,15 +782,16 @@ class SkladItemsModule_Modal extends React.Component {
     let { this_storages } = item;
     if (
       (!name ||
-      !cat_id ||
-      !ed_izmer_id ||
-      !name_for_vendor ||
-      !pq ||
-      !art ||
-      !pf_id ||
-      !my_allergens.length ||
-      !my_allergens_other.length ||
-      !this_storages.length) && this.props.method !== "Редактирование товара"
+        !cat_id ||
+        !ed_izmer_id ||
+        !name_for_vendor ||
+        !pq ||
+        !art ||
+        !pf_id ||
+        !my_allergens.length ||
+        !my_allergens_other.length ||
+        !this_storages.length) &&
+      this.props.method !== "Редактирование товара"
     ) {
       this.setState({
         openAlert: true,
@@ -800,17 +801,15 @@ class SkladItemsModule_Modal extends React.Component {
 
       return;
     } else {
-      if (
-      !name
-    ) {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: "Название должно быть заполнено",
-      });
+      if (!name) {
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: "Название должно быть заполнено",
+        });
 
-      return;
-    }
+        return;
+      }
     }
 
     this.props.method === "Редактирование товара"
@@ -868,6 +867,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3.5,
                 }}
+                style={
+                  !this.props.acces?.name_edit && !this.props.acces?.name_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Название товара"
@@ -883,6 +887,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3.5,
                 }}
+                style={
+                  !this.props.acces?.cats_edit && !this.props.acces?.cats_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyAutocomplite
                   label="Категория"
@@ -910,6 +919,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 1.5,
                 }}
+                style={
+                  !this.props.acces?.ed_izmer_edit && !this.props.acces?.ed_izmer_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MySelect
                   data={this.state.itemEdit ? this.state.itemEdit.ed_izmer : []}
@@ -934,6 +948,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3.5,
                 }}
+                style={
+                  !this.props.acces?.max_count_in_m_edit && !this.props.acces?.max_count_in_m_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Максимальное количество заказов в месяц (0 - без ограничений)"
@@ -950,6 +969,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3.5,
                 }}
+                style={
+                  !this.props.acces?.mark_name_edit && !this.props.acces?.mark_name_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Маркетинговое название"
@@ -966,6 +990,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3.5,
                 }}
+                style={
+                  !this.props.acces?.name_for_vendor_edit && !this.props.acces?.name_for_vendor_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Название товара для поставщика"
@@ -982,6 +1011,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3.5,
                 }}
+                style={
+                  !this.props.acces?.pq_edit && !this.props.acces?.pq_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Количество в упаковке"
@@ -997,6 +1031,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 1.5,
                 }}
+                style={
+                  !this.props.acces?.percent_edit && !this.props.acces?.percent_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="% заявки"
@@ -1012,6 +1051,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3.5,
                 }}
+                style={
+                  !this.props.acces?.vend_percent_edit && !this.props.acces?.vend_percent_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Разрешенный % повышения ценника"
@@ -1028,6 +1072,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3.5,
                 }}
+                style={
+                  !this.props.acces?.art_edit && !this.props.acces?.art_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Код для 1с"
@@ -1043,6 +1092,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3.5,
                 }}
+                style={
+                  !this.props.acces?.min_count_edit && !this.props.acces?.min_count_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Минимальный остаток"
@@ -1060,6 +1114,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 12,
                 }}
+                style={
+                  !this.props.acces?.pf_list_edit && !this.props.acces?.pf_list_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Состав"
@@ -1076,6 +1135,11 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 12,
                 }}
+                style={
+                  !this.props.acces?.allergens_edit && !this.props.acces?.allergens_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyAutocomplite
                   label="Аллергены"
@@ -1099,6 +1163,12 @@ class SkladItemsModule_Modal extends React.Component {
                   xs: 12,
                   sm: 12,
                 }}
+                style={
+                  !this.props.acces?.my_allergens_other_edit &&
+                  !this.props.acces?.my_allergens_other_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyAutocomplite
                   label="Возможные аллергены"
@@ -1126,6 +1196,11 @@ class SkladItemsModule_Modal extends React.Component {
                     xs: 12,
                     md: 6,
                   }}
+                  style={
+                    !this.props.acces?.this_storages_edit && !this.props.acces?.this_storages_view
+                      ? { display: "none" }
+                      : {}
+                  }
                 >
                   <Box>
                     <Typography variant="h6">Места хранения</Typography>
@@ -1167,6 +1242,11 @@ class SkladItemsModule_Modal extends React.Component {
                           xs: 12,
                           sm: 6,
                         }}
+                        style={
+                          !this.props.acces?.apps_edit && !this.props.acces?.apps_view
+                            ? { display: "none" }
+                            : {}
+                        }
                       >
                         <MySelect
                           label="Должность в кафе"
@@ -1185,6 +1265,12 @@ class SkladItemsModule_Modal extends React.Component {
                           xs: 12,
                           sm: 6,
                         }}
+                        style={
+                          !this.props.acces?.time_min_other_edit &&
+                          !this.props.acces?.time_min_other_view
+                            ? { display: "none" }
+                            : {}
+                        }
                       >
                         <MyTextInput
                           label="Время ММ:SS за 1кг / 1шт / 1л (15:20)"
@@ -1777,20 +1863,21 @@ class SkladItemsModule_ extends React.Component {
           >
             <h1>{this.state.module_name}</h1>
           </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 3,
-            }}
-          >
-            <Button
-              onClick={this.openModalItemNew.bind(this, "Новый товар")}
-              variant="contained"
+          {this.state.acces?.create_new_access ? (
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3,
+              }}
             >
-              Добавить товар
-            </Button>
-          </Grid>
+              <Button
+                onClick={this.openModalItemNew.bind(this, "Новый товар")}
+                variant="contained"
+              >
+                Добавить товар
+              </Button>
+            </Grid>
+          ) : null}
 
           <SkladItemsModule_input_search
             data={this.state.searchItem}
@@ -1834,9 +1921,15 @@ class SkladItemsModule_ extends React.Component {
                                     <TableHead>
                                       <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                                         <TableCell style={{ width: "5%" }}>№</TableCell>
-                                        <TableCell style={{ width: "10%" }}>Активность</TableCell>
-                                        <TableCell style={{ width: "10%" }}>Заявка</TableCell>
-                                        <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
+                                        {this.state.acces?.active_access ? (
+                                          <TableCell style={{ width: "10%" }}>Активность</TableCell>
+                                        ) : null}
+                                        {this.state.acces?.ord_access ? (
+                                          <TableCell style={{ width: "10%" }}>Заявка</TableCell>
+                                        ) : null}
+                                        {this.state.acces?.rev_access ? (
+                                          <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
+                                        ) : null}
                                         <TableCell style={{ width: "20%" }}>Товар</TableCell>
                                         <TableCell style={{ width: "15%" }}>Код для 1С</TableCell>
                                         <TableCell style={{ width: "15%" }}>
@@ -1852,35 +1945,47 @@ class SkladItemsModule_ extends React.Component {
                                       {category.items.map((it, k) => (
                                         <TableRow key={k}>
                                           <TableCell>{k + 1}</TableCell>
-                                          <TableCell>
-                                            <MyCheckBox
-                                              label=""
-                                              value={parseInt(it.is_show) == 1 ? true : false}
-                                              func={this.saveCheckItem.bind(this, it.id, "is_show")}
-                                            />
-                                          </TableCell>
-                                          <TableCell>
-                                            <MyCheckBox
-                                              label=""
-                                              value={parseInt(it.show_in_order) == 1 ? true : false}
-                                              func={this.saveCheckItem.bind(
-                                                this,
-                                                it.id,
-                                                "show_in_order",
-                                              )}
-                                            />
-                                          </TableCell>
-                                          <TableCell>
-                                            <MyCheckBox
-                                              label=""
-                                              value={parseInt(it.show_in_rev) == 1 ? true : false}
-                                              func={this.saveCheckItem.bind(
-                                                this,
-                                                it.id,
-                                                "show_in_rev",
-                                              )}
-                                            />
-                                          </TableCell>
+                                          {this.state.acces?.active_access ? (
+                                            <TableCell>
+                                              <MyCheckBox
+                                                label=""
+                                                value={parseInt(it.is_show) == 1 ? true : false}
+                                                func={this.saveCheckItem.bind(
+                                                  this,
+                                                  it.id,
+                                                  "is_show",
+                                                )}
+                                              />
+                                            </TableCell>
+                                          ) : null}
+                                          {this.state.acces?.ord_access ? (
+                                            <TableCell>
+                                              <MyCheckBox
+                                                label=""
+                                                value={
+                                                  parseInt(it.show_in_order) == 1 ? true : false
+                                                }
+                                                func={this.saveCheckItem.bind(
+                                                  this,
+                                                  it.id,
+                                                  "show_in_order",
+                                                )}
+                                              />
+                                            </TableCell>
+                                          ) : null}
+                                          {this.state.acces?.rev_access ? (
+                                            <TableCell>
+                                              <MyCheckBox
+                                                label=""
+                                                value={parseInt(it.show_in_rev) == 1 ? true : false}
+                                                func={this.saveCheckItem.bind(
+                                                  this,
+                                                  it.id,
+                                                  "show_in_rev",
+                                                )}
+                                              />
+                                            </TableCell>
+                                          ) : null}
                                           <TableCell>{it.name}</TableCell>
                                           <TableCell>{it.art}</TableCell>
                                           <TableCell
@@ -1935,9 +2040,15 @@ class SkladItemsModule_ extends React.Component {
                       <TableHead>
                         <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                           <TableCell style={{ width: "5%" }}>№</TableCell>
-                          <TableCell style={{ width: "10%" }}>Активность</TableCell>
-                          <TableCell style={{ width: "10%" }}>Заявка</TableCell>
-                          <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
+                          {this.state.acces?.active_access ? (
+                            <TableCell style={{ width: "10%" }}>Активность</TableCell>
+                          ) : null}
+                          {this.state.acces?.ord_access ? (
+                            <TableCell style={{ width: "10%" }}>Заявка</TableCell>
+                          ) : null}
+                          {this.state.acces?.rev_access ? (
+                            <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
+                          ) : null}
                           <TableCell style={{ width: "20%" }}>Товар</TableCell>
                           <TableCell style={{ width: "15%" }}>Код для 1С</TableCell>
                           <TableCell style={{ width: "15%" }}>Редактирование</TableCell>
@@ -1949,27 +2060,33 @@ class SkladItemsModule_ extends React.Component {
                         {this.state.freeItems.map((it, key) => (
                           <TableRow key={key}>
                             <TableCell>{key + 1}</TableCell>
-                            <TableCell>
-                              <MyCheckBox
-                                label=""
-                                value={parseInt(it.is_show) == 1 ? true : false}
-                                func={this.saveCheckItem.bind(this, it.id, "is_show")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyCheckBox
-                                label=""
-                                value={parseInt(it.show_in_order) == 1 ? true : false}
-                                func={this.saveCheckItem.bind(this, it.id, "show_in_order")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyCheckBox
-                                label=""
-                                value={parseInt(it.show_in_rev) == 1 ? true : false}
-                                func={this.saveCheckItem.bind(this, it.id, "show_in_rev")}
-                              />
-                            </TableCell>
+                            {this.state.acces?.active_access ? (
+                              <TableCell>
+                                <MyCheckBox
+                                  label=""
+                                  value={parseInt(it.is_show) == 1 ? true : false}
+                                  func={this.saveCheckItem.bind(this, it.id, "is_show")}
+                                />
+                              </TableCell>
+                            ) : null}
+                            {this.state.acces?.ord_access ? (
+                              <TableCell>
+                                <MyCheckBox
+                                  label=""
+                                  value={parseInt(it.show_in_order) == 1 ? true : false}
+                                  func={this.saveCheckItem.bind(this, it.id, "show_in_order")}
+                                />
+                              </TableCell>
+                            ) : null}
+                            {this.state.acces?.rev_access ? (
+                              <TableCell>
+                                <MyCheckBox
+                                  label=""
+                                  value={parseInt(it.show_in_rev) == 1 ? true : false}
+                                  func={this.saveCheckItem.bind(this, it.id, "show_in_rev")}
+                                />
+                              </TableCell>
+                            ) : null}
                             <TableCell>{it.name}</TableCell>
                             <TableCell>{it.art}</TableCell>
                             <TableCell
