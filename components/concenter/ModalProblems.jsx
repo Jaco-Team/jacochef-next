@@ -68,10 +68,10 @@ export const ModalProblems = ({
   };
 
   useEffect(() => {
-    const positionNames = new Set(positions.map((p) => p.name));
+    const positionNames = new Set(positions.map((p) => p.id));
 
     const matchingItem = problem_arr.find(
-      (item) => positionNames.has(item.name) && (item.name === current_name || item.name === ""),
+      (item) => positionNames.has(item.id) && (item.id === current_name || item.id === ""),
     );
 
     if (matchingItem) {

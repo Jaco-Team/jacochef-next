@@ -195,6 +195,7 @@ class Concenter_ extends React.Component {
     this.setState({
       module_name: data.module_info.name,
       cities: data.cities,
+      checkedKey: {},
       point_list: data.points,
       need_point_list: need_points,
       point_id: parseInt(need_points[0].id),
@@ -512,7 +513,7 @@ class Concenter_ extends React.Component {
 
   openProblems = () => {
     const positions = [];
-    this.state.showOrder.order_items_.map((item, key) => {
+    this.state.showOrder.order_items_for.map((item, key) => {
       if (this.state.checkedKey[key]) {
         positions.push(item);
       }
@@ -550,7 +551,7 @@ class Concenter_ extends React.Component {
           <Dialog
             open={!!this.state.modalDialog}
             onClose={() => {
-              this.setState({ modalDialog: false });
+              this.setState({ modalDialog: false, checkedKey: {} });
             }}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
@@ -915,7 +916,6 @@ class Concenter_ extends React.Component {
                           marginTop: 15,
                           borderSpacing: "0 6px",
                           borderCollapse: "separate",
-                          height: "400px",
                         }}
                       >
                         <TableBody>
@@ -991,11 +991,10 @@ class Concenter_ extends React.Component {
                           marginTop: 15,
                           borderSpacing: "0 6px",
                           borderCollapse: "separate",
-                          height: "400px",
                         }}
                       >
                         <TableBody>
-                          {this.state.showOrder.order_items_.map((item, key) => (
+                          {this.state.showOrder.order_items_for.map((item, key) => (
                             <TableRow
                               key={key}
                               style={{
@@ -1015,7 +1014,7 @@ class Concenter_ extends React.Component {
                                   {this.state.checkedError ? (
                                     <span>
                                       <MyCheckBox
-                                        value={this.state.checkedKey[key]}
+                                        value={this.state.checkedKey[key] === true}
                                         func={(e) =>
                                           this.setState({
                                             checkedKey: {
@@ -1045,7 +1044,7 @@ class Concenter_ extends React.Component {
                                               ...{},
                                               [key]: true,
                                             },
-                                            current_name: item.name,
+                                            current_name: item.id,
                                           },
                                           () => {
                                             this.openProblems();
@@ -1055,7 +1054,7 @@ class Concenter_ extends React.Component {
                                     >
                                       {item.name}
                                     </span>
-                                    {this.state.problem_arr.find((it) => it?.name === item.name)
+                                    {this.state.problem_arr.find((it) => it?.id === item.id)
                                       ?.problem_name ? (
                                       <span
                                         style={{
@@ -1069,9 +1068,8 @@ class Concenter_ extends React.Component {
                                         className="special-badge"
                                       >
                                         {
-                                          this.state.problem_arr.find(
-                                            (it) => it?.name === item.name,
-                                          )?.problem_name
+                                          this.state.problem_arr.find((it) => it?.id === item.id)
+                                            ?.problem_name
                                         }
                                       </span>
                                     ) : null}
@@ -1100,14 +1098,14 @@ class Concenter_ extends React.Component {
                                   height: "32px",
                                 }}
                               >
-                                {item.count}
+                                {item.price} р.
                               </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
                     )}
-                    {this.hasAccess(acces?.disband_access) && (
+                    {this.hasAccess(acces?.disband_access) && !this.state.checkedError && (
                       <Accordion
                         style={{
                           width: "98%",
