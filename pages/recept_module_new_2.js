@@ -322,7 +322,7 @@ class ReceptModule_Modal_History_View extends React.Component {
               }}
             >
               <MyTextInput
-                label="Дополнительное время (уборка рабочего места)"
+                label="Доп. время (уборка рабочего места) MM:SS (15:20)"
                 value={
                   this.state.itemView
                     ? this.state.itemView.time_min_dop?.color
@@ -1251,7 +1251,7 @@ class ReceptModule_Modal extends React.Component {
                 }
               >
                 <MyTextInput
-                  label="Дополнительное время (уборка рабочего места)"
+                  label="Доп. время (уборка рабочего места) MM:SS (15:20)"
                   value={this.state.dop_time}
                   disabled={
                     this.props.method !== "Новый рецепт" &&
@@ -1533,7 +1533,7 @@ class ReceptModule_Table extends React.Component {
                   >
                     <TableHead sx={{ "& th": { fontWeight: "bold" } }}>
                       <TableRow>
-                        {acces?.rev_table_access ? (
+                        {acces?.rev_table_view && acces?.rev_table_edit ? (
                           <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
                         ) : null}
                         <TableCell style={{ width: "18%" }}>Наименование</TableCell>
@@ -1547,7 +1547,7 @@ class ReceptModule_Table extends React.Component {
                     <TableBody>
                       {data.map((item, key) => (
                         <TableRow key={key}>
-                          {this.props.acces?.rev_table_access ? (
+                          {acces?.rev_table_view && acces?.rev_table_edit ? (
                             <TableCell>
                               <MyCheckBox
                                 label=""
@@ -1564,7 +1564,7 @@ class ReceptModule_Table extends React.Component {
                             onClick={openItemEdit.bind(
                               this,
                               item.id,
-                              `Редактирование: ${item.name}`,
+                              `Редактирование ${type === "rec" ? "Рецепта" : "Полуфабриката"}: ${item.name}`,
                               type,
                             )}
                           >
@@ -1684,7 +1684,7 @@ class ReceptModule_ extends React.Component {
 
       res.rec.rec_users = [
         { id: 0, name: "Один сотрудник" },
-        { id: 1, name: "Два сотрудника" },
+        { id: 20, name: "Два сотрудника" },
       ];
 
       this.setState({
@@ -1707,7 +1707,7 @@ class ReceptModule_ extends React.Component {
 
       res.pf.rec_users = [
         { id: 0, name: "Один сотрудник" },
-        { id: 1, name: "Два сотрудника" },
+        { id: 20, name: "Два сотрудника" },
       ];
 
       this.setState({
@@ -1740,7 +1740,7 @@ class ReceptModule_ extends React.Component {
 
       res.rec.rec_users = [
         { id: 0, name: "Один сотрудник" },
-        { id: 1, name: "Два сотрудника" },
+        { id: 20, name: "Два сотрудника" },
       ];
 
       this.setState({
@@ -1765,7 +1765,7 @@ class ReceptModule_ extends React.Component {
 
       res.pf.rec_users = [
         { id: 0, name: "Один сотрудник" },
-        { id: 1, name: "Два сотрудника" },
+        { id: 20, name: "Два сотрудника" },
       ];
 
       this.setState({
