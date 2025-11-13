@@ -708,8 +708,10 @@ class ReceptModule_Modal extends React.Component {
       two_user: "",
       rec_apps: [],
       rec_users: [],
+      focusedRow: null,
       list: [],
       all_w: 0,
+      acces: {},
       all_w_brutto: 0,
       all_w_netto: 0,
       show_in_rev: 0,
@@ -744,36 +746,99 @@ class ReceptModule_Modal extends React.Component {
         show_in_rev: this.props.rec?.show_in_rev,
         dop_time: this.props.rec?.time_min_dop,
       });
+      if (this.props.typeMethod === "edit_rec") {
+        let objAcces = {
+          name_edit: this.props.acces?.name_edit,
+          name_view: this.props.acces?.name_view,
+          shelf_life_edit: this.props.acces?.shelf_life_edit,
+          shelf_life_view: this.props.acces?.shelf_life_view,
+          two_user_edit: this.props.acces?.two_user_edit,
+          two_user_view: this.props.acces?.two_user_view,
+          show_in_rev_edit: this.props.acces?.show_in_rev_edit,
+          show_in_rev_view: this.props.acces?.show_in_rev_view,
+          date_start_edit: this.props.acces?.date_start_edit,
+          date_start_view: this.props.acces?.date_start_view,
+          date_end_edit: this.props.acces?.date_end_edit,
+          date_end_view: this.props.acces?.date_end_view,
+          time_edit: this.props.acces?.time_edit,
+          time_view: this.props.acces?.time_view,
+          dop_time_edit: this.props.acces?.dop_time_edit,
+          dop_time_view: this.props.acces?.dop_time_view,
+          rec_apps_edit: this.props.acces?.rec_apps_edit,
+          rec_apps_view: this.props.acces?.rec_apps_view,
+          storages_edit: this.props.acces?.storages_edit,
+          storages_view: this.props.acces?.storages_view,
+        };
+        this.setState({
+          acces: objAcces,
+        });
+      } else {
+        let objAcces = {
+          name_edit: this.props.acces?.name_pf_edit,
+          name_view: this.props.acces?.name_pf_view,
+          shelf_life_edit: this.props.acces?.shelf_life_pf_edit,
+          shelf_life_view: this.props.acces?.shelf_life_pf_view,
+          two_user_edit: this.props.acces?.two_user_pf_edit,
+          two_user_view: this.props.acces?.two_user_pf_view,
+          show_in_rev_edit: this.props.acces?.show_in_rev_pf_edit,
+          show_in_rev_view: this.props.acces?.show_in_rev_pf_view,
+          date_start_edit: this.props.acces?.date_start_pf_edit,
+          date_start_view: this.props.acces?.date_start_pf_view,
+          date_end_edit: this.props.acces?.date_end_pf_edit,
+          date_end_view: this.props.acces?.date_end_pf_view,
+          time_edit: this.props.acces?.time_pf_edit,
+          time_view: this.props.acces?.time_pf_view,
+          dop_time_edit: this.props.acces?.dop_time_pf_edit,
+          dop_time_view: this.props.acces?.dop_time_pf_view,
+          rec_apps_edit: this.props.acces?.rec_apps_pf_edit,
+          rec_apps_view: this.props.acces?.rec_apps_pf_view,
+          storages_edit: this.props.acces?.storages_pf_edit,
+          storages_view: this.props.acces?.storages_pf_view,
+        };
+        this.setState({
+          acces: objAcces,
+        });
+      }
     }
   }
 
-  chooseItem(event, data) {
-    let list = this.state.list;
+  chooseItem = (event, value) => {
+    if (!value?.id) return;
 
-    const find_item = list.find((item) => parseInt(item.item_id.id) === parseInt(data.id));
+    this.setState((prevState) => {
+      const { list } = prevState;
+      const valueId = parseInt(value.id);
 
-    if (find_item) {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: "Данная позиция уже добавлена",
-      });
+      // Проверка на дубликат во всем списке
+      const isDuplicate = list.some(
+        (item) => item.item_id && parseInt(item.item_id.id) === valueId,
+      );
 
-      return;
-    }
-    list.push({
-      item_id: { id: data.id, name: data.name },
-      type_rec: data.type_rec,
-      ei_name: data.ei_name,
-      brutto: 0,
-      pr_1: 0,
-      netto: 0,
-      pr_2: 0,
-      res: 0,
+      if (isDuplicate) {
+        this.showAlert("Данная позиция уже добавлена", false);
+        return null;
+      }
+
+      // Добавляем новую строку
+      const newItem = {
+        item_id: {
+          id: value.id,
+          name: value.name,
+        },
+        ei_name: value.ei_name || "",
+        type_rec: value.type_rec || "",
+        brutto: 0,
+        pr_1: 0,
+        netto: 0,
+        pr_2: 0,
+        res: 0,
+      };
+
+      return {
+        list: [...list, newItem],
+      };
     });
-
-    this.setState({ list });
-  }
+  };
 
   deleteItemData(key) {
     let list = this.state.list;
@@ -997,6 +1062,14 @@ class ReceptModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3,
                 }}
+                style={
+                  this.props.method !== "Новый рецепт" &&
+                  this.props.method !== "Новый полуфабрикат" &&
+                  !this.state.acces?.name_edit &&
+                  !this.state.acces?.name_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Наименование"
@@ -1004,7 +1077,7 @@ class ReceptModule_Modal extends React.Component {
                   disabled={
                     this.props.method !== "Новый рецепт" &&
                     this.props.method !== "Новый полуфабрикат" &&
-                    !this.props.acces?.name_edit
+                    !this.state.acces?.name_edit
                   }
                   func={this.changeItem.bind(this, "name")}
                 />
@@ -1014,6 +1087,14 @@ class ReceptModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3,
                 }}
+                style={
+                  this.props.method !== "Новый рецепт" &&
+                  this.props.method !== "Новый полуфабрикат" &&
+                  !this.state.acces?.shelf_life_edit &&
+                  !this.state.acces?.shelf_life_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Срок годности"
@@ -1021,7 +1102,7 @@ class ReceptModule_Modal extends React.Component {
                   disabled={
                     this.props.method !== "Новый рецепт" &&
                     this.props.method !== "Новый полуфабрикат" &&
-                    !this.props.acces?.shelf_life_edit
+                    !this.state.acces?.shelf_life_edit
                   }
                   func={this.changeItem.bind(this, "shelf_life")}
                 />
@@ -1031,6 +1112,14 @@ class ReceptModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3,
                 }}
+                style={
+                  this.props.method !== "Новый рецепт" &&
+                  this.props.method !== "Новый полуфабрикат" &&
+                  !this.state.acces?.two_user_edit &&
+                  !this.state.acces?.two_user_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MySelect
                   is_none={false}
@@ -1040,7 +1129,7 @@ class ReceptModule_Modal extends React.Component {
                   disabled={
                     this.props.method !== "Новый рецепт" &&
                     this.props.method !== "Новый полуфабрикат" &&
-                    !this.props.acces?.two_user_edit
+                    !this.state.acces?.two_user_edit
                   }
                   label="Количество сотрудников"
                 />
@@ -1050,6 +1139,14 @@ class ReceptModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3,
                 }}
+                style={
+                  this.props.method !== "Новый рецепт" &&
+                  this.props.method !== "Новый полуфабрикат" &&
+                  !this.state.acces?.show_in_rev_edit &&
+                  !this.state.acces?.show_in_rev_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyCheckBox
                   label="Ревизия"
@@ -1057,7 +1154,7 @@ class ReceptModule_Modal extends React.Component {
                   disabled={
                     this.props.method !== "Новый рецепт" &&
                     this.props.method !== "Новый полуфабрикат" &&
-                    !this.props.acces?.show_in_rev_edit
+                    !this.state.acces?.show_in_rev_edit
                   }
                   func={this.changeItemChecked.bind(this, "show_in_rev")}
                 />
@@ -1067,6 +1164,14 @@ class ReceptModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3,
                 }}
+                style={
+                  this.props.method !== "Новый рецепт" &&
+                  this.props.method !== "Новый полуфабрикат" &&
+                  !this.state.acces?.date_start_edit &&
+                  !this.state.acces?.date_start_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyDatePickerNew
                   label="Действует с"
@@ -1075,7 +1180,7 @@ class ReceptModule_Modal extends React.Component {
                   disabled={
                     this.props.method !== "Новый рецепт" &&
                     this.props.method !== "Новый полуфабрикат" &&
-                    !this.props.acces?.date_start_edit
+                    !this.state.acces?.date_start_edit
                   }
                   func={this.changeDateRange.bind(this, "date_start")}
                 />
@@ -1085,6 +1190,14 @@ class ReceptModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3,
                 }}
+                style={
+                  this.props.method !== "Новый рецепт" &&
+                  this.props.method !== "Новый полуфабрикат" &&
+                  !this.state.acces?.date_end_edit &&
+                  !this.state.acces?.date_end_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyDatePickerNew
                   label="Действует до"
@@ -1093,7 +1206,7 @@ class ReceptModule_Modal extends React.Component {
                   disabled={
                     this.props.method !== "Новый рецепт" &&
                     this.props.method !== "Новый полуфабрикат" &&
-                    !this.props.acces?.date_end_edit
+                    !this.state.acces?.date_end_edit
                   }
                   func={this.changeDateRange.bind(this, "date_end")}
                 />
@@ -1103,6 +1216,14 @@ class ReceptModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3,
                 }}
+                style={
+                  this.props.method !== "Новый рецепт" &&
+                  this.props.method !== "Новый полуфабрикат" &&
+                  !this.state.acces?.time_edit &&
+                  !this.state.acces?.time_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Время приготовления 1 кг ММ:SS (15:20)"
@@ -1110,7 +1231,7 @@ class ReceptModule_Modal extends React.Component {
                   disabled={
                     this.props.method !== "Новый рецепт" &&
                     this.props.method !== "Новый полуфабрикат" &&
-                    !this.props.acces?.time_edit
+                    !this.state.acces?.time_edit
                   }
                   func={this.changeItem.bind(this, "time")}
                 />
@@ -1120,6 +1241,14 @@ class ReceptModule_Modal extends React.Component {
                   xs: 12,
                   sm: 3,
                 }}
+                style={
+                  this.props.method !== "Новый рецепт" &&
+                  this.props.method !== "Новый полуфабрикат" &&
+                  !this.state.acces?.dop_time_edit &&
+                  !this.state.acces?.dop_time_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyTextInput
                   label="Дополнительное время (уборка рабочего места)"
@@ -1127,7 +1256,7 @@ class ReceptModule_Modal extends React.Component {
                   disabled={
                     this.props.method !== "Новый рецепт" &&
                     this.props.method !== "Новый полуфабрикат" &&
-                    !this.props.acces?.dop_time_edit
+                    !this.state.acces?.dop_time_edit
                   }
                   func={this.changeItem.bind(this, "dop_time")}
                 />
@@ -1137,6 +1266,14 @@ class ReceptModule_Modal extends React.Component {
                   xs: 12,
                   sm: 6,
                 }}
+                style={
+                  this.props.method !== "Новый рецепт" &&
+                  this.props.method !== "Новый полуфабрикат" &&
+                  !this.state.acces?.rec_apps_edit &&
+                  !this.state.acces?.rec_apps_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyAutocomplite
                   label="Должность в кафе (кто будет готовить)"
@@ -1145,7 +1282,7 @@ class ReceptModule_Modal extends React.Component {
                   disabled={
                     this.props.method !== "Новый рецепт" &&
                     this.props.method !== "Новый полуфабрикат" &&
-                    !this.props.acces?.rec_apps_edit
+                    !this.state.acces?.rec_apps_edit
                   }
                   value={this.state.rec_apps}
                   func={this.changeComplite.bind(this, "rec_apps")}
@@ -1156,6 +1293,14 @@ class ReceptModule_Modal extends React.Component {
                   xs: 12,
                   sm: 6,
                 }}
+                style={
+                  this.props.method !== "Новый рецепт" &&
+                  this.props.method !== "Новый полуфабрикат" &&
+                  !this.state.acces?.storages_edit &&
+                  !this.state.acces?.storages_view
+                    ? { display: "none" }
+                    : {}
+                }
               >
                 <MyAutocomplite
                   label="Места хранения"
@@ -1165,7 +1310,7 @@ class ReceptModule_Modal extends React.Component {
                   disabled={
                     this.props.method !== "Новый рецепт" &&
                     this.props.method !== "Новый полуфабрикат" &&
-                    !this.props.acces?.storages_edit
+                    !this.state.acces?.storages_edit
                   }
                   func={this.changeComplite.bind(this, "storages")}
                 />
@@ -1269,7 +1414,11 @@ class ReceptModule_Modal extends React.Component {
                         <MyAutocomplite
                           multiple={false}
                           data={all_pf_list}
+                          getOptionLabel={(option) => option?.name || ""}
+                          disabledItemsFocusable={true}
                           value={null}
+                          blurOnSelect={true}
+                          autoFocus={false}
                           func={this.chooseItem.bind(this)}
                         />
                       </TableCell>
@@ -1357,7 +1506,7 @@ class ReceptModule_Modal extends React.Component {
 
 class ReceptModule_Table extends React.Component {
   render() {
-    const { data, method, openItemEdit, checkTable, openHistoryItem, type } = this.props;
+    const { data, method, openItemEdit, checkTable, openHistoryItem, type, acces } = this.props;
 
     return (
       <>
@@ -1384,7 +1533,9 @@ class ReceptModule_Table extends React.Component {
                   >
                     <TableHead sx={{ "& th": { fontWeight: "bold" } }}>
                       <TableRow>
-                        <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
+                        {acces?.rev_table_access ? (
+                          <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
+                        ) : null}
                         <TableCell style={{ width: "18%" }}>Наименование</TableCell>
                         <TableCell style={{ width: "18%" }}>Действует с</TableCell>
                         <TableCell style={{ width: "18%" }}>Обновление</TableCell>
@@ -1396,13 +1547,15 @@ class ReceptModule_Table extends React.Component {
                     <TableBody>
                       {data.map((item, key) => (
                         <TableRow key={key}>
-                          <TableCell>
-                            <MyCheckBox
-                              label=""
-                              value={parseInt(item.show_in_rev) == 1 ? true : false}
-                              func={checkTable.bind(this, item.id, "show_in_rev", type)}
-                            />
-                          </TableCell>
+                          {this.props.acces?.rev_table_access ? (
+                            <TableCell>
+                              <MyCheckBox
+                                label=""
+                                value={parseInt(item.show_in_rev) == 1 ? true : false}
+                                func={checkTable.bind(this, item.id, "show_in_rev", type)}
+                              />
+                            </TableCell>
+                          ) : null}
                           <TableCell>{item.name}</TableCell>
                           <TableCell>{item.date_start}</TableCell>
                           <TableCell>{item.date_update}</TableCell>
@@ -1442,7 +1595,7 @@ class ReceptModule_ extends React.Component {
     super(props);
 
     this.state = {
-      module: "recept_module",
+      module: "recept_module_new_2",
       module_name: "",
       is_load: false,
 
@@ -1458,6 +1611,7 @@ class ReceptModule_ extends React.Component {
       rec: null,
       item: [],
       acces: {},
+      typeMethod: "",
 
       openAlert: false,
       err_status: false,
@@ -1598,6 +1752,7 @@ class ReceptModule_ extends React.Component {
         rec: res.rec,
         rec_pf_list: res.pf_list,
         type,
+        typeMethod: "edit_rec",
       });
     } else {
       const res = await this.getData("get_one_pf", data);
@@ -1622,6 +1777,7 @@ class ReceptModule_ extends React.Component {
         rec: res.pf,
         rec_pf_list: res.items_list,
         type,
+        typeMethod: "edit_pf",
       });
     }
   }
@@ -1792,7 +1948,6 @@ class ReceptModule_ extends React.Component {
     }
 
     if (res.st === true) {
-      console.log("aaaaa");
       this.setState({
         openAlert: true,
         err_status: res.st,
@@ -1907,6 +2062,7 @@ class ReceptModule_ extends React.Component {
           onClose={() => this.setState({ modalDialog: false })}
           all_pf_list={this.state.all_pf_list}
           method={this.state.method}
+          typeMethod={this.state.typeMethod}
           storages={this.state.storages}
           apps={this.state.apps}
           rec={this.state.rec}
@@ -1947,36 +2103,39 @@ class ReceptModule_ extends React.Component {
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid
-            mb={3}
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            <Button
-              onClick={this.openItemNew.bind(this, "Новый рецепт", "rec")}
-              variant="contained"
+          {this.state.acces?.create_rec_access ? (
+            <Grid
+              mb={3}
+              size={{
+                xs: 12,
+                sm: 4,
+              }}
             >
-              Добавить рецепт
-            </Button>
-          </Grid>
+              <Button
+                onClick={this.openItemNew.bind(this, "Новый рецепт", "rec")}
+                variant="contained"
+              >
+                Добавить рецепт
+              </Button>
+            </Grid>
+          ) : null}
 
-          <Grid
-            mb={3}
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            <Button
-              onClick={this.openItemNew.bind(this, "Новый полуфабрикат", "pf")}
-              variant="contained"
+          {this.state.acces?.create_pol_access ? (
+            <Grid
+              mb={3}
+              size={{
+                xs: 12,
+                sm: 4,
+              }}
             >
-              Добавить полуфабрикат
-            </Button>
-          </Grid>
-
+              <Button
+                onClick={this.openItemNew.bind(this, "Новый полуфабрикат", "pf")}
+                variant="contained"
+              >
+                Добавить полуфабрикат
+              </Button>
+            </Grid>
+          ) : null}
           <ReceptModule_Table
             data={this.state.pf_list}
             method="Полуфабрикаты"
@@ -1984,6 +2143,7 @@ class ReceptModule_ extends React.Component {
             checkTable={this.checkTable.bind(this)}
             openHistoryItem={this.openHistoryItem.bind(this)}
             type={"pf"}
+            acces={this.state.acces}
           />
 
           <ReceptModule_Table
@@ -1993,6 +2153,7 @@ class ReceptModule_ extends React.Component {
             checkTable={this.checkTable.bind(this)}
             openHistoryItem={this.openHistoryItem.bind(this)}
             type={"rec"}
+            acces={this.state.acces}
           />
         </Grid>
       </>

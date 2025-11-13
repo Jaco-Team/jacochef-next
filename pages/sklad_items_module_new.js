@@ -868,7 +868,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  !this.props.acces?.name_edit && !this.props.acces?.name_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.name_edit &&
+                  !this.props.acces?.name_view
                     ? { display: "none" }
                     : {}
                 }
@@ -888,7 +890,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  !this.props.acces?.cats_edit && !this.props.acces?.cats_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.cats_edit &&
+                  !this.props.acces?.cats_view
                     ? { display: "none" }
                     : {}
                 }
@@ -920,7 +924,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 1.5,
                 }}
                 style={
-                  !this.props.acces?.ed_izmer_edit && !this.props.acces?.ed_izmer_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.ed_izmer_edit &&
+                  !this.props.acces?.ed_izmer_view
                     ? { display: "none" }
                     : {}
                 }
@@ -949,7 +955,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  !this.props.acces?.max_count_in_m_edit && !this.props.acces?.max_count_in_m_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.max_count_in_m_edit &&
+                  !this.props.acces?.max_count_in_m_view
                     ? { display: "none" }
                     : {}
                 }
@@ -970,7 +978,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  !this.props.acces?.mark_name_edit && !this.props.acces?.mark_name_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.mark_name_edit &&
+                  !this.props.acces?.mark_name_view
                     ? { display: "none" }
                     : {}
                 }
@@ -991,7 +1001,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  !this.props.acces?.name_for_vendor_edit && !this.props.acces?.name_for_vendor_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.name_for_vendor_edit &&
+                  !this.props.acces?.name_for_vendor_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1012,7 +1024,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  !this.props.acces?.pq_edit && !this.props.acces?.pq_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.pq_edit &&
+                  !this.props.acces?.pq_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1032,7 +1046,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 1.5,
                 }}
                 style={
-                  !this.props.acces?.percent_edit && !this.props.acces?.percent_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.percent_edit &&
+                  !this.props.acces?.percent_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1052,7 +1068,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  !this.props.acces?.vend_percent_edit && !this.props.acces?.vend_percent_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.vend_percent_edit &&
+                  !this.props.acces?.vend_percent_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1073,7 +1091,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  !this.props.acces?.art_edit && !this.props.acces?.art_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.art_edit &&
+                  !this.props.acces?.art_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1093,7 +1113,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  !this.props.acces?.min_count_edit && !this.props.acces?.min_count_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.min_count_edit &&
+                  !this.props.acces?.min_count_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1115,7 +1137,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 12,
                 }}
                 style={
-                  !this.props.acces?.pf_list_edit && !this.props.acces?.pf_list_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.pf_list_edit &&
+                  !this.props.acces?.pf_list_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1136,7 +1160,9 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 12,
                 }}
                 style={
-                  !this.props.acces?.allergens_edit && !this.props.acces?.allergens_view
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.allergens_edit &&
+                  !this.props.acces?.allergens_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1164,6 +1190,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 12,
                 }}
                 style={
+                  this.props.method === "Редактирование товара" &&
                   !this.props.acces?.my_allergens_other_edit &&
                   !this.props.acces?.my_allergens_other_view
                     ? { display: "none" }
