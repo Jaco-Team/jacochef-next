@@ -525,13 +525,27 @@ class Concenter_ extends React.Component {
     const positions = this.state.positions;
     const problem_arr = [...this.state.problem_arr];
     positions.map((pos) => {
-      problem_arr.push({
-        ...pos,
-        problem_name: solutions.value,
-        problem_comment: solutions.comment,
-        problem_solution: solutions.solution,
-        previewUrl: solutions.previewUrl,
-      });
+      const existingIndex = problem_arr.findIndex((item) => item.id === pos.id);
+
+      if (existingIndex !== -1) {
+        // Обновляем существующую запись
+        problem_arr[existingIndex] = {
+          ...problem_arr[existingIndex],
+          problem_name: solutions.value,
+          problem_comment: solutions.comment,
+          problem_solution: solutions.solution,
+          previewUrl: solutions.previewUrl,
+        };
+      } else {
+        // Добавляем новую запись
+        problem_arr.push({
+          ...pos,
+          problem_name: solutions.value,
+          problem_comment: solutions.comment,
+          problem_solution: solutions.solution,
+          previewUrl: solutions.previewUrl,
+        });
+      }
     });
 
     this.setState({ problem_arr: problem_arr, modalDialogProblem: false, checkedKey: {} });
@@ -1001,6 +1015,27 @@ class Concenter_ extends React.Component {
                                 border: "none",
                                 backgroundColor: "#f6f6f6",
                                 borderRadius: "12px",
+                                cursor: "pointer",
+                              }}
+                              onClick={(e) => {
+                                if (
+                                  e.target.type === "checkbox" ||
+                                  e.target.closest('input[type="checkbox"]')
+                                ) {
+                                  return;
+                                }
+                                this.setState(
+                                  {
+                                    checkedKey: {
+                                      ...{},
+                                      [key]: true,
+                                    },
+                                    current_name: item.id,
+                                  },
+                                  () => {
+                                    this.openProblems();
+                                  },
+                                );
                               }}
                             >
                               <TableCell
@@ -1035,25 +1070,7 @@ class Concenter_ extends React.Component {
                                       justifyContent: "flex-start",
                                     }}
                                   >
-                                    <span
-                                      style={{ cursor: "pointer" }}
-                                      onClick={() => {
-                                        this.setState(
-                                          {
-                                            checkedKey: {
-                                              ...{},
-                                              [key]: true,
-                                            },
-                                            current_name: item.id,
-                                          },
-                                          () => {
-                                            this.openProblems();
-                                          },
-                                        );
-                                      }}
-                                    >
-                                      {item.name}
-                                    </span>
+                                    <span>{item.name}</span>
                                     {this.state.problem_arr.find((it) => it?.id === item.id)
                                       ?.problem_name ? (
                                       <span
@@ -1077,19 +1094,6 @@ class Concenter_ extends React.Component {
                                 </span>
                               </TableCell>
                               <TableCell
-                                onClick={() => {
-                                  this.setState(
-                                    {
-                                      checkedKey: {
-                                        ...{},
-                                        [key]: true,
-                                      },
-                                    },
-                                    () => {
-                                      this.openProblems();
-                                    },
-                                  );
-                                }}
                                 style={{
                                   borderRadius: "0  10px 10px 0",
                                   border: "none",
