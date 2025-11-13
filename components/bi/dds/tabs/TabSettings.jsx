@@ -14,53 +14,34 @@ import {
   IconButton,
 } from "@mui/material";
 import { UploadFile, Add, Edit, Delete } from "@mui/icons-material";
+import { useMemo } from "react";
 import { useConfirm } from "@/src/hooks/useConfirm";
+import useDDSStore from "../useDDSStore";
 
 export default function TabSettings() {
-  const rows = [
-    {
-      name: "Выручка от покупателей",
-      group: "Операционные поступления",
-      type: "Основная деятельность",
-      op: "от покупателя",
-      uses: 45,
-      updated: "15.01.2024",
-    },
-    {
-      name: "Закупка продуктов",
-      group: "Операционные платежи",
-      type: "Себестоимость",
-      op: "поставщику",
-      uses: 32,
-      updated: "15.01.2024",
-    },
-    {
-      name: "Аренда помещений",
-      group: "Операционные платежи",
-      type: "Постоянные расходы",
-      op: "на расходы",
-      uses: 12,
-      updated: "15.01.2024",
-    },
-    {
-      name: "Зарплата сотрудников",
-      group: "Операционные платежи",
-      type: "ФОТ",
-      op: "на расходы",
-      uses: 28,
-      updated: "15.01.2024",
-    },
-    {
-      name: "Возврат от поставщиков",
-      group: "Операционные поступления",
-      type: "Прочие доходы",
-      op: "прочие поступления",
-      uses: 3,
-      updated: "16.01.2024",
-    },
-  ];
-
   const { withConfirm, ConfirmDialog } = useConfirm();
+  const [articles, transactions] = useDDSStore((s) => [s.articles, s.transactions]);
+  const setState = useDDSStore.setState;
+
+  // Compute usage counts per article
+  const data = useMemo(() => {
+    return (
+      articles?.map((a) => ({
+        ...a,
+        uses: transactions?.filter((t) => t.article_id === a.id).length || 0,
+      })) || []
+    );
+  }, [articles, transactions]);
+
+  // Handle deletion
+  const handleDelete = (id) => {
+    setState((state) => ({
+      articles: state.articles.filter((a) => a.id !== id),
+      transactions: state.transactions.map((t) =>
+        t.article_id === id ? { ...t, article_id: null } : t,
+      ),
+    }));
+  };
 
   return (
     <Paper sx={{ p: 3 }}>
@@ -146,19 +127,19 @@ export default function TabSettings() {
             </TableHead>
 
             <TableBody>
-              {rows.map((r, i) => {
-                const isIncome = r.group.includes("поступления");
+              {data.map((r) => {
+                const isIncome = r.flow === 1;
                 const color = isIncome ? "success.main" : "primary.main";
 
                 return (
                   <TableRow
-                    key={i}
+                    key={r.id}
                     hover
                   >
                     <TableCell>{r.name}</TableCell>
                     <TableCell sx={{ color }}>{r.group}</TableCell>
                     <TableCell>{r.type}</TableCell>
-                    <TableCell>{r.op}</TableCell>
+                    <TableCell>{r.operation}</TableCell>
                     <TableCell>{r.uses}</TableCell>
                     <TableCell>{r.updated}</TableCell>
                     <TableCell>
@@ -172,8 +153,8 @@ export default function TabSettings() {
                         size="small"
                         color="primary"
                         onClick={withConfirm(
-                          () => console.log(`DELETED ${r.name}`),
-                          `Точно удалить ${r.name}?`,
+                          () => handleDelete(r.id),
+                          `Точно удалить статью "${r.name}"?`,
                           3,
                         )}
                       >

@@ -39,7 +39,6 @@ export default function DDS() {
       point: [],
       module_name: data.module_info.name,
     });
-    console.log(useDDSStore.getState().points);
 
     document.title = data.module_info.name;
   }

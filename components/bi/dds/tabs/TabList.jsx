@@ -26,14 +26,6 @@ import TransactionsTable from "./TransactionsTable";
 import { useState } from "react";
 import ArticlesTable from "./ArticlesTable";
 
-const rows = [
-  { name: "Выручка от покупателей", amount: "379 500 ₽", percent: "57.5 %", ops: 3 },
-  { name: "Зарплата сотрудников", amount: "150 000 ₽", percent: "22.7 %", ops: 1 },
-  { name: "Аренда помещений", amount: "80 000 ₽", percent: "12.1 %", ops: 1 },
-  { name: "Закупка продуктов", amount: "45 000 ₽", percent: "6.8 %", ops: 1 },
-  { name: "Возврат от поставщиков", amount: "5 000 ₽", percent: "0.8 %", ops: 1 },
-];
-
 export default function TabList() {
   const { points, point, date_start, date_end } = useDDSStore();
   const setState = useDDSStore.setState;
@@ -151,7 +143,7 @@ export default function TabList() {
         index={0}
         id={0}
       >
-        <ArticlesTable rows={rows} />
+        <ArticlesTable />
       </TabPanel>
 
       <TabPanel

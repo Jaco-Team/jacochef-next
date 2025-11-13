@@ -16,106 +16,27 @@ import {
   Box,
 } from "@mui/material";
 import { EditOutlined } from "@mui/icons-material";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useConfirm } from "@/src/hooks/useConfirm";
-
-const rows = [
-  {
-    id: 1,
-    date: "01.11.2024",
-    number: "00001",
-    income: 125000,
-    expense: null,
-    contractor: "ИП Иванов А.А.",
-    purpose: "Оплата по договору №123",
-    article: "Выручка от покупателей",
-  },
-  {
-    id: 2,
-    date: "02.11.2024",
-    number: "00002",
-    income: null,
-    expense: 45000,
-    contractor: 'ООО "Поставщик продуктов"',
-    purpose: "Закупка кофейных зерен",
-    article: "Закупка продуктов",
-  },
-  {
-    id: 3,
-    date: "03.11.2024",
-    number: "00003",
-    income: null,
-    expense: 80000,
-    contractor: 'ООО "Арендодатель"',
-    purpose: "Аренда за ноябрь 2024",
-    article: "Аренда помещений",
-  },
-  {
-    id: 4,
-    date: "05.11.2024",
-    number: "00004",
-    income: 98500,
-    expense: null,
-    contractor: 'ООО "Корпоративный клиент"',
-    purpose: "Оплата за услуги кейтеринга",
-    article: "Выручка от покупателей",
-  },
-  {
-    id: 5,
-    date: "10.11.2024",
-    number: "00005",
-    income: null,
-    expense: 150000,
-    contractor: "Сотрудники",
-    purpose: "Выплата заработной платы за октябрь",
-    article: "Зарплата сотрудников",
-  },
-  {
-    id: 6,
-    date: "12.11.2024",
-    number: "00006",
-    income: 5000,
-    expense: null,
-    contractor: 'ООО "Поставщик продуктов"',
-    purpose: "Возврат за бракованный товар",
-    article: "Возврат от поставщиков",
-  },
-  {
-    id: 7,
-    date: "15.11.2024",
-    number: "00007",
-    income: null,
-    expense: 23000,
-    contractor: 'ООО "Коммунальные услуги"',
-    purpose: "Оплата электроэнергии и воды",
-    article: null,
-  },
-  {
-    id: 8,
-    date: "18.11.2024",
-    number: "00008",
-    income: 156000,
-    expense: null,
-    contractor: "ИП Петров В.В.",
-    purpose: "Оплата по договору №456",
-    article: "Выручка от покупателей",
-  },
-];
+import useDDSStore from "../useDDSStore";
 
 export default function TransactionsTable() {
-  const [selected, setSelected] = useState([]);
+  const [articles, transactions] = useDDSStore((s) => [s.articles, s.transactions]);
+  const rowsWithArticles = useMemo(() =>
+    transactions.map((t) => ({ ...t, article: articles.find((a) => a.id === t.article_id)?.name })),
+  );
 
+  const [selected, setSelected] = useState([]);
   const toggleSelect = (id) => {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
-
   const toggleAll = () => {
-    if (selected.length === rows.length) setSelected([]);
-    else setSelected(rows.map((r) => r.id));
+    if (selected.length === transactions.length) setSelected([]);
+    else setSelected(transactions.map((r) => r.id));
   };
 
-  const totalIncome = rows.reduce((a, b) => a + (b.income || 0), 0);
-  const totalExpense = rows.reduce((a, b) => a + (b.expense || 0), 0);
+  const totalIncome = transactions.reduce((a, b) => a + (b.income || 0), 0);
+  const totalExpense = transactions.reduce((a, b) => a + (b.expense || 0), 0);
 
   const { withConfirm, ConfirmDialog } = useConfirm();
 
@@ -127,6 +48,7 @@ export default function TransactionsTable() {
           <Button
             variant="text"
             size="small"
+            disabled={!selected.length}
             startIcon={<Typography fontSize={14}>🏷️</Typography>}
             onClick={withConfirm((e) => console.log(e), "Точно нажать?", 5)}
           >
@@ -141,8 +63,8 @@ export default function TransactionsTable() {
               <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
-                    checked={selected.length === rows.length}
-                    indeterminate={selected.length > 0 && selected.length < rows.length}
+                    checked={selected.length === transactions.length}
+                    indeterminate={selected.length > 0 && selected.length < transactions.length}
                     onChange={toggleAll}
                   />
                 </TableCell>
@@ -153,20 +75,25 @@ export default function TransactionsTable() {
                 <TableCell>Контрагент</TableCell>
                 <TableCell>Назначение</TableCell>
                 <TableCell>Статья ДДС</TableCell>
+                <TableCell />
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((r) => {
+              {rowsWithArticles.map((r) => {
                 const checked = selected.includes(r.id);
                 return (
                   <TableRow
                     key={r.id}
                     hover
                     sx={{ cursor: "pointer" }}
-                    onClick={() => toggleSelect(r.id)}
+                    title="Изменить"
+                    // onClick={() => toggleSelect(r.id)}
                   >
                     <TableCell padding="checkbox">
-                      <Checkbox checked={checked} />
+                      <Checkbox
+                        checked={checked}
+                        onChange={() => toggleSelect(r.id)}
+                      />
                     </TableCell>
                     <TableCell>{r.date}</TableCell>
                     <TableCell>{r.number}</TableCell>
@@ -180,12 +107,7 @@ export default function TransactionsTable() {
                     <TableCell>{r.purpose}</TableCell>
                     <TableCell>
                       {r.article ? (
-                        <>
-                          {r.article}
-                          <IconButton size="small">
-                            <EditOutlined fontSize="inherit" />
-                          </IconButton>
-                        </>
+                        r.article
                       ) : (
                         <Chip
                           size="small"
@@ -194,6 +116,11 @@ export default function TransactionsTable() {
                           label="Требует классификации"
                         />
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <IconButton size="small">
+                        <EditOutlined fontSize="inherit" />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 );
@@ -211,8 +138,10 @@ export default function TransactionsTable() {
                 <TableCell sx={{ color: "error.main", fontWeight: 600 }}>
                   {totalExpense.toLocaleString()} ₽
                 </TableCell>
-                <TableCell colSpan={2} />
-                <TableCell sx={{ fontWeight: 600, color: "success.main" }}>
+                <TableCell
+                  colSpan={4}
+                  sx={{ fontWeight: 600, color: "success.main" }}
+                >
                   Баланс: {(totalIncome - totalExpense).toLocaleString()} ₽
                 </TableCell>
               </TableRow>
