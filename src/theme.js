@@ -13,7 +13,7 @@ const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#c03", // your accent red
+      main: "#c03",
       contrastText: "#fff",
     },
     secondary: {

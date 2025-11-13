@@ -14,6 +14,7 @@ import {
 import { useState, useMemo } from "react";
 import ModalArticleTransactions from "../modals/ModalArticleTransactions";
 import useDDSStore from "../useDDSStore";
+import { formatNumber } from "@/src/helpers/utils/i18n";
 
 export default function ArticlesTable() {
   const [articles, transactions] = useDDSStore((s) => [s.articles, s.transactions]);
@@ -48,8 +49,8 @@ export default function ArticlesTable() {
 
     return rows.map((r) => ({
       ...r,
-      amount: `${r._sum.toLocaleString("ru-RU")} ₽`,
-      percent: totalAbs ? `${((r._sum / totalAbs) * 100).toFixed(1)} %` : "0 %",
+      amount: `${formatNumber(r._sum, 2, 2)} ₽`,
+      percent: totalAbs ? `${((r._sum / totalAbs) * 100).toFixed(2)} %` : "0 %",
     }));
   }, [articles, transactions]);
 
@@ -65,7 +66,7 @@ export default function ArticlesTable() {
               <TableCell sx={{ fontWeight: 600 }}>Статья ДДС</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Сумма за период</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Доля %</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Операций</TableCell>
+              <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>Операций</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Действия</TableCell>
             </TableRow>
           </TableHead>
@@ -78,7 +79,7 @@ export default function ArticlesTable() {
                 <TableCell>{r.name}</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>{r.amount}</TableCell>
                 <TableCell>{r.percent}</TableCell>
-                <TableCell>{r.ops}</TableCell>
+                <TableCell sx={{ textAlign: "center" }}>{r.ops}</TableCell>
                 <TableCell>
                   <Button
                     variant="text"

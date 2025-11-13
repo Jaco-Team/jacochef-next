@@ -14,14 +14,17 @@ import {
   IconButton,
 } from "@mui/material";
 import { UploadFile, Add, Edit, Delete } from "@mui/icons-material";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import useDDSStore from "../useDDSStore";
+import ModalAddArticle from "../modals/ModalAddArticle";
 
 export default function TabSettings() {
   const { withConfirm, ConfirmDialog } = useConfirm();
   const [articles, transactions] = useDDSStore((s) => [s.articles, s.transactions]);
   const setState = useDDSStore.setState;
+
+  const [openAdd, setOpenAdd] = useState(false);
 
   // Compute usage counts per article
   const data = useMemo(() => {
@@ -46,8 +49,10 @@ export default function TabSettings() {
   return (
     <Paper sx={{ p: 3 }}>
       <ConfirmDialog />
-
-      {/* Upload block */}
+      <ModalAddArticle
+        open={openAdd}
+        onClose={() => setOpenAdd(false)}
+      />
       <Paper
         variant="outlined"
         sx={{ p: 3, mb: 3 }}
@@ -65,10 +70,7 @@ export default function TabSettings() {
           spacing={2}
           alignItems="center"
         >
-          <Grid
-            xs={12}
-            md={8}
-          >
+          <Grid size={{ xs: 12, sm: "auto" }}>
             <Button
               variant="outlined"
               component="label"
@@ -84,14 +86,12 @@ export default function TabSettings() {
             </Button>
           </Grid>
 
-          <Grid
-            xs={12}
-            md="auto"
-          >
+          <Grid size={{ xs: 12, sm: "auto" }}>
             <Button
               variant="contained"
               startIcon={<Add />}
               sx={{ height: 40, whiteSpace: "nowrap" }}
+              onClick={() => setOpenAdd(true)}
             >
               Добавить статью
             </Button>
@@ -99,7 +99,6 @@ export default function TabSettings() {
         </Grid>
       </Paper>
 
-      {/* Reference table */}
       <Paper
         variant="outlined"
         sx={{ p: 2 }}
