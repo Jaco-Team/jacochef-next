@@ -3,17 +3,30 @@
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
 import TestAccess from "@/ui/TestAccess";
-import { Backdrop, CircularProgress, Grid } from "@mui/material";
+import { Backdrop, Box, CircularProgress, Grid, Paper, Tab, Tabs, Typography } from "@mui/material";
 import useDDSStore from "./useDDSStore";
 import { api_laravel } from "@/src/api_new";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+
+import a11yProps from "@/ui/TabPanel/a11yProps";
+import TabPanel from "@/ui/TabPanel/TabPanel";
+
+import TabList from "./tabs/TabList";
+import TabSettings from "./tabs/TabSettings";
+
+const TABS = [
+  { id: 0, key: "list", name: "Таблица", component: <TabList /> },
+  { id: 1, key: "settings", name: "Настройки", component: <TabSettings /> },
+];
 
 export default function DDS() {
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
   const { setStateKey, is_load, module, module_name } = useDDSStore();
   const setState = useDDSStore.setState;
 
-  const getBaseData = async () => {
+  const [currentTab, setCurrentTab] = useState(0);
+
+  async function getBaseData() {
     const data = await getData("get_all");
     if (!data) {
       showAlert("Ошибка получения данных");
@@ -23,22 +36,15 @@ export default function DDS() {
     setState({
       access: data.acces,
       points: data.points,
-      point: data.points[0],
+      point: [],
       module_name: data.module_info.name,
     });
+    console.log(useDDSStore.getState().points);
 
     document.title = data.module_info.name;
+  }
 
-    setTimeout(() => {
-      getTabIndex();
-    }, 100);
-
-    setTimeout(async () => {
-      await getDataPoint();
-    }, 200);
-  };
-
-  const getData = async (method, data = {}) => {
+  async function getData(method, data = {}) {
     setStateKey("is_load", true);
 
     const res = api_laravel(module, method, data)
@@ -53,7 +59,7 @@ export default function DDS() {
       });
 
     return res;
-  };
+  }
 
   useEffect(() => {
     getBaseData();
@@ -87,7 +93,38 @@ export default function DDS() {
         className="container_first_child"
       >
         <Grid size={12}>
-          <h1>{module_name}</h1>
+          <Typography variant="h5">{module_name}</Typography>
+        </Grid>
+        <Grid size={12}>
+          <Paper>
+            <Tabs
+              value={currentTab}
+              onChange={(_, id) => setCurrentTab(+id || 0)}
+              variant="scrollable"
+              scrollButtons={false}
+            >
+              {TABS.map((tab) => (
+                <Tab
+                  {...a11yProps(tab.key)}
+                  key={tab.key}
+                  value={tab.id}
+                  label={tab.name}
+                  sx={{ minWidth: "fit-content", flex: 1 }}
+                />
+              ))}
+            </Tabs>
+          </Paper>
+
+          {TABS.map((tab) => (
+            <TabPanel
+              key={tab.key}
+              value={currentTab}
+              index={tab.id}
+              id={tab.key}
+            >
+              {tab.component}
+            </TabPanel>
+          ))}
         </Grid>
       </Grid>
     </>
