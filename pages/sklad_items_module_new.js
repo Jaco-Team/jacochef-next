@@ -1948,13 +1948,16 @@ class SkladItemsModule_ extends React.Component {
                                     <TableHead>
                                       <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                                         <TableCell style={{ width: "5%" }}>№</TableCell>
-                                        {this.state.acces?.active_access ? (
+                                        {this.state.acces?.active_edit ||
+                                        this.state.acces?.active_view ? (
                                           <TableCell style={{ width: "10%" }}>Активность</TableCell>
                                         ) : null}
-                                        {this.state.acces?.ord_access ? (
+                                        {this.state.acces?.ord_edit ||
+                                        this.state.acces?.ord_view ? (
                                           <TableCell style={{ width: "10%" }}>Заявка</TableCell>
                                         ) : null}
-                                        {this.state.acces?.rev_access ? (
+                                        {this.state.acces?.rev_edit ||
+                                        this.state.acces?.rev_view ? (
                                           <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
                                         ) : null}
                                         <TableCell style={{ width: "20%" }}>Товар</TableCell>
@@ -1972,10 +1975,12 @@ class SkladItemsModule_ extends React.Component {
                                       {category.items.map((it, k) => (
                                         <TableRow key={k}>
                                           <TableCell>{k + 1}</TableCell>
-                                          {this.state.acces?.active_access ? (
+                                          {this.state.acces?.active_edit ||
+                                          this.state.acces?.active_view ? (
                                             <TableCell>
                                               <MyCheckBox
                                                 label=""
+                                                disabled={!this.state.acces?.active_edit}
                                                 value={parseInt(it.is_show) == 1 ? true : false}
                                                 func={this.saveCheckItem.bind(
                                                   this,
@@ -1985,10 +1990,12 @@ class SkladItemsModule_ extends React.Component {
                                               />
                                             </TableCell>
                                           ) : null}
-                                          {this.state.acces?.ord_access ? (
+                                          {this.state.acces?.ord_edit ||
+                                          this.state.acces?.ord_view ? (
                                             <TableCell>
                                               <MyCheckBox
                                                 label=""
+                                                disabled={!this.state.acces?.ord_edit}
                                                 value={
                                                   parseInt(it.show_in_order) == 1 ? true : false
                                                 }
@@ -2000,10 +2007,12 @@ class SkladItemsModule_ extends React.Component {
                                               />
                                             </TableCell>
                                           ) : null}
-                                          {this.state.acces?.rev_access ? (
+                                          {this.state.acces?.rev_edit ||
+                                          this.state.acces?.rev_view ? (
                                             <TableCell>
                                               <MyCheckBox
                                                 label=""
+                                                disabled={!this.state.acces?.rev_edit}
                                                 value={parseInt(it.show_in_rev) == 1 ? true : false}
                                                 func={this.saveCheckItem.bind(
                                                   this,
