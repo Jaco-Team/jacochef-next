@@ -349,13 +349,6 @@ class HeaderItem extends React.Component {
               display: parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
             }}
           ></TableCell>
-
-          <TableCell
-            style={{
-              textAlign: "center",
-              display: parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
-            }}
-          ></TableCell>
           <TableCell
             style={{
               textAlign: "center",
@@ -363,6 +356,13 @@ class HeaderItem extends React.Component {
                 parseInt(this.props.access["test_all_price_view"]) == 1 ? "table-cell" : "none",
             }}
           ></TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+            }}
+          ></TableCell>
+
           {this.props.part == 1 ? (
             false
           ) : (
@@ -455,7 +455,23 @@ class HeaderItem extends React.Component {
               Всего
             </TableCell>
           ) : null}
-
+          <TableCell
+            style={{
+              textAlign: "center",
+              display: parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+            }}
+          >
+            Удержано по исп. листу
+          </TableCell>
+          <TableCell
+            style={{
+              textAlign: "center",
+              display:
+                parseInt(this.props.access["test_all_price_view"]) == 1 ? "table-cell" : "none",
+            }}
+          >
+            Сумма к выплате
+          </TableCell>
           <TableCell
             style={{
               textAlign: "center",
@@ -468,28 +484,12 @@ class HeaderItem extends React.Component {
           <TableCell
             style={{
               textAlign: "center",
-              display: parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
-            }}
-          >
-            Удержано по исп. листу
-          </TableCell>
-          <TableCell
-            style={{
-              textAlign: "center",
               display: parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
             }}
           >
             Перечислено на карты
           </TableCell>
-          <TableCell
-            style={{
-              textAlign: "center",
-              display:
-                parseInt(this.props.access["test_all_price_view"]) == 1 ? "table-cell" : "none",
-            }}
-          >
-            Сумма к выплате
-          </TableCell>
+
           {this.props.part == 1 ? (
             false
           ) : (
@@ -870,12 +870,70 @@ class WorkSchedule_Table extends React.Component {
                           parseInt(item.data.dir_price_dop) +
                           parseInt(item.data.h_price) +
                           parseInt(item.data.my_bonus) -
-                          parseInt(item.data.err_price) -
-                          parseInt(item.data.withheld) +
+                          parseInt(item.data.err_price) +
+                          //parseInt(item.data.withheld) +
                           ""
                         : " - "}
                     </TableCell>
                   ) : null}
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      cursor: "pointer",
+                      display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                    onClick={
+                      parseInt(this.props.access["withheld_edit"]) == 0
+                        ? () => {}
+                        : this.props.openWithheld.bind(
+                            this,
+                            item.data.id,
+                            item.data.smena_id,
+                            item.data.app_id,
+                            this.props.numberChoose,
+                            item.data,
+                          )
+                    }
+                  >
+                    {item.data.withheld}
+                  </TableCell>
+
+                  {item.data.app_type == "driver" ? (
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["test_all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    ></TableCell>
+                  ) : (
+                    <TableCell
+                      style={{
+                        textAlign: "center",
+                        display:
+                          parseInt(this.props.access["test_all_price_view"]) == 1
+                            ? "table-cell"
+                            : "none",
+                      }}
+                    >
+                      {parseInt(item.data.check_period) == 1
+                        ? parseInt(item.data.dop_bonus) +
+                          parseInt(item.data.dir_price) +
+                          parseInt(item.data.register_price) +
+                          parseInt(item.data.dir_price_dop) +
+                          parseInt(item.data.h_price) +
+                          parseInt(item.data.my_bonus) -
+                          parseInt(item.data.err_price) -
+                          parseInt(item.data.given_cart) -
+                          parseInt(item.data.withheld) +
+                          ""
+                        : " - "}
+                    </TableCell>
+                  )}
 
                   {item.data.app_type == "driver" ? (
                     <TableCell
@@ -909,29 +967,6 @@ class WorkSchedule_Table extends React.Component {
                       {item.data.given}
                     </TableCell>
                   )}
-
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      cursor: "pointer",
-                      display:
-                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                    onClick={
-                      parseInt(this.props.access["withheld_edit"]) == 0
-                        ? () => {}
-                        : this.props.openWithheld.bind(
-                            this,
-                            item.data.id,
-                            item.data.smena_id,
-                            item.data.app_id,
-                            this.props.numberChoose,
-                            item.data,
-                          )
-                    }
-                  >
-                    {item.data.withheld}
-                  </TableCell>
 
                   {item.data.app_type == "driver" ? (
                     <TableCell
@@ -967,41 +1002,6 @@ class WorkSchedule_Table extends React.Component {
                       }
                     >
                       {item.data.given_cart}
-                    </TableCell>
-                  )}
-
-                  {item.data.app_type == "driver" ? (
-                    <TableCell
-                      style={{
-                        textAlign: "center",
-                        display:
-                          parseInt(this.props.access["test_all_price_view"]) == 1
-                            ? "table-cell"
-                            : "none",
-                      }}
-                    ></TableCell>
-                  ) : (
-                    <TableCell
-                      style={{
-                        textAlign: "center",
-                        display:
-                          parseInt(this.props.access["test_all_price_view"]) == 1
-                            ? "table-cell"
-                            : "none",
-                      }}
-                    >
-                      {parseInt(item.data.check_period) == 1
-                        ? parseInt(item.data.dop_bonus) +
-                          parseInt(item.data.dir_price) +
-                          parseInt(item.data.register_price) +
-                          parseInt(item.data.dir_price_dop) +
-                          parseInt(item.data.h_price) +
-                          parseInt(item.data.my_bonus) -
-                          parseInt(item.data.err_price) -
-                          parseInt(item.data.given_cart) -
-                          parseInt(item.data.withheld) +
-                          ""
-                        : " - "}
                     </TableCell>
                   )}
 
@@ -1128,6 +1128,24 @@ class WorkSchedule_Table extends React.Component {
                     style={{
                       textAlign: "center",
                       display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["test_all_price_view"]) == 1
+                          ? "table-cell"
+                          : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
                         parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
                     }}
                   >
@@ -1138,25 +1156,10 @@ class WorkSchedule_Table extends React.Component {
                     style={{
                       textAlign: "center",
                       display:
-                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
                         parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
                     }}
                   ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
-                        parseInt(this.props.access["test_all_price_view"]) == 1
-                          ? "table-cell"
-                          : "none",
-                    }}
-                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -1253,23 +1256,10 @@ class WorkSchedule_Table extends React.Component {
                     style={{
                       textAlign: "center",
                       display:
-                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
                         parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
                     }}
                   ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
-                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -1279,6 +1269,23 @@ class WorkSchedule_Table extends React.Component {
                           : "none",
                     }}
                   ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -1375,23 +1382,10 @@ class WorkSchedule_Table extends React.Component {
                     style={{
                       textAlign: "center",
                       display:
-                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
                         parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
                     }}
                   ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
-                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -1401,6 +1395,23 @@ class WorkSchedule_Table extends React.Component {
                           : "none",
                     }}
                   ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -1498,23 +1509,10 @@ class WorkSchedule_Table extends React.Component {
                     style={{
                       textAlign: "center",
                       display:
-                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
                         parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
                     }}
                   ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
-                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -1524,6 +1522,23 @@ class WorkSchedule_Table extends React.Component {
                           : "none",
                     }}
                   ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -1728,12 +1743,32 @@ class WorkSchedule_Table_without_functions extends React.Component {
                           parseInt(item.data.dir_price_dop) +
                           parseInt(item.data.h_price) +
                           parseInt(item.data.my_bonus) -
-                          parseInt(item.data.err_price) -
-                          parseInt(item.data.withheld) +
+                          parseInt(item.data.err_price) +
+                          //parseInt(item.data.withheld) +
                           ""
                         : " - "}
                     </TableCell>
                   ) : null}
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  >
+                    {item.data.withheld}
+                  </TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["test_all_price_view"]) == 1
+                          ? "table-cell"
+                          : "none",
+                    }}
+                  ></TableCell>
 
                   <TableCell
                     style={{
@@ -1744,15 +1779,7 @@ class WorkSchedule_Table_without_functions extends React.Component {
                   >
                     {item.data.given}
                   </TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
-                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  >
-                    {item.data.withheld}
-                  </TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -1762,15 +1789,7 @@ class WorkSchedule_Table_without_functions extends React.Component {
                   >
                     {item.data.given_cart}
                   </TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
-                        parseInt(this.props.access["test_all_price_view"]) == 1
-                          ? "table-cell"
-                          : "none",
-                    }}
-                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -1890,6 +1909,24 @@ class WorkSchedule_Table_without_functions extends React.Component {
                     style={{
                       textAlign: "center",
                       display:
+                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["test_all_price_view"]) == 1
+                          ? "table-cell"
+                          : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
                         parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
                     }}
                   >
@@ -1900,25 +1937,10 @@ class WorkSchedule_Table_without_functions extends React.Component {
                     style={{
                       textAlign: "center",
                       display:
-                        parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
                         parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
                     }}
                   ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
-                        parseInt(this.props.access["test_all_price_view"]) == 1
-                          ? "table-cell"
-                          : "none",
-                    }}
-                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -2019,23 +2041,10 @@ class WorkSchedule_Table_without_functions extends React.Component {
                     style={{
                       textAlign: "center",
                       display:
-                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
                         parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
                     }}
                   ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
-                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -2045,6 +2054,23 @@ class WorkSchedule_Table_without_functions extends React.Component {
                           : "none",
                     }}
                   ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -2145,23 +2171,10 @@ class WorkSchedule_Table_without_functions extends React.Component {
                     style={{
                       textAlign: "center",
                       display:
-                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
                         parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
                     }}
                   ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
-                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -2171,6 +2184,23 @@ class WorkSchedule_Table_without_functions extends React.Component {
                           : "none",
                     }}
                   ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -2272,23 +2302,10 @@ class WorkSchedule_Table_without_functions extends React.Component {
                     style={{
                       textAlign: "center",
                       display:
-                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
                         parseInt(this.props.access["withheld_view"]) == 1 ? "table-cell" : "none",
                     }}
                   ></TableCell>
-                  <TableCell
-                    style={{
-                      textAlign: "center",
-                      display:
-                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
-                    }}
-                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -2298,6 +2315,23 @@ class WorkSchedule_Table_without_functions extends React.Component {
                           : "none",
                     }}
                   ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
+                  <TableCell
+                    style={{
+                      textAlign: "center",
+                      display:
+                        parseInt(this.props.access["given_cart_view"]) == 1 ? "table-cell" : "none",
+                    }}
+                  ></TableCell>
+
                   <TableCell
                     style={{
                       textAlign: "center",
@@ -3204,8 +3238,8 @@ class WorkSchedule_ extends React.Component {
       parseInt(user.dir_price_dop) +
       parseInt(user.dop_bonus) -
       parseInt(user.err_price) -
-      parseInt(user.given_cart) -
-      parseInt(user.withheld);
+      parseInt(user.given_cart);
+    //parseInt(user.withheld);
 
     this.setState({
       mainMenuZP: true,
@@ -3231,8 +3265,8 @@ class WorkSchedule_ extends React.Component {
       parseInt(user.dir_price) +
       parseInt(user.dir_price_dop) +
       parseInt(user.dop_bonus) -
-      parseInt(user.err_price) -
-      parseInt(user.withheld);
+      parseInt(user.err_price);
+    //parseInt(user.withheld);
 
     this.setState({
       mainMenuZPCart: true,
