@@ -198,7 +198,8 @@ class SiteUserManager_ extends React.Component {
 
       textDel: "",
       textSearch: "",
-      delModal: false,
+      chooseModal: false,
+      typeEdit: "edit",
 
       graphModal: false,
       graphType: 0,
@@ -420,7 +421,7 @@ class SiteUserManager_ extends React.Component {
     });
   }
 
-  async saveEditUser(graphType) {
+  async openEdit(graphType) {
     if (!this.click) {
       this.click = true;
 
@@ -453,10 +454,53 @@ class SiteUserManager_ extends React.Component {
         return;
       }
 
-      //todo
       if (parseInt(user.app_id) == 0 && this.state.textDel.length == 0) {
         this.setState({
-          delModal: true,
+          chooseModal: true,
+          typeEdit: "del",
+        });
+
+        setTimeout(() => {
+          this.click = false;
+        }, 300);
+        return;
+      }
+
+      this.setState({
+        chooseModal: true,
+        typeEdit: "edit",
+      });
+
+      setTimeout(() => {
+        this.click = false;
+      }, 300);
+    }
+  }
+
+  async saveEditUser(graphType) {
+    if (!this.click) {
+      this.click = true;
+
+      this.setState({
+        graphType: graphType,
+      });
+
+      let is_graph = false;
+      const { user } = this.state.editUser;
+
+      user.app_id = this.state.chose_app !== null ? this.state.chose_app.id : 0;
+
+      this.state.app_list.map((item, key) => {
+        if (parseInt(user.app_id) == parseInt(item.id)) {
+          if (parseInt(item.is_graph) == 1 && parseInt(graphType) == 0) {
+            is_graph = true;
+          }
+        }
+      });
+
+      if (is_graph === true) {
+        this.setState({
+          graphModal: true,
         });
 
         setTimeout(() => {
@@ -506,7 +550,7 @@ class SiteUserManager_ extends React.Component {
           }
 
           this.setState({
-            delModal: false,
+            chooseModal: false,
             graphModal: false,
             modalUserEdit: false,
             editUser: null,
@@ -541,7 +585,7 @@ class SiteUserManager_ extends React.Component {
           this.isInit = false;
 
           this.setState({
-            delModal: false,
+            chooseModal: false,
             graphModal: false,
             modalUserEdit: false,
             editUser: null,
@@ -868,36 +912,42 @@ class SiteUserManager_ extends React.Component {
           text={this.state.err_text}
         />
         <Dialog
-          open={this.state.delModal}
-          onClose={() => this.setState({ delModal: false, textDel: "" })}
+          open={this.state.chooseModal}
+          onClose={() => this.setState({ chooseModal: false, textDel: "" })}
         >
           <DialogTitle className="button">
-            <Typography>Причина увольнения</Typography>
-            <IconButton onClick={() => this.setState({ delModal: false, textDel: "" })}>
+            <Typography>
+              {this.state.typeEdit === "del" ? "Причина увольнения" : "Приенение изменений"}
+            </Typography>
+            <IconButton onClick={() => this.setState({ chooseModal: false, textDel: "" })}>
               <CloseIcon />
             </IconButton>
           </DialogTitle>
           <DialogContent>
-            <DialogContentText>
-              Если выбрано сегодня - увольнение происходит сразу, если завтра и далее - сотрудник
-              будет уволен в полночь этого дня
-            </DialogContentText>
+            {this.state.typeEdit === "del" ? (
+              <DialogContentText>
+                Если выбрано сегодня - увольнение происходит сразу, если завтра и далее - сотрудник
+                будет уволен в полночь этого дня
+              </DialogContentText>
+            ) : null}
             <Grid
               container
               spacing={3}
               style={{ paddingBottom: 10, paddingTop: 20 }}
             >
-              <Grid
-                size={{
-                  xs: 12,
-                }}
-              >
-                <MyTextInput
-                  label="Причина увольнения"
-                  value={this.state.textDel}
-                  func={(event) => this.setState({ textDel: event.target.value })}
-                />
-              </Grid>
+              {this.state.typeEdit === "del" ? (
+                <Grid
+                  size={{
+                    xs: 12,
+                  }}
+                >
+                  <MyTextInput
+                    label="Причина увольнения"
+                    value={this.state.textDel}
+                    func={(event) => this.setState({ textDel: event.target.value })}
+                  />
+                </Grid>
+              ) : null}
               <Grid
                 size={{
                   xs: 12,
@@ -919,7 +969,9 @@ class SiteUserManager_ extends React.Component {
             >
               Уволить
             </Button>
-            <Button onClick={() => this.setState({ delModal: false, textDel: "" })}>Отмена</Button>
+            <Button onClick={() => this.setState({ chooseModal: false, textDel: "" })}>
+              Отмена
+            </Button>
           </DialogActions>
         </Dialog>
         <Dialog
@@ -1487,10 +1539,10 @@ class SiteUserManager_ extends React.Component {
           </DialogContent>
           <DialogActions>
             <Button
-              onClick={this.saveEditUser.bind(this, 0)}
+              onClick={this.openEdit.bind(this, 0)}
               color="primary"
             >
-              Сохранить
+              Выбор даты
             </Button>
           </DialogActions>
         </Dialog>
