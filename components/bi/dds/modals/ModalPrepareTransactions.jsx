@@ -92,7 +92,7 @@ export default function ModalPrepareTransactions({ open, onClose, showAlert }) {
     }
   };
 
-  const toggle = (id) => {
+  const toggleSelected = (id) => {
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   };
 
@@ -213,13 +213,13 @@ export default function ModalPrepareTransactions({ open, onClose, showAlert }) {
               <TableBody>
                 {parsedData.map((t) => (
                   <TableRow
-                    key={t.number}
+                    key={t.id}
                     hover
                   >
                     <TableCell padding="checkbox">
                       <Checkbox
-                        checked={selected.includes(t.number)}
-                        onChange={() => toggle(t.number)}
+                        checked={selected.includes(t.id)}
+                        onChange={() => toggleSelected(t.id)}
                       />
                     </TableCell>
 
