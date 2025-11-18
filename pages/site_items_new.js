@@ -2485,7 +2485,7 @@ class SiteItems_ extends React.Component {
     res.item.tags_all = res?.tags_all;
     this.setState({
       itemMark: res.item,
-      modalDialogMark: true,
+      modalDialogTech: true,
       method,
     });
   }
