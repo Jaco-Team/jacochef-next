@@ -14,17 +14,37 @@ import TabPanel from "@/ui/TabPanel/TabPanel";
 import TabList from "./tabs/TabList";
 import TabSettings from "./tabs/TabSettings";
 
-const TABS = [
-  { id: 0, key: "list", name: "Таблица", component: <TabList /> },
-  { id: 1, key: "settings", name: "Настройки", component: <TabSettings /> },
-];
-
 export default function DDS() {
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
   const { setStateKey, is_load, module, module_name } = useDDSStore();
   const setState = useDDSStore.setState;
 
   const [currentTab, setCurrentTab] = useState(0);
+
+  const TABS = [
+    {
+      id: 0,
+      key: "list",
+      name: "Таблица",
+      component: (
+        <TabList
+          getData={getData}
+          showAlert={showAlert}
+        />
+      ),
+    },
+    {
+      id: 1,
+      key: "settings",
+      name: "Настройки",
+      component: (
+        <TabSettings
+          getData={getData}
+          showAlert={showAlert}
+        />
+      ),
+    },
+  ];
 
   async function getBaseData() {
     const data = await getData("get_all");
@@ -37,6 +57,7 @@ export default function DDS() {
       access: data.acces,
       points: data.points,
       point: [],
+      articles: data.articles,
       module_name: data.module_info.name,
     });
 
@@ -67,7 +88,7 @@ export default function DDS() {
   return (
     <>
       <Backdrop
-        style={{ zIndex: 999 }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
         open={is_load}
       >
         <CircularProgress />

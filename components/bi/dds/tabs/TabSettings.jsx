@@ -19,6 +19,11 @@ import { useConfirm } from "@/src/hooks/useConfirm";
 import useDDSStore from "../useDDSStore";
 import ModalAddArticle from "../modals/ModalAddArticle";
 
+const GROUP_NAMES = [
+  { id: 1, name: "Операционные поступления" },
+  { id: 2, name: "Операционные платежи" },
+];
+
 export default function TabSettings() {
   const { withConfirm, ConfirmDialog } = useConfirm();
   const [articles, transactions] = useDDSStore((s) => [s.articles, s.transactions]);
@@ -46,9 +51,13 @@ export default function TabSettings() {
     }));
   };
 
+  const getGroupName = (id) => {
+    const group = GROUP_NAMES.find((g) => g.id === id);
+    return group ? group.name : "Неизвестная группа";
+  };
+
   return (
     <Paper sx={{ p: 3 }}>
-      <ConfirmDialog />
       <ModalAddArticle
         open={openAdd}
         onClose={() => setOpenAdd(false)}
@@ -127,7 +136,7 @@ export default function TabSettings() {
 
             <TableBody>
               {data.map((r) => {
-                const isIncome = r.flow === 1;
+                const isIncome = r.group === 1;
                 const color = isIncome ? "success.main" : "primary.main";
 
                 return (
@@ -136,7 +145,7 @@ export default function TabSettings() {
                     hover
                   >
                     <TableCell>{r.name}</TableCell>
-                    <TableCell sx={{ color }}>{r.group}</TableCell>
+                    <TableCell sx={{ color }}>{getGroupName(r.group)}</TableCell>
                     <TableCell>{r.type}</TableCell>
                     <TableCell>{r.operation}</TableCell>
                     <TableCell>{r.uses}</TableCell>

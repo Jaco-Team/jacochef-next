@@ -1,159 +1,248 @@
 "use client";
 
-import {
-  Box,
-  Button,
-  Grid,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tabs,
-  Tab,
-  Typography,
-} from "@mui/material";
-import { UploadFile, Download, Visibility } from "@mui/icons-material";
+import { Button, Grid, Paper, Tabs, Tab, Typography, Box } from "@mui/material";
+import { UploadFile, Download } from "@mui/icons-material";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import { MyDatePickerNew } from "@/ui/Forms";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import useDDSStore from "../useDDSStore";
+import useDDSParserStore from "../useDDSParserStore";
 import TabPanel from "@/ui/TabPanel/TabPanel";
 import TransactionsTable from "./TransactionsTable";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ArticlesTable from "./ArticlesTable";
+import ModalArticleTransactions from "../modals/ModalArticleTransactions";
+import useApi from "@/src/hooks/useApi";
+import ModalPrepareTransactions from "../modals/ModalPrepareTransactions";
 
-export default function TabList() {
-  const { points, point, date_start, date_end } = useDDSStore();
+export default function TabList({ getData, showAlert }) {
+  const { points, point, date_start, date_end, module } = useDDSStore();
   const setState = useDDSStore.setState;
+
+  const { parsedData, updateState } = useDDSParserStore();
   const [currentTab, setCurrentTab] = useState(0);
 
+  const [prepareTransactionsModalOpen, setPrepareTransactionsModalOpen] = useState(true);
+
+  // const { withConfirm, ConfirmDialog } = useConfirm();
+
+  const { api_upload, api_laravel } = useApi(module);
+  const uploadBankStatement = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+      const res = await api_upload("parser/parse", file);
+      if (!res?.st) {
+        showAlert("Ошибка загрузки файла");
+        return;
+      }
+      showAlert("Файл успешно загружен", true);
+      updateState({ sessionId: res.session_id });
+
+      await fetchParsedTransactions();
+      console.log(res);
+    } catch (error) {
+      showAlert(error.message);
+      return;
+    }
+  };
+
+  async function fetchParsedTransactions() {
+    const { sessionId, setParsedData, updateState, currentPage, perPage, query, sortBy, sortDir } =
+      useDDSParserStore.getState();
+    const request = {
+      session_id: sessionId || "4f502b33-a286-40d5-935c-a30bb280f016",
+      page: currentPage + 1,
+      perpage: perPage,
+      q: query,
+      sort_by: sortBy,
+      sort_dir: sortDir,
+    };
+    const parsedData = await api_laravel("parser/get", request);
+    if (!parsedData?.transactions?.length) {
+      showAlert("Нет транзакций для загрузки");
+      return;
+    }
+    setParsedData(parsedData.transactions);
+    updateState({ total: parsedData.total });
+    setPrepareTransactionsModalOpen(true);
+  }
+
+  useEffect(() => {
+    fetchParsedTransactions();
+  }, []);
+
+  async function getPeriodData() {
+    const request = {
+      date_start,
+      date_end,
+      points_list: points,
+    };
+    const res = await getData("get_transactions", request);
+    if (!res?.st) {
+      showAlert("Ошибка получения данных");
+      return;
+    }
+    const { articles, transactions } = res;
+    setState({
+      articles,
+      transactions,
+    });
+  }
   return (
-    <Paper sx={{ p: 3 }}>
-      <Grid
-        container
-        spacing={2}
-      >
-        <Grid size={{ xs: 12, sm: 8 }}>
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={12}>
-              <CityCafeAutocomplete2
-                label="Кафе"
-                points={points}
-                value={point}
-                onChange={(v) => setState({ point: v })}
-                withAll
-                withAllSelected
-              />
-            </Grid>
+    <>
+      <ModalPrepareTransactions
+        open={prepareTransactionsModalOpen}
+        onClose={() => setPrepareTransactionsModalOpen(false)}
+        showAlert={showAlert}
+      />
+      <Paper sx={{ p: 3 }}>
+        {/* <ConfirmDialog /> */}
+        <Grid
+          container
+          spacing={2}
+        >
+          <Grid size={{ xs: 12, sm: 8 }}>
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={12}>
+                <CityCafeAutocomplete2
+                  label="Кафе"
+                  points={points}
+                  value={point}
+                  onChange={(v) => setState({ point: v })}
+                  withAll
+                  withAllSelected
+                />
+              </Grid>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <MyDatePickerNew
-                func={(v) => setState({ date_start: formatDate(v) })}
-                value={date_start}
-                label="Начало периода"
-              />
-            </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <MyDatePickerNew
+                  func={(v) => setState({ date_start: formatDate(v) })}
+                  value={date_start}
+                  label="Начало периода"
+                />
+              </Grid>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <MyDatePickerNew
-                func={(v) => setState({ date_end: formatDate(v) })}
-                value={date_end}
-                label="Конец периода"
-              />
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <MyDatePickerNew
+                  func={(v) => setState({ date_end: formatDate(v) })}
+                  value={date_end}
+                  label="Конец периода"
+                />
+              </Grid>
+              <Grid size={12}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={getPeriodData}
+                >
+                  Показать
+                </Button>
+              </Grid>
             </Grid>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2,
+                borderRadius: 1.5,
+                display: "flex",
+                flexDirection: "column",
+                gap: 1.5,
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{ color: "text.secondary", fontWeight: 500 }}
+              >
+                Загрузка банка
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<UploadFile />}
+                  sx={{ height: 40 }}
+                >
+                  Выбрать файл .txt
+                  <input
+                    type="file"
+                    multiple={false}
+                    accept=".txt"
+                    hidden
+                    onInput={(e) => uploadBankStatement(e)}
+                  />
+                </Button>
+                {parsedData?.length > 0 && (
+                  <Button
+                    variant="text"
+                    component="label"
+                    color={"theme.success"}
+                    sx={{ height: 40 }}
+                    onChange={() => setPrepareTransactionsModalOpen(true)}
+                  >
+                    Продолжить
+                  </Button>
+                )}
+              </Box>
+
+              <Button
+                variant="contained"
+                startIcon={<Download />}
+                fullWidth
+                sx={{ height: 40 }}
+              >
+                Скачать отчёт
+              </Button>
+            </Paper>
           </Grid>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2,
-              borderRadius: 1.5,
-              display: "flex",
-              flexDirection: "column",
-              gap: 1.5,
-            }}
+        {/* Inner tabs */}
+        <Paper sx={{ mt: 4, mb: 2 }}>
+          <Tabs
+            value={currentTab}
+            onChange={(_, id) => setCurrentTab(+id || 0)}
+            variant="scrollable"
+            scrollButtons={false}
           >
-            <Typography
-              variant="subtitle2"
-              sx={{ color: "text.secondary", fontWeight: 500 }}
-            >
-              Загрузка банка
-            </Typography>
+            <Tab
+              key={"key"}
+              value={0}
+              label="Статьи"
+            />
+            <Tab
+              key={"list"}
+              value={1}
+              label="Весь список"
+            />
+          </Tabs>
+        </Paper>
 
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<UploadFile />}
-              sx={{ height: 40 }}
-            >
-              Выбрать файл .txt
-              <input
-                type="file"
-                accept=".txt"
-                hidden
-                onChange={(e) => console.log(e.target.files)}
-              />
-            </Button>
-
-            <Button
-              variant="contained"
-              startIcon={<Download />}
-              fullWidth
-              sx={{ height: 40 }}
-            >
-              Скачать отчёт
-            </Button>
-          </Paper>
-        </Grid>
-      </Grid>
-
-      {/* Inner tabs */}
-      <Paper sx={{ mt: 4, mb: 2 }}>
-        <Tabs
+        <TabPanel
+          key={"key"}
           value={currentTab}
-          onChange={(_, id) => setCurrentTab(+id || 0)}
-          variant="scrollable"
-          scrollButtons={false}
+          index={0}
+          id={0}
         >
-          <Tab
-            key={"key"}
-            value={0}
-            label="Статьи"
-          />
-          <Tab
-            key={"list"}
-            value={1}
-            label="Весь список"
-          />
-        </Tabs>
+          <ArticlesTable />
+        </TabPanel>
+
+        <TabPanel
+          key={"list"}
+          value={currentTab}
+          index={1}
+          id={1}
+        >
+          <TransactionsTable />
+        </TabPanel>
+        <ModalArticleTransactions />
       </Paper>
-
-      <TabPanel
-        key={"key"}
-        value={currentTab}
-        index={0}
-        id={0}
-      >
-        <ArticlesTable />
-      </TabPanel>
-
-      <TabPanel
-        key={"list"}
-        value={currentTab}
-        index={1}
-        id={1}
-      >
-        <TransactionsTable />
-      </TabPanel>
-    </Paper>
+    </>
   );
 }

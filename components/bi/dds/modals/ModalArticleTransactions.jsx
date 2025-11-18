@@ -1,89 +1,137 @@
 "use client";
+
 import {
-  DialogContent,
-  DialogActions,
+  Box,
+  Button,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Button,
-  Paper,
   Typography,
 } from "@mui/material";
+import { useMemo, useState } from "react";
 import useDDSStore from "../useDDSStore";
 import MyModal from "@/ui/MyModal";
+import { useConfirm } from "@/src/hooks/useConfirm";
+import { MyAutocomplite } from "@/ui/Forms";
+import { formatNumber } from "@/src/helpers/utils/i18n";
 
-export default function ModalArticleTransactions({ open, onClose, article }) {
-  const { transactions } = useDDSStore();
+export default function ModalArticleTransactions({ onClose }) {
+  const [transactions, articles, selectedTx, isModalArticleTxOpen] = useDDSStore((s) => [
+    s.transactions,
+    s.articles,
+    s.selectedTx,
+    s.isModalArticleTxOpen,
+  ]);
+  const setState = useDDSStore.setState;
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const { withConfirm, ConfirmDialog } = useConfirm();
 
-  const filtered = transactions?.filter((t) => t.article_id === article?.id) || [];
+  const filtered = useMemo(() => {
+    if (!Array.isArray(selectedTx) || !selectedTx.length) return [];
+    return transactions.filter((t) => selectedTx.includes(t.number));
+  }, [transactions, selectedTx]);
+
+  const assignArticleToTransactions = () => {
+    const updated = transactions.map((t) =>
+      selectedTx.includes(t.number) ? { ...t, article_id: selectedArticle.id } : t,
+    );
+    setState({ transactions: updated });
+  };
+
+  const close = () => {
+    setState({ isModalArticleTxOpen: false, selectedTx: null });
+    onClose?.();
+  };
 
   return (
-    <MyModal
-      open={open}
-      onClose={onClose}
-      title={<Typography fontWeight={600}>Расшифровка: {article?.name || "—"}</Typography>}
-    >
-      <DialogContent>
-        <TableContainer
-          component={Paper}
-          sx={{ borderRadius: 1.5 }}
-        >
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Дата</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>№</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Сумма</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Контрагент</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Назначение</TableCell>
-              </TableRow>
-            </TableHead>
+    <>
+      <MyModal
+        open={isModalArticleTxOpen}
+        onClose={close}
+        maxWidth="md"
+        title="Присвоить статью ДДС"
+      >
+        <Paper variant="outlined">
+          <Box
+            p={2}
+            display="flex"
+            flexDirection="column"
+            gap={2}
+          >
+            <Box>
+              <Typography fontWeight={500}>Назначить статью:</Typography>
+              <MyAutocomplite
+                data={articles}
+                value={selectedArticle}
+                func={(_, v) => setSelectedArticle(v)}
+              />
+            </Box>
 
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    align="center"
-                    sx={{ py: 3, color: "text.secondary" }}
-                  >
-                    Нет операций
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((t) => {
-                  const amount = t.income ?? -t.expense ?? 0;
-                  const color =
-                    amount > 0 ? "success.main" : amount < 0 ? "error.main" : "text.primary";
-                  return (
-                    <TableRow
-                      key={t.id}
-                      hover
-                    >
-                      <TableCell>{t.date}</TableCell>
-                      <TableCell>{t.number}</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color }}>
-                        {amount > 0
-                          ? `+${amount.toLocaleString()} ₽`
-                          : `${amount.toLocaleString()} ₽`}
-                      </TableCell>
-                      <TableCell>{t.contractor}</TableCell>
-                      <TableCell>{t.purpose}</TableCell>
-                    </TableRow>
-                  );
-                })
+            <Typography fontWeight={500}>Для транзакций:</Typography>
+            <TableContainer
+              component={Paper}
+              variant="outlined"
+            >
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Дата</TableCell>
+                    <TableCell>Поступление</TableCell>
+                    <TableCell>Списание</TableCell>
+                    <TableCell>Контрагент</TableCell>
+                    <TableCell>Назначение</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filtered.map((tx) => {
+                    const counterparty =
+                      (tx.income || 0) > 0 ? tx.payer || "—" : tx.receiver || "—";
+                    return (
+                      <TableRow
+                        key={tx.id}
+                        hover
+                      >
+                        <TableCell>{tx.date || "—"}</TableCell>
+                        <TableCell sx={{ color: "success.main" }}>
+                          {tx.income ? `${formatNumber(tx.income, 2, 2)} ₽` : "—"}
+                        </TableCell>
+                        <TableCell sx={{ color: "secondary.main" }}>
+                          {tx.expense ? `-${formatNumber(tx.expense, 2, 2)} ₽` : "—"}
+                        </TableCell>
+                        <TableCell>{counterparty}</TableCell>
+                        <TableCell>{tx.payment_description || "—"}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Button
+              variant="contained"
+              disabled={!selectedArticle}
+              onClick={withConfirm(
+                () => {
+                  console.log(selectedArticle);
+                  if (selectedArticle?.id) {
+                    assignArticleToTransactions(selectedArticle.id);
+                    close();
+                  }
+                },
+                `Подтвердите назначение статьи «${selectedArticle?.name ?? "—"}» для ${filtered.length} транзакций`,
+                5,
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </DialogContent>
-
-      {/* <DialogActions>
-        <Button onClick={onClose}>Закрыть</Button>
-      </DialogActions> */}
-    </MyModal>
+            >
+              Назначить
+            </Button>
+          </Box>
+        </Paper>
+      </MyModal>
+      <ConfirmDialog />
+    </>
   );
 }

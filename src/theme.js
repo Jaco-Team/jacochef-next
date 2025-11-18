@@ -40,6 +40,9 @@ const theme = createTheme({
     background: {
       default: "#fafafa",
       paper: "#fff",
+      positive: "#a3c5a5ff",
+      neutral: "#f0f0f0",
+      negative: "#f8d7da",
     },
   },
   typography: {

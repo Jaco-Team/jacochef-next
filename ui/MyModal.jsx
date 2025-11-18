@@ -36,21 +36,21 @@ export default function MyModal({
           }}
         >
           {title}
-          <IconButton
-            aria-label="закрыть"
-            onClick={onClose}
-            size="small"
-            sx={{
-              position: "absolute",
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <Close fontSize="small" />
-          </IconButton>
         </DialogTitle>
       )}
+      <IconButton
+        aria-label="закрыть"
+        onClick={onClose}
+        size="small"
+        sx={{
+          position: "absolute",
+          right: 8,
+          top: 8,
+          color: (theme) => theme.palette.grey[500],
+        }}
+      >
+        <Close fontSize="small" />
+      </IconButton>
 
       <DialogContent>{children}</DialogContent>
     </Dialog>
