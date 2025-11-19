@@ -17,8 +17,16 @@ import {
   TableSortLabel,
   TextField,
   Stack,
+  TablePagination,
 } from "@mui/material";
-import { Category, Clear, DeleteOutline, EditOutlined, FilterAlt } from "@mui/icons-material";
+import {
+  Category,
+  Clear,
+  Delete,
+  DeleteOutline,
+  EditOutlined,
+  FilterAlt,
+} from "@mui/icons-material";
 import { useEffect, useMemo, useState } from "react";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import useDDSStore from "../useDDSStore";
@@ -30,12 +38,13 @@ import { formatYMD } from "@/src/helpers/ui/formatDate";
 
 export default function TransactionsTable({ showAlert }) {
   const [
-    articles,
+    articles, // TODO: remove article_name from api response, get it from this list by id
     transactions,
     points,
     module,
     txPage,
     txPerPage,
+    txTotal,
     sortBy,
     sortDir,
     filters,
@@ -47,6 +56,7 @@ export default function TransactionsTable({ showAlert }) {
     s.module,
     s.txPage,
     s.txPerPage,
+    s.txTotal,
     s.sortBy,
     s.sortDir,
     s.filters,
@@ -102,6 +112,7 @@ export default function TransactionsTable({ showAlert }) {
         transactions,
         txTotal: meta?.total || 0,
       });
+      setSelected([]);
     } catch (e) {
       showAlert(e.message || "Ошибка получения транзакций");
     } finally {
@@ -196,7 +207,7 @@ export default function TransactionsTable({ showAlert }) {
           />
         </Stack>
 
-        <TableContainer sx={{ borderRadius: 2 }}>
+        <TableContainer sx={{ maxHeight: 500 }}>
           <Table
             size="small"
             stickyHeader
@@ -241,7 +252,6 @@ export default function TransactionsTable({ showAlert }) {
                   <TableRow
                     key={r.id}
                     hover
-                    sx={{ cursor: "pointer" }}
                   >
                     <TableCell padding="checkbox">
                       <Checkbox
@@ -279,12 +289,33 @@ export default function TransactionsTable({ showAlert }) {
                       )}
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        color="primary"
+                      <Stack
+                        direction="row"
+                        spacing={1}
                       >
-                        <EditOutlined fontSize="inherit" />
-                      </IconButton>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => setState({ selectedTx: r.id, isModalArticleTxOpen: true })}
+                        >
+                          <EditOutlined fontSize="inherit" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="success"
+                          onClick={() => setState({ selectedTx: r.id, isModalArticleTxOpen: true })}
+                        >
+                          <Delete
+                            size="small"
+                            color="secondary"
+                            onClick={withConfirm(
+                              () => removeOneTransaction(r.id),
+                              "Вы уверены, что хотите удалить эту транзакцию?",
+                              3,
+                            )}
+                          />
+                        </IconButton>
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 );
@@ -324,6 +355,26 @@ export default function TransactionsTable({ showAlert }) {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          component="div"
+          rowsPerPageOptions={[50, 100, 500]}
+          labelRowsPerPage="Транзакций на странице:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
+          page={txPage}
+          rowsPerPage={txPerPage}
+          count={txTotal ?? 0}
+          onPageChange={(_, newPage) => {
+            setState({ txPage: newPage });
+            getPaginatedTransactions();
+            document.querySelector("#prepare-table-top")?.scrollIntoView({ behavior: "smooth" });
+          }}
+          onRowsPerPageChange={(e) => {
+            const newPerPage = Number(e.target.value);
+            setState({ txPerPage: newPerPage, txPage: 0 });
+            getPaginatedTransactions();
+            document.querySelector("#prepare-table-top")?.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
       </Paper>
     </>
   );
