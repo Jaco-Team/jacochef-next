@@ -225,7 +225,7 @@ export default function TabList({ getData, showAlert }) {
           index={0}
           id={0}
         >
-          <ArticlesTable />
+          <ArticlesTable showAlert={showAlert} />
         </TabPanel>
 
         <TabPanel
@@ -234,7 +234,7 @@ export default function TabList({ getData, showAlert }) {
           index={1}
           id={1}
         >
-          <TransactionsTable />
+          <TransactionsTable showAlert={showAlert} />
         </TabPanel>
         <ModalArticleTransactions />
       </Paper>

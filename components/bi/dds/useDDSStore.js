@@ -14,8 +14,31 @@ const useDDSStore = create((set) => ({
   date_end: formatDate(),
 
   articles: [],
-  transactions: [],
 
+  // for ArticlesTable
+  articlesStats: [
+    {
+      id: null,
+      name: null,
+      count: 0,
+      balance: 0,
+      artTx: [],
+      artTxPage: 0,
+      artTxPerPage: 30,
+    },
+  ],
+
+  // for TransactionsTable
+  transactions: [],
+  txPage: 1,
+  txPerPage: 50,
+  txTotal: 0,
+  sortBy: "date",
+  sortDir: "desc",
+  searchQuery: "",
+  filters: {},
+
+  // modal set article to transaction
   selectedTx: [],
   isModalArticleTxOpen: false,
 
