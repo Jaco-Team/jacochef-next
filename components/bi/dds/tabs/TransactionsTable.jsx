@@ -32,7 +32,7 @@ export default function TransactionsTable() {
       ...t,
       article: t.article_id ? aMap.get(t.article_id) : null,
       contractor: (t.income || 0) > 0 ? t.payer : t.receiver,
-      purpose: t.payment_description || "—",
+      purpose: t.naznachenie_platezha || "—",
     }));
   }, [articles, transactions]);
 
@@ -138,7 +138,7 @@ export default function TransactionsTable() {
                         maxWidth: 360,
                       }}
                     >
-                      {r.purpose}
+                      {r.naznachenie_platezha}
                     </TableCell>
                     <TableCell>
                       {r.article ? (

@@ -77,6 +77,17 @@ export default function ModalPrepareTransactions({ open, onClose, showAlert }) {
     if (open) loadParsedData();
   }, [open, currentPage, sortBy, sortDir, query, perPage]);
 
+  const onSave = async () => {
+    const sessionId = useDDSParserStore.getState().sessionId;
+    const res = await api_laravel("parser/save", {
+      session_id: sessionId,
+    });
+
+    if (!res?.st) return showAlert("Ошибка сохранения", false);
+    updateState({ parsedData: res.skipped });
+    showAlert(`Сохранено ${res.inserted} транзакций`, true);
+  };
+
   const debouncedSearch = useDebounce(
     (v) => updateState({ query: v.toLowerCase(), currentPage: 0 }),
     350,
@@ -100,7 +111,7 @@ export default function ModalPrepareTransactions({ open, onClose, showAlert }) {
     setSelected(e.target.checked ? parsedData.map((r) => r.number) : []);
   };
 
-  const remove = async (ids) => {
+  const removeByIds = async (ids) => {
     const sessionId = useDDSParserStore.getState().sessionId;
 
     if (!sessionId) {
@@ -120,14 +131,8 @@ export default function ModalPrepareTransactions({ open, onClose, showAlert }) {
     showAlert("Удалено", true);
   };
 
-  const removeOne = (id) => remove([id]);
-  const removeMany = () => remove(selected);
-
-  const onSave = () => {
-    const toSave = parsedData.filter((r) => selected.includes(r.number));
-    console.log("Saving:", toSave);
-    onClose();
-  };
+  const removeOne = (id) => removeByIds([id]);
+  const removeMany = () => removeByIds(selected);
 
   return (
     <MyModal
@@ -232,14 +237,14 @@ export default function ModalPrepareTransactions({ open, onClose, showAlert }) {
                       align="right"
                       sx={{ color: "success.main" }}
                     >
-                      {t.income ? `${t.income.toFixed(2)} ₽` : "—"}
+                      {+t.income > 0 ? `${Number(t.income).toFixed(2)} ₽` : "—"}
                     </TableCell>
 
                     <TableCell
                       align="right"
                       sx={{ color: "secondary.main" }}
                     >
-                      {t.expense ? `-${t.expense.toFixed(2)} ₽` : "—"}
+                      {+t.expense > 0 ? `-${Number(t.expense).toFixed(2)} ₽` : "—"}
                     </TableCell>
 
                     <TableCell sx={{ width: "30%", wordBreak: "break-word" }}>

@@ -103,7 +103,7 @@ export default function ModalArticleTransactions({ onClose }) {
                           {tx.expense ? `-${formatNumber(tx.expense, 2, 2)} ₽` : "—"}
                         </TableCell>
                         <TableCell>{counterparty}</TableCell>
-                        <TableCell>{tx.payment_description || "—"}</TableCell>
+                        <TableCell>{tx.naznachenie_platezha || "—"}</TableCell>
                       </TableRow>
                     );
                   })}

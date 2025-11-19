@@ -4,7 +4,7 @@ import { Button, Grid, Paper, Tabs, Tab, Typography, Box } from "@mui/material";
 import { UploadFile, Download } from "@mui/icons-material";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import { MyDatePickerNew } from "@/ui/Forms";
-import { formatDate } from "@/src/helpers/ui/formatDate";
+import { formatDate, formatYMD } from "@/src/helpers/ui/formatDate";
 import useDDSStore from "../useDDSStore";
 import useDDSParserStore from "../useDDSParserStore";
 import TabPanel from "@/ui/TabPanel/TabPanel";
@@ -22,7 +22,7 @@ export default function TabList({ getData, showAlert }) {
   const { parsedData, updateState } = useDDSParserStore();
   const [currentTab, setCurrentTab] = useState(0);
 
-  const [prepareTransactionsModalOpen, setPrepareTransactionsModalOpen] = useState(true);
+  const [prepareTransactionsModalOpen, setPrepareTransactionsModalOpen] = useState(false);
 
   // const { withConfirm, ConfirmDialog } = useConfirm();
 
@@ -51,7 +51,7 @@ export default function TabList({ getData, showAlert }) {
     const { sessionId, setParsedData, updateState, currentPage, perPage, query, sortBy, sortDir } =
       useDDSParserStore.getState();
     const request = {
-      session_id: sessionId || "4f502b33-a286-40d5-935c-a30bb280f016",
+      session_id: sessionId,
       page: currentPage + 1,
       perpage: perPage,
       q: query,
@@ -68,24 +68,19 @@ export default function TabList({ getData, showAlert }) {
     setPrepareTransactionsModalOpen(true);
   }
 
-  useEffect(() => {
-    fetchParsedTransactions();
-  }, []);
-
   async function getPeriodData() {
     const request = {
-      date_start,
-      date_end,
-      points_list: points,
+      date_start: formatYMD(date_start),
+      date_end: formatYMD(date_end),
+      points: point,
     };
     const res = await getData("get_transactions", request);
     if (!res?.st) {
-      showAlert("Ошибка получения данных");
+      showAlert("Ошибка получения транзакций");
       return;
     }
-    const { articles, transactions } = res;
+    const { transactions } = res;
     setState({
-      articles,
       transactions,
     });
   }

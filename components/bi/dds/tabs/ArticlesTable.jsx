@@ -129,7 +129,7 @@ export default function ArticlesTable() {
                   {(t.expense || 0) > 0 ? `-${formatNumber(t.expense, 2, 2)} ₽` : "—"}
                 </TableCell>
                 <TableCell>{(t.income || 0) > 0 ? t.payer || "—" : t.receiver || "—"}</TableCell>
-                <TableCell sx={{ minWidth: 300 }}>{t.payment_description || "—"}</TableCell>
+                <TableCell sx={{ minWidth: 300 }}>{t.naznachenie_platezha || "—"}</TableCell>
                 <TableCell align="right">
                   <IconButton
                     size="small"

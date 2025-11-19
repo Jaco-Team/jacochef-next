@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 const useDDSParserStore = create((set) => ({
-  sessionId: "4f502b33-a286-40d5-935c-a30bb280f016",
+  sessionId: "175fdf3b-45e9-42ae-aefb-41be69b7464c",
   parsedData: [],
   query: "",
   sortBy: "date",
