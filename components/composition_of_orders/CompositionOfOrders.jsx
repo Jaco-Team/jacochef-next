@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { MyCheckBox, MyDatePickerNew, MyAutoCompleteWithAll, MyAutocomplite } from "@/ui/Forms";
 import { Grid, Button, Backdrop, CircularProgress, Tab, Tabs, Paper } from "@mui/material";
@@ -28,9 +28,29 @@ const CompositionOfOrdersGroupGraphModal = dynamic(
 
 export default function CompositionOfOrders() {
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
-  const state = useCompositionOfOrdersStore();
-  const { currentTab, items, setState, is_load } = useCompositionOfOrdersStore();
-
+  const {
+    is_load,
+    currentTab,
+    items,
+    allItems,
+    setState,
+    point,
+    points,
+    dow,
+    dows,
+    date_start,
+    date_end,
+    pay,
+    pays,
+    now_time,
+    pred_time,
+    module,
+    module_name,
+    itemsTabAll,
+    itemsTabNotAll,
+  } = useCompositionOfOrdersStore();
+  const { graphModal, graphRowName, graph, groupGraphModal, groupGraph } =
+    useCompositionOfOrdersStore();
   const { resetOpenRows, sort } = useCompositionOfOrdersStore();
 
   const changeTab = (_, tabId) => setState({ currentTab: +tabId || 0 });
@@ -39,10 +59,13 @@ export default function CompositionOfOrders() {
     switch (currentTab) {
       case 0:
         await getGroupedData();
+        break;
       case 1:
         await getBySetsData();
+        break;
       case 2:
         await getNoSetsData();
+        break;
     }
   }, [currentTab]);
 
@@ -51,7 +74,7 @@ export default function CompositionOfOrders() {
       is_load: true,
     });
 
-    const res = await api_laravel(state.module, method, data);
+    const res = await api_laravel(module, method, data);
     const result = res?.data;
     setTimeout(() => {
       setState({
@@ -74,8 +97,9 @@ export default function CompositionOfOrders() {
     });
   }
 
-  async function getGroupedData() {
-    const { point, dow, date_start, date_end, pay, now_time, pred_time } = state;
+  const getGroupedData = async () => {
+    const { point, items, dow, date_start, date_end, pay, now_time, pred_time } =
+      useCompositionOfOrdersStore.getState();
 
     if (!point.length) {
       showAlert("Необходимо выбрать точки");
@@ -108,16 +132,17 @@ export default function CompositionOfOrders() {
     });
 
     resetOpenRows();
-  }
+  };
 
-  async function getBySetsData() {
-    const state = useCompositionOfOrdersStore.getState();
-    if (!state.items?.length) {
+  const getBySetsData = async () => {
+    const { point, items, dow, date_start, date_end, pay, now_time, pred_time } =
+      useCompositionOfOrdersStore.getState();
+
+    if (!items?.length) {
       setState({ itemsTabAll: null });
-      showAlert("Выберите хотя бы одну позицию");
+      showAlert("Выберите хотя бы одну позицию (для разбивки по сетам)");
       return;
     }
-    const { point, dow, date_start, date_end, pay, now_time, pred_time } = state;
     const payload = {
       date_start: date_start ? dayjs(date_start).format("YYYY-MM-DD") : "",
       date_end: date_end ? dayjs(date_end).format("YYYY-MM-DD") : "",
@@ -126,7 +151,7 @@ export default function CompositionOfOrders() {
       pay,
       now_time,
       pred_time,
-      item_ids: state.items?.map((i) => i.id),
+      item_ids: items?.map((i) => i.id),
     };
     const res = await getData("get_items_full", payload);
     if (!res) {
@@ -134,16 +159,17 @@ export default function CompositionOfOrders() {
       return;
     }
     setState({ itemsTabAll: res });
-  }
+  };
 
-  async function getNoSetsData() {
-    const state = useCompositionOfOrdersStore.getState();
-    if (!state.items?.length) {
+  const getNoSetsData = async () => {
+    const { point, items, dow, date_start, date_end, pay, now_time, pred_time } =
+      useCompositionOfOrdersStore.getState();
+
+    if (!items?.length) {
       setState({ itemsTabAll: null });
       showAlert("Выберите хотя бы одну позицию");
       return;
     }
-    const { point, dow, date_start, date_end, pay, now_time, pred_time } = state;
     const payload = {
       date_start: date_start ? dayjs(date_start).format("YYYY-MM-DD") : "",
       date_end: date_end ? dayjs(date_end).format("YYYY-MM-DD") : "",
@@ -152,7 +178,7 @@ export default function CompositionOfOrders() {
       pay,
       now_time,
       pred_time,
-      item_ids: state.items?.map((i) => i.id),
+      item_ids: items?.map((i) => i.id),
     };
     const res = await getData("get_items_notfull", payload);
     if (!res) {
@@ -160,7 +186,7 @@ export default function CompositionOfOrders() {
       return;
     }
     setState({ itemsTabNotAll: res });
-  }
+  };
 
   const TABS = useMemo(
     () => [
@@ -182,7 +208,7 @@ export default function CompositionOfOrders() {
         name: "С разбивкой сетов",
         content: (
           <COOTabBySets
-            data={state.itemsTabAll}
+            data={itemsTabAll}
             getData={getBySetsData}
             showAlert={showAlert}
           />
@@ -194,14 +220,14 @@ export default function CompositionOfOrders() {
         name: "Без разбивки сетов",
         content: (
           <COOTabNoSets
-            data={state.itemsTabNotAll}
+            data={itemsTabNotAll}
             getData={getNoSetsData}
             showAlert={showAlert}
           />
         ),
       },
     ],
-    [state, getData, showAlert],
+    [getNoSetsData, getBySetsData, getData],
   );
 
   // EFFECTS
@@ -232,16 +258,16 @@ export default function CompositionOfOrders() {
         text={alertMessage}
       />
       <CompositionOfOrdersGraphModal
-        open={state.graphModal}
-        rowName={state.graphRowName}
+        open={graphModal}
+        rowName={graphRowName}
         onClose={() => setState({ graphModal: false })}
-        data={state.graph}
+        data={graph}
       />
       <CompositionOfOrdersGroupGraphModal
-        open={state.groupGraphModal}
-        rowName={state.graphRowName}
+        open={groupGraphModal}
+        rowName={graphRowName}
         onClose={() => setState({ groupGraphModal: false })}
-        data={state.groupGraph}
+        data={groupGraph}
       />
       <Grid
         container
@@ -255,7 +281,7 @@ export default function CompositionOfOrders() {
             sm: 12,
           }}
         >
-          <h1>{state.module_name}</h1>
+          <h1>{module_name}</h1>
         </Grid>
 
         <Grid
@@ -266,8 +292,8 @@ export default function CompositionOfOrders() {
         >
           <CityCafeAutocomplete2
             label="Кафе"
-            points={state.points}
-            value={state.point}
+            points={points}
+            value={point}
             onChange={(v) => {
               setState({ point: v });
             }}
@@ -284,7 +310,7 @@ export default function CompositionOfOrders() {
         >
           <MyDatePickerNew
             label="Дата от"
-            value={state.date_start}
+            value={date_start}
             func={(e) => changeDateRange("date_start", e)}
           />
         </Grid>
@@ -297,7 +323,7 @@ export default function CompositionOfOrders() {
         >
           <MyDatePickerNew
             label="Дата до"
-            value={state.date_end}
+            value={date_end}
             func={(e) => changeDateRange("date_end", e)}
           />
         </Grid>
@@ -310,8 +336,8 @@ export default function CompositionOfOrders() {
         >
           <MyAutoCompleteWithAll
             label="День недели"
-            options={state.dows}
-            value={state.dow}
+            options={dows}
+            value={dow}
             onChange={(v) => {
               setState({ dow: v });
             }}
@@ -328,8 +354,8 @@ export default function CompositionOfOrders() {
         >
           <MyAutoCompleteWithAll
             label="Способ оплаты"
-            options={state.pays}
-            value={state.pay}
+            options={pays}
+            value={pay}
             onChange={(v) => {
               setState({ pay: v });
             }}
@@ -347,7 +373,7 @@ export default function CompositionOfOrders() {
           <MyAutocomplite
             label="Товар"
             multiple={true}
-            data={state.allItems || []}
+            data={allItems || []}
             value={items || []}
             func={(_, v) => {
               setState({ items: v });
@@ -364,7 +390,7 @@ export default function CompositionOfOrders() {
           <MyCheckBox
             defa
             label="Оформлен на ближайшее время"
-            value={parseInt(state.now_time) === 1 ? true : false}
+            value={parseInt(now_time) === 1 ? true : false}
             func={(e) => changeItemChecked("now_time", e)}
           />
         </Grid>
@@ -377,7 +403,7 @@ export default function CompositionOfOrders() {
         >
           <MyCheckBox
             label="Оформлен предзаказ"
-            value={parseInt(state.pred_time) === 1 ? true : false}
+            value={parseInt(pred_time) === 1 ? true : false}
             func={(e) => changeItemChecked("pred_time", e)}
           />
         </Grid>

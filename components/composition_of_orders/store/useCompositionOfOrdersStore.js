@@ -70,14 +70,8 @@ const initialState = {
 
   currentTab: 0, // 0|1|2
 
-  itemsTabAll: {
-    graph: [],
-    totals: {},
-  },
-  itemsTabNotAll: {
-    graph: [],
-    totals: {},
-  },
+  itemsTabAll: null,
+  itemsTabNotAll: null,
 };
 
 const useCompositionOfOrdersStore = create((set, get) => ({
