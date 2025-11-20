@@ -18,28 +18,57 @@ import MyModal from "@/ui/MyModal";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import { MyAutocomplite } from "@/ui/Forms";
 import { formatNumber } from "@/src/helpers/utils/i18n";
+import useApi from "@/src/hooks/useApi";
+import { refresh } from "next/cache";
 
-export default function ModalArticleTransactions({ onClose }) {
-  const [transactions, articles, selectedTx, isModalArticleTxOpen] = useDDSStore((s) => [
+// confirmation timer for mass change, seconds
+const MASS_DELAY = 3;
+
+export default function ModalArticleTransactions({ onClose, showAlert }) {
+  const [transactions, articles, selectedTx, isModalArticleTxOpen, module] = useDDSStore((s) => [
     s.transactions,
     s.articles,
     s.selectedTx,
     s.isModalArticleTxOpen,
+    s.module,
   ]);
   const setState = useDDSStore.setState;
+  const { api_laravel } = useApi(module);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const { withConfirm, ConfirmDialog } = useConfirm();
 
   const filtered = useMemo(() => {
     if (!Array.isArray(selectedTx) || !selectedTx.length) return [];
-    return transactions.filter((t) => selectedTx.includes(t.number));
+    return transactions.filter((t) => selectedTx.includes(t.id));
   }, [transactions, selectedTx]);
 
-  const assignArticleToTransactions = () => {
-    const updated = transactions.map((t) =>
-      selectedTx.includes(t.number) ? { ...t, article_id: selectedArticle.id } : t,
-    );
-    setState({ transactions: updated });
+  const updateTransactions = async (payload) => {
+    try {
+      setState({ is_load: true });
+      const res = await api_laravel("update_transactions", payload);
+      if (!res?.st) {
+        throw new Error(res?.text || "Ошибка сервера");
+      }
+      showAlert(res?.text || `Успешно обновлено: ${selectedTx.length}`, true);
+    } catch (e) {
+      showAlert(e?.message || "Ошибка обновления транзакций");
+    } finally {
+      setState({ is_load: false });
+    }
+  };
+
+  const assignArticleToTransactions = async () => {
+    const payload = {
+      ids: filtered.map((t) => t.id),
+      data: { article_id: selectedArticle.id },
+    };
+    await updateTransactions(payload);
+    setState({
+      refreshToken: Date.now(),
+      statsRefreshToken: Date.now(),
+      page: 1,
+      selectedTx: null,
+    });
   };
 
   const close = () => {
@@ -68,6 +97,7 @@ export default function ModalArticleTransactions({ onClose }) {
                 data={articles}
                 value={selectedArticle}
                 func={(_, v) => setSelectedArticle(v)}
+                disableCloseOnSelect={false}
               />
             </Box>
 
@@ -87,26 +117,22 @@ export default function ModalArticleTransactions({ onClose }) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filtered.map((tx) => {
-                    const counterparty =
-                      (tx.income || 0) > 0 ? tx.payer || "—" : tx.receiver || "—";
-                    return (
-                      <TableRow
-                        key={tx.id}
-                        hover
-                      >
-                        <TableCell>{tx.date || "—"}</TableCell>
-                        <TableCell sx={{ color: "success.main" }}>
-                          {tx.income ? `${formatNumber(tx.income, 2, 2)} ₽` : "—"}
-                        </TableCell>
-                        <TableCell sx={{ color: "secondary.main" }}>
-                          {tx.expense ? `-${formatNumber(tx.expense, 2, 2)} ₽` : "—"}
-                        </TableCell>
-                        <TableCell>{counterparty}</TableCell>
-                        <TableCell>{tx.naznachenie_platezha || "—"}</TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {filtered.map((tx) => (
+                    <TableRow
+                      key={tx.id}
+                      hover
+                    >
+                      <TableCell>{tx.date || "—"}</TableCell>
+                      <TableCell sx={{ color: "success.main" }}>
+                        {tx.income ? `${formatNumber(tx.income, 2, 2)} ₽` : "—"}
+                      </TableCell>
+                      <TableCell sx={{ color: "secondary.main" }}>
+                        {tx.expense ? `-${formatNumber(tx.expense, 2, 2)} ₽` : "—"}
+                      </TableCell>
+                      <TableCell>{tx.contractor}</TableCell>
+                      <TableCell>{tx.naznachenie_platezha || "—"}</TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -123,7 +149,7 @@ export default function ModalArticleTransactions({ onClose }) {
                   }
                 },
                 `Подтвердите назначение статьи «${selectedArticle?.name ?? "—"}» для ${filtered.length} транзакций`,
-                5,
+                selectedTx?.length > 1 ? MASS_DELAY : null,
               )}
             >
               Назначить

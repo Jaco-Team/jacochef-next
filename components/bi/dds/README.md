@@ -5,4 +5,5 @@
 - [x] search cron jobs, maybe something relevant is already processing - added schedule, migration
 - [x] create api group
 - [ ] adjust ui schemas
+- [ ] add fullscreen mobile for modals
 - [ ] test, adjust, test

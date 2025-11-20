@@ -74,14 +74,13 @@ export default function TabList({ getData, showAlert }) {
       date_end: formatYMD(date_end),
       points: point,
     };
-    const res = await getData("get_transactions", request);
+    const res = await getData("get_stats", request);
     if (!res?.st) {
-      showAlert("Ошибка получения транзакций");
+      showAlert("Ошибка получения статистики");
       return;
     }
-    const { transactions } = res;
     setState({
-      transactions,
+      stats: res?.stats ?? null,
     });
   }
   return (
@@ -236,7 +235,7 @@ export default function TabList({ getData, showAlert }) {
         >
           <TransactionsTable showAlert={showAlert} />
         </TabPanel>
-        <ModalArticleTransactions />
+        <ModalArticleTransactions showAlert={showAlert} />
       </Paper>
     </>
   );

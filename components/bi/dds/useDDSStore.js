@@ -16,19 +16,11 @@ const useDDSStore = create((set) => ({
   articles: [],
 
   // for ArticlesTable
-  articlesStats: [
-    {
-      id: null,
-      name: null,
-      count: 0,
-      balance: 0,
-      artTx: [],
-      artTxPage: 0,
-      artTxPerPage: 30,
-    },
-  ],
+  stats: null,
+  statsRefreshToken: 0, // trigger stats reload
 
   // for TransactionsTable
+  refreshToken: 0, // is used to trigger updates from deep levels
   transactions: [],
   txPage: 1,
   txPerPage: 50,
@@ -46,6 +38,17 @@ const useDDSStore = create((set) => ({
   sessionId: null,
   parsedTransactions: [],
   setParsedTransactions: (transactions) => set({ parsedTransactions: transactions }),
+
+  setStatsArticleTx: (articleId, txs) =>
+    set((state) => {
+      const newStats = [...state.stats];
+      if (!newStats) return;
+      const article = newStats.find((a) => a.article_id === articleId);
+      if (article) {
+        article = { ...article, transactions: txs ?? [] };
+      }
+      return { stats: [...newStats] };
+    }),
 
   setStateKey: (key, value) => set((state) => ({ ...state, [key]: value })),
 }));

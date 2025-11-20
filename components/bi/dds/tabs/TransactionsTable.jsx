@@ -27,12 +27,11 @@ import {
   EditOutlined,
   FilterAlt,
 } from "@mui/icons-material";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import useDDSStore from "../useDDSStore";
 import { formatNumber } from "@/src/helpers/utils/i18n";
 import useApi from "@/src/hooks/useApi";
-import { i } from "mathjs";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import { formatYMD } from "@/src/helpers/ui/formatDate";
 
@@ -40,6 +39,7 @@ export default function TransactionsTable({ showAlert }) {
   const [
     articles, // TODO: remove article_name from api response, get it from this list by id
     transactions,
+    refreshToken,
     points,
     module,
     txPage,
@@ -52,6 +52,7 @@ export default function TransactionsTable({ showAlert }) {
   ] = useDDSStore((s) => [
     s.articles,
     s.transactions,
+    s.refreshToken,
     s.points,
     s.module,
     s.txPage,
@@ -73,9 +74,13 @@ export default function TransactionsTable({ showAlert }) {
   const toggleAll = () =>
     setSelected(selected.length === transactions.length ? [] : transactions.map((r) => r.id));
 
+  const handleEdit = (id) => {
+    setState({ selectedTx: [id], isModalArticleTxOpen: true });
+  };
+
   const assignGroupArticle = () => {
-    const selectedTx = selected.map((id) => transactions.find((r) => r.id === id));
-    setState({ selectedTx, isModalArticleTxOpen: true });
+    setState({ selectedTx: selected, isModalArticleTxOpen: true });
+    console.log("Selected transactions for article assignment:", selected);
   };
 
   const getPaginatedTransactions = async () => {
@@ -160,7 +165,7 @@ export default function TransactionsTable({ showAlert }) {
 
   useEffect(() => {
     getPaginatedTransactions();
-  }, [txPage, txPerPage, sortBy, sortDir, filters, searchQuery]);
+  }, [refreshToken, txPage, txPerPage, sortBy, sortDir, filters, searchQuery]);
 
   return (
     <>
@@ -248,6 +253,7 @@ export default function TransactionsTable({ showAlert }) {
             <TableBody>
               {transactions.map((r) => {
                 const checked = selected.includes(r.id);
+                const article = articles?.find((a) => a.id === r.article_id) || null;
                 return (
                   <TableRow
                     key={r.id}
@@ -277,16 +283,14 @@ export default function TransactionsTable({ showAlert }) {
                       {r.purpose}
                     </TableCell>
                     <TableCell>
-                      {r.article ? (
-                        r.article
-                      ) : (
-                        <Chip
-                          size="small"
-                          color="warning"
-                          variant="outlined"
-                          label="Требует классификации"
-                        />
-                      )}
+                      <Chip
+                        size="small"
+                        color={
+                          article ? (article.group === 1 ? "success" : "secondary") : "warning"
+                        }
+                        variant="outlined"
+                        label={article ? article.name : "Требует классификации"}
+                      />
                     </TableCell>
                     <TableCell align="right">
                       <Stack
@@ -296,23 +300,21 @@ export default function TransactionsTable({ showAlert }) {
                         <IconButton
                           size="small"
                           color="primary"
-                          onClick={() => setState({ selectedTx: r.id, isModalArticleTxOpen: true })}
+                          onClick={() => handleEdit(r.id)}
                         >
                           <EditOutlined fontSize="inherit" />
                         </IconButton>
                         <IconButton
                           size="small"
                           color="success"
-                          onClick={() => setState({ selectedTx: r.id, isModalArticleTxOpen: true })}
+                          onClick={withConfirm(
+                            () => removeOneTransaction(r.id),
+                            "Вы уверены, что хотите удалить эту транзакцию?",
+                          )}
                         >
                           <Delete
                             size="small"
                             color="secondary"
-                            onClick={withConfirm(
-                              () => removeOneTransaction(r.id),
-                              "Вы уверены, что хотите удалить эту транзакцию?",
-                              3,
-                            )}
                           />
                         </IconButton>
                       </Stack>
@@ -360,7 +362,7 @@ export default function TransactionsTable({ showAlert }) {
           rowsPerPageOptions={[50, 100, 500]}
           labelRowsPerPage="Транзакций на странице:"
           labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
-          page={txPage}
+          page={txPage - 1 || 0}
           rowsPerPage={txPerPage}
           count={txTotal ?? 0}
           onPageChange={(_, newPage) => {

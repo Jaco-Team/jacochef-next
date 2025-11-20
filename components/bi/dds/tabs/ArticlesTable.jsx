@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyboardArrowDown, KeyboardArrowUp, Edit } from "@mui/icons-material";
+import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import {
   Collapse,
   Grid,
@@ -10,143 +10,86 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
   Typography,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
 import { useState, useMemo, Fragment } from "react";
 import useDDSStore from "../useDDSStore";
 import { formatNumber } from "@/src/helpers/utils/i18n";
+import ArticleTxTable from "./ArticleTxTable";
 
 export default function ArticlesTable() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const stats = useDDSStore((s) => s.stats);
 
-  const [articles, transactions] = useDDSStore((s) => [s.articles, s.transactions]);
-  const setState = useDDSStore.setState;
+  const [openGroups, setOpenGroups] = useState({
+    income: true,
+    expense: false,
+  });
 
-  const [openGroups, setOpenGroups] = useState({ income: true, expense: false });
   const [openArticles, setOpenArticles] = useState({});
 
   const toggleGroup = (key) => setOpenGroups((p) => ({ ...p, [key]: !p[key] }));
+
   const toggleArticle = (id) => setOpenArticles((p) => ({ ...p, [id]: !p[id] }));
 
+  // Build groups from get_stats()
   const groups = useMemo(() => {
     const g = {
-      income: { id: 1, title: "Операционные поступления", rows: [] },
-      expense: { id: 2, title: "Операционные платежи", rows: [] },
+      income: {
+        id: 1,
+        title: "Операционные поступления",
+        articles: [],
+        total: 0,
+        count: 0,
+      },
+      expense: {
+        id: 2,
+        title: "Операционные платежи",
+        articles: [],
+        total: 0,
+        count: 0,
+      },
     };
 
-    if (Array.isArray(transactions)) {
-      for (const t of transactions) {
-        const key = (t.income || 0) > 0 ? "income" : (t.expense || 0) > 0 ? "expense" : null;
-        if (!key) continue;
-        g[key].rows.push(t);
-      }
-    }
+    if (!Array.isArray(stats)) return g;
 
-    const aMap = new Map((articles || []).map((a) => [a.id, a.name]));
+    for (const row of stats) {
+      const type = row.type; // "income" | "expense"
+      if (!type) continue;
 
-    const buildArticles = (rows, flowKey) => {
-      const map = {};
-      for (const t of rows) {
-        const id = t.article_id ?? null;
-        const keyId = id === null ? `${flowKey}-unclassified` : id;
-        const name = id === null ? "Требует классификации" : aMap.get(t.article_id) || "—";
-        if (!map[keyId]) map[keyId] = { id, keyId, name, rows: [], total: 0 };
-        const amt = flowKey === "income" ? t.income || 0 : t.expense || 0;
-        map[keyId].rows.push(t);
-        map[keyId].total += amt;
-      }
-      return Object.values(map);
-    };
+      const id = row.article_id ?? null;
+      const keyId = id === null ? `${type}-unclassified` : id;
+      const name = row.article_name;
 
-    for (const k of Object.keys(g)) {
-      g[k].articles = buildArticles(g[k].rows, k);
-      g[k].total = g[k].articles.reduce((a, x) => a + x.total, 0);
+      const total = type === "income" ? row.income_total : row.expense_total;
+
+      const count = type === "income" ? row.tx_income_count : row.tx_expense_count;
+
+      g[type].articles.push({
+        id,
+        keyId,
+        name,
+        total,
+        count,
+      });
+
+      g[type].total += total;
+      g[type].count += count;
     }
 
     return g;
-  }, [articles, transactions]);
+  }, [stats]);
 
-  const totalIncome = groups.income?.total || 0;
-  const totalExpense = groups.expense?.total || 0;
+  // Balance
+  const totalIncome = groups.income.total;
+  const totalExpense = groups.expense.total;
+
   const balance = totalIncome - totalExpense;
+
   const balanceColor =
     balance > 0 ? "success.main" : balance < 0 ? "secondary.main" : "text.primary";
 
-  const handleEdit = (tx) => {
-    setState({ selectedTx: [tx.number], isModalArticleTxOpen: true });
-  };
-
-  const renderTxTable = (txs) => (
-    <TableContainer
-      component={Paper}
-      variant="outlined"
-      sx={{
-        borderRadius: 1,
-        maxHeight: "50dvh",
-        overflowY: "auto",
-        overflowX: "auto",
-        display: "block", // critical: restores horizontal scrolling
-        width: "100%", // ensures it fills parent width
-      }}
-    >
-      <Table
-        size="small"
-        stickyHeader
-        sx={{ minWidth: 700 }} // let wide tables scroll naturally
-      >
-        <TableHead>
-          <TableRow>
-            <TableCell>Дата</TableCell>
-            <TableCell>Номер</TableCell>
-            <TableCell>Поступление</TableCell>
-            <TableCell>Списание</TableCell>
-            <TableCell>Контрагент</TableCell>
-            <TableCell>Назначение платежа</TableCell>
-            <TableCell />
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {txs.map((t) => {
-            const txKey =
-              t.id ||
-              `${t.number || "no-num"}-${t.date || "no-date"}-${(t.income || 0) + (t.expense || 0)}`;
-            return (
-              <TableRow
-                key={txKey}
-                hover
-              >
-                <TableCell>{t.date || "—"}</TableCell>
-                <TableCell>{t.number || "—"}</TableCell>
-                <TableCell sx={{ color: "success.main" }}>
-                  {(t.income || 0) > 0 ? `${formatNumber(t.income, 2, 2)} ₽` : "—"}
-                </TableCell>
-                <TableCell sx={{ color: "secondary.main" }}>
-                  {(t.expense || 0) > 0 ? `-${formatNumber(t.expense, 2, 2)} ₽` : "—"}
-                </TableCell>
-                <TableCell>{(t.income || 0) > 0 ? t.payer || "—" : t.receiver || "—"}</TableCell>
-                <TableCell sx={{ minWidth: 300 }}>{t.naznachenie_platezha || "—"}</TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => handleEdit(t)}
-                  >
-                    <Edit fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-
+  // Render group block
   const renderGroupRow = (key) => {
     const g = groups[key];
     const sumLabel = (key === "expense" ? "-" : "") + formatNumber(g.total || 0, 2, 2) + " ₽";
@@ -168,7 +111,9 @@ export default function ArticlesTable() {
                   {openGroups[key] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
                 </IconButton>
               </Grid>
+
               <Grid sx={{ fontWeight: 600 }}>{g.title}</Grid>
+
               <Grid
                 sx={{
                   ml: "auto",
@@ -178,6 +123,7 @@ export default function ArticlesTable() {
               >
                 {sumLabel}
               </Grid>
+
               <Grid
                 sx={{
                   minWidth: 100,
@@ -185,7 +131,7 @@ export default function ArticlesTable() {
                   opacity: 0.7,
                 }}
               >
-                {g.rows.length} документов
+                {g.count} документов
               </Grid>
             </Grid>
           </TableCell>
@@ -213,7 +159,7 @@ export default function ArticlesTable() {
               >
                 {g.articles.map((a) => (
                   <Grid
-                    key={`${key}-${a.keyId}`}
+                    key={a.keyId}
                     container
                     direction="column"
                   >
@@ -236,7 +182,9 @@ export default function ArticlesTable() {
                           {openArticles[a.keyId] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
                         </IconButton>
                       </Grid>
+
                       <Grid sx={{ fontWeight: 500 }}>{a.name}</Grid>
+
                       <Grid
                         sx={{
                           ml: "auto",
@@ -245,8 +193,9 @@ export default function ArticlesTable() {
                         }}
                       >
                         {key === "expense" ? "-" : ""}
-                        {formatNumber(a.total || 0, 2, 2)} ₽
+                        {formatNumber(a.total, 2, 2)} ₽
                       </Grid>
+
                       <Grid
                         sx={{
                           minWidth: 120,
@@ -254,7 +203,7 @@ export default function ArticlesTable() {
                           opacity: 0.7,
                         }}
                       >
-                        {a.rows.length} операций
+                        {a.count} операций
                       </Grid>
                     </Grid>
 
@@ -263,7 +212,12 @@ export default function ArticlesTable() {
                       timeout="auto"
                       unmountOnExit
                     >
-                      <Grid sx={{ pt: 1 }}>{renderTxTable(a.rows)}</Grid>
+                      <ArticleTxTable
+                        articleId={a.id}
+                        type={key}
+                        open={openArticles[a.keyId]}
+                        key={`tx-${a.keyId}-${key}`}
+                      />
                     </Collapse>
                   </Grid>
                 ))}
@@ -275,7 +229,8 @@ export default function ArticlesTable() {
     );
   };
 
-  return transactions?.length > 0 ? (
+  // Render root
+  return stats?.length > 0 ? (
     <>
       <TableContainer
         component={Paper}
@@ -300,6 +255,7 @@ export default function ArticlesTable() {
         >
           Баланс:&nbsp;
         </Typography>
+
         <Typography
           variant="subtitle1"
           sx={{
