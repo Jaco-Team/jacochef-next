@@ -10,14 +10,14 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
   Chip,
   Button,
-  Box,
   TableSortLabel,
   TextField,
   Stack,
   TablePagination,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import {
   Category,
@@ -81,6 +81,18 @@ export default function TransactionsTable({ showAlert }) {
 
   const handleEdit = (tx) => {
     setState({ selectedTx: [tx], isModalArticleTxOpen: true });
+  };
+
+  const handleTypeFilter = (_, v) => {
+    setState((s) => {
+      const next = { ...s.filters };
+      if (v === null) {
+        delete next.type; // <-- remove key completely
+      } else {
+        next.type = v; // <-- set new value
+      }
+      return { filters: next };
+    });
   };
 
   const assignGroupArticle = () => {
@@ -176,7 +188,7 @@ export default function TransactionsTable({ showAlert }) {
     <>
       <ConfirmDialog />
       <Paper sx={{ p: 2 }}>
-        <Stack sx={{ p: 1, gap: 1, flexDirection: "row" }}>
+        <Stack sx={{ p: 1, gap: 1, flexDirection: "row", alignItems: "center" }}>
           <Button
             variant="text"
             size="small"
@@ -215,6 +227,21 @@ export default function TransactionsTable({ showAlert }) {
               },
             }}
           />
+          <ToggleButtonGroup
+            value={filters.type}
+            exclusive
+            onChange={handleTypeFilter}
+            size="small"
+          >
+            <ToggleButton value={"income"}>Поступления</ToggleButton>
+            <ToggleButton value={"expense"}>Платежи</ToggleButton>
+            <ToggleButton
+              value={null}
+              selected={!filters.type}
+            >
+              Все
+            </ToggleButton>
+          </ToggleButtonGroup>
         </Stack>
 
         <TableContainer sx={{ maxHeight: 500 }}>

@@ -14,13 +14,14 @@ const useDDSStore = create((set) => ({
   date_end: formatDate(),
 
   articles: [],
+  articlesRefreshToken: null,
 
   // for ArticlesTable
   stats: null,
-  statsRefreshToken: 0, // trigger stats reload
+  statsRefreshToken: null, // trigger stats reload
 
   // for TransactionsTable
-  refreshToken: 0, // is used to trigger updates from deep levels
+  refreshToken: null, // is used to trigger updates from deep levels
   transactions: [],
   txPage: 1,
   txPerPage: 50,

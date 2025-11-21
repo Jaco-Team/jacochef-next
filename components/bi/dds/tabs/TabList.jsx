@@ -85,6 +85,7 @@ export default function TabList({ getData, showAlert }) {
   }
 
   useEffect(() => {
+    if (!statsRefreshToken) return;
     getPeriodData();
   }, [statsRefreshToken]);
 

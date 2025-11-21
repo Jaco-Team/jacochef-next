@@ -12,11 +12,12 @@ import {
 import useDDSStore from "../useDDSStore";
 import MyModal from "@/ui/MyModal";
 import { MySelect } from "@/ui/Forms";
+import useApi from "@/src/hooks/useApi";
 
 // === Stubbed dictionaries (simulate backend enums / tables)
 const GROUPS = [
-  { id: 1, name: "Операционные поступления", flow: 1 },
-  { id: 2, name: "Операционные расходы", flow: 0 },
+  { id: 1, name: "Операционные поступления" },
+  { id: 2, name: "Операционные платежи" },
 ];
 
 const OPERATIONS = [
@@ -29,10 +30,13 @@ const OPERATIONS = [
 
 const baseForm = { name: "", group_id: "", operation_id: "", type: "" };
 
-export default function ModalAddArticle({ open, onClose }) {
+export default function ModalAddArticle({ open, onClose, showAlert }) {
+  const { module } = useDDSStore();
   const setState = useDDSStore.setState;
   const [form, setForm] = useState(baseForm);
   const [errors, setErrors] = useState({});
+
+  const { api_laravel } = useApi(module);
 
   const filteredOperations = useMemo(() => {
     if (!form.group_id) return [];
@@ -44,40 +48,49 @@ export default function ModalAddArticle({ open, onClose }) {
     setErrors((prev) => ({ ...prev, [key]: false }));
   };
 
+  const handleClose = () => {
+    setForm(baseForm);
+    onClose();
+  };
+
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = true;
     if (!form.group_id) e.group_id = true;
+    if (!form.type) e.type = true;
     if (!form.operation_id) e.operation_id = true;
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (!validate()) return;
-
-    const group = GROUPS.find((g) => String(g.id) === String(form.group_id));
-    const operation = OPERATIONS.find((o) => String(o.id) === String(form.operation_id));
-
-    const newArticle = {
-      id: Date.now(),
-      name: form.name.trim(),
-      group_id: group?.id || null,
-      group: group?.name || "",
-      operation_id: operation?.id || null,
-      operation: operation?.name || "",
-      type: form.type?.trim() || "",
-      flow: group?.flow || 0,
-      updated: new Date().toLocaleDateString("ru-RU"),
-    };
-
-    setState((state) => ({
-      articles: [...state.articles, newArticle],
-    }));
-
-    alert("Статья успешно добавлена");
-    setForm(baseForm);
-    onClose();
+  const addArticle = async () => {
+    if (!validate()) {
+      return showAlert("Ошибки в форме");
+    }
+    try {
+      setState({ is_load: true });
+      const req = {
+        name: form.name,
+        group: form.group_id,
+        type: form.type,
+        operation: OPERATIONS.find((op) => +op.id === +form.operation_id)?.name ?? "n/a",
+      };
+      const res = await api_laravel("articles/add", req);
+      if (!res?.st) {
+        return showAlert("Ошибка добавления статьи");
+      }
+      setState((state) => ({
+        articles: [...state.articles, res.article],
+        articlesRefreshToken: Date.now(),
+      }));
+      setForm(baseForm);
+      showAlert(`Статья успешно добавлена, id: ${res.article.id}`, true);
+      onClose();
+    } catch (e) {
+      showAlert(e?.message || "Ошибка добавления статьи");
+    } finally {
+      setState({ is_load: false });
+    }
   };
 
   return (
@@ -118,15 +131,10 @@ export default function ModalAddArticle({ open, onClose }) {
               func={(e) => handleChange("group_id", e.target.value)}
               is_none={false}
             />
-            {errors.group_id && (
-              <Typography
-                variant="caption"
-                color="error"
-                sx={{ ml: 1, mt: 0.25, display: "block" }}
-              >
-                Обязательное поле
-              </Typography>
-            )}
+            <ErrorMessage
+              show={errors.group_id}
+              message="Обязательное поле"
+            />
           </Grid>
 
           <Grid size={{ xs: 12 }}>
@@ -138,15 +146,10 @@ export default function ModalAddArticle({ open, onClose }) {
               is_none={false}
               disabled={!form.group_id}
             />
-            {errors.operation_id && (
-              <Typography
-                variant="caption"
-                color="error"
-                sx={{ ml: 1, mt: 0.25, display: "block" }}
-              >
-                Обязательное поле
-              </Typography>
-            )}
+            <ErrorMessage
+              show={errors.operation_id}
+              message="Обязательное поле"
+            />
           </Grid>
 
           <Grid size={{ xs: 12 }}>
@@ -163,14 +166,28 @@ export default function ModalAddArticle({ open, onClose }) {
       </DialogContent>
 
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose}>Отмена</Button>
+        <Button onClick={handleClose}>Отмена</Button>
         <Button
           variant="contained"
-          onClick={handleSubmit}
+          onClick={addArticle}
         >
           Создать
         </Button>
       </DialogActions>
     </MyModal>
+  );
+}
+
+function ErrorMessage({ show = false, message }) {
+  return (
+    !!show && (
+      <Typography
+        variant="caption"
+        color="error"
+        sx={{ ml: 1, mt: 0.25, display: "block" }}
+      >
+        {message}
+      </Typography>
+    )
   );
 }

@@ -14,41 +14,63 @@ import {
   IconButton,
 } from "@mui/material";
 import { UploadFile, Add, Edit, Delete } from "@mui/icons-material";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import useDDSStore from "../useDDSStore";
 import ModalAddArticle from "../modals/ModalAddArticle";
+import useApi from "@/src/hooks/useApi";
+import { formatPlural } from "@/src/helpers/utils/i18n";
+import { formatYMD } from "@/src/helpers/ui/formatDate";
 
 const GROUP_NAMES = [
   { id: 1, name: "Операционные поступления" },
   { id: 2, name: "Операционные платежи" },
 ];
 
-export default function TabSettings() {
+export default function TabSettings({ showAlert }) {
   const { withConfirm, ConfirmDialog } = useConfirm();
-  const [articles, transactions] = useDDSStore((s) => [s.articles, s.transactions]);
+  const { articles, articlesRefreshToken, module } = useDDSStore();
   const setState = useDDSStore.setState;
+
+  const { api_laravel } = useApi(module);
 
   const [openAdd, setOpenAdd] = useState(false);
 
-  // Compute usage counts per article
-  const data = useMemo(() => {
-    return (
-      articles?.map((a) => ({
-        ...a,
-        uses: transactions?.filter((t) => t.article_id === a.id).length || 0,
-      })) || []
-    );
-  }, [articles, transactions]);
+  const fetchArticles = async () => {
+    const res = await api_laravel("get_articles");
+    if (!res?.st) {
+      return showAlert("Ошибка загрузки статей ДДС");
+    }
+    setState({ articles: res.articles || [] });
+  };
 
   // Handle deletion
-  const handleDelete = (id) => {
-    setState((state) => ({
-      articles: state.articles.filter((a) => a.id !== id),
-      transactions: state.transactions.map((t) =>
-        t.article_id === id ? { ...t, article_id: null } : t,
-      ),
-    }));
+  const handleDelete = async (id) => {
+    if (!id) {
+      console.log("No ID provided");
+      return;
+    }
+    try {
+      setState({ is_load: true });
+      const res = await api_laravel("articles/delete", { id });
+      if (!res?.st) {
+        throw new Error("Ошибка удаления статьи");
+      }
+      setState({
+        refreshToken: Date.now(),
+        statsRefreshToken: Date.now(),
+        articlesRefreshToken: Date.now(),
+      });
+      showAlert(
+        res.text ||
+          `Удалена статья ${id}, ${formatPlural(res.untied_tx, ["отвязана", "отвязано", "отвязано"])} ${formatPlural(res.affected, ["транзакция", "транзакции", "транзакций"])}`,
+        true,
+      );
+    } catch (e) {
+      showAlert(e?.message || "Ошибка удаления статьи");
+    } finally {
+      setState({ is_load: false });
+    }
   };
 
   const getGroupName = (id) => {
@@ -56,11 +78,18 @@ export default function TabSettings() {
     return group ? group.name : "Неизвестная группа";
   };
 
+  useEffect(() => {
+    if (!articlesRefreshToken) return;
+    fetchArticles();
+  }, [articlesRefreshToken]);
+
   return (
     <Paper sx={{ p: 3 }}>
+      <ConfirmDialog />
       <ModalAddArticle
         open={openAdd}
         onClose={() => setOpenAdd(false)}
+        showAlert={showAlert}
       />
       <Paper
         variant="outlined"
@@ -135,7 +164,7 @@ export default function TabSettings() {
             </TableHead>
 
             <TableBody>
-              {data.map((r) => {
+              {articles.map((r) => {
                 const isIncome = r.group === 1;
                 const color = isIncome ? "success.main" : "primary.main";
 
@@ -148,8 +177,8 @@ export default function TabSettings() {
                     <TableCell sx={{ color }}>{getGroupName(r.group)}</TableCell>
                     <TableCell>{r.type}</TableCell>
                     <TableCell>{r.operation}</TableCell>
-                    <TableCell>{r.uses}</TableCell>
-                    <TableCell>{r.updated}</TableCell>
+                    <TableCell sx={{ textAlign: "center" }}>{r.used}</TableCell>
+                    <TableCell>{formatYMD(r.updated)}</TableCell>
                     <TableCell>
                       <IconButton
                         size="small"

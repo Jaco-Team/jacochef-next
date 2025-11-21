@@ -12,14 +12,13 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import useDDSStore from "../useDDSStore";
 import MyModal from "@/ui/MyModal";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import { MyAutocomplite } from "@/ui/Forms";
 import { formatNumber } from "@/src/helpers/utils/i18n";
 import useApi from "@/src/hooks/useApi";
-import { refresh } from "next/cache";
 
 // confirmation timer for mass change, seconds
 const MASS_DELAY = 3;
