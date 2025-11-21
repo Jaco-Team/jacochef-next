@@ -3238,8 +3238,8 @@ class WorkSchedule_ extends React.Component {
       parseInt(user.dir_price_dop) +
       parseInt(user.dop_bonus) -
       parseInt(user.err_price) -
-      parseInt(user.given_cart);
-    //parseInt(user.withheld);
+      parseInt(user.given_cart) -
+      parseInt(user.withheld);
 
     this.setState({
       mainMenuZP: true,
@@ -3265,8 +3265,8 @@ class WorkSchedule_ extends React.Component {
       parseInt(user.dir_price) +
       parseInt(user.dir_price_dop) +
       parseInt(user.dop_bonus) -
-      parseInt(user.err_price);
-    //parseInt(user.withheld);
+      parseInt(user.err_price) -
+      parseInt(user.withheld);
 
     this.setState({
       mainMenuZPCart: true,
