@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { useState, useMemo, Fragment } from "react";
 import useDDSStore from "../useDDSStore";
-import { formatNumber } from "@/src/helpers/utils/i18n";
+import { formatNumber, formatPlural } from "@/src/helpers/utils/i18n";
 import ArticleTxTable from "./ArticleTxTable";
 
 export default function ArticlesTable() {
@@ -131,7 +131,7 @@ export default function ArticlesTable() {
                   opacity: 0.7,
                 }}
               >
-                {g.count} документов
+                {formatPlural(g.count, ["транзакция", "транзакции", "транзакций"])}
               </Grid>
             </Grid>
           </TableCell>
@@ -203,7 +203,7 @@ export default function ArticlesTable() {
                           opacity: 0.7,
                         }}
                       >
-                        {a.count} операций
+                        {formatPlural(a.count, ["транзакция", "транзакции", "транзакций"])}
                       </Grid>
                     </Grid>
 
@@ -215,7 +215,6 @@ export default function ArticlesTable() {
                       <ArticleTxTable
                         articleId={a.id}
                         type={key}
-                        open={openArticles[a.keyId]}
                         key={`tx-${a.keyId}-${key}`}
                       />
                     </Collapse>

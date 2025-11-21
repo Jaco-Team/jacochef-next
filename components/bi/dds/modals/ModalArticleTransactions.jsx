@@ -25,8 +25,7 @@ import { refresh } from "next/cache";
 const MASS_DELAY = 3;
 
 export default function ModalArticleTransactions({ onClose, showAlert }) {
-  const [transactions, articles, selectedTx, isModalArticleTxOpen, module] = useDDSStore((s) => [
-    s.transactions,
+  const [articles, selectedTx = [], isModalArticleTxOpen, module] = useDDSStore((s) => [
     s.articles,
     s.selectedTx,
     s.isModalArticleTxOpen,
@@ -37,11 +36,6 @@ export default function ModalArticleTransactions({ onClose, showAlert }) {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const { withConfirm, ConfirmDialog } = useConfirm();
 
-  const filtered = useMemo(() => {
-    if (!Array.isArray(selectedTx) || !selectedTx.length) return [];
-    return transactions.filter((t) => selectedTx.includes(t.id));
-  }, [transactions, selectedTx]);
-
   const updateTransactions = async (payload) => {
     try {
       setState({ is_load: true });
@@ -49,7 +43,11 @@ export default function ModalArticleTransactions({ onClose, showAlert }) {
       if (!res?.st) {
         throw new Error(res?.text || "Ошибка сервера");
       }
-      showAlert(res?.text || `Успешно обновлено: ${selectedTx.length}`, true);
+      showAlert(
+        // res?.text ||
+        `Успешно обновлено: ${selectedTx.length}`,
+        true,
+      );
     } catch (e) {
       showAlert(e?.message || "Ошибка обновления транзакций");
     } finally {
@@ -59,7 +57,7 @@ export default function ModalArticleTransactions({ onClose, showAlert }) {
 
   const assignArticleToTransactions = async () => {
     const payload = {
-      ids: filtered.map((t) => t.id),
+      ids: selectedTx.map((t) => t.id),
       data: { article_id: selectedArticle.id },
     };
     await updateTransactions(payload);
@@ -117,7 +115,7 @@ export default function ModalArticleTransactions({ onClose, showAlert }) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filtered.map((tx) => (
+                  {selectedTx?.map((tx) => (
                     <TableRow
                       key={tx.id}
                       hover
@@ -148,7 +146,7 @@ export default function ModalArticleTransactions({ onClose, showAlert }) {
                     close();
                   }
                 },
-                `Подтвердите назначение статьи «${selectedArticle?.name ?? "—"}» для ${filtered.length} транзакций`,
+                `Подтвердите назначение статьи «${selectedArticle?.name ?? "—"}» для ${selectedTx?.length} транзакций`,
                 selectedTx?.length > 1 ? MASS_DELAY : null,
               )}
             >

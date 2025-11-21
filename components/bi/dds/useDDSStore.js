@@ -34,20 +34,20 @@ const useDDSStore = create((set) => ({
   selectedTx: [],
   isModalArticleTxOpen: false,
 
-  // parsed but not added
-  sessionId: null,
-  parsedTransactions: [],
-  setParsedTransactions: (transactions) => set({ parsedTransactions: transactions }),
-
-  setStatsArticleTx: (articleId, txs) =>
+  setStatsArticleTx: (articleId, txs, page, total) =>
     set((state) => {
-      const newStats = [...state.stats];
-      if (!newStats) return;
-      const article = newStats.find((a) => a.article_id === articleId);
-      if (article) {
-        article = { ...article, transactions: txs ?? [] };
-      }
-      return { stats: [...newStats] };
+      return {
+        stats: state.stats.map((a) =>
+          a.article_id === articleId
+            ? {
+                ...a, // new identity
+                transactions: [...txs], // new identity
+                page,
+                total,
+              }
+            : a,
+        ),
+      };
     }),
 
   setStateKey: (key, value) => set((state) => ({ ...state, [key]: value })),

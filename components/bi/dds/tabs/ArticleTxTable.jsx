@@ -1,4 +1,6 @@
 import {
+  Box,
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -11,15 +13,22 @@ import useDDSStore from "../useDDSStore";
 import { useEffect, useState } from "react";
 import useApi from "@/src/hooks/useApi";
 import { formatNumber } from "@/src/helpers/utils/i18n";
+import { useIntersectionObserver } from "@/src/hooks/useIntersectionObserver";
+import { useDebounce } from "@/src/hooks/useDebounce";
+import { EditOutlined } from "@mui/icons-material";
 
-export default function ArticleTxTable({ articleId, type, open }) {
-  const [is_load, point, date_start, date_end, module, setStatsArticleTx] = useDDSStore((s) => [
-    s.is_load,
+// globals
+const FIRST_PAGE = 0;
+const PER_PAGE = 50;
+
+export default function ArticleTxTable({ articleId, type }) {
+  const [point, date_start, date_end, module, setStatsArticleTx, is_load] = useDDSStore((s) => [
     s.point,
     s.date_start,
     s.date_end,
     s.module,
     s.setStatsArticleTx,
+    s.is_load,
   ]);
 
   const setState = useDDSStore.setState;
@@ -27,49 +36,48 @@ export default function ArticleTxTable({ articleId, type, open }) {
   const { api_laravel } = useApi(module);
 
   const [articleTx, setArticleTx] = useState([]);
+  const [hasMore, setHasMore] = useState(false);
 
-  // Helper: load and cache article transactions
   const loadArticleTx = async () => {
     try {
       setState({ is_load: true });
-      const stats = useDDSStore.getState().stats;
       if (!articleId && articleId !== null) return [];
+      const state = useDDSStore.getState();
+      const statRow = state.stats.find((s) => s.article_id === articleId);
+      if (!statRow) return [];
+      const page = statRow.page ?? FIRST_PAGE;
+      const currentTx = statRow.transactions ?? [];
 
-      // find stats row by BACKEND FIELD!
-      const statRow = stats?.find((s) => s.article_id === articleId);
-
-      let allTxs = statRow?.transactions;
-
-      if (!allTxs) {
-        const req = {
-          article_ids: [articleId],
-          date_start,
-          date_end,
-          points: point,
-        };
-        console.log("Fetching article transactions:", req);
-        const res = await api_laravel("get_transactions_by_article", req);
-
-        if (res?.transactions) {
-          allTxs = res.transactions;
-          // attach into stats cache
-          setStatsArticleTx(articleId, res.transactions);
-        }
+      const req = {
+        article_ids: [articleId],
+        date_start,
+        date_end,
+        points: point,
+        page: page + 1,
+        limit: PER_PAGE,
+      };
+      const res = await api_laravel("get_transactions_by_article", req);
+      const newTx = [];
+      if (res?.transactions?.length) {
+        newTx.push(...res.transactions);
+        setHasMore(res.has_more);
+        setStatsArticleTx(articleId, [...currentTx, ...newTx], res.page, res.total);
       }
 
-      return (
-        allTxs
-          ?.filter((tx) => tx.type === type)
-          ?.map((tx) => ({
-            id: tx.id,
-            date: tx.date,
-            number: tx.number,
-            income: tx.income || 0,
-            expense: tx.expense || 0,
-            contractor: type === "income" ? tx.payer : tx.receiver,
-            naznachenie_platezha: tx.naznachenie_platezha,
-          })) ?? []
-      );
+      // transform for rendering
+      if (newTx.length) {
+        const prettyTx =
+          newTx
+            ?.filter((tx) => tx.type === type)
+            ?.map((tx) => ({
+              ...tx,
+              income: tx.income || 0,
+              expense: tx.expense || 0,
+              contractor: type === "income" ? tx.payer : tx.receiver,
+            })) ?? [];
+
+        setArticleTx((prev) => [...prev, ...prettyTx]);
+      }
     } catch (e) {
       console.error("Error loading article transactions:", e);
     } finally {
@@ -77,28 +85,25 @@ export default function ArticleTxTable({ articleId, type, open }) {
     }
   };
 
+  const handleEdit = (tx) => {
+    setState({ selectedTx: [tx], isModalArticleTxOpen: true });
+  };
+
+  const loaderRef = useIntersectionObserver({
+    enabled: hasMore && !is_load,
+    onVisible: useDebounce(async () => {
+      await loadArticleTx();
+    }, 300),
+  });
+
   // Load on dependency change
   useEffect(() => {
-    console.log("render:", { open, articleId, type });
-    if (!open) {
-      console.log("unmounting");
-      setArticleTx([]);
-      return;
-    }
     if (!articleId && articleId !== null) return;
-    let isMounted = true;
-    console.log("effect");
     const run = async () => {
-      const list = await loadArticleTx();
-      if (isMounted) setArticleTx(list);
+      await loadArticleTx();
     };
-
     run();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [open, articleId, type]);
+  }, [articleId, type]);
 
   return (
     <TableContainer
@@ -109,14 +114,14 @@ export default function ArticleTxTable({ articleId, type, open }) {
         maxHeight: "50dvh",
         overflowY: "auto",
         overflowX: "auto",
-        display: "block", // critical: restores horizontal scrolling
-        width: "100%", // ensures it fills parent width
+        display: "block",
+        width: "100%",
       }}
     >
       <Table
         size="small"
         stickyHeader
-        sx={{ minWidth: 700 }} // let wide tables scroll naturally
+        sx={{ minWidth: 700 }}
       >
         <TableHead>
           <TableRow>
@@ -126,11 +131,12 @@ export default function ArticleTxTable({ articleId, type, open }) {
             <TableCell>Списание</TableCell>
             <TableCell>Контрагент</TableCell>
             <TableCell>Назначение платежа</TableCell>
+            <TableCell />
           </TableRow>
         </TableHead>
         <TableBody>
           {articleTx?.map((t) => {
-            const txKey = t.id;
+            const txKey = `${articleId}-${t.id}`;
             return (
               <TableRow
                 key={txKey}
@@ -146,9 +152,33 @@ export default function ArticleTxTable({ articleId, type, open }) {
                 </TableCell>
                 <TableCell>{t.contractor || "—"}</TableCell>
                 <TableCell sx={{ minWidth: 300 }}>{t.naznachenie_platezha || "—"}</TableCell>
+                <TableCell>
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={() => handleEdit(t)}
+                  >
+                    <EditOutlined fontSize="inherit" />
+                  </IconButton>
+                </TableCell>
               </TableRow>
             );
           })}
+          <TableRow>
+            <TableCell colSpan={6}>
+              <Box
+                ref={loaderRef}
+                sx={{
+                  height: 40,
+                  opacity: 0.3,
+                  textAlign: "center",
+                  visibility: hasMore ? "visible" : "hidden",
+                }}
+              >
+                {is_load && "Загрузка..."}
+              </Box>
+            </TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     </TableContainer>

@@ -69,13 +69,18 @@ export default function TransactionsTable({ showAlert }) {
   const { withConfirm, ConfirmDialog } = useConfirm();
 
   const [selected, setSelected] = useState([]);
-  const toggleSelect = (id) =>
-    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  const toggleAll = () =>
-    setSelected(selected.length === transactions.length ? [] : transactions.map((r) => r.id));
+  const toggleSelect = (tx) =>
+    setSelected((prev) =>
+      prev.some((x) => x.id === tx.id) ? prev.filter((x) => x.id !== tx.id) : [...prev, tx],
+    );
 
-  const handleEdit = (id) => {
-    setState({ selectedTx: [id], isModalArticleTxOpen: true });
+  const toggleAll = () => {
+    if (selected.length === transactions.length) setSelected([]);
+    else setSelected([...transactions]); // full objects
+  };
+
+  const handleEdit = (tx) => {
+    setState({ selectedTx: [tx], isModalArticleTxOpen: true });
   };
 
   const assignGroupArticle = () => {
@@ -229,7 +234,7 @@ export default function TransactionsTable({ showAlert }) {
                 {[
                   ["date", "Дата"],
                   ["number", "№"],
-                  ["point", "Точка"],
+                  ["point", "Кафе"],
                   ["contractor", "Контрагент"],
                   ["income", "Поступление"],
                   ["expense", "Списание"],
@@ -252,7 +257,7 @@ export default function TransactionsTable({ showAlert }) {
 
             <TableBody>
               {transactions.map((r) => {
-                const checked = selected.includes(r.id);
+                const checked = selected.some((s) => s.id === r.id);
                 const article = articles?.find((a) => a.id === r.article_id) || null;
                 return (
                   <TableRow
@@ -262,7 +267,7 @@ export default function TransactionsTable({ showAlert }) {
                     <TableCell padding="checkbox">
                       <Checkbox
                         checked={checked}
-                        onChange={() => toggleSelect(r.id)}
+                        onChange={() => toggleSelect(r)}
                       />
                     </TableCell>
                     <TableCell>{r.date || "—"}</TableCell>
@@ -300,7 +305,7 @@ export default function TransactionsTable({ showAlert }) {
                         <IconButton
                           size="small"
                           color="primary"
-                          onClick={() => handleEdit(r.id)}
+                          onClick={() => handleEdit(r)}
                         >
                           <EditOutlined fontSize="inherit" />
                         </IconButton>

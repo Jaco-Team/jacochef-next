@@ -86,6 +86,7 @@ export default function ModalPrepareTransactions({ open, onClose, showAlert }) {
     if (!res?.st) return showAlert("Ошибка сохранения", false);
     updateState({ parsedData: res.skipped });
     showAlert(`Сохранено ${res.inserted} транзакций`, true);
+    onClose?.();
   };
 
   const debouncedSearch = useDebounce(

@@ -16,7 +16,7 @@ import useApi from "@/src/hooks/useApi";
 import ModalPrepareTransactions from "../modals/ModalPrepareTransactions";
 
 export default function TabList({ getData, showAlert }) {
-  const { points, point, date_start, date_end, module } = useDDSStore();
+  const { points, point, date_start, date_end, module, statsRefreshToken } = useDDSStore();
   const setState = useDDSStore.setState;
 
   const { parsedData, updateState } = useDDSParserStore();
@@ -83,6 +83,11 @@ export default function TabList({ getData, showAlert }) {
       stats: res?.stats ?? null,
     });
   }
+
+  useEffect(() => {
+    getPeriodData();
+  }, [statsRefreshToken]);
+
   return (
     <>
       <ModalPrepareTransactions
