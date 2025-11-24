@@ -146,6 +146,7 @@ export default function TabSettings({ showAlert }) {
       const parsed = await parseArticlesFile(file);
       setState({ parsedArticles: parsed });
       setPrepareModalOpen(true);
+      e.target.value = null;
     } catch (error) {
       showAlert(error?.message || "Ошибка загрузки файла");
     } finally {

@@ -115,7 +115,7 @@ export default function ModalPrepareArticles({ open, onClose, showAlert, onConfi
         throw new Error(res?.text || "Ошибка добавления статей");
       }
       setState({ articlesRefreshToken: Date.now(), parsedArticles: null });
-      showAlert(`Добавили ${formatPlural(res.count, ["Статья", "Статьи", "Статей"])}`, true);
+      showAlert(`Добавили ${formatPlural(res.count, ["статью", "статьи", "статей"])}`, true);
       onClose();
     } catch (error) {
       showAlert(error?.message || "Ошибка добавления статей");
