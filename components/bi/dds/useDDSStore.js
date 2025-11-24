@@ -15,6 +15,7 @@ const useDDSStore = create((set) => ({
 
   articles: [],
   articlesRefreshToken: null,
+  parsedArticles: null,
 
   // for ArticlesTable
   stats: null,

@@ -1,5 +1,5 @@
 "use client";
-import { Dialog, DialogTitle, DialogContent, IconButton } from "@mui/material";
+import { Dialog, DialogTitle, IconButton } from "@mui/material";
 import { Close } from "@mui/icons-material";
 
 /**
@@ -52,7 +52,7 @@ export default function MyModal({
         <Close fontSize="small" />
       </IconButton>
 
-      <DialogContent>{children}</DialogContent>
+      {children}
     </Dialog>
   );
 }

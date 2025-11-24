@@ -12,20 +12,21 @@ import {
   TableHead,
   TableRow,
   IconButton,
+  TableSortLabel,
+  TextField,
+  Stack,
 } from "@mui/material";
-import { UploadFile, Add, Edit, Delete } from "@mui/icons-material";
-import { useEffect, useState } from "react";
+import { UploadFile, Add, Edit, Delete, FilterAlt, Clear } from "@mui/icons-material";
+import { useEffect, useMemo, useState } from "react";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import useDDSStore from "../useDDSStore";
-import ModalAddArticle from "../modals/ModalAddArticle";
+import ModalAddEditArticle from "../modals/ModalAddEditArticle";
 import useApi from "@/src/hooks/useApi";
 import { formatPlural } from "@/src/helpers/utils/i18n";
 import { formatYMD } from "@/src/helpers/ui/formatDate";
-
-const GROUP_NAMES = [
-  { id: 1, name: "Операционные поступления" },
-  { id: 2, name: "Операционные платежи" },
-];
+import { parseArticlesFile } from "../helpers/parseArticles";
+import ModalPrepareArticles from "../modals/ModalPrepareArticles";
+import { GROUPS } from "../config";
 
 export default function TabSettings({ showAlert }) {
   const { withConfirm, ConfirmDialog } = useConfirm();
@@ -35,6 +36,64 @@ export default function TabSettings({ showAlert }) {
   const { api_laravel } = useApi(module);
 
   const [openAdd, setOpenAdd] = useState(false);
+  const [pickedArticle, setPickedArticle] = useState(null);
+
+  const [prepareModalOpen, setPrepareModalOpen] = useState(false);
+
+  const [orderBy, setOrderBy] = useState(null); // column key
+  const [order, setOrder] = useState("asc"); // asc | desc
+
+  // SORTING AND FILTERING
+
+  const columns = [
+    { key: "name", label: "Наименование" },
+    { key: "group", label: "Группа" },
+    { key: "type", label: "Тип показателя" },
+    { key: "operation", label: "Вид операции" },
+    { key: "used", label: "Использований" },
+    { key: "updated", label: "Обновлено" },
+  ];
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredArticles = useMemo(() => {
+    if (!searchQuery?.trim()) return articles;
+
+    const q = searchQuery.trim().toLowerCase();
+
+    return articles.filter((a) => a.name.toLowerCase().includes(q));
+  }, [articles, searchQuery]);
+
+  const sortData = (rows) => {
+    if (!orderBy) return rows;
+
+    const sorted = [...rows].sort((a, b) => {
+      const x = a[orderBy];
+      const y = b[orderBy];
+
+      if (x == null) return 1;
+      if (y == null) return -1;
+
+      if (typeof x === "number" && typeof y === "number") {
+        return order === "asc" ? x - y : y - x;
+      }
+
+      return order === "asc"
+        ? String(x).localeCompare(String(y))
+        : String(y).localeCompare(String(x));
+    });
+
+    return sorted;
+  };
+
+  const handleSort = (col) => {
+    if (orderBy === col) {
+      setOrder(order === "asc" ? "desc" : "asc");
+    } else {
+      setOrderBy(col);
+      setOrder("asc");
+    }
+  };
 
   const fetchArticles = async () => {
     const res = await api_laravel("get_articles");
@@ -73,8 +132,29 @@ export default function TabSettings({ showAlert }) {
     }
   };
 
+  const handleEdit = (article) => {
+    setPickedArticle(article);
+    setOpenAdd(true);
+  };
+
+  const handleFile = async (e) => {
+    try {
+      setState({ is_load: true });
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const parsed = await parseArticlesFile(file);
+      setState({ parsedArticles: parsed });
+      setPrepareModalOpen(true);
+    } catch (error) {
+      showAlert(error?.message || "Ошибка загрузки файла");
+    } finally {
+      setState({ is_load: false });
+    }
+  };
+
   const getGroupName = (id) => {
-    const group = GROUP_NAMES.find((g) => g.id === id);
+    const group = GROUPS.find((g) => g.id === id);
     return group ? group.name : "Неизвестная группа";
   };
 
@@ -86,10 +166,16 @@ export default function TabSettings({ showAlert }) {
   return (
     <Paper sx={{ p: 3 }}>
       <ConfirmDialog />
-      <ModalAddArticle
+      <ModalPrepareArticles
+        showAlert={showAlert}
+        open={prepareModalOpen}
+        onClose={() => setPrepareModalOpen(false)}
+      />
+      <ModalAddEditArticle
         open={openAdd}
         onClose={() => setOpenAdd(false)}
         showAlert={showAlert}
+        article={pickedArticle}
       />
       <Paper
         variant="outlined"
@@ -112,14 +198,15 @@ export default function TabSettings({ showAlert }) {
             <Button
               variant="outlined"
               component="label"
-              startIcon={<UploadFile />}
-              sx={{ justifyContent: "flex-start", height: 40 }}
+              size="small"
+              startIcon={<UploadFile fontSize="small" />}
+              sx={{ justifyContent: "flex-start" }}
             >
               Выбрать файл
               <input
                 type="file"
                 hidden
-                onChange={(e) => console.log(e.target.files)}
+                onInput={handleFile}
               />
             </Button>
           </Grid>
@@ -128,7 +215,7 @@ export default function TabSettings({ showAlert }) {
             <Button
               variant="contained"
               startIcon={<Add />}
-              sx={{ height: 40, whiteSpace: "nowrap" }}
+              sx={{ whiteSpace: "nowrap" }}
               onClick={() => setOpenAdd(true)}
             >
               Добавить статью
@@ -141,30 +228,65 @@ export default function TabSettings({ showAlert }) {
         variant="outlined"
         sx={{ p: 2 }}
       >
-        <Typography
-          variant="h6"
-          fontWeight={600}
-          sx={{ mb: 2 }}
+        <Stack
+          direction="row"
+          spacing={2}
+          justifyContent={"space-between"}
+          sx={{ pb: 2 }}
         >
-          Справочник статей ДДС
-        </Typography>
-
-        <TableContainer>
-          <Table size="small">
+          <Typography
+            variant="h6"
+            fontWeight={600}
+            sx={{ mb: 2 }}
+          >
+            Справочник статей ДДС
+          </Typography>
+          <TextField
+            size="small"
+            placeholder="Наименование…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: <FilterAlt sx={{ mr: 1, color: "text.disabled" }} />,
+                endAdornment: searchQuery ? (
+                  <IconButton onClick={() => setSearchQuery("")}>
+                    <Clear fontSize="small" />
+                  </IconButton>
+                ) : null,
+              },
+            }}
+            sx={{ width: 240, marginLeft: "auto" }}
+          />
+        </Stack>
+        <TableContainer sx={{ maxHeight: "60vh" }}>
+          <Table
+            size="small"
+            stickyHeader
+          >
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Наименование</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Группа</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Тип показателя</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Вид операции</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Использований</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Обновлено</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Действия</TableCell>
+                {columns.map((col) => (
+                  <TableCell
+                    key={col.key}
+                    sortDirection={orderBy === col.key ? order : false}
+                  >
+                    <TableSortLabel
+                      active={orderBy === col.key}
+                      direction={orderBy === col.key ? order : "asc"}
+                      onClick={() => handleSort(col.key)}
+                    >
+                      {col.label}
+                    </TableSortLabel>
+                  </TableCell>
+                ))}
+
+                <TableCell>Действия</TableCell>
               </TableRow>
             </TableHead>
 
             <TableBody>
-              {articles.map((r) => {
+              {sortData(filteredArticles)?.map((r) => {
                 const isIncome = r.group === 1;
                 const color = isIncome ? "success.main" : "primary.main";
 
@@ -183,6 +305,7 @@ export default function TabSettings({ showAlert }) {
                       <IconButton
                         size="small"
                         sx={{ color: "text.secondary" }}
+                        onClick={() => handleEdit(r)}
                       >
                         <Edit fontSize="small" />
                       </IconButton>

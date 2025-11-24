@@ -6,4 +6,5 @@
 - [x] create api group
 - [ ] adjust ui schemas
 - [ ] add fullscreen mobile for modals
+- [ ] move GROUPS and OPERATIONS to mysql?
 - [ ] test, adjust, test

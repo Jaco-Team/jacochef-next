@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Button,
   DialogActions,
@@ -13,27 +13,14 @@ import useDDSStore from "../useDDSStore";
 import MyModal from "@/ui/MyModal";
 import { MySelect } from "@/ui/Forms";
 import useApi from "@/src/hooks/useApi";
+import { GROUPS, OPERATIONS } from "../config";
 
-// === Stubbed dictionaries (simulate backend enums / tables)
-const GROUPS = [
-  { id: 1, name: "Операционные поступления" },
-  { id: 2, name: "Операционные платежи" },
-];
+const emptyForm = { name: "", group_id: "", operation_id: "", type: "" };
 
-const OPERATIONS = [
-  { id: 1, group_id: 1, name: "от покупателя" },
-  { id: 2, group_id: 1, name: "прочие поступления" },
-  { id: 3, group_id: 2, name: "поставщику" },
-  { id: 4, group_id: 2, name: "на расходы" },
-  { id: 5, group_id: 2, name: "прочие расходы" },
-];
-
-const baseForm = { name: "", group_id: "", operation_id: "", type: "" };
-
-export default function ModalAddArticle({ open, onClose, showAlert }) {
+export default function ModalAddEditArticle({ open, onClose, showAlert, article = null }) {
   const { module } = useDDSStore();
   const setState = useDDSStore.setState;
-  const [form, setForm] = useState(baseForm);
+  const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
 
   const { api_laravel } = useApi(module);
@@ -49,7 +36,7 @@ export default function ModalAddArticle({ open, onClose, showAlert }) {
   };
 
   const handleClose = () => {
-    setForm(baseForm);
+    setForm(emptyForm);
     onClose();
   };
 
@@ -83,7 +70,7 @@ export default function ModalAddArticle({ open, onClose, showAlert }) {
         articles: [...state.articles, res.article],
         articlesRefreshToken: Date.now(),
       }));
-      setForm(baseForm);
+      setForm(emptyForm);
       showAlert(`Статья успешно добавлена, id: ${res.article.id}`, true);
       onClose();
     } catch (e) {
@@ -92,16 +79,55 @@ export default function ModalAddArticle({ open, onClose, showAlert }) {
       setState({ is_load: false });
     }
   };
+  const updateArticle = async () => {
+    if (!validate()) {
+      return showAlert("Ошибки в форме");
+    }
+    try {
+      setState({ is_load: true });
+      const req = {
+        id: article.id,
+        name: form.name,
+        group: form.group_id,
+        type: form.type,
+        operation: OPERATIONS.find((op) => +op.id === +form.operation_id)?.name ?? "n/a",
+      };
+      const res = await api_laravel("articles/update", req);
+      if (!res?.st) {
+        return showAlert(res?.text || "Ошибка обновления статьи");
+      }
+      setState({
+        articlesRefreshToken: Date.now(),
+      });
+      setForm(emptyForm);
+      showAlert(`Статья ${article.name} успешно обновлена`, true);
+      onClose();
+    } catch (e) {
+      showAlert(e?.message || "Ошибка обновления статьи");
+    } finally {
+      setState({ is_load: false });
+    }
+  };
+
+  useEffect(() => {
+    if (article) {
+      setForm({
+        name: article.name,
+        group_id: article.group,
+        operation_id: OPERATIONS.find((op) => op.name === article.operation)?.id,
+        type: article.type,
+      });
+    }
+  }, [article]);
 
   return (
     <MyModal
       open={open}
       onClose={onClose}
       maxWidth="sm"
+      title={article ? "Редактировать статью ДДС" : "Создать статью ДДС"}
       fullWidth
     >
-      <DialogTitle>Создать статью ДДС</DialogTitle>
-
       <DialogContent
         dividers
         sx={{ pt: 2 }}
@@ -169,9 +195,9 @@ export default function ModalAddArticle({ open, onClose, showAlert }) {
         <Button onClick={handleClose}>Отмена</Button>
         <Button
           variant="contained"
-          onClick={addArticle}
+          onClick={article ? updateArticle : addArticle}
         >
-          Создать
+          {article ? "Сохранить" : "Создать"}
         </Button>
       </DialogActions>
     </MyModal>
