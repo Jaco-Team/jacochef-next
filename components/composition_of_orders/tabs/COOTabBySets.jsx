@@ -3,7 +3,9 @@ import SortableTable from "./SortableTable";
 
 function COOTabBySets({ getData, data }) {
   useEffect(() => {
-    getData();
+    if (!data) {
+      getData();
+    }
   }, []);
 
   return (

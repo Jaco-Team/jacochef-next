@@ -2355,6 +2355,7 @@ class SiteItems_ extends React.Component {
       { id: "3", name: "3 этап" },
     ];
     res.item.category_id = "";
+    res.item.tags_all = res?.tags_all;
 
     this.setState({
       itemTech: res.item,
@@ -3076,6 +3077,7 @@ class SiteItems_ extends React.Component {
           save={this.saveTech.bind(this)}
           getData={this.getData.bind(this)}
           update={this.update.bind(this)}
+          tags_all={this.state.tags_all}
           fullScreen={this.state.fullScreen}
           acces={this.state.acces}
           item_items={this.state.item_items}
@@ -3209,11 +3211,7 @@ class SiteItems_ extends React.Component {
               saveSort={this.saveSort.bind(this)}
               changeTableCheck={this.changeTableCheck.bind(this)}
               acces={this.state.acces}
-              openItem={
-                this.state.user_app === "technologist"
-                  ? this.openItemTech.bind(this)
-                  : this.openItemMark.bind(this)
-              }
+              openItem={this.openItemTech.bind(this)}
               openHistoryItem={
                 this.state.user_app === "technologist"
                   ? this.openHistoryTech.bind(this)

@@ -17,6 +17,7 @@ import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
+import Dropzone from "dropzone";
 const roundTo = (value, decimals) => {
   return Number(Math.round(value + "e" + decimals) + "e-" + decimals);
 };
@@ -44,7 +45,7 @@ export class SiteItemsModalTech extends React.Component {
       date_start: null,
       date_end: null,
       art: "",
-      category_id: "",
+      category_id: {},
       count_part: "",
       stol: "",
       weight: "",
@@ -92,7 +93,7 @@ export class SiteItemsModalTech extends React.Component {
       this.setState({
         name: this.props.item?.name || "",
         art: this.props.item?.art || "",
-        category_id: this.props.item?.category_id || "",
+        category_id: this.props.category.find((item) => this.props.item?.category_id) ?? {},
         count_part: this.props.item?.count_part || "",
         date_start: this.props.item?.date_start ? formatDate(this.props.item.date_start) : null,
         date_end: this.props.item?.date_end ? formatDate(this.props.item.date_end) : null,
@@ -122,6 +123,10 @@ export class SiteItemsModalTech extends React.Component {
         tags_all: tags,
         tags_my: this.props.item?.tags || [],
       });
+      setTimeout(() => {
+        this.myDropzone = new Dropzone("#for_img_edit_new", this.dropzoneOptions);
+        this.recalculateWeights();
+      }, 300);
     }
   }
 
@@ -443,7 +448,7 @@ export class SiteItemsModalTech extends React.Component {
         id: this.props.item.id,
         name: this.props.item.name,
         link: this.props.item.link,
-        category_id: this.props.item.category_id,
+        category_id: this.state.category_id.id,
         weight: this.props.item.weight,
         stol: this.props.item.stol,
         type: this.props.item.type,
@@ -532,7 +537,7 @@ export class SiteItemsModalTech extends React.Component {
       size_pizza: this.props.item?.size_pizza,
       name: this.state.name,
       art: this.state.art,
-      category_id: this.state.category_id,
+      category_id: this.state.category_id.id,
       count_part: this.state.count_part,
       stol: this.state.stol,
       weight: this.state.weight,
@@ -569,7 +574,7 @@ export class SiteItemsModalTech extends React.Component {
       date_start: null,
       date_end: null,
       art: "",
-      category_id: "",
+      category_id: {},
       count_part: "",
       stol: "",
       weight: "",
@@ -730,13 +735,13 @@ export class SiteItemsModalTech extends React.Component {
                     : {}
                 }
               >
-                <MySelect
-                  is_none={false}
-                  data={category}
-                  value={this.state.category_id}
-                  disabled={method !== "Новое блюдо" && !this.props.acces?.category_id_edit}
-                  func={this.changeSelect.bind(this, "category_id")}
+                <MyAutocomplite
                   label="Категория"
+                  multiple={false}
+                  data={category}
+                  disabled={method !== "Новое блюдо" && !this.props.acces?.category_id_edit}
+                  value={this.state.category_id}
+                  func={(event, value) => this.setState({ category_id: value })}
                 />
               </Grid>
               <Grid
@@ -956,33 +961,6 @@ export class SiteItemsModalTech extends React.Component {
                 <Grid
                   size={{
                     xs: 12,
-                    sm: 3,
-                  }}
-                >
-                  <Typography>{method}</Typography>
-                </Grid>
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 3,
-                  }}
-                  style={
-                    !this.props.acces?.date_start_edit && !this.props.acces?.date_start_view
-                      ? { display: "none" }
-                      : {}
-                  }
-                >
-                  <MyDatePickerNew
-                    label="Действует с"
-                    value={this.state.date_start}
-                    disabled={!this.props.acces?.date_start_edit}
-                    minDate={dayjs(new Date())}
-                    func={this.changeDateRange.bind(this, "date_start")}
-                  />
-                </Grid>
-                <Grid
-                  size={{
-                    xs: 12,
                     sm: 12,
                   }}
                   style={
@@ -1025,7 +1003,7 @@ export class SiteItemsModalTech extends React.Component {
                   }
                 >
                   <MyTextInput
-                    label="Короткое описание (в карточке)"
+                    label="Короткое название (в списке)"
                     value={this.state.marc_desc}
                     disabled={!this.props.acces?.marc_desc_edit}
                     func={this.changeItem.bind(this, "marc_desc")}
@@ -1483,7 +1461,10 @@ export class SiteItemsModalTech extends React.Component {
                         <MyAutocomplite
                           multiple={false}
                           data={this.state.items_stage?.all ?? []}
+                          disabledItemsFocusable={true}
                           value={null}
+                          blurOnSelect={true}
+                          autoFocus={false}
                           func={this.chooseItem.bind(this, "stages")}
                         />
                       </TableCell>
@@ -1526,7 +1507,15 @@ export class SiteItemsModalTech extends React.Component {
                       <TableCell colSpan={2}></TableCell>
                     </TableRow>
                     <TableRow sx={{ "& td": { fontWeight: "bold" } }}>
-                      <TableCell colSpan={9}>Позиции</TableCell>
+                      <TableCell>Позиции</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell>Брутто</TableCell>
+                      <TableCell>% потери при ХО</TableCell>
+                      <TableCell>Нетто</TableCell>
+                      <TableCell>% потери при ГО</TableCell>
+                      <TableCell>Выход</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
                     </TableRow>
                     {this.state.item_items?.this_items.map((item, key) => (
                       <TableRow key={key}>
@@ -1586,7 +1575,10 @@ export class SiteItemsModalTech extends React.Component {
                         <MyAutocomplite
                           multiple={false}
                           data={this.state.item_items?.all_items ?? []}
+                          disabledItemsFocusable={true}
                           value={null}
+                          blurOnSelect={true}
+                          autoFocus={false}
                           func={this.chooseItem.bind(this, "items")}
                         />
                       </TableCell>
