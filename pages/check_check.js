@@ -41,15 +41,48 @@ import ListItemText from "@mui/material/ListItemText";
 import HelpIcon from "@mui/icons-material/Help";
 import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
 
+import PropTypes from "prop-types";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+
 import { MySelect, MyDatePickerNew, MyAutocomplite, MyTextInput } from "@/ui/Forms";
 
-// import {api_laravel_local as api_laravel} from "@/src/api_new";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+//import {api_laravel_local as api_laravel} from "@/src/api_new";
+import { api_laravel } from "@/src/api_new";
 
 import dayjs from "dayjs";
 import { formatDateReverse } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 import { Close } from "@mui/icons-material";
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box>{children}</Box>}
+    </div>
+  );
+}
+
+TabPanel.propTypes = {
+  children: PropTypes.node,
+  index: PropTypes.number.isRequired,
+  value: PropTypes.number.isRequired,
+};
+
+function a11yProps(index) {
+  return {
+    id: `simple-tab-${index}`,
+    "aria-controls": `simple-tabpanel-${index}`,
+  };
+}
 
 const formatNumber = (num) => new Intl.NumberFormat("ru-RU").format(num);
 
@@ -74,7 +107,7 @@ const DiffButton = ({
   if (!visible) return null;
 
   const scope = ctx?.scope;
-  const canComment = scope === "kassa_day";
+  const canComment = scope === "kassa_day" || scope === "smena";
 
   const hasComment =
     (typeof ctx?.hasComment === "boolean" ? ctx.hasComment : undefined) ??
@@ -206,6 +239,8 @@ class CheckCheck_Accordion extends React.Component {
       mismatchOpen: false,
       mismatchCtx: null,
       comment: "",
+      activeTab: 0,
+      activeKassaTab: 0,
     };
   }
 
@@ -267,6 +302,134 @@ class CheckCheck_Accordion extends React.Component {
       }));
   };
 
+  // данные по сменам
+  getSmenaByKassa = (summ_ofd, summ_chef) => {
+    const result = {};
+
+    const ofdSmena  = summ_ofd?.smena  ?? [];
+    const chefSmena = summ_chef?.smena ?? [];
+
+    const metaByDateKassa = {};
+    (summ_ofd?.days ?? []).forEach((day) => {
+      const date = day.date;
+      (day.kass ?? []).forEach((k) => {
+        const kassaId = Number(k.kassa);
+        if (!kassaId) return;
+
+        const key = `${date}__${kassaId}`;
+
+        metaByDateKassa[key] = {
+          color:   k.color || day.color || "inherit",
+          comment: typeof k.comment === "string" ? k.comment : "",
+        };
+      });
+    });
+
+    const makeKey = (kassaId, smena) => `${kassaId}__${smena}`;
+
+    const ofdMap  = {};
+    const chefMap = {};
+    const keysSet = new Set();
+
+    // ---------- ОФД ----------
+    ofdSmena.forEach((row) => {
+      const date  = row.date || row.day || "";
+      const kassa = Number(row.kassa);
+      const smena = Number(row.smena);
+
+      if (!date || !kassa || !smena) return;
+
+      const key  = makeKey(kassa, smena);
+      const meta = metaByDateKassa[`${date}__${kassa}`] || {};
+
+      keysSet.add(key);
+
+      ofdMap[key] = {
+        date,
+        kassaId: kassa,
+        smena,
+        cash: Number(row.summ_cash) || 0,
+        bank: Number(row.summ_bank) || 0,
+        cashCount: Number(row.count_cash_checks) || 0,
+        bankCount: Number(row.count_bank_checks) || 0,
+        // приоритет — комментарий с уровня дня/кассы
+        comment:
+          (meta.comment && meta.comment.trim().length > 0)
+            ? meta.comment
+            : (typeof row.comment === "string" ? row.comment : ""),
+        serverColor: meta.color || "inherit",
+      };
+    });
+
+    // ---------- ШЕФ ----------
+    chefSmena.forEach((row) => {
+      const date = row.date || row.day || "";
+      const kassa = Number(row.kassa);
+      const smena = Number(row.smena);
+
+      if (!date || !kassa || !smena) return;
+
+      const key  = makeKey(kassa, smena);
+      const meta = metaByDateKassa[`${date}__${kassa}`] || {};
+
+      keysSet.add(key);
+
+      chefMap[key] = {
+        date,
+        kassaId: kassa,
+        smena,
+        cash: Number(row.summ_cash)         || 0,
+        bank: Number(row.summ_bank)         || 0,
+        cashCount: Number(row.count_cash_checks) || 0,
+        bankCount: Number(row.count_bank_checks) || 0,
+        comment:
+          (meta.comment && meta.comment.trim().length > 0)
+            ? meta.comment
+            : (typeof row.comment === "string" ? row.comment : ""),
+        serverColor: meta.color || "inherit",
+      };
+    });
+
+    // ---------- Склейка ОФД + ШЕФ ----------
+    keysSet.forEach((key) => {
+      const [kassaStr, smenaStr] = key.split("__");
+      const kassaId = Number(kassaStr);
+      const smena = Number(smenaStr);
+
+      const ofd  = ofdMap[key]  || {};
+      const chef = chefMap[key] || {};
+
+      const date = ofd.date || chef.date || "";
+
+      const comment = (typeof ofd.comment === "string" && ofd.comment.trim().length > 0) ? ofd.comment : (typeof chef.comment === "string" ? chef.comment : "");
+
+      const serverColor = ofd.serverColor ?? chef.serverColor ?? "inherit";
+
+      if (!result[kassaId]) result[kassaId] = [];
+
+      result[kassaId].push({
+        date,
+        smena,
+        smenaLabel: String(smena),
+
+        ofdCash: ofd.cash ?? 0,
+        ofdBank: ofd.bank ?? 0,
+        ofdCashCount: ofd.cashCount  ?? 0,
+        ofdBankCount: ofd.bankCount  ?? 0,
+
+        chefCash: chef.cash ?? 0,
+        chefBank: chef.bank ?? 0,
+        chefCashCount: chef.cashCount ?? 0,
+        chefBankCount: chef.bankCount ?? 0,
+
+        comment,
+        serverColor,
+      });
+    });
+
+    return result;
+  };
+
   openMismatch = (ctx) => {
     this.setState({
       mismatchOpen: true,
@@ -283,7 +446,9 @@ class CheckCheck_Accordion extends React.Component {
     const { mismatchCtx, comment } = this.state;
     const { acces_comment, save_comment } = this.props;
 
-    if (!mismatchCtx || mismatchCtx.scope !== "kassa_day") return;
+    if (!mismatchCtx || (mismatchCtx.scope !== "kassa_day" && mismatchCtx.scope !== "smena")) {
+      return;
+    }
     if (String(acces_comment) !== "1") return;
     const smena_list = (mismatchCtx.smena_list || "").trim();
     if (!smena_list) return;
@@ -304,29 +469,60 @@ class CheckCheck_Accordion extends React.Component {
     });
   };
 
+  changeTab = (event, value) => {
+    this.setState({
+      activeTab: value,
+    });
+  }
+
+  changeKassaTab = (event, value) => {
+    this.setState({
+      activeKassaTab: value,
+    });
+  };
+
+  calcSmenaCountForDayKassa = (date, kassaId, summ_ofd, summ_chef) => {
+    const ofdCnt = (summ_ofd?.smena ?? []).filter(
+      (s) => s.date === date && Number(s.kassa) === Number(kassaId)
+    ).length;
+
+    const chefCnt = (summ_chef?.smena ?? []).filter(
+      (s) => s.date === date && Number(s.kassa) === Number(kassaId)
+    ).length;
+
+    const cnt = Math.max(ofdCnt, chefCnt);
+
+    return cnt || 1;
+  };
+
   render() {
     const { summ_ofd, summ_chef, acces_comment } = this.props;
-    const { openRows, openSummary, mismatchOpen, mismatchCtx, comment } = this.state;
+    const { openRows, openSummary, mismatchOpen, mismatchCtx, comment, activeTab, activeKassaTab } = this.state;
 
     const daysMerged = this.getPreparedDays(summ_ofd, summ_chef);
     const kassTotals = this.getKassTotals(summ_ofd, summ_chef);
 
+    // готовим данные по сменам
+    const smenaByKassa = this.getSmenaByKassa(summ_ofd, summ_chef);
+    
     const counts = { green: 0, gray: 0, red: 0 };
-
-    daysMerged.forEach(({ ofdDay, kassas }) => {
-      kassas.forEach(({ ofdKassa = {}, chefKassa = {} }) => {
-        const ofdSum = (ofdKassa.summ_cash ?? 0) + (ofdKassa.summ_bank ?? 0);
+    
+    daysMerged.forEach(({ date, ofdDay, chefDay, kassas }) => {
+      kassas.forEach(({ kassaId, ofdKassa = {}, chefKassa = {} }) => {
+        const ofdSum  = (ofdKassa.summ_cash ?? 0) + (ofdKassa.summ_bank ?? 0);
         const chefSum = (chefKassa.summ_cash ?? 0) + (chefKassa.summ_bank ?? 0);
 
-        const smenaCount = ofdKassa.smena_count ?? 0;
+        let smenaCount = Number(ofdKassa.smena_count ?? 0);
+        if (!smenaCount || smenaCount < 1) {
+          smenaCount = this.calcSmenaCountForDayKassa(date, kassaId, summ_ofd, summ_chef);
+        }
 
         const summColor = ofdKassa.color ?? ofdDay?.color ?? "inherit";
-
         const color = getColor(ofdSum, chefSum, summColor);
 
-        if (color === "green") counts.green += smenaCount;
-        else if (color === "gray") counts.gray += smenaCount;
-        else if (color === "red") counts.red += smenaCount;
+        if (color === "red") counts.red += smenaCount;
+        else if (color === "gray" || color === "grey") counts.gray += smenaCount;
+        else if (color === "green") counts.green += smenaCount;
       });
     });
 
@@ -375,6 +571,8 @@ class CheckCheck_Accordion extends React.Component {
           </AccordionSummary>
 
           <AccordionDetails>
+
+            {/* таблица статуса смен */}
             <TableContainer
               component={Paper}
               sx={{ mb: 5, width: "40%" }}
@@ -405,6 +603,7 @@ class CheckCheck_Accordion extends React.Component {
               </Table>
             </TableContainer>
 
+            {/* таблица с общими суммами */}
             <Table
               size="small"
               sx={{ mb: 5 }}
@@ -437,7 +636,7 @@ class CheckCheck_Accordion extends React.Component {
                   }}
                   sx={{ cursor: "pointer" }}
                 >
-                  <TableCell style={{ width: "8%", fontWeight: "bold" }}>Даты</TableCell>
+                  <TableCell style={{ width: "8%", fontWeight: "bold" }}/>
 
                   <TableCell style={{ width: "23%" }}>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -561,6 +760,7 @@ class CheckCheck_Accordion extends React.Component {
               </TableBody>
             </Table>
 
+            {/* таблица с общими суммами по кассам */}
             {openSummary && kassTotals.length > 0 && (
               <TableContainer
                 component={Paper}
@@ -705,324 +905,541 @@ class CheckCheck_Accordion extends React.Component {
               </TableContainer>
             )}
 
-            <Table size="small">
-              <TableBody>
-                {daysMerged.map(({ date, ofdDay, chefDay, kassas }) => {
-                  const colorCashDay = getColor(
-                    ofdDay?.summ_cash,
-                    chefDay?.summ_cash,
-                    ofdDay?.color,
-                  );
-                  const colorBankDay = getColor(
-                    ofdDay?.summ_bank,
-                    chefDay?.summ_bank,
-                    ofdDay?.color,
-                  );
+            {/* табы для переключения между датами и сменами */}
+            <Grid
+              style={{ paddingBottom: 24 }}
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
+            >
+              <Paper>
+                <Tabs
+                  value={activeTab}
+                  onChange={this.changeTab}
+                  centered
+                  variant="fullWidth"
+                >
+                  <Tab label="Даты" {...a11yProps(0)} />
+                  <Tab label="Смены" {...a11yProps(1)} />
+                </Tabs>
+              </Paper>
+            </Grid>
 
-                  const hasCommentForDate = [
-                    ...(ofdDay?.kass ?? []),
-                    ...(chefDay?.kass ?? []),
-                  ].some((k) => typeof k?.comment === "string" && k.comment.trim().length > 0);
+            {/* таб с таблицами по датам */}
+            <TabPanel value={activeTab} index={0}>
+              <Table size="small">
+                <TableBody>
+                  {daysMerged.map(({ date, ofdDay, chefDay, kassas }) => {
+                    const colorCashDay = getColor(
+                      ofdDay?.summ_cash,
+                      chefDay?.summ_cash,
+                      ofdDay?.color,
+                    );
+                    const colorBankDay = getColor(
+                      ofdDay?.summ_bank,
+                      chefDay?.summ_bank,
+                      ofdDay?.color,
+                    );
 
-                  return (
-                    <React.Fragment key={date}>
-                      <TableRow
-                        hover
-                        onClick={() => this.toggleRow(date)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <TableCell sx={{ fontWeight: "bold" }}>{formatDateReverse(date)}</TableCell>
+                    const hasCommentForDate = [
+                      ...(ofdDay?.kass ?? []),
+                      ...(chefDay?.kass ?? []),
+                    ].some((k) => typeof k?.comment === "string" && k.comment.trim().length > 0);
 
-                        <TableCell>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Typography sx={{ mr: 1 }}>Наличные за день:</Typography>
-                            <Typography sx={{ fontWeight: "bold", color: colorCashDay }}>
-                              {formatNumber(ofdDay?.summ_cash ?? 0)} ₽
-                            </Typography>
-                            <DiffButton
-                              visible={colorCashDay === "red"}
-                              onClick={this.openMismatch}
-                              ctx={{
-                                scope: "day",
-                                date,
-                                label: "Наличные (день)",
-                                ofd: ofdDay?.summ_cash,
-                                chef: chefDay?.summ_cash,
-                                smena_list: "",
-                                comment: "",
-                                hasComment: hasCommentForDate,
-                              }}
-                              canEdit={canEdit}
-                            />
-                            <Tooltip
-                              title="Количество чеков"
-                              arrow
-                            >
-                              <Chip
-                                label={formatNumber(ofdDay?.count_cash_checks ?? 0)}
-                                size="small"
-                                sx={{ ml: 1, fontWeight: 500, cursor: "default" }}
-                              />
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Typography sx={{ mr: 1 }}>Безнал за день:</Typography>
-                            <Typography sx={{ fontWeight: "bold", color: colorBankDay }}>
-                              {formatNumber(ofdDay?.summ_bank ?? 0)} ₽
-                            </Typography>
-                            <DiffButton
-                              visible={colorBankDay === "red"}
-                              onClick={this.openMismatch}
-                              ctx={{
-                                scope: "day",
-                                date,
-                                label: "Безнал (день)",
-                                ofd: ofdDay?.summ_bank,
-                                chef: chefDay?.summ_bank,
-                                smena_list: ofdDay?.smena_list || "",
-                                comment: "",
-                                hasComment: hasCommentForDate,
-                              }}
-                              canEdit={canEdit}
-                            />
-                            <Tooltip
-                              title="Количество чеков"
-                              arrow
-                            >
-                              <Chip
-                                label={formatNumber(ofdDay?.count_bank_checks ?? 0)}
-                                size="small"
-                                sx={{ ml: 1, fontWeight: 500, cursor: "default" }}
-                              />
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Typography sx={{ mr: 1 }}>Наличные за день:</Typography>
-                            <Typography sx={{ fontWeight: "bold", color: colorCashDay }}>
-                              {formatNumber(chefDay?.summ_cash ?? 0)} ₽
-                            </Typography>
-                            <Tooltip
-                              title="Количество чеков"
-                              arrow
-                            >
-                              <Chip
-                                label={formatNumber(chefDay?.count_cash_checks ?? 0)}
-                                size="small"
-                                sx={{ ml: 1, fontWeight: 500, cursor: "default" }}
-                              />
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Typography sx={{ mr: 1 }}>Безнал за день:</Typography>
-                            <Typography sx={{ fontWeight: "bold", color: colorBankDay }}>
-                              {formatNumber(chefDay?.summ_bank ?? 0)} ₽
-                            </Typography>
-                            <Tooltip
-                              title="Количество чеков"
-                              arrow
-                            >
-                              <Chip
-                                label={formatNumber(chefDay?.count_bank_checks ?? 0)}
-                                size="small"
-                                sx={{ ml: 1, fontWeight: 500, cursor: "default" }}
-                              />
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell
-                          style={{ width: 48 }}
-                          align="center"
+                    return (
+                      <React.Fragment key={date}>
+                        <TableRow
+                          hover
+                          onClick={() => this.toggleRow(date)}
+                          style={{ cursor: "pointer" }}
                         >
-                          <ExpandMoreIcon
-                            style={{
-                              display: "flex",
-                              transform: openRows[date] ? "rotate(180deg)" : "rotate(0deg)",
-                              transition: "transform 0.2s",
-                            }}
-                          />
-                        </TableCell>
-                      </TableRow>
+                          <TableCell sx={{ fontWeight: "bold" }}>{formatDateReverse(date)}</TableCell>
 
-                      {openRows[date] && (
-                        <TableRow>
+                          <TableCell>
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Typography sx={{ mr: 1 }}>Наличные за день:</Typography>
+                              <Typography sx={{ fontWeight: "bold", color: colorCashDay }}>
+                                {formatNumber(ofdDay?.summ_cash ?? 0)} ₽
+                              </Typography>
+                              <DiffButton
+                                visible={colorCashDay === "red"}
+                                onClick={this.openMismatch}
+                                ctx={{
+                                  scope: "day",
+                                  date,
+                                  label: "Наличные (день)",
+                                  ofd: ofdDay?.summ_cash,
+                                  chef: chefDay?.summ_cash,
+                                  smena_list: "",
+                                  comment: "",
+                                  hasComment: hasCommentForDate,
+                                }}
+                                canEdit={canEdit}
+                              />
+                              <Tooltip
+                                title="Количество чеков"
+                                arrow
+                              >
+                                <Chip
+                                  label={formatNumber(ofdDay?.count_cash_checks ?? 0)}
+                                  size="small"
+                                  sx={{ ml: 1, fontWeight: 500, cursor: "default" }}
+                                />
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+
+                          <TableCell>
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Typography sx={{ mr: 1 }}>Безнал за день:</Typography>
+                              <Typography sx={{ fontWeight: "bold", color: colorBankDay }}>
+                                {formatNumber(ofdDay?.summ_bank ?? 0)} ₽
+                              </Typography>
+                              <DiffButton
+                                visible={colorBankDay === "red"}
+                                onClick={this.openMismatch}
+                                ctx={{
+                                  scope: "day",
+                                  date,
+                                  label: "Безнал (день)",
+                                  ofd: ofdDay?.summ_bank,
+                                  chef: chefDay?.summ_bank,
+                                  smena_list: ofdDay?.smena_list || "",
+                                  comment: "",
+                                  hasComment: hasCommentForDate,
+                                }}
+                                canEdit={canEdit}
+                              />
+                              <Tooltip
+                                title="Количество чеков"
+                                arrow
+                              >
+                                <Chip
+                                  label={formatNumber(ofdDay?.count_bank_checks ?? 0)}
+                                  size="small"
+                                  sx={{ ml: 1, fontWeight: 500, cursor: "default" }}
+                                />
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+
+                          <TableCell>
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Typography sx={{ mr: 1 }}>Наличные за день:</Typography>
+                              <Typography sx={{ fontWeight: "bold", color: colorCashDay }}>
+                                {formatNumber(chefDay?.summ_cash ?? 0)} ₽
+                              </Typography>
+                              <Tooltip
+                                title="Количество чеков"
+                                arrow
+                              >
+                                <Chip
+                                  label={formatNumber(chefDay?.count_cash_checks ?? 0)}
+                                  size="small"
+                                  sx={{ ml: 1, fontWeight: 500, cursor: "default" }}
+                                />
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+
+                          <TableCell>
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Typography sx={{ mr: 1 }}>Безнал за день:</Typography>
+                              <Typography sx={{ fontWeight: "bold", color: colorBankDay }}>
+                                {formatNumber(chefDay?.summ_bank ?? 0)} ₽
+                              </Typography>
+                              <Tooltip
+                                title="Количество чеков"
+                                arrow
+                              >
+                                <Chip
+                                  label={formatNumber(chefDay?.count_bank_checks ?? 0)}
+                                  size="small"
+                                  sx={{ ml: 1, fontWeight: 500, cursor: "default" }}
+                                />
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+
                           <TableCell
-                            style={{ paddingBottom: 0, paddingTop: 0 }}
-                            colSpan={6}
+                            style={{ width: 48 }}
+                            align="center"
                           >
-                            <TableContainer
-                              component={Paper}
-                              sx={{ mt: 3, mb: 3 }}
-                            >
-                              <Table size="small">
-                                <TableHead>
-                                  <TableRow>
-                                    <TableCell
-                                      style={{ width: "7%", borderRight: "1px solid #ccc" }}
-                                    >
-                                      Касса
-                                    </TableCell>
-                                    <TableCell style={{ width: "22%" }}>Наличные</TableCell>
-                                    <TableCell
-                                      style={{ width: "22%", borderRight: "1px solid #ccc" }}
-                                    >
-                                      Безнал
-                                    </TableCell>
-                                    <TableCell style={{ width: "23%" }}>Наличные</TableCell>
-                                    <TableCell style={{ width: "23%" }}>Безнал</TableCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {kassas.map(({ kassaId, ofdKassa = {}, chefKassa = {} }) => {
-                                    const colCash = getColor(
-                                      ofdKassa.summ_cash,
-                                      chefKassa.summ_cash,
-                                      ofdKassa.color,
-                                    );
-                                    const colBank = getColor(
-                                      ofdKassa.summ_bank,
-                                      chefKassa.summ_bank,
-                                      ofdKassa.color,
-                                    );
-
-                                    return (
-                                      <TableRow key={kassaId}>
-                                        <TableCell style={{ borderRight: "1px solid #ccc" }}>
-                                          {`${kassaId}${kassaId === 2 ? " (онлайн)" : ""}`}
-                                        </TableCell>
-
-                                        <TableCell>
-                                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                                            <Typography sx={{ color: colCash }}>
-                                              {formatNumber(ofdKassa.summ_cash ?? 0)} ₽
-                                            </Typography>
-                                            <DiffButton
-                                              visible={colCash === "red"}
-                                              onClick={this.openMismatch}
-                                              ctx={{
-                                                scope: "kassa_day",
-                                                date,
-                                                kassaId,
-                                                label: "Наличные (касса/день)",
-                                                ofd: ofdKassa.summ_cash,
-                                                chef: chefKassa.summ_cash,
-                                                smena_list: ofdKassa?.smena_list || "",
-                                                comment: ofdKassa?.comment || "",
-                                              }}
-                                              canEdit={canEdit}
-                                            />
-                                            <Tooltip
-                                              title="Количество чеков"
-                                              arrow
-                                            >
-                                              <Chip
-                                                label={formatNumber(
-                                                  ofdKassa.count_cash_checks ?? 0,
-                                                )}
-                                                size="small"
-                                                sx={{ ml: 1, fontWeight: 400, cursor: "default" }}
-                                              />
-                                            </Tooltip>
-                                          </Box>
-                                        </TableCell>
-
-                                        <TableCell style={{ borderRight: "1px solid #ccc" }}>
-                                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                                            <Typography sx={{ color: colBank }}>
-                                              {formatNumber(ofdKassa.summ_bank ?? 0)} ₽
-                                            </Typography>
-                                            <DiffButton
-                                              visible={colBank === "red"}
-                                              onClick={this.openMismatch}
-                                              ctx={{
-                                                scope: "kassa_day",
-                                                date,
-                                                kassaId,
-                                                label: "Безнал (касса/день)",
-                                                ofd: ofdKassa.summ_bank,
-                                                chef: chefKassa.summ_bank,
-                                                smena_list: ofdKassa?.smena_list || "",
-                                                comment: ofdKassa?.comment || "",
-                                              }}
-                                              canEdit={canEdit}
-                                            />
-                                            <Tooltip
-                                              title="Количество чеков"
-                                              arrow
-                                            >
-                                              <Chip
-                                                label={formatNumber(
-                                                  ofdKassa.count_bank_checks ?? 0,
-                                                )}
-                                                size="small"
-                                                sx={{ ml: 1, fontWeight: 400, cursor: "default" }}
-                                              />
-                                            </Tooltip>
-                                          </Box>
-                                        </TableCell>
-
-                                        <TableCell>
-                                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                                            <Typography sx={{ color: colCash }}>
-                                              {formatNumber(chefKassa.summ_cash ?? 0)} ₽
-                                            </Typography>
-                                            <Tooltip
-                                              title="Количество чеков"
-                                              arrow
-                                            >
-                                              <Chip
-                                                label={formatNumber(
-                                                  chefKassa.count_cash_checks ?? 0,
-                                                )}
-                                                size="small"
-                                                sx={{ ml: 1, fontWeight: 400, cursor: "default" }}
-                                              />
-                                            </Tooltip>
-                                          </Box>
-                                        </TableCell>
-
-                                        <TableCell>
-                                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                                            <Typography sx={{ color: colBank }}>
-                                              {formatNumber(chefKassa.summ_bank ?? 0)} ₽
-                                            </Typography>
-                                            <Tooltip
-                                              title="Количество чеков"
-                                              arrow
-                                            >
-                                              <Chip
-                                                label={formatNumber(
-                                                  chefKassa.count_bank_checks ?? 0,
-                                                )}
-                                                size="small"
-                                                sx={{ ml: 1, fontWeight: 400, cursor: "default" }}
-                                              />
-                                            </Tooltip>
-                                          </Box>
-                                        </TableCell>
-                                      </TableRow>
-                                    );
-                                  })}
-                                </TableBody>
-                              </Table>
-                            </TableContainer>
+                            <ExpandMoreIcon
+                              style={{
+                                display: "flex",
+                                transform: openRows[date] ? "rotate(180deg)" : "rotate(0deg)",
+                                transition: "transform 0.2s",
+                              }}
+                            />
                           </TableCell>
                         </TableRow>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </TableBody>
-            </Table>
+
+                        {openRows[date] && (
+                          <TableRow>
+                            <TableCell
+                              style={{ paddingBottom: 0, paddingTop: 0 }}
+                              colSpan={6}
+                            >
+                              <TableContainer
+                                component={Paper}
+                                sx={{ mt: 3, mb: 3 }}
+                              >
+                                <Table size="small">
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell
+                                        style={{ width: "7%", borderRight: "1px solid #ccc" }}
+                                      >
+                                        Касса
+                                      </TableCell>
+                                      <TableCell style={{ width: "22%" }}>Наличные</TableCell>
+                                      <TableCell
+                                        style={{ width: "22%", borderRight: "1px solid #ccc" }}
+                                      >
+                                        Безнал
+                                      </TableCell>
+                                      <TableCell style={{ width: "23%" }}>Наличные</TableCell>
+                                      <TableCell style={{ width: "23%" }}>Безнал</TableCell>
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                                    {kassas.map(({ kassaId, ofdKassa = {}, chefKassa = {} }) => {
+                                      const colCash = getColor(
+                                        ofdKassa.summ_cash,
+                                        chefKassa.summ_cash,
+                                        ofdKassa.color,
+                                      );
+                                      const colBank = getColor(
+                                        ofdKassa.summ_bank,
+                                        chefKassa.summ_bank,
+                                        ofdKassa.color,
+                                      );
+
+                                      return (
+                                        <TableRow key={kassaId}>
+                                          <TableCell style={{ borderRight: "1px solid #ccc" }}>
+                                            {`${kassaId}${kassaId === 2 ? " (онлайн)" : ""}`}
+                                          </TableCell>
+
+                                          <TableCell>
+                                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                                              <Typography sx={{ color: colCash }}>
+                                                {formatNumber(ofdKassa.summ_cash ?? 0)} ₽
+                                              </Typography>
+                                              <DiffButton
+                                                visible={colCash === "red"}
+                                                onClick={this.openMismatch}
+                                                ctx={{
+                                                  scope: "kassa_day",
+                                                  date,
+                                                  kassaId,
+                                                  label: "Наличные (касса/день)",
+                                                  ofd: ofdKassa.summ_cash,
+                                                  chef: chefKassa.summ_cash,
+                                                  smena_list: ofdKassa?.smena_list || "",
+                                                  comment: ofdKassa?.comment || "",
+                                                }}
+                                                canEdit={canEdit}
+                                              />
+                                              <Tooltip
+                                                title="Количество чеков"
+                                                arrow
+                                              >
+                                                <Chip
+                                                  label={formatNumber(
+                                                    ofdKassa.count_cash_checks ?? 0,
+                                                  )}
+                                                  size="small"
+                                                  sx={{ ml: 1, fontWeight: 400, cursor: "default" }}
+                                                />
+                                              </Tooltip>
+                                            </Box>
+                                          </TableCell>
+
+                                          <TableCell style={{ borderRight: "1px solid #ccc" }}>
+                                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                                              <Typography sx={{ color: colBank }}>
+                                                {formatNumber(ofdKassa.summ_bank ?? 0)} ₽
+                                              </Typography>
+                                              <DiffButton
+                                                visible={colBank === "red"}
+                                                onClick={this.openMismatch}
+                                                ctx={{
+                                                  scope: "kassa_day",
+                                                  date,
+                                                  kassaId,
+                                                  label: "Безнал (касса/день)",
+                                                  ofd: ofdKassa.summ_bank,
+                                                  chef: chefKassa.summ_bank,
+                                                  smena_list: ofdKassa?.smena_list || "",
+                                                  comment: ofdKassa?.comment || "",
+                                                }}
+                                                canEdit={canEdit}
+                                              />
+                                              <Tooltip
+                                                title="Количество чеков"
+                                                arrow
+                                              >
+                                                <Chip
+                                                  label={formatNumber(
+                                                    ofdKassa.count_bank_checks ?? 0,
+                                                  )}
+                                                  size="small"
+                                                  sx={{ ml: 1, fontWeight: 400, cursor: "default" }}
+                                                />
+                                              </Tooltip>
+                                            </Box>
+                                          </TableCell>
+
+                                          <TableCell>
+                                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                                              <Typography sx={{ color: colCash }}>
+                                                {formatNumber(chefKassa.summ_cash ?? 0)} ₽
+                                              </Typography>
+                                              <Tooltip
+                                                title="Количество чеков"
+                                                arrow
+                                              >
+                                                <Chip
+                                                  label={formatNumber(
+                                                    chefKassa.count_cash_checks ?? 0,
+                                                  )}
+                                                  size="small"
+                                                  sx={{ ml: 1, fontWeight: 400, cursor: "default" }}
+                                                />
+                                              </Tooltip>
+                                            </Box>
+                                          </TableCell>
+
+                                          <TableCell>
+                                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                                              <Typography sx={{ color: colBank }}>
+                                                {formatNumber(chefKassa.summ_bank ?? 0)} ₽
+                                              </Typography>
+                                              <Tooltip
+                                                title="Количество чеков"
+                                                arrow
+                                              >
+                                                <Chip
+                                                  label={formatNumber(
+                                                    chefKassa.count_bank_checks ?? 0,
+                                                  )}
+                                                  size="small"
+                                                  sx={{ ml: 1, fontWeight: 400, cursor: "default" }}
+                                                />
+                                              </Tooltip>
+                                            </Box>
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </TableBody>
+                                </Table>
+                              </TableContainer>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TabPanel>
+
+            {/* таб с таблицами по сменам */}
+            <TabPanel value={activeTab} index={1}>
+              {kassTotals.length === 0 ? (
+                <Typography>Нет данных по кассам за выбранный период</Typography>
+              ) : (
+                <>
+                  {/* ТАБЫ по кассам */}
+                  <Grid
+                    style={{ paddingBottom: 24 }}
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                  >
+                    <Paper>
+                      <Tabs
+                        value={activeKassaTab}
+                        onChange={this.changeKassaTab}
+                        centered
+                        variant="fullWidth"
+                      >
+                        {kassTotals.map(({ kassaId }, idx) => (
+                          <Tab
+                            key={kassaId}
+                            label={`Касса ${kassaId}${kassaId === 2 ? " (онлайн)" : ""}`}
+                            {...a11yProps(idx)}
+                          />
+                        ))}
+                      </Tabs>
+                    </Paper>
+                  </Grid>
+
+                  {/* Кассы в табе Смены */}
+                  {kassTotals.map(({ kassaId }, idx) => {
+                    const rows = smenaByKassa[kassaId] || [];
+
+                    return (
+                      <TabPanel
+                        key={`kassa-tab-${kassaId}`}
+                        value={activeKassaTab}
+                        index={idx}
+                      >
+                        {rows.length === 0 ? (
+                          <Typography>По данной кассе нет смен за выбранный период</Typography>
+                        ) : (
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell style={{ width: "8%" }}>Смены</TableCell>
+                                <TableCell style={{ width: "23%" }}>Наличные за период (ОФД)</TableCell>
+                                <TableCell style={{ width: "23%" }}>Безналичные за период (ОФД)</TableCell>
+                                <TableCell style={{ width: "23%" }}>Наличные за период (ШЕФ)</TableCell>
+                                <TableCell style={{ width: "23%" }}>Безналичные за период (ШЕФ)</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {rows.map((row, i) => {
+                                const isOnline = kassaId === 2;
+
+                                const colCash = getColor(row.ofdCash, row.chefCash, row.serverColor);
+                                const colBank = getColor(row.ofdBank, row.chefBank, row.serverColor);
+
+                                return (
+                                  <TableRow key={`${kassaId}-${row.date}-${row.smena}-${i}`} hover>
+                                    {/* Смена */}
+                                    <TableCell style={{ fontWeight: "bold" }}>
+                                      {row.smenaLabel}
+                                    </TableCell>
+
+                                     {/* ОФД НАЛ */}
+                                    <TableCell>
+                                      {isOnline ? (
+                                        <Typography sx={{ color: "text.secondary" }}>—</Typography>
+                                      ) : (
+                                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                                          <Typography sx={{ color: colCash }}>
+                                            {formatNumber(row.ofdCash || 0)} ₽
+                                          </Typography>
+
+                                          <DiffButton
+                                            visible={colCash === "red"}
+                                            onClick={this.openMismatch}
+                                            ctx={{
+                                              scope: "smena",
+                                              date: row.date,
+                                              kassaId,
+                                              smena: row.smena,
+                                              smena_list: row.smenaLabel,
+                                              label: "Наличные (смена)",
+                                              ofd: row.ofdCash,
+                                              chef: row.chefCash,
+                                              comment: row.comment || "",
+                                            }}
+                                            canEdit={canEdit}
+                                          />
+
+                                          <Tooltip title="Количество чеков" arrow>
+                                            <Chip
+                                              label={formatNumber(row.ofdCashCount || 0)}
+                                              size="small"
+                                              sx={{ ml: 1, fontWeight: 500, cursor: "default" }}
+                                            />
+                                          </Tooltip>
+                                        </Box>
+                                      )}
+                                    </TableCell>
+
+                                    {/* ОФД БЕЗНАЛ */}
+                                    <TableCell>
+                                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                                        <Typography sx={{ color: colBank }}>
+                                          {formatNumber(row.ofdBank || 0)} ₽
+                                        </Typography>
+
+                                        <DiffButton
+                                          visible={colBank === "red"}
+                                          onClick={this.openMismatch}
+                                          ctx={{
+                                            scope: "smena",
+                                            date: row.date,
+                                            kassaId,
+                                            smena: row.smena,
+                                            smena_list: row.smenaLabel,
+                                            label: "Безнал (смена)",
+                                            ofd: row.ofdBank,
+                                            chef: row.chefBank,
+                                            comment: row.comment || "",
+                                          }}
+                                          canEdit={canEdit}
+                                        />
+
+                                        <Tooltip title="Количество чеков" arrow>
+                                          <Chip
+                                            label={formatNumber(row.ofdBankCount || 0)}
+                                            size="small"
+                                            sx={{ ml: 1, fontWeight: 500, cursor: "default" }}
+                                          />
+                                        </Tooltip>
+                                      </Box>
+                                    </TableCell>
+
+
+                                    {/* ШЕФ НАЛ */}
+                                    <TableCell>
+                                      {isOnline ? (
+                                        <Typography sx={{ color: "text.secondary" }}>—</Typography>
+                                      ) : (
+                                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                                          <Typography sx={{ color: colCash }}>
+                                            {formatNumber(row.chefCash || 0)} ₽
+                                          </Typography>
+                                          <Tooltip title="Количество чеков" arrow>
+                                            <Chip
+                                              label={formatNumber(row.chefCashCount || 0)}
+                                              size="small"
+                                              sx={{ ml: 1, fontWeight: 500, cursor: "default" }}
+                                            />
+                                          </Tooltip>
+                                        </Box>
+                                      )}
+                                    </TableCell>
+
+                                    {/* ШЕФ БЕЗНАЛ */}
+                                    <TableCell>
+                                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                                        <Typography sx={{ color: colBank }}>
+                                          {formatNumber(row.chefBank || 0)} ₽
+                                        </Typography>
+                                        <Tooltip title="Количество чеков" arrow>
+                                          <Chip
+                                            label={formatNumber(row.chefBankCount || 0)}
+                                            size="small"
+                                            sx={{ ml: 1, fontWeight: 500, cursor: "default" }}
+                                          />
+                                        </Tooltip>
+                                      </Box>
+                                    </TableCell>
+
+                                  </TableRow>
+                                );
+                              })}
+
+                            </TableBody>
+                          </Table>
+                        )}
+                      </TabPanel>
+                    );
+                  })}
+                </>
+              )}
+            </TabPanel>
+
           </AccordionDetails>
         </Accordion>
 
@@ -1142,7 +1559,7 @@ class CheckCheck_Accordion extends React.Component {
                     </TableContainer>
                   )}
 
-                  {c.scope === "kassa_day" && (
+                  {(c.scope === "kassa_day" || c.scope === "smena") && (
                     <Box sx={{ mt: 2 }}>
                       <MyTextInput
                         label="Комментарий"
@@ -1161,7 +1578,7 @@ class CheckCheck_Accordion extends React.Component {
           </DialogContent>
 
           <DialogActions>
-            {mismatchCtx?.scope === "kassa_day" && canEdit && (
+            {mismatchCtx && (mismatchCtx.scope === "kassa_day" || mismatchCtx.scope === "smena") && canEdit && (
               <Button
                 onClick={this.saveComment}
                 variant="contained"
@@ -1520,6 +1937,8 @@ class CheckCheck_ extends React.Component {
 
     const res = await this.getData("get_orders", data);
 
+    // console.log('getOrders res', res);
+
     if (!res.st) {
       this.openAlert(false, res.text);
     } else {
@@ -1669,6 +2088,7 @@ class CheckCheck_ extends React.Component {
   };
 
   render() {
+
     const {
       is_load,
       openAlert,
@@ -1703,12 +2123,14 @@ class CheckCheck_ extends React.Component {
 
     return (
       <>
+
         <Backdrop
           style={{ zIndex: 99 }}
           open={is_load}
         >
           <CircularProgress color="inherit" />
         </Backdrop>
+
         <Dialog
           sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 600 } }}
           maxWidth="md"
@@ -1814,12 +2236,14 @@ class CheckCheck_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
+
         <MyAlert
           isOpen={openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={err_status}
           text={err_text}
         />
+
         <CheckCheck_Modal
           open={modalOrder}
           onClose={() => this.setState({ modalOrder: false, orders: [], order: null })}
@@ -1828,11 +2252,13 @@ class CheckCheck_ extends React.Component {
           order={order}
           saveOrder={this.saveOrder}
         />
+
         <Grid
           container
           spacing={3}
           className="container_first_child"
         >
+
           <Grid
             size={{
               xs: 12,
@@ -2104,6 +2530,7 @@ class CheckCheck_ extends React.Component {
               />
             </Grid>
           )}
+      
         </Grid>
       </>
     );
