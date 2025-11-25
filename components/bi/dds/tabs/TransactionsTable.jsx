@@ -27,7 +27,7 @@ import {
   EditOutlined,
   FilterAlt,
 } from "@mui/icons-material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import useDDSStore from "../useDDSStore";
 import { formatNumber } from "@/src/helpers/utils/i18n";
@@ -97,7 +97,7 @@ export default function TransactionsTable({ showAlert }) {
 
   const assignGroupArticle = () => {
     setState({ selectedTx: selected, isModalArticleTxOpen: true });
-    console.log("Selected transactions for article assignment:", selected);
+    // console.log("Selected transactions for article assignment:", selected);
   };
 
   const getPaginatedTransactions = async () => {
@@ -155,7 +155,8 @@ export default function TransactionsTable({ showAlert }) {
       if (!res?.st) {
         throw new Error("Ошибка сервера");
       }
-      showAlert("Транзакции успешно удалены");
+      setState({ refreshToken: Date.now() });
+      showAlert("Транзакции успешно удалены", true);
     } catch (e) {
       showAlert(e.message || "Ошибка удаления транзакций");
     } finally {
@@ -175,10 +176,11 @@ export default function TransactionsTable({ showAlert }) {
     }
   };
 
-  const onSearch = useDebounce(
-    (e) => setState({ searchQuery: e?.target?.value?.toLowerCase() || "" }),
-    350,
-  );
+  const filterRef = useRef(null);
+  const onSearch = useDebounce(() => {
+    const value = filterRef?.current?.value.trim()?.toLowerCase() || "";
+    setState({ searchQuery: value });
+  }, 350);
 
   useEffect(() => {
     getPaginatedTransactions();
@@ -216,11 +218,17 @@ export default function TransactionsTable({ showAlert }) {
             size="small"
             placeholder="Фильтр…"
             onChange={onSearch}
+            inputRef={filterRef}
             slotProps={{
               input: {
                 startAdornment: <FilterAlt sx={{ mr: 1, color: "text.disabled" }} />,
-                endAdornment: searchQuery ? (
-                  <IconButton onClick={() => setState({ searchQuery: "", page: 0 })}>
+                endAdornment: filterRef.current?.value ? (
+                  <IconButton
+                    onClick={() => {
+                      filterRef.current.value = "";
+                      setState({ searchQuery: "", page: 0 });
+                    }}
+                  >
                     <Clear fontSize="small" />
                   </IconButton>
                 ) : null,
@@ -354,38 +362,6 @@ export default function TransactionsTable({ showAlert }) {
                   </TableRow>
                 );
               })}
-
-              {/* Summary row */}
-              {/* <TableRow sx={{ backgroundColor: "action.hover" }}>
-                <TableCell colSpan={2}>
-                  <Typography fontWeight={600}>Итого:</Typography>
-                </TableCell>
-                <TableCell />
-                <TableCell sx={{ color: "success.main", fontWeight: 600 }}>
-                  {formatNumber(totalIncome, 2, 2)} ₽
-                </TableCell>
-                <TableCell sx={{ color: "secondary.main", fontWeight: 600 }}>
-                  -{formatNumber(totalExpense, 2, 2)} ₽
-                </TableCell>
-                <TableCell
-                  colSpan={4}
-                  align="right"
-                >
-                  <Typography
-                    fontWeight={600}
-                    sx={{
-                      color:
-                        balance > 0
-                          ? "success.main"
-                          : balance < 0
-                            ? "secondary.main"
-                            : "text.primary",
-                    }}
-                  >
-                    Баланс: {formatNumber(balance, 2, 2)} ₽
-                  </Typography>
-                </TableCell>
-              </TableRow> */}
             </TableBody>
           </Table>
         </TableContainer>
@@ -394,17 +370,17 @@ export default function TransactionsTable({ showAlert }) {
           rowsPerPageOptions={[50, 100, 500]}
           labelRowsPerPage="Транзакций на странице:"
           labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
-          page={txPage - 1 || 0}
+          page={txPage - 1}
           rowsPerPage={txPerPage}
           count={txTotal ?? 0}
           onPageChange={(_, newPage) => {
-            setState({ txPage: newPage });
+            setState({ txPage: newPage + 1 });
             getPaginatedTransactions();
             document.querySelector("#prepare-table-top")?.scrollIntoView({ behavior: "smooth" });
           }}
           onRowsPerPageChange={(e) => {
             const newPerPage = Number(e.target.value);
-            setState({ txPerPage: newPerPage, txPage: 0 });
+            setState({ txPerPage: newPerPage, txPage: 1 }); // mui 0-based, all other 1-based
             getPaginatedTransactions();
             document.querySelector("#prepare-table-top")?.scrollIntoView({ behavior: "smooth" });
           }}

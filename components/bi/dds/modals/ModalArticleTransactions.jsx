@@ -139,7 +139,7 @@ export default function ModalArticleTransactions({ onClose, showAlert }) {
               disabled={!selectedArticle}
               onClick={withConfirm(
                 () => {
-                  console.log(selectedArticle);
+                  // console.log(selectedArticle);
                   if (selectedArticle?.id) {
                     assignArticleToTransactions(selectedArticle.id);
                     close();
