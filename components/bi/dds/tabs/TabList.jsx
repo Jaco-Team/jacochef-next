@@ -15,8 +15,8 @@ import ModalArticleTransactions from "../modals/ModalArticleTransactions";
 import useApi from "@/src/hooks/useApi";
 import ModalPrepareTransactions from "../modals/ModalPrepareTransactions";
 
-export default function TabList({ getData, showAlert }) {
-  const { points, point, date_start, date_end, module, statsRefreshToken } = useDDSStore();
+export default function TabList({ showAlert }) {
+  const { points, point, date_start, date_end, module, statsRefreshToken, stats } = useDDSStore();
   const setState = useDDSStore.setState;
 
   const { parsedData, updateState } = useDDSParserStore();
@@ -31,6 +31,7 @@ export default function TabList({ getData, showAlert }) {
     const file = event.target.files[0];
     if (!file) return;
     try {
+      setState({ is_load: true });
       const res = await api_upload("parser/parse", file);
       if (!res?.st) {
         showAlert("Ошибка загрузки файла");
@@ -44,28 +45,72 @@ export default function TabList({ getData, showAlert }) {
     } catch (error) {
       showAlert(error.message);
       return;
+    } finally {
+      setState({ is_load: false });
     }
   };
 
-  async function fetchParsedTransactions() {
-    const { sessionId, setParsedData, updateState, currentPage, perPage, query, sortBy, sortDir } =
-      useDDSParserStore.getState();
-    const request = {
-      session_id: sessionId,
-      page: currentPage + 1,
-      perpage: perPage,
-      q: query,
-      sort_by: sortBy,
-      sort_dir: sortDir,
-    };
-    const parsedData = await api_laravel("parser/get", request);
-    if (!parsedData?.transactions?.length) {
-      showAlert("Нет транзакций для загрузки");
-      return;
+  async function downloadExportFile() {
+    try {
+      setState({ is_load: true });
+      const request = {
+        date_start: formatYMD(date_start),
+        date_end: formatYMD(date_end),
+        points: point,
+      };
+      const res = await api_laravel("export_stats", request, { responseType: "blob" });
+      if (!res) {
+        throw new Error(`Error!`);
+      }
+      const blob = new Blob([res], { type: "application/octet-stream" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `dds_stats_${request.date_start}-${request.date_end}.xlsx`;
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      showAlert(e.message || "Произошла ошибка");
+    } finally {
+      setState({ is_load: false });
     }
-    setParsedData(parsedData.transactions);
-    updateState({ total: parsedData.total });
-    setPrepareTransactionsModalOpen(true);
+  }
+
+  async function fetchParsedTransactions() {
+    try {
+      setState({ is_load: true });
+      const {
+        sessionId,
+        setParsedData,
+        updateState,
+        currentPage,
+        perPage,
+        query,
+        sortBy,
+        sortDir,
+      } = useDDSParserStore.getState();
+      const request = {
+        session_id: sessionId,
+        page: currentPage + 1,
+        perpage: perPage,
+        q: query,
+        sort_by: sortBy,
+        sort_dir: sortDir,
+      };
+      const parsedData = await api_laravel("parser/get", request);
+      if (!parsedData?.transactions?.length) {
+        throw new Error("Нет транзакций для загрузки");
+      }
+      setParsedData(parsedData.transactions);
+      updateState({ total: parsedData.total });
+      setPrepareTransactionsModalOpen(true);
+    } catch (error) {
+      showAlert(error.message || "Ошибка");
+      return;
+    } finally {
+      setState({ is_load: false });
+    }
   }
 
   async function getPeriodData() {
@@ -74,7 +119,7 @@ export default function TabList({ getData, showAlert }) {
       date_end: formatYMD(date_end),
       points: point,
     };
-    const res = await getData("get_stats", request);
+    const res = await api_laravel("get_stats", request);
     if (!res?.st) {
       showAlert("Ошибка получения статистики");
       return;
@@ -184,7 +229,7 @@ export default function TabList({ getData, showAlert }) {
                     component="label"
                     color={"theme.success"}
                     sx={{ height: 40 }}
-                    onChange={() => setPrepareTransactionsModalOpen(true)}
+                    onClick={() => setPrepareTransactionsModalOpen(true)}
                   >
                     Продолжить
                   </Button>
@@ -196,6 +241,7 @@ export default function TabList({ getData, showAlert }) {
                 startIcon={<Download />}
                 fullWidth
                 sx={{ height: 40 }}
+                onClick={downloadExportFile}
               >
                 Скачать отчёт
               </Button>
@@ -219,6 +265,7 @@ export default function TabList({ getData, showAlert }) {
             <Tab
               key={"list"}
               value={1}
+              disabled={!stats}
               label="Весь список"
             />
           </Tabs>

@@ -17,6 +17,7 @@ import {
   TextField,
   Box,
   TablePagination,
+  Paper,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Clear, FilterAlt } from "@mui/icons-material";
@@ -141,181 +142,187 @@ export default function ModalPrepareTransactions({ open, onClose, showAlert }) {
       onClose={onClose}
       title="Подготовка транзакций"
     >
-      <Grid
-        container
-        spacing={2}
-      >
-        <Grid size={12}>
-          {/* TOP BAR: search + remove btn right */}
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            sx={{ mb: 1 }}
-          >
-            <TextField
-              size="small"
-              placeholder="Фильтр…"
-              onChange={onSearch}
-              slotProps={{
-                input: {
-                  startAdornment: <FilterAlt sx={{ mr: 1, color: "text.disabled" }} />,
-                  endAdornment: query ? (
-                    <IconButton onClick={() => updateState({ query: "", currentPage: 0 })}>
-                      <Clear fontSize="small" />
-                    </IconButton>
-                  ) : null,
-                },
-              }}
-            />
-
-            <Button
-              variant="contained"
-              disabled={!selected.length}
-              onClick={removeMany}
+      <Paper sx={{ p: 2 }}>
+        <Grid
+          container
+          spacing={2}
+        >
+          <Grid size={12}>
+            {/* TOP BAR: search + remove btn right */}
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              sx={{ mb: 1 }}
             >
-              Удалить выбранные
-            </Button>
-          </Stack>
+              <TextField
+                size="small"
+                placeholder="Фильтр…"
+                onChange={onSearch}
+                slotProps={{
+                  input: {
+                    startAdornment: <FilterAlt sx={{ mr: 1, color: "text.disabled" }} />,
+                    endAdornment: query ? (
+                      <IconButton onClick={() => updateState({ query: "", currentPage: 0 })}>
+                        <Clear fontSize="small" />
+                      </IconButton>
+                    ) : null,
+                  },
+                }}
+              />
 
-          <TableContainer sx={{ maxHeight: 500 }}>
-            <Table
-              size="small"
-              stickyHeader
-            >
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={selected.length === parsedData.length && parsedData.length > 0}
-                      indeterminate={selected.length > 0 && selected.length < parsedData.length}
-                      onChange={toggleAll}
-                    />
-                  </TableCell>
+              <Button
+                variant="contained"
+                disabled={!selected.length}
+                onClick={removeMany}
+              >
+                Удалить выбранные
+              </Button>
+            </Stack>
 
-                  {[
-                    ["date", "Дата"],
-                    ["number", "№"],
-                    ["payer", "Плательщик"],
-                    ["receiver", "Получатель"],
-                    ["income", "Поступление"],
-                    ["expense", "Списание"],
-                    ["naznachenie_platezha", "Назначение"],
-                  ].map(([k, lbl]) => (
-                    <TableCell key={k}>
-                      <TableSortLabel
-                        active={sortBy === k}
-                        direction={sortBy === k ? sortDir : "asc"}
-                        onClick={() => onSort(k)}
-                      >
-                        {lbl}
-                      </TableSortLabel>
-                    </TableCell>
-                  ))}
-
-                  <TableCell />
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {parsedData.map((t) => (
-                  <TableRow
-                    key={t.id}
-                    hover
-                  >
+            <TableContainer sx={{ maxHeight: 500 }}>
+              <Table
+                size="small"
+                stickyHeader
+              >
+                <TableHead>
+                  <TableRow>
                     <TableCell padding="checkbox">
                       <Checkbox
-                        checked={selected.includes(t.id)}
-                        onChange={() => toggleSelected(t.id)}
+                        checked={selected.length === parsedData.length && parsedData.length > 0}
+                        indeterminate={selected.length > 0 && selected.length < parsedData.length}
+                        onChange={toggleAll}
                       />
                     </TableCell>
 
-                    <TableCell>{t.date}</TableCell>
-                    <TableCell>{t.number}</TableCell>
-                    <TableCell>{t.payer}</TableCell>
-                    <TableCell>{t.receiver}</TableCell>
-
-                    <TableCell
-                      align="right"
-                      sx={{ color: "success.main" }}
-                    >
-                      {+t.income > 0 ? `${Number(t.income).toFixed(2)} ₽` : "—"}
-                    </TableCell>
-
-                    <TableCell
-                      align="right"
-                      sx={{ color: "secondary.main" }}
-                    >
-                      {+t.expense > 0 ? `-${Number(t.expense).toFixed(2)} ₽` : "—"}
-                    </TableCell>
-
-                    <TableCell sx={{ width: "30%", wordBreak: "break-word" }}>
-                      <Box sx={{ fontSize: "0.85rem", lineHeight: 1.15 }}>
-                        {t.naznachenie_platezha}
-                      </Box>
-                    </TableCell>
-
-                    <TableCell>
-                      <Tooltip title="Удалить">
-                        <IconButton
-                          color="error"
-                          onClick={() => removeOne(t.id)}
+                    {[
+                      ["date", "Дата"],
+                      ["number", "№"],
+                      ["payer", "Плательщик"],
+                      ["receiver", "Получатель"],
+                      ["income", "Поступление"],
+                      ["expense", "Списание"],
+                      ["naznachenie_platezha", "Назначение"],
+                    ].map(([k, lbl]) => (
+                      <TableCell key={k}>
+                        <TableSortLabel
+                          active={sortBy === k}
+                          direction={sortBy === k ? sortDir : "asc"}
+                          onClick={() => onSort(k)}
                         >
-                          <DeleteIcon
-                            fontSize="small"
-                            color="primary"
-                          />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+                          {lbl}
+                        </TableSortLabel>
+                      </TableCell>
+                    ))}
+
+                    <TableCell />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
 
-          <TablePagination
-            component="div"
-            rowsPerPageOptions={[30, 100, 500]}
-            labelRowsPerPage="Записей на странице:"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
-            page={currentPage}
-            rowsPerPage={perPage}
-            count={total ?? 0}
-            onPageChange={async (_, newPage) => {
-              updateState({ currentPage: newPage });
-              await loadParsedData({ page: newPage });
-              document.querySelector("#prepare-table-top")?.scrollIntoView({ behavior: "smooth" });
-            }}
-            onRowsPerPageChange={async (e) => {
-              const newPerPage = Number(e.target.value);
-              updateState({ perPage: newPerPage, currentPage: 0 });
-              await loadParsedData({ page: 0, perpage: newPerPage });
-              document.querySelector("#prepare-table-top")?.scrollIntoView({ behavior: "smooth" });
-            }}
-          />
-        </Grid>
+                <TableBody>
+                  {parsedData.map((t) => (
+                    <TableRow
+                      key={t.id}
+                      hover
+                    >
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selected.includes(t.id)}
+                          onChange={() => toggleSelected(t.id)}
+                        />
+                      </TableCell>
 
-        <Grid size={12}>
-          <Stack
-            direction="row"
-            justifyContent="flex-end"
-            spacing={2}
-          >
-            <Button
-              variant="outlined"
-              onClick={onClose}
+                      <TableCell>{t.date}</TableCell>
+                      <TableCell>{t.number}</TableCell>
+                      <TableCell>{t.payer}</TableCell>
+                      <TableCell>{t.receiver}</TableCell>
+
+                      <TableCell
+                        align="right"
+                        sx={{ color: "success.main" }}
+                      >
+                        {+t.income > 0 ? `${Number(t.income).toFixed(2)} ₽` : "—"}
+                      </TableCell>
+
+                      <TableCell
+                        align="right"
+                        sx={{ color: "secondary.main" }}
+                      >
+                        {+t.expense > 0 ? `-${Number(t.expense).toFixed(2)} ₽` : "—"}
+                      </TableCell>
+
+                      <TableCell sx={{ width: "30%", wordBreak: "break-word" }}>
+                        <Box sx={{ fontSize: "0.85rem", lineHeight: 1.15 }}>
+                          {t.naznachenie_platezha}
+                        </Box>
+                      </TableCell>
+
+                      <TableCell>
+                        <Tooltip title="Удалить">
+                          <IconButton
+                            color="error"
+                            onClick={() => removeOne(t.id)}
+                          >
+                            <DeleteIcon
+                              fontSize="small"
+                              color="primary"
+                            />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <TablePagination
+              component="div"
+              rowsPerPageOptions={[30, 100, 500]}
+              labelRowsPerPage="Записей на странице:"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
+              page={currentPage}
+              rowsPerPage={perPage}
+              count={total ?? 0}
+              onPageChange={async (_, newPage) => {
+                updateState({ currentPage: newPage });
+                await loadParsedData({ page: newPage });
+                document
+                  .querySelector("#prepare-table-top")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+              onRowsPerPageChange={async (e) => {
+                const newPerPage = Number(e.target.value);
+                updateState({ perPage: newPerPage, currentPage: 0 });
+                await loadParsedData({ page: 0, perpage: newPerPage });
+                document
+                  .querySelector("#prepare-table-top")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+            />
+          </Grid>
+
+          <Grid size={12}>
+            <Stack
+              direction="row"
+              justifyContent="flex-end"
+              spacing={2}
             >
-              Отмена
-            </Button>
-            <Button
-              variant="contained"
-              onClick={onSave}
-            >
-              Сохранить
-            </Button>
-          </Stack>
+              <Button
+                variant="outlined"
+                onClick={onClose}
+              >
+                Отмена
+              </Button>
+              <Button
+                variant="contained"
+                onClick={onSave}
+              >
+                Сохранить
+              </Button>
+            </Stack>
+          </Grid>
         </Grid>
-      </Grid>
+      </Paper>
     </MyModal>
   );
 }

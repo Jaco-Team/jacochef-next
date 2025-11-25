@@ -10,6 +10,7 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TableHead,
   TableRow,
   Typography,
 } from "@mui/material";
@@ -17,13 +18,19 @@ import { useState, useMemo, Fragment } from "react";
 import useDDSStore from "../useDDSStore";
 import { formatNumber, formatPlural } from "@/src/helpers/utils/i18n";
 import ArticleTxTable from "./ArticleTxTable";
+import dayjs from "dayjs";
+
+const getMoneyColor = (type, value) => {
+  if (value === 0) return "text.primary";
+  return type === "income" ? "success.main" : "secondary.main";
+};
 
 export default function ArticlesTable() {
   const stats = useDDSStore((s) => s.stats);
 
   const [openGroups, setOpenGroups] = useState({
     income: true,
-    expense: false,
+    expense: true,
   });
 
   const [openArticles, setOpenArticles] = useState({});
@@ -32,195 +39,166 @@ export default function ArticlesTable() {
 
   const toggleArticle = (id) => setOpenArticles((p) => ({ ...p, [id]: !p[id] }));
 
-  // Build groups from get_stats()
-  const groups = useMemo(() => {
-    const g = {
-      income: {
-        id: 1,
-        title: "Операционные поступления",
-        articles: [],
-        total: 0,
-        count: 0,
-      },
-      expense: {
-        id: 2,
-        title: "Операционные платежи",
-        articles: [],
-        total: 0,
-        count: 0,
-      },
-    };
-
-    if (!Array.isArray(stats)) return g;
-
-    for (const row of stats) {
-      const type = row.type; // "income" | "expense"
-      if (!type) continue;
-
-      const id = row.article_id ?? null;
-      const keyId = id === null ? `${type}-unclassified` : id;
-      const name = row.article_name;
-
-      const total = type === "income" ? row.income_total : row.expense_total;
-
-      const count = type === "income" ? row.tx_income_count : row.tx_expense_count;
-
-      g[type].articles.push({
-        id,
-        keyId,
-        name,
-        total,
-        count,
-      });
-
-      g[type].total += total;
-      g[type].count += count;
+  const monthKeys = useMemo(() => {
+    if (!stats) return [];
+    const set = new Set();
+    for (const a of stats) {
+      for (const m of Object.keys(a.months || {})) set.add(m);
     }
-
-    return g;
+    return Array.from(set).sort();
   }, [stats]);
 
-  // Balance
-  const totalIncome = groups.income.total;
-  const totalExpense = groups.expense.total;
+  const groups = useMemo(() => {
+    const base = {
+      income: { title: "Операционные поступления", articles: [], totals: {} },
+      expense: { title: "Операционные платежи", articles: [], totals: {} },
+    };
+
+    for (const a of stats || []) {
+      const type = a.type;
+      if (!type) continue;
+
+      const safeId = `${type}-${a.article_id}`;
+
+      const row = {
+        id: safeId,
+        rawId: a.article_id,
+        name: a.article_name,
+        type,
+        months: {},
+      };
+
+      for (const m of monthKeys) {
+        const v = a.months?.[m];
+        const sum = v?.sum || 0;
+        const tx = v?.tx || 0;
+
+        row.months[m] = { sum, tx };
+
+        base[type].totals[m] = (base[type].totals[m] || 0) + sum;
+      }
+
+      base[type].articles.push(row);
+    }
+
+    return base;
+  }, [stats, monthKeys]);
+
+  const totalIncome = useMemo(
+    () => Object.values(groups.income.totals).reduce((s, v) => s + v, 0),
+    [groups],
+  );
+
+  const totalExpense = useMemo(
+    () => Object.values(groups.expense.totals).reduce((s, v) => s + v, 0),
+    [groups],
+  );
 
   const balance = totalIncome - totalExpense;
 
   const balanceColor =
     balance > 0 ? "success.main" : balance < 0 ? "secondary.main" : "text.primary";
 
-  // Render group block
-  const renderGroupRow = (key) => {
-    const g = groups[key];
-    const sumLabel = (key === "expense" ? "-" : "") + formatNumber(g.total || 0, 2, 2) + " ₽";
+  const renderArticleRow = (a) => (
+    <Fragment key={`art-${a.id}`}>
+      <TableRow hover>
+        <TableCell sx={{ width: "50%", fontWeight: 500, whiteSpace: "nowrap" }}>
+          <IconButton
+            size="small"
+            onClick={() => toggleArticle(a.id)}
+          >
+            {openArticles[a.id] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+          </IconButton>
+          {a.name}
+        </TableCell>
 
+        {monthKeys.map((m) => {
+          const { sum, tx } = a.months[m];
+          return (
+            <TableCell
+              key={`${a.id}-${m}`}
+              sx={{
+                textAlign: "right",
+                whiteSpace: "nowrap",
+                color: getMoneyColor(a.type, sum),
+              }}
+            >
+              {formatNumber(sum, 2, 2)} ₽
+              <Typography
+                variant="caption"
+                sx={{ opacity: 0.6, display: "block" }}
+              >
+                {formatPlural(tx, ["транзакция", "транзакции", "транзакций"])}
+              </Typography>
+            </TableCell>
+          );
+        })}
+      </TableRow>
+
+      <TableRow>
+        <TableCell
+          colSpan={monthKeys.length + 1}
+          sx={{ p: 0, bgcolor: "background.default" }}
+        >
+          <Collapse
+            in={openArticles[a.id]}
+            unmountOnExit
+          >
+            <ArticleTxTable
+              articleId={a.rawId}
+              type={a.type}
+            />
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </Fragment>
+  );
+
+  const renderGroup = (key) => {
+    const g = groups[key];
     return (
       <Fragment key={`group-${key}`}>
-        <TableRow>
-          <TableCell colSpan={3}>
-            <Grid
-              container
-              alignItems="center"
-              spacing={1}
+        <TableRow sx={{ bgcolor: "action.hover" }}>
+          <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+            <IconButton
+              size="small"
+              onClick={() => toggleGroup(key)}
             >
-              <Grid>
-                <IconButton
-                  size="small"
-                  onClick={() => toggleGroup(key)}
-                >
-                  {openGroups[key] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
-                </IconButton>
-              </Grid>
-
-              <Grid sx={{ fontWeight: 600 }}>{g.title}</Grid>
-
-              <Grid
-                sx={{
-                  ml: "auto",
-                  fontWeight: 600,
-                  color: key === "income" ? "success.main" : "secondary.main",
-                }}
-              >
-                {sumLabel}
-              </Grid>
-
-              <Grid
-                sx={{
-                  minWidth: 100,
-                  textAlign: "right",
-                  opacity: 0.7,
-                }}
-              >
-                {formatPlural(g.count, ["транзакция", "транзакции", "транзакций"])}
-              </Grid>
-            </Grid>
+              {openGroups[key] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+            </IconButton>
+            {g.title}
           </TableCell>
+
+          {monthKeys.map((m) => (
+            <TableCell
+              key={m}
+              sx={{
+                textAlign: "right",
+                fontWeight: 600,
+                whiteSpace: "nowrap",
+                color: getMoneyColor(key, g.totals[m] || 0),
+              }}
+            >
+              {formatNumber(g.totals[m] || 0, 2, 2)} ₽
+            </TableCell>
+          ))}
         </TableRow>
 
         <TableRow>
           <TableCell
-            colSpan={3}
+            colSpan={monthKeys.length + 1}
             sx={{ p: 0 }}
           >
             <Collapse
               in={openGroups[key]}
-              timeout="auto"
               unmountOnExit
             >
-              <Grid
-                container
-                direction="column"
-                sx={{
-                  p: 2,
-                  bgcolor: "action.hover",
-                  gap: 1,
-                  overflow: "visible",
-                }}
+              <Table
+                size="small"
+                sx={{ tableLayout: "fixed", width: "100%" }}
               >
-                {g.articles.map((a) => (
-                  <Grid
-                    key={a.keyId}
-                    container
-                    direction="column"
-                  >
-                    <Grid
-                      container
-                      alignItems="center"
-                      spacing={1}
-                      sx={{
-                        borderRadius: 1,
-                        px: 1,
-                        py: 0.5,
-                        bgcolor: a.id === null ? "background.neutral" : "transparent",
-                      }}
-                    >
-                      <Grid>
-                        <IconButton
-                          size="small"
-                          onClick={() => toggleArticle(a.keyId)}
-                        >
-                          {openArticles[a.keyId] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
-                        </IconButton>
-                      </Grid>
-
-                      <Grid sx={{ fontWeight: 500 }}>{a.name}</Grid>
-
-                      <Grid
-                        sx={{
-                          ml: "auto",
-                          fontWeight: 600,
-                          color: key === "income" ? "success.main" : "secondary.main",
-                        }}
-                      >
-                        {key === "expense" ? "-" : ""}
-                        {formatNumber(a.total, 2, 2)} ₽
-                      </Grid>
-
-                      <Grid
-                        sx={{
-                          minWidth: 120,
-                          textAlign: "right",
-                          opacity: 0.7,
-                        }}
-                      >
-                        {formatPlural(a.count, ["транзакция", "транзакции", "транзакций"])}
-                      </Grid>
-                    </Grid>
-
-                    <Collapse
-                      in={openArticles[a.keyId]}
-                      timeout="auto"
-                      unmountOnExit
-                    >
-                      <ArticleTxTable
-                        articleId={a.id}
-                        type={key}
-                        key={`tx-${a.keyId}-${key}`}
-                      />
-                    </Collapse>
-                  </Grid>
-                ))}
-              </Grid>
+                <TableBody>{g.articles.map(renderArticleRow)}</TableBody>
+              </Table>
             </Collapse>
           </TableCell>
         </TableRow>
@@ -228,17 +206,38 @@ export default function ArticlesTable() {
     );
   };
 
-  // Render root
   return stats?.length > 0 ? (
     <>
       <TableContainer
         component={Paper}
         sx={{ borderRadius: 2 }}
       >
-        <Table>
+        <Table
+          stickyHeader
+          sx={{ tableLayout: "fixed" }}
+        >
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ width: "50%", fontWeight: 600 }}>Статья</TableCell>
+
+              {monthKeys.map((m) => (
+                <TableCell
+                  key={`head-${m}`}
+                  sx={{
+                    fontWeight: 600,
+                    textAlign: "right",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {dayjs(m).format("MMM YYYY")}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+
           <TableBody>
-            {renderGroupRow("income")}
-            {renderGroupRow("expense")}
+            {renderGroup("income")}
+            {renderGroup("expense")}
           </TableBody>
         </Table>
       </TableContainer>
@@ -246,7 +245,7 @@ export default function ArticlesTable() {
       <Grid
         container
         justifyContent="flex-end"
-        sx={{ mt: 2, pr: 1 }}
+        sx={{ mt: 2, pr: 4 }}
       >
         <Typography
           variant="subtitle1"
@@ -257,10 +256,7 @@ export default function ArticlesTable() {
 
         <Typography
           variant="subtitle1"
-          sx={{
-            fontWeight: 600,
-            color: balanceColor,
-          }}
+          sx={{ fontWeight: 600, color: balanceColor }}
         >
           {formatNumber(balance, 2, 2)} ₽
         </Typography>

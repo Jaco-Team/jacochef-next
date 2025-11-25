@@ -37,6 +37,9 @@ export default function useApi(module) {
 
     try {
       const response = await apiClient.post(`${module}/${method}`, payload, options);
+      if (options.responseType === "blob") {
+        return response;
+      }
       if (typeof response.data === "string") {
         return { st: false, text: response.data };
       }
