@@ -2630,6 +2630,8 @@ class WorkSchedule_ extends React.Component {
       tabTable: localStorage.getItem("tabTable")
         ? parseInt(localStorage.getItem("tabTable"))
         : parseInt(res.part) - 1,
+
+      access: res.access,
     });
   }
 
