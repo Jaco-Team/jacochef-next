@@ -24,8 +24,14 @@ const CafeEdit_Modal_Close_Cafe = (props) => {
 
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
-  const { is_сlosed_overload, is_сlosed_technic, show_comment, reason_list, chooseReason } =
-    useCafeEditModalsStore();
+  const {
+    is_сlosed_overload,
+    is_сlosed_technic,
+    show_comment,
+    reason_list,
+    chooseReason,
+    setModalsStateKey,
+  } = useCafeEditModalsStore();
 
   const open_confirm = () => {
     console.log(useCafeEditModalsStore.getState().reason_list);
