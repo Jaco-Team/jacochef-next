@@ -18,6 +18,7 @@ import {
   TablePagination,
   ToggleButtonGroup,
   ToggleButton,
+  Tooltip,
 } from "@mui/material";
 import {
   Category,
@@ -80,7 +81,11 @@ export default function TransactionsTable({ showAlert }) {
     );
 
   const toggleAll = () => {
-    if (selected.length === transactions.length) setSelected([]);
+    if (
+      selected.filter((tx) => !tx.is_order).length ===
+      transactions.filter((tx) => !tx.is_order).length
+    )
+      setSelected([]);
     else setSelected([...transactions.filter((tx) => !tx.is_order)]); // full objects
   };
 
@@ -299,8 +304,16 @@ export default function TransactionsTable({ showAlert }) {
               <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
-                    checked={selected.length === transactions.length && transactions.length > 0}
-                    indeterminate={selected.length > 0 && selected.length < transactions.length}
+                    checked={
+                      selected?.filter((tx) => !tx.is_order)?.length ===
+                        transactions.filter((tx) => !tx.is_order)?.length &&
+                      transactions.filter((tx) => !tx.is_order)?.length > 0
+                    }
+                    indeterminate={
+                      selected?.filter((tx) => !tx.is_order)?.length > 0 &&
+                      selected.filter((tx) => !tx.is_order)?.length <
+                        transactions.filter((tx) => !tx.is_order)?.length
+                    }
                     onChange={toggleAll}
                   />
                 </TableCell>
@@ -338,11 +351,25 @@ export default function TransactionsTable({ showAlert }) {
                     hover
                   >
                     <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={checked}
-                        onChange={() => toggleSelect(r)}
-                        disabled={!!r.is_order}
-                      />
+                      <Tooltip
+                        title={
+                          !!r.is_order ? "Эту транзакцию нельзя изменить или удалить" : "Выбрать"
+                        }
+                      >
+                        <span>
+                          <Checkbox
+                            checked={checked}
+                            title={
+                              !!r.is_order
+                                ? "Эту транзакцию нельзя изменить или удалить"
+                                : "Выбрать"
+                            }
+                            onChange={() => toggleSelect(r)}
+                            disabled={!!r.is_order}
+                            sx={{ p: 1 }}
+                          />
+                        </span>
+                      </Tooltip>
                     </TableCell>
                     <TableCell>{r.date || "—"}</TableCell>
                     <TableCell>{r.number || "—"}</TableCell>
@@ -372,11 +399,11 @@ export default function TransactionsTable({ showAlert }) {
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                      >
-                        {!r.is_order && (
+                      {!r.is_order && (
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                        >
                           <IconButton
                             size="small"
                             color="primary"
@@ -384,21 +411,22 @@ export default function TransactionsTable({ showAlert }) {
                           >
                             <EditOutlined fontSize="inherit" />
                           </IconButton>
-                        )}
-                        <IconButton
-                          size="small"
-                          color="success"
-                          onClick={withConfirm(
-                            () => removeOneTransaction(r.id),
-                            "Вы уверены, что хотите удалить эту транзакцию?",
-                          )}
-                        >
-                          <Delete
+
+                          <IconButton
                             size="small"
-                            color="secondary"
-                          />
-                        </IconButton>
-                      </Stack>
+                            color="success"
+                            onClick={withConfirm(
+                              () => removeOneTransaction(r.id),
+                              "Вы уверены, что хотите удалить эту транзакцию?",
+                            )}
+                          >
+                            <Delete
+                              size="small"
+                              color="secondary"
+                            />
+                          </IconButton>
+                        </Stack>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
