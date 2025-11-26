@@ -31,6 +31,7 @@ const useDDSStore = create((set) => ({
   sortDir: "desc",
   searchQuery: "",
   filters: {},
+  txArticlesSet: [],
 
   // modal set article to transaction
   selectedTx: [],

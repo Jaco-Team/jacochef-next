@@ -56,7 +56,7 @@ export default function ModalArticleTransactions({ onClose, showAlert }) {
 
   const assignArticleToTransactions = async () => {
     const payload = {
-      ids: selectedTx.map((t) => t.id),
+      ids: selectedTx.filter((t) => !t.is_order).map((t) => t.id),
       data: { article_id: selectedArticle.id },
     };
     await updateTransactions(payload);
@@ -114,22 +114,24 @@ export default function ModalArticleTransactions({ onClose, showAlert }) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {selectedTx?.map((tx) => (
-                    <TableRow
-                      key={tx.id}
-                      hover
-                    >
-                      <TableCell>{tx.date || "—"}</TableCell>
-                      <TableCell sx={{ color: "success.main" }}>
-                        {tx.income ? `${formatNumber(tx.income, 2, 2)} ₽` : "—"}
-                      </TableCell>
-                      <TableCell sx={{ color: "secondary.main" }}>
-                        {tx.expense ? `-${formatNumber(tx.expense, 2, 2)} ₽` : "—"}
-                      </TableCell>
-                      <TableCell>{tx.contractor}</TableCell>
-                      <TableCell>{tx.naznachenie_platezha || "—"}</TableCell>
-                    </TableRow>
-                  ))}
+                  {selectedTx
+                    ?.filter((t) => !t.is_order)
+                    ?.map((tx) => (
+                      <TableRow
+                        key={tx.id}
+                        hover
+                      >
+                        <TableCell>{tx.date || "—"}</TableCell>
+                        <TableCell sx={{ color: "success.main" }}>
+                          {tx.income ? `${formatNumber(tx.income, 2, 2)} ₽` : "—"}
+                        </TableCell>
+                        <TableCell sx={{ color: "secondary.main" }}>
+                          {tx.expense ? `-${formatNumber(tx.expense, 2, 2)} ₽` : "—"}
+                        </TableCell>
+                        <TableCell>{tx.contractor}</TableCell>
+                        <TableCell>{tx.naznachenie_platezha || "—"}</TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </TableContainer>

@@ -27,13 +27,14 @@ import {
   EditOutlined,
   FilterAlt,
 } from "@mui/icons-material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import useDDSStore from "../useDDSStore";
 import { formatNumber } from "@/src/helpers/utils/i18n";
 import useApi from "@/src/hooks/useApi";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import { formatYMD } from "@/src/helpers/ui/formatDate";
+import { MyAutoCompleteWithAll } from "@/ui/Forms";
 
 export default function TransactionsTable({ showAlert }) {
   const [
@@ -49,6 +50,7 @@ export default function TransactionsTable({ showAlert }) {
     sortDir,
     filters,
     searchQuery,
+    txArticlesSet,
   ] = useDDSStore((s) => [
     s.articles,
     s.transactions,
@@ -62,6 +64,7 @@ export default function TransactionsTable({ showAlert }) {
     s.sortDir,
     s.filters,
     s.searchQuery,
+    s.txArticlesSet,
   ]);
   const { api_laravel } = useApi(module);
   const setState = useDDSStore.setState;
@@ -71,12 +74,14 @@ export default function TransactionsTable({ showAlert }) {
   const [selected, setSelected] = useState([]);
   const toggleSelect = (tx) =>
     setSelected((prev) =>
-      prev.some((x) => x.id === tx.id) ? prev.filter((x) => x.id !== tx.id) : [...prev, tx],
+      prev.some((x) => x.id === tx.id)
+        ? prev.filter((x) => x.id !== tx.id && !tx.is_order)
+        : [...prev, tx],
     );
 
   const toggleAll = () => {
     if (selected.length === transactions.length) setSelected([]);
-    else setSelected([...transactions]); // full objects
+    else setSelected([...transactions.filter((tx) => !tx.is_order)]); // full objects
   };
 
   const handleEdit = (tx) => {
@@ -92,6 +97,17 @@ export default function TransactionsTable({ showAlert }) {
         next.type = v; // <-- set new value
       }
       return { filters: next };
+    });
+  };
+  const handleArticleIdsFilter = (v) => {
+    setState((s) => {
+      const next = { ...s.filters };
+      if (v === null) {
+        delete next.article_ids; // <-- remove key completely
+      } else {
+        next.article_ids = v; // <-- set new value
+      }
+      return { filters: next, txPage: 1 };
     });
   };
 
@@ -114,6 +130,10 @@ export default function TransactionsTable({ showAlert }) {
         filters,
         searchQuery,
       } = useDDSStore.getState();
+      const filtersDTO = { ...filters };
+      if (filters.article_ids?.length) {
+        filtersDTO.article_ids = [...filters.article_ids].map((a) => a.id);
+      }
       const request = {
         date_start: formatYMD(date_start),
         date_end: formatYMD(date_end),
@@ -122,7 +142,7 @@ export default function TransactionsTable({ showAlert }) {
         perpage: txPerPage,
         sort_by: sortBy,
         sort_dir: sortDir,
-        filters: filters,
+        filters: filtersDTO,
         q: searchQuery,
       };
       const res = await api_laravel("get_paginated_transactions", request);
@@ -131,6 +151,7 @@ export default function TransactionsTable({ showAlert }) {
       }
       const { transactions, meta } = res;
       setState({
+        txArticlesSet: res.articles_set,
         transactions,
         txTotal: meta?.total || 0,
       });
@@ -143,6 +164,12 @@ export default function TransactionsTable({ showAlert }) {
       });
     }
   };
+
+  const article_idsFilterItems = useMemo(() => {
+    console.log(`Articles ${articles?.length}, article_ids set: ${txArticlesSet}`);
+    return articles?.filter((a) => txArticlesSet?.includes(a.id));
+  }, [txArticlesSet, articles]);
+  const article_ids = useMemo(() => filters?.article_ids, [filters, article_idsFilterItems]);
 
   const removeTransactions = async (ids = null) => {
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -190,24 +217,26 @@ export default function TransactionsTable({ showAlert }) {
     <>
       <ConfirmDialog />
       <Paper sx={{ p: 2 }}>
-        <Stack sx={{ p: 1, gap: 1, flexDirection: "row", alignItems: "center" }}>
+        <Stack
+          sx={{ p: 1, gap: 1, flexDirection: { sm: "column", md: "row" }, alignItems: "center" }}
+        >
           <Button
             variant="text"
             size="small"
-            disabled={!selected.length}
+            disabled={!selected?.length}
             startIcon={<Category />}
             onClick={assignGroupArticle}
           >
-            Присвоить статью ({selected.length})
+            Присвоить статью ({selected?.length})
           </Button>
           <Button
             variant="text"
             size="small"
-            disabled={!selected.length}
+            disabled={!selected?.length}
             startIcon={<DeleteOutline />}
             onClick={withConfirm(() => {
               setState({
-                selectedTx: transactions.filter((r) => selected.includes(r.id)),
+                selectedTx: transactions?.filter((r) => selected?.includes(r.id)),
                 isModalArticleTxOpen: true,
               });
             })}
@@ -250,6 +279,15 @@ export default function TransactionsTable({ showAlert }) {
               Все
             </ToggleButton>
           </ToggleButtonGroup>
+          <MyAutoCompleteWithAll
+            options={article_idsFilterItems}
+            value={article_ids}
+            onChange={handleArticleIdsFilter}
+            withAll
+            // withAllSelected
+            label="Только статьи"
+            sx={{ minWidth: 200, width: 300 }}
+          />
         </Stack>
 
         <TableContainer sx={{ maxHeight: 500 }}>
@@ -293,16 +331,17 @@ export default function TransactionsTable({ showAlert }) {
             <TableBody>
               {transactions.map((r) => {
                 const checked = selected.some((s) => s.id === r.id);
-                const article = articles?.find((a) => a.id === r.article_id) || null;
+                const article = articles?.find((a) => +a.id === +r.article_id) || null;
                 return (
                   <TableRow
-                    key={r.id}
+                    key={r.id || r.order_id}
                     hover
                   >
                     <TableCell padding="checkbox">
                       <Checkbox
                         checked={checked}
                         onChange={() => toggleSelect(r)}
+                        disabled={!!r.is_order}
                       />
                     </TableCell>
                     <TableCell>{r.date || "—"}</TableCell>
@@ -337,13 +376,15 @@ export default function TransactionsTable({ showAlert }) {
                         direction="row"
                         spacing={1}
                       >
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleEdit(r)}
-                        >
-                          <EditOutlined fontSize="inherit" />
-                        </IconButton>
+                        {!r.is_order && (
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleEdit(r)}
+                          >
+                            <EditOutlined fontSize="inherit" />
+                          </IconButton>
+                        )}
                         <IconButton
                           size="small"
                           color="success"
@@ -375,13 +416,13 @@ export default function TransactionsTable({ showAlert }) {
           count={txTotal ?? 0}
           onPageChange={(_, newPage) => {
             setState({ txPage: newPage + 1 });
-            getPaginatedTransactions();
+            // getPaginatedTransactions();
             document.querySelector("#prepare-table-top")?.scrollIntoView({ behavior: "smooth" });
           }}
           onRowsPerPageChange={(e) => {
             const newPerPage = Number(e.target.value);
             setState({ txPerPage: newPerPage, txPage: 1 }); // mui 0-based, all other 1-based
-            getPaginatedTransactions();
+            // getPaginatedTransactions();
             document.querySelector("#prepare-table-top")?.scrollIntoView({ behavior: "smooth" });
           }}
         />
