@@ -20,7 +20,7 @@ export function MyAutocomplite(props) {
           getOptionLabel={(option) => option?.name || ""}
           disableClearable={props.disableClearable}
           getOptionKey={props.getOptionKey}
-          value={props.value}
+          value={props.value ?? (props.multiple ? [] : null)}
           onChange={props.func}
           onFocus={props.onFocus}
           autoFocus={props.autoFocus}
