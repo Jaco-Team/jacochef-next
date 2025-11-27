@@ -818,17 +818,21 @@ class WorkSchedule_Table extends React.Component {
                         parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
                       cursor:
                         this.props.numberChoose == 2 &&
+                        item.data.app_type == "dir" &&
                         parseInt(this.props.access["bonus_edit"]) == 1
                           ? "pointer"
                           : "default",
                       backgroundColor:
                         this.props.numberChoose == 2 &&
+                        item.data.app_type == "dir" &&
                         parseInt(this.props.access["bonus_edit"]) == 1
                           ? "#e5e5e5"
                           : "#fff",
                     }}
                     onClick={
-                      this.props.numberChoose == 2 && parseInt(this.props.access["bonus_edit"]) == 1
+                      this.props.numberChoose == 2 &&
+                      parseInt(this.props.access["bonus_edit"]) == 1 &&
+                      item.data.app_type == "dir"
                         ? this.props.openModalDirBonus.bind(
                             this,
                             item.data.id,
@@ -2626,6 +2630,8 @@ class WorkSchedule_ extends React.Component {
       tabTable: localStorage.getItem("tabTable")
         ? parseInt(localStorage.getItem("tabTable"))
         : parseInt(res.part) - 1,
+
+      access: res.access,
     });
   }
 
