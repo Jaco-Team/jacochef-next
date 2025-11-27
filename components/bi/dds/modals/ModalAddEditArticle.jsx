@@ -15,7 +15,7 @@ import { MySelect } from "@/ui/Forms";
 import useApi from "@/src/hooks/useApi";
 import { GROUPS, OPERATIONS } from "../config";
 
-const emptyForm = { name: "", group_id: "", operation_id: "", type: "" };
+const emptyForm = { name: "", group_id: null, operation_id: null, type: "" };
 
 export default function ModalAddEditArticle({ open, onClose, showAlert, article = null }) {
   const { module } = useDDSStore();
@@ -123,7 +123,7 @@ export default function ModalAddEditArticle({ open, onClose, showAlert, article 
   return (
     <MyModal
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       maxWidth="sm"
       title={article ? "Редактировать статью ДДС" : "Создать статью ДДС"}
       fullWidth

@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   IconButton,
   Paper,
   Table,
@@ -10,7 +11,7 @@ import {
   TableRow,
 } from "@mui/material";
 import useDDSStore from "../useDDSStore";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useApi from "@/src/hooks/useApi";
 import { formatNumber } from "@/src/helpers/utils/i18n";
 import { useIntersectionObserver } from "@/src/hooks/useIntersectionObserver";
@@ -89,12 +90,14 @@ export default function ArticleTxTable({ articleId, type }) {
     setState({ selectedTx: [tx], isModalArticleTxOpen: true });
   };
 
-  const loaderRef = useIntersectionObserver({
-    enabled: hasMore && !is_load,
-    onVisible: useDebounce(async () => {
-      await loadArticleTx();
-    }, 300),
-  });
+  // const loaderRef = useIntersectionObserver({
+  //   enabled: hasMore && !is_load,
+  //   onVisible: useDebounce(async () => {
+  //     await loadArticleTx();
+  //   }, 300),
+  // });
+
+  const loaderRefBtn = useRef(null);
 
   // Load on dependency change
   useEffect(() => {
@@ -136,7 +139,7 @@ export default function ArticleTxTable({ articleId, type }) {
         </TableHead>
         <TableBody>
           {articleTx?.map((t) => {
-            const txKey = `${articleId}-${t.id}`;
+            const txKey = `${articleId}-${t.id || t.order_id}`;
             return (
               <TableRow
                 key={txKey}
@@ -165,8 +168,11 @@ export default function ArticleTxTable({ articleId, type }) {
             );
           })}
           <TableRow>
-            <TableCell colSpan={6}>
-              <Box
+            <TableCell
+              colSpan={6}
+              sx={{ textAlign: "center" }}
+            >
+              {/* <Box
                 ref={loaderRef}
                 sx={{
                   height: 40,
@@ -176,7 +182,19 @@ export default function ArticleTxTable({ articleId, type }) {
                 }}
               >
                 {is_load && "Загрузка..."}
-              </Box>
+              </Box> */}
+              <Button
+                ref={loaderRefBtn}
+                variant="text"
+                sx={{
+                  textAlign: "center",
+                  visibility: hasMore ? "visible" : "hidden",
+                }}
+                disabled={is_load}
+                onClick={loadArticleTx}
+              >
+                Показать больше
+              </Button>
             </TableCell>
           </TableRow>
         </TableBody>

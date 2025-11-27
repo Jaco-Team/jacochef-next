@@ -285,12 +285,15 @@ export default function TransactionsTable({ showAlert }) {
             </ToggleButton>
           </ToggleButtonGroup>
           <MyAutoCompleteWithAll
-            options={article_idsFilterItems}
+            options={[
+              { id: null, name: "Требует классификации (не указана)" },
+              ...article_idsFilterItems,
+            ]}
             value={article_ids}
             onChange={handleArticleIdsFilter}
-            withAll
+            // withAll
             // withAllSelected
-            label="Только статьи"
+            label="Только статьи..."
             sx={{ minWidth: 200, width: 300 }}
           />
         </Stack>
