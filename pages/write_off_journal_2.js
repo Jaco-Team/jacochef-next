@@ -82,7 +82,7 @@ class Write_off_journal_View extends React.Component {
 
   async openHistoryItem() {
     const point = this.props.points.find(
-      (point) => parseInt(point.id) === parseInt(this.props.point),
+      (point) => parseInt(point.id) === parseInt(this.props.point.id),
     );
 
     const data = {
@@ -525,7 +525,8 @@ class Write_off_journal_modal extends React.Component {
 
     if (this.props.itemEdit !== prevProps.itemEdit) {
       const point =
-        this.props.points.find((point) => parseInt(point.id) === parseInt(this.props.point)) ?? "";
+        this.props.points.find((point) => parseInt(point.id) === parseInt(this.props.point.id)) ??
+        "";
 
       this.setState({
         point,
@@ -644,7 +645,7 @@ class Write_off_journal_modal extends React.Component {
 
   save() {
     const writeOffItems = this.state.writeOffItems;
-
+    const cleanComment = this.state.comment.replace(/\s/g, "");
     if (!writeOffItems.length) {
       this.setState({
         openAlert: true,
@@ -655,12 +656,32 @@ class Write_off_journal_modal extends React.Component {
       return;
     }
 
+    if (!this.state.comment.trim()) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Комментарий обязателен для заполнения!",
+      });
+
+      return;
+    }
+
+    if (cleanComment.length < 3) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Комментарий должен содержать минимум 3 символа (без пробелов)",
+      });
+
+      return;
+    }
+
     const id = this.props.itemEdit?.woj?.id ?? 0;
 
     const comment = this.state.comment;
     const point =
       this.props.method === "Новое списание"
-        ? this.state.points.find((value) => value.id === this.state.point)
+        ? this.state.points.find((value) => value.id === this.state.point.id)
         : this.state.point;
 
     this.props.save(writeOffItems, comment, point, id);
@@ -760,6 +781,7 @@ class Write_off_journal_modal extends React.Component {
                 {method === "Новое списание" ? (
                   <MySelect
                     is_none={false}
+                    disabled={true}
                     data={this.state.points}
                     value={this.state.point?.id}
                     func={this.changePoint.bind(this, "point")}
@@ -1094,7 +1116,7 @@ class Write_off_journal_ extends React.Component {
 
     this.setState({
       points: data.points,
-      point: data.points[0].id,
+      point: data.points[0],
       acces: result,
       module_name: data.module_info.name,
     });
@@ -1143,7 +1165,7 @@ class Write_off_journal_ extends React.Component {
 
   async getPointData() {
     const point = this.state.points.find(
-      (point) => parseInt(point.id) === parseInt(this.state.point),
+      (point) => parseInt(point.id) === parseInt(this.state.point.id),
     );
     const date_start = this.state.date_start
       ? dayjs(this.state.date_start).format("YYYY-MM-DD")
@@ -1395,7 +1417,7 @@ class Write_off_journal_ extends React.Component {
     this.handleResize();
 
     const point = this.state.points.find(
-      (point) => parseInt(point.id) === parseInt(this.state.point),
+      (point) => parseInt(point.id) === parseInt(this.state.point.id),
     );
 
     const data = {
@@ -1605,12 +1627,12 @@ class Write_off_journal_ extends React.Component {
               sm: 4,
             }}
           >
-            <MySelect
-              is_none={false}
+            <MyAutocomplite
               label="Точка"
+              multiple={false}
               data={this.state.points}
               value={this.state.point}
-              func={this.changePoint.bind(this, "point")}
+              func={(event, value) => this.setState({ point: value })}
             />
           </Grid>
 
