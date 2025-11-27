@@ -565,7 +565,13 @@ class SiteBaners_Modal extends React.Component {
                     xs: 12,
                     sm: 6,
                   }}
-                ></Grid>
+                >
+                  <MyTextInput
+                    label="Ссылка"
+                    value={this.state.banner?.this_ban?.link || ""}
+                    func={this.changeItem.bind(this, "link")}
+                  />
+                </Grid>
 
                 <Grid
                   size={{

@@ -192,7 +192,14 @@ export function BannerModal({ getData, showAlert, id, action }) {
               xs: 12,
               sm: 6,
             }}
-          ></Grid>
+          >
+            <MyTextInput
+              label="Ссылка"
+              disabled={acces.banners_view && !acces.banners_edit}
+              value={banner?.this_ban?.link || ""}
+              func={(e) => changeThisBanField("link", e)}
+            />
+          </Grid>
 
           <Grid
             size={{
