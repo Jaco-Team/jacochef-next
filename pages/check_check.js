@@ -2062,11 +2062,14 @@ class CheckCheck_ extends React.Component {
 
     data.type = type;
 
+    // включать/выключать debug-режим
+    data.debug = false;
+
     const res = await this.getData("upload_data_1C", data);
 
     this.openAlert(res.st, res.text);
 
-    if (res.st) {
+    if (res.st && !data.debug) {
       setTimeout(() => {
         this.getOrders();
       }, 500);
