@@ -1306,7 +1306,7 @@ class Write_off_journal_ extends React.Component {
     }
 
     const point = this.state.points.find(
-      (point) => parseInt(point.id) === parseInt(this.state.point),
+      (point) => parseInt(point.id) === parseInt(this.state.point.id),
     );
 
     const data = {
