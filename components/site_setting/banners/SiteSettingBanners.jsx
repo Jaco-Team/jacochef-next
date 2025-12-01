@@ -33,7 +33,7 @@ export function SiteSettingBanners(props) {
   const [acces] = useSiteSettingStore((state) => [state.acces]);
 
   // banners list state
-  const { getData, setActiveBanners, setNonActiveBanners, setModuleName } =
+  const { getData, setActiveBanners, setNonActiveBanners, setModuleName, banner } =
     useBannersStore.getState();
   const active = useBannersStore((state) => state.active);
   const non_active = useBannersStore((state) => state.non_active);
@@ -112,7 +112,10 @@ export function SiteSettingBanners(props) {
           {acces.banners_edit ? (
             <Button
               variant="contained"
-              onClick={async () => (action === "bannerNew" ? await saveNew() : await saveEdit())}
+              onClick={async () => {
+                action === "bannerNew" ? await saveNew() : await saveEdit();
+                await fetchCoreData();
+              }}
             >
               Сохранить
             </Button>
@@ -129,7 +132,7 @@ export function SiteSettingBanners(props) {
 
   useEffect(() => {
     fetchCoreData();
-  }, [fetchCoreData]);
+  }, [fetchCoreData, banner]);
 
   return (
     <Grid

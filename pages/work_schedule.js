@@ -755,11 +755,10 @@ class WorkSchedule_Table extends React.Component {
                       cursor: "pointer",
                       display: parseInt(this.props.access["1h_view"]) == 1 ? "table-cell" : "none",
                     }}
-                    // onClick={
-                    //   this.props.kind == "manager"
-                    //     ? () => {}
-                    //     : this.props.pricePerHour.bind(this, item.data)
-                    // }
+                    onClick={
+                      parseInt(this.props.access["1h_edit"]) == 1 &&
+                      this.props.pricePerHour.bind(this, item.data)
+                    }
                   >
                     {item.data.price_p_h}
                   </TableCell>

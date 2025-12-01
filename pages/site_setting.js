@@ -102,7 +102,7 @@ export default function SiteSetting() {
       <SiteSettingModal
         open={modalDialog}
         title={modalTitle}
-        fullScreen={fullScreen}
+        // fullScreen={fullScreen}
         fullWidth={true}
         closeModal={closeModal}
         customActions={

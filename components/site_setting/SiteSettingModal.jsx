@@ -9,18 +9,18 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import useFullScreen from "@/src/hooks/useFullScreen";
 
 export function SiteSettingModal({
   open,
   children,
   customActions = null,
-  fullScreen,
   title = "",
   closeModal,
   ...restProps
 }) {
   const onClose = closeModal || restProps.onClose;
-
+  const fullScreen = useFullScreen();
   return (
     <Dialog
       open={open}

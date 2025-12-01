@@ -442,17 +442,17 @@ class SiteUserManager_ extends React.Component {
         }
       });
 
-      if (is_graph === true) {
-        this.setState({
-          graphModal: true,
-        });
+      // if (is_graph === true) {
+      //   this.setState({
+      //     graphModal: true,
+      //   });
 
-        setTimeout(() => {
-          this.click = false;
-        }, 300);
+      //   setTimeout(() => {
+      //     this.click = false;
+      //   }, 300);
 
-        return;
-      }
+      //   return;
+      // }
 
       if (parseInt(user.app_id) == 0 && this.state.textDel.length == 0) {
         this.setState({
@@ -498,17 +498,17 @@ class SiteUserManager_ extends React.Component {
         }
       });
 
-      if (is_graph === true) {
-        this.setState({
-          graphModal: true,
-        });
+      // if (is_graph === true) {
+      //   this.setState({
+      //     graphModal: true,
+      //   });
 
-        setTimeout(() => {
-          this.click = false;
-        }, 300);
+      //   setTimeout(() => {
+      //     this.click = false;
+      //   }, 300);
 
-        return;
-      }
+      //   return;
+      // }
 
       if (this.myDropzone["files"].length > 0 && this.isInit === false) {
         this.isInit = true;
@@ -916,20 +916,17 @@ class SiteUserManager_ extends React.Component {
           onClose={() => this.setState({ chooseModal: false, textDel: "" })}
         >
           <DialogTitle className="button">
-            <Typography>
-              {this.state.typeEdit === "del" ? "Причина увольнения" : "Приенение изменений"}
-            </Typography>
+            <Typography>Приенение изменений</Typography>
             <IconButton onClick={() => this.setState({ chooseModal: false, textDel: "" })}>
               <CloseIcon />
             </IconButton>
           </DialogTitle>
           <DialogContent>
-            {this.state.typeEdit === "del" ? (
-              <DialogContentText>
-                Если выбрано сегодня - увольнение происходит сразу, если завтра и далее - сотрудник
-                будет уволен в полночь этого дня
-              </DialogContentText>
-            ) : null}
+            <DialogContentText>
+              Если выбрано сегодня - изменения применяются сразу, если завтра и далее - изменения
+              применятся в полночь этого дня
+            </DialogContentText>
+
             <Grid
               container
               spacing={3}
@@ -954,7 +951,7 @@ class SiteUserManager_ extends React.Component {
                 }}
               >
                 <MyDatePickerNew
-                  label="Дата от"
+                  label="Дата"
                   minDate={formatDate(new Date())}
                   value={this.state.date_start_day}
                   func={this.changeDateRange_days.bind(this, "date_start_day")}
@@ -967,13 +964,14 @@ class SiteUserManager_ extends React.Component {
               variant="contained"
               onClick={this.saveEditUser.bind(this, 0)}
             >
-              Уволить
+              Сохранить
             </Button>
             <Button onClick={() => this.setState({ chooseModal: false, textDel: "" })}>
               Отмена
             </Button>
           </DialogActions>
         </Dialog>
+
         <Dialog
           open={this.state.graphModal}
           onClose={() => this.setState({ graphModal: false, graphType: 0 })}
