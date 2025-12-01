@@ -44,9 +44,9 @@ export function MyAutocomplite(props) {
               />
             ))
           }
-          renderOption={(props, option) => (
+          renderOption={(params, option) => (
             <li
-              {...props}
+              {...params}
               key={props.optionKey ? option[`${props.optionKey}`] : option.id}
             >
               {option.name}

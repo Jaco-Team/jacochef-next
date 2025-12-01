@@ -2453,19 +2453,8 @@ class SiteItems_ extends React.Component {
       { id: "3", name: "3 этап" },
     ];
 
-    let res2 = await this.getData("get_one_mark", {
-      id,
-    });
-    res2.item.tags_all = res2?.tags_all;
     this.setState({
-      itemMark: res2.item,
-    });
-    let item = {
-      ...res.item,
-      ...res2.item,
-    };
-    this.setState({
-      itemTech: item,
+      itemTech: res.item,
       modalDialogTech: true,
       method,
       category: res.cat_list,
