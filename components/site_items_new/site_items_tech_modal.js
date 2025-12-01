@@ -102,6 +102,7 @@ export class SiteItemsModalTech extends React.Component {
       marc_desc_full: "",
       is_hit: "0",
       is_new: "0",
+      is_update: "0",
       show_program: "0",
       show_site: "0",
       img_app: "",
@@ -168,7 +169,9 @@ export class SiteItemsModalTech extends React.Component {
         tags_my: this.props.item?.tags || [],
       });
       setTimeout(() => {
-        this.myDropzone = new Dropzone(this.dropzoneRef.current, this.dropzoneOptions);
+        if (this.dropzoneRef.current) {
+          this.myDropzone = new Dropzone(this.dropzoneRef.current, this.dropzoneOptions);
+        }
         this.recalculateWeights();
       }, 300);
     }
@@ -427,7 +430,7 @@ export class SiteItemsModalTech extends React.Component {
 
   recalculateWeights() {
     const { items_stage, item_items } = this.state;
-
+    console.log(1);
     let all_w_brutto_1 =
       items_stage?.stage_1?.reduce((sum, item) => sum + parseFloat(item.brutto || 0), 0) || 0;
     let all_w_brutto_2 =
@@ -439,10 +442,10 @@ export class SiteItemsModalTech extends React.Component {
     let all_w_brutto_5 =
       item_items?.this_items?.reduce((sum, item) => sum + parseFloat(item.brutto || 0), 0) || 0;
 
-    let all_w_brutto = all_w_brutto_4 + all_w_brutto_5;
+    let all_w_brutto = all_w_brutto_5;
     all_w_brutto = roundTo(all_w_brutto, 3);
 
-    let all_w_brutto_p = all_w_brutto_1 + all_w_brutto_2 + all_w_brutto_3;
+    let all_w_brutto_p = all_w_brutto_1 + all_w_brutto_2 + all_w_brutto_3 + all_w_brutto_4;
     all_w_brutto_p = roundTo(all_w_brutto_p, 3);
 
     let all_w_netto_1 =
@@ -456,10 +459,10 @@ export class SiteItemsModalTech extends React.Component {
     let all_w_netto_5 =
       item_items?.this_items?.reduce((sum, item) => sum + parseFloat(item.netto || 0), 0) || 0;
 
-    let all_w_netto = all_w_netto_4 + all_w_netto_5;
+    let all_w_netto = all_w_netto_5;
     all_w_netto = roundTo(all_w_netto, 3);
 
-    let all_w_netto_p = all_w_netto_1 + all_w_netto_2 + all_w_netto_3;
+    let all_w_netto_p = all_w_netto_1 + all_w_netto_2 + all_w_netto_3 + all_w_netto_4;
     all_w_netto_p = roundTo(all_w_netto_p, 3);
 
     let all_w_1 =
@@ -473,10 +476,10 @@ export class SiteItemsModalTech extends React.Component {
     let all_w_5 =
       item_items?.this_items?.reduce((sum, item) => sum + parseFloat(item.res || 0), 0) || 0;
 
-    let all_w = all_w_4 + all_w_5;
+    let all_w = all_w_5;
     all_w = roundTo(all_w, 3);
 
-    let all_w_p = all_w_1 + all_w_2 + all_w_3;
+    let all_w_p = all_w_1 + all_w_2 + all_w_3 + all_w_4;
     all_w_p = roundTo(all_w_p, 3);
 
     this.setState({ all_w_brutto, all_w_netto, all_w, all_w_brutto_p, all_w_netto_p, all_w_p });
@@ -606,6 +609,7 @@ export class SiteItemsModalTech extends React.Component {
       is_show: this.state.is_show,
       protein: this.state.protein,
       fat: this.state.fat,
+      is_update: this.state.is_update,
       carbohydrates: this.state.carbohydrates,
       time_stage_1: this.state.time_stage_1,
       time_stage_2: this.state.time_stage_2,
@@ -639,6 +643,7 @@ export class SiteItemsModalTech extends React.Component {
       count_part: "",
       stol: "",
       weight: "",
+      activeTab: 0,
       is_price: "0",
       is_show: "0",
       protein: "0",
@@ -864,6 +869,7 @@ export class SiteItemsModalTech extends React.Component {
                   >
                     <MyTextInput
                       label="Стол"
+                      type="number"
                       value={this.state.stol}
                       disabled={method !== "Новое блюдо" && !this.props.acces?.stol_edit}
                       func={this.changeItem.bind(this, "stol")}
@@ -952,7 +958,7 @@ export class SiteItemsModalTech extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 2,
+                      sm: 6,
                     }}
                     style={
                       !this.props.acces?.count_part_edit && !this.props.acces?.count_part_view
@@ -970,7 +976,7 @@ export class SiteItemsModalTech extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 4,
+                      sm: 6,
                     }}
                     style={
                       !this.props.acces?.weight_edit && !this.props.acces?.weight_view
@@ -988,7 +994,7 @@ export class SiteItemsModalTech extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 3,
+                      sm: 4,
                     }}
                     style={
                       !this.props.acces?.protein_edit && !this.props.acces?.protein_view
@@ -1006,7 +1012,7 @@ export class SiteItemsModalTech extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 3,
+                      sm: 4,
                     }}
                     style={
                       !this.props.acces?.fat_edit && !this.props.acces?.fat_view
@@ -1024,7 +1030,7 @@ export class SiteItemsModalTech extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 3,
+                      sm: 4,
                     }}
                     style={
                       !this.props.acces?.carbohydrates_edit && !this.props.acces?.carbohydrates_view
@@ -1059,6 +1065,26 @@ export class SiteItemsModalTech extends React.Component {
                       value={this.state.tmp_desc}
                       disabled={!this.props.acces?.tmp_desc_edit}
                       func={this.changeItem.bind(this, "tmp_desc")}
+                      multiline={true}
+                      maxRows={3}
+                    />
+                  </Grid>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                    style={
+                      !this.props.acces?.marc_desc_edit && !this.props.acces?.marc_desc_view
+                        ? { display: "none" }
+                        : {}
+                    }
+                  >
+                    <MyTextInput
+                      label="Короткое название (в списке)"
+                      value={this.state.marc_desc}
+                      disabled={!this.props.acces?.marc_desc_edit}
+                      func={this.changeItem.bind(this, "marc_desc")}
                       multiline={true}
                       maxRows={3}
                     />
@@ -1104,7 +1130,7 @@ export class SiteItemsModalTech extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 4,
+                      sm: 2,
                     }}
                     style={
                       !this.props.acces?.is_new_edit && !this.props.acces?.is_new_view
@@ -1117,6 +1143,19 @@ export class SiteItemsModalTech extends React.Component {
                       value={parseInt(this.state.is_new) == 1 ? true : false}
                       disabled={!this.props.acces?.is_new_edit}
                       func={this.changeItemChecked.bind(this, "is_new")}
+                    />
+                  </Grid>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 4,
+                    }}
+                  >
+                    <MyCheckBox
+                      label="Обновлено"
+                      value={parseInt(this.state.is_update) == 1 ? true : false}
+                      func={this.changeItemChecked.bind(this, "is_update")}
+                      style={{ justifyContent: "center" }}
                     />
                   </Grid>
                   <Grid
@@ -1195,7 +1234,7 @@ export class SiteItemsModalTech extends React.Component {
                       func={this.changeItemChecked.bind(this, "show_site")}
                     />
                   </Grid>
-                  <Grid
+                  {/*<Grid
                     size={{
                       xs: 12,
                       sm: 4,
@@ -1212,7 +1251,7 @@ export class SiteItemsModalTech extends React.Component {
                       disabled={!this.props.acces?.show_program_edit}
                       func={this.changeItemChecked.bind(this, "show_program")}
                     />
-                  </Grid>
+                  </Grid>*/}
                 </>
               ) : null}
               {this.state.activeTab === 5 ? (
