@@ -184,6 +184,7 @@ export class SiteItemsModalTech extends React.Component {
       });
       setTimeout(() => {
         this.myDropzone = new Dropzone("#for_img_edit_new", this.dropzoneOptions);
+        this.recalculateWeights();
       }, 300);
     }
   }
@@ -533,7 +534,6 @@ export class SiteItemsModalTech extends React.Component {
     const data = {
       id: this.props.item?.id,
       type: this.props.item?.type,
-      size_pizza: this.props.item?.size_pizza,
       name: this.state.name,
       art: this.state.art,
       tmp_desc: this.state.tmp_desc,
@@ -547,7 +547,8 @@ export class SiteItemsModalTech extends React.Component {
       link: this.props.item.link,
       tags: this.state.tags_my,
       category_id: this.state.category_id.id,
-      count_part: this.state.count_part,
+      size_pizza: this.state.category_id.id === 14 ? this.state.count_part : 0,
+      count_part: this.state.category_id.id !== 14 ? this.state.count_part : 0,
       stol: this.state.stol,
       weight: this.state.weight,
       is_price: this.state.is_price,
@@ -567,6 +568,50 @@ export class SiteItemsModalTech extends React.Component {
       items_stage: new_obj_stage,
       item_items: new_obj_item_items,
     };
+
+    if (this.myDropzone && this.myDropzone["files"]?.length > 0) {
+      if (this.myDropzone["files"].length > 0 && this.isInit === false) {
+        this.isInit = true;
+
+        let name = this.props.item.name,
+          id = this.props.item.id;
+
+        this.myDropzone.on("sending", (file, xhr, data) => {
+          let file_type = file.name.split(".");
+          file_type = file_type[file_type.length - 1];
+          file_type = file_type.toLowerCase();
+
+          data.append("type", "site_items");
+          data.append("name", name + "site_items");
+          data.append("login", localStorage.getItem("token"));
+          data.append("id", id);
+        });
+
+        this.myDropzone.on("queuecomplete", (data) => {
+          var check_img = false;
+
+          this.myDropzone["files"].map((item, key) => {
+            if (item["status"] == "error") {
+              check_img = true;
+            }
+          });
+
+          if (!check_img) {
+            setTimeout(() => {
+              this.onClose(true);
+              this.props.update();
+            }, 1000);
+          }
+
+          this.isInit = false;
+        });
+      }
+
+      this.myDropzone.processQueue();
+    } else {
+      this.onClose(true);
+      this.props.update();
+    }
 
     this.props.save(data);
   }
@@ -911,8 +956,8 @@ export class SiteItemsModalTech extends React.Component {
                           }}
                         >
                           <img
-                            style={{ maxHeight: 2000, maxWidth: 2000 }}
-                            src={`https://storage.yandexcloud.net/site-home-img/${this.state?.img_app}site_items_2000x2000.jpg?date_update=${this.props.item?.img_new_update}`}
+                            style={{ maxHeight: 400, maxWidth: 800 }}
+                            src={`https://storage.yandexcloud.net/site-home-img/${this.state?.img_app.toLowerCase()}site_items_2000x2000.jpg`}
                           />
                         </Grid>
                       ) : null}
