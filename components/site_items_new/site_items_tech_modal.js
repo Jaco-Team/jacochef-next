@@ -73,7 +73,7 @@ export class SiteItemsModalTech extends React.Component {
 
   constructor(props) {
     super(props);
-    this.dropzoneRef = React.createRef();
+
     this.state = {
       name: "",
       date_start: null,
@@ -102,7 +102,7 @@ export class SiteItemsModalTech extends React.Component {
       marc_desc_full: "",
       is_hit: "0",
       is_new: "0",
-      is_update: "0",
+      is_updated: "0",
       show_program: "0",
       show_site: "0",
       img_app: "",
@@ -117,9 +117,22 @@ export class SiteItemsModalTech extends React.Component {
   }
 
   changeTab(event, val) {
-    this.setState({
-      activeTab: val,
-    });
+    this.setState(
+      {
+        activeTab: val,
+      },
+      () => {
+        if (val === 0) {
+          this.initDropzone();
+        }
+      },
+    );
+  }
+
+  initDropzone() {
+    if (this.state.activeTab === 0) {
+      this.myDropzone = new Dropzone("#for_img_edit_new", this.dropzoneOptions);
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -131,7 +144,6 @@ export class SiteItemsModalTech extends React.Component {
       const tags = this.props.item?.tags_all
         ? [{ id: -1, name: "Новый" }, ...this.props.item.tags_all]
         : [{ id: -1, name: "Новый" }];
-
       this.setState({
         name: this.props.item?.name || "",
         art: this.props.item?.art || "",
@@ -141,11 +153,13 @@ export class SiteItemsModalTech extends React.Component {
         date_end: this.props.item?.date_end ? formatDate(this.props.item.date_end) : null,
         stol: this.props.item?.stol || "",
         weight: this.props.item?.weight || "",
+        activeTab: 0,
         is_price: parseInt(this.props.item?.is_price) ? 1 : 0,
         is_show: parseInt(this.props.item?.is_show) ? 1 : 0,
-        protein: this.props.item?.protein || "0",
-        fat: this.props.item?.fat || "0",
-        carbohydrates: this.props.item?.carbohydrates || "0",
+        protein: this.props.item?.protein,
+        fat: this.props.item?.fat,
+        is_updated: this.props.item?.is_updated,
+        carbohydrates: this.props.item?.carbohydrates,
         time_stage_1: this.props.item?.time_stage_1 || "",
         time_stage_2: this.props.item?.time_stage_2 || "",
         time_stage_3: this.props.item?.time_stage_3 || "",
@@ -169,15 +183,20 @@ export class SiteItemsModalTech extends React.Component {
         tags_my: this.props.item?.tags || [],
       });
       setTimeout(() => {
-        if (this.dropzoneRef.current) {
-          this.myDropzone = new Dropzone(this.dropzoneRef.current, this.dropzoneOptions);
-        }
-        this.recalculateWeights();
+        this.myDropzone = new Dropzone("#for_img_edit_new", this.dropzoneOptions);
       }, 300);
     }
   }
 
   changeItem(type, event, data) {
+    if (type === "marc_desc") {
+      const value = event.target.value;
+
+      // Проверяем ограничение в 20 символов
+      if (value.length >= 20) {
+        return;
+      }
+    }
     this.setState({
       [type]: data ? data : event.target.value,
     });
@@ -430,7 +449,7 @@ export class SiteItemsModalTech extends React.Component {
 
   recalculateWeights() {
     const { items_stage, item_items } = this.state;
-    console.log(1);
+
     let all_w_brutto_1 =
       items_stage?.stage_1?.reduce((sum, item) => sum + parseFloat(item.brutto || 0), 0) || 0;
     let all_w_brutto_2 =
@@ -485,92 +504,6 @@ export class SiteItemsModalTech extends React.Component {
     this.setState({ all_w_brutto, all_w_netto, all_w, all_w_brutto_p, all_w_netto_p, all_w_p });
   }
 
-  async saveMark() {
-    if (!this.click) {
-      this.click = true;
-
-      const data = {
-        date_start: this.state.date_start ? dayjs(this.state.date_start).format("YYYY-MM-DD") : "",
-        date_end: this.state.date_end ? dayjs(this.state.date_end).format("YYYY-MM-DD") : "",
-        tmp_desc: this.state.tmp_desc,
-        marc_desc: this.state.marc_desc,
-        marc_desc_full: this.state.marc_desc_full,
-        is_hit: this.state.is_hit,
-        is_new: this.state.is_new,
-        show_program: this.state.show_program,
-        show_site: this.state.show_site,
-        img_app: this.state.img_app,
-        id: this.props.item.id,
-        name: this.props.item.name,
-        link: this.props.item.link,
-        category_id: this.state.category_id.id,
-        weight: this.props.item.weight,
-        stol: this.props.item.stol,
-        type: this.props.item.type,
-        tags: this.state.tags_my,
-        type_save: "mark",
-      };
-
-      const res = await this.props.getData("save_edit", data);
-
-      if (res.st === false) {
-        this.setState({
-          openAlert: true,
-          err_status: res.st,
-          err_text: res.text,
-        });
-      } else {
-        if (this.myDropzone && this.myDropzone["files"]?.length > 0) {
-          if (this.myDropzone["files"].length > 0 && this.isInit === false) {
-            this.isInit = true;
-
-            let name = this.props.item.name,
-              id = this.props.item.id;
-
-            this.myDropzone.on("sending", (file, xhr, data) => {
-              let file_type = file.name.split(".");
-              file_type = file_type[file_type.length - 1];
-              file_type = file_type.toLowerCase();
-
-              data.append("type", "site_items");
-              data.append("name", name + "site_items");
-              data.append("login", localStorage.getItem("token"));
-              data.append("id", id);
-            });
-
-            this.myDropzone.on("queuecomplete", (data) => {
-              var check_img = false;
-
-              this.myDropzone["files"].map((item, key) => {
-                if (item["status"] == "error") {
-                  check_img = true;
-                }
-              });
-
-              if (!check_img) {
-                setTimeout(() => {
-                  this.onClose(true);
-                  this.props.update();
-                }, 1000);
-              }
-
-              this.isInit = false;
-            });
-          }
-
-          this.myDropzone.processQueue();
-        } else {
-          this.onClose(true);
-          this.props.update();
-        }
-      }
-
-      setTimeout(() => {
-        this.click = false;
-      }, 300);
-    }
-  }
-
   save() {
     const items_stage = this.state.items_stage;
     if (items_stage?.not_stage?.length) {
@@ -582,7 +515,7 @@ export class SiteItemsModalTech extends React.Component {
       return;
     }
 
-    if (this.state.name.length > 20 && this.state.marc_desc.length < 20) {
+    if (this.state.name.length > 20 && !this.state.marc_desc.length) {
       this.setState({
         openAlert: true,
         err_status: false,
@@ -592,8 +525,10 @@ export class SiteItemsModalTech extends React.Component {
     }
 
     // Сохраняем маркетинговые данные
-    this.saveMark();
-
+    const obj_stage = this.state.items_stage;
+    const { all, ...new_obj_stage } = obj_stage;
+    const obj_item_items = this.state.item_items;
+    const { all_items, ...new_obj_item_items } = obj_item_items;
     // Сохраняем технологические данные
     const data = {
       id: this.props.item?.id,
@@ -601,6 +536,16 @@ export class SiteItemsModalTech extends React.Component {
       size_pizza: this.props.item?.size_pizza,
       name: this.state.name,
       art: this.state.art,
+      tmp_desc: this.state.tmp_desc,
+      marc_desc: this.state.marc_desc,
+      marc_desc_full: this.state.marc_desc_full,
+      is_hit: this.state.is_hit,
+      is_new: this.state.is_new,
+      show_program: this.state.show_program,
+      show_site: this.state.show_site,
+      img_app: this.state.img_app,
+      link: this.props.item.link,
+      tags: this.state.tags_my,
       category_id: this.state.category_id.id,
       count_part: this.state.count_part,
       stol: this.state.stol,
@@ -609,7 +554,7 @@ export class SiteItemsModalTech extends React.Component {
       is_show: this.state.is_show,
       protein: this.state.protein,
       fat: this.state.fat,
-      is_update: this.state.is_update,
+      is_updated: this.state.is_updated,
       carbohydrates: this.state.carbohydrates,
       time_stage_1: this.state.time_stage_1,
       time_stage_2: this.state.time_stage_2,
@@ -619,8 +564,8 @@ export class SiteItemsModalTech extends React.Component {
       all_w: this.state.all_w + this.state.all_w_p,
       all_w_brutto: this.state.all_w_brutto + this.state.all_w_brutto_p,
       all_w_netto: this.state.all_w_netto + this.state.all_w_netto_p,
-      items_stage: this.state.items_stage,
-      item_items: this.state.item_items,
+      items_stage: new_obj_stage,
+      item_items: new_obj_item_items,
     };
 
     this.props.save(data);
@@ -719,6 +664,48 @@ export class SiteItemsModalTech extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
+        {this.state.modalNewTag ? (
+          <Dialog
+            maxWidth={"sm"}
+            fullWidth={true}
+            open={this.state.modalNewTag}
+            onClose={() => this.setState({ modalNewTag: false })}
+          >
+            <DialogTitle className="button">
+              <Typography style={{ alignSelf: "center" }}>Новый тег</Typography>
+              <IconButton onClick={() => this.setState({ modalNewTag: false })}>
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent>
+              <Grid
+                container
+                spacing={3}
+              >
+                <Grid
+                  size={{
+                    xs: 12,
+                  }}
+                >
+                  <MyTextInput
+                    label=""
+                    value={this.state.tag_name_new}
+                    func={this.changeItem.bind(this, "tag_name_new")}
+                  />
+                </Grid>
+              </Grid>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => this.setState({ modalNewTag: false })}>Отмена</Button>
+              <Button
+                type="submit"
+                onClick={this.saveNewTag.bind(this)}
+              >
+                Сохранить
+              </Button>
+            </DialogActions>
+          </Dialog>
+        ) : null}
         <Dialog
           open={open}
           fullWidth={true}
@@ -816,6 +803,7 @@ export class SiteItemsModalTech extends React.Component {
                       value={this.state.date_start}
                       disabled={method !== "Новое блюдо" && !this.props.acces?.date_start_edit}
                       func={this.changeDateRange.bind(this, "date_start")}
+                      minDate={dayjs(new Date())}
                     />
                   </Grid>
                   <Grid
@@ -834,6 +822,27 @@ export class SiteItemsModalTech extends React.Component {
                       value={this.state.art}
                       disabled={method !== "Новое блюдо" && !this.props.acces?.art_edit}
                       func={this.changeItem.bind(this, "art")}
+                    />
+                  </Grid>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 12,
+                    }}
+                    style={
+                      !this.props.acces?.marc_desc_edit && !this.props.acces?.marc_desc_view
+                        ? { display: "none" }
+                        : {}
+                    }
+                  >
+                    <MyTextInput
+                      label="Короткое название (в списке)"
+                      value={this.state.marc_desc}
+                      maxLength={20}
+                      disabled={!this.props.acces?.marc_desc_edit}
+                      func={this.changeItem.bind(this, "marc_desc")}
+                      multiline={true}
+                      maxRows={3}
                     />
                   </Grid>
                   <Grid
@@ -870,29 +879,10 @@ export class SiteItemsModalTech extends React.Component {
                     <MyTextInput
                       label="Стол"
                       type="number"
+                      onWheel={(e) => e.target.blur()}
                       value={this.state.stol}
                       disabled={method !== "Новое блюдо" && !this.props.acces?.stol_edit}
                       func={this.changeItem.bind(this, "stol")}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 12,
-                    }}
-                    style={
-                      !this.props.acces?.marc_desc_edit && !this.props.acces?.marc_desc_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyTextInput
-                      label="Короткое название (в списке)"
-                      value={this.state.marc_desc}
-                      disabled={!this.props.acces?.marc_desc_edit}
-                      func={this.changeItem.bind(this, "marc_desc")}
-                      multiline={true}
-                      maxRows={3}
                     />
                   </Grid>
                   <Grid
@@ -922,7 +912,7 @@ export class SiteItemsModalTech extends React.Component {
                         >
                           <img
                             style={{ maxHeight: 2000, maxWidth: 2000 }}
-                            src={`https://storage.yandexcloud.net/site-home-img/${this.state.img_app}site_items_2000x2000.jpg?date_update=${this.props.item.img_new_update}`}
+                            src={`https://storage.yandexcloud.net/site-home-img/${this.state?.img_app}site_items_2000x2000.jpg?date_update=${this.props.item?.img_new_update}`}
                           />
                         </Grid>
                       ) : null}
@@ -935,6 +925,7 @@ export class SiteItemsModalTech extends React.Component {
                         <div
                           className="dropzone"
                           id="for_img_edit_new"
+                          key="dropzone-element"
                           ref={this.dropzoneRef}
                           style={{
                             width: "100%",
@@ -1004,6 +995,8 @@ export class SiteItemsModalTech extends React.Component {
                   >
                     <MyTextInput
                       label="Белки"
+                      type="number"
+                      onWheel={(e) => e.target.blur()}
                       value={this.state.protein}
                       disabled={method !== "Новое блюдо" && !this.props.acces?.protein_edit}
                       func={this.changeItem.bind(this, "protein")}
@@ -1022,6 +1015,8 @@ export class SiteItemsModalTech extends React.Component {
                   >
                     <MyTextInput
                       label="Жиры"
+                      type="number"
+                      onWheel={(e) => e.target.blur()}
                       value={this.state.fat}
                       disabled={method !== "Новое блюдо" && !this.props.acces?.fat_edit}
                       func={this.changeItem.bind(this, "fat")}
@@ -1040,6 +1035,8 @@ export class SiteItemsModalTech extends React.Component {
                   >
                     <MyTextInput
                       label="Углеводы"
+                      type="number"
+                      onWheel={(e) => e.target.blur()}
                       value={this.state.carbohydrates}
                       disabled={method !== "Новое блюдо" && !this.props.acces?.carbohydrates_edit}
                       func={this.changeItem.bind(this, "carbohydrates")}
@@ -1065,26 +1062,6 @@ export class SiteItemsModalTech extends React.Component {
                       value={this.state.tmp_desc}
                       disabled={!this.props.acces?.tmp_desc_edit}
                       func={this.changeItem.bind(this, "tmp_desc")}
-                      multiline={true}
-                      maxRows={3}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 12,
-                    }}
-                    style={
-                      !this.props.acces?.marc_desc_edit && !this.props.acces?.marc_desc_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyTextInput
-                      label="Короткое название (в списке)"
-                      value={this.state.marc_desc}
-                      disabled={!this.props.acces?.marc_desc_edit}
-                      func={this.changeItem.bind(this, "marc_desc")}
                       multiline={true}
                       maxRows={3}
                     />
@@ -1153,8 +1130,8 @@ export class SiteItemsModalTech extends React.Component {
                   >
                     <MyCheckBox
                       label="Обновлено"
-                      value={parseInt(this.state.is_update) == 1 ? true : false}
-                      func={this.changeItemChecked.bind(this, "is_update")}
+                      value={parseInt(this.state.is_updated) == 1 ? true : false}
+                      func={this.changeItemChecked.bind(this, "is_updated")}
                       style={{ justifyContent: "center" }}
                     />
                   </Grid>

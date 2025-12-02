@@ -2452,6 +2452,7 @@ class SiteItems_ extends React.Component {
       { id: "2", name: "2 этап" },
       { id: "3", name: "3 этап" },
     ];
+    res.item.tags_all = res.tags_all;
 
     this.setState({
       itemTech: res.item,
@@ -2460,6 +2461,7 @@ class SiteItems_ extends React.Component {
       category: res.cat_list,
       items_stage: res.items_stage,
       item_items: res.item_items,
+      tags_all: res.tags_all,
       stages,
     });
   }
@@ -2602,7 +2604,6 @@ class SiteItems_ extends React.Component {
       rec_stage_1,
       rec_stage_2,
       rec_stage_3,
-      type_save: "tech",
     };
 
     let res;
@@ -2612,7 +2613,6 @@ class SiteItems_ extends React.Component {
     } else {
       res = await this.getData("save_edit", data);
     }
-    console.log(data);
 
     if (res.st) {
       this.setState({
