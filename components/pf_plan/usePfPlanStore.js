@@ -15,6 +15,9 @@ const usePfPlanStore = create((set) => ({
   dateStart: formatDate(),
   dateEnd: formatDate(),
 
+  stats: [],
+  allPfs: [],
+
   // actions
 }));
 
