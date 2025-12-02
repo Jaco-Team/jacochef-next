@@ -835,20 +835,22 @@ export class SiteItemsModalTech extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 2,
+                      sm: 4,
                     }}
                     style={
-                      !this.props.acces?.date_start_edit && !this.props.acces?.date_start_view
+                      !this.props.acces?.marc_desc_edit && !this.props.acces?.marc_desc_view
                         ? { display: "none" }
                         : {}
                     }
                   >
-                    <MyDatePickerNew
-                      label="Действует с"
-                      value={this.state.date_start}
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.date_start_edit}
-                      func={this.changeDateRange.bind(this, "date_start")}
-                      minDate={dayjs(new Date())}
+                    <MyTextInput
+                      label="Короткое название (20 символов)"
+                      value={this.state.marc_desc}
+                      maxLength={20}
+                      disabled={!this.props.acces?.marc_desc_edit}
+                      func={this.changeItem.bind(this, "marc_desc")}
+                      multiline={true}
+                      maxRows={3}
                     />
                   </Grid>
                   <Grid
@@ -872,24 +874,23 @@ export class SiteItemsModalTech extends React.Component {
                   <Grid
                     size={{
                       xs: 12,
-                      sm: 12,
+                      sm: 2,
                     }}
                     style={
-                      !this.props.acces?.marc_desc_edit && !this.props.acces?.marc_desc_view
+                      !this.props.acces?.date_start_edit && !this.props.acces?.date_start_view
                         ? { display: "none" }
                         : {}
                     }
                   >
-                    <MyTextInput
-                      label="Короткое название (в списке)"
-                      value={this.state.marc_desc}
-                      maxLength={20}
-                      disabled={!this.props.acces?.marc_desc_edit}
-                      func={this.changeItem.bind(this, "marc_desc")}
-                      multiline={true}
-                      maxRows={3}
+                    <MyDatePickerNew
+                      label="Действует с"
+                      value={this.state.date_start}
+                      disabled={method !== "Новое блюдо" && !this.props.acces?.date_start_edit}
+                      func={this.changeDateRange.bind(this, "date_start")}
+                      minDate={dayjs(new Date())}
                     />
                   </Grid>
+
                   <Grid
                     size={{
                       xs: 12,
