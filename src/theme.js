@@ -13,12 +13,19 @@ const theme = createTheme({
   palette: {
     primary: {
       main: "#c03",
+      contrastText: "#fff",
     },
     secondary: {
       main: "#c03",
+      contrastText: "#fff",
+    },
+    inactive: {
+      main: "#ccc",
+      contrastText: "#000",
     },
     error: {
       main: red.A400,
+      contrastText: "#fff",
     },
   },
   typography: {
