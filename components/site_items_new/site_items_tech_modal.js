@@ -18,35 +18,13 @@ import TableBody from "@mui/material/TableBody";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import Dropzone from "dropzone";
-import Paper from "@mui/material/Paper";
-import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
-import PropTypes from "prop-types";
+import TabList from "@mui/lab/TabList";
+import TabContext from "@mui/lab/TabContext";
+import TabPanel from "@mui/lab/TabPanel";
 const roundTo = (value, decimals) => {
   return Number(Math.round(value + "e" + decimals) + "e-" + decimals);
-};
-
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-TabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.number.isRequired,
-  value: PropTypes.number.isRequired,
 };
 
 function a11yProps(index) {
@@ -70,9 +48,11 @@ export class SiteItemsModalTech extends React.Component {
   myDropzone = null;
   isInit = false;
   click = false;
+  dropzoneInitialized = false;
 
   constructor(props) {
     super(props);
+    this.dropzoneRef = React.createRef();
 
     this.state = {
       name: "",
@@ -83,7 +63,7 @@ export class SiteItemsModalTech extends React.Component {
       count_part: "",
       stol: "",
       weight: "",
-      activeTab: 0,
+      activeTab: "0",
       is_price: "0",
       is_show: "0",
       protein: "0",
@@ -117,22 +97,63 @@ export class SiteItemsModalTech extends React.Component {
   }
 
   changeTab(event, val) {
-    this.setState(
-      {
-        activeTab: val,
-      },
-      () => {
-        if (val === 0) {
-          this.initDropzone();
-        }
-      },
-    );
+    this.setState({
+      activeTab: val,
+    });
+  }
+
+  componentDidMount() {
+    // Инициализируем Dropzone один раз при монтировании
+    this.initDropzone();
   }
 
   initDropzone() {
-    if (this.state.activeTab === 0) {
-      this.myDropzone = new Dropzone("#for_img_edit_new", this.dropzoneOptions);
+    // Проверяем, что Dropzone еще не инициализирован и элемент существует
+    if (this.dropzoneRef.current) {
+      try {
+        this.myDropzone = new Dropzone(this.dropzoneRef.current, this.dropzoneOptions);
+        this.dropzoneInitialized = true;
+        this.setupDropzoneEvents();
+      } catch (error) {
+        console.error("Error initializing Dropzone:", error);
+      }
     }
+  }
+
+  setupDropzoneEvents() {
+    if (!this.myDropzone) return;
+
+    this.myDropzone.on("sending", (file, xhr, data) => {
+      if (!this.props.item) return;
+
+      let file_type = file.name.split(".");
+      file_type = file_type[file_type.length - 1];
+      file_type = file_type.toLowerCase();
+
+      data.append("type", "site_items");
+      data.append("name", this.props.item.name + "site_items");
+      data.append("login", localStorage.getItem("token"));
+      data.append("id", this.props.item.id);
+    });
+
+    this.myDropzone.on("queuecomplete", (data) => {
+      var check_img = false;
+
+      this.myDropzone["files"].map((item, key) => {
+        if (item["status"] == "error") {
+          check_img = true;
+        }
+      });
+
+      if (!check_img) {
+        setTimeout(() => {
+          this.onClose(true);
+          this.props.update();
+        }, 1000);
+      }
+
+      this.isInit = false;
+    });
   }
 
   componentDidUpdate(prevProps) {
@@ -153,7 +174,7 @@ export class SiteItemsModalTech extends React.Component {
         date_end: this.props.item?.date_end ? formatDate(this.props.item.date_end) : null,
         stol: this.props.item?.stol || "",
         weight: this.props.item?.weight || "",
-        activeTab: 0,
+        activeTab: "0",
         is_price: parseInt(this.props.item?.is_price) ? 1 : 0,
         is_show: parseInt(this.props.item?.is_show) ? 1 : 0,
         protein: this.props.item?.protein,
@@ -183,9 +204,12 @@ export class SiteItemsModalTech extends React.Component {
         tags_my: this.props.item?.tags || [],
       });
       setTimeout(() => {
-        this.myDropzone = new Dropzone("#for_img_edit_new", this.dropzoneOptions);
-        this.recalculateWeights();
+        if (this.dropzoneRef.current) {
+          this.initDropzone();
+        }
       }, 300);
+
+      this.recalculateWeights();
     }
   }
 
@@ -213,6 +237,15 @@ export class SiteItemsModalTech extends React.Component {
     this.setState({
       [type]: event.target.checked === true ? 1 : 0,
     });
+  }
+
+  componentWillUnmount() {
+    // Уничтожаем Dropzone при размонтировании
+    if (this.myDropzone) {
+      this.myDropzone.destroy();
+      this.myDropzone = null;
+      this.dropzoneInitialized = false;
+    }
   }
 
   changeSelect(data, event) {
@@ -633,7 +666,7 @@ export class SiteItemsModalTech extends React.Component {
       count_part: "",
       stol: "",
       weight: "",
-      activeTab: 0,
+      activeTab: "0",
       is_price: "0",
       is_show: "0",
       protein: "0",
@@ -767,497 +800,445 @@ export class SiteItemsModalTech extends React.Component {
             </IconButton>
           </DialogTitle>
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid
-              container
-              spacing={3}
-            >
-              <Grid
-                style={{ paddingBottom: 24 }}
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
-              >
-                <Paper>
-                  <Tabs
-                    value={this.state.activeTab}
+            <>
+              <TabContext value={this.state.activeTab}>
+                <Box>
+                  <TabList
                     onChange={this.changeTab.bind(this)}
                     centered
                     variant="fullWidth"
                   >
                     <Tab
                       label="Основные"
-                      {...a11yProps(0)}
+                      value="0"
                     />
                     <Tab
                       label="БЖУ"
-                      {...a11yProps(1)}
+                      value="1"
                     />
                     <Tab
                       label="Описание"
-                      {...a11yProps(1)}
+                      value="2"
                     />
                     <Tab
                       label="Теги"
-                      {...a11yProps(1)}
+                      value="3"
                     />
                     <Tab
                       label="Активность"
-                      {...a11yProps(1)}
+                      value="4"
                     />
                     <Tab
                       label="Состав"
-                      {...a11yProps(1)}
+                      value="5"
                     />
-                  </Tabs>
-                </Paper>
-              </Grid>
-              {this.state.activeTab === 0 ? (
-                <>
+                  </TabList>
+                </Box>
+                <TabPanel value="0">
                   <Grid
-                    size={{
-                      xs: 12,
-                      sm: 4,
-                    }}
-                    style={
-                      !this.props.acces?.name_edit && !this.props.acces?.name_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyTextInput
-                      label="Наименование"
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.name_edit}
-                      value={this.state.name}
-                      func={this.changeItem.bind(this, "name")}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 4,
-                    }}
-                    style={
-                      !this.props.acces?.marc_desc_edit && !this.props.acces?.marc_desc_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyTextInput
-                      label="Короткое название (20 символов)"
-                      value={this.state.marc_desc}
-                      maxLength={20}
-                      disabled={!this.props.acces?.marc_desc_edit}
-                      func={this.changeItem.bind(this, "marc_desc")}
-                      multiline={true}
-                      maxRows={3}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 4,
-                    }}
-                    style={
-                      !this.props.acces?.art_edit && !this.props.acces?.art_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyTextInput
-                      label="Код 1С"
-                      value={this.state.art}
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.art_edit}
-                      func={this.changeItem.bind(this, "art")}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 2,
-                    }}
-                    style={
-                      !this.props.acces?.date_start_edit && !this.props.acces?.date_start_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyDatePickerNew
-                      label="Действует с"
-                      value={this.state.date_start}
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.date_start_edit}
-                      func={this.changeDateRange.bind(this, "date_start")}
-                      minDate={dayjs(new Date())}
-                    />
-                  </Grid>
-
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 4,
-                    }}
-                    style={
-                      !this.props.acces?.category_id_edit && !this.props.acces?.category_id_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyAutocomplite
-                      label="Категория"
-                      multiple={false}
-                      data={category}
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.category_id_edit}
-                      value={this.state.category_id}
-                      func={(event, value) => this.setState({ category_id: value })}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 2,
-                    }}
-                    style={
-                      !this.props.acces?.stol_edit && !this.props.acces?.stol_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyTextInput
-                      label="Стол"
-                      type="number"
-                      onWheel={(e) => e.target.blur()}
-                      value={this.state.stol}
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.stol_edit}
-                      func={this.changeItem.bind(this, "stol")}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                    }}
+                    container
+                    spacing={3}
                   >
                     <Grid
-                      container
-                      spacing={3}
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                      style={
+                        !this.props.acces?.name_edit && !this.props.acces?.name_view
+                          ? { display: "none" }
+                          : {}
+                      }
                     >
-                      <Grid
-                        size={{
-                          xs: 12,
-                        }}
-                      >
-                        <Typography>
-                          Картинка соотношением сторон (1:1) (пример: 2000х2000) только JPG
-                        </Typography>
-                      </Grid>
-                      {this.state.img_app.length > 0 ? (
-                        <Grid
-                          size={{
-                            xs: 12,
-                            sm: 12,
-                          }}
-                        >
-                          <img
-                            style={{ maxHeight: 400, maxWidth: 800 }}
-                            src={`https://storage.yandexcloud.net/site-home-img/${this.state?.img_app.toLowerCase()}site_items_2000x2000.jpg`}
-                          />
-                        </Grid>
-                      ) : null}
-                      <Grid
-                        size={{
-                          xs: 12,
-                          sm: 6,
-                        }}
-                      >
-                        <div
-                          className="dropzone"
-                          id="for_img_edit_new"
-                          key="dropzone-element"
-                          ref={this.dropzoneRef}
-                          style={{
-                            width: "100%",
-                            minHeight: 150,
-                            ...(!this.props.acces?.dropzone_edit
-                              ? {
-                                  pointerEvents: "none",
-                                  cursor: "not-allowed",
-                                  filter: "grayscale(50%)",
-                                }
-                              : {}),
-                          }}
-                        />
-                      </Grid>
+                      <MyTextInput
+                        label="Наименование"
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.name_edit}
+                        value={this.state.name}
+                        func={this.changeItem.bind(this, "name")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                      style={
+                        !this.props.acces?.marc_desc_edit && !this.props.acces?.marc_desc_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Короткое название (20 символов)"
+                        value={this.state.marc_desc}
+                        maxLength={20}
+                        disabled={!this.props.acces?.marc_desc_edit}
+                        func={this.changeItem.bind(this, "marc_desc")}
+                        multiline={true}
+                        maxRows={3}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                      style={
+                        !this.props.acces?.art_edit && !this.props.acces?.art_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Код 1С"
+                        value={this.state.art}
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.art_edit}
+                        func={this.changeItem.bind(this, "art")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 2,
+                      }}
+                      style={
+                        !this.props.acces?.date_start_edit && !this.props.acces?.date_start_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyDatePickerNew
+                        label="Действует с"
+                        value={this.state.date_start}
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.date_start_edit}
+                        func={this.changeDateRange.bind(this, "date_start")}
+                        minDate={dayjs(new Date())}
+                      />
+                    </Grid>
+
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                      style={
+                        !this.props.acces?.category_id_edit && !this.props.acces?.category_id_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyAutocomplite
+                        label="Категория"
+                        multiple={false}
+                        data={category}
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.category_id_edit}
+                        value={this.state.category_id}
+                        func={(event, value) => this.setState({ category_id: value })}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 2,
+                      }}
+                      style={
+                        !this.props.acces?.stol_edit && !this.props.acces?.stol_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Стол"
+                        type="number"
+                        onWheel={(e) => e.target.blur()}
+                        value={this.state.stol}
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.stol_edit}
+                        func={this.changeItem.bind(this, "stol")}
+                      />
                     </Grid>
                   </Grid>
-                </>
-              ) : null}
-              {this.state.activeTab === 1 ? (
-                <>
+                </TabPanel>
+                <TabPanel value="1">
                   <Grid
-                    size={{
-                      xs: 12,
-                      sm: 6,
-                    }}
-                    style={
-                      !this.props.acces?.count_part_edit && !this.props.acces?.count_part_view
-                        ? { display: "none" }
-                        : {}
-                    }
+                    container
+                    spacing={3}
                   >
-                    <MyTextInput
-                      label="Кусочков или размер"
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.count_part_edit}
-                      value={this.state.count_part}
-                      func={this.changeItem.bind(this, "count_part")}
-                    />
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6,
+                      }}
+                      style={
+                        !this.props.acces?.count_part_edit && !this.props.acces?.count_part_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Кусочков или размер"
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.count_part_edit}
+                        value={this.state.count_part}
+                        func={this.changeItem.bind(this, "count_part")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6,
+                      }}
+                      style={
+                        !this.props.acces?.weight_edit && !this.props.acces?.weight_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Вес"
+                        value={this.state.weight}
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.weight_edit}
+                        func={this.changeItem.bind(this, "weight")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                      style={
+                        !this.props.acces?.protein_edit && !this.props.acces?.protein_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Белки"
+                        type="number"
+                        onWheel={(e) => e.target.blur()}
+                        value={this.state.protein}
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.protein_edit}
+                        func={this.changeItem.bind(this, "protein")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                      style={
+                        !this.props.acces?.fat_edit && !this.props.acces?.fat_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Жиры"
+                        type="number"
+                        onWheel={(e) => e.target.blur()}
+                        value={this.state.fat}
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.fat_edit}
+                        func={this.changeItem.bind(this, "fat")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                      style={
+                        !this.props.acces?.carbohydrates_edit &&
+                        !this.props.acces?.carbohydrates_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Углеводы"
+                        type="number"
+                        onWheel={(e) => e.target.blur()}
+                        value={this.state.carbohydrates}
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.carbohydrates_edit}
+                        func={this.changeItem.bind(this, "carbohydrates")}
+                      />
+                    </Grid>
                   </Grid>
+                </TabPanel>
+                <TabPanel value="2">
                   <Grid
-                    size={{
-                      xs: 12,
-                      sm: 6,
-                    }}
-                    style={
-                      !this.props.acces?.weight_edit && !this.props.acces?.weight_view
-                        ? { display: "none" }
-                        : {}
-                    }
+                    container
+                    spacing={3}
                   >
-                    <MyTextInput
-                      label="Вес"
-                      value={this.state.weight}
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.weight_edit}
-                      func={this.changeItem.bind(this, "weight")}
-                    />
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 12,
+                      }}
+                      style={
+                        !this.props.acces?.tmp_desc_edit && !this.props.acces?.tmp_desc_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Состав"
+                        value={this.state.tmp_desc}
+                        disabled={!this.props.acces?.tmp_desc_edit}
+                        func={this.changeItem.bind(this, "tmp_desc")}
+                        multiline={true}
+                        maxRows={3}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 12,
+                      }}
+                      style={
+                        !this.props.acces?.marc_desc_full_edit &&
+                        !this.props.acces?.marc_desc_full_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Полное описание (в карточке)"
+                        value={this.state.marc_desc_full}
+                        disabled={!this.props.acces?.marc_desc_full_edit}
+                        func={this.changeItem.bind(this, "marc_desc_full")}
+                        multiline={true}
+                        maxRows={3}
+                      />
+                    </Grid>
                   </Grid>
+                </TabPanel>
+                <TabPanel value="3">
                   <Grid
-                    size={{
-                      xs: 12,
-                      sm: 4,
-                    }}
-                    style={
-                      !this.props.acces?.protein_edit && !this.props.acces?.protein_view
-                        ? { display: "none" }
-                        : {}
-                    }
+                    container
+                    spacing={3}
                   >
-                    <MyTextInput
-                      label="Белки"
-                      type="number"
-                      onWheel={(e) => e.target.blur()}
-                      value={this.state.protein}
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.protein_edit}
-                      func={this.changeItem.bind(this, "protein")}
-                    />
+                    <Grid
+                      size={{
+                        xs: 12,
+                      }}
+                    >
+                      <MyAutocomplite
+                        label="Теги"
+                        multiple={true}
+                        data={this.state.tags_all}
+                        value={this.state.tags_my}
+                        func={this.changeAutocomplite.bind(this, "tags_my")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 2,
+                      }}
+                      style={
+                        !this.props.acces?.is_new_edit && !this.props.acces?.is_new_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyCheckBox
+                        label="Новинка"
+                        value={parseInt(this.state.is_new) == 1 ? true : false}
+                        disabled={!this.props.acces?.is_new_edit}
+                        func={this.changeItemChecked.bind(this, "is_new")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                    >
+                      <MyCheckBox
+                        label="Обновлено"
+                        value={parseInt(this.state.is_updated) == 1 ? true : false}
+                        func={this.changeItemChecked.bind(this, "is_updated")}
+                        style={{ justifyContent: "center" }}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                      style={
+                        !this.props.acces?._edit && !this.props.acces?._view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyCheckBox
+                        label="Хит"
+                        value={parseInt(this.state.is_hit) == 1 ? true : false}
+                        disabled={!this.props.acces?.is_hit_edit}
+                        func={this.changeItemChecked.bind(this, "is_hit")}
+                      />
+                    </Grid>
                   </Grid>
+                </TabPanel>
+                <TabPanel value="4">
                   <Grid
-                    size={{
-                      xs: 12,
-                      sm: 4,
-                    }}
-                    style={
-                      !this.props.acces?.fat_edit && !this.props.acces?.fat_view
-                        ? { display: "none" }
-                        : {}
-                    }
+                    container
+                    spacing={3}
                   >
-                    <MyTextInput
-                      label="Жиры"
-                      type="number"
-                      onWheel={(e) => e.target.blur()}
-                      value={this.state.fat}
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.fat_edit}
-                      func={this.changeItem.bind(this, "fat")}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 4,
-                    }}
-                    style={
-                      !this.props.acces?.carbohydrates_edit && !this.props.acces?.carbohydrates_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyTextInput
-                      label="Углеводы"
-                      type="number"
-                      onWheel={(e) => e.target.blur()}
-                      value={this.state.carbohydrates}
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.carbohydrates_edit}
-                      func={this.changeItem.bind(this, "carbohydrates")}
-                    />
-                  </Grid>
-                </>
-              ) : null}
-              {this.state.activeTab === 2 ? (
-                <>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 12,
-                    }}
-                    style={
-                      !this.props.acces?.tmp_desc_edit && !this.props.acces?.tmp_desc_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyTextInput
-                      label="Состав"
-                      value={this.state.tmp_desc}
-                      disabled={!this.props.acces?.tmp_desc_edit}
-                      func={this.changeItem.bind(this, "tmp_desc")}
-                      multiline={true}
-                      maxRows={3}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 12,
-                    }}
-                    style={
-                      !this.props.acces?.marc_desc_full_edit &&
-                      !this.props.acces?.marc_desc_full_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyTextInput
-                      label="Полное описание (в карточке)"
-                      value={this.state.marc_desc_full}
-                      disabled={!this.props.acces?.marc_desc_full_edit}
-                      func={this.changeItem.bind(this, "marc_desc_full")}
-                      multiline={true}
-                      maxRows={3}
-                    />
-                  </Grid>
-                </>
-              ) : null}
-              {this.state.activeTab === 3 ? (
-                <>
-                  <Grid
-                    size={{
-                      xs: 12,
-                    }}
-                  >
-                    <MyAutocomplite
-                      label="Теги"
-                      multiple={true}
-                      data={this.state.tags_all}
-                      value={this.state.tags_my}
-                      func={this.changeAutocomplite.bind(this, "tags_my")}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 2,
-                    }}
-                    style={
-                      !this.props.acces?.is_new_edit && !this.props.acces?.is_new_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyCheckBox
-                      label="Новинка"
-                      value={parseInt(this.state.is_new) == 1 ? true : false}
-                      disabled={!this.props.acces?.is_new_edit}
-                      func={this.changeItemChecked.bind(this, "is_new")}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 4,
-                    }}
-                  >
-                    <MyCheckBox
-                      label="Обновлено"
-                      value={parseInt(this.state.is_updated) == 1 ? true : false}
-                      func={this.changeItemChecked.bind(this, "is_updated")}
-                      style={{ justifyContent: "center" }}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 4,
-                    }}
-                    style={
-                      !this.props.acces?._edit && !this.props.acces?._view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyCheckBox
-                      label="Хит"
-                      value={parseInt(this.state.is_hit) == 1 ? true : false}
-                      disabled={!this.props.acces?.is_hit_edit}
-                      func={this.changeItemChecked.bind(this, "is_hit")}
-                    />
-                  </Grid>
-                </>
-              ) : null}
-              {this.state.activeTab === 4 ? (
-                <>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 3,
-                    }}
-                    style={
-                      !this.props.acces?.is_price_edit && !this.props.acces?.is_price_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyCheckBox
-                      label="Установить цену"
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.is_price_edit}
-                      value={parseInt(this.state.is_price) == 1 ? true : false}
-                      func={this.changeItemChecked.bind(this, "is_price")}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 3,
-                    }}
-                    style={
-                      !this.props.acces?.is_show_edit && !this.props.acces?.is_show_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyCheckBox
-                      label="Активность"
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.is_show_edit}
-                      value={parseInt(this.state.is_show) == 1 ? true : false}
-                      func={this.changeItemChecked.bind(this, "is_show")}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 4,
-                    }}
-                    style={
-                      !this.props.acces?.show_site_edit && !this.props.acces?.show_site_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyCheckBox
-                      label="На сайте и КЦ"
-                      value={parseInt(this.state.show_site) == 1 ? true : false}
-                      disabled={!this.props.acces?.show_site_edit}
-                      func={this.changeItemChecked.bind(this, "show_site")}
-                    />
-                  </Grid>
-                  {/*<Grid
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 3,
+                      }}
+                      style={
+                        !this.props.acces?.is_price_edit && !this.props.acces?.is_price_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyCheckBox
+                        label="Установить цену"
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.is_price_edit}
+                        value={parseInt(this.state.is_price) == 1 ? true : false}
+                        func={this.changeItemChecked.bind(this, "is_price")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 3,
+                      }}
+                      style={
+                        !this.props.acces?.is_show_edit && !this.props.acces?.is_show_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyCheckBox
+                        label="Активность"
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.is_show_edit}
+                        value={parseInt(this.state.is_show) == 1 ? true : false}
+                        func={this.changeItemChecked.bind(this, "is_show")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                      style={
+                        !this.props.acces?.show_site_edit && !this.props.acces?.show_site_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyCheckBox
+                        label="На сайте и КЦ"
+                        value={parseInt(this.state.show_site) == 1 ? true : false}
+                        disabled={!this.props.acces?.show_site_edit}
+                        func={this.changeItemChecked.bind(this, "show_site")}
+                      />
+                    </Grid>
+                    {/*<Grid
                     size={{
                       xs: 12,
                       sm: 4,
@@ -1275,608 +1256,680 @@ export class SiteItemsModalTech extends React.Component {
                       func={this.changeItemChecked.bind(this, "show_program")}
                     />
                   </Grid>*/}
-                </>
-              ) : null}
-              {this.state.activeTab === 5 ? (
-                <>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 3,
-                    }}
-                    style={
-                      !this.props.acces?.time_stage_1_edit && !this.props.acces?.time_stage_1_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyTextInput
-                      label="Время на 1 этап MM:SS"
-                      value={this.state.time_stage_1}
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.time_stage_1_edit}
-                      func={this.changeItem.bind(this, "time_stage_1")}
-                    />
                   </Grid>
+                </TabPanel>
+                <TabPanel value="5">
                   <Grid
-                    size={{
-                      xs: 12,
-                      sm: 3,
-                    }}
-                    style={
-                      !this.props.acces?.time_stage_2_edit && !this.props.acces?.time_stage_2_view
-                        ? { display: "none" }
-                        : {}
-                    }
+                    container
+                    spacing={3}
                   >
-                    <MyTextInput
-                      label="Время на 2 этап MM:SS"
-                      value={this.state.time_stage_2}
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.time_stage_2_edit}
-                      func={this.changeItem.bind(this, "time_stage_2")}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 3,
-                    }}
-                    style={
-                      !this.props.acces?.time_stage_3_edit && !this.props.acces?.time_stage_3_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyTextInput
-                      label="Время на 3 этап MM:SS"
-                      value={this.state.time_stage_3}
-                      disabled={method !== "Новое блюдо" && !this.props.acces?.time_stage_3_edit}
-                      func={this.changeItem.bind(this, "time_stage_3")}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 12,
-                      sm: 12,
-                    }}
-                  >
-                    <Table>
-                      <TableHead>
-                        <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                          <TableCell width="30%">Номенклатура</TableCell>
-                          <TableCell>Единица измерения</TableCell>
-                          <TableCell>Брутто</TableCell>
-                          <TableCell>% потери при ХО</TableCell>
-                          <TableCell>Нетто</TableCell>
-                          <TableCell>% потери при ГО</TableCell>
-                          <TableCell>Выход</TableCell>
-                          <TableCell>Этапы</TableCell>
-                          <TableCell></TableCell>
-                        </TableRow>
-                        <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                          <TableCell colSpan={9}>Заготовки</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {this.state.items_stage?.stage_1.map((item, key) => (
-                          <TableRow key={key}>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 3,
+                      }}
+                      style={
+                        !this.props.acces?.time_stage_1_edit && !this.props.acces?.time_stage_1_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Время на 1 этап MM:SS"
+                        value={this.state.time_stage_1}
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.time_stage_1_edit}
+                        func={this.changeItem.bind(this, "time_stage_1")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 3,
+                      }}
+                      style={
+                        !this.props.acces?.time_stage_2_edit && !this.props.acces?.time_stage_2_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Время на 2 этап MM:SS"
+                        value={this.state.time_stage_2}
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.time_stage_2_edit}
+                        func={this.changeItem.bind(this, "time_stage_2")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 3,
+                      }}
+                      style={
+                        !this.props.acces?.time_stage_3_edit && !this.props.acces?.time_stage_3_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Время на 3 этап MM:SS"
+                        value={this.state.time_stage_3}
+                        disabled={method !== "Новое блюдо" && !this.props.acces?.time_stage_3_edit}
+                        func={this.changeItem.bind(this, "time_stage_3")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 12,
+                      }}
+                    >
+                      <Table>
+                        <TableHead>
+                          <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                            <TableCell width="30%">Номенклатура</TableCell>
+                            <TableCell>Единица измерения</TableCell>
+                            <TableCell>Брутто</TableCell>
+                            <TableCell>% потери при ХО</TableCell>
+                            <TableCell>Нетто</TableCell>
+                            <TableCell>% потери при ГО</TableCell>
+                            <TableCell>Выход</TableCell>
+                            <TableCell>Этапы</TableCell>
+                            <TableCell></TableCell>
+                          </TableRow>
+                          <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                            <TableCell colSpan={9}>Заготовки</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {this.state.items_stage?.stage_1.map((item, key) => (
+                            <TableRow key={key}>
+                              <TableCell>
+                                <MyAutocomplite
+                                  multiple={false}
+                                  optionKey="un_id"
+                                  getOptionKey={(option) => `${option?.un_id}`}
+                                  data={this.state.items_stage?.all ?? []}
+                                  value={item.type_id}
+                                  func={this.changeItemData.bind(this, key, "stage_1")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.ei_name}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.brutto}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "brutto", key, "stage_1")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.pr_1}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "pr_1", key, "stage_1")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.netto}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.pr_2}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "pr_2", key, "stage_1")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.res}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MySelect
+                                  is_none={false}
+                                  data={stages}
+                                  value={item.stage}
+                                  func={this.changeItemSelect.bind(
+                                    this,
+                                    "stage",
+                                    key,
+                                    "stage_1",
+                                    item,
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <IconButton
+                                  onClick={this.deleteItemData.bind(this, key, "stage_1")}
+                                >
+                                  <CloseIcon />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {this.state.items_stage?.stage_2.map((item, key) => (
+                            <TableRow key={key}>
+                              <TableCell>
+                                <MyAutocomplite
+                                  optionKey="un_id"
+                                  multiple={false}
+                                  data={this.state.items_stage?.all ?? []}
+                                  value={item.type_id}
+                                  func={this.changeItemData.bind(this, key, "stage_2")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.ei_name}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.brutto}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "brutto", key, "stage_2")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.pr_1}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "pr_1", key, "stage_2")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.netto}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.pr_2}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "pr_2", key, "stage_2")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.res}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MySelect
+                                  is_none={false}
+                                  data={stages}
+                                  value={item.stage}
+                                  func={this.changeItemSelect.bind(
+                                    this,
+                                    "stage",
+                                    key,
+                                    "stage_2",
+                                    item,
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <IconButton
+                                  onClick={this.deleteItemData.bind(this, key, "stage_2")}
+                                >
+                                  <CloseIcon />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {this.state.items_stage?.stage_3.map((item, key) => (
+                            <TableRow key={key}>
+                              <TableCell>
+                                <MyAutocomplite
+                                  multiple={false}
+                                  optionKey="un_id"
+                                  data={this.state.items_stage?.all ?? []}
+                                  value={item.type_id}
+                                  func={this.changeItemData.bind(this, key, "stage_3")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.ei_name}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.brutto}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "brutto", key, "stage_3")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.pr_1}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "pr_1", key, "stage_3")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.netto}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.pr_2}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "pr_2", key, "stage_3")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.res}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MySelect
+                                  is_none={false}
+                                  data={stages}
+                                  value={item.stage}
+                                  func={this.changeItemSelect.bind(
+                                    this,
+                                    "stage",
+                                    key,
+                                    "stage_3",
+                                    item,
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <IconButton
+                                  onClick={this.deleteItemData.bind(this, key, "stage_3")}
+                                >
+                                  <CloseIcon />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {this.state.items_stage?.not_stage.map((item, key) => (
+                            <TableRow key={key}>
+                              <TableCell>
+                                <MyAutocomplite
+                                  optionKey="un_id"
+                                  multiple={false}
+                                  data={this.state.items_stage?.all ?? []}
+                                  value={item.type_id}
+                                  func={this.changeItemData.bind(this, key, "not_stage")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.ei_name}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.brutto}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "brutto", key, "not_stage")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.pr_1}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "pr_1", key, "not_stage")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.netto}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.pr_2}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "pr_2", key, "not_stage")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.res}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MySelect
+                                  is_none={false}
+                                  data={stages}
+                                  value={item.stage}
+                                  func={this.changeItemSelect.bind(
+                                    this,
+                                    "stage",
+                                    key,
+                                    "not_stage",
+                                    item,
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <IconButton
+                                  onClick={this.deleteItemData.bind(this, key, "not_stage")}
+                                >
+                                  <CloseIcon />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          <TableRow>
                             <TableCell>
                               <MyAutocomplite
                                 multiple={false}
-                                optionKey="un_id"
-                                getOptionKey={(option) => `${option?.un_id}`}
                                 data={this.state.items_stage?.all ?? []}
-                                value={item.type_id}
-                                func={this.changeItemData.bind(this, key, "stage_1")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.ei_name}
-                                disabled={true}
-                                className="disabled_input"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.brutto}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "brutto", key, "stage_1")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.pr_1}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "pr_1", key, "stage_1")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.netto}
-                                disabled={true}
-                                className="disabled_input"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.pr_2}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "pr_2", key, "stage_1")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.res}
-                                disabled={true}
-                                className="disabled_input"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MySelect
-                                is_none={false}
-                                data={stages}
-                                value={item.stage}
-                                func={this.changeItemSelect.bind(
-                                  this,
-                                  "stage",
-                                  key,
-                                  "stage_1",
-                                  item,
-                                )}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <IconButton onClick={this.deleteItemData.bind(this, key, "stage_1")}>
-                                <CloseIcon />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {this.state.items_stage?.stage_2.map((item, key) => (
-                          <TableRow key={key}>
-                            <TableCell>
-                              <MyAutocomplite
+                                disabledItemsFocusable={true}
+                                value={null}
                                 optionKey="un_id"
-                                multiple={false}
-                                data={this.state.items_stage?.all ?? []}
-                                value={item.type_id}
-                                func={this.changeItemData.bind(this, key, "stage_2")}
+                                blurOnSelect={true}
+                                autoFocus={false}
+                                func={this.chooseItem.bind(this, "stages")}
                               />
                             </TableCell>
                             <TableCell>
                               <MyTextInput
-                                value={item.ei_name}
+                                value={""}
                                 disabled={true}
-                                className="disabled_input"
                               />
                             </TableCell>
                             <TableCell>
                               <MyTextInput
-                                value={item.brutto}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "brutto", key, "stage_2")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.pr_1}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "pr_1", key, "stage_2")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.netto}
+                                value={""}
                                 disabled={true}
-                                className="disabled_input"
                               />
                             </TableCell>
                             <TableCell>
                               <MyTextInput
-                                value={item.pr_2}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "pr_2", key, "stage_2")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.res}
+                                value={""}
                                 disabled={true}
-                                className="disabled_input"
                               />
                             </TableCell>
                             <TableCell>
-                              <MySelect
-                                is_none={false}
-                                data={stages}
-                                value={item.stage}
-                                func={this.changeItemSelect.bind(
-                                  this,
-                                  "stage",
-                                  key,
-                                  "stage_2",
-                                  item,
-                                )}
+                              <MyTextInput
+                                value={""}
+                                disabled={true}
                               />
                             </TableCell>
                             <TableCell>
-                              <IconButton onClick={this.deleteItemData.bind(this, key, "stage_2")}>
-                                <CloseIcon />
-                              </IconButton>
+                              <MyTextInput
+                                value={""}
+                                disabled={true}
+                              />
                             </TableCell>
+                            <TableCell>
+                              <MyTextInput
+                                value={""}
+                                disabled={true}
+                              />
+                            </TableCell>
+                            <TableCell colSpan={2}></TableCell>
                           </TableRow>
-                        ))}
-                        {this.state.items_stage?.stage_3.map((item, key) => (
-                          <TableRow key={key}>
-                            <TableCell>
-                              <MyAutocomplite
-                                multiple={false}
-                                optionKey="un_id"
-                                data={this.state.items_stage?.all ?? []}
-                                value={item.type_id}
-                                func={this.changeItemData.bind(this, key, "stage_3")}
-                              />
-                            </TableCell>
+                          <TableRow>
+                            <TableCell colSpan={2} />
                             <TableCell>
                               <MyTextInput
-                                value={item.ei_name}
+                                value={this.state.all_w_brutto_p}
                                 disabled={true}
                                 className="disabled_input"
                               />
                             </TableCell>
+                            <TableCell colSpan={1} />
                             <TableCell>
                               <MyTextInput
-                                value={item.brutto}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "brutto", key, "stage_3")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.pr_1}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "pr_1", key, "stage_3")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.netto}
+                                value={this.state.all_w_netto_p}
                                 disabled={true}
                                 className="disabled_input"
                               />
                             </TableCell>
+                            <TableCell colSpan={1} />
                             <TableCell>
                               <MyTextInput
-                                value={item.pr_2}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "pr_2", key, "stage_3")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.res}
+                                value={this.state.all_w_p}
                                 disabled={true}
                                 className="disabled_input"
                               />
                             </TableCell>
-                            <TableCell>
-                              <MySelect
-                                is_none={false}
-                                data={stages}
-                                value={item.stage}
-                                func={this.changeItemSelect.bind(
-                                  this,
-                                  "stage",
-                                  key,
-                                  "stage_3",
-                                  item,
-                                )}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <IconButton onClick={this.deleteItemData.bind(this, key, "stage_3")}>
-                                <CloseIcon />
-                              </IconButton>
-                            </TableCell>
+                            <TableCell colSpan={2}></TableCell>
                           </TableRow>
-                        ))}
-                        {this.state.items_stage?.not_stage.map((item, key) => (
-                          <TableRow key={key}>
-                            <TableCell>
-                              <MyAutocomplite
-                                optionKey="un_id"
-                                multiple={false}
-                                data={this.state.items_stage?.all ?? []}
-                                value={item.type_id}
-                                func={this.changeItemData.bind(this, key, "not_stage")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.ei_name}
-                                disabled={true}
-                                className="disabled_input"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.brutto}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "brutto", key, "not_stage")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.pr_1}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "pr_1", key, "not_stage")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.netto}
-                                disabled={true}
-                                className="disabled_input"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.pr_2}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "pr_2", key, "not_stage")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.res}
-                                disabled={true}
-                                className="disabled_input"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MySelect
-                                is_none={false}
-                                data={stages}
-                                value={item.stage}
-                                func={this.changeItemSelect.bind(
-                                  this,
-                                  "stage",
-                                  key,
-                                  "not_stage",
-                                  item,
-                                )}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <IconButton
-                                onClick={this.deleteItemData.bind(this, key, "not_stage")}
-                              >
-                                <CloseIcon />
-                              </IconButton>
-                            </TableCell>
+                          <TableRow sx={{ "& td": { fontWeight: "bold" } }}>
+                            <TableCell>Позиции</TableCell>
+                            <TableCell></TableCell>
+                            <TableCell>Брутто</TableCell>
+                            <TableCell>% потери при ХО</TableCell>
+                            <TableCell>Нетто</TableCell>
+                            <TableCell>% потери при ГО</TableCell>
+                            <TableCell>Выход</TableCell>
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
                           </TableRow>
-                        ))}
-                        <TableRow>
-                          <TableCell>
-                            <MyAutocomplite
-                              multiple={false}
-                              data={this.state.items_stage?.all ?? []}
-                              disabledItemsFocusable={true}
-                              value={null}
-                              optionKey="un_id"
-                              blurOnSelect={true}
-                              autoFocus={false}
-                              func={this.chooseItem.bind(this, "stages")}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <MyTextInput
-                              value={""}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <MyTextInput
-                              value={""}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <MyTextInput
-                              value={""}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <MyTextInput
-                              value={""}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <MyTextInput
-                              value={""}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <MyTextInput
-                              value={""}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell colSpan={2}></TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell colSpan={2} />
-                          <TableCell>
-                            <MyTextInput
-                              value={this.state.all_w_brutto_p}
-                              disabled={true}
-                              className="disabled_input"
-                            />
-                          </TableCell>
-                          <TableCell colSpan={1} />
-                          <TableCell>
-                            <MyTextInput
-                              value={this.state.all_w_netto_p}
-                              disabled={true}
-                              className="disabled_input"
-                            />
-                          </TableCell>
-                          <TableCell colSpan={1} />
-                          <TableCell>
-                            <MyTextInput
-                              value={this.state.all_w_p}
-                              disabled={true}
-                              className="disabled_input"
-                            />
-                          </TableCell>
-                          <TableCell colSpan={2}></TableCell>
-                        </TableRow>
-                        <TableRow sx={{ "& td": { fontWeight: "bold" } }}>
-                          <TableCell>Позиции</TableCell>
-                          <TableCell></TableCell>
-                          <TableCell>Брутто</TableCell>
-                          <TableCell>% потери при ХО</TableCell>
-                          <TableCell>Нетто</TableCell>
-                          <TableCell>% потери при ГО</TableCell>
-                          <TableCell>Выход</TableCell>
-                          <TableCell></TableCell>
-                          <TableCell></TableCell>
-                        </TableRow>
-                        {this.state.item_items?.this_items.map((item, key) => (
-                          <TableRow key={key}>
+                          {this.state.item_items?.this_items.map((item, key) => (
+                            <TableRow key={key}>
+                              <TableCell colSpan={2}>
+                                <MyAutocomplite
+                                  multiple={false}
+                                  data={this.state.item_items?.all_items ?? []}
+                                  value={item.item_id}
+                                  func={this.changeItemData.bind(this, key, "this_items")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.brutto}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "brutto", key, "this_items")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.pr_1}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "pr_1", key, "this_items")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.netto}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.pr_2}
+                                  type={"number"}
+                                  func={this.changeItemList.bind(this, "pr_2", key, "this_items")}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  value={item.res}
+                                  disabled={true}
+                                  className="disabled_input"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <IconButton
+                                  onClick={this.deleteItemData.bind(this, key, "this_items")}
+                                >
+                                  <CloseIcon />
+                                </IconButton>
+                              </TableCell>
+                              <TableCell></TableCell>
+                            </TableRow>
+                          ))}
+                          <TableRow>
                             <TableCell colSpan={2}>
                               <MyAutocomplite
                                 multiple={false}
                                 data={this.state.item_items?.all_items ?? []}
-                                value={item.item_id}
-                                func={this.changeItemData.bind(this, key, "this_items")}
+                                disabledItemsFocusable={true}
+                                value={null}
+                                blurOnSelect={true}
+                                autoFocus={false}
+                                func={this.chooseItem.bind(this, "items")}
                               />
                             </TableCell>
                             <TableCell>
                               <MyTextInput
-                                value={item.brutto}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "brutto", key, "this_items")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.pr_1}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "pr_1", key, "this_items")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.netto}
+                                value={""}
                                 disabled={true}
-                                className="disabled_input"
                               />
                             </TableCell>
                             <TableCell>
                               <MyTextInput
-                                value={item.pr_2}
-                                type={"number"}
-                                func={this.changeItemList.bind(this, "pr_2", key, "this_items")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyTextInput
-                                value={item.res}
+                                value={""}
                                 disabled={true}
-                                className="disabled_input"
                               />
                             </TableCell>
                             <TableCell>
-                              <IconButton
-                                onClick={this.deleteItemData.bind(this, key, "this_items")}
-                              >
-                                <CloseIcon />
-                              </IconButton>
+                              <MyTextInput
+                                value={""}
+                                disabled={true}
+                              />
                             </TableCell>
-                            <TableCell></TableCell>
+                            <TableCell>
+                              <MyTextInput
+                                value={""}
+                                disabled={true}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <MyTextInput
+                                value={""}
+                                disabled={true}
+                              />
+                            </TableCell>
+                            <TableCell colSpan={2}></TableCell>
                           </TableRow>
-                        ))}
-                        <TableRow>
-                          <TableCell colSpan={2}>
-                            <MyAutocomplite
-                              multiple={false}
-                              data={this.state.item_items?.all_items ?? []}
-                              disabledItemsFocusable={true}
-                              value={null}
-                              blurOnSelect={true}
-                              autoFocus={false}
-                              func={this.chooseItem.bind(this, "items")}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <MyTextInput
-                              value={""}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <MyTextInput
-                              value={""}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <MyTextInput
-                              value={""}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <MyTextInput
-                              value={""}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <MyTextInput
-                              value={""}
-                              disabled={true}
-                            />
-                          </TableCell>
-                          <TableCell colSpan={2}></TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell colSpan={2} />
-                          <TableCell>
-                            <MyTextInput
-                              value={this.state.all_w_brutto}
-                              disabled={true}
-                              className="disabled_input"
-                            />
-                          </TableCell>
-                          <TableCell colSpan={1} />
-                          <TableCell>
-                            <MyTextInput
-                              value={this.state.all_w_netto}
-                              disabled={true}
-                              className="disabled_input"
-                            />
-                          </TableCell>
-                          <TableCell colSpan={1} />
-                          <TableCell>
-                            <MyTextInput
-                              value={this.state.all_w}
-                              disabled={true}
-                              className="disabled_input"
-                            />
-                          </TableCell>
-                          <TableCell colSpan={2}></TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
+                          <TableRow>
+                            <TableCell colSpan={2} />
+                            <TableCell>
+                              <MyTextInput
+                                value={this.state.all_w_brutto}
+                                disabled={true}
+                                className="disabled_input"
+                              />
+                            </TableCell>
+                            <TableCell colSpan={1} />
+                            <TableCell>
+                              <MyTextInput
+                                value={this.state.all_w_netto}
+                                disabled={true}
+                                className="disabled_input"
+                              />
+                            </TableCell>
+                            <TableCell colSpan={1} />
+                            <TableCell>
+                              <MyTextInput
+                                value={this.state.all_w}
+                                disabled={true}
+                                className="disabled_input"
+                              />
+                            </TableCell>
+                            <TableCell colSpan={2}></TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </Grid>
                   </Grid>
-                </>
-              ) : null}
-            </Grid>
+                </TabPanel>
+              </TabContext>
+              <Grid
+                size={{
+                  xs: 12,
+                }}
+              >
+                <Grid
+                  container
+                  spacing={3}
+                  style={{
+                    display: this.state.activeTab === "0" ? "block" : "none",
+                  }}
+                >
+                  <Grid
+                    size={{
+                      xs: 12,
+                    }}
+                  >
+                    <Typography>
+                      Картинка соотношением сторон (1:1) (пример: 2000х2000) только JPG
+                    </Typography>
+                  </Grid>
+                  {this.state.img_app.length > 0 ? (
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 12,
+                      }}
+                    >
+                      <img
+                        style={{ maxHeight: 400, maxWidth: 800 }}
+                        src={`https://storage.yandexcloud.net/site-home-img/${this.state?.img_app.toLowerCase()}site_items_2000x2000.jpg`}
+                      />
+                    </Grid>
+                  ) : null}
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                    }}
+                    style={{
+                      display: this.state.activeTab === "0" ? "block" : "none",
+                    }}
+                  >
+                    <div
+                      className="dropzone"
+                      id="for_img_edit_new"
+                      ref={this.dropzoneRef}
+                      style={{
+                        width: "100%",
+                        minHeight: 150,
+                        ...(!this.props.acces?.dropzone_edit
+                          ? {
+                              pointerEvents: "none",
+                              cursor: "not-allowed",
+                              filter: "grayscale(50%)",
+                            }
+                          : {}),
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </Grid>
+            </>
           </DialogContent>
           <DialogActions>
             <Button
