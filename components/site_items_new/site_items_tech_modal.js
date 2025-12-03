@@ -122,20 +122,6 @@ export class SiteItemsModalTech extends React.Component {
 
   setupDropzoneEvents() {
     if (!this.myDropzone) return;
-
-    this.myDropzone.on("sending", (file, xhr, data) => {
-      if (!this.props.item) return;
-
-      let file_type = file.name.split(".");
-      file_type = file_type[file_type.length - 1];
-      file_type = file_type.toLowerCase();
-
-      data.append("type", "site_items");
-      data.append("name", this.props.item.name + "site_items");
-      data.append("login", localStorage.getItem("token"));
-      data.append("id", this.props.item.id);
-    });
-
     this.myDropzone.on("queuecomplete", (data) => {
       var check_img = false;
 
@@ -148,7 +134,6 @@ export class SiteItemsModalTech extends React.Component {
       if (!check_img) {
         setTimeout(() => {
           this.onClose(true);
-          this.props.update();
         }, 1000);
       }
 
@@ -602,51 +587,61 @@ export class SiteItemsModalTech extends React.Component {
       item_items: new_obj_item_items,
     };
 
-    if (this.myDropzone && this.myDropzone["files"]?.length > 0) {
-      if (this.myDropzone["files"].length > 0 && this.isInit === false) {
-        this.isInit = true;
+    const resp = this.props.save(data);
+    let idGet = 0;
+    if (resp.id && resp.st) {
+      idGet = resp.id;
+    }
+    resp.then((data) => {
+      let idGet = 0;
+      if (data.id && data.st) {
+        idGet = data.id;
+      }
+      if (
+        this.myDropzone &&
+        this.myDropzone["files"]?.length > 0 &&
+        (this.props.item.id || idGet)
+      ) {
+        if (this.myDropzone["files"].length > 0 && this.isInit === false) {
+          this.isInit = true;
 
-        let name = this.props.item.name,
-          id = this.props.item.id;
+          let name = this.state.name,
+            id = this.props.item.id ? this.props.item.id : idGet;
+          this.myDropzone.on("sending", (file, xhr, data) => {
+            let file_type = file.name.split(".");
+            file_type = file_type[file_type.length - 1];
+            file_type = file_type.toLowerCase();
 
-        this.myDropzone.on("sending", (file, xhr, data) => {
-          let file_type = file.name.split(".");
-          file_type = file_type[file_type.length - 1];
-          file_type = file_type.toLowerCase();
-
-          data.append("type", "site_items");
-          data.append("name", name + "site_items");
-          data.append("login", localStorage.getItem("token"));
-          data.append("id", id);
-        });
-
-        this.myDropzone.on("queuecomplete", (data) => {
-          var check_img = false;
-
-          this.myDropzone["files"].map((item, key) => {
-            if (item["status"] == "error") {
-              check_img = true;
-            }
+            data.append("type", "site_items");
+            data.append("name", name + "site_items");
+            data.append("login", localStorage.getItem("token"));
+            data.append("id", id);
           });
 
-          if (!check_img) {
-            setTimeout(() => {
-              this.onClose(true);
-              this.props.update();
-            }, 1000);
-          }
+          this.myDropzone.on("queuecomplete", (data) => {
+            var check_img = false;
 
-          this.isInit = false;
-        });
+            this.myDropzone["files"].map((item, key) => {
+              if (item["status"] == "error") {
+                check_img = true;
+              }
+            });
+
+            if (!check_img) {
+              setTimeout(() => {
+                this.onClose(true);
+              }, 1000);
+            }
+
+            this.isInit = false;
+          });
+        }
+
+        this.myDropzone.processQueue();
+      } else {
+        this.onClose(true);
       }
-
-      this.myDropzone.processQueue();
-    } else {
-      this.onClose(true);
-      this.props.update();
-    }
-
-    this.props.save(data);
+    });
   }
 
   openNewTag() {
@@ -976,6 +971,8 @@ export class SiteItemsModalTech extends React.Component {
                     >
                       <MyTextInput
                         label="Кусочков или размер"
+                        type="number"
+                        onWheel={(e) => e.target.blur()}
                         disabled={method !== "Новое блюдо" && !this.props.acces?.count_part_edit}
                         value={this.state.count_part}
                         func={this.changeItem.bind(this, "count_part")}
@@ -994,6 +991,8 @@ export class SiteItemsModalTech extends React.Component {
                     >
                       <MyTextInput
                         label="Вес"
+                        type="number"
+                        onWheel={(e) => e.target.blur()}
                         value={this.state.weight}
                         disabled={method !== "Новое блюдо" && !this.props.acces?.weight_edit}
                         func={this.changeItem.bind(this, "weight")}

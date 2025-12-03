@@ -2314,7 +2314,7 @@ class SiteItems_ extends React.Component {
           this.setState({
             is_load: false,
           });
-        }, 500);
+        }, 750);
       });
 
     return res;
@@ -2633,6 +2633,7 @@ class SiteItems_ extends React.Component {
         err_text: res.text,
       });
     }
+    return res;
   }
 
   async openHistoryMark(id, method) {
