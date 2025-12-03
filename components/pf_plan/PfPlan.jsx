@@ -3,6 +3,7 @@
 import {
   Backdrop,
   Button,
+  CircularProgress,
   Grid,
   Table,
   TableBody,
@@ -17,11 +18,12 @@ import { api_laravel } from "@/src/api_new";
 import { useEffect, useMemo } from "react";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
-import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
+import { MyAutocomplite, MyWeekPicker } from "@/ui/Forms";
 import dayjs from "dayjs";
+import { formatNumber } from "@/src/helpers/utils/i18n";
 
 export default function PfPlan() {
-  const { module, module_name, isLoading, allPoints, point, dateStart, dateEnd, stats, allPfs } =
+  const { module, module_name, isLoading, allPoints, point, week, stats, allPfs } =
     usePfPlanStore();
   const setState = usePfPlanStore.setState;
 
@@ -68,19 +70,23 @@ export default function PfPlan() {
   };
 
   const getPfPlanData = async () => {
+    const { point, week } = usePfPlanStore.getState();
+    if (!point) return showAlert("Не выбрано кафе");
+    if (!week) return showAlert("Выбери неделю");
     try {
       const payload = {
         point,
         date_start: dayjs("2025-11-01").format("YYYY-MM-DD"),
         date_end: dayjs("2025-11-07").format("YYYY-MM-DD"),
-        // date_start: dayjs(dateStart).format("YYYY-MM-DD"),
-        // date_end: dayjs(dateEnd).format("YYYY-MM-DD"),
+        // date_start: dayjs(week?.weekStart).format("YYYY-MM-DD"),
+        // date_end: dayjs(week?.weekEnd).format("YYYY-MM-DD"),
       };
       const data = await getData("get_data", payload);
       if (!data?.st) {
         return showAlert(data?.text || "Ошибка загрузки данных плана");
       }
       setState({ stats: data.stats, allPfs: data.all_pf });
+      // showAlert("Данные успешно загружены", true);
     } catch (e) {
       showAlert(e.message || "Ошибка сервера");
     }
@@ -92,12 +98,17 @@ export default function PfPlan() {
 
   return (
     <>
-      <Backdrop open={isLoading} />
+      <Backdrop
+        open={isLoading}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 10 }}
+      >
+        <CircularProgress />
+      </Backdrop>
       <MyAlert
-        open={isAlert}
+        isOpen={isAlert}
         onClose={closeAlert}
         status={alertStatus}
-        message={alertMessage}
+        text={alertMessage}
       />
       <Grid
         container
@@ -124,22 +135,17 @@ export default function PfPlan() {
             sm: 3,
           }}
         >
-          <MyDatePickerNew
-            label="Дата от"
-            value={dateStart}
-            func={(v) => setState({ dateStart: dayjs(v) })}
-          />
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            sm: 3,
-          }}
-        >
-          <MyDatePickerNew
-            label="Дата до"
-            value={dateEnd}
-            func={(v) => setState({ dateEnd: dayjs(v) })}
+          <MyWeekPicker
+            value={week?.weekStart || null}
+            onChange={(r) => {
+              setState({
+                week: {
+                  weekStart: r.weekStart,
+                  weekEnd: r.weekEnd,
+                  weekNumber: r.weekNumber,
+                },
+              });
+            }}
           />
         </Grid>
         <Grid
@@ -183,7 +189,7 @@ export default function PfPlan() {
                     return (
                       <TableRow key={pfId}>
                         <TableCell>
-                          {pf?.name ?? ""}({pf?.id})
+                          {pf?.name ?? pf?.name2 ?? "НЕТ НАЗВАНИЯ"}(ID: {pf?.id || pfId})
                         </TableCell>
 
                         {weekDays.map((date) => {
@@ -192,19 +198,21 @@ export default function PfPlan() {
 
                           return (
                             <TableCell key={date}>
-                              {fv}
+                              {formatNumber(fv, 0, 2)}
                               {av !== undefined && (
-                                <span style={{ color: "#8a8a8a", marginLeft: 4 }}>({av})</span>
+                                <span style={{ color: "#8a8a8a", marginLeft: 4 }}>
+                                  ({formatNumber(av, 0, 2)})
+                                </span>
                               )}
                             </TableCell>
                           );
                         })}
 
                         <TableCell>
-                          {f.weekly_total}
+                          {formatNumber(f.weekly_total, 0, 2)}
                           {a?.weekly_total !== undefined && (
                             <span style={{ color: "#8a8a8a", marginLeft: 4 }}>
-                              ({a.weekly_total})
+                              ({formatNumber(a.weekly_total, 0, 2)})
                             </span>
                           )}
                         </TableCell>

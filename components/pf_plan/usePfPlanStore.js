@@ -12,8 +12,13 @@ const usePfPlanStore = create((set) => ({
   allPoints: [],
   point: null,
 
-  dateStart: formatDate(),
-  dateEnd: formatDate(),
+  // dateStart: formatDate(),
+  // dateEnd: formatDate(),
+  week: {
+    weekStart: formatDate(),
+    weekEnd: formatDate(),
+    weekNumber: 1,
+  },
 
   stats: [],
   allPfs: [],
