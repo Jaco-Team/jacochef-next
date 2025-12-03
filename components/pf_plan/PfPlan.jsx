@@ -168,7 +168,7 @@ export default function PfPlan() {
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell>ПФ</TableCell>
+                  <TableCell style={{ minidth: "25%" }}>ПФ</TableCell>
                   <TableCell>Пн.</TableCell>
                   <TableCell>Вт.</TableCell>
                   <TableCell>Ср.</TableCell>
@@ -182,14 +182,15 @@ export default function PfPlan() {
 
               <TableBody>
                 {stats?.forecast &&
-                  Object.entries(stats.forecast).map(([pfId, f]) => {
+                  stats.forecast.map((f) => {
+                    const pfId = f.id;
                     const pf = allPfs?.find((p) => +p.id === +pfId);
-                    const a = stats.actual[pfId]; // may be undefined
+                    const a = stats.actual?.find((item) => +item.id === +pfId);
 
                     return (
                       <TableRow key={pfId}>
                         <TableCell>
-                          {pf?.name ?? pf?.name2 ?? "НЕТ НАЗВАНИЯ"}(ID: {pf?.id || pfId})
+                          {pf?.name ?? "НЕТ НАЗВАНИЯ"} {` ${pf?.ed_izmer_name}`}
                         </TableCell>
 
                         {weekDays.map((date) => {
