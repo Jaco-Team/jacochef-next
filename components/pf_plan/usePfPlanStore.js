@@ -21,6 +21,7 @@ const usePfPlanStore = create((set) => ({
   },
 
   stats: [],
+  stats2: [],
   allPfs: [],
 
   // actions

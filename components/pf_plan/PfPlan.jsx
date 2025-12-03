@@ -11,11 +11,13 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import usePfPlanStore from "./usePfPlanStore";
 import { api_laravel } from "@/src/api_new";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
 import { MyAutocomplite, MyWeekPicker } from "@/ui/Forms";
@@ -23,7 +25,7 @@ import dayjs from "dayjs";
 import { formatNumber } from "@/src/helpers/utils/i18n";
 
 export default function PfPlan() {
-  const { module, module_name, isLoading, allPoints, point, week, stats, allPfs } =
+  const { module, module_name, isLoading, allPoints, point, week, stats, stats2, allPfs } =
     usePfPlanStore();
   const setState = usePfPlanStore.setState;
 
@@ -76,21 +78,24 @@ export default function PfPlan() {
     try {
       const payload = {
         point,
-        date_start: dayjs("2025-11-01").format("YYYY-MM-DD"),
-        date_end: dayjs("2025-11-07").format("YYYY-MM-DD"),
-        // date_start: dayjs(week?.weekStart).format("YYYY-MM-DD"),
-        // date_end: dayjs(week?.weekEnd).format("YYYY-MM-DD"),
+        // date_start: dayjs("2025-11-01").format("YYYY-MM-DD"),
+        // date_end: dayjs("2025-11-07").format("YYYY-MM-DD"),
+        date_start: dayjs(week?.weekStart).format("YYYY-MM-DD"),
+        date_end: dayjs(week?.weekEnd).format("YYYY-MM-DD"),
       };
       const data = await getData("get_data", payload);
       if (!data?.st) {
         return showAlert(data?.text || "Ошибка загрузки данных плана");
       }
-      setState({ stats: data.stats, allPfs: data.all_pf });
+      setState({ stats: data.stats, stats2: data.stats2, allPfs: data.all_pf });
       // showAlert("Данные успешно загружены", true);
     } catch (e) {
       showAlert(e.message || "Ошибка сервера");
     }
   };
+
+  const [statType, setStatType] = useState("MA");
+  const currentStat = useMemo(() => (statType === "MA" ? stats : stats2), [statType, stats]);
 
   useEffect(() => {
     getBaseData();
@@ -164,11 +169,27 @@ export default function PfPlan() {
         </Grid>
         <Grid size={12}>
           <Typography variant="h6">Данные плана по кафе {point?.name || ""}</Typography>
+          <ToggleButtonGroup>
+            <ToggleButton
+              value="MA"
+              selected={statType === "MA"}
+              onChange={() => setStatType("MA")}
+            >
+              Плавающее среднее
+            </ToggleButton>
+            <ToggleButton
+              value="BA"
+              selected={statType === "BA"}
+              onChange={() => setStatType("BA")}
+            >
+              АППГ + тренд
+            </ToggleButton>
+          </ToggleButtonGroup>
           <TableContainer sx={{ maxHeight: "65dvh" }}>
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell style={{ minidth: "25%" }}>ПФ</TableCell>
+                  <TableCell style={{ minWidth: "25%" }}>ПФ</TableCell>
                   <TableCell>Пн.</TableCell>
                   <TableCell>Вт.</TableCell>
                   <TableCell>Ср.</TableCell>
@@ -181,16 +202,16 @@ export default function PfPlan() {
               </TableHead>
 
               <TableBody>
-                {stats?.forecast &&
-                  stats.forecast.map((f) => {
+                {currentStat?.forecast &&
+                  currentStat.forecast.map((f) => {
                     const pfId = f.id;
                     const pf = allPfs?.find((p) => +p.id === +pfId);
-                    const a = stats.actual?.find((item) => +item.id === +pfId);
+                    const a = currentStat?.actual?.find((item) => +item.id === +pfId);
 
                     return (
                       <TableRow key={pfId}>
                         <TableCell>
-                          {pf?.name ?? "НЕТ НАЗВАНИЯ"} {` ${pf?.ed_izmer_name}`}
+                          {pf?.name ?? "НЕТ НАЗВАНИЯ"} {`, ${pf?.ed_izmer_name}`}
                         </TableCell>
 
                         {weekDays.map((date) => {
