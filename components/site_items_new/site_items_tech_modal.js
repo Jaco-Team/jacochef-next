@@ -78,6 +78,7 @@ export class SiteItemsModalTech extends React.Component {
       items_stage: null,
       item_items: null,
       tmp_desc: "",
+      short_name: "",
       marc_desc: "",
       marc_desc_full: "",
       is_hit: "0",
@@ -179,6 +180,7 @@ export class SiteItemsModalTech extends React.Component {
         item_items: this.props.item_items || null,
         tmp_desc: this.props.item?.tmp_desc || "",
         marc_desc: this.props.item?.marc_desc || "",
+        short_name: this.props.item?.short_name || "",
         marc_desc_full: this.props.item?.marc_desc_full || "",
         is_hit: parseInt(this.props.item?.is_hit) ? 1 : 0,
         is_new: parseInt(this.props.item?.is_new) ? 1 : 0,
@@ -191,15 +193,14 @@ export class SiteItemsModalTech extends React.Component {
       setTimeout(() => {
         if (this.dropzoneRef.current) {
           this.initDropzone();
+          this.recalculateWeights();
         }
       }, 300);
-
-      this.recalculateWeights();
     }
   }
 
   changeItem(type, event, data) {
-    if (type === "marc_desc") {
+    if (type === "short_name") {
       const value = event.target.value;
 
       // Проверяем ограничение в 20 символов
@@ -534,7 +535,7 @@ export class SiteItemsModalTech extends React.Component {
       return;
     }
 
-    if (this.state.name.length > 20 && !this.state.marc_desc.length) {
+    if (this.state.name.length > 20 && !this.state.short_name.length) {
       this.setState({
         openAlert: true,
         err_status: false,
@@ -557,6 +558,7 @@ export class SiteItemsModalTech extends React.Component {
       tmp_desc: this.state.tmp_desc,
       marc_desc: this.state.marc_desc,
       marc_desc_full: this.state.marc_desc_full,
+      short_name: this.state.short_name,
       is_hit: this.state.is_hit,
       is_new: this.state.is_new,
       show_program: this.state.show_program,
@@ -680,6 +682,7 @@ export class SiteItemsModalTech extends React.Component {
       item_items: null,
       tmp_desc: "",
       marc_desc: "",
+      short_name: "",
       marc_desc_full: "",
       is_hit: "0",
       is_new: "0",
@@ -858,17 +861,17 @@ export class SiteItemsModalTech extends React.Component {
                         sm: 4,
                       }}
                       style={
-                        !this.props.acces?.marc_desc_edit && !this.props.acces?.marc_desc_view
+                        !this.props.acces?.short_name_edit && !this.props.acces?.short_name_view
                           ? { display: "none" }
                           : {}
                       }
                     >
                       <MyTextInput
                         label="Короткое название (20 символов)"
-                        value={this.state.marc_desc}
+                        value={this.state.short_name}
                         maxLength={20}
-                        disabled={!this.props.acces?.marc_desc_edit}
-                        func={this.changeItem.bind(this, "marc_desc")}
+                        disabled={!this.props.acces?.short_name_edit}
+                        func={this.changeItem.bind(this, "short_name")}
                         multiline={true}
                         maxRows={3}
                       />
@@ -1107,6 +1110,27 @@ export class SiteItemsModalTech extends React.Component {
                         maxRows={3}
                       />
                     </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 12,
+                      }}
+                      style={
+                        !this.props.acces?.marc_desc_edit && !this.props.acces?.marc_desc_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyTextInput
+                        label="Короткое описание (в списке)"
+                        value={this.state.marc_desc}
+                        maxLength={20}
+                        disabled={!this.props.acces?.marc_desc_edit}
+                        func={this.changeItem.bind(this, "marc_desc")}
+                        multiline={true}
+                        maxRows={3}
+                      />
+                    </Grid>
                   </Grid>
                 </TabPanel>
                 <TabPanel value="3">
@@ -1237,24 +1261,24 @@ export class SiteItemsModalTech extends React.Component {
                         func={this.changeItemChecked.bind(this, "show_site")}
                       />
                     </Grid>
-                    {/*<Grid
-                    size={{
-                      xs: 12,
-                      sm: 4,
-                    }}
-                    style={
-                      !this.props.acces?.show_program_edit && !this.props.acces?.show_program_view
-                        ? { display: "none" }
-                        : {}
-                    }
-                  >
-                    <MyCheckBox
-                      label="На кассе"
-                      value={parseInt(this.state.show_program) == 1 ? true : false}
-                      disabled={!this.props.acces?.show_program_edit}
-                      func={this.changeItemChecked.bind(this, "show_program")}
-                    />
-                  </Grid>*/}
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                      style={
+                        !this.props.acces?.show_program_edit && !this.props.acces?.show_program_view
+                          ? { display: "none" }
+                          : {}
+                      }
+                    >
+                      <MyCheckBox
+                        label="На кассе"
+                        value={parseInt(this.state.show_program) == 1 ? true : false}
+                        disabled={!this.props.acces?.show_program_edit}
+                        func={this.changeItemChecked.bind(this, "show_program")}
+                      />
+                    </Grid>
                   </Grid>
                 </TabPanel>
                 <TabPanel value="5">
@@ -1895,8 +1919,17 @@ export class SiteItemsModalTech extends React.Component {
                       }}
                     >
                       <img
-                        style={{ maxHeight: 400, maxWidth: 800 }}
                         src={`https://storage.yandexcloud.net/site-home-img/${this.state?.img_app.toLowerCase()}site_items_2000x2000.jpg`}
+                        alt="Изображение"
+                        style={{
+                          width: "100%",
+                          height: "auto",
+                          maxWidth: "800px",
+                          maxHeight: "400px",
+                          objectFit: "inherit",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                        }}
                       />
                     </Grid>
                   ) : null}
