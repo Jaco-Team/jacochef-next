@@ -738,19 +738,26 @@ class SkladItemsModule_Modal extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    //console.log(this.props);
-
     if (!this.props) {
       return;
     }
 
     if (this.props !== prevProps) {
-      this.setState({
-        itemEdit: this.props.event,
-        openAlert: false,
-        err_status: false,
-        err_text: "",
-      });
+      const currentStorages = this.state.itemEdit ? this.state.itemEdit.this_storages : [];
+
+      if (this.props.event) {
+        const newItemEdit = {
+          ...this.props.event,
+          this_storages: this.props.event.this_storages || currentStorages,
+        };
+
+        this.setState({
+          itemEdit: newItemEdit,
+          openAlert: false,
+          err_status: false,
+          err_text: "",
+        });
+      }
     }
   }
 
@@ -778,7 +785,7 @@ class SkladItemsModule_Modal extends React.Component {
       my_allergens_other,
       app_id,
     } = item.item;
-
+    console.log(item.item);
     let { this_storages } = item;
     if (
       (!name ||
@@ -787,7 +794,6 @@ class SkladItemsModule_Modal extends React.Component {
         !name_for_vendor ||
         !pq ||
         !art ||
-        !pf_id ||
         !my_allergens.length ||
         !my_allergens_other.length ||
         !this_storages.length) &&
@@ -1138,29 +1144,6 @@ class SkladItemsModule_Modal extends React.Component {
                 }}
                 style={
                   this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.pf_list_edit &&
-                  !this.props.acces?.pf_list_view
-                    ? { display: "none" }
-                    : {}
-                }
-              >
-                <MyTextInput
-                  label="Состав"
-                  value={this.state.itemEdit ? this.state.itemEdit.item.pf_id : ""}
-                  disabled={
-                    this.props.method === "Редактирование товара" && !this.props.acces?.pf_list_edit
-                  }
-                  func={this.changeItem.bind(this, "pf_id")}
-                />
-              </Grid>
-
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
-                style={
-                  this.props.method === "Редактирование товара" &&
                   !this.props.acces?.allergens_edit &&
                   !this.props.acces?.allergens_view
                     ? { display: "none" }
@@ -1482,6 +1465,9 @@ class SkladItemsModule_ extends React.Component {
     const res = await this.getData("get_one", data);
 
     res.item.cat_id = res.cats.find((item) => item.id === res.item.cat_id);
+    if (this.state.itemEdit && this.state.itemEdit.this_storages) {
+      res.this_storages = this.state.itemEdit.this_storages;
+    }
 
     this.setState({
       modalDialog: true,
@@ -1600,11 +1586,9 @@ class SkladItemsModule_ extends React.Component {
   }
 
   async saveNewItem(itemEdit, main_item_id = 0) {
-    const pf_id = itemEdit.item.pf_id.id;
     const cat_id = itemEdit.item.cat_id.id;
 
     const data = {
-      pf_id,
       cat_id,
       id: itemEdit.item.id,
       item: itemEdit.item,
@@ -1639,6 +1623,7 @@ class SkladItemsModule_ extends React.Component {
         operAlert: true,
         err_status: res.st,
         err_text: res.text,
+        itemEdit: itemEdit,
       });
     }
   }
@@ -1668,6 +1653,8 @@ class SkladItemsModule_ extends React.Component {
       art: itemEdit.item.art,
     };
 
+    console.log(itemEdit);
+
     let res = await this.getData("check_art", data);
 
     if (res.st === false) {
@@ -1676,6 +1663,7 @@ class SkladItemsModule_ extends React.Component {
       this.setState({
         checkArtDialog: true,
         checkArtList: res.arts,
+        itemEdit: itemEdit,
       });
     } else {
       this.saveNewItem(itemEdit);
