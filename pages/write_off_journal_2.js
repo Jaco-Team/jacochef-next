@@ -41,6 +41,9 @@ import dayjs from "dayjs";
 import moment from "moment";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import { NumericTextField } from "@/ui/Forms/MyNumericFormat";
 
 class Write_off_journal_View extends React.Component {
   constructor(props) {
@@ -142,13 +145,49 @@ class Write_off_journal_View extends React.Component {
             <Table
               stickyHeader
               aria-label="sticky table"
+              sx={{
+                width: "100%",
+                tableLayout: "fixed",
+              }}
             >
               <TableHead>
-                <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                  <TableCell style={{ width: "10%" }}>#</TableCell>
-                  <TableCell style={{ width: "20%" }}>Тип</TableCell>
-                  <TableCell style={{ width: "40%" }}>Наименование</TableCell>
-                  <TableCell style={{ width: "20%" }}>Количество</TableCell>
+                <TableRow>
+                  <TableCell
+                    sx={{
+                      width: "10%",
+                      fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
+                      padding: { xs: "8px 4px", sm: "16px" },
+                    }}
+                  >
+                    #
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: "20%",
+                      fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
+                      padding: { xs: "8px 4px", sm: "16px" },
+                    }}
+                  >
+                    Тип
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: "40%",
+                      fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
+                      padding: { xs: "8px 4px", sm: "16px" },
+                    }}
+                  >
+                    Наименование
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: "20%",
+                      fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
+                      padding: { xs: "8px 4px", sm: "16px" },
+                    }}
+                  >
+                    Кол-во
+                  </TableCell>
                 </TableRow>
               </TableHead>
 
@@ -156,7 +195,16 @@ class Write_off_journal_View extends React.Component {
                 {this.state.itemView?.items.map((it, key) => (
                   <TableRow
                     key={key}
-                    sx={{ "& td": { color: it?.color ? "#fff" : "rgba(0, 0, 0, 0.87)" } }}
+                    sx={{
+                      "& td": {
+                        color: it?.color ? "#fff" : "rgba(0, 0, 0, 0.87)",
+                        fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
+                        padding: { xs: "8px 4px", sm: "16px" },
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      },
+                    }}
                     style={{
                       backgroundColor: it?.color
                         ? it.color === "add"
@@ -165,30 +213,27 @@ class Write_off_journal_View extends React.Component {
                         : "#fff",
                     }}
                   >
-                    <TableCell>{key + 1}</TableCell>
-                    <TableCell>{it.type_name}</TableCell>
-                    <TableCell>{it.item_name}</TableCell>
-                    <TableCell>{it.value + " " + it.ei_name}</TableCell>
+                    <TableCell sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
+                      {key + 1}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
+                      {it.type_name}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                        maxWidth: "150px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {it.item_name}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
+                      {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
+                    </TableCell>
                   </TableRow>
                 ))}
-                <TableRow>
-                  <TableCell colSpan={4}>
-                    <MyTextInput
-                      label="Комментарий"
-                      value={
-                        this.state.itemView?.coment?.color
-                          ? this.state.itemView?.coment?.key
-                          : this.state.itemView?.coment
-                      }
-                      disabled={true}
-                      className={
-                        this.state.itemView?.coment?.color
-                          ? "disabled_input disabled_input_color"
-                          : "disabled_input"
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
               </TableBody>
             </Table>
           </TableContainer>
@@ -324,6 +369,7 @@ class Write_off_journal_View_Disabled extends React.Component {
             >
               <TableHead>
                 <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                  <TableCell></TableCell>
                   <TableCell style={{ width: "10%" }}>#</TableCell>
                   <TableCell style={{ width: "20%" }}>Тип</TableCell>
                   <TableCell style={{ width: "40%" }}>Наименование</TableCell>
@@ -332,17 +378,41 @@ class Write_off_journal_View_Disabled extends React.Component {
               </TableHead>
               <TableBody>
                 {this.props.itemView?.items.map((it, key) => (
-                  <TableRow
-                    key={key}
-                    sx={{ "& td": { color: it?.color ? "#fff" : "rgba(0, 0, 0, 0.87)" } }}
-                    style={{
-                      backgroundColor: it?.color
-                        ? it.color === "add"
-                          ? "rgb(255, 204, 0)"
-                          : "red"
-                        : "#fff",
-                    }}
-                  >
+                  <TableRow key={key}>
+                    <TableCell
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      {it.color === "add" ? (
+                        <AddIcon
+                          style={{
+                            color: "green",
+                            fontWeight: "bold",
+                            border: "2px solid green",
+                            borderRadius: "6px",
+                            padding: "6px",
+                          }}
+                        />
+                      ) : it.color === "edit" ? (
+                        <EditIcon
+                          style={{
+                            color: "yellow",
+                            fontWeight: "bold",
+                            border: "2px solid yellow",
+                            borderRadius: "6px",
+                            padding: "6px",
+                          }}
+                        />
+                      ) : (
+                        <RemoveIcon
+                          style={{
+                            color: "red",
+                            border: "2px solid red",
+                            borderRadius: "6px",
+                            padding: "6px",
+                          }}
+                        />
+                      )}
+                    </TableCell>
                     <TableCell>{key + 1}</TableCell>
                     <TableCell>{it.type_name}</TableCell>
                     <TableCell>{it.item_name}</TableCell>
@@ -836,11 +906,10 @@ class Write_off_journal_modal extends React.Component {
                   sm: 3,
                 }}
               >
-                <MyTextInput
-                  type="number"
+                <NumericTextField
                   label="Количество"
                   value={this.state.count}
-                  func={this.changeItem.bind(this, "count")}
+                  onChange={this.changeItem.bind(this, "count")}
                 />
               </Grid>
               <Grid
@@ -886,41 +955,131 @@ class Write_off_journal_modal extends React.Component {
                 <Divider />
               </Grid>
             </Grid>
-            <TableContainer component={Paper}>
+            <TableContainer
+              component={Paper}
+              sx={{
+                width: "100%",
+                overflow: "hidden",
+                fontSize: { xs: "12px", sm: "14px", md: "16px" },
+              }}
+            >
               <Table
                 stickyHeader
                 aria-label="sticky table"
+                size="small"
+                sx={{
+                  width: "100%",
+                  tableLayout: "fixed",
+                }}
               >
                 <TableHead>
-                  <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                    <TableCell style={{ width: "10%" }}>#</TableCell>
-                    <TableCell style={{ width: "20%" }}>Тип</TableCell>
-                    <TableCell style={{ width: "40%" }}>Наименование</TableCell>
-                    <TableCell style={{ width: "20%" }}>Количество</TableCell>
-                    <TableCell style={{ width: "10%" }}></TableCell>
+                  <TableRow
+                    sx={{
+                      "& th": {
+                        fontWeight: "bold",
+                        fontSize: "inherit",
+                        padding: { xs: "8px 4px", sm: "16px" },
+                      },
+                    }}
+                  >
+                    <TableCell sx={{ width: { xs: "15%", sm: "10%" } }}>#</TableCell>
+                    <TableCell sx={{ width: { xs: "25%", sm: "20%" } }}>Тип</TableCell>
+                    <TableCell
+                      sx={{
+                        width: { xs: "35%", sm: "40%" },
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      Наименование
+                    </TableCell>
+                    <TableCell sx={{ width: { xs: "15%", sm: "20%" } }}>Кол-во</TableCell>
+                    <TableCell sx={{ width: { xs: "5%", sm: "10%" } }}></TableCell>
                   </TableRow>
                 </TableHead>
 
                 <TableBody>
                   {this.state.writeOffItems.map((it, key) => (
                     <TableRow key={key}>
-                      <TableCell>{key + 1}</TableCell>
-                      <TableCell>{it.type_name}</TableCell>
-                      <TableCell>{it.name}</TableCell>
-                      <TableCell>{it.value + " " + it.ei_name}</TableCell>
-                      <TableCell onClick={this.deleteItem.bind(this, key)}>
-                        <IconButton style={{ cursor: "pointer" }}>
+                      <TableCell
+                        sx={{
+                          fontSize: "inherit",
+                          padding: { xs: "8px 4px", sm: "16px" },
+                        }}
+                      >
+                        {key + 1}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontSize: "inherit",
+                          padding: { xs: "8px 4px", sm: "16px" },
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {it.type_name}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontSize: "inherit",
+                          padding: { xs: "8px 4px", sm: "16px" },
+                          maxWidth: { xs: "120px", sm: "none" },
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {it.name}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          fontSize: "inherit",
+                          padding: { xs: "8px 4px", sm: "16px" },
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
+                      </TableCell>
+                      <TableCell
+                        onClick={this.deleteItem.bind(this, key)}
+                        sx={{
+                          padding: { xs: "8px 2px", sm: "16px" },
+                          textAlign: "center",
+                        }}
+                      >
+                        <IconButton
+                          size="small" // Маленькая кнопка на мобилке
+                          sx={{
+                            cursor: "pointer",
+                            padding: { xs: "4px", sm: "8px" },
+                            "& svg": {
+                              fontSize: { xs: "18px", sm: "24px" }, // Размер иконки
+                            },
+                          }}
+                        >
                           <CloseIcon />
                         </IconButton>
                       </TableCell>
                     </TableRow>
                   ))}
                   <TableRow>
-                    <TableCell colSpan={4}>
+                    <TableCell
+                      colSpan={5} // Изменил с 4 на 5, так как теперь 5 колонок
+                      sx={{
+                        padding: { xs: "8px", sm: "16px" },
+                        borderTop: "1px solid #e0e0e0",
+                      }}
+                    >
                       <MyTextInput
                         label="Комментарий"
                         value={this.state.comment}
                         func={this.changeItem.bind(this, "comment")}
+                        size="small" // Компактный размер поля ввода
+                        sx={{
+                          fontSize: "inherit", // Наследуем размер шрифта
+                          "& .MuiInputBase-input": {
+                            fontSize: { xs: "12px", sm: "14px" },
+                          },
+                        }}
                       />
                     </TableCell>
                   </TableRow>
@@ -1475,15 +1634,50 @@ class Write_off_journal_ extends React.Component {
         if (key === "items") {
           itemView.items = itemView.items
             .reduce((newList, it) => {
-              if (
-                !itemView_old.items.find(
-                  (item) =>
-                    item.type === it.type && parseInt(item.item_id) === parseInt(it.item_id),
-                )
-              ) {
+              // Находим старую запись
+              const oldItem = itemView_old.items.find(
+                (item) => item.type === it.type && parseInt(item.item_id) === parseInt(it.item_id),
+              );
+
+              if (!oldItem) {
+                // Новый элемент
                 it.color = "add";
+              } else {
+                // Сравниваем все важные поля
+                const fieldsToCompare = [
+                  "name",
+                  "price",
+                  "quantity",
+                  "status",
+                  "weight",
+                  "size",
+                  "category",
+                  "art",
+                  "is_show",
+                  "is_hit",
+                  "is_new",
+                  // добавьте другие поля, которые нужно отслеживать
+                ];
+
+                const hasChanges = fieldsToCompare.some((field) => {
+                  // Проверяем наличие поля в обоих объектах
+                  if (field in oldItem || field in it) {
+                    const oldValue = oldItem[field];
+                    const newValue = it[field];
+
+                    // Сравниваем с учетом типов
+                    return String(oldValue) !== String(newValue);
+                  }
+                  return false;
+                });
+
+                if (hasChanges) {
+                  it.color = "edit";
+                }
+                // Если нет изменений, цвет не меняем
               }
-              return (newList = [...newList, ...[it]]);
+
+              return [...newList, it];
             }, [])
             .concat(
               itemView_old.items.filter((it) => {
