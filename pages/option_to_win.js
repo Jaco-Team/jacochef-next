@@ -24,304 +24,23 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { MyTextInput, MyAutocomplite, MyCheckBox } from "@/ui/Forms";
 
 import { api, api_laravel, api_laravel_local } from "@/src/api_new";
+import ErrCats from "@/components/option_to_win/ErrCats";
+import OptionToWin_Modal from "@/components/option_to_win/OptionToWin_Modal";
+import CatsModal from "@/components/option_to_win/CatsModal";
 
-class OptionToWin_Modal extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      item: null,
-    };
-  }
-
-  componentDidUpdate(prevProps) {
-    // console.log(this.props.item);
-
-    if (!this.props.item) {
-      return;
-    }
-
-    if (this.props.item !== prevProps.item) {
-      this.setState({
-        item: this.props.item,
-      });
-    }
-  }
-
-  changeItem(data, event) {
-    const item = this.state.item;
-
-    item.err[data] = event.target.value;
-
-    this.setState({
-      item,
-    });
-  }
-
-  changeItemAutocomplite(data, event, value) {
-    const item = this.state.item;
-
-    if (this.props.mark === "newItem") {
-      item.err[data] = value;
-
-      this.setState({
-        item,
-      });
-    }
-
-    if (this.props.mark === "editItem") {
-      item[data] = value;
-
-      this.setState({
-        item,
-      });
-    }
-  }
-
-  changeItemChecked(data, event) {
-    const item = this.state.item;
-
-    item.err[data] = event.target.checked === true ? 1 : 0;
-
-    this.setState({
-      item,
-    });
-  }
-
-  save() {
-    const item = this.state.item;
-
-    if (this.props.mark === "newItem") {
-      this.props.save(item.err);
-    }
-
-    if (this.props.mark === "editItem") {
-      this.props.save(item);
-    }
-
-    this.onClose();
-  }
-
-  onClose() {
-    this.setState({
-      item: null,
-    });
-
-    this.props.onClose();
-  }
-
-  render() {
-    return (
-      <Dialog
-        open={this.props.open}
-        onClose={this.onClose.bind(this)}
-        fullScreen={this.props.fullScreen}
-        fullWidth={true}
-        maxWidth={"lg"}
-      >
-        <DialogTitle className="button">
-          {this.props.method}
-          {this.props.itemName ? `: ${this.props.itemName}` : null}
-          {this.props.fullScreen ? (
-            <IconButton
-              onClick={this.onClose.bind(this)}
-              style={{ cursor: "pointer" }}
-            >
-              <CloseIcon />
-            </IconButton>
-          ) : null}
-        </DialogTitle>
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid
-              size={{
-                xs: 12,
-                sm: 6,
-              }}
-            >
-              <MyTextInput
-                label="Наименование"
-                value={this.state.item ? this.state.item.err.name : ""}
-                func={this.changeItem.bind(this, "name")}
-              />
-            </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-                sm: 6,
-              }}
-            >
-              <MyAutocomplite
-                label="Варианты решения"
-                multiple={true}
-                data={
-                  this.state.item
-                    ? this.state.item.err_to_win
-                      ? this.state.item.err_to_win
-                      : this.state.item.all_wins
-                    : []
-                }
-                value={
-                  this.state.item
-                    ? this.state.item.this_wins
-                      ? this.state.item.this_wins
-                      : this.state.item.err.id_win
-                    : []
-                }
-                func={this.changeItemAutocomplite.bind(
-                  this,
-                  this.props.mark === "newItem" ? "id_win" : "this_wins",
-                )}
-              />
-            </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyAutocomplite
-                label="Этапы ошибки роллы"
-                multiple={true}
-                data={
-                  this.state.item
-                    ? this.state.item.all_stages
-                      ? this.state.item.all_stages
-                      : this.state.item.stages
-                    : []
-                }
-                value={
-                  this.state.item
-                    ? this.state.item.this_stages_1
-                      ? this.state.item.this_stages_1
-                      : this.state.item.err.stage_err_1
-                    : []
-                }
-                func={this.changeItemAutocomplite.bind(
-                  this,
-                  this.props.mark === "newItem" ? "stage_err_1" : "this_stages_1",
-                )}
-              />
-            </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyAutocomplite
-                label="Этапы ошибки пицца"
-                multiple={true}
-                data={
-                  this.state.item
-                    ? this.state.item.all_stages
-                      ? this.state.item.all_stages
-                      : this.state.item.stages
-                    : []
-                }
-                value={
-                  this.state.item
-                    ? this.state.item.this_stages_2
-                      ? this.state.item.this_stages_2
-                      : this.state.item.err.stage_err_2
-                    : []
-                }
-                func={this.changeItemAutocomplite.bind(
-                  this,
-                  this.props.mark === "newItem" ? "stage_err_2" : "this_stages_2",
-                )}
-              />
-            </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyAutocomplite
-                label="Этапы ошибки напитки / допы"
-                multiple={true}
-                data={
-                  this.state.item
-                    ? this.state.item.all_stages
-                      ? this.state.item.all_stages
-                      : this.state.item.stages
-                    : []
-                }
-                value={
-                  this.state.item
-                    ? this.state.item.this_stages_3
-                      ? this.state.item.this_stages_3
-                      : this.state.item.err.stage_err_3
-                    : []
-                }
-                func={this.changeItemAutocomplite.bind(
-                  this,
-                  this.props.mark === "newItem" ? "stage_err_3" : "this_stages_3",
-                )}
-              />
-            </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <MyCheckBox
-                label="Картинка"
-                value={
-                  this.state.item
-                    ? parseInt(this.state.item.err.need_photo) == 1
-                      ? true
-                      : false
-                    : false
-                }
-                func={this.changeItemChecked.bind(this, "need_photo")}
-              />
-            </Grid>
-
-            {this.props.mark === "editItem" ? (
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 3,
-                }}
-              >
-                <MyCheckBox
-                  label="Активность"
-                  value={
-                    this.state.item
-                      ? parseInt(this.state.item.err.is_active) == 1
-                        ? true
-                        : false
-                      : false
-                  }
-                  func={this.changeItemChecked.bind(this, "is_active")}
-                />
-              </Grid>
-            ) : null}
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            color="primary"
-            onClick={this.save.bind(this)}
-          >
-            Сохранить
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  }
-}
+const toCsv = (v) =>
+  !v
+    ? ""
+    : Array.isArray(v)
+      ? v
+          .map((x) => (typeof x === "object" ? x.id : x))
+          .filter(Boolean)
+          .join(",")
+      : String(v)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .join(",");
 
 class OptionToWin_ extends React.Component {
   constructor(props) {
@@ -331,6 +50,15 @@ class OptionToWin_ extends React.Component {
       module: "option_to_win",
       module_name: "",
       is_load: false,
+
+      err_cats: [],
+      site_cats: [],
+
+      modalCats: false,
+      modalCatsTitle: "",
+      catItem: null,
+      catName: "",
+      solutions: [],
 
       items: [],
 
@@ -358,6 +86,10 @@ class OptionToWin_ extends React.Component {
 
     this.setState({
       items: data.items,
+      err_cats: data.err_cats,
+      site_cats: data.site_cats,
+      solutions: data.solutions,
+      all_stages: data.all_stages,
       module_name: data.module_info.name,
     });
 
@@ -424,35 +156,85 @@ class OptionToWin_ extends React.Component {
     }, 300);
   }
 
-  async save(item) {
-    if (this.state.mark === "newItem") {
-      const data = item;
-
-      console.log(data);
-
-      await this.getData("save_new", data);
-    }
-
-    if (this.state.mark === "editItem") {
+  async saveActiveCat(id, is_active) {
+    try {
+      this.setState({ is_load: true });
       const data = {
-        id: item.err.id,
-        name: item.err.name,
-        is_active: item.err.is_active,
-        need_photo: item.err.need_photo,
-        id_win: item.this_wins,
-        stage_err_1: item.this_stages_1,
-        stage_err_2: item.this_stages_2,
-        stage_err_3: item.this_stages_3,
+        id,
+        is_active,
       };
-
-      console.log(data);
-
-      await this.getData("save_edit", data);
-    }
-
-    setTimeout(() => {
+      await this.getData("set_active_cat", data);
+    } catch (e) {
+      console.error(e.message || "Ошибка");
+    } finally {
+      this.setState({ is_load: false });
       this.update();
-    }, 300);
+    }
+  }
+
+  async save(item) {
+    try {
+      // LEGACY
+      this.setState({ is_load: true });
+      if (this.state.mark === "newItem") {
+        const data = item;
+
+        // console.log(data);
+
+        await this.getData("save_new", data);
+        return;
+      }
+
+      if (this.state.mark === "editItem") {
+        const data = {
+          id: item.err.id,
+          name: item.err.name,
+          is_active: item.err.is_active,
+          need_photo: item.err.need_photo,
+          id_win: item.this_wins,
+          stage_err_1: item.this_stages_1,
+          stage_err_2: item.this_stages_2,
+          stage_err_3: item.this_stages_3,
+        };
+
+        await this.getData("save_edit", data);
+        return;
+      }
+      // CATS
+      const type = item.id ? "editCat" : "addCat";
+      const properSiteCats = Array.isArray(item?.site_cats)
+        ? item?.site_cats?.map((c) => c.id).join(",") || null
+        : item?.site_cats;
+      const request = {
+        cat: {
+          ...item,
+          site_cats: properSiteCats,
+          stage_1: toCsv(item.stage_1),
+          stage_2: toCsv(item.stage_2),
+          stage_3: toCsv(item.stage_3),
+          solutions: toCsv(item.solutions),
+        },
+      };
+      if (type === "editCat") {
+        const res = await this.getData("update_cat", request);
+        if (!res?.st) throw new Error(res?.text || "Ошибка сохранения категории");
+      }
+      if (type === "addCat") {
+        const res = await this.getData("add_cat", request);
+        if (!res?.st) throw new Error(res?.text || "Ошибка добавления категории");
+      }
+    } catch (e) {
+      console.error(e?.message || "ERROOORRR");
+    } finally {
+      this.setState({ is_load: false, catItem: null });
+      this.update();
+    }
+  }
+
+  async changeCatActive(cat) {
+    // const alterCat = { ...cat, is_active: !cat.is_active };
+    // await this.save(alterCat);
+    await this.saveActiveCat(cat.id, !cat.is_active);
   }
 
   async update() {
@@ -460,7 +242,37 @@ class OptionToWin_ extends React.Component {
 
     this.setState({
       items: data.items,
+      err_cats: data.err_cats,
+      site_cats: data.site_cats,
     });
+  }
+
+  async openCatsModal(title, mark, id = null) {
+    const catItem = this.state.err_cats?.find((c) => +c.id === +id) || null;
+    const itemName = catItem?.name || "";
+    this.setState({
+      mark,
+      modalCats: true,
+      modalCatsTitle: title,
+      itemName,
+      catItem,
+    });
+  }
+
+  async removeErrCat(id) {
+    if (!id) return;
+    try {
+      this.setState({ is_load: true });
+      const res = await this.getData("delete_cat", { id });
+      if (!res?.st) {
+        throw new Error(res?.text || "Ошибка удаления");
+      }
+      this.update();
+    } catch (e) {
+      console.error(e.message || "Ошибка");
+    } finally {
+      this.setState({ is_load: false });
+    }
   }
 
   async openModal(mark, method, id) {
@@ -508,6 +320,7 @@ class OptionToWin_ extends React.Component {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
+
         <OptionToWin_Modal
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false, itemName: "" })}
@@ -518,18 +331,50 @@ class OptionToWin_ extends React.Component {
           save={this.save.bind(this)}
           fullScreen={this.state.fullScreen}
         />
+
+        <CatsModal
+          open={this.state.modalCats}
+          title={this.state.modalCatsTitle}
+          catName={this.state.catName}
+          errCats={this.state.err_cats}
+          siteCats={this.state.site_cats}
+          solutions={this.state.solutions}
+          allStages={this.state.all_stages}
+          item={this.state.catItem}
+          onClose={() => this.setState({ modalCats: false, catName: "" })}
+          save={this.save.bind(this)}
+          remove={this.removeErrCat.bind(this)}
+        />
         <Grid
           container
           spacing={3}
           className="container_first_child"
         >
+          <Grid size={12}>
+            <h1>{this.state.module_name}</h1>
+          </Grid>
+
           <Grid
             size={{
               xs: 12,
-              sm: 12,
+              sm: 3,
             }}
           >
-            <h1>{this.state.module_name}</h1>
+            <Button
+              onClick={this.openCatsModal.bind(this, "Новая категория", "addCat")}
+              variant="contained"
+            >
+              Добавить
+            </Button>
+          </Grid>
+
+          <Grid size={12}>
+            <ErrCats
+              errCats={this.state.err_cats}
+              siteCats={this.state.site_cats}
+              openModal={this.openCatsModal.bind(this, "Редактировать", "editCat")}
+              changeActive={this.changeCatActive.bind(this)}
+            />
           </Grid>
 
           <Grid
