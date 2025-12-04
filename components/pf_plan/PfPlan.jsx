@@ -4,7 +4,9 @@ import {
   Backdrop,
   Button,
   CircularProgress,
+  Dialog,
   Grid,
+  IconButton,
   Stack,
   Table,
   TableBody,
@@ -24,25 +26,17 @@ import MyAlert from "@/ui/MyAlert";
 import { MyAutocomplite, MyWeekPicker } from "@/ui/Forms";
 import dayjs from "dayjs";
 import { formatNumber } from "@/src/helpers/utils/i18n";
+import { ShowChart } from "@mui/icons-material";
+import dynamic from "next/dynamic";
+
+const PfWeeklyChart = dynamic(() => import("./PfWeeklyChart"), { ssr: false });
 
 export default function PfPlan() {
-  const { module, module_name, isLoading, allPoints, point, week, stats, stats2, stats3, allPfs } =
+  const { module, module_name, isLoading, allPoints, point, week, stats, chartModalOpen, allPfs } =
     usePfPlanStore();
   const setState = usePfPlanStore.setState;
 
   const { alertStatus, alertMessage, showAlert, closeAlert, isAlert } = useMyAlert();
-
-  const weekDays = useMemo(() => {
-    if (!stats?.week_start) return [];
-    return [
-      stats.week_start,
-      ...Array.from({ length: 6 }, (_, i) =>
-        dayjs(stats.week_start)
-          .add(i + 1, "day")
-          .format("YYYY-MM-DD"),
-      ),
-    ];
-  }, [stats]);
 
   const getData = async (method, payload = {}) => {
     try {
@@ -90,8 +84,6 @@ export default function PfPlan() {
       }
       setState({
         stats: data.stats,
-        stats2: data.stats2,
-        stats3: data.stats3,
         allPfs: data.all_pf,
       });
       // showAlert("Данные успешно загружены", true);
@@ -101,18 +93,47 @@ export default function PfPlan() {
   };
 
   const [statType, setStatType] = useState("MA");
+
   const currentStat = useMemo(() => {
-    switch (statType) {
-      case "MA":
-        return stats;
-      case "BA":
-        return stats2;
-      case "YY":
-        return stats3;
-      default:
-        return stats;
-    }
+    console.log(`Type ${statType}:`, stats[statType]);
+    return stats[statType] || [];
   }, [statType, stats]);
+
+  const weekDays = useMemo(() => {
+    if (!currentStat?.week_start) return [];
+    return [
+      currentStat.week_start,
+      ...Array.from({ length: 6 }, (_, i) =>
+        dayjs(currentStat.week_start)
+          .add(i + 1, "day")
+          .format("YYYY-MM-DD"),
+      ),
+    ];
+  }, [currentStat]);
+
+  const openPfWeeklyChart = async (pfId) => {
+    try {
+      setState({ isLoading: true });
+      const { chartData } = usePfPlanStore.getState();
+      if (!chartData) {
+        const request = {
+          point,
+          pf_ids: [pfId],
+          year: dayjs(week?.weekStart).format("YYYY"),
+        };
+        const res = await getData("get_chart_data", request);
+        if (!res?.st) {
+          return showAlert(res?.text || "Ошибка загрузки данных графика");
+        }
+        setState({ chartData: res.stats });
+        setState({ chartModalOpen: true, chartPfId: pfId });
+      }
+    } catch (e) {
+      showAlert(e.message || "Ошибка сервера");
+    } finally {
+      setState({ isLoading: false });
+    }
+  };
 
   useEffect(() => {
     getBaseData();
@@ -132,6 +153,12 @@ export default function PfPlan() {
         status={alertStatus}
         text={alertMessage}
       />
+      <Dialog
+        open={chartModalOpen}
+        onClose={() => setState({ chartModalOpen: false })}
+      >
+        <PfWeeklyChart />
+      </Dialog>
       <Grid
         container
         spacing={2}
@@ -192,12 +219,12 @@ export default function PfPlan() {
               selected={statType === "MA"}
               onChange={() => setStatType("MA")}
             >
-              Плавающее среднее
+              Плавающее среднее (MA)
             </ToggleButton>
             <ToggleButton
-              value="BA"
-              selected={statType === "BA"}
-              onChange={() => setStatType("BA")}
+              value="SA"
+              selected={statType === "SA"}
+              onChange={() => setStatType("SA")}
             >
               АППГ + тренд
             </ToggleButton>
@@ -207,6 +234,13 @@ export default function PfPlan() {
               onChange={() => setStatType("YY")}
             >
               52-вектор + тренд
+            </ToggleButton>
+            <ToggleButton
+              value="MAG"
+              selected={statType === "MAG"}
+              onChange={() => setStatType("MAG")}
+            >
+              MA + фактор роста
             </ToggleButton>
           </ToggleButtonGroup>
           <TableContainer sx={{ maxHeight: "65dvh" }}>
@@ -237,6 +271,12 @@ export default function PfPlan() {
                         <TableCell>
                           {pf?.name ?? "НЕТ НАЗВАНИЯ"}
                           {`, ${pf?.ed_izmer_name}`}
+                          <IconButton
+                            size="small"
+                            onClick={() => openPfWeeklyChart(pfId)}
+                          >
+                            <ShowChart fontSize="inherit" />
+                          </IconButton>
                         </TableCell>
 
                         {weekDays.map((date) => {

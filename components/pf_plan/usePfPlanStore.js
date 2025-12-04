@@ -21,8 +21,10 @@ const usePfPlanStore = create((set) => ({
   },
 
   stats: [],
-  stats2: [],
   allPfs: [],
+
+  chartModalOpen: false,
+  chartData: null,
 
   // actions
 }));
