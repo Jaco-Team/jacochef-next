@@ -5,6 +5,7 @@ import {
   Button,
   CircularProgress,
   Grid,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -25,7 +26,7 @@ import dayjs from "dayjs";
 import { formatNumber } from "@/src/helpers/utils/i18n";
 
 export default function PfPlan() {
-  const { module, module_name, isLoading, allPoints, point, week, stats, stats2, allPfs } =
+  const { module, module_name, isLoading, allPoints, point, week, stats, stats2, stats3, allPfs } =
     usePfPlanStore();
   const setState = usePfPlanStore.setState;
 
@@ -87,7 +88,12 @@ export default function PfPlan() {
       if (!data?.st) {
         return showAlert(data?.text || "Ошибка загрузки данных плана");
       }
-      setState({ stats: data.stats, stats2: data.stats2, allPfs: data.all_pf });
+      setState({
+        stats: data.stats,
+        stats2: data.stats2,
+        stats3: data.stats3,
+        allPfs: data.all_pf,
+      });
       // showAlert("Данные успешно загружены", true);
     } catch (e) {
       showAlert(e.message || "Ошибка сервера");
@@ -95,7 +101,18 @@ export default function PfPlan() {
   };
 
   const [statType, setStatType] = useState("MA");
-  const currentStat = useMemo(() => (statType === "MA" ? stats : stats2), [statType, stats]);
+  const currentStat = useMemo(() => {
+    switch (statType) {
+      case "MA":
+        return stats;
+      case "BA":
+        return stats2;
+      case "YY":
+        return stats3;
+      default:
+        return stats;
+    }
+  }, [statType, stats]);
 
   useEffect(() => {
     getBaseData();
@@ -184,19 +201,26 @@ export default function PfPlan() {
             >
               АППГ + тренд
             </ToggleButton>
+            <ToggleButton
+              value="YY"
+              selected={statType === "YY"}
+              onChange={() => setStatType("YY")}
+            >
+              52-вектор + тренд
+            </ToggleButton>
           </ToggleButtonGroup>
           <TableContainer sx={{ maxHeight: "65dvh" }}>
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell style={{ minWidth: "25%" }}>ПФ</TableCell>
-                  <TableCell>Пн.</TableCell>
-                  <TableCell>Вт.</TableCell>
-                  <TableCell>Ср.</TableCell>
-                  <TableCell>Чт.</TableCell>
-                  <TableCell>Пт.</TableCell>
-                  <TableCell>Сб.</TableCell>
-                  <TableCell>Вс.</TableCell>
+                  <TableCell sx={{ textAlign: "center" }}>Пн.</TableCell>
+                  <TableCell sx={{ textAlign: "center" }}>Вт.</TableCell>
+                  <TableCell sx={{ textAlign: "center" }}>Ср.</TableCell>
+                  <TableCell sx={{ textAlign: "center" }}>Чт.</TableCell>
+                  <TableCell sx={{ textAlign: "center" }}>Пт.</TableCell>
+                  <TableCell sx={{ textAlign: "center" }}>Сб.</TableCell>
+                  <TableCell sx={{ textAlign: "center" }}>Вс.</TableCell>
                   <TableCell>Неделя</TableCell>
                 </TableRow>
               </TableHead>
@@ -211,7 +235,8 @@ export default function PfPlan() {
                     return (
                       <TableRow key={pfId}>
                         <TableCell>
-                          {pf?.name ?? "НЕТ НАЗВАНИЯ"} {`, ${pf?.ed_izmer_name}`}
+                          {pf?.name ?? "НЕТ НАЗВАНИЯ"}
+                          {`, ${pf?.ed_izmer_name}`}
                         </TableCell>
 
                         {weekDays.map((date) => {
@@ -220,12 +245,14 @@ export default function PfPlan() {
 
                           return (
                             <TableCell key={date}>
-                              {formatNumber(fv, 0, 2)}
-                              {av !== undefined && (
-                                <span style={{ color: "#8a8a8a", marginLeft: 4 }}>
-                                  ({formatNumber(av, 0, 2)})
-                                </span>
-                              )}
+                              <Stack alignItems={"center"}>
+                                <span style={{ fontWeight: 500 }}>{formatNumber(fv, 0, 2)}</span>
+                                {av !== undefined && (
+                                  <span style={{ color: "#8a8a8a", marginLeft: 4 }}>
+                                    ({formatNumber(av, 0, 2)})
+                                  </span>
+                                )}
+                              </Stack>
                             </TableCell>
                           );
                         })}
