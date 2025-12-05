@@ -1657,14 +1657,17 @@ class ReceptModule_Table extends React.Component {
                             <EditNoteIcon />
                           </TableCell>
                           <TableCell>
-                            <IconButton
-                              onClick={() =>
-                                this.setState({ type, itemId: item.id, openChange: true })
-                              }
-                              style={{ cursor: "pointer" }}
-                            >
-                              <SwapIcon />
-                            </IconButton>
+                            {acces?.change_rec_pf_access ? (
+                              <IconButton
+                                title={`Смена на ${type === "rec" ? "полуфабрикат" : "рецепт"}`}
+                                onClick={() =>
+                                  this.setState({ type, itemId: item.id, openChange: true })
+                                }
+                                style={{ cursor: "pointer" }}
+                              >
+                                <SwapIcon />
+                              </IconButton>
+                            ) : null}
                           </TableCell>
                         </TableRow>
                       ))}
