@@ -42,7 +42,7 @@ export class SiteItemsModalTech extends React.Component {
     parallelUploads: 10,
     acceptedFiles: "image/jpeg,image/png",
     addRemoveLinks: true,
-    url: "https://apichef.jacochef.ru/api/site_setting/upload_banner",
+    url: "https://apichef.jacochef.ru/api/site_items_new/upload_img",
   };
 
   myDropzone = null;
@@ -1188,7 +1188,7 @@ export class SiteItemsModalTech extends React.Component {
                         sm: 4,
                       }}
                       style={
-                        !this.props.acces?._edit && !this.props.acces?._view
+                        !this.props.acces?.is_hit_edit && !this.props.acces?.is_hit_view
                           ? { display: "none" }
                           : {}
                       }
@@ -1919,7 +1919,7 @@ export class SiteItemsModalTech extends React.Component {
                       }}
                     >
                       <img
-                        src={`https://storage.yandexcloud.net/site-home-img/${this.state?.img_app.toLowerCase()}site_items_2000x2000.jpg`}
+                        src={`https://storage.yandexcloud.net/site-img/${this.state?.img_app.toLowerCase()}site_items_2000x2000.jpg`}
                         alt="Изображение"
                         style={{
                           width: "100%",
