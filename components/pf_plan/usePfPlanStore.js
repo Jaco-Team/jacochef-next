@@ -25,6 +25,7 @@ const usePfPlanStore = create((set) => ({
 
   chartModalOpen: false,
   chartData: null,
+  chartPfId: null,
 
   // actions
 }));

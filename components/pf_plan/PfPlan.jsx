@@ -5,6 +5,8 @@ import {
   Button,
   CircularProgress,
   Dialog,
+  DialogContent,
+  DialogTitle,
   Grid,
   IconButton,
   Stack,
@@ -26,14 +28,24 @@ import MyAlert from "@/ui/MyAlert";
 import { MyAutocomplite, MyWeekPicker } from "@/ui/Forms";
 import dayjs from "dayjs";
 import { formatNumber } from "@/src/helpers/utils/i18n";
-import { ShowChart } from "@mui/icons-material";
+import { Close, ShowChart } from "@mui/icons-material";
 import dynamic from "next/dynamic";
 
 const PfWeeklyChart = dynamic(() => import("./PfWeeklyChart"), { ssr: false });
 
 export default function PfPlan() {
-  const { module, module_name, isLoading, allPoints, point, week, stats, chartModalOpen, allPfs } =
-    usePfPlanStore();
+  const {
+    module,
+    module_name,
+    isLoading,
+    allPoints,
+    point,
+    week,
+    stats,
+    chartModalOpen,
+    allPfs,
+    chartPfId,
+  } = usePfPlanStore();
   const setState = usePfPlanStore.setState;
 
   const { alertStatus, alertMessage, showAlert, closeAlert, isAlert } = useMyAlert();
@@ -95,7 +107,7 @@ export default function PfPlan() {
   const [statType, setStatType] = useState("MA");
 
   const currentStat = useMemo(() => {
-    console.log(`Type ${statType}:`, stats[statType]);
+    // console.log(`Type ${statType}:`, stats[statType]);
     return stats[statType] || [];
   }, [statType, stats]);
 
@@ -115,19 +127,17 @@ export default function PfPlan() {
     try {
       setState({ isLoading: true });
       const { chartData } = usePfPlanStore.getState();
-      if (!chartData) {
-        const request = {
-          point,
-          pf_ids: [pfId],
-          year: dayjs(week?.weekStart).format("YYYY"),
-        };
-        const res = await getData("get_chart_data", request);
-        if (!res?.st) {
-          return showAlert(res?.text || "Ошибка загрузки данных графика");
-        }
-        setState({ chartData: res.stats });
-        setState({ chartModalOpen: true, chartPfId: pfId });
+      if (chartData?.find((x) => x.pf_id === pfId)) return;
+      const request = {
+        point,
+        pf_ids: [pfId],
+        year: dayjs(week?.weekStart).format("YYYY"),
+      };
+      const res = await getData("get_chart_data", request);
+      if (!res?.st) {
+        return showAlert(res?.text || "Ошибка загрузки данных графика");
       }
+      setState({ chartData: res.chartData, chartModalOpen: true, chartPfId: pfId });
     } catch (e) {
       showAlert(e.message || "Ошибка сервера");
     } finally {
@@ -154,10 +164,25 @@ export default function PfPlan() {
         text={alertMessage}
       />
       <Dialog
+        fullWidth
+        maxWidth="lg"
         open={chartModalOpen}
         onClose={() => setState({ chartModalOpen: false })}
       >
-        <PfWeeklyChart />
+        <DialogTitle>
+          <Typography variant="h6">
+            Расход {allPfs?.find((p) => p.id === chartPfId)?.name}
+          </Typography>
+          <IconButton
+            style={{ position: "absolute", right: 8, top: 8, p: 20, cursor: "pointer" }}
+            onClick={() => setState({ chartModalOpen: false })}
+          >
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <PfWeeklyChart />
+        </DialogContent>
       </Dialog>
       <Grid
         container
