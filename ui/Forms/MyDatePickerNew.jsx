@@ -20,6 +20,7 @@ export function MyDatePickerNew(props) {
           //format="YYYY-MM-DD"
           format={props.format ?? "YYYY-MM-DD"}
           minDate={props.minDate ? props.minDate : null}
+          maxDate={props.maxDate ? props.maxDate : null}
           label={props.label}
           value={props.value ? dayjs(props.value) : null}
           disabled={props.disabled || props.disabled === true ? true : false}

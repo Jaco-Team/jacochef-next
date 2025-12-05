@@ -37,6 +37,43 @@ import { api_laravel_local, api_laravel } from "@/src/api_new";
 import dayjs from "dayjs";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
+import { ModalAccept } from "@/components/general/ModalAccept";
+
+const SwapIcon = ({ size = 24, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    aria-hidden="true"
+  >
+    {/* Верхняя стрелка: вправо */}
+    <path
+      d="M7 8L12 3L17 8"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* Нижняя стрелка: влево */}
+    <path
+      d="M17 16L12 21L7 16"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* Центральная линия (опционально — для баланса) */}
+    <path
+      d="M12 7V17"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
 
 function roundTo(n, digits) {
   if (n.length == 0) {
@@ -1175,6 +1212,7 @@ class ReceptModule_Modal extends React.Component {
               >
                 <MyDatePickerNew
                   label="Действует с"
+                  maxDate={this.state.date_end ? dayjs(this.state.date_end) : null}
                   minDate={dayjs(new Date()).add(1, "day")}
                   value={this.state.date_start}
                   disabled={
@@ -1505,8 +1543,35 @@ class ReceptModule_Modal extends React.Component {
 }
 
 class ReceptModule_Table extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      openChange: false,
+      itemId: 1,
+      type: "",
+    };
+  }
+
+  saveChange = async () => {
+    const { itemId, type } = this.state;
+    const data = { itemId, type };
+    const res = await this.props.getData("change_rec_and_pf", data);
+    if (res.st) {
+      this.setState(
+        {
+          openChange: false,
+        },
+        () => {
+          this.props.update();
+        },
+      );
+    }
+  };
+
   render() {
-    const { data, method, openItemEdit, checkTable, openHistoryItem, type, acces } = this.props;
+    const { data, method, openItemEdit, checkTable, openHistoryItem, type, acces, getData } =
+      this.props;
+    const { openChange } = this.state;
 
     return (
       <>
@@ -1518,6 +1583,20 @@ class ReceptModule_Table extends React.Component {
               sm: 12,
             }}
           >
+            <ModalAccept
+              open={openChange}
+              onClose={() => this.setState({ openChange: false })}
+              title={
+                type === "rec"
+                  ? "Заменить Рецепт на Полуфабрикат?"
+                  : "Заменить Полуфабрикат на Рецепт?"
+              }
+              save={() => {
+                this.saveChange();
+                this.setState({ openChange: false });
+              }}
+            />
+
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography style={{ fontWeight: "bold" }}>{method}</Typography>
@@ -1541,6 +1620,7 @@ class ReceptModule_Table extends React.Component {
                         <TableCell style={{ width: "18%" }}>Обновление</TableCell>
                         <TableCell style={{ width: "18%" }}>Редактирование</TableCell>
                         <TableCell style={{ width: "18%" }}>История изменений</TableCell>
+                        <TableCell style={{ width: "18%" }}></TableCell>
                       </TableRow>
                     </TableHead>
 
@@ -1575,6 +1655,16 @@ class ReceptModule_Table extends React.Component {
                             style={{ cursor: "pointer" }}
                           >
                             <EditNoteIcon />
+                          </TableCell>
+                          <TableCell>
+                            <IconButton
+                              onClick={() =>
+                                this.setState({ type, itemId: item.id, openChange: true })
+                              }
+                              style={{ cursor: "pointer" }}
+                            >
+                              <SwapIcon />
+                            </IconButton>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -2139,8 +2229,10 @@ class ReceptModule_ extends React.Component {
           <ReceptModule_Table
             data={this.state.pf_list}
             method="Полуфабрикаты"
+            getData={this.getData.bind(this)}
             openItemEdit={this.openItemEdit.bind(this)}
             checkTable={this.checkTable.bind(this)}
+            update={this.update.bind(this)}
             openHistoryItem={this.openHistoryItem.bind(this)}
             type={"pf"}
             acces={this.state.acces}
@@ -2149,6 +2241,8 @@ class ReceptModule_ extends React.Component {
           <ReceptModule_Table
             data={this.state.rec_list}
             method="Рецепты"
+            update={this.update.bind(this)}
+            getData={this.getData.bind(this)}
             openItemEdit={this.openItemEdit.bind(this)}
             checkTable={this.checkTable.bind(this)}
             openHistoryItem={this.openHistoryItem.bind(this)}
