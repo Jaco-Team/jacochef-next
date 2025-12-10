@@ -13,12 +13,27 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from "@
 
 import HelpIcon from "@mui/icons-material/Help";
 
-import { MySelect, MyDatePickerNew, MyTimePicker, MyCheckBox } from "@/ui/Forms";
+import { MySelect, MyDatePickerNew, MyTimePicker, MyCheckBox, MyAutocomplite } from "@/ui/Forms";
 
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 import dayjs from "dayjs";
 import { Close } from "@mui/icons-material";
+import { ModalAddressManagement } from "@/components/hot_map/ModalAddressManagement";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import Chip from "@mui/material/Chip";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import TableBody from "@mui/material/TableBody";
+import Accordion from "@mui/material/Accordion";
+import HomeWorkIcon from "@mui/icons-material/HomeWork";
+import MyAlert from "@/ui/MyAlert";
+import { ModalAddressManagementEdit } from "@/components/hot_map/ModalAddressManagementEdit";
+import EditIcon from "@mui/icons-material/Edit";
 
 const formatNumber = (num) => new Intl.NumberFormat("ru-RU").format(num);
 
@@ -28,6 +43,19 @@ const formatCurrency = (num) =>
     currency: "RUB",
     minimumFractionDigits: 0,
   }).format(num);
+
+const getHomeIconSVG = () => {
+  // SVG путь для иконки Home из Material-UI
+  return (
+    "data:image/svg+xml;utf8," +
+    encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FF4136">
+      <path d="M0 0h24v24H0z" fill="none"/>
+      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+    </svg>
+  `)
+  );
+};
 
 const HotMap_Modal = ({ open, onClose, stats }) => {
   return (
@@ -119,16 +147,24 @@ export default class HotMap extends React.PureComponent {
       module_name: "",
       is_load: false,
       is_driver: false,
+      address_group_data: [],
+      address_group: {},
 
       cities: [],
       city_id: "",
+      acces: {},
 
       date_start: dayjs(new Date()),
       date_end: dayjs(new Date()),
       time_start: "00:00",
       time_end: "23:59",
+      err_text: "",
+      err_status: false,
+      openAlert: false,
 
       statsModalOpen: false,
+      addAddressModalOpen: false,
+      editAddressModalOpen: false,
       stats: {
         statTruePercent: "",
         statTrueCount: "",
@@ -153,10 +189,23 @@ export default class HotMap extends React.PureComponent {
       cities: data.cities,
       city_id: data.cities[0].id,
       module_name: data.module_info.name,
+      address_group_data: data.address_group,
+      acces: data.acces,
     });
 
     document.title = data.module_info.name;
   }
+
+  update = async () => {
+    let data = await this.getData("get_all");
+
+    this.setState({
+      cities: data.cities,
+      module_name: data.module_info.name,
+      address_group_data: data.address_group,
+      acces: data.acces,
+    });
+  };
 
   getData = (method, data = {}) => {
     this.setState({
@@ -175,6 +224,12 @@ export default class HotMap extends React.PureComponent {
 
     return res;
   };
+
+  changeAutocomplite(type, event, data) {
+    this.setState({
+      [type]: data,
+    });
+  }
 
   changeCity = (event) => {
     const data = event.target.value;
@@ -207,6 +262,7 @@ export default class HotMap extends React.PureComponent {
       date_end: dayjs(this.state.date_end).format("YYYY-MM-DD"),
       time_start: this.state.time_start,
       time_end: this.state.time_end,
+      address_group_id: this.state.address_group?.id,
       is_new: this.state.is_new,
       is_driver: this.state.is_driver,
       is_pick_order: this.state.is_pick_order,
@@ -215,10 +271,10 @@ export default class HotMap extends React.PureComponent {
 
     let res = await this.getData("get_orders", data);
 
-    this.getOrders(res.points, res.all_points, res.drivers);
+    this.getOrders(res.points, res.all_points, res.drivers, res.groups);
   };
 
-  getOrders = (home, all_points, drivers = {}) => {
+  getOrders = (home, all_points, drivers = {}, groups = []) => {
     var new_data = all_points
       .filter((item) => item && item[0] && item[1])
       .map((item) => [parseFloat(item[0]), parseFloat(item[1])]);
@@ -272,6 +328,50 @@ export default class HotMap extends React.PureComponent {
           ],
           radiuses = [5, 10, 20, 30],
           opacities = [0.4, 0.6, 0.8, 1];
+        if (groups.length) {
+          groups.forEach((item) => {
+            let myGeoObject2 = new ymaps.GeoObject(
+              {
+                geometry: {
+                  type: "Point",
+                  coordinates: [item.cordY, item.cordX],
+                },
+                // Добавляем свойства для отображения
+                properties: {
+                  hintContent: item.address || "Нажмите для подробностей", // Всплывающая подсказка при наведении
+                  balloonContentHeader: `<strong>${item.title || "Информация"}</strong>`,
+                  balloonContentBody: `
+            <div style="padding: 5px;">
+              <p><strong>Адрес:</strong> ${item.address || "Не указан"}</p>
+              <p><strong>Координаты:</strong> ${item.cordY}, ${item.cordX}</p>
+              ${item.orders?.sum ? `<p><strong>Сумма заказов:</strong> ${item.orders?.sum} руб.</p>` : ""}
+              ${item.orders?.count ? `<p><strong>Количество заказов:</strong> ${item.orders?.count}</p>` : ""}
+            </div>
+          `,
+                  balloonContentFooter: "Информация о точке",
+                  // Любые дополнительные данные
+                  data: item,
+                },
+              },
+              {
+                preset: "islands#blueDotIcon", // Более заметная иконка
+                iconColor: "#1E88E5",
+                // Опции для балуна
+                balloonCloseButton: true,
+                balloonPanelMaxMapArea: 0, // Балун не будет скрывать метку
+                hideIconOnBalloonOpen: false,
+                balloonAutoPan: true, // Автоматически прокручивать карту при открытии балуна
+              },
+            );
+
+            // Обработчик клика - открываем балун
+            myGeoObject2.events.add("click", function (e) {
+              e.get("target").balloon.open();
+            });
+
+            this.map.geoObjects.add(myGeoObject2);
+          });
+        }
 
         home.forEach((item) => {
           let myGeoObject1 = new ymaps.GeoObject(
@@ -352,6 +452,51 @@ export default class HotMap extends React.PureComponent {
             opacity: opacities[2],
           });
           this.heatmap.setMap(this.map);
+        });
+      }
+
+      if (groups.length) {
+        groups.forEach((item) => {
+          let myGeoObject2 = new ymaps.GeoObject(
+            {
+              geometry: {
+                type: "Point",
+                coordinates: [item.cordY, item.cordX],
+              },
+              // Добавляем свойства для отображения
+              properties: {
+                hintContent: item.address || "Нажмите для подробностей", // Всплывающая подсказка при наведении
+                balloonContentHeader: `<strong>${item.title || "Информация"}</strong>`,
+                balloonContentBody: `
+            <div style="padding: 5px;">
+              <p><strong>Адрес:</strong> ${item.address || "Не указан"}</p>
+              <p><strong>Координаты:</strong> ${item.cordY}, ${item.cordX}</p>
+              ${item.orders?.sum ? `<p><strong>Сумма заказов:</strong> ${item.orders?.sum} руб.</p>` : ""}
+              ${item.orders?.count ? `<p><strong>Количество заказов:</strong> ${item.orders?.count}</p>` : ""}
+            </div>
+          `,
+                balloonContentFooter: "Информация о точке",
+                // Любые дополнительные данные
+                data: item,
+              },
+            },
+            {
+              preset: "islands#blueDotIcon", // Более заметная иконка
+              iconColor: "#1E88E5",
+              // Опции для балуна
+              balloonCloseButton: true,
+              balloonPanelMaxMapArea: 0, // Балун не будет скрывать метку
+              hideIconOnBalloonOpen: false,
+              balloonAutoPan: true, // Автоматически прокручивать карту при открытии балуна
+            },
+          );
+
+          // Обработчик клика - открываем балун
+          myGeoObject2.events.add("click", function (e) {
+            e.get("target").balloon.open();
+          });
+
+          this.map.geoObjects.add(myGeoObject2);
         });
       }
 
@@ -550,6 +695,57 @@ export default class HotMap extends React.PureComponent {
     }
   };
 
+  saveAddressModalOpen = async (name, addresses) => {
+    let res = await this.getData("save_group_address", {
+      name,
+      addresses,
+      city_id: this.state.city_id,
+    });
+    if (!res.st) {
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    } else {
+      this.setState(
+        {
+          openAlert: true,
+          err_status: res.st,
+          err_text: res.text,
+          addAddressModalOpen: false,
+        },
+        () => this.update(),
+      );
+    }
+  };
+
+  saveEditAddressModalOpen = async (id, name, addresses) => {
+    let res = await this.getData("save_edit_group_address", {
+      id,
+      name,
+      addresses,
+      city_id: this.state.city_id,
+    });
+    if (!res.st) {
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    } else {
+      this.setState(
+        {
+          openAlert: true,
+          err_status: res.st,
+          err_text: res.text,
+          editAddressModalOpen: false,
+        },
+        () => this.update(),
+      );
+    }
+  };
+
   render() {
     return (
       <>
@@ -559,6 +755,12 @@ export default class HotMap extends React.PureComponent {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
         <Grid
           container
           spacing={3}
@@ -572,6 +774,29 @@ export default class HotMap extends React.PureComponent {
           >
             <h1>{this.state.module_name}</h1>
           </Grid>
+          {this.state.addAddressModalOpen ? (
+            <ModalAddressManagement
+              open={this.state.addAddressModalOpen}
+              onClose={() => this.setState({ addAddressModalOpen: false })}
+              save={this.saveAddressModalOpen}
+              centerMap={JSON.parse(
+                this.state.cities.find((item) => item.id === parseInt(this.state.city_id))
+                  ?.xy_center_map,
+              ).map(parseFloat)}
+            />
+          ) : null}
+          {this.state.editAddressModalOpen ? (
+            <ModalAddressManagementEdit
+              open={this.state.editAddressModalOpen}
+              addressGroup={this.state.address_group}
+              onClose={() => this.setState({ editAddressModalOpen: false })}
+              save={this.saveEditAddressModalOpen}
+              centerMap={JSON.parse(
+                this.state.cities.find((item) => item.id === parseInt(this.state.city_id))
+                  ?.xy_center_map,
+              ).map(parseFloat)}
+            />
+          ) : null}
 
           <HotMap_Modal
             open={this.state.statsModalOpen}
@@ -749,6 +974,70 @@ export default class HotMap extends React.PureComponent {
               Очистить область редактирования
             </Button>
           </Grid>
+          {this.state.acces?.groups_access ? (
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
+            >
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography sx={{ fontWeight: "bold" }}>Раздел с группами адресов</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Grid
+                    container
+                    spacing={3}
+                  >
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 3,
+                      }}
+                    >
+                      <MyAutocomplite
+                        label="Группа адресов"
+                        multiple={false}
+                        data={this.state.address_group_data.filter(
+                          (item) => item.city_id === parseInt(this.state.city_id),
+                        )}
+                        value={this.state.address_group}
+                        func={this.changeAutocomplite.bind(this, "address_group")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6,
+                      }}
+                    >
+                      <Button
+                        variant="contained"
+                        disabled={!this.state.address_group?.id}
+                        onClick={() => this.setState({ editAddressModalOpen: true })}
+                      >
+                        <EditIcon />
+                      </Button>
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 3,
+                      }}
+                    >
+                      <Button
+                        variant="contained"
+                        onClick={() => this.setState({ addAddressModalOpen: true })}
+                      >
+                        Создать группу адресов
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </AccordionDetails>
+              </Accordion>
+            </Grid>
+          ) : null}
 
           <Grid
             mb={10}
