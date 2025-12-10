@@ -33,40 +33,43 @@ import { ModalAccept } from "@/components/general/ModalAccept";
 const ModalOrderWithFeedback = ({
   open,
   onClose,
-  order,
-  order_items,
-  err_order,
-  feedback_forms,
+  order: orderObj,
   getData,
+  showAlert,
   openOrder,
 }) => {
+  const { order_items, err_order, feedback_forms, order } = orderObj;
   const [values, setValues] = useState([]);
   const [discountValue, setDiscountValue] = useState(0);
   const [answerValue, setAnswerValue] = useState(0);
   const [userActive, setUserActive] = useState("");
-  const saveFeedback = () => {
-    const feedbacks = [];
-    order_items.map((value, index) => {
-      feedbacks.push({ ...values[index], item: { ...value } });
-    });
-    const anyPercent = {
-      sale: discountValue,
-      phone: order.number,
-    };
-    const anyAnswer = {
-      answer: answerValue,
-      phone: order.number,
-    };
-    getData("save_feedbacks", {
-      feedbacks,
-      order_id: order.order_id,
-      point_id: order.point_id,
-      anyAnswer,
-      anyPercent,
-      userActive,
-    }).then(() => {
-      openOrder(order.point_id, order.order_id);
-    });
+  const saveFeedback = async () => {
+    try {
+      const feedbacks = [];
+      order_items.map((value, index) => {
+        feedbacks.push({ ...values[index], item: { ...value } });
+      });
+      const anyPercent = {
+        sale: discountValue,
+        phone: order.number,
+      };
+      const anyAnswer = {
+        answer: answerValue,
+        phone: order.number,
+      };
+      const res = await getData("save_feedbacks", {
+        feedbacks,
+        order_id: order.order_id,
+        point_id: order.point_id,
+        anyAnswer,
+        anyPercent,
+        userActive,
+      });
+      if (!res) throw new Error("Заказ не получен");
+      await openOrder(order.point_id, order.order_id);
+    } catch (e) {
+      showAlert(e.message || "Ошибка получения заказа");
+    }
   };
 
   useEffect(() => {
@@ -377,7 +380,7 @@ const ModalOrderWithFeedback = ({
             alignSelf: "center",
           }}
         >
-          Заказ #{order?.order_id}
+          Заказ #{order?.order_id} (feedback)
         </Typography>
         <IconButton
           onClick={onClose}

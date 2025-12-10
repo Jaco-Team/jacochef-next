@@ -7,11 +7,11 @@ import useMarketingTabStore from "./useMarketingTabStore";
 import dayjs from "dayjs";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import { useLoading } from "./useClientsLoadingContext";
+import { useSiteClientsStore } from "../useSiteClientsStore";
 
 const InnerTabStats = ({ getData, showAlert }) => {
+  const { date_start_marketing, date_end_marketing } = useSiteClientsStore();
   const {
-    dateStart,
-    dateEnd,
     points,
     stats,
     setStats,
@@ -23,18 +23,19 @@ const InnerTabStats = ({ getData, showAlert }) => {
     slicePromo,
     sliceReset,
     setOrders,
+    refreshToken,
   } = useMarketingTabStore();
 
   const { setIsLoading } = useLoading();
 
   const getStats = async () => {
-    if (!points.length || !dateStart || !dateEnd) {
+    if (!points.length || !date_start_marketing || !date_end_marketing) {
       return;
     }
     const resData = await getData("get_marketing_stats", {
       points: points,
-      date_start: dayjs(dateStart).format("YYYY-MM-DD"),
-      date_end: dayjs(dateEnd).format("YYYY-MM-DD"),
+      date_start: dayjs(date_start_marketing).format("YYYY-MM-DD"),
+      date_end: dayjs(date_end_marketing).format("YYYY-MM-DD"),
     });
 
     if (!resData?.st) {
@@ -47,7 +48,7 @@ const InnerTabStats = ({ getData, showAlert }) => {
   };
 
   const debouncedGetStats = useDebounce(getStats, 500);
-  useEffect(() => debouncedGetStats(), [points, dateStart, dateEnd]);
+  useEffect(() => debouncedGetStats(), [refreshToken]);
 
   return (
     <>

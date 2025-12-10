@@ -30,6 +30,7 @@ import { useDebounce } from "@/src/hooks/useDebounce";
 import ExcelIcon from "@/ui/ExcelIcon";
 import DownloadButton from "@/ui/DownloadButton";
 import { useLoading } from "./useClientsLoadingContext";
+import { useSiteClientsStore } from "../useSiteClientsStore";
 
 function SiteClientsMarketingOrdersTable({
   openOrder,
@@ -81,33 +82,24 @@ function SiteClientsMarketingOrdersTable({
 
   // core orders fetcher
   const getOrders = async () => {
-    const {
-      points,
-      dateStart,
-      dateEnd,
-      orderIds,
-      page,
-      perPage,
-      filters,
-      slices,
-      setOrders,
-      setTotal,
-    } = useMarketingTabStore.getState();
+    const { date_start_marketing, date_end_marketing, update } = useSiteClientsStore.getState();
+    const { points, orderIds, page, perPage, filters, slices, setOrders, setTotal } =
+      useMarketingTabStore.getState();
     try {
-      if (!points.length || !dateStart || !dateEnd) {
+      if (!points.length || !date_start_marketing || !date_end_marketing) {
         return;
       }
-      if (!checkDates(dateStart, dateEnd)) {
+      if (!checkDates(date_start_marketing, date_end_marketing)) {
         showAlert("Дата начала должна быть перед датой окончания", false);
         return;
       }
-      setIsLoading(true);
+      update({ is_load: true });
       setOrders(null);
       setTotal(0);
       const resData = await getData("get_marketing_orders", {
         points: points,
-        date_start: dayjs(dateStart).format("YYYY-MM-DD"),
-        date_end: dayjs(dateEnd).format("YYYY-MM-DD"),
+        date_start: dayjs(date_start_marketing).format("YYYY-MM-DD"),
+        date_end: dayjs(date_end_marketing).format("YYYY-MM-DD"),
         ids: orderIds,
         page,
         perPage,
@@ -125,7 +117,7 @@ function SiteClientsMarketingOrdersTable({
     } catch (e) {
       showAlert(`Ошибка при загрузке заказов: ${e.message}`, false);
     } finally {
-      setIsLoading(false);
+      update({ is_load: false });
     }
   };
 
@@ -303,9 +295,9 @@ function SiteClientsMarketingOrdersTable({
                             onBlur={() => handleToggleFilter(col.key, false)}
                             autoFocus
                             fullWidth
-                            InputProps={{
-                              endAdornment: filters[col.key] && (
-                                <InputAdornment position="end">
+                            slotProps={{
+                              input: {
+                                endAdornment: filters[col.key] && (
                                   <IconButton
                                     size="small"
                                     onClick={() => setFiltersItem(col.key, "")}
@@ -314,8 +306,8 @@ function SiteClientsMarketingOrdersTable({
                                   >
                                     <Clear fontSize="small" />
                                   </IconButton>
-                                </InputAdornment>
-                              ),
+                                ),
+                              },
                             }}
                           />
                         )}
