@@ -17,6 +17,6 @@ export * from "./MyDatePickerGraph";
 export * from "./TextEditor";
 export * from "./TextEditor22";
 
-export const TextEditor = dynamic(() => import("./TextEditor"), {
-  ssr: false,
-});
+export const MyWeekPicker = dynamic(() => import("./MyWeekPicker"), { ssr: false });
+
+export const TextEditor = dynamic(() => import("./TextEditor"), { ssr: false });
