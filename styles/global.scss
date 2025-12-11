@@ -425,8 +425,10 @@ div.css-19kzrtu {
   width: 100%;
   height: 100%;
   z-index: 1000;
-  overflow: hidden auto;
+  // overflow: hidden auto;
+  overflow: hidden;
   transition: all 0.5s ease 0s;
+  touch-action: none;
 }
 
 .modal_btn {
