@@ -2403,10 +2403,12 @@ function FormImage_new({ type_edit, type_doc }) {
       >
         <TableContainer>
           <Grid
-            display="flex"
-            flexDirection="row"
-            flexWrap="wrap"
             style={{ fontWeight: "bold", gap: "10px" }}
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              flexWrap: "wrap",
+            }}
           >
             {!imgs_bill.length ? (
               "Фото отсутствует"
@@ -2449,13 +2451,15 @@ function FormImage_new({ type_edit, type_doc }) {
       </Grid>
       {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen && type_doc === "bill" ? (
         <Grid
-          display="flex"
-          flexDirection="row"
-          flexWrap="wrap"
           style={{ fontWeight: "bold", gap: "10px" }}
           size={{
             xs: 12,
             sm: 6,
+          }}
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            flexWrap: "wrap",
           }}
         >
           {!imgs_factur.length ? (
@@ -2572,10 +2576,12 @@ function FormImage_new({ type_edit, type_doc }) {
           >
             <TableContainer>
               <Grid
-                display="flex"
-                flexDirection="row"
-                flexWrap="wrap"
                 style={{ fontWeight: "bold", gap: "10px" }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                }}
               >
                 {!imgs_factur.length ? (
                   "Фото отсутствует"
@@ -2768,11 +2774,13 @@ function FormOther_new({ page, type_edit, type_doc }) {
         </Grid>
       ) : null}
       <Grid
-        display="flex"
-        alignItems="center"
         size={{
           xs: 12,
           sm: 12,
+        }}
+        sx={{
+          display: "flex",
+          alignItems: "center",
         }}
       >
         <MyCheckBox
@@ -2838,10 +2846,12 @@ class Billing_Accordion extends React.Component {
 
     return (
       <Grid
-        mb={5}
         size={{
           xs: 12,
           sm: 12,
+        }}
+        sx={{
+          mb: 5,
         }}
       >
         <Accordion>
@@ -2854,8 +2864,10 @@ class Billing_Accordion extends React.Component {
                 aria-controls="panel1a-content"
               >
                 <Grid
-                  display="flex"
-                  flexDirection="row"
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                  }}
                 >
                   <Typography style={{ width: "1%" }}></Typography>
                   <Typography style={{ width: "4%", minWidth: "210px" }}>Тип документа</Typography>
@@ -2968,8 +2980,10 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
         style={{ paddingRight: "1%" }}
       >
         <Grid
-          display="flex"
-          flexDirection="row"
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+          }}
         >
           <Typography
             component="div"

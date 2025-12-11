@@ -186,8 +186,10 @@ export default function Registration() {
         container
         spacing={3}
         direction="row"
-        justifyContent="center"
-        alignItems="center"
+        sx={{
+          justifyContent: "center",
+          alignItems: "center",
+        }}
       >
         <Grid
           size={{

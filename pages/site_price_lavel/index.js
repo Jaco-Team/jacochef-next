@@ -497,11 +497,13 @@ class StatSale_Tab_Dynamic extends React.Component {
 
             {columns.length && cats.length ? (
               <Grid
-                mt={3}
-                mb={5}
                 size={{
                   xs: 12,
                   sm: 12,
+                }}
+                sx={{
+                  mt: 3,
+                  mb: 5,
                 }}
               >
                 <TableContainer
@@ -900,7 +902,6 @@ class SitePriceLevel_Tab_Level extends React.Component {
             <Button onClick={this.delete_level}>Удалить</Button>
           </DialogActions>
         </Dialog>
-
         <SitePriceLevel_Modal_New
           open={modalDialog}
           onClose={() => this.setState({ modalDialog: false })}
@@ -910,7 +911,6 @@ class SitePriceLevel_Tab_Level extends React.Component {
           fullScreen={fullScreen}
           openAlert={openAlert}
         />
-
         <SitePriceLevel_Modal_XLS
           open={modalDialog_XLS}
           onClose={() => this.setState({ modalDialog_XLS: false })}
@@ -919,17 +919,17 @@ class SitePriceLevel_Tab_Level extends React.Component {
           fullScreen={fullScreen}
           input_value={input_value}
         />
-
         <Backdrop
           style={{ zIndex: 999 }}
           open={is_load}
         >
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Grid
-          mb={10}
           size={12}
+          sx={{
+            mb: 10,
+          }}
         >
           <TabPanel
             value={activeTab}
@@ -1200,8 +1200,10 @@ class SitePriceLevel_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={3}
           className="container_first_child"
+          sx={{
+            mb: 3,
+          }}
         >
           <Grid size={12}>
             <h1>{module_name}</h1>

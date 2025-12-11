@@ -476,8 +476,10 @@ class SitePriceLevelEdit_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={3}
           className="container_first_child"
+          sx={{
+            mb: 3,
+          }}
         >
           <Grid
             size={{

@@ -446,11 +446,13 @@ class Experience_Modal_User extends React.Component {
                   spacing={3}
                 >
                   <Grid
-                    display="flex"
-                    justifyContent="center"
                     size={{
                       xs: 12,
                       sm: 4,
+                    }}
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
                     }}
                   >
                     {this.state.item ? (
@@ -468,17 +470,21 @@ class Experience_Modal_User extends React.Component {
                   </Grid>
 
                   <Grid
-                    display="flex"
-                    flexDirection="column"
                     size={{
                       xs: 12,
                       sm: 6,
                     }}
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
                   >
                     <Grid
-                      display="flex"
-                      flexDirection="row"
-                      mb={2}
+                      sx={{
+                        display: "flex",
+                        flexDirection: "row",
+                        mb: 2,
+                      }}
                     >
                       <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
                         ФИО:
@@ -489,9 +495,11 @@ class Experience_Modal_User extends React.Component {
                     </Grid>
 
                     <Grid
-                      display="flex"
-                      flexDirection="row"
-                      mb={2}
+                      sx={{
+                        display: "flex",
+                        flexDirection: "row",
+                        mb: 2,
+                      }}
                     >
                       <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
                         Текущая должность:
@@ -502,9 +510,11 @@ class Experience_Modal_User extends React.Component {
                     </Grid>
 
                     <Grid
-                      display="flex"
-                      flexDirection="row"
-                      mb={2}
+                      sx={{
+                        display: "flex",
+                        flexDirection: "row",
+                        mb: 2,
+                      }}
                     >
                       <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
                         Общий стаж:
@@ -515,9 +525,11 @@ class Experience_Modal_User extends React.Component {
                     </Grid>
 
                     <Grid
-                      display="flex"
-                      flexDirection="row"
-                      mb={2}
+                      sx={{
+                        display: "flex",
+                        flexDirection: "row",
+                        mb: 2,
+                      }}
                     >
                       <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
                         Текущая организация:
@@ -528,9 +540,11 @@ class Experience_Modal_User extends React.Component {
                     </Grid>
 
                     <Grid
-                      display="flex"
-                      flexDirection="row"
-                      mb={2}
+                      sx={{
+                        display: "flex",
+                        flexDirection: "row",
+                        mb: 2,
+                      }}
                     >
                       <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
                         Телефон:
@@ -541,9 +555,11 @@ class Experience_Modal_User extends React.Component {
                     </Grid>
 
                     <Grid
-                      display="flex"
-                      flexDirection="row"
-                      mb={2}
+                      sx={{
+                        display: "flex",
+                        flexDirection: "row",
+                        mb: 2,
+                      }}
                     >
                       <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
                         Трудоустроен:
@@ -558,9 +574,11 @@ class Experience_Modal_User extends React.Component {
                     </Grid>
 
                     <Grid
-                      display="flex"
-                      flexDirection={this.state.setEdit ? "column" : "row"}
-                      mb={2}
+                      sx={{
+                        display: "flex",
+                        flexDirection: this.state.setEdit ? "column" : "row",
+                        mb: 2,
+                      }}
                     >
                       <Typography
                         sx={{
@@ -574,17 +592,27 @@ class Experience_Modal_User extends React.Component {
                       </Typography>
                       {this.state.setEdit ? (
                         <Grid
-                          display="flex"
-                          flexDirection="row"
+                          sx={{
+                            display: "flex",
+                            flexDirection: "row",
+                          }}
                         >
-                          <Grid mr={2}>
+                          <Grid
+                            sx={{
+                              mr: 2,
+                            }}
+                          >
                             <MyDatePickerNew
                               label="Изменить датy"
                               value={dayjs(this.state.item?.date_registration ?? "")}
                               func={this.changeDateRange.bind(this, "registration", 0, 0)}
                             />
                           </Grid>
-                          <Grid mr={2}>
+                          <Grid
+                            sx={{
+                              mr: 2,
+                            }}
+                          >
                             <Button
                               onClick={this.saveEdit.bind(this)}
                               style={{ cursor: "pointer" }}
@@ -1326,10 +1354,12 @@ class Experience_ extends React.Component {
           {/* таблица */}
           {!this.state.users ? null : (
             <Grid
-              mb={5}
               size={{
                 xs: 12,
                 sm: 12,
+              }}
+              sx={{
+                mb: 5,
               }}
             >
               <TableContainer>

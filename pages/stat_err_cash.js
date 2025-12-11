@@ -457,16 +457,20 @@ class StatErrCash_Modal extends React.Component {
             <Grid
               container
               spacing={3}
-              justifyContent="center"
-              mb={3}
+              sx={{
+                justifyContent: "center",
+                mb: 3,
+              }}
             >
               <Grid
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
                 size={{
                   xs: 12,
                   sm: 6,
+                }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
                 <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>Сотрудник</Typography>
@@ -489,12 +493,14 @@ class StatErrCash_Modal extends React.Component {
               </Grid>
 
               <Grid
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
                 size={{
                   xs: 12,
                   sm: 6,
+                }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
                 <Typography sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
@@ -513,12 +519,14 @@ class StatErrCash_Modal extends React.Component {
               </Grid>
 
               <Grid
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
                 size={{
                   xs: 12,
                   sm: 12,
+                }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
                 <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
@@ -537,12 +545,14 @@ class StatErrCash_Modal extends React.Component {
 
               {this.props.mark !== "errCam" ? null : (
                 <Grid
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
                   size={{
                     xs: 12,
                     sm: 12,
+                  }}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
                   }}
                 >
                   <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
@@ -556,12 +566,14 @@ class StatErrCash_Modal extends React.Component {
 
               {this.props.mark !== "errOrder" ? null : (
                 <Grid
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
                   size={{
                     xs: 12,
                     sm: 3,
+                  }}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
                   }}
                 >
                   <Typography sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>Позиция</Typography>
@@ -573,12 +585,14 @@ class StatErrCash_Modal extends React.Component {
 
               {this.props.mark !== "errOrder" ? null : (
                 <Grid
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
                   size={{
                     xs: 12,
                     sm: 3,
+                  }}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
                   }}
                 >
                   <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>Этап</Typography>
@@ -590,12 +604,14 @@ class StatErrCash_Modal extends React.Component {
 
               {this.props.mark !== "errOrder" ? null : (
                 <Grid
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
                   size={{
                     xs: 12,
                     sm: 3,
+                  }}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
                   }}
                 >
                   <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>Ошибка</Typography>
@@ -607,12 +623,14 @@ class StatErrCash_Modal extends React.Component {
 
               {this.props.mark !== "errOrder" ? null : (
                 <Grid
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
                   size={{
                     xs: 12,
                     sm: 3,
+                  }}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
                   }}
                 >
                   <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>Сумма</Typography>
@@ -623,12 +641,14 @@ class StatErrCash_Modal extends React.Component {
               )}
 
               <Grid
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
                 size={{
                   xs: 12,
                   sm: 6,
+                }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
                 <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
@@ -680,16 +700,22 @@ class StatErrCash_Modal extends React.Component {
               </Grid>
               {parseInt(acces?.close_err_access) ? (
                 <Grid
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
-                  justifyContent="center"
                   size={{
                     xs: 12,
                     sm: 6,
                   }}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  <Grid mb={5}>
+                  <Grid
+                    sx={{
+                      mb: 5,
+                    }}
+                  >
                     <Button
                       variant="contained"
                       onClick={this.openConfirm.bind(this, "50")}
@@ -698,7 +724,11 @@ class StatErrCash_Modal extends React.Component {
                       Снять 50%
                     </Button>
                   </Grid>
-                  <Grid mb={5}>
+                  <Grid
+                    sx={{
+                      mb: 5,
+                    }}
+                  >
                     <Button
                       variant="contained"
                       onClick={this.openConfirm.bind(this, "100")}
@@ -1040,8 +1070,11 @@ class StatErrCash_ extends React.Component {
           <Grid
             container
             spacing={3}
-            justifyContent="center"
-            sx={{ p: 3, mt: 3 }}
+            sx={{
+              justifyContent: "center",
+              p: 3,
+              mt: 3,
+            }}
           >
             <Grid
               size={{

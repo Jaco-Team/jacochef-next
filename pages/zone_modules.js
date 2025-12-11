@@ -347,10 +347,12 @@ class ZoneModules_Modal_History extends React.Component {
             </Grid>
             {zone_data?.coordinates_old === "last" ? null : (
               <Grid
-                mb={2}
                 size={{
                   xs: 12,
                   sm: 12,
+                }}
+                sx={{
+                  mb: 2,
                 }}
               >
                 <Typography
@@ -988,10 +990,12 @@ class ZoneModules_Modal extends React.Component {
               spacing={3}
             >
               <Grid
-                mt={2}
                 size={{
                   xs: 12,
                   sm: 12,
+                }}
+                sx={{
+                  mt: 2,
                 }}
               >
                 <MySelect
@@ -1816,8 +1820,10 @@ class ZoneModules_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={3}
           className="container_first_child"
+          sx={{
+            mb: 3,
+          }}
         >
           <Grid
             size={{
@@ -1858,10 +1864,12 @@ class ZoneModules_ extends React.Component {
           </Grid>
 
           <Grid
-            mb={this.state.zones_future.length ? 2 : 10}
             size={{
               xs: 12,
               sm: 12,
+            }}
+            sx={{
+              mb: this.state.zones_future.length ? 2 : 10,
             }}
           >
             <TableContainer>
@@ -2045,10 +2053,12 @@ class ZoneModules_ extends React.Component {
 
           {!this.state.zones_future.length ? null : (
             <Grid
-              mb={5}
               size={{
                 xs: 12,
                 sm: 12,
+              }}
+              sx={{
+                mb: 5,
               }}
             >
               <TableContainer>
@@ -2144,10 +2154,12 @@ class ZoneModules_ extends React.Component {
 
           {!this.state.zones_hist.length ? null : (
             <Grid
-              mb={5}
               size={{
                 xs: 12,
                 sm: 12,
+              }}
+              sx={{
+                mb: 5,
               }}
             >
               <Accordion style={{ width: "100%" }}>

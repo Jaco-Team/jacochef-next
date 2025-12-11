@@ -309,17 +309,21 @@ class CheckWorks_Modal_Edit extends React.Component {
           <Grid
             container
             spacing={3}
-            justifyContent="center"
-            mb={3}
+            sx={{
+              justifyContent: "center",
+              mb: 3,
+            }}
           >
             <Grid
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              mb={2}
               size={{
                 xs: 12,
                 sm: 6,
+              }}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                mb: 2,
               }}
             >
               <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
@@ -335,13 +339,15 @@ class CheckWorks_Modal_Edit extends React.Component {
             </Grid>
 
             <Grid
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              mb={2}
               size={{
                 xs: 12,
                 sm: 6,
+              }}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                mb: 2,
               }}
             >
               <Typography sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
@@ -357,12 +363,14 @@ class CheckWorks_Modal_Edit extends React.Component {
             </Grid>
 
             <Grid
-              display="flex"
-              justifyContent="space-around"
-              sx={{ flexDirection: { xs: "column", sm: "row" } }}
               size={{
                 xs: 12,
                 sm: 12,
+              }}
+              sx={{
+                display: "flex",
+                justifyContent: "space-around",
+                flexDirection: { xs: "column", sm: "row" },
               }}
             >
               <Grid
@@ -811,8 +819,10 @@ class Checkworks_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={5}
           className="container_first_child"
+          sx={{
+            mb: 5,
+          }}
         >
           <Grid
             size={{
@@ -927,16 +937,20 @@ class Checkworks_ extends React.Component {
                 sx={{ p: 0 }}
               >
                 <Grid
-                  mb={5}
                   size={{
                     xs: 12,
                     sm: 12,
                   }}
+                  sx={{
+                    mb: 5,
+                  }}
                 >
                   <TableContainer>
                     <Grid
-                      mb={5}
-                      mt={5}
+                      sx={{
+                        mb: 5,
+                        mt: 5,
+                      }}
                     >
                       <Button
                         variant="contained"
@@ -985,8 +999,9 @@ class Checkworks_ extends React.Component {
                                 (item.manager_name ?? "")
                               ) : (
                                 <Grid
-                                  display="flex"
                                   sx={{
+                                    display: "flex",
+
                                     justifyContent: {
                                       sm: "space-evenly",
                                       xs: "space-around",
@@ -1039,11 +1054,13 @@ class Checkworks_ extends React.Component {
                 sx={{ p: 0 }}
               >
                 <Grid
-                  mt={5}
-                  mb={5}
                   size={{
                     xs: 12,
                     sm: 12,
+                  }}
+                  sx={{
+                    mt: 5,
+                    mb: 5,
                   }}
                 >
                   <TableContainer>
@@ -1091,11 +1108,13 @@ class Checkworks_ extends React.Component {
                 sx={{ p: 0 }}
               >
                 <Grid
-                  mt={5}
-                  mb={5}
                   size={{
                     xs: 12,
                     sm: 12,
+                  }}
+                  sx={{
+                    mt: 5,
+                    mb: 5,
                   }}
                 >
                   <TableContainer>
@@ -1169,8 +1188,10 @@ class Checkworks_ extends React.Component {
                                 (item.manager_name ?? "")
                               ) : (
                                 <Grid
-                                  display="flex"
-                                  justifyContent="space-evenly"
+                                  sx={{
+                                    display: "flex",
+                                    justifyContent: "space-evenly",
+                                  }}
                                 >
                                   <Button
                                     onClick={this.openConfirm.bind(this, item, "savePf")}

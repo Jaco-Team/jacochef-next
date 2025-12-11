@@ -1525,10 +1525,12 @@ class ReceptModuleNew_ extends React.Component {
           </Grid>
 
           <Grid
-            mb={3}
             size={{
               xs: 12,
               sm: 3,
+            }}
+            sx={{
+              mb: 3,
             }}
           >
             <Button
@@ -1539,10 +1541,12 @@ class ReceptModuleNew_ extends React.Component {
             </Button>
           </Grid>
           <Grid
-            mb={3}
             size={{
               xs: 12,
               sm: 3,
+            }}
+            sx={{
+              mb: 3,
             }}
           >
             <Button

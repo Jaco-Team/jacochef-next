@@ -4687,7 +4687,6 @@ class WorkSchedule_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         {!this.state.userInfo || this.state.mainMenuWithheld === false ? null : (
           <Dialog
             onClose={() => this.setState({ mainMenuWithheld: false, userInfo: null })}
@@ -4748,7 +4747,6 @@ class WorkSchedule_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         {!this.state.userInfo || this.state.isOpenModalH === false ? null : (
           <Dialog
             open={this.state.isOpenModalH}
@@ -4917,13 +4915,21 @@ class WorkSchedule_ extends React.Component {
                         func={(event) => this.setState({ newTimeStart: event.target.value })}
                         label="Время начала работы"
                       />
-                      <Typography width={"3%"}></Typography>
+                      <Typography
+                        sx={{
+                          width: "3%",
+                        }}
+                      ></Typography>
                       <MyTimePicker
                         value={this.state.newTimeEnd}
                         func={(event) => this.setState({ newTimeEnd: event.target.value })}
                         label="Время окончания работы"
                       />
-                      <Typography width={"3%"}></Typography>
+                      <Typography
+                        sx={{
+                          width: "3%",
+                        }}
+                      ></Typography>
                       <Button
                         style={{
                           minWidth: "12%",
@@ -4954,7 +4960,11 @@ class WorkSchedule_ extends React.Component {
                           func={this.changeHourse.bind(this, "time_start", key)}
                           label="Время начала работы"
                         />
-                        <Typography width={"3%"}></Typography>
+                        <Typography
+                          sx={{
+                            width: "3%",
+                          }}
+                        ></Typography>
                         <MyTimePicker
                           value={item.time_end}
                           func={this.changeHourse.bind(this, "time_end", key)}
@@ -5885,11 +5895,13 @@ class WorkSchedule_ extends React.Component {
           </Grid>
 
           <Grid
-            display="flex"
-            justifyContent="space-between"
             size={{
               xs: 12,
               sm: 6,
+            }}
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
             }}
           >
             <Button

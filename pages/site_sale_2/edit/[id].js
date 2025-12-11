@@ -1041,9 +1041,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="start"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "start",
+            }}
           >
             <Grid
               size={{
@@ -1057,9 +1059,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="start"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "start",
+            }}
           >
             <Grid
               size={{
@@ -1087,9 +1091,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="column"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1166,9 +1172,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1189,9 +1197,11 @@ class SiteSale2_edit_ extends React.Component {
             <Grid
               container
               direction="row"
-              justifyContent="center"
               style={{ paddingTop: 20 }}
               spacing={3}
+              sx={{
+                justifyContent: "center",
+              }}
             >
               <Grid
                 size={{
@@ -1293,9 +1303,11 @@ class SiteSale2_edit_ extends React.Component {
             <Grid
               container
               direction="row"
-              justifyContent="center"
               style={{ paddingTop: 20 }}
               spacing={3}
+              sx={{
+                justifyContent: "center",
+              }}
             >
               <Grid
                 size={{
@@ -1359,9 +1371,11 @@ class SiteSale2_edit_ extends React.Component {
             <Grid
               container
               direction="row"
-              justifyContent="center"
               style={{ paddingTop: 20 }}
               spacing={3}
+              sx={{
+                justifyContent: "center",
+              }}
             >
               <Grid
                 size={{
@@ -1412,9 +1426,11 @@ class SiteSale2_edit_ extends React.Component {
             <Grid
               container
               direction="row"
-              justifyContent="center"
               style={{ paddingTop: 20 }}
               spacing={3}
+              sx={{
+                justifyContent: "center",
+              }}
             >
               <Grid
                 size={{
@@ -1465,9 +1481,11 @@ class SiteSale2_edit_ extends React.Component {
             <Grid
               container
               direction="row"
-              justifyContent="center"
               style={{ paddingTop: 20 }}
               spacing={3}
+              sx={{
+                justifyContent: "center",
+              }}
             >
               <Grid
                 size={{
@@ -1513,9 +1531,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1586,9 +1606,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1608,9 +1630,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1667,9 +1691,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1689,9 +1715,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ marginTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <MyCheckBox
               value={this.state.day_1}
@@ -1741,9 +1769,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1808,9 +1838,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1855,9 +1887,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="end"
             style={{ paddingTop: 50 }}
             spacing={3}
+            sx={{
+              justifyContent: "end",
+            }}
           >
             <Button
               variant="contained"
@@ -1869,9 +1903,11 @@ class SiteSale2_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="end"
             style={{ paddingTop: 10 }}
             spacing={3}
+            sx={{
+              justifyContent: "end",
+            }}
           >
             <Grid
               size={{

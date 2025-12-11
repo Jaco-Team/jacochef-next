@@ -639,8 +639,10 @@ class CafeDirEdit_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={3}
           className="container_first_child"
+          sx={{
+            mb: 3,
+          }}
         >
           <Grid
             size={{
@@ -682,11 +684,13 @@ class CafeDirEdit_ extends React.Component {
         </Grid>
         {/* табы */}
         <Grid
-          mt={3}
-          mb={5}
           size={{
             xs: 12,
             sm: 12,
+          }}
+          sx={{
+            mt: 3,
+            mb: 5,
           }}
         >
           <TabContext value={this.state.ItemTab}>
@@ -963,8 +967,10 @@ class CafeDirEdit_ extends React.Component {
             </TabPanel>
           </TabContext>
           <Grid
-            display="flex"
-            sx={{ justifyContent: { sm: "end", xs: "start" } }}
+            sx={{
+              display: "flex",
+              justifyContent: { sm: "end", xs: "start" },
+            }}
           >
             <Button
               onClick={this.save.bind(this)}

@@ -156,9 +156,11 @@ class SiteSale2_Stat_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{

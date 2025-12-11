@@ -216,11 +216,13 @@ function LkPage() {
     <Grid
       container
       spacing={3}
-      mb={3}
       className="container_first_child"
       size={{
         xs: 12,
         sm: 12,
+      }}
+      sx={{
+        mb: 3,
       }}
     >
       <Backdrop
@@ -325,7 +327,9 @@ function LkPage() {
                     <Box>
                       <Typography
                         variant="body2"
-                        color="text.secondary"
+                        sx={{
+                          color: "text.secondary",
+                        }}
                       >
                         ФИО
                       </Typography>
@@ -343,7 +347,9 @@ function LkPage() {
                     <Box>
                       <Typography
                         variant="body2"
-                        color="text.secondary"
+                        sx={{
+                          color: "text.secondary",
+                        }}
                       >
                         Код доступа
                       </Typography>
@@ -367,7 +373,9 @@ function LkPage() {
                     <Box>
                       <Typography
                         variant="body2"
-                        color="text.secondary"
+                        sx={{
+                          color: "text.secondary",
+                        }}
                       >
                         Должность
                       </Typography>
@@ -409,7 +417,9 @@ function LkPage() {
                         <Box>
                           <Typography
                             variant="body2"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             Дата регистрации
                           </Typography>
@@ -433,7 +443,9 @@ function LkPage() {
                         <Box>
                           <Typography
                             variant="body2"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             Стаж работы
                           </Typography>

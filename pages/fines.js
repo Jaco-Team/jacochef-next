@@ -45,9 +45,11 @@ class Fines_Table_Сameras extends React.Component {
     return (
       <TableContainer>
         <Grid
-          sx={{ fontWeight: "bold" }}
-          mt={3}
-          mb={3}
+          sx={{
+            mt: 3,
+            mb: 3,
+            fontWeight: "bold",
+          }}
         >
           Ошибки по камерам
         </Grid>
@@ -104,9 +106,11 @@ class Fines_Table_Reviews extends React.Component {
     return (
       <TableContainer>
         <Grid
-          sx={{ fontWeight: "bold" }}
-          mt={3}
-          mb={3}
+          sx={{
+            mt: 3,
+            mb: 3,
+            fontWeight: "bold",
+          }}
         >
           Ошибки по отзывам
         </Grid>
@@ -232,10 +236,12 @@ class Fines_Modal extends React.Component {
                 spacing={3}
               >
                 <Grid
-                  mb={2}
                   size={{
                     xs: 12,
                     sm: 8,
+                  }}
+                  sx={{
+                    mb: 2,
                   }}
                 >
                   <MyTextInput
@@ -252,10 +258,12 @@ class Fines_Modal extends React.Component {
                   spacing={3}
                 >
                   <Grid
-                    mb={2}
                     size={{
                       xs: 12,
                       sm: 4,
+                    }}
+                    sx={{
+                      mb: 2,
                     }}
                   >
                     <MyTextInput
@@ -265,10 +273,12 @@ class Fines_Modal extends React.Component {
                     />
                   </Grid>
                   <Grid
-                    mb={2}
                     size={{
                       xs: 12,
                       sm: 4,
+                    }}
+                    sx={{
+                      mb: 2,
                     }}
                   >
                     <MyTextInput
@@ -278,10 +288,12 @@ class Fines_Modal extends React.Component {
                     />
                   </Grid>
                   <Grid
-                    mb={2}
                     size={{
                       xs: 12,
                       sm: 4,
+                    }}
+                    sx={{
+                      mb: 2,
                     }}
                   >
                     <MyTextInput
@@ -298,10 +310,12 @@ class Fines_Modal extends React.Component {
                 spacing={3}
               >
                 <Grid
-                  mb={2}
                   size={{
                     xs: 12,
                     sm: 4,
+                  }}
+                  sx={{
+                    mb: 2,
                   }}
                 >
                   <MyTextInput
@@ -311,10 +325,12 @@ class Fines_Modal extends React.Component {
                   />
                 </Grid>
                 <Grid
-                  mb={2}
                   size={{
                     xs: 12,
                     sm: 4,
+                  }}
+                  sx={{
+                    mb: 2,
                   }}
                 >
                   <MyTextInput
@@ -324,10 +340,12 @@ class Fines_Modal extends React.Component {
                   />
                 </Grid>
                 <Grid
-                  mb={2}
                   size={{
                     xs: 12,
                     sm: 4,
+                  }}
+                  sx={{
+                    mb: 2,
                   }}
                 >
                   <MyTextInput

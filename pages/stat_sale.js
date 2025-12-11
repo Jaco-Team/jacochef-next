@@ -1192,10 +1192,12 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
             spacing={10}
           >
             <Grid
-              mt={3}
               size={{
                 xs: 12,
                 sm: 6,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <TextField
@@ -1230,10 +1232,12 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
             </Grid>
 
             <Grid
-              mt={3}
               size={{
                 xs: 12,
                 sm: 6,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <CustomColorPicker
@@ -1475,10 +1479,12 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
             spacing={10}
           >
             <Grid
-              mt={3}
               size={{
                 xs: 12,
                 sm: 8,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <TableContainer component={Paper}>
@@ -1538,10 +1544,12 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
             </Grid>
 
             <Grid
-              mt={3}
               size={{
                 xs: 12,
                 sm: 4,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <CustomColorPicker
@@ -2079,11 +2087,13 @@ class StatSale_Tab_Sett extends React.Component {
                     spacing={3}
                   >
                     <Grid
-                      mt={3}
-                      mb={5}
                       size={{
                         xs: 12,
                         sm: 12,
+                      }}
+                      sx={{
+                        mt: 3,
+                        mb: 5,
                       }}
                     >
                       <TableContainer
@@ -2194,11 +2204,13 @@ class StatSale_Tab_Sett extends React.Component {
                     spacing={3}
                   >
                     <Grid
-                      mt={3}
-                      mb={5}
                       size={{
                         xs: 12,
                         sm: 12,
+                      }}
+                      sx={{
+                        mt: 3,
+                        mb: 5,
                       }}
                     >
                       <TableContainer
@@ -2304,10 +2316,12 @@ class StatSale_Tab_Sett extends React.Component {
                     spacing={3}
                   >
                     <Grid
-                      mt={3}
                       size={{
                         xs: 12,
                         sm: 12,
+                      }}
+                      sx={{
+                        mt: 3,
                       }}
                     >
                       <TableContainer>
@@ -2340,11 +2354,13 @@ class StatSale_Tab_Sett extends React.Component {
                     </Grid>
 
                     <Grid
-                      mb={5}
-                      display="grid"
                       size={{
                         xs: 12,
                         sm: 12,
+                      }}
+                      sx={{
+                        mb: 5,
+                        display: "grid",
                       }}
                     >
                       <Button
@@ -2684,12 +2700,15 @@ class StatSale_Tab_Clients extends React.Component {
 
             {!data_clients_list.length ? null : (
               <Grid
-                mt={3}
-                mb={5}
-                sx={{ position: "relative", overflow: "hidden" }}
                 size={{
                   xs: 12,
                   sm: 12,
+                }}
+                sx={{
+                  mt: 3,
+                  mb: 5,
+                  position: "relative",
+                  overflow: "hidden",
                 }}
               >
                 <TableContainer
@@ -3461,12 +3480,15 @@ class StatSale_Tab_Sale extends React.Component {
 
             {data_sale_list && data_sale_list.columns && data_sale_list.columns.months.length ? (
               <Grid
-                mt={3}
-                mb={5}
-                sx={{ position: "relative", overflow: "hidden" }}
                 size={{
                   xs: 12,
                   sm: 12,
+                }}
+                sx={{
+                  mt: 3,
+                  mb: 5,
+                  position: "relative",
+                  overflow: "hidden",
                 }}
               >
                 <DataTable
@@ -3809,8 +3831,10 @@ class StatSale_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={3}
           className="container_first_child"
+          sx={{
+            mb: 3,
+          }}
         >
           <Grid
             size={{

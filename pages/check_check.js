@@ -1768,17 +1768,21 @@ class CheckCheck_Modal extends React.Component {
 
           <DialogContent style={{ paddingTop: 10, paddingBottom: 10 }}>
             <Grid
-              display="flex"
-              flexDirection="column"
-              marginBottom={2}
               size={{
                 xs: 12,
                 sm: 6,
               }}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                marginBottom: 2,
+              }}
             >
               <Grid
-                display="flex"
-                flexDirection="row"
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                }}
               >
                 <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
                   Дата/Время заказа:
@@ -1789,8 +1793,10 @@ class CheckCheck_Modal extends React.Component {
               </Grid>
 
               <Grid
-                display="flex"
-                flexDirection="row"
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                }}
               >
                 <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
                   Сумма заказа:
@@ -2192,8 +2198,10 @@ class CheckCheck_ extends React.Component {
           <DialogTitle>
             <Typography
               variant="h6"
-              fontWeight="bold"
               gutterBottom
+              sx={{
+                fontWeight: "bold",
+              }}
             >
               Выберите действие
             </Typography>
@@ -2457,10 +2465,12 @@ class CheckCheck_ extends React.Component {
           {Number(acces?.check_access) === 1 && Number(acces?.upload_access) === 1 && (
             <Grid
               container
-              justifyContent={{ xs: "flex-start", sm: "flex-end" }}
               size={{
                 xs: 12,
                 sm: 3,
+              }}
+              sx={{
+                justifyContent: { xs: "flex-start", sm: "flex-end" },
               }}
             >
               <Button
@@ -2477,10 +2487,12 @@ class CheckCheck_ extends React.Component {
 
           {complete_data?.length > 0 && Number(acces?.check_access) === 1 && (
             <Grid
-              mb={summ_ofd ? 0 : 5}
               size={{
                 xs: 12,
                 sm: 12,
+              }}
+              sx={{
+                mb: summ_ofd ? 0 : 5,
               }}
             >
               <Accordion
@@ -2493,13 +2505,17 @@ class CheckCheck_ extends React.Component {
                   expandIcon={complete_data.length > 100 ? null : <ExpandMoreIcon />}
                 >
                   <Box
-                    display="flex"
-                    alignItems="center"
-                    width="100%"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
                   >
                     <Typography
                       variant="subtitle1"
-                      fontWeight="bold"
+                      sx={{
+                        fontWeight: "bold",
+                      }}
                     >
                       Проверка на заполненность данных
                     </Typography>
@@ -2572,10 +2588,12 @@ class CheckCheck_ extends React.Component {
 
           {summ_ofd && summ_chef && (
             <Grid
-              mb={5}
               size={{
                 xs: 12,
                 sm: 12,
+              }}
+              sx={{
+                mb: 5,
               }}
             >
               <CheckCheck_Accordion

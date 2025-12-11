@@ -80,13 +80,17 @@ class ReceptModule_Modal_Container extends React.Component {
       <Grid
         container
         spacing={3}
-        mt={3}
+        sx={{
+          mt: 3,
+        }}
       >
         <Grid size={12}>
           <Grid
             container
             spacing={3}
-            mb={2}
+            sx={{
+              mb: 2,
+            }}
           >
             <Grid
               size={{
@@ -116,7 +120,9 @@ class ReceptModule_Modal_Container extends React.Component {
           <Grid
             container
             spacing={3}
-            mb={2}
+            sx={{
+              mb: 2,
+            }}
           >
             <Grid
               size={{
@@ -147,9 +153,11 @@ class ReceptModule_Modal_Container extends React.Component {
           </Grid>
 
           <Grid
-            mb={3}
             size={{
               xs: 12,
+            }}
+            sx={{
+              mb: 3,
             }}
           >
             <MyAutocomplite
@@ -998,10 +1006,12 @@ class ReceptModule_ extends React.Component {
           </Grid>
 
           <Grid
-            mb={3}
             size={{
               xs: 12,
               sm: 3,
+            }}
+            sx={{
+              mb: 3,
             }}
           >
             <Button

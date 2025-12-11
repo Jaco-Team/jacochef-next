@@ -771,13 +771,14 @@ class OrderReturn_Modal_Order extends React.Component {
                             <TableCell>
                               {new Intl.NumberFormat("ru-RU").format(item.price || 0)} ₽
                             </TableCell>
-
                             <TableCell align="center">
                               <Box
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
-                                gap={1}
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: 1,
+                                }}
                               >
                                 <IconButton
                                   disableRipple
@@ -806,8 +807,10 @@ class OrderReturn_Modal_Order extends React.Component {
 
                                 <Typography
                                   variant="body1"
-                                  minWidth={24}
-                                  textAlign="center"
+                                  sx={{
+                                    minWidth: 24,
+                                    textAlign: "center",
+                                  }}
                                 >
                                   {item.count_return ?? 0}
                                 </Typography>
@@ -842,7 +845,6 @@ class OrderReturn_Modal_Order extends React.Component {
                                 </IconButton>
                               </Box>
                             </TableCell>
-
                             <TableCell align="center">
                               <Typography
                                 variant="body1"
@@ -851,7 +853,6 @@ class OrderReturn_Modal_Order extends React.Component {
                                 {new Intl.NumberFormat("ru-RU").format(item.price_return || 0)} ₽
                               </Typography>
                             </TableCell>
-
                             <TableCell
                               style={{
                                 display: "flex",
@@ -877,7 +878,6 @@ class OrderReturn_Modal_Order extends React.Component {
                               <TableCell />
                               <TableCell />
                             </TableRow>
-
                             {(item.set_items ?? []).map((sub) => {
                               const subKey = sub.item_id;
 
@@ -893,13 +893,14 @@ class OrderReturn_Modal_Order extends React.Component {
                                   <TableCell>
                                     {new Intl.NumberFormat("ru-RU").format(sub.price || 0)} ₽
                                   </TableCell>
-
                                   <TableCell align="center">
                                     <Box
-                                      display="flex"
-                                      alignItems="center"
-                                      justifyContent="center"
-                                      gap={1}
+                                      sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        gap: 1,
+                                      }}
                                     >
                                       <IconButton
                                         disableRipple
@@ -939,8 +940,10 @@ class OrderReturn_Modal_Order extends React.Component {
 
                                       <Typography
                                         variant="body1"
-                                        minWidth={24}
-                                        textAlign="center"
+                                        sx={{
+                                          minWidth: 24,
+                                          textAlign: "center",
+                                        }}
                                       >
                                         {sub.count_return ?? 0}
                                       </Typography>
@@ -982,7 +985,6 @@ class OrderReturn_Modal_Order extends React.Component {
                                       </IconButton>
                                     </Box>
                                   </TableCell>
-
                                   <TableCell align="center">
                                     <Typography
                                       variant="body1"
@@ -992,7 +994,6 @@ class OrderReturn_Modal_Order extends React.Component {
                                       ₽
                                     </Typography>
                                   </TableCell>
-
                                   <TableCell
                                     style={{
                                       display: "flex",
@@ -1413,11 +1414,13 @@ class OrderReturn_ extends React.Component {
           </Grid>
 
           <Grid
-            mt={3}
-            mb={5}
             size={{
               xs: 12,
               sm: 12,
+            }}
+            sx={{
+              mt: 3,
+              mb: 5,
             }}
           >
             <TableContainer>

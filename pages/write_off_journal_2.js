@@ -840,7 +840,9 @@ class Write_off_journal_modal extends React.Component {
             <Grid
               container
               spacing={3}
-              mb={3}
+              sx={{
+                mb: 3,
+              }}
             >
               <Grid
                 size={{
@@ -1782,7 +1784,6 @@ class Write_off_journal_ extends React.Component {
             points={this.state.points}
           />
         )}
-
         <Grid
           container
           spacing={3}
@@ -2026,10 +2027,12 @@ class Write_off_journal_ extends React.Component {
           </Grid>
 
           <Grid
-            mb={5}
             size={{
               xs: 12,
               sm: 12,
+            }}
+            sx={{
+              mb: 5,
             }}
           >
             <TableContainer

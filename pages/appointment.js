@@ -456,9 +456,11 @@ class Appointment_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={3}
-          mt={10}
           className="container_first_child"
+          sx={{
+            mb: 3,
+            mt: 10,
+          }}
         >
           <Grid
             size={{
@@ -571,10 +573,12 @@ class Appointment_ extends React.Component {
           />
 
           <Grid
-            mb={1}
             style={{ display: "flex", gap: "1em" }}
             size={{
               xs: 12,
+            }}
+            sx={{
+              mb: 1,
             }}
           >
             {this.canEdit("app") && this.canEdit("app_create") && (
@@ -595,9 +599,11 @@ class Appointment_ extends React.Component {
             )}
           </Grid>
           <Grid
-            mb={1}
             size={{
               xs: 12,
+            }}
+            sx={{
+              mb: 1,
             }}
           >
             {unitsWithItems?.map((unit) => (
@@ -692,9 +698,11 @@ class Appointment_ extends React.Component {
           </Grid>
 
           <Grid
-            mb={1}
             size={{
               xs: 12,
+            }}
+            sx={{
+              mb: 1,
             }}
           >
             <Button

@@ -222,16 +222,20 @@ class Fines_err_Modal_item extends React.Component {
             <Grid
               container
               spacing={3}
-              justifyContent="center"
-              mb={3}
+              sx={{
+                justifyContent: "center",
+                mb: 3,
+              }}
             >
               <Grid
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
                 size={{
                   xs: 12,
                   sm: 4,
+                }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
                 <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>Точка</Typography>
@@ -241,12 +245,14 @@ class Fines_err_Modal_item extends React.Component {
               </Grid>
 
               <Grid
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
                 size={{
                   xs: 12,
                   sm: 4,
+                }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
                 <Typography sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
@@ -258,12 +264,14 @@ class Fines_err_Modal_item extends React.Component {
               </Grid>
 
               <Grid
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
                 size={{
                   xs: 12,
                   sm: 4,
+                }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
                 <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
@@ -275,12 +283,14 @@ class Fines_err_Modal_item extends React.Component {
               </Grid>
 
               <Grid
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
                 size={{
                   xs: 12,
                   sm: 6,
+                }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
                 <Typography sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
@@ -296,12 +306,14 @@ class Fines_err_Modal_item extends React.Component {
               </Grid>
 
               <Grid
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
                 size={{
                   xs: 12,
                   sm: 6,
+                }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
                 <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>Ошибка</Typography>
@@ -346,12 +358,14 @@ class Fines_err_Modal_item extends React.Component {
 
               {this.state.item && this.state.item.err.text_one.length > 0 ? (
                 <Grid
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
                   size={{
                     xs: 12,
                     sm: 6,
+                  }}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
                   }}
                 >
                   <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
@@ -366,12 +380,14 @@ class Fines_err_Modal_item extends React.Component {
               {this.state.item && this.state.item.err.text_one.length > 0 ? (
                 this.state.item.err.text_two.length > 0 ? (
                   <Grid
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="center"
                     size={{
                       xs: 12,
                       sm: 6,
+                    }}
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
                     }}
                   >
                     <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
@@ -402,22 +418,27 @@ class Fines_err_Modal_item extends React.Component {
               ) : null}
 
               <Grid
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
                 size={{
                   xs: 12,
                   sm: 6,
+                }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
               >
                 <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
                   Фото ошибки
                 </Typography>
                 <Grid
-                  sx={{ fontWeight: "normal", whiteSpace: "nowrap" }}
-                  display="flex"
-                  flexDirection="column"
-                  justifyContent="center"
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    fontWeight: "normal",
+                    whiteSpace: "nowrap",
+                  }}
                 >
                   {this.state.item
                     ? !this.state.item.imgs.length
@@ -440,12 +461,14 @@ class Fines_err_Modal_item extends React.Component {
               {this.state.item ? (
                 this.state.item.user.name ? (
                   <Grid
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="center"
                     size={{
                       xs: 12,
                       sm: 6,
+                    }}
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
                     }}
                   >
                     <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
@@ -516,12 +539,14 @@ class Fines_err_Modal_item extends React.Component {
                     </Grid>
 
                     <Grid
-                      display="flex"
-                      flexWrap="wrap"
-                      justifyContent="center"
                       size={{
                         xs: 12,
                         sm: 12,
+                      }}
+                      sx={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        justifyContent: "center",
                       }}
                     >
                       {this.state.users
@@ -1091,12 +1116,14 @@ class Fines_err_Modal_NewItem extends React.Component {
                   </Grid>
 
                   <Grid
-                    display="flex"
-                    flexWrap="wrap"
-                    justifyContent="center"
                     size={{
                       xs: 12,
                       sm: 12,
+                    }}
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      justifyContent: "center",
                     }}
                   >
                     {this.state.users

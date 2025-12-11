@@ -296,10 +296,12 @@ class AppWorkPoint_ extends React.Component {
           </Grid>
 
           <Grid
-            mb={5}
             size={{
               xs: 12,
               sm: 6,
+            }}
+            sx={{
+              mb: 5,
             }}
           >
             <List style={{ width: "100%" }}>
@@ -316,10 +318,12 @@ class AppWorkPoint_ extends React.Component {
           </Grid>
 
           <Grid
-            mb={5}
             size={{
               xs: 12,
               sm: 6,
+            }}
+            sx={{
+              mb: 5,
             }}
           >
             <Table size="small">

@@ -1087,9 +1087,11 @@ class SiteSale2_new_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             {this.state.generate_new === true ? null : (
               <Grid
@@ -1235,9 +1237,11 @@ class SiteSale2_new_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1258,9 +1262,11 @@ class SiteSale2_new_ extends React.Component {
             <Grid
               container
               direction="row"
-              justifyContent="center"
               style={{ paddingTop: 20 }}
               spacing={3}
+              sx={{
+                justifyContent: "center",
+              }}
             >
               <Grid
                 size={{
@@ -1363,9 +1369,11 @@ class SiteSale2_new_ extends React.Component {
             <Grid
               container
               direction="row"
-              justifyContent="center"
               style={{ paddingTop: 20 }}
               spacing={3}
+              sx={{
+                justifyContent: "center",
+              }}
             >
               <Grid
                 size={{
@@ -1429,9 +1437,11 @@ class SiteSale2_new_ extends React.Component {
             <Grid
               container
               direction="row"
-              justifyContent="center"
               style={{ paddingTop: 20 }}
               spacing={3}
+              sx={{
+                justifyContent: "center",
+              }}
             >
               <Grid
                 size={{
@@ -1482,9 +1492,11 @@ class SiteSale2_new_ extends React.Component {
             <Grid
               container
               direction="row"
-              justifyContent="center"
               style={{ paddingTop: 20 }}
               spacing={3}
+              sx={{
+                justifyContent: "center",
+              }}
             >
               <Grid
                 size={{
@@ -1535,9 +1547,11 @@ class SiteSale2_new_ extends React.Component {
             <Grid
               container
               direction="row"
-              justifyContent="center"
               style={{ paddingTop: 20 }}
               spacing={3}
+              sx={{
+                justifyContent: "center",
+              }}
             >
               <Grid
                 size={{
@@ -1583,9 +1597,11 @@ class SiteSale2_new_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1675,9 +1691,11 @@ class SiteSale2_new_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1697,9 +1715,11 @@ class SiteSale2_new_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1756,9 +1776,11 @@ class SiteSale2_new_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1778,9 +1800,11 @@ class SiteSale2_new_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ marginTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <MyCheckBox
               value={this.state.day_1}
@@ -1830,9 +1854,11 @@ class SiteSale2_new_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1897,9 +1923,11 @@ class SiteSale2_new_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -1967,9 +1995,11 @@ class SiteSale2_new_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             {parseInt(this.state.where_promo) !== 8 ? null : (
               <Grid
@@ -2078,9 +2108,11 @@ class SiteSale2_new_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="end"
             style={{ paddingTop: 50 }}
             spacing={3}
+            sx={{
+              justifyContent: "end",
+            }}
           >
             <Button
               variant="contained"

@@ -226,8 +226,10 @@ class CloseBuy_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={3}
           className="container_first_child"
+          sx={{
+            mb: 3,
+          }}
         >
           <Grid
             size={{
@@ -254,10 +256,12 @@ class CloseBuy_ extends React.Component {
           </Grid>
         </Grid>
         <Grid
-          mb={1}
           style={{ padding: "24px" }}
           size={{
             xs: 12,
+          }}
+          sx={{
+            mb: 1,
           }}
         >
           {this.state.cats.map((cat, key) => {

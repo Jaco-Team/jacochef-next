@@ -576,10 +576,12 @@ class ItemsPr_ extends React.Component {
 
           {/* таблица_статистика */}
           <Grid
-            mb={5}
             size={{
               xs: 12,
               sm: 12,
+            }}
+            sx={{
+              mb: 5,
             }}
           >
             {!this.state.stat ? null : <ItemsPr_TableStat stat={this.state.stat} />}

@@ -791,9 +791,11 @@ class SiteSaleMin_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -823,9 +825,11 @@ class SiteSaleMin_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -882,9 +886,11 @@ class SiteSaleMin_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
             style={{ paddingTop: 20 }}
             spacing={3}
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{
@@ -918,9 +924,11 @@ class SiteSaleMin_edit_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="end"
             style={{ paddingTop: 50 }}
             spacing={3}
+            sx={{
+              justifyContent: "end",
+            }}
           >
             <Button
               variant="contained"
