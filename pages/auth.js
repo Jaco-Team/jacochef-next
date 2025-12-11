@@ -161,25 +161,27 @@ export default function Auth() {
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 value={password}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        onClick={() => setShowPassword(!showPassword)}
-                        disableRipple
-                        disableFocusRipple
-                      >
-                        {showPassword ? (
-                          <EyeShow style={{ fontSize: 30 }} />
-                        ) : (
-                          <EyeHide style={{ fontSize: 30 }} />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
                 onChange={setLogin}
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          onClick={() => setShowPassword(!showPassword)}
+                          disableRipple
+                          disableFocusRipple
+                        >
+                          {showPassword ? (
+                            <EyeShow style={{ fontSize: 30 }} />
+                          ) : (
+                            <EyeHide style={{ fontSize: 30 }} />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
 
               <Button

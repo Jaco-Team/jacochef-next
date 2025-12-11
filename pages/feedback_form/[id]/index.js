@@ -448,7 +448,9 @@ const ModalItem = ({ open, onClose, params }) => {
             <Card elevation={3}>
               <CardHeader
                 title="Список параметров"
-                titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                slotProps={{
+                  title: { variant: "h6", fontWeight: "bold" },
+                }}
               />
               <Divider />
               <TableContainer>
@@ -1108,7 +1110,9 @@ function FeedbackPage() {
                   <CardHeader
                     title="Лидеры проблем"
                     subheader={`За период ${dayjs(dateStart).format("DD.MM.YYYY")} - ${dayjs(dateEnd).format("DD.MM.YYYY")}`}
-                    titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                    slotProps={{
+                      title: { variant: "h6", fontWeight: "bold" },
+                    }}
                   />
                   <Divider />
                   <TableContainer>
@@ -1182,7 +1186,9 @@ function FeedbackPage() {
                   <CardHeader
                     title="Топ положительных оценок"
                     subheader={`За период ${dayjs(dateStart).format("DD.MM.YYYY")} - ${dayjs(dateEnd).format("DD.MM.YYYY")}`}
-                    titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                    slotProps={{
+                      title: { variant: "h6", fontWeight: "bold" },
+                    }}
                   />
                   <Divider />
                   <TableContainer>

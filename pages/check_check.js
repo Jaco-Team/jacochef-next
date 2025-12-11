@@ -306,7 +306,7 @@ class CheckCheck_Accordion extends React.Component {
   getSmenaByKassa = (summ_ofd, summ_chef) => {
     const result = {};
 
-    const ofdSmena  = summ_ofd?.smena  ?? [];
+    const ofdSmena = summ_ofd?.smena ?? [];
     const chefSmena = summ_chef?.smena ?? [];
 
     const metaByDateKassa = {};
@@ -319,7 +319,7 @@ class CheckCheck_Accordion extends React.Component {
         const key = `${date}__${kassaId}`;
 
         metaByDateKassa[key] = {
-          color:   k.color || day.color || "inherit",
+          color: k.color || day.color || "inherit",
           comment: typeof k.comment === "string" ? k.comment : "",
         };
       });
@@ -327,19 +327,19 @@ class CheckCheck_Accordion extends React.Component {
 
     const makeKey = (kassaId, smena) => `${kassaId}__${smena}`;
 
-    const ofdMap  = {};
+    const ofdMap = {};
     const chefMap = {};
     const keysSet = new Set();
 
     // ---------- ОФД ----------
     ofdSmena.forEach((row) => {
-      const date  = row.date || row.day || "";
+      const date = row.date || row.day || "";
       const kassa = Number(row.kassa);
       const smena = Number(row.smena);
 
       if (!date || !kassa || !smena) return;
 
-      const key  = makeKey(kassa, smena);
+      const key = makeKey(kassa, smena);
       const meta = metaByDateKassa[`${date}__${kassa}`] || {};
 
       keysSet.add(key);
@@ -354,9 +354,11 @@ class CheckCheck_Accordion extends React.Component {
         bankCount: Number(row.count_bank_checks) || 0,
         // приоритет — комментарий с уровня дня/кассы
         comment:
-          (meta.comment && meta.comment.trim().length > 0)
+          meta.comment && meta.comment.trim().length > 0
             ? meta.comment
-            : (typeof row.comment === "string" ? row.comment : ""),
+            : typeof row.comment === "string"
+              ? row.comment
+              : "",
         serverColor: meta.color || "inherit",
       };
     });
@@ -369,7 +371,7 @@ class CheckCheck_Accordion extends React.Component {
 
       if (!date || !kassa || !smena) return;
 
-      const key  = makeKey(kassa, smena);
+      const key = makeKey(kassa, smena);
       const meta = metaByDateKassa[`${date}__${kassa}`] || {};
 
       keysSet.add(key);
@@ -378,14 +380,16 @@ class CheckCheck_Accordion extends React.Component {
         date,
         kassaId: kassa,
         smena,
-        cash: Number(row.summ_cash)         || 0,
-        bank: Number(row.summ_bank)         || 0,
+        cash: Number(row.summ_cash) || 0,
+        bank: Number(row.summ_bank) || 0,
         cashCount: Number(row.count_cash_checks) || 0,
         bankCount: Number(row.count_bank_checks) || 0,
         comment:
-          (meta.comment && meta.comment.trim().length > 0)
+          meta.comment && meta.comment.trim().length > 0
             ? meta.comment
-            : (typeof row.comment === "string" ? row.comment : ""),
+            : typeof row.comment === "string"
+              ? row.comment
+              : "",
         serverColor: meta.color || "inherit",
       };
     });
@@ -396,12 +400,17 @@ class CheckCheck_Accordion extends React.Component {
       const kassaId = Number(kassaStr);
       const smena = Number(smenaStr);
 
-      const ofd  = ofdMap[key]  || {};
+      const ofd = ofdMap[key] || {};
       const chef = chefMap[key] || {};
 
       const date = ofd.date || chef.date || "";
 
-      const comment = (typeof ofd.comment === "string" && ofd.comment.trim().length > 0) ? ofd.comment : (typeof chef.comment === "string" ? chef.comment : "");
+      const comment =
+        typeof ofd.comment === "string" && ofd.comment.trim().length > 0
+          ? ofd.comment
+          : typeof chef.comment === "string"
+            ? chef.comment
+            : "";
 
       const serverColor = ofd.serverColor ?? chef.serverColor ?? "inherit";
 
@@ -414,8 +423,8 @@ class CheckCheck_Accordion extends React.Component {
 
         ofdCash: ofd.cash ?? 0,
         ofdBank: ofd.bank ?? 0,
-        ofdCashCount: ofd.cashCount  ?? 0,
-        ofdBankCount: ofd.bankCount  ?? 0,
+        ofdCashCount: ofd.cashCount ?? 0,
+        ofdBankCount: ofd.bankCount ?? 0,
 
         chefCash: chef.cash ?? 0,
         chefBank: chef.bank ?? 0,
@@ -473,7 +482,7 @@ class CheckCheck_Accordion extends React.Component {
     this.setState({
       activeTab: value,
     });
-  }
+  };
 
   changeKassaTab = (event, value) => {
     this.setState({
@@ -483,11 +492,11 @@ class CheckCheck_Accordion extends React.Component {
 
   calcSmenaCountForDayKassa = (date, kassaId, summ_ofd, summ_chef) => {
     const ofdCnt = (summ_ofd?.smena ?? []).filter(
-      (s) => s.date === date && Number(s.kassa) === Number(kassaId)
+      (s) => s.date === date && Number(s.kassa) === Number(kassaId),
     ).length;
 
     const chefCnt = (summ_chef?.smena ?? []).filter(
-      (s) => s.date === date && Number(s.kassa) === Number(kassaId)
+      (s) => s.date === date && Number(s.kassa) === Number(kassaId),
     ).length;
 
     const cnt = Math.max(ofdCnt, chefCnt);
@@ -497,19 +506,20 @@ class CheckCheck_Accordion extends React.Component {
 
   render() {
     const { summ_ofd, summ_chef, acces_comment } = this.props;
-    const { openRows, openSummary, mismatchOpen, mismatchCtx, comment, activeTab, activeKassaTab } = this.state;
+    const { openRows, openSummary, mismatchOpen, mismatchCtx, comment, activeTab, activeKassaTab } =
+      this.state;
 
     const daysMerged = this.getPreparedDays(summ_ofd, summ_chef);
     const kassTotals = this.getKassTotals(summ_ofd, summ_chef);
 
     // готовим данные по сменам
     const smenaByKassa = this.getSmenaByKassa(summ_ofd, summ_chef);
-    
+
     const counts = { green: 0, gray: 0, red: 0 };
-    
+
     daysMerged.forEach(({ date, ofdDay, chefDay, kassas }) => {
       kassas.forEach(({ kassaId, ofdKassa = {}, chefKassa = {} }) => {
-        const ofdSum  = (ofdKassa.summ_cash ?? 0) + (ofdKassa.summ_bank ?? 0);
+        const ofdSum = (ofdKassa.summ_cash ?? 0) + (ofdKassa.summ_bank ?? 0);
         const chefSum = (chefKassa.summ_cash ?? 0) + (chefKassa.summ_bank ?? 0);
 
         let smenaCount = Number(ofdKassa.smena_count ?? 0);
@@ -571,7 +581,6 @@ class CheckCheck_Accordion extends React.Component {
           </AccordionSummary>
 
           <AccordionDetails>
-
             {/* таблица статуса смен */}
             <TableContainer
               component={Paper}
@@ -636,7 +645,7 @@ class CheckCheck_Accordion extends React.Component {
                   }}
                   sx={{ cursor: "pointer" }}
                 >
-                  <TableCell style={{ width: "8%", fontWeight: "bold" }}/>
+                  <TableCell style={{ width: "8%", fontWeight: "bold" }} />
 
                   <TableCell style={{ width: "23%" }}>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -920,14 +929,23 @@ class CheckCheck_Accordion extends React.Component {
                   centered
                   variant="fullWidth"
                 >
-                  <Tab label="Даты" {...a11yProps(0)} />
-                  <Tab label="Смены" {...a11yProps(1)} />
+                  <Tab
+                    label="Даты"
+                    {...a11yProps(0)}
+                  />
+                  <Tab
+                    label="Смены"
+                    {...a11yProps(1)}
+                  />
                 </Tabs>
               </Paper>
             </Grid>
 
             {/* таб с таблицами по датам */}
-            <TabPanel value={activeTab} index={0}>
+            <TabPanel
+              value={activeTab}
+              index={0}
+            >
               <Table size="small">
                 <TableBody>
                   {daysMerged.map(({ date, ofdDay, chefDay, kassas }) => {
@@ -954,7 +972,9 @@ class CheckCheck_Accordion extends React.Component {
                           onClick={() => this.toggleRow(date)}
                           style={{ cursor: "pointer" }}
                         >
-                          <TableCell sx={{ fontWeight: "bold" }}>{formatDateReverse(date)}</TableCell>
+                          <TableCell sx={{ fontWeight: "bold" }}>
+                            {formatDateReverse(date)}
+                          </TableCell>
 
                           <TableCell>
                             <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -1249,7 +1269,10 @@ class CheckCheck_Accordion extends React.Component {
             </TabPanel>
 
             {/* таб с таблицами по сменам */}
-            <TabPanel value={activeTab} index={1}>
+            <TabPanel
+              value={activeTab}
+              index={1}
+            >
               {kassTotals.length === 0 ? (
                 <Typography>Нет данных по кассам за выбранный период</Typography>
               ) : (
@@ -1297,27 +1320,46 @@ class CheckCheck_Accordion extends React.Component {
                             <TableHead>
                               <TableRow>
                                 <TableCell style={{ width: "8%" }}>Смены</TableCell>
-                                <TableCell style={{ width: "23%" }}>Наличные за период (ОФД)</TableCell>
-                                <TableCell style={{ width: "23%" }}>Безналичные за период (ОФД)</TableCell>
-                                <TableCell style={{ width: "23%" }}>Наличные за период (ШЕФ)</TableCell>
-                                <TableCell style={{ width: "23%" }}>Безналичные за период (ШЕФ)</TableCell>
+                                <TableCell style={{ width: "23%" }}>
+                                  Наличные за период (ОФД)
+                                </TableCell>
+                                <TableCell style={{ width: "23%" }}>
+                                  Безналичные за период (ОФД)
+                                </TableCell>
+                                <TableCell style={{ width: "23%" }}>
+                                  Наличные за период (ШЕФ)
+                                </TableCell>
+                                <TableCell style={{ width: "23%" }}>
+                                  Безналичные за период (ШЕФ)
+                                </TableCell>
                               </TableRow>
                             </TableHead>
                             <TableBody>
                               {rows.map((row, i) => {
                                 const isOnline = kassaId === 2;
 
-                                const colCash = getColor(row.ofdCash, row.chefCash, row.serverColor);
-                                const colBank = getColor(row.ofdBank, row.chefBank, row.serverColor);
+                                const colCash = getColor(
+                                  row.ofdCash,
+                                  row.chefCash,
+                                  row.serverColor,
+                                );
+                                const colBank = getColor(
+                                  row.ofdBank,
+                                  row.chefBank,
+                                  row.serverColor,
+                                );
 
                                 return (
-                                  <TableRow key={`${kassaId}-${row.date}-${row.smena}-${i}`} hover>
+                                  <TableRow
+                                    key={`${kassaId}-${row.date}-${row.smena}-${i}`}
+                                    hover
+                                  >
                                     {/* Смена */}
                                     <TableCell style={{ fontWeight: "bold" }}>
                                       {row.smenaLabel}
                                     </TableCell>
 
-                                     {/* ОФД НАЛ */}
+                                    {/* ОФД НАЛ */}
                                     <TableCell>
                                       {isOnline ? (
                                         <Typography sx={{ color: "text.secondary" }}>—</Typography>
@@ -1344,7 +1386,10 @@ class CheckCheck_Accordion extends React.Component {
                                             canEdit={canEdit}
                                           />
 
-                                          <Tooltip title="Количество чеков" arrow>
+                                          <Tooltip
+                                            title="Количество чеков"
+                                            arrow
+                                          >
                                             <Chip
                                               label={formatNumber(row.ofdCashCount || 0)}
                                               size="small"
@@ -1379,7 +1424,10 @@ class CheckCheck_Accordion extends React.Component {
                                           canEdit={canEdit}
                                         />
 
-                                        <Tooltip title="Количество чеков" arrow>
+                                        <Tooltip
+                                          title="Количество чеков"
+                                          arrow
+                                        >
                                           <Chip
                                             label={formatNumber(row.ofdBankCount || 0)}
                                             size="small"
@@ -1388,7 +1436,6 @@ class CheckCheck_Accordion extends React.Component {
                                         </Tooltip>
                                       </Box>
                                     </TableCell>
-
 
                                     {/* ШЕФ НАЛ */}
                                     <TableCell>
@@ -1399,7 +1446,10 @@ class CheckCheck_Accordion extends React.Component {
                                           <Typography sx={{ color: colCash }}>
                                             {formatNumber(row.chefCash || 0)} ₽
                                           </Typography>
-                                          <Tooltip title="Количество чеков" arrow>
+                                          <Tooltip
+                                            title="Количество чеков"
+                                            arrow
+                                          >
                                             <Chip
                                               label={formatNumber(row.chefCashCount || 0)}
                                               size="small"
@@ -1416,7 +1466,10 @@ class CheckCheck_Accordion extends React.Component {
                                         <Typography sx={{ color: colBank }}>
                                           {formatNumber(row.chefBank || 0)} ₽
                                         </Typography>
-                                        <Tooltip title="Количество чеков" arrow>
+                                        <Tooltip
+                                          title="Количество чеков"
+                                          arrow
+                                        >
                                           <Chip
                                             label={formatNumber(row.chefBankCount || 0)}
                                             size="small"
@@ -1425,11 +1478,9 @@ class CheckCheck_Accordion extends React.Component {
                                         </Tooltip>
                                       </Box>
                                     </TableCell>
-
                                   </TableRow>
                                 );
                               })}
-
                             </TableBody>
                           </Table>
                         )}
@@ -1439,7 +1490,6 @@ class CheckCheck_Accordion extends React.Component {
                 </>
               )}
             </TabPanel>
-
           </AccordionDetails>
         </Accordion>
 
@@ -1578,15 +1628,17 @@ class CheckCheck_Accordion extends React.Component {
           </DialogContent>
 
           <DialogActions>
-            {mismatchCtx && (mismatchCtx.scope === "kassa_day" || mismatchCtx.scope === "smena") && canEdit && (
-              <Button
-                onClick={this.saveComment}
-                variant="contained"
-                color="success"
-              >
-                Сохранить
-              </Button>
-            )}
+            {mismatchCtx &&
+              (mismatchCtx.scope === "kassa_day" || mismatchCtx.scope === "smena") &&
+              canEdit && (
+                <Button
+                  onClick={this.saveComment}
+                  variant="contained"
+                  color="success"
+                >
+                  Сохранить
+                </Button>
+              )}
             <Button
               onClick={this.closeMismatch}
               variant="contained"
@@ -2091,7 +2143,6 @@ class CheckCheck_ extends React.Component {
   };
 
   render() {
-
     const {
       is_load,
       openAlert,
@@ -2126,14 +2177,12 @@ class CheckCheck_ extends React.Component {
 
     return (
       <>
-
         <Backdrop
           style={{ zIndex: 99 }}
           open={is_load}
         >
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Dialog
           sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 600 } }}
           maxWidth="md"
@@ -2171,7 +2220,9 @@ class CheckCheck_ extends React.Component {
                 >
                   <ListItemText
                     primary={text_primary}
-                    primaryTypographyProps={{ fontWeight: "medium", color: "primary.main" }}
+                    slotProps={{
+                      primary: { fontWeight: "medium", color: "primary.main" },
+                    }}
                   />
                 </ListItemButton>
               )}
@@ -2189,7 +2240,9 @@ class CheckCheck_ extends React.Component {
                 >
                   <ListItemText
                     primary="Очистить данные по выбранным параметрам в 1С и после выгрузить данные в 1С"
-                    primaryTypographyProps={{ fontWeight: "medium", color: "primary.main" }}
+                    slotProps={{
+                      primary: { fontWeight: "medium", color: "primary.main" },
+                    }}
                   />
                 </ListItemButton>
               )}
@@ -2207,7 +2260,9 @@ class CheckCheck_ extends React.Component {
                 >
                   <ListItemText
                     primary="Очистить ВСЕ данные по выбранной точке в 1С и после выгрузить данные в 1С"
-                    primaryTypographyProps={{ fontWeight: "medium", color: "primary.main" }}
+                    slotProps={{
+                      primary: { fontWeight: "medium", color: "primary.main" },
+                    }}
                   />
                 </ListItemButton>
               )}
@@ -2224,7 +2279,9 @@ class CheckCheck_ extends React.Component {
                 >
                   <ListItemText
                     primary="Очистить ВСЕ данные по выбранной точке в 1С"
-                    primaryTypographyProps={{ fontWeight: "medium", color: "primary.main" }}
+                    slotProps={{
+                      primary: { fontWeight: "medium", color: "primary.main" },
+                    }}
                   />
                 </ListItemButton>
               )}
@@ -2239,14 +2296,12 @@ class CheckCheck_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <MyAlert
           isOpen={openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={err_status}
           text={err_text}
         />
-
         <CheckCheck_Modal
           open={modalOrder}
           onClose={() => this.setState({ modalOrder: false, orders: [], order: null })}
@@ -2255,13 +2310,11 @@ class CheckCheck_ extends React.Component {
           order={order}
           saveOrder={this.saveOrder}
         />
-
         <Grid
           container
           spacing={3}
           className="container_first_child"
         >
-
           <Grid
             size={{
               xs: 12,
@@ -2533,7 +2586,6 @@ class CheckCheck_ extends React.Component {
               />
             </Grid>
           )}
-      
         </Grid>
       </>
     );

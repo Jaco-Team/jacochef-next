@@ -95,9 +95,11 @@ class MyTimePicker extends React.PureComponent {
         id={this.props.id}
         value={this.props.value || ""}
         onChange={this.handleChange}
-        InputLabelProps={{ shrink: true }}
-        inputProps={{ step: 1 }}
         fullWidth
+        slotProps={{
+          htmlInput: { step: 1 },
+          inputLabel: { shrink: true },
+        }}
       />
     );
   }
@@ -122,9 +124,11 @@ class MyTimePickerHM extends React.PureComponent {
         id={this.props.id}
         value={this.props.value || ""}
         onChange={this.handleChange}
-        InputLabelProps={{ shrink: true }}
-        inputProps={{ step: 60 }}
         fullWidth
+        slotProps={{
+          htmlInput: { step: 60 },
+          inputLabel: { shrink: true },
+        }}
       />
     );
   }

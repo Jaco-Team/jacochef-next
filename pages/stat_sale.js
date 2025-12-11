@@ -856,7 +856,6 @@ export class CustomColorPicker extends React.Component {
         <div style={{ marginBottom: 20 }}>
           <h3>Выбрать цвет ячейки</h3>
         </div>
-
         <div
           style={{
             position: "relative",
@@ -892,7 +891,6 @@ export class CustomColorPicker extends React.Component {
             }}
           />
         </div>
-
         <div style={{ marginTop: 20 }}>
           <TextField
             label="Указать цвет в формате hex"
@@ -901,7 +899,6 @@ export class CustomColorPicker extends React.Component {
             value={hexInput}
             onChange={this.handleHexInputChange}
             onBlur={this.handleHexInputBlur}
-            inputProps={{ maxLength: 9, style: { padding: "10px 16px" } }}
             sx={{
               marginTop: 2,
               "& .MuiInputBase-root": {
@@ -926,9 +923,11 @@ export class CustomColorPicker extends React.Component {
                 color: "#c03",
               },
             }}
+            slotProps={{
+              htmlInput: { maxLength: 9, style: { padding: "10px 16px" } },
+            }}
           />
         </div>
-
         <div
           ref={this.alphaSliderRef}
           style={{
@@ -945,7 +944,6 @@ export class CustomColorPicker extends React.Component {
         >
           {this.renderAlphaSlider()}
         </div>
-
         {this.renderColorPresets()}
       </div>
     );
@@ -964,7 +962,9 @@ class StatSale_Modal_Graph extends React.Component {
         fullScreen={fullScreen}
         fullWidth
         maxWidth="calc(95% - 32px)"
-        PaperProps={{ style: { height: "90vh" } }}
+        slotProps={{
+          paper: { style: { height: "90vh" } },
+        }}
       >
         <DialogTitle className="button">
           <Typography style={{ fontWeight: "bold" }}>{name}</Typography>
@@ -1052,18 +1052,20 @@ class StatSale_Tab_Sett_Modal_Input extends React.Component {
         onBlur={handleChange.bind(this, index, item_type, item)}
         variant="standard"
         fullWidth
-        InputProps={{
-          disableUnderline: true,
-          inputProps: { min: 0, step: 1 },
-          endAdornment: [1, 2, 4].includes(id) ? (
-            <InputAdornment position="end">%</InputAdornment>
-          ) : null,
-        }}
         sx={{
           margin: 0,
           padding: 0,
           "& input": {
             fontWeight: id === 1 ? "bold" : "normal",
+          },
+        }}
+        slotProps={{
+          input: {
+            disableUnderline: true,
+            inputProps: { min: 0, step: 1 },
+            endAdornment: [1, 2, 4].includes(id) ? (
+              <InputAdornment position="end">%</InputAdornment>
+            ) : null,
           },
         }}
       />
@@ -1203,9 +1205,6 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
                 onChange={(e) => this.changeItem(e)}
                 onBlur={(e) => this.changeItem(e)}
                 fullWidth
-                InputProps={{
-                  inputProps: { min: 0, step: 1 },
-                }}
                 sx={{
                   margin: 0,
                   padding: 0,
@@ -1220,6 +1219,11 @@ class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
                     backgroundColor: color,
                     borderRadius: "8px",
                     backgroundClip: "padding-box",
+                  },
+                }}
+                slotProps={{
+                  input: {
+                    inputProps: { min: 0, step: 1 },
                   },
                 }}
               />
@@ -1517,8 +1521,10 @@ class StatSale_Tab_Sett_Modal_Rate extends React.Component {
                               value={item.value}
                               variant="standard"
                               fullWidth
-                              InputProps={{ disableUnderline: true }}
                               sx={{ margin: 0, padding: 0 }}
+                              slotProps={{
+                                input: { disableUnderline: true },
+                              }}
                             />
                           ) : (
                             " "

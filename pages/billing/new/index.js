@@ -2529,7 +2529,7 @@ function MyTooltip(props) {
       arrow
       placement="bottom-start"
       {...other}
-      componentsProps={{
+      slotProps={{
         tooltip: {
           sx: {
             bgcolor: "#fff",

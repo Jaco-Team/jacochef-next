@@ -278,7 +278,9 @@ function SettingsPage() {
                     <Card elevation={3}>
                       <CardHeader
                         title="Активные"
-                        titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                        slotProps={{
+                          title: { variant: "h6", fontWeight: "bold" },
+                        }}
                       />
                       <Divider />
                       <TableContainer>
@@ -334,7 +336,9 @@ function SettingsPage() {
                     <Card elevation={3}>
                       <CardHeader
                         title="Не активные"
-                        titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                        slotProps={{
+                          title: { variant: "h6", fontWeight: "bold" },
+                        }}
                       />
                       <Divider />
                       <TableContainer>
