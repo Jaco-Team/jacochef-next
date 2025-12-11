@@ -3050,7 +3050,25 @@ const DataTable = ({ tableData, openGraphModal }) => {
   return (
     <TableContainer
       component={Paper}
-      sx={{ overflowX: "auto", overflowY: "hidden", p: 0, m: 0, pb: 5 }}
+      sx={{
+        overflowX: "auto",
+        overflow: "auto !important",
+        overflowY: "auto",
+        "&::-webkit-scrollbar": {
+          WebkitAppearance: "none",
+          width: "8px",
+          height: "8px",
+        },
+        "&::-webkit-scrollbar-thumb": {
+          borderRadius: "8px",
+          backgroundColor: "rgba(0, 0, 0, .3)",
+        },
+        minHeight: "400px",
+        maxHeight: "calc(100vh - 200px)",
+        p: 0,
+        m: 0,
+        pb: 5,
+      }}
       className="montserrat-family"
     >
       <Table
@@ -3072,7 +3090,7 @@ const DataTable = ({ tableData, openGraphModal }) => {
                 left: 0,
                 top: 0,
                 backgroundColor: "white",
-                zIndex: 1300,
+                zIndex: 1100,
                 minWidth: paramColWidth + typeColWidth,
                 borderRight: thickBorder,
                 textAlign: "left !important",
