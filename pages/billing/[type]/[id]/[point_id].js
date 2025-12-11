@@ -3140,7 +3140,50 @@ class Billing_Modal extends React.Component {
       scaleY: 1,
       vertical: false,
       horizontal: true,
+      initialScaleSet: false,
     };
+    this.containerRef = React.createRef();
+  }
+
+  componentDidMount() {
+    this.loadImageDimensions(this.props.image);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.image !== this.props.image) {
+      this.setState({ initialScaleSet: false });
+      this.loadImageDimensions(this.props.image);
+    }
+  }
+
+  loadImageDimensions(src) {
+    const img = new Image();
+    img.onload = () => {
+      this.imageNaturalWidth = img.naturalWidth;
+      this.imageNaturalHeight = img.naturalHeight;
+      this.tryComputeInitialScale();
+    };
+    img.src = src;
+  }
+
+  tryComputeInitialScale() {
+    if (this.state.initialScaleSet) return;
+
+    const container = this.containerRef.current;
+    if (!container || !this.imageNaturalWidth) return;
+
+    const cw = container.clientWidth;
+    // const ch = container.clientHeight;
+
+    // Fit width to 90%
+    const targetWidth = cw * 0.9;
+    const baseScale = targetWidth / this.imageNaturalWidth;
+
+    this.setState({
+      scaleX: baseScale,
+      scaleY: baseScale,
+      initialScaleSet: true,
+    });
   }
 
   setLeftRotate() {
@@ -3342,14 +3385,14 @@ class Billing_Modal extends React.Component {
               <ZoomOutIcon />
             </IconButton>
           </MyTooltip>
-          <MyTooltip
+          {/* <MyTooltip
             name="Разделить экран по вертикали"
             style={{ display: "none" }}
           >
             <IconButton onClick={this.setSplitVertical.bind(this)}>
               <VerticalSplitIcon />
             </IconButton>
-          </MyTooltip>
+          </MyTooltip> */}
           <MyTooltip name="Разделить экран по горизонтали">
             <IconButton onClick={this.setSplitHorizontal.bind(this)}>
               <HorizontalSplitIcon />
@@ -3372,7 +3415,7 @@ class Billing_Modal extends React.Component {
             className="modal"
             onClick={this.props.onClose.bind(this)}
             style={{
-              width: this.state.vertical ? "50%" : "100%",
+              width: this.state.vertical ? "50wv" : "100wv",
               height: this.state.horizontal ? "50vh" : "100vh",
             }}
           >
@@ -3390,9 +3433,10 @@ class Billing_Modal extends React.Component {
         {this.state.vertical || this.state.horizontal ? (
           <div
             className="modal"
+            ref={this.containerRef}
             style={{
               backgroundColor: "rgba(0, 0, 0, 0.9)",
-              width: this.state.vertical ? "50%" : "100%",
+              width: this.state.vertical ? "50wv" : "100wv",
               height: this.state.horizontal ? "50vh" : "100vh",
               left: this.state.vertical ? "50%" : 0,
               top: this.state.horizontal ? "50%" : 0,
