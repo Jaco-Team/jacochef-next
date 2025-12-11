@@ -24,13 +24,7 @@ import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Chip from "@mui/material/Chip";
 import AccordionDetails from "@mui/material/AccordionDetails";
-import Table from "@mui/material/Table";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import TableCell from "@mui/material/TableCell";
-import TableBody from "@mui/material/TableBody";
 import Accordion from "@mui/material/Accordion";
-import HomeWorkIcon from "@mui/icons-material/HomeWork";
 import MyAlert from "@/ui/MyAlert";
 import { ModalAddressManagementEdit } from "@/components/hot_map/ModalAddressManagementEdit";
 import EditIcon from "@mui/icons-material/Edit";
@@ -45,7 +39,6 @@ const formatCurrency = (num) =>
   }).format(num);
 
 const getHomeIconSVG = () => {
-  // SVG путь для иконки Home из Material-UI
   return (
     "data:image/svg+xml;utf8," +
     encodeURIComponent(`
@@ -179,6 +172,7 @@ export default class HotMap extends React.PureComponent {
       is_pick_order: 0,
 
       isDrawing: false,
+      drawnZones: [],
     };
   }
 
@@ -336,9 +330,8 @@ export default class HotMap extends React.PureComponent {
                   type: "Point",
                   coordinates: [item.cordY, item.cordX],
                 },
-                // Добавляем свойства для отображения
                 properties: {
-                  hintContent: item.address || "Нажмите для подробностей", // Всплывающая подсказка при наведении
+                  hintContent: item.address || "Нажмите для подробностей",
                   balloonContentHeader: `<strong>${item.title || "Информация"}</strong>`,
                   balloonContentBody: `
             <div style="padding: 5px;">
@@ -349,22 +342,20 @@ export default class HotMap extends React.PureComponent {
             </div>
           `,
                   balloonContentFooter: "Информация о точке",
-                  // Любые дополнительные данные
+
                   data: item,
                 },
               },
               {
-                preset: "islands#blueDotIcon", // Более заметная иконка
+                preset: "islands#blueDotIcon",
                 iconColor: "#1E88E5",
-                // Опции для балуна
                 balloonCloseButton: true,
-                balloonPanelMaxMapArea: 0, // Балун не будет скрывать метку
+                balloonPanelMaxMapArea: 0,
                 hideIconOnBalloonOpen: false,
-                balloonAutoPan: true, // Автоматически прокручивать карту при открытии балуна
+                balloonAutoPan: true,
               },
             );
 
-            // Обработчик клика - открываем балун
             myGeoObject2.events.add("click", function (e) {
               e.get("target").balloon.open();
             });
@@ -463,9 +454,8 @@ export default class HotMap extends React.PureComponent {
                 type: "Point",
                 coordinates: [item.cordY, item.cordX],
               },
-              // Добавляем свойства для отображения
               properties: {
-                hintContent: item.address || "Нажмите для подробностей", // Всплывающая подсказка при наведении
+                hintContent: item.address || "Нажмите для подробностей",
                 balloonContentHeader: `<strong>${item.title || "Информация"}</strong>`,
                 balloonContentBody: `
             <div style="padding: 5px;">
@@ -476,22 +466,20 @@ export default class HotMap extends React.PureComponent {
             </div>
           `,
                 balloonContentFooter: "Информация о точке",
-                // Любые дополнительные данные
+
                 data: item,
               },
             },
             {
-              preset: "islands#blueDotIcon", // Более заметная иконка
+              preset: "islands#blueDotIcon",
               iconColor: "#1E88E5",
-              // Опции для балуна
               balloonCloseButton: true,
-              balloonPanelMaxMapArea: 0, // Балун не будет скрывать метку
+              balloonPanelMaxMapArea: 0,
               hideIconOnBalloonOpen: false,
-              balloonAutoPan: true, // Автоматически прокручивать карту при открытии балуна
+              balloonAutoPan: true,
             },
           );
 
-          // Обработчик клика - открываем балун
           myGeoObject2.events.add("click", function (e) {
             e.get("target").balloon.open();
           });
@@ -602,51 +590,84 @@ export default class HotMap extends React.PureComponent {
 
   startDrawing = () => {
     if (this.myGeoObject) {
-      if (!this.state.isDrawing) {
-        this.myGeoObject.options.set({ strokeColor: "rgb(187, 0, 37)" });
-
-        this.setState({ isDrawing: true }, () => {
-          if (this.myGeoObject.editor && this.myGeoObject.editor.startEditing) {
-            this.myGeoObject.editor.startEditing();
-          }
-        });
-      }
-
-      return;
+      this.map.geoObjects.remove(this.myGeoObject);
     }
 
-    this.setState({ isDrawing: true }, () => {
-      this.myGeoObject = new ymaps.GeoObject(
-        {
-          geometry: {
-            type: "Polygon",
-            coordinates: [],
-            fillRule: "nonZero",
-          },
+    this.myGeoObject = new ymaps.GeoObject(
+      {
+        geometry: {
+          type: "Polygon",
+          coordinates: [],
+          fillRule: "nonZero",
         },
-        {
-          fillColor: "#00FF00",
-          strokeColor: "#0000FF",
-          opacity: 0.5,
-          strokeWidth: 5,
-          strokeStyle: "shortdash",
-        },
-      );
+      },
+      {
+        fillColor: "#00FF0022",
+        strokeColor: "#00FF00",
+        strokeWidth: 3,
+        strokeStyle: "solid",
+        cursor: "crosshair",
+      },
+    );
 
-      this.map.geoObjects.add(this.myGeoObject);
-      this.myGeoObject.editor.startDrawing();
+    this.map.geoObjects.add(this.myGeoObject);
+
+    this.map.balloon.close();
+
+    this.map.balloon.open(
+      null,
+      `<div style="max-width: 300px; font-size: 14px; padding: 10px;">
+    <b>Режим рисования зоны включён</b><br>
+    • Кликайте по карте, чтобы добавить точки<br>
+    • Завершите рисование двойным кликом<br>
+    • Зона будет автоматически проанализирована
+  </div>`,
+      {
+        position: {
+          right: 20,
+          bottom: 20,
+        },
+        closeButton: true,
+        autoPan: false,
+        hideOnMapClick: false,
+      },
+    );
+
+    this.myGeoObject.editor.startDrawing();
+
+    this.myGeoObject.editor.events.add("statechange", (e) => {
+      if (e.get("newState") === "normal") {
+        this.setState({ isDrawing: false });
+
+        this.map.hint.close();
+
+        const coords = this.myGeoObject?.geometry?.getCoordinates();
+        if (coords?.[0]?.length >= 3) {
+          this.myGeoObject.options.set({
+            strokeColor: "#FFFF00",
+            fillColor: "#FFFF0022",
+          });
+          this.selectedZone = this.myGeoObject;
+          this.setState({ is_chooseZone: true }, () => {
+            setTimeout(() => this.getCount(), 300);
+          });
+        } else {
+          this.map.geoObjects.remove(this.myGeoObject);
+          this.myGeoObject = null;
+          this.selectedZone = null;
+          this.setState({ is_chooseZone: false });
+        }
+      }
     });
+
+    this.setState({ isDrawing: true, is_chooseZone: false });
   };
 
   stopDrawing = () => {
-    if (this.myGeoObject && this.myGeoObject.editor) {
-      if (this.myGeoObject.editor.stopEditing) {
-        this.myGeoObject.editor.stopEditing();
-      } else {
-        this.myGeoObject.editor.stopDrawing();
-      }
+    if (this.myGeoObject?.editor) {
+      this.myGeoObject.editor.stopDrawing();
     }
-
+    this.map.hint.close();
     this.setState({ isDrawing: false });
   };
 
@@ -687,12 +708,13 @@ export default class HotMap extends React.PureComponent {
   };
 
   removeDrawing = () => {
-    if (this.myGeoObject && this.myGeoObject.editor) {
-      this.myGeoObject.editor.stopDrawing();
+    if (this.myGeoObject) {
       this.map.geoObjects.remove(this.myGeoObject);
       this.myGeoObject = null;
-      this.setState({ isDrawing: false });
+      this.selectedZone = null;
     }
+    this.map.hint.close();
+    this.setState({ isDrawing: false, is_chooseZone: false });
   };
 
   saveAddressModalOpen = async (name, addresses) => {
