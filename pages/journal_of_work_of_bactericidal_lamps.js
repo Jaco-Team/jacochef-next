@@ -904,11 +904,13 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
           </Grid>
 
           <Grid
-            mt={3}
-            mb={5}
             size={{
               xs: 12,
               sm: 12,
+            }}
+            sx={{
+              mt: 3,
+              mb: 5,
             }}
           >
             <TableContainer>

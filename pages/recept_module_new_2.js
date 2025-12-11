@@ -2198,10 +2198,12 @@ class ReceptModule_ extends React.Component {
 
           {this.state.acces?.create_rec_access ? (
             <Grid
-              mb={3}
               size={{
                 xs: 12,
                 sm: 4,
+              }}
+              sx={{
+                mb: 3,
               }}
             >
               <Button
@@ -2215,10 +2217,12 @@ class ReceptModule_ extends React.Component {
 
           {this.state.acces?.create_pol_access ? (
             <Grid
-              mb={3}
               size={{
                 xs: 12,
                 sm: 4,
+              }}
+              sx={{
+                mb: 3,
               }}
             >
               <Button

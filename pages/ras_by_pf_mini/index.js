@@ -88,11 +88,13 @@ function LkPage() {
     <Grid
       container
       spacing={3}
-      mb={3}
       className="container_first_child"
       size={{
         xs: 12,
         sm: 12,
+      }}
+      sx={{
+        mb: 3,
       }}
     >
       <Backdrop

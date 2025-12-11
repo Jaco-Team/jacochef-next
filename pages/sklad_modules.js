@@ -469,10 +469,12 @@ class SkladModules_ extends React.Component {
 
           {!this.state.list ? null : (
             <Grid
-              mb={10}
               size={{
                 xs: 12,
                 sm: 12,
+              }}
+              sx={{
+                mb: 10,
               }}
             >
               {parseInt(this.state.acces?.view_pos_access) == 1 ? (

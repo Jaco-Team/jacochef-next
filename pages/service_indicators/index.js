@@ -393,8 +393,10 @@ function IndicatorsPage() {
       size={12}
       container
       spacing={3}
-      mb={3}
       className="container_first_child"
+      sx={{
+        mb: 3,
+      }}
     >
       <Backdrop
         style={{ zIndex: 99 }}
@@ -430,7 +432,6 @@ function IndicatorsPage() {
           delete={delete_sett_rate_clients}
         />
       )}
-
       {openModalDriver && (
         <ModalSettings
           open={openModalDriver}
@@ -453,7 +454,6 @@ function IndicatorsPage() {
           delete={delete_sett_rate_clients_driver}
         />
       )}
-
       {openModalDelete && (
         <ModalDelete
           open={openModalDelete}
@@ -462,7 +462,6 @@ function IndicatorsPage() {
           onDelete={deleteFuture}
         />
       )}
-
       {openModalDeleteDriver && (
         <ModalDelete
           open={openModalDeleteDriver}
@@ -555,8 +554,10 @@ function IndicatorsPage() {
                     </Grid>
                     <Grid
                       size={12}
-                      mt={3}
-                      mb={5}
+                      sx={{
+                        mt: 3,
+                        mb: 5,
+                      }}
                     >
                       <TableContainer
                         style={{
@@ -853,7 +854,9 @@ function IndicatorsPage() {
                     </Grid>
                     <Grid
                       size={12}
-                      paddingTop={4}
+                      sx={{
+                        paddingTop: 4,
+                      }}
                     >
                       {tableData.rows && <PerformanceTable dataTable={tableData} />}
                     </Grid>
@@ -910,7 +913,9 @@ function IndicatorsPage() {
                     </Grid>
                     <Grid
                       size={12}
-                      paddingTop={4}
+                      sx={{
+                        paddingTop: 4,
+                      }}
                     >
                       {tableDataYear.rows && <PerformanceTableYears dataTable={tableDataYear} />}
                     </Grid>
@@ -972,8 +977,10 @@ function IndicatorsPage() {
                     </Grid>
                     <Grid
                       size={12}
-                      mt={3}
-                      mb={5}
+                      sx={{
+                        mt: 3,
+                        mb: 5,
+                      }}
                     >
                       <TableContainer
                         style={{
@@ -1270,7 +1277,9 @@ function IndicatorsPage() {
                     </Grid>
                     <Grid
                       size={12}
-                      paddingTop={4}
+                      sx={{
+                        paddingTop: 4,
+                      }}
                     >
                       {tableData.rows && <PerformanceTable dataTable={tableData} />}
                     </Grid>
@@ -1327,7 +1336,9 @@ function IndicatorsPage() {
                     </Grid>
                     <Grid
                       size={12}
-                      paddingTop={4}
+                      sx={{
+                        paddingTop: 4,
+                      }}
                     >
                       {tableDataYear.rows && <PerformanceTableYears dataTable={tableDataYear} />}
                     </Grid>

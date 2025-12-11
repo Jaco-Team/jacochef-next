@@ -141,8 +141,10 @@ function SettingsPage() {
       <Grid
         container
         spacing={3}
-        mb={3}
         className="container_first_child"
+        sx={{
+          mb: 3,
+        }}
       >
         <Grid
           size={{
@@ -278,7 +280,9 @@ function SettingsPage() {
                     <Card elevation={3}>
                       <CardHeader
                         title="Активные"
-                        titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                        slotProps={{
+                          title: { variant: "h6", fontWeight: "bold" },
+                        }}
                       />
                       <Divider />
                       <TableContainer>
@@ -334,7 +338,9 @@ function SettingsPage() {
                     <Card elevation={3}>
                       <CardHeader
                         title="Не активные"
-                        titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                        slotProps={{
+                          title: { variant: "h6", fontWeight: "bold" },
+                        }}
                       />
                       <Divider />
                       <TableContainer>

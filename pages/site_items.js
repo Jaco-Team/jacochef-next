@@ -1833,7 +1833,9 @@ class SiteItems_ extends React.Component {
                                 <Grid
                                   container
                                   spacing={3}
-                                  justifyContent="center"
+                                  sx={{
+                                    justifyContent: "center",
+                                  }}
                                 >
                                   <Grid
                                     size={{

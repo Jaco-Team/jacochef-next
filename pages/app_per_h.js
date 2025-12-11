@@ -283,14 +283,12 @@ class AppPerH_ extends React.Component {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <MyAlert
           isOpen={openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={err_status}
           text={err_text}
         />
-
         {openDelete && (
           <ModalAccept
             open={openDelete}
@@ -302,7 +300,6 @@ class AppPerH_ extends React.Component {
             }}
           />
         )}
-
         {/*Модалка с кэфом бонуса и пмериодом*/}
         {this.state.confirmDialog ? (
           <Dialog
@@ -350,8 +347,10 @@ class AppPerH_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={3}
           className="container_first_child"
+          sx={{
+            mb: 3,
+          }}
         >
           <Grid
             size={{

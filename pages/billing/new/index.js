@@ -2220,10 +2220,12 @@ function FormImage_new({ type_edit }) {
       >
         <TableContainer>
           <Grid
-            display="flex"
-            flexDirection="row"
-            flexWrap="wrap"
             style={{ fontWeight: "bold", gap: "10px" }}
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              flexWrap: "wrap",
+            }}
           >
             {!imgs_bill.length ? (
               ""
@@ -2245,13 +2247,15 @@ function FormImage_new({ type_edit }) {
       </Grid>
       {parseInt(type) === 2 && parseInt(doc_base_id) == 5 && !fullScreen ? (
         <Grid
-          display="flex"
-          flexDirection="row"
-          flexWrap="wrap"
           style={{ fontWeight: "bold", gap: "10px" }}
           size={{
             xs: 12,
             sm: 6,
+          }}
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            flexWrap: "wrap",
           }}
         >
           {!imgs_factur.length ? (
@@ -2347,10 +2351,12 @@ function FormImage_new({ type_edit }) {
           >
             <TableContainer>
               <Grid
-                display="flex"
-                flexDirection="row"
-                flexWrap="wrap"
                 style={{ fontWeight: "bold", gap: "10px" }}
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                }}
               >
                 {!imgs_factur.length ? (
                   ""
@@ -2502,11 +2508,13 @@ function FormOther_new({ page, type_edit }) {
         </>
       )}
       <Grid
-        display="flex"
-        alignItems="center"
         size={{
           xs: 12,
           sm: 12,
+        }}
+        sx={{
+          display: "flex",
+          alignItems: "center",
         }}
       >
         <MyCheckBox
@@ -2529,7 +2537,7 @@ function MyTooltip(props) {
       arrow
       placement="bottom-start"
       {...other}
-      componentsProps={{
+      slotProps={{
         tooltip: {
           sx: {
             bgcolor: "#fff",
@@ -2572,10 +2580,12 @@ class Billing_Accordion extends React.Component {
 
     return (
       <Grid
-        mb={5}
         size={{
           xs: 12,
           sm: 12,
+        }}
+        sx={{
+          mb: 5,
         }}
       >
         <AccordionDetails>
@@ -2585,8 +2595,10 @@ class Billing_Accordion extends React.Component {
             aria-controls="panel1a-content"
           >
             <Grid
-              display="flex"
-              flexDirection="row"
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+              }}
             >
               <Typography style={{ width: "1%" }}></Typography>
               <Typography style={{ width: "4%", minWidth: "210px" }}>
@@ -2617,8 +2629,10 @@ class Billing_Accordion extends React.Component {
                 style={{ paddingRight: "1%" }}
               >
                 <Grid
-                  display="flex"
-                  flexDirection="row"
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                  }}
                 >
                   <Typography
                     component="div"
@@ -3370,11 +3384,13 @@ class Billing_Edit_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={10}
           style={{
             marginTop: "64px",
             maxWidth: is_vertical ? "50%" : "100%",
             marginBottom: is_horizontal ? 700 : 30,
+          }}
+          sx={{
+            mb: 10,
           }}
         >
           <Grid

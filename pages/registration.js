@@ -186,8 +186,10 @@ export default function Registration() {
         container
         spacing={3}
         direction="row"
-        justifyContent="center"
-        alignItems="center"
+        sx={{
+          justifyContent: "center",
+          alignItems: "center",
+        }}
       >
         <Grid
           size={{
@@ -255,8 +257,10 @@ export default function Registration() {
                   autoComplete="code"
                   autoFocus
                   value={code}
-                  inputProps={{ maxLength: 4 }}
                   onChange={handleSetCode}
+                  slotProps={{
+                    htmlInput: { maxLength: 4 },
+                  }}
                 />
               )}
 
@@ -272,25 +276,27 @@ export default function Registration() {
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     value={password}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            size="small"
-                            onClick={() => setShowPassword(!showPassword)}
-                            disableRipple
-                            disableFocusRipple
-                          >
-                            {showPassword ? (
-                              <EyeShow style={{ fontSize: 30 }} />
-                            ) : (
-                              <EyeHide style={{ fontSize: 30 }} />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
                     onChange={handlePasswordChange}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              size="small"
+                              onClick={() => setShowPassword(!showPassword)}
+                              disableRipple
+                              disableFocusRipple
+                            >
+                              {showPassword ? (
+                                <EyeShow style={{ fontSize: 30 }} />
+                              ) : (
+                                <EyeHide style={{ fontSize: 30 }} />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
                   />
 
                   <Typography
@@ -315,13 +321,15 @@ export default function Registration() {
                       </ListItemIcon>
                       <ListItemText
                         primary="Не менее 8 символов"
-                        primaryTypographyProps={{
-                          variant: "caption",
-                          sx: {
-                            fontSize: "0.8rem !important",
-                            m: 0,
-                            p: 0,
-                            color: isMinLength ? "#c03" : "text.secondary",
+                        slotProps={{
+                          primary: {
+                            variant: "caption",
+                            sx: {
+                              fontSize: "0.8rem !important",
+                              m: 0,
+                              p: 0,
+                              color: isMinLength ? "#c03" : "text.secondary",
+                            },
                           },
                         }}
                       />
@@ -338,13 +346,15 @@ export default function Registration() {
                       </ListItemIcon>
                       <ListItemText
                         primary="Цифры"
-                        primaryTypographyProps={{
-                          variant: "caption",
-                          sx: {
-                            fontSize: "0.8rem !important",
-                            m: 0,
-                            p: 0,
-                            color: hasNumber ? "#c03" : "text.secondary",
+                        slotProps={{
+                          primary: {
+                            variant: "caption",
+                            sx: {
+                              fontSize: "0.8rem !important",
+                              m: 0,
+                              p: 0,
+                              color: hasNumber ? "#c03" : "text.secondary",
+                            },
                           },
                         }}
                       />
@@ -361,13 +371,15 @@ export default function Registration() {
                       </ListItemIcon>
                       <ListItemText
                         primary="Буквы верхнего и нижнего регистра"
-                        primaryTypographyProps={{
-                          variant: "caption",
-                          sx: {
-                            fontSize: "0.8rem !important",
-                            m: 0,
-                            p: 0,
-                            color: hasMixedCase ? "#c03" : "text.secondary",
+                        slotProps={{
+                          primary: {
+                            variant: "caption",
+                            sx: {
+                              fontSize: "0.8rem !important",
+                              m: 0,
+                              p: 0,
+                              color: hasMixedCase ? "#c03" : "text.secondary",
+                            },
                           },
                         }}
                       />

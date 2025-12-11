@@ -875,8 +875,10 @@ class SiteClients_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={3}
           className="container_first_child"
+          sx={{
+            mb: 3,
+          }}
         >
           <Grid
             size={{
@@ -980,10 +982,12 @@ class SiteClients_ extends React.Component {
                   </Grid>
 
                   <Grid
-                    mt={5}
                     size={{
                       xs: 12,
                       sm: 12,
+                    }}
+                    sx={{
+                      mt: 5,
                     }}
                   >
                     <TableContainer
@@ -1335,10 +1339,12 @@ class SiteClients_ extends React.Component {
                 </Grid>
 
                 <Grid
-                  mt={5}
                   size={{
                     xs: 12,
                     sm: 12,
+                  }}
+                  sx={{
+                    mt: 5,
                   }}
                 >
                   <TableContainer
@@ -1666,11 +1672,13 @@ class SiteClients_ extends React.Component {
                         spacing={3}
                       >
                         <Grid
-                          mt={3}
-                          mb={5}
                           size={{
                             xs: 12,
                             sm: 12,
+                          }}
+                          sx={{
+                            mt: 3,
+                            mb: 5,
                           }}
                         >
                           <TableContainer
@@ -1745,11 +1753,13 @@ class SiteClients_ extends React.Component {
                         spacing={3}
                       >
                         <Grid
-                          mt={3}
-                          mb={5}
                           size={{
                             xs: 12,
                             sm: 12,
+                          }}
+                          sx={{
+                            mt: 3,
+                            mb: 5,
                           }}
                         >
                           <TableContainer>
@@ -1996,11 +2006,13 @@ class SiteClients_ extends React.Component {
                   {/* Визиты статистика */}
                   {this.state.traffic_stats?.length > 0 && (
                     <Grid
-                      mt={3}
-                      mb={5}
                       size={{
                         xs: 12,
                         sm: 6,
+                      }}
+                      sx={{
+                        mt: 3,
+                        mb: 5,
                       }}
                     >
                       <Typography variant="h4">Визиты все</Typography>
@@ -2012,11 +2024,13 @@ class SiteClients_ extends React.Component {
                   {/* Визиты по источнику */}
                   {this.state.traffic_sources?.length > 0 && (
                     <Grid
-                      mt={3}
-                      mb={5}
                       size={{
                         xs: 12,
                         sm: 6,
+                      }}
+                      sx={{
+                        mt: 3,
+                        mb: 5,
                       }}
                     >
                       <Typography variant="h4">Источники трафика</Typography>
@@ -2028,11 +2042,13 @@ class SiteClients_ extends React.Component {
                   {/* Заказы по источнику */}
                   {this.state.orders_by_source?.length > 0 && (
                     <Grid
-                      mt={3}
-                      mb={5}
                       size={{
                         xs: 12,
                         sm: 6,
+                      }}
+                      sx={{
+                        mt: 3,
+                        mb: 5,
                       }}
                     >
                       <Typography variant="h4">Источники заказов</Typography>
@@ -2044,11 +2060,13 @@ class SiteClients_ extends React.Component {
                   {/* Заказы по utm */}
                   {this.state.orders_by_utm?.length > 0 && (
                     <Grid
-                      mt={3}
-                      mb={5}
                       size={{
                         xs: 12,
                         sm: 6,
+                      }}
+                      sx={{
+                        mt: 3,
+                        mb: 5,
                       }}
                     >
                       <Typography variant="h4">Заказы по UTM</Typography>

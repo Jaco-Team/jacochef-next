@@ -1062,10 +1062,12 @@ export default class HotMap extends React.PureComponent {
           ) : null}
 
           <Grid
-            mb={10}
             size={{
               xs: 12,
               sm: 12,
+            }}
+            sx={{
+              mb: 10,
             }}
           >
             <div

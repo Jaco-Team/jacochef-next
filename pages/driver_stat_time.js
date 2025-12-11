@@ -160,7 +160,9 @@ class DriverStatTime_Modal extends React.Component {
         <DialogTitle style={{ display: "flex" }}>
           <Typography
             style={{ fontWeight: "bold" }}
-            mr={5}
+            sx={{
+              mr: 5,
+            }}
           >{`Заказ: ${this.state.order?.id ?? ""}`}</Typography>
           <Typography
             style={{ fontWeight: "bold" }}

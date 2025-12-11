@@ -785,9 +785,11 @@ class CatWork_ extends React.Component {
 
                 {!this.state.errOrder ? null : (
                   <Grid
-                    mt={3}
                     size={{
                       xs: 12,
+                    }}
+                    sx={{
+                      mt: 3,
                     }}
                   >
                     <Accordion>

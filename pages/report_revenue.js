@@ -698,10 +698,12 @@ class ReportRevenue_ extends React.Component {
 
           {months.length && reportCats.length ? (
             <Grid
-              mt={3}
               size={{
                 xs: 12,
                 sm: 12,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <ReportRevenue_Table

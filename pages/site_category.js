@@ -432,10 +432,12 @@ class SiteCategory_ extends React.Component {
 
           {!this.state.main ? null : (
             <Grid
-              mb={10}
               size={{
                 xs: 12,
                 sm: 12,
+              }}
+              sx={{
+                mb: 10,
               }}
             >
               <TableContainer>

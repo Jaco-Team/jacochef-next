@@ -908,7 +908,6 @@ function FormBuilder() {
               }
               sx={{ mb: 3 }}
             />
-
             <Typography
               variant="h6"
               sx={{ mb: 2 }}
@@ -946,7 +945,6 @@ function FormBuilder() {
               }}
               sx={{ mb: 3 }}
             />
-
             <DragDropContext onDragEnd={(result) => handleDragEndCheckbox(result)}>
               <Droppable droppableId="checkboxes">
                 {(provided) => (
@@ -981,7 +979,11 @@ function FormBuilder() {
                               <DragHandleIcon />
                             </div>
 
-                            <Box flexGrow={1}>
+                            <Box
+                              sx={{
+                                flexGrow: 1,
+                              }}
+                            >
                               <TextField
                                 fullWidth
                                 size="small"
@@ -1009,7 +1011,6 @@ function FormBuilder() {
                 )}
               </Droppable>
             </DragDropContext>
-
             <Button
               variant="outlined"
               size="small"
@@ -1019,7 +1020,6 @@ function FormBuilder() {
             >
               Создать новый пресет
             </Button>
-
             <Typography
               variant="h6"
               sx={{ mt: 4, mb: 2 }}
@@ -1515,7 +1515,6 @@ function FormBuilder() {
               }
               sx={{ mb: 3 }}
             />
-
             <Typography
               variant="h6"
               sx={{ mb: 2 }}
@@ -1553,7 +1552,6 @@ function FormBuilder() {
               }}
               sx={{ mb: 3 }}
             />
-
             <DragDropContext onDragEnd={(result) => handleDragEndCheckboxBlock(result)}>
               <Droppable droppableId="checkboxes">
                 {(provided) => (
@@ -1588,7 +1586,11 @@ function FormBuilder() {
                               <DragHandleIcon />
                             </div>
 
-                            <Box flexGrow={1}>
+                            <Box
+                              sx={{
+                                flexGrow: 1,
+                              }}
+                            >
                               <TextField
                                 fullWidth
                                 size="small"
@@ -1616,7 +1618,6 @@ function FormBuilder() {
                 )}
               </Droppable>
             </DragDropContext>
-
             <Button
               variant="outlined"
               size="small"
@@ -1626,7 +1627,6 @@ function FormBuilder() {
             >
               Создать новый пресет
             </Button>
-
             <Typography
               variant="h6"
               sx={{ mt: 4, mb: 2 }}
@@ -1778,11 +1778,13 @@ function FormBuilder() {
     <Grid
       container
       spacing={3}
-      mb={3}
       className="container_first_child"
       size={{
         xs: 12,
         sm: 12,
+      }}
+      sx={{
+        mb: 3,
       }}
     >
       <Backdrop
@@ -1821,11 +1823,13 @@ function FormBuilder() {
       <Grid
         container
         spacing={2}
-        mb={3}
-        sx={{ height: "92vh" }}
         size={{
           xs: 12,
           sm: 12,
+        }}
+        sx={{
+          mb: 3,
+          height: "92vh",
         }}
       >
         <Grid

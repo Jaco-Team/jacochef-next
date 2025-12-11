@@ -244,7 +244,9 @@ class CountUsers_Modal extends React.Component {
           <Grid
             container
             spacing={3}
-            mb={3}
+            sx={{
+              mb: 3,
+            }}
           >
             <Grid
               size={{
@@ -266,10 +268,12 @@ class CountUsers_Modal extends React.Component {
                 spacing={3}
               >
                 <Grid
-                  mt={2}
                   size={{
                     xs: 8,
                     sm: 3,
+                  }}
+                  sx={{
+                    mt: 2,
                   }}
                 >
                   <div
@@ -559,7 +563,9 @@ class CountUsers_TablePanel extends React.Component {
       <TabPanel value={this.props.value}>
         <Grid
           container
-          justifyContent="center"
+          sx={{
+            justifyContent: "center",
+          }}
         >
           {this.state.item.map((item, key) => (
             <Grid
@@ -572,10 +578,12 @@ class CountUsers_TablePanel extends React.Component {
               }}
             >
               <Grid
-                mt={2}
                 size={{
                   xs: 8,
                   sm: 3,
+                }}
+                sx={{
+                  mt: 2,
                 }}
               >
                 <div
@@ -1198,10 +1206,12 @@ class CountUsers_ extends React.Component {
           {/* аккордион */}
           {!this.state.other_days.length ? null : (
             <Grid
-              mb={3}
               size={{
                 xs: 12,
                 sm: 4,
+              }}
+              sx={{
+                mb: 3,
               }}
             >
               <Accordion>

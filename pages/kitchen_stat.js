@@ -406,17 +406,21 @@ class KitchenStat_ extends React.Component {
         </Grid>
         <Grid
           container
-          pt={1}
           spacing={3}
-          sx={{ paddingInline: "24px" }}
+          sx={{
+            pt: 1,
+            paddingInline: "24px",
+          }}
         >
           {/* таблица Оформленные заказы по часам */}
           {(this.state.arrayOrdersByH?.length || this.state.is_load_parts?.orders_by_h) && (
             <Grid
-              mt={5}
               size={{
                 xs: 12,
                 sm: 12,
+              }}
+              sx={{
+                mt: 5,
               }}
             >
               <TableContainer>
@@ -511,10 +515,12 @@ class KitchenStat_ extends React.Component {
           {/* таблица Завершенные заказы по типу */}
           {(this.state.data?.type_stat_new?.length || this.state.is_load_parts?.type_stat_new) && (
             <Grid
-              mt={5}
               size={{
                 xs: 12,
                 sm: 6,
+              }}
+              sx={{
+                mt: 5,
               }}
             >
               <TableContainer>
@@ -565,10 +571,12 @@ class KitchenStat_ extends React.Component {
           {/* таблица Заказы по статусу */}
           {(this.state.data?.status_stat?.length || this.state.is_load_parts?.status_stat) && (
             <Grid
-              mt={5}
               size={{
                 xs: 12,
                 sm: 6,
+              }}
+              sx={{
+                mt: 5,
               }}
             >
               <TableContainer>
@@ -617,10 +625,12 @@ class KitchenStat_ extends React.Component {
           {/* таблица Не завершенные заказы */}
           {(this.state.data?.fake_orders?.length || this.state.is_load_parts?.fake_orders) && (
             <Grid
-              mt={5}
               size={{
                 xs: 12,
                 sm: 12,
+              }}
+              sx={{
+                mt: 5,
               }}
             >
               <TableContainer>
@@ -677,10 +687,12 @@ class KitchenStat_ extends React.Component {
           {/* аккордион Проданные позиции (разбивка сетов, без допов) */}
           {(this.state.statAllItemsCount > 0 || this.state.is_load_parts?.stat_all_items) && (
             <Grid
-              mt={3}
               size={{
                 xs: 12,
                 sm: 6,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <Accordion>
@@ -746,10 +758,12 @@ class KitchenStat_ extends React.Component {
           {/* аккордион Проданные позиции (все) */}
           {(this.state.data?.all_items_all || this.state.is_load_parts?.all_items_all) && (
             <Grid
-              mt={3}
               size={{
                 xs: 12,
                 sm: 6,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <Accordion>
@@ -792,10 +806,12 @@ class KitchenStat_ extends React.Component {
             !this.isEmptyCheckoutStats("stat_items_checkout")) ||
             this.state.is_load_parts?.stat_items_checkout) && (
             <Grid
-              mt={3}
               size={{
                 xs: 12,
                 sm: 6,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <Accordion>
@@ -891,10 +907,12 @@ class KitchenStat_ extends React.Component {
             !this.isEmptyCheckoutStats("stat_items_checkout_all")) ||
             this.state.is_load_parts?.stat_items_checkout_all) && (
             <Grid
-              mt={3}
               size={{
                 xs: 12,
                 sm: 6,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <Accordion>
@@ -973,10 +991,12 @@ class KitchenStat_ extends React.Component {
           {/* аккордион Проданные позиции по категориям */}
           {(this.state.data?.stat_cat?.length || this.state.is_load_parts?.stat_cat) && (
             <Grid
-              mt={3}
               size={{
                 xs: 12,
                 sm: 6,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <Accordion>
@@ -1029,10 +1049,12 @@ class KitchenStat_ extends React.Component {
           {/* аккордион Использованные промокоды */}
           {(this.state.data?.promo_stat?.length || this.state.is_load_parts?.promo_stat) && (
             <Grid
-              mt={3}
               size={{
                 xs: 12,
                 sm: 6,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <Accordion>

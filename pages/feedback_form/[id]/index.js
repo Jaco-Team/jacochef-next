@@ -448,7 +448,9 @@ const ModalItem = ({ open, onClose, params }) => {
             <Card elevation={3}>
               <CardHeader
                 title="Список параметров"
-                titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                slotProps={{
+                  title: { variant: "h6", fontWeight: "bold" },
+                }}
               />
               <Divider />
               <TableContainer>
@@ -776,11 +778,13 @@ function FeedbackPage() {
     <Grid
       container
       spacing={3}
-      mb={3}
       className="container_first_child"
       size={{
         xs: 12,
         sm: 12,
+      }}
+      sx={{
+        mb: 3,
       }}
     >
       <Backdrop
@@ -963,10 +967,12 @@ function FeedbackPage() {
                       >
                         <CardContent>
                           <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="center"
-                            mb={2}
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              mb: 2,
+                            }}
                           >
                             <Typography
                               variant="h6"
@@ -999,7 +1005,9 @@ function FeedbackPage() {
                             >
                               <Typography
                                 variant="body2"
-                                color="text.secondary"
+                                sx={{
+                                  color: "text.secondary",
+                                }}
                               >
                                 Всего отзывов:
                               </Typography>
@@ -1012,7 +1020,9 @@ function FeedbackPage() {
                             >
                               <Typography
                                 variant="body2"
-                                color="text.secondary"
+                                sx={{
+                                  color: "text.secondary",
+                                }}
                               >
                                 Высоких оценок:
                               </Typography>
@@ -1030,7 +1040,9 @@ function FeedbackPage() {
                             >
                               <Typography
                                 variant="body2"
-                                color="text.secondary"
+                                sx={{
+                                  color: "text.secondary",
+                                }}
                               >
                                 Низких оценок:
                               </Typography>
@@ -1044,7 +1056,11 @@ function FeedbackPage() {
                           </Grid>
 
                           <Divider sx={{ my: 2 }} />
-                          <Box mt={2}>
+                          <Box
+                            sx={{
+                              mt: 2,
+                            }}
+                          >
                             <Typography
                               variant="subtitle2"
                               gutterBottom
@@ -1052,9 +1068,11 @@ function FeedbackPage() {
                               Основные достоинства:
                             </Typography>
                             <Box
-                              display="flex"
-                              flexWrap="wrap"
-                              gap={1}
+                              sx={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 1,
+                              }}
                             >
                               {item.r_up.split(",").map((advantage, i) => (
                                 <Chip
@@ -1075,9 +1093,11 @@ function FeedbackPage() {
                               Основные проблемы:
                             </Typography>
                             <Box
-                              display="flex"
-                              flexWrap="wrap"
-                              gap={1}
+                              sx={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 1,
+                              }}
                             >
                               {item.r_low.split(",").map((problem, i) => (
                                 <Chip
@@ -1108,7 +1128,9 @@ function FeedbackPage() {
                   <CardHeader
                     title="Лидеры проблем"
                     subheader={`За период ${dayjs(dateStart).format("DD.MM.YYYY")} - ${dayjs(dateEnd).format("DD.MM.YYYY")}`}
-                    titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                    slotProps={{
+                      title: { variant: "h6", fontWeight: "bold" },
+                    }}
                   />
                   <Divider />
                   <TableContainer>
@@ -1143,23 +1165,28 @@ function FeedbackPage() {
                             <TableCell align="center">{row.total_parameters_count}</TableCell>
                             <TableCell align="center">
                               <Box
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
                               >
                                 {row.percentage}%
                                 <Box
-                                  width="8px"
-                                  height="8px"
-                                  bgcolor={
-                                    parseFloat(row.percentage) > 35
-                                      ? "#f44336"
-                                      : parseFloat(row.percentage) > 25
-                                        ? "#ff9800"
-                                        : "#4caf50"
-                                  }
-                                  borderRadius="50%"
-                                  ml={1}
+                                  sx={{
+                                    width: "8px",
+                                    height: "8px",
+
+                                    bgcolor:
+                                      parseFloat(row.percentage) > 35
+                                        ? "#f44336"
+                                        : parseFloat(row.percentage) > 25
+                                          ? "#ff9800"
+                                          : "#4caf50",
+
+                                    borderRadius: "50%",
+                                    ml: 1,
+                                  }}
                                 />
                               </Box>
                             </TableCell>
@@ -1182,7 +1209,9 @@ function FeedbackPage() {
                   <CardHeader
                     title="Топ положительных оценок"
                     subheader={`За период ${dayjs(dateStart).format("DD.MM.YYYY")} - ${dayjs(dateEnd).format("DD.MM.YYYY")}`}
-                    titleTypographyProps={{ variant: "h6", fontWeight: "bold" }}
+                    slotProps={{
+                      title: { variant: "h6", fontWeight: "bold" },
+                    }}
                   />
                   <Divider />
                   <TableContainer>
@@ -1217,23 +1246,28 @@ function FeedbackPage() {
                             <TableCell align="center">{row.total_parameters_count}</TableCell>
                             <TableCell align="center">
                               <Box
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
                               >
                                 {row.percentage}%
                                 <Box
-                                  width="8px"
-                                  height="8px"
-                                  bgcolor={
-                                    parseFloat(row.percentage) > 35
-                                      ? "#5a8b33"
-                                      : parseFloat(row.percentage) > 25
-                                        ? "#6fe821"
-                                        : "#29ff33"
-                                  }
-                                  borderRadius="50%"
-                                  ml={1}
+                                  sx={{
+                                    width: "8px",
+                                    height: "8px",
+
+                                    bgcolor:
+                                      parseFloat(row.percentage) > 35
+                                        ? "#5a8b33"
+                                        : parseFloat(row.percentage) > 25
+                                          ? "#6fe821"
+                                          : "#29ff33",
+
+                                    borderRadius: "50%",
+                                    ml: 1,
+                                  }}
                                 />
                               </Box>
                             </TableCell>
@@ -1329,12 +1363,14 @@ function FeedbackPage() {
               />
             </Grid>
             <Grid
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
               size={{
                 xs: 12,
                 sm: 12,
+              }}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
               }}
             >
               <div

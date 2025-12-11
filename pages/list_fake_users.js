@@ -691,9 +691,11 @@ class ListFakeUsers_Modal_Order extends React.Component {
 
             {!this.state.showOrder?.err_order ? null : (
               <Grid
-                mt={3}
                 size={{
                   xs: 12,
+                }}
+                sx={{
+                  mt: 3,
                 }}
               >
                 <Accordion>
@@ -1448,14 +1450,18 @@ class ListFakeUsers_ extends React.Component {
         <Grid
           container
           spacing={3}
-          justifyContent="center"
-          sx={{ flexDirection: { sm: "row", xs: "column-reverse" } }}
           style={{ marginTop: "64px", marginBottom: "24px" }}
+          sx={{
+            justifyContent: "center",
+            flexDirection: { sm: "row", xs: "column-reverse" },
+          }}
         >
           <Grid
-            mb={3}
             size={{
               xs: 12,
+            }}
+            sx={{
+              mb: 3,
             }}
           >
             <h1>{this.state.module_name}</h1>
@@ -1490,12 +1496,14 @@ class ListFakeUsers_ extends React.Component {
           </Grid>
 
           <Grid
-            sx={{ order: { sm: 2, xs: 2 } }}
-            display="flex"
-            flexDirection="row"
             size={{
               xs: 12,
               sm: 3,
+            }}
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              order: { sm: 2, xs: 2 },
             }}
           >
             <Grid>
@@ -1523,8 +1531,10 @@ class ListFakeUsers_ extends React.Component {
         <Grid
           container
           spacing={3}
-          justifyContent="center"
-          mb={3}
+          sx={{
+            justifyContent: "center",
+            mb: 3,
+          }}
         >
           <Grid
             size={{
@@ -1568,8 +1578,10 @@ class ListFakeUsers_ extends React.Component {
         <Grid
           container
           spacing={3}
-          justifyContent="center"
-          mb={3}
+          sx={{
+            justifyContent: "center",
+            mb: 3,
+          }}
         >
           <Grid
             size={{
@@ -1614,8 +1626,10 @@ class ListFakeUsers_ extends React.Component {
         <Grid
           container
           spacing={3}
-          justifyContent="center"
-          mb={3}
+          sx={{
+            justifyContent: "center",
+            mb: 3,
+          }}
         >
           <Grid
             size={{
@@ -1661,8 +1675,10 @@ class ListFakeUsers_ extends React.Component {
         <Grid
           container
           spacing={3}
-          justifyContent="center"
-          mb={3}
+          sx={{
+            justifyContent: "center",
+            mb: 3,
+          }}
         >
           <Grid
             size={{
@@ -1704,7 +1720,9 @@ class ListFakeUsers_ extends React.Component {
         {!this.state.users.length ? null : (
           <Grid
             container
-            justifyContent="center"
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{

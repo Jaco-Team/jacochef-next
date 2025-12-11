@@ -364,10 +364,12 @@ class OrderPostRec_Table extends React.Component {
           </Button>
         </Grid>
         <Grid
-          mb={6}
           size={{
             xs: 12,
             sm: 12,
+          }}
+          sx={{
+            mb: 6,
           }}
         >
           {this.state.cats
@@ -724,9 +726,11 @@ class OrderPostRec_ extends React.Component {
 
           {!this.state.hist.length ? null : (
             <Grid
-              pb={1}
               container
-              justifyContent="center"
+              sx={{
+                pb: 1,
+                justifyContent: "center",
+              }}
             >
               <Grid
                 size={{
@@ -745,7 +749,13 @@ class OrderPostRec_ extends React.Component {
                     {this.state.hist.map((item, i) => (
                       <Accordion key={i}>
                         <AccordionSummary>
-                          <Typography mr={8}>{item.date_time}</Typography>
+                          <Typography
+                            sx={{
+                              mr: 8,
+                            }}
+                          >
+                            {item.date_time}
+                          </Typography>
                           <Typography>{item.user_name}</Typography>
                         </AccordionSummary>
                         <AccordionDetails>

@@ -95,9 +95,11 @@ class MyTimePicker extends React.PureComponent {
         id={this.props.id}
         value={this.props.value || ""}
         onChange={this.handleChange}
-        InputLabelProps={{ shrink: true }}
-        inputProps={{ step: 1 }}
         fullWidth
+        slotProps={{
+          htmlInput: { step: 1 },
+          inputLabel: { shrink: true },
+        }}
       />
     );
   }
@@ -122,9 +124,11 @@ class MyTimePickerHM extends React.PureComponent {
         id={this.props.id}
         value={this.props.value || ""}
         onChange={this.handleChange}
-        InputLabelProps={{ shrink: true }}
-        inputProps={{ step: 60 }}
         fullWidth
+        slotProps={{
+          htmlInput: { step: 60 },
+          inputLabel: { shrink: true },
+        }}
       />
     );
   }
@@ -314,7 +318,13 @@ class EventTime_Tab_Kassir_Registr_Modal extends React.Component {
         <DialogTitle
           sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}
         >
-          <Typography fontWeight="bold">Добавить новый уровень</Typography>
+          <Typography
+            sx={{
+              fontWeight: "bold",
+            }}
+          >
+            Добавить новый уровень
+          </Typography>
           <IconButton onClick={onClose}>
             <CloseIcon />
           </IconButton>
@@ -467,9 +477,11 @@ class EventTime_Tab_Kassir_Registr extends React.PureComponent {
 
     return (
       <Grid
-        mb={5}
         size={{
           xs: 12,
+        }}
+        sx={{
+          mb: 5,
         }}
       >
         <Dialog
@@ -686,10 +698,12 @@ class EventTime_Tab_Cur extends React.PureComponent {
 
     return (
       <Grid
-        mb={5}
         size={{
           xs: 12,
           sm: 12,
+        }}
+        sx={{
+          mb: 5,
         }}
       >
         <TabPanel
@@ -997,10 +1011,12 @@ class EventTime_Tab_Kassir_Time extends React.PureComponent {
 
     return (
       <Grid
-        mb={5}
         size={{
           xs: 12,
           sm: 12,
+        }}
+        sx={{
+          mb: 5,
         }}
       >
         <TabPanel
@@ -1014,7 +1030,9 @@ class EventTime_Tab_Kassir_Time extends React.PureComponent {
           ].map(({ title, data, h }, i) => (
             <Box
               key={i}
-              mb={3}
+              sx={{
+                mb: 3,
+              }}
             >
               <Typography
                 variant="subtitle1"
@@ -1103,8 +1121,10 @@ class EventTime_Tab_Kassir_Time extends React.PureComponent {
           <Divider />
 
           <Box
-            mt={3}
-            mb={3}
+            sx={{
+              mt: 3,
+              mb: 3,
+            }}
           >
             <Typography
               variant="subtitle1"
@@ -1192,10 +1212,12 @@ class EventTime_Tab_Rate extends React.PureComponent {
 
     return (
       <Grid
-        mb={5}
         size={{
           xs: 12,
           sm: 12,
+        }}
+        sx={{
+          mb: 5,
         }}
       >
         <TabPanel
@@ -1212,7 +1234,9 @@ class EventTime_Tab_Rate extends React.PureComponent {
           <Grid
             container
             spacing={2}
-            alignItems="flex-end"
+            sx={{
+              alignItems: "flex-end",
+            }}
           >
             {sortedDow.map((row) => (
               <Grid
@@ -1258,7 +1282,11 @@ class EventTime_Tab_Rate extends React.PureComponent {
 
           <Divider sx={{ my: 3 }} />
 
-          <Box mb={3}>
+          <Box
+            sx={{
+              mb: 3,
+            }}
+          >
             <Typography
               variant="subtitle1"
               gutterBottom
@@ -1337,17 +1365,23 @@ class EventTime_Tab_Time_Smena extends React.PureComponent {
 
     return (
       <Grid
-        mb={5}
         size={{
           xs: 12,
           sm: 12,
+        }}
+        sx={{
+          mb: 5,
         }}
       >
         <TabPanel
           value={activeTab}
           index={index_time_smena}
         >
-          <Box mb={2}>
+          <Box
+            sx={{
+              mb: 2,
+            }}
+          >
             <Typography
               variant="subtitle1"
               gutterBottom
@@ -1363,8 +1397,10 @@ class EventTime_Tab_Time_Smena extends React.PureComponent {
           </Box>
           <Divider />
           <Box
-            mt={2}
-            mb={1}
+            sx={{
+              mt: 2,
+              mb: 1,
+            }}
           >
             <Typography
               variant="subtitle1"
@@ -1501,10 +1537,12 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
 
     return (
       <Grid
-        mb={5}
         size={{
           xs: 12,
           sm: 12,
+        }}
+        sx={{
+          mb: 5,
         }}
       >
         <TabPanel
@@ -1514,7 +1552,9 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
           <Grid
             container
             spacing={2}
-            mb={3}
+            sx={{
+              mb: 3,
+            }}
           >
             <Grid
               size={{
@@ -1582,8 +1622,10 @@ class EventTime_Tab_Time_Manager extends React.PureComponent {
           <Divider />
 
           <Box
-            mt={3}
-            mb={3}
+            sx={{
+              mt: 3,
+              mb: 3,
+            }}
           >
             <Typography
               variant="subtitle1"
@@ -1699,10 +1741,12 @@ class EventTime_Tab_Time_Cook extends React.PureComponent {
 
     return (
       <Grid
-        mb={5}
         size={{
           xs: 12,
           sm: 12,
+        }}
+        sx={{
+          mb: 5,
         }}
       >
         <TabPanel

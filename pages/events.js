@@ -605,7 +605,9 @@ class Events_ extends React.Component {
           <Grid
             container
             direction="row"
-            justifyContent="center"
+            sx={{
+              justifyContent: "center",
+            }}
           >
             {this.state.calendar.map((item, key) => (
               <Grid

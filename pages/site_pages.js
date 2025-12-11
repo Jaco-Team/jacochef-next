@@ -352,10 +352,12 @@ class SitePages_ extends React.Component {
           </Grid>
 
           <Grid
-            mb={5}
             size={{
               xs: 12,
               sm: 12,
+            }}
+            sx={{
+              mb: 5,
             }}
           >
             {!this.state.pages ? null : (

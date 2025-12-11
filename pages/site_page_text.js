@@ -692,9 +692,11 @@ class SitePageText_ extends React.Component {
         </Grid>
         <Grid
           container
-          mt={3}
           spacing={3}
-          mb={5}
+          sx={{
+            mt: 3,
+            mb: 5,
+          }}
         >
           <Grid
             size={12}

@@ -365,9 +365,11 @@ class OrderStats_ extends React.Component {
           </Grid>
 
           <Grid
-            mb={3}
             size={{
               xs: 12,
+            }}
+            sx={{
+              mb: 3,
             }}
           >
             <TableContainer component={Paper}>

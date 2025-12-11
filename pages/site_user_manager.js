@@ -971,7 +971,6 @@ class SiteUserManager_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.state.graphModal}
           onClose={() => this.setState({ graphModal: false, graphType: 0 })}
@@ -1899,9 +1898,11 @@ class SiteUserManager_ extends React.Component {
           </Grid>
 
           <Grid
-            mb={10}
             size={{
               xs: 12,
+            }}
+            sx={{
+              mb: 10,
             }}
           >
             {this.state.users.length > 0 ? (

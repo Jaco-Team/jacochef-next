@@ -422,7 +422,9 @@ class CitiesModules_Modal extends React.Component {
           <Grid
             container
             spacing={3}
-            pl={1}
+            sx={{
+              pl: 1,
+            }}
           >
             {this.props.mark === "newItem" ? (
               <>
@@ -966,8 +968,10 @@ class CitiesModules_ extends React.Component {
         <Grid
           container
           spacing={3}
-          mb={3}
           className="container_first_child"
+          sx={{
+            mb: 3,
+          }}
         >
           <Grid
             size={{

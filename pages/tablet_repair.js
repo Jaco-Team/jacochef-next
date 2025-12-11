@@ -147,11 +147,19 @@ class TabletRepair_Modal extends React.Component {
             </Typography>
             {this.props.type === "tablet" ? (
               <>
-                <Typography mt={1}>
+                <Typography
+                  sx={{
+                    mt: 1,
+                  }}
+                >
                   Наименование планшета:{" "}
                   <span style={{ fontWeight: "bold" }}>{this.props.tablet.tablet.model}</span>
                 </Typography>
-                <Typography mt={1}>
+                <Typography
+                  sx={{
+                    mt: 1,
+                  }}
+                >
                   Порядковый номер планшета:{" "}
                   <span style={{ fontWeight: "bold" }}>{this.props.tablet.tablet.number}</span>
                 </Typography>
@@ -279,10 +287,12 @@ class TabletRepair_Modal extends React.Component {
               </>
             ) : (
               <Grid
-                mb={5}
                 size={{
                   xs: 12,
                   sm: 12,
+                }}
+                sx={{
+                  mb: 5,
                 }}
               >
                 <TableContainer>
@@ -714,11 +724,13 @@ class TabletRepair_ extends React.Component {
           </Grid>
 
           <Grid
-            mt={3}
-            mb={5}
             size={{
               xs: 12,
               sm: 12,
+            }}
+            sx={{
+              mt: 3,
+              mb: 5,
             }}
           >
             <TableContainer>

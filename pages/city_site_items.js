@@ -233,9 +233,11 @@ class CitySiteItems_ extends React.Component {
           </Grid>
 
           <Grid
-            mb={5}
             size={{
               xs: 12,
+            }}
+            sx={{
+              mb: 5,
             }}
           >
             <TableContainer component={Paper}>

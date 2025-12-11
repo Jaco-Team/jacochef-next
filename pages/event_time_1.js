@@ -267,9 +267,11 @@ class EventTime1_Modal extends React.Component {
             <Grid
               container
               spacing={3}
-              mb={3}
               size={{
                 xs: 12,
+              }}
+              sx={{
+                mb: 3,
               }}
             >
               {this.props.mark !== "newDay" ? null : (
@@ -1063,10 +1065,12 @@ class EventTime1_ extends React.Component {
 
                 {!this.state.itemData_hist.length ? null : (
                   <Grid
-                    mb={5}
                     size={{
                       xs: 12,
                       sm: 12,
+                    }}
+                    sx={{
+                      mb: 5,
                     }}
                   >
                     <Accordion>
@@ -1162,10 +1166,12 @@ class EventTime1_ extends React.Component {
                 </Grid>
 
                 <Grid
-                  mb={5}
                   size={{
                     xs: 12,
                     sm: 12,
+                  }}
+                  sx={{
+                    mb: 5,
                   }}
                 >
                   <div
