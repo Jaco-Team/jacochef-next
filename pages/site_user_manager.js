@@ -453,8 +453,11 @@ class SiteUserManager_ extends React.Component {
 
       //   return;
       // }
-
-      if (parseInt(user.app_id) == 0 && this.state.textDel.length == 0) {
+      if (
+        parseInt(this.state.chose_app.id) == 0 &&
+        user.app_id != 0 &&
+        this.state.textDel.length == 0
+      ) {
         this.setState({
           chooseModal: true,
           typeEdit: "del",
@@ -916,7 +919,7 @@ class SiteUserManager_ extends React.Component {
           onClose={() => this.setState({ chooseModal: false, textDel: "" })}
         >
           <DialogTitle className="button">
-            <Typography>Приенение изменений</Typography>
+            <Typography>Примнение изменений</Typography>
             <IconButton onClick={() => this.setState({ chooseModal: false, textDel: "" })}>
               <CloseIcon />
             </IconButton>
