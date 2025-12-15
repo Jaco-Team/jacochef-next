@@ -31,6 +31,7 @@ import YandexMapAddressTextField from "@/components/hot_map/YandexMapAddressText
 export const ModalAddressManagement = ({ open, onClose, save, centerMap }) => {
   const [value, setValue] = useState("list");
   const [tip, setTip] = useState("");
+  const [mapSelectedAddresses, setMapSelectedAddresses] = useState([]);
   const [openAlert, setOpenAlert] = useState(false);
   const [errStatus, setErrorStatus] = useState(false);
   const [errText, setErrorText] = useState("");
@@ -71,6 +72,21 @@ export const ModalAddressManagement = ({ open, onClose, save, centerMap }) => {
     dt.push({ ...selectedAddress, tip, date_create: date });
     setDataAddress(dt);
     setSelectedAddress("");
+  };
+
+  const handleSaveAddressMulti = () => {
+    const dt = [...dataAddress];
+    const date = dayjs(new Date()).format("YYYY-MM-DD HH:mm");
+    setOpenAlert(true);
+    setErrorStatus(true);
+    setErrorText(`Вы успешно добавили адреса`);
+    const m = mapSelectedAddresses.map((item) => ({
+      ...item,
+      tip,
+      date_create: date,
+    }));
+    setDataAddress([...dt, ...m]);
+    setMapSelectedAddresses([]);
   };
 
   const deleteAddress = (index) => {
@@ -179,26 +195,15 @@ export const ModalAddressManagement = ({ open, onClose, save, centerMap }) => {
                   <CardContent>
                     <YandexMapAddressPicker
                       centerMap={centerMap}
-                      onAddressSelect={handleAddressSelect}
+                      onMultipleAddressesSelect={setMapSelectedAddresses}
+                      allowMultiple={true}
+                      maxMarkers={8}
                       apiKey={YANDEX_MAPS_API_KEY}
                       initialAddress={selectedAddress?.address || ""}
                     />
                   </CardContent>
                 </Card>
 
-                {selectedAddress && (
-                  <Card sx={{ mt: 3 }}>
-                    <CardContent>
-                      <Typography
-                        variant="h6"
-                        gutterBottom
-                      >
-                        Выбранный адрес
-                      </Typography>
-                      <Typography variant="body1">{selectedAddress.address}</Typography>
-                    </CardContent>
-                  </Card>
-                )}
                 <Grid style={{ marginTop: "10px" }}>
                   <MyTextInput
                     value={tip}
@@ -209,17 +214,9 @@ export const ModalAddressManagement = ({ open, onClose, save, centerMap }) => {
 
                 <Box sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}>
                   <Button
-                    variant="outlined"
-                    onClick={() => setSelectedAddress(null)}
-                    disabled={!selectedAddress}
-                  >
-                    Сбросить
-                  </Button>
-
-                  <Button
                     variant="contained"
-                    onClick={handleSaveAddress}
-                    disabled={!selectedAddress}
+                    onClick={handleSaveAddressMulti}
+                    disabled={!mapSelectedAddresses.length}
                   >
                     Сохранить адрес
                   </Button>
