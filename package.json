@@ -51,6 +51,7 @@
     "react": "19.2.1",
     "react-dev-utils": "^12.0.1",
     "react-dom": "19.2.1",
+    "react-imask": "^7.6.1",
     "react-modal-image": "^2.6.0",
     "react-multi-date-picker": "^4.5.2",
     "react-number-format": "^5.4.4",

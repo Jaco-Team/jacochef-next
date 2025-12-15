@@ -1,6 +1,6 @@
 "use client";
 
-import { MyCheckBox, MySelect, MyTextInput } from "@/ui/Forms";
+import { MyAutocomplite, MyCheckBox, MySelect, MyTextInput } from "@/ui/Forms";
 import { ExpandMore } from "@mui/icons-material";
 import {
   Accordion,
@@ -18,6 +18,7 @@ import {
 import { memo } from "react";
 import useCafeEditStore from "../useCafeEditStore";
 import HistDropDownTable from "../HistDropDownTable";
+import SupplierUnloadingTimeInput from "@/ui/Forms/SupplierUnloadingTimeInput";
 
 function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
   const canEditAny =
@@ -28,7 +29,17 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
     s.cities,
   ]);
   const changePointInfoData = useCafeEditStore((s) => s.changePointInfoData);
+  const changePointInfoDataText = useCafeEditStore((s) => s.changePointInfoDataText);
   const changeItemChecked = useCafeEditStore((s) => s.changeItemChecked);
+  const dows = [
+    { id: 1, name: "Понедельник" },
+    { id: 2, name: "Вторник" },
+    { id: 3, name: "Среда" },
+    { id: 4, name: "Четверг" },
+    { id: 5, name: "Пятница" },
+    { id: 6, name: "Суббота" },
+    { id: 7, name: "Воскресенье" },
+  ];
 
   return (
     <Grid
@@ -47,7 +58,6 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
               func={(e) => changePointInfoData("city_id", e)}
             />
           </Grid>
-
           <Grid size={{ xs: 12, sm: 3 }}>
             <MyTextInput
               disabled={!canEdit("organization_point")}
@@ -110,6 +120,30 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
               func={(e) => changePointInfoData("kpp", e)}
             />
           </Grid>
+          {canView("point_unload") ? (
+            <>
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <SupplierUnloadingTimeInput
+                  handleChange={(e) => changePointInfoDataText("point_unload_time", e)}
+                  value={point_info?.point_unload_time}
+                  disabled={!canEdit("point_unload")}
+                  label={"Время разгрузки товара поставщика"}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <MyAutocomplite
+                  multiple={true}
+                  label="Дни недели"
+                  data={dows}
+                  disabled={!canEdit("point_unload")}
+                  value={point_info?.point_unload_week_day ?? []}
+                  func={(event, value) => {
+                    changePointInfoData("point_unload_week_day", value);
+                  }}
+                />
+              </Grid>
+            </>
+          ) : null}
 
           <Grid size={12}>
             <MyTextInput

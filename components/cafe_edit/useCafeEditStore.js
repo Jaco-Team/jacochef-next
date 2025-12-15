@@ -54,6 +54,12 @@ const useCafeEditStore = create((set) => ({
       point_info: { ...state.point_info, [key]: e?.target?.value || e },
     }));
   },
+  changePointInfoDataText: (key, e) => {
+    set((state) => ({
+      ...state,
+      point_info: { ...state.point_info, [key]: e?.target?.value },
+    }));
+  },
   changeItemChecked: (key, event) => {
     const value = event.target.checked ? 1 : 0;
     set((state) => ({

@@ -20,7 +20,7 @@ import {
 import { MyAutocomplite } from "@/ui/Forms";
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
-import { api_laravel } from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 import dayjs from "dayjs";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import CafeEdit_Modal_Kkt_Info_Add from "@/components/cafe_edit/CafeEdit_Modal_Kkt_Info_Add";
@@ -302,6 +302,26 @@ export default function CafeEdit() {
       id: pointData.point_info.manager_id,
       name: pointData.point_info.manager_name,
     };
+    const dows = [
+      { id: 1, name: "Понедельник" },
+      { id: 2, name: "Вторник" },
+      { id: 3, name: "Среда" },
+      { id: 4, name: "Четверг" },
+      { id: 5, name: "Пятница" },
+      { id: 6, name: "Суббота" },
+      { id: 7, name: "Воскресенье" },
+    ];
+    if (!pointData.point_info.point_unload_time) {
+      pointData.point_info.point_unload_time = "";
+    }
+    if (pointData.point_info.point_unload_week_day) {
+      const selectedDays = dows.filter((day) =>
+        pointData.point_info.point_unload_week_day.includes(day.name),
+      );
+      pointData.point_info.point_unload_week_day = selectedDays;
+    } else {
+      pointData.point_info.point_unload_week_day = [];
+    }
     const upr = pointData.upr_list.find(
       (upr) => parseInt(upr.id) === parseInt(pointData.point_info?.manager_id?.id),
     );
