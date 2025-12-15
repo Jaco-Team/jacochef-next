@@ -126,7 +126,7 @@ export default function PfPlan() {
   const openPfWeeklyChart = async (pfId) => {
     try {
       setState({ isLoading: true });
-      const { chartData } = usePfPlanStore.getState();
+      const { chartData = [] } = usePfPlanStore.getState();
       if (!chartData?.find((x) => x.pf_id === pfId)) {
         const request = {
           point,
@@ -137,7 +137,7 @@ export default function PfPlan() {
         if (!res?.st) {
           return showAlert(res?.text || "Ошибка загрузки данных графика");
         }
-        const appendedChartData = chartData.reduce((a, c) => {
+        const appendedChartData = chartData?.reduce((a, c) => {
           if (a?.find((a) => a.pf_id === c.pf_id)) return a;
           return [...a, c];
         }, res.chartData);
@@ -175,7 +175,7 @@ export default function PfPlan() {
         open={chartModalOpen}
         onClose={() => setState({ chartModalOpen: false })}
       >
-        <DialogTitle>
+        <DialogTitle component="div">
           <Typography variant="h6">
             Расход {allPfs?.find((p) => p.id === chartPfId)?.name}
           </Typography>
