@@ -36,11 +36,27 @@ export const ModalAddressManagementEdit = ({ open, onClose, save, addressGroup, 
   const [errText, setErrorText] = useState("");
   const [name, setName] = useState("");
   const [dataAddress, setDataAddress] = useState([]);
+  const [mapSelectedAddresses, setMapSelectedAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const YANDEX_MAPS_API_KEY = "665f5b53-8905-4934-9502-4a6a7b06a900";
   const YANDEX_MAPS_API_SUGGEST_KEY = "15826a23-3220-4e58-acdf-05db437d0837";
   const handleAddressSelect = (address) => {
     setSelectedAddress(address);
+  };
+
+  const handleSaveAddressMulti = () => {
+    const dt = [...dataAddress];
+    const date = dayjs(new Date()).format("YYYY-MM-DD HH:mm");
+    setOpenAlert(true);
+    setErrorStatus(true);
+    setErrorText(`Вы успешно добавили адреса`);
+    const m = mapSelectedAddresses.map((item) => ({
+      ...item,
+      tip,
+      date_create: date,
+    }));
+    setDataAddress([...dt, ...m]);
+    setMapSelectedAddresses([]);
   };
 
   useEffect(() => {
@@ -187,7 +203,9 @@ export const ModalAddressManagementEdit = ({ open, onClose, save, addressGroup, 
                 <Card>
                   <CardContent>
                     <YandexMapAddressPicker
-                      onAddressSelect={handleAddressSelect}
+                      onMultipleAddressesSelect={setMapSelectedAddresses}
+                      allowMultiple={true}
+                      maxMarkers={8}
                       apiKey={YANDEX_MAPS_API_KEY}
                       centerMap={centerMap}
                       initialAddress={selectedAddress?.address || ""}
@@ -218,17 +236,9 @@ export const ModalAddressManagementEdit = ({ open, onClose, save, addressGroup, 
 
                 <Box sx={{ mt: 3, display: "flex", gap: 2, justifyContent: "flex-end" }}>
                   <Button
-                    variant="outlined"
-                    onClick={() => setSelectedAddress(null)}
-                    disabled={!selectedAddress}
-                  >
-                    Сбросить
-                  </Button>
-
-                  <Button
                     variant="contained"
-                    onClick={handleSaveAddress}
-                    disabled={!selectedAddress}
+                    onClick={handleSaveAddressMulti}
+                    disabled={!mapSelectedAddresses.length}
                   >
                     Сохранить адрес
                   </Button>

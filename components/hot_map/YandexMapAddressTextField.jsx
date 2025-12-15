@@ -54,6 +54,9 @@ const YandexMapAddressTextField = ({
       script.onload = () => {
         if (window.ymaps) {
           window.ymaps.ready(() => {
+            if (centerMap.length) {
+              setMapCenter([centerMap[1], centerMap[0]]);
+            }
             setMapLoaded(true);
           });
         }
@@ -64,6 +67,9 @@ const YandexMapAddressTextField = ({
       document.head.appendChild(script);
     } else if (window.ymaps) {
       window.ymaps.ready(() => {
+        if (centerMap.length) {
+          setMapCenter([centerMap[1], centerMap[0]]);
+        }
         setMapLoaded(true);
       });
     }
@@ -74,13 +80,6 @@ const YandexMapAddressTextField = ({
       }
     };
   }, [apiKey]);
-
-  useEffect(() => {
-    if (centerMap.length) {
-      setMapCenter([centerMap[1], centerMap[0]]);
-      setMapLoaded(true);
-    }
-  }, [centerMap]);
 
   // Инициализация карты
   useEffect(() => {

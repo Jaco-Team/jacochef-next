@@ -142,6 +142,7 @@ export default class HotMap extends React.PureComponent {
       is_driver: false,
       address_group_data: [],
       address_group: {},
+      groups: [],
 
       cities: [],
       city_id: "",
@@ -206,7 +207,7 @@ export default class HotMap extends React.PureComponent {
       is_load: true,
     });
 
-    let res = api_laravel(this.state.module, method, data)
+    let res = api_laravel_local(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {
@@ -264,7 +265,9 @@ export default class HotMap extends React.PureComponent {
     };
 
     let res = await this.getData("get_orders", data);
-
+    this.setState({
+      groups: res.groups,
+    });
     this.getOrders(res.points, res.all_points, res.drivers, res.groups);
   };
 
@@ -337,8 +340,9 @@ export default class HotMap extends React.PureComponent {
             <div style="padding: 5px;">
               <p><strong>Адрес:</strong> ${item.address || "Не указан"}</p>
               <p><strong>Координаты:</strong> ${item.cordY}, ${item.cordX}</p>
-              ${item.orders?.sum ? `<p><strong>Сумма заказов:</strong> ${item.orders?.sum} руб.</p>` : ""}
-              ${item.orders?.count ? `<p><strong>Количество заказов:</strong> ${item.orders?.count}</p>` : ""}
+              <p><strong>Сумма заказов:</strong> ${item.orders?.sum ?? 0} руб.</p>
+              <p><strong>Средний чек:</strong> ${item.orders?.avg_sum ?? 0} руб.</p>
+              <p><strong>Количество заказов:</strong> ${item.orders?.count ?? 0}</p>
             </div>
           `,
                   balloonContentFooter: "Информация о точке",
@@ -1055,6 +1059,38 @@ export default class HotMap extends React.PureComponent {
                         Создать группу адресов
                       </Button>
                     </Grid>
+                    {this.state.groups.length ? (
+                      <>
+                        <p>
+                          Кол-во заказов:{" "}
+                          {this.state.groups.reduce(
+                            (acc, item) => acc + (item.orders?.count || 0),
+                            0,
+                          )}{" "}
+                          шт.
+                        </p>
+                        <p>
+                          Сумма заказов:{" "}
+                          {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
+                            this.state.groups.reduce(
+                              (acc, item) => acc + (parseFloat(item.orders?.sum) || 0),
+                              0,
+                            ),
+                          )}{" "}
+                          руб.
+                        </p>
+                        <p>
+                          Средний чек:{" "}
+                          {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
+                            this.state.groups.reduce(
+                              (acc, item) => acc + (parseFloat(item.orders?.avg_sum) || 0),
+                              0,
+                            ),
+                          )}{" "}
+                          руб.
+                        </p>
+                      </>
+                    ) : null}
                   </Grid>
                 </AccordionDetails>
               </Accordion>
