@@ -1291,7 +1291,8 @@ const useStore = create((set, get) => ({
 
     vendor_items[0].color = false;
 
-    vendor_items[0].summ_nds = is_add == 0 ? "" : (Number(sum_w_nds) - Number(summ)).toFixed(2);
+    vendor_items[0].summ_nds =
+      is_add == 0 ? "" : Number(count) == 0 ? 0 : (Number(sum_w_nds) - Number(summ)).toFixed(2);
     vendor_items[0].nds = nds;
 
     vendor_items[0].pq = is_add == 0 ? "" : pq;
