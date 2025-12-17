@@ -753,23 +753,86 @@ const useStore = create((set, get) => ({
         bill_items_doc: res.billing_items,
       });
 
+      console.log("res.billing_items", res.billing_items);
+      console.log("res.items", res.items);
+      console.log("bill_items", bill_items);
+
+      let check_this_bill = false;
+
       res.billing_items.map((item) => {
         let test = res.items.filter((v) => parseInt(v.id) === parseInt(item.item_id));
 
-        let this_bill = bill_items.find((b) => parseInt(b.item_id) === parseInt(item.item_id));
+        let this_bill = bill_items.find(
+          (b) =>
+            parseInt(b.item_id) === parseInt(item.item_id) &&
+            parseFloat(b.price_w_nds) == parseFloat(item.price_w_nds),
+        );
 
         if (this_bill) {
-          get().addItem_fast(
-            this_bill.count,
-            this_bill.fact_unit,
-            this_bill.price,
-            this_bill.price_w_nds,
-            this_bill.ed_izmer_name,
-            this_bill.pq,
-            this_bill.item_id,
-            test,
-            1,
-          );
+          check_this_bill = true;
+        }
+      });
+
+      const normalizePrice = (v) => Number(parseFloat(v).toFixed(2));
+
+      const notFoundBillingItems = res.billing_items.filter(
+        (item) =>
+          !bill_items.some(
+            (bill) =>
+              Number(bill.item_id) === Number(item.item_id) &&
+              normalizePrice(bill.price_w_nds) === normalizePrice(item.price_w_nds),
+          ),
+      );
+
+      console.log("notFoundBillingItems", notFoundBillingItems);
+
+      res.billing_items.forEach((item) => {
+        const found = bill_items.some(
+          (bill) =>
+            Number(bill.item_id) === Number(item.item_id) &&
+            normalizePrice(bill.price_w_nds) === normalizePrice(item.price_w_nds),
+        );
+
+        console.log(item, found ? "FOUND" : "NOT FOUND");
+      });
+
+      res.billing_items.map((item) => {
+        let test = res.items.filter((v) => parseInt(v.id) === parseInt(item.item_id));
+
+        let this_bill = bill_items.find(
+          (b) =>
+            parseInt(b.item_id) === parseInt(item.item_id) &&
+            parseFloat(b.price_w_nds) == parseFloat(item.price_w_nds),
+        );
+
+        console.log("test123", this_bill, item);
+
+        if (check_this_bill) {
+          if (this_bill) {
+            get().addItem_fast(
+              this_bill.count,
+              this_bill.fact_unit,
+              this_bill.price,
+              this_bill.price_w_nds,
+              this_bill.ed_izmer_name,
+              this_bill.pq,
+              this_bill.item_id,
+              test,
+              1,
+            );
+          } else {
+            get().addItem_fast(
+              0,
+              0,
+              0,
+              item.price_w_nds,
+              notFoundBillingItems[0].ed_izmer_name,
+              notFoundBillingItems[0].pq,
+              notFoundBillingItems[0].item_id,
+              test,
+              1,
+            );
+          }
         } else {
           get().addItem_fast(
             item.count,
@@ -1154,7 +1217,11 @@ const useStore = create((set, get) => ({
     const bill_items_doc = get().bill_items_doc;
 
     if (bill_items_doc.length) {
-      const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
+      // const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
+      const item = bill_items_doc.find(
+        (it) =>
+          it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
+      );
 
       item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
       item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
@@ -1224,7 +1291,8 @@ const useStore = create((set, get) => ({
 
     vendor_items[0].color = false;
 
-    vendor_items[0].summ_nds = is_add == 0 ? "" : (Number(sum_w_nds) - Number(summ)).toFixed(2);
+    vendor_items[0].summ_nds =
+      is_add == 0 ? "" : Number(count) == 0 ? 0 : (Number(sum_w_nds) - Number(summ)).toFixed(2);
     vendor_items[0].nds = nds;
 
     vendor_items[0].pq = is_add == 0 ? "" : pq;
@@ -1232,17 +1300,25 @@ const useStore = create((set, get) => ({
     vendor_items[0].count = is_add == 0 ? "" : count;
     vendor_items[0].fact_unit = is_add == 0 ? "" : fact_unit;
     vendor_items[0].price_item = is_add == 0 ? "" : summ;
-    vendor_items[0].price_w_nds = is_add == 0 ? "" : sum_w_nds;
+    vendor_items[0].price_w_nds = is_add == 0 ? "" : Number(count) == 0 ? 0 : sum_w_nds;
     vendor_items[0].item_id = is_add == 0 ? "" : item_id;
 
-    vendor_items[0].one_price_bill = is_add == 0 ? "" : parseInt(sum_w_nds) / parseInt(fact_unit);
+    vendor_items[0].one_price_bill =
+      is_add == 0 || Number(count) == 0 ? "" : parseInt(sum_w_nds) / parseInt(fact_unit);
 
     const bill_items_doc = get().bill_items_doc;
 
+    console.log("bill_items_doc", bill_items_doc, sum_w_nds);
+
     if (bill_items_doc.length) {
-      const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
+      // const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
+      const item = bill_items_doc.find(
+        (it) =>
+          it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
+      );
 
       item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
+      // item.price_w_nds = Number(count) == 0 ? 0 : item.price_w_nds;
       item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
 
       const nds = get().check_nds_bill(

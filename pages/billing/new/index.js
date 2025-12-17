@@ -1088,7 +1088,11 @@ const useStore = create((set, get) => ({
     const bill_items_doc = get().bill_items_doc;
 
     if (bill_items_doc.length) {
-      const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
+      // const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
+      const item = bill_items_doc.find(
+        (it) =>
+          it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
+      );
 
       item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
       item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
@@ -1137,6 +1141,8 @@ const useStore = create((set, get) => ({
 
     let bill_items = JSON.parse(JSON.stringify(get().bill_items));
 
+    console.log("stage1", get().bill_items);
+
     //const nds = get().check_nds_bill((Number(sum_w_nds) - Number(summ)) / (Number(summ) / 100))
 
     vendor_items[0].color = false;
@@ -1152,9 +1158,16 @@ const useStore = create((set, get) => ({
 
     const bill_items_doc = get().bill_items_doc;
 
-    if (bill_items_doc.length) {
-      const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
+    console.log("stage1.5", get().bill_items_doc, sum_w_nds);
+    console.log("stage1.7", vendor_items[0].id, sum_w_nds);
 
+    if (bill_items_doc.length) {
+      const item = bill_items_doc.find(
+        (it) =>
+          it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
+      );
+
+      // if(item){
       item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
       item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
 
@@ -1169,7 +1182,10 @@ const useStore = create((set, get) => ({
       }
 
       vendor_items[0].data_bill = item;
+      // }
     }
+
+    console.log("stage2", vendor_items[0]);
 
     bill_items.push(vendor_items[0]);
 
@@ -1495,6 +1511,8 @@ function VendorItemsTableEdit() {
   bill_items.map((item) => {
     summ_nds += parseFloat(item.summ_nds);
   });
+
+  console.log("bill_items", bill_items);
 
   return (
     <>
