@@ -949,10 +949,14 @@ class Experience_ extends React.Component {
 
   changeCity(event) {
     const data = JSON.parse(JSON.stringify(this.state.pointsCopy));
-
-    const points = data.filter((point) =>
-      event.target.value === -1 ? point : point.city_id === event.target.value,
-    );
+    const points = data
+      .map((point) => {
+        if (event.target.value == -1 || point.city_id == event.target.value) {
+          return point;
+        }
+        return null;
+      })
+      .filter(Boolean);
 
     this.setState({
       city: event.target.value,
