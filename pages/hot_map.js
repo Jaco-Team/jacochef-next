@@ -229,6 +229,8 @@ export default class HotMap extends React.PureComponent {
   changeCity = (event) => {
     const data = event.target.value;
 
+    this.clearAllDrawnZones();
+
     if (this.myGeoObject && this.myGeoObject.editor) {
       this.myGeoObject.editor.stopDrawing && this.myGeoObject.editor.stopDrawing();
     }
@@ -242,6 +244,12 @@ export default class HotMap extends React.PureComponent {
   };
 
   updateData = async () => {
+    const keepZones = true;
+
+    if (!keepZones) {
+      this.clearAllDrawnZones();
+    }
+
     this.setState({
       statAllCount: "",
       statTrueCount: "",
@@ -465,8 +473,9 @@ export default class HotMap extends React.PureComponent {
             <div style="padding: 5px;">
               <p><strong>Адрес:</strong> ${item.address || "Не указан"}</p>
               <p><strong>Координаты:</strong> ${item.cordY}, ${item.cordX}</p>
-              ${item.orders?.sum ? `<p><strong>Сумма заказов:</strong> ${item.orders?.sum} руб.</p>` : ""}
-              ${item.orders?.count ? `<p><strong>Количество заказов:</strong> ${item.orders?.count}</p>` : ""}
+              <p><strong>Сумма заказов:</strong> ${item.orders?.sum ?? 0} руб.</p>
+              <p><strong>Средний чек:</strong> ${item.orders?.avg_sum ?? 0} руб.</p>
+              <p><strong>Количество заказов:</strong> ${item.orders?.count ?? 0}</p>
             </div>
           `,
                 balloonContentFooter: "Информация о точке",
@@ -593,8 +602,9 @@ export default class HotMap extends React.PureComponent {
   };
 
   startDrawing = () => {
-    if (this.myGeoObject) {
-      this.map.geoObjects.remove(this.myGeoObject);
+    if (this.state.isDrawing) {
+      this.stopDrawing();
+      return;
     }
 
     this.myGeoObject = new ymaps.GeoObject(
@@ -611,6 +621,7 @@ export default class HotMap extends React.PureComponent {
         strokeWidth: 3,
         strokeStyle: "solid",
         cursor: "crosshair",
+        draggable: true,
       },
     );
 
@@ -621,11 +632,11 @@ export default class HotMap extends React.PureComponent {
     this.map.balloon.open(
       null,
       `<div style="max-width: 300px; font-size: 14px; padding: 10px;">
-    <b>Режим рисования зоны включён</b><br>
-    • Кликайте по карте, чтобы добавить точки<br>
-    • Завершите рисование двойным кликом<br>
-    • Зона будет автоматически проанализирована
-  </div>`,
+      <b>Режим рисования зоны включён</b><br>
+      • Кликайте по карте, чтобы добавить точки<br>
+      • Завершите рисование двойным кликом<br>
+      • Зона будет автоматически проанализирована
+    </div>`,
       {
         position: {
           right: 20,
@@ -639,40 +650,305 @@ export default class HotMap extends React.PureComponent {
 
     this.myGeoObject.editor.startDrawing();
 
-    this.myGeoObject.editor.events.add("statechange", (e) => {
+    const finishDrawingHandler = (e) => {
       if (e.get("newState") === "normal") {
-        this.setState({ isDrawing: false });
+        this.myGeoObject.editor.events.remove("statechange", finishDrawingHandler);
 
         this.map.hint.close();
+        this.map.balloon.close();
 
         const coords = this.myGeoObject?.geometry?.getCoordinates();
         if (coords?.[0]?.length >= 3) {
-          this.myGeoObject.options.set({
-            strokeColor: "#FFFF00",
-            fillColor: "#FFFF0022",
-          });
-          this.selectedZone = this.myGeoObject;
-          this.setState({ is_chooseZone: true }, () => {
-            setTimeout(() => this.getCount(), 300);
-          });
+          this.stopDrawing();
         } else {
           this.map.geoObjects.remove(this.myGeoObject);
           this.myGeoObject = null;
-          this.selectedZone = null;
-          this.setState({ is_chooseZone: false });
+          this.setState({ isDrawing: false, is_chooseZone: false });
         }
       }
-    });
+    };
+
+    this.myGeoObject.editor.events.add("statechange", finishDrawingHandler);
 
     this.setState({ isDrawing: true, is_chooseZone: false });
   };
 
+  restoreDrawnZones = () => {
+    this.map.geoObjects.removeAll();
+
+    if (this.heatmap) {
+      this.heatmap.setMap(this.map);
+    }
+
+    this.state.drawnZones.forEach((zoneData) => {
+      if (zoneData.geoObject) {
+        try {
+          this.map.geoObjects.add(zoneData.geoObject);
+        } catch (e) {
+          console.error("Ошибка восстановления зоны:", e);
+          this.recreateZone(zoneData);
+        }
+      }
+    });
+  };
+
   stopDrawing = () => {
     if (this.myGeoObject?.editor) {
-      this.myGeoObject.editor.stopDrawing();
+      try {
+        this.myGeoObject.editor.stopDrawing();
+      } catch (e) {
+        console.error("Ошибка остановки редактора:", e);
+      }
     }
+
+    if (this.myGeoObject) {
+      const coords = this.myGeoObject?.geometry?.getCoordinates();
+
+      if (coords?.[0]?.length >= 3) {
+        const isAlreadySaved = this.state.drawnZones.some(
+          (zone) => zone.geoObject === this.myGeoObject,
+        );
+
+        if (!isAlreadySaved) {
+          this.makeZoneStatic(this.myGeoObject);
+
+          const newZone = {
+            geoObject: this.myGeoObject,
+            coordinates: coords[0],
+            isEditable: false,
+            id: Date.now() + Math.random(),
+          };
+
+          this.setState(
+            (prevState) => ({
+              drawnZones: [...prevState.drawnZones, newZone],
+              is_chooseZone: true,
+            }),
+            () => {
+              this.selectedZone = this.myGeoObject;
+              this.selectedZone.options.set({ strokeColor: "#FF0000" });
+
+              setTimeout(() => this.getCount(), 300);
+            },
+          );
+        } else {
+          this.makeZoneStatic(this.myGeoObject);
+          this.selectedZone = this.myGeoObject;
+          this.selectedZone.options.set({ strokeColor: "#FF0000" });
+          this.setState({ is_chooseZone: true });
+        }
+      } else {
+        this.map.geoObjects.remove(this.myGeoObject);
+        this.myGeoObject = null;
+      }
+    }
+
     this.map.hint.close();
+    this.map.balloon.close();
+
     this.setState({ isDrawing: false });
+  };
+
+  makeZoneStatic = (zone) => {
+    if (!zone) return zone;
+
+    if (zone.editor) {
+      try {
+        zone.editor.stopDrawing();
+        zone.editor.stopEditing();
+
+        if (zone.editor.options) {
+          zone.editor.options.set("enabled", false);
+        }
+      } catch (e) {}
+    }
+
+    const coords = zone.geometry.getCoordinates();
+
+    zone.options.set({
+      fillColor: "#FFFF0022",
+      strokeColor: "#FFFF00",
+      strokeWidth: 3,
+      cursor: "pointer",
+      draggable: false,
+      hasBalloon: false,
+      hasHint: false,
+      openBalloonOnClick: false,
+      openEmptyBalloon: false,
+      openHintOnHover: false,
+      editorDrawingCursor: "",
+      editorMaxPoints: 0,
+      editorMenuManager: null,
+    });
+
+    try {
+      zone.events.removeAll();
+    } catch (e) {
+      const eventTypes = [
+        "click",
+        "dblclick",
+        "mousedown",
+        "mouseup",
+        "mousemove",
+        "dragstart",
+        "drag",
+        "dragend",
+      ];
+      eventTypes.forEach((type) => {
+        try {
+          zone.events.remove(type);
+        } catch (err) {}
+      });
+    }
+
+    zone.events.add("click", (e) => {
+      e.preventDefault();
+      this.selectZone(zone);
+    });
+
+    return zone;
+  };
+
+  recreateZone = (zoneData) => {
+    const zone = new ymaps.GeoObject(
+      {
+        geometry: {
+          type: "Polygon",
+          coordinates: [zoneData.coordinates],
+          fillRule: "nonZero",
+        },
+      },
+      {
+        fillColor: "#FFFF0022",
+        strokeColor: zoneData.isEditable ? "#00FF00" : "#FFFF00",
+        strokeWidth: 3,
+        cursor: zoneData.isEditable ? "crosshair" : "pointer",
+        draggable: zoneData.isEditable,
+      },
+    );
+
+    zone.events.add("click", () => {
+      if (zoneData.isEditable) {
+        this.selectZoneForEditing(zone);
+      } else {
+        this.selectZone(zone);
+      }
+    });
+
+    this.map.geoObjects.add(zone);
+
+    const zoneIndex = this.state.drawnZones.findIndex(
+      (z) => z.coordinates === zoneData.coordinates,
+    );
+
+    if (zoneIndex !== -1) {
+      const newDrawnZones = [...this.state.drawnZones];
+      newDrawnZones[zoneIndex] = {
+        ...zoneData,
+        geoObject: zone,
+      };
+      this.setState({ drawnZones: newDrawnZones });
+    }
+
+    return zone;
+  };
+
+  selectZone = (zone) => {
+    if (this.selectedZone === zone) {
+      zone.options.set({ strokeColor: "#FFFF00" });
+      this.selectedZone = null;
+      this.setState({ is_chooseZone: false });
+      return;
+    }
+
+    if (this.selectedZone) {
+      this.selectedZone.options.set({ strokeColor: "#FFFF00" });
+    }
+
+    zone.options.set({ strokeColor: "#FF0000" });
+    this.selectedZone = zone;
+    this.setState({ is_chooseZone: true }, () => {
+      setTimeout(() => this.getCount(), 300);
+    });
+  };
+
+  removeDrawing = () => {
+    if (this.myGeoObject && this.state.isDrawing) {
+      if (this.myGeoObject?.editor) {
+        try {
+          this.myGeoObject.editor.stopDrawing();
+        } catch (e) {}
+      }
+
+      this.map.geoObjects.remove(this.myGeoObject);
+      this.myGeoObject = null;
+    }
+
+    if (this.state.drawnZones.length > 0) {
+      const lastZone = this.state.drawnZones[this.state.drawnZones.length - 1];
+
+      if (lastZone.geoObject) {
+        this.map.geoObjects.remove(lastZone.geoObject);
+      }
+
+      const newDrawnZones = this.state.drawnZones.slice(0, -1);
+
+      this.setState({
+        drawnZones: newDrawnZones,
+        is_chooseZone: false,
+      });
+
+      if (this.selectedZone === lastZone.geoObject) {
+        this.selectedZone = null;
+      }
+    }
+
+    this.map.hint.close();
+    this.map.balloon.close();
+    this.setState({ isDrawing: false });
+  };
+
+  clearAllDrawnZones = () => {
+    this.state.drawnZones.forEach((zone) => {
+      if (zone.geoObject) {
+        this.map.geoObjects.remove(zone.geoObject);
+      }
+    });
+
+    if (this.myGeoObject) {
+      this.map.geoObjects.remove(this.myGeoObject);
+      this.myGeoObject = null;
+    }
+
+    this.selectedZone = null;
+    this.map.hint.close();
+    this.map.balloon.close();
+    this.setState({
+      isDrawing: false,
+      is_chooseZone: false,
+      drawnZones: [],
+    });
+  };
+
+  removeLastDrawnZone = () => {
+    if (this.state.drawnZones.length === 0) return;
+
+    const lastZone = this.state.drawnZones[this.state.drawnZones.length - 1];
+
+    if (lastZone.geoObject) {
+      this.map.geoObjects.remove(lastZone.geoObject);
+    }
+
+    const newDrawnZones = this.state.drawnZones.slice(0, -1);
+
+    this.setState({
+      drawnZones: newDrawnZones,
+      is_chooseZone: false,
+    });
+
+    if (this.selectedZone === lastZone.geoObject) {
+      this.selectedZone = null;
+    }
   };
 
   changeColorPolygon = (event) => {
@@ -709,16 +985,6 @@ export default class HotMap extends React.PureComponent {
       }
       this.setState({ is_chooseZone: false });
     }, 1000);
-  };
-
-  removeDrawing = () => {
-    if (this.myGeoObject) {
-      this.map.geoObjects.remove(this.myGeoObject);
-      this.myGeoObject = null;
-      this.selectedZone = null;
-    }
-    this.map.hint.close();
-    this.setState({ isDrawing: false, is_chooseZone: false });
   };
 
   saveAddressModalOpen = async (name, addresses) => {
@@ -977,6 +1243,7 @@ export default class HotMap extends React.PureComponent {
           >
             <Button
               variant={this.map ? "contained" : "outlined"}
+              color={this.state.isDrawing ? "warning" : "primary"}
               onClick={this.state.isDrawing ? this.stopDrawing : this.startDrawing}
               disabled={!this.map}
             >
