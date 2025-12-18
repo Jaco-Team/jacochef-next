@@ -885,22 +885,18 @@ export default class HotMap extends React.PureComponent {
     }
 
     if (this.state.drawnZones.length > 0) {
-      const lastZone = this.state.drawnZones[this.state.drawnZones.length - 1];
-
-      if (lastZone.geoObject) {
-        this.map.geoObjects.remove(lastZone.geoObject);
-      }
-
-      const newDrawnZones = this.state.drawnZones.slice(0, -1);
+      this.state.drawnZones.forEach((zone) => {
+        if (zone.geoObject) {
+          this.map.geoObjects.remove(zone.geoObject);
+        }
+      });
 
       this.setState({
-        drawnZones: newDrawnZones,
+        drawnZones: [],
         is_chooseZone: false,
       });
 
-      if (this.selectedZone === lastZone.geoObject) {
-        this.selectedZone = null;
-      }
+      this.selectedZone = null;
     }
 
     this.map.hint.close();

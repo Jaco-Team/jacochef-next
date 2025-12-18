@@ -65,6 +65,8 @@ export const ModalAddressManagementEdit = ({ open, onClose, save, addressGroup, 
         return {
           coordinates: [item.cordX, item.cordY],
           address: item.address,
+          street: item.street,
+          house: item.home,
           tip: item.tip,
           date_create: item.date_create,
         };
@@ -309,12 +311,7 @@ export const ModalAddressManagementEdit = ({ open, onClose, save, addressGroup, 
         >
           Отмена
         </Button>
-        <Button
-          onClick={handleSave}
-          disabled={value === "add_map" || value === "add_hands"}
-        >
-          Сохранить
-        </Button>
+        <Button onClick={handleSave}>Сохранить</Button>
       </DialogActions>
     </Dialog>
   );

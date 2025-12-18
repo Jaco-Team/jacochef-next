@@ -287,12 +287,7 @@ export const ModalAddressManagement = ({ open, onClose, save, centerMap }) => {
         >
           Отмена
         </Button>
-        <Button
-          onClick={handleSave}
-          disabled={value === "add_map" || value === "add_hands"}
-        >
-          Сохранить
-        </Button>
+        <Button onClick={handleSave}>Сохранить</Button>
       </DialogActions>
     </Dialog>
   );
