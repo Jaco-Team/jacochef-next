@@ -116,8 +116,8 @@ function LkPage() {
   const [openAlert, setOpenAlert] = useState(false);
   const [errStatus, setErrStatus] = useState(false);
   const [errText, setErrText] = useState("");
-  const [dateStart, setDateStart] = useState(null);
-  const [dateEnd, setDateEnd] = useState(null);
+  const [dateStart, setDateStart] = useState(dayjs().startOf("month"));
+  const [dateEnd, setDateEnd] = useState(dayjs().endOf("month"));
   const [goods, setGoods] = useState([]);
   const [good, setGood] = useState([]);
   const [data, setData] = useState([]);
@@ -307,51 +307,93 @@ function LkPage() {
                 </AccordionSummary>
                 <AccordionDetails>
                   {it.data.map((it2, k2) => (
-                    <Accordion key={`${k}-${k2}`}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography>
-                          {it2.name} Кол-во: {it2.data.length}{" "}
-                          <IconButton onClick={() => openModalGrap(it2.data)}>
-                            <QueryStats />
-                          </IconButton>
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Table>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>#</TableCell>
-                              <TableCell>Товар</TableCell>
-                              <TableCell>Дата создания</TableCell>
-                              <TableCell>Точка</TableCell>
-                              <TableCell>Цена</TableCell>
-                              <TableCell style={{ textAlign: "center" }}>
-                                % от прошлой цены
-                              </TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {it2.data.map((it3, k3) => (
-                              <TableRow
-                                hover
-                                key={`${k}-${k2}-${k3}`}
+                    <TableContainer>
+                      <Table style={{ border: "1px solid #e0e0e0", marginBottom: "24px" }}>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>#</TableCell>
+                            <TableCell
+                              sx={{
+                                borderLeft: "none",
+                                minWidth: 250,
+                                width: 250,
+                              }}
+                            >
+                              Товар
+                            </TableCell>
+                            {it2.data.map((it3) => (
+                              <TableCell
+                                sx={{
+                                  textAlign: "center",
+                                  borderLeft: "none",
+                                  minWidth: 100,
+                                  width: 400,
+                                }}
                               >
-                                <TableCell>{k3 + 1}</TableCell>
-                                <TableCell>{it3.name}</TableCell>
-                                <TableCell>{it3.date_create}</TableCell>
-                                <TableCell>{it3.point_name}</TableCell>
-                                <TableCell>{it3.one_price}</TableCell>
-                                <TableCell style={{ textAlign: "center" }}>
-                                  <h3 style={{ color: it3.percent > 0 ? "green" : "red" }}>
-                                    {it3.percent || "—"}
-                                  </h3>
-                                </TableCell>
-                              </TableRow>
+                                {it3.date_create}
+                              </TableCell>
                             ))}
-                          </TableBody>
-                        </Table>
-                      </AccordionDetails>
-                    </Accordion>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          <TableCell>{k2 + 1}</TableCell>
+                          <TableCell
+                            sx={{
+                              borderLeft: "none",
+                              minWidth: 250,
+                              width: 250,
+                            }}
+                          >
+                            {it2.name}{" "}
+                            <IconButton onClick={() => openModalGrap(it2.data)}>
+                              <QueryStats />
+                            </IconButton>
+                          </TableCell>
+                          {it2.data.map((it3, k) => (
+                            <TableCell
+                              sx={{
+                                borderLeft: "none",
+                                minWidth: 100,
+                                width: 400,
+                                backgroundColor:
+                                  it2.data[k - 1]?.percent > 0
+                                    ? "#BDECB6"
+                                    : it2.data[k - 1]?.percent !== 0 &&
+                                        it2.data[k - 1]?.percent !== undefined
+                                      ? "#CD5C5C"
+                                      : "#fbf3f3",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "center",
+                                }}
+                              >
+                                {it2.data[k - 1]?.percent ? (
+                                  <h5
+                                    style={{
+                                      backgroundColor: "white",
+                                      fontColor: "bold",
+                                      padding: "4px",
+                                      textAlign: "center",
+                                      borderRadius: "12px",
+                                      marginBottom: "8px !important",
+                                    }}
+                                  >
+                                    {it2.data[k - 1]?.percent > 0
+                                      ? `↓ ${Math.abs(it2.data[k - 1]?.percent)}%`
+                                      : `↑ ${Math.abs(it2.data[k - 1]?.percent)}%`}
+                                  </h5>
+                                ) : null}
+                                <h3>{it3.one_price}</h3>
+                              </div>
+                            </TableCell>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   ))}
                 </AccordionDetails>
               </Accordion>
