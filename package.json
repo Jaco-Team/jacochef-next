@@ -31,9 +31,9 @@
     "@mui/icons-material": "^7.3.6",
     "@mui/lab": "^7.0.1-beta.18",
     "@mui/material": "^7.3.6",
-    "@mui/x-date-pickers": "^8.22.0",
-    "@sentry/cli": "^2.58.4",
-    "@sentry/react": "^10.30.0",
+    "@mui/x-date-pickers": "^8.22.1",
+    "@sentry/cli": "^3.0.1",
+    "@sentry/react": "^10.32.0",
     "@tinymce/tinymce-react": "^6.3.0",
     "axios": "^1.13.2",
     "childprocess": "^2.0.2",
@@ -65,10 +65,10 @@
     "@types/file-saver": "^2.0.7",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "baseline-browser-mapping": "^2.9.7",
+    "baseline-browser-mapping": "^2.9.10",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
-    "sass": "^1.96.0"
+    "sass": "^1.97.0"
   }
 }
