@@ -356,10 +356,10 @@ function LkPage() {
                                 minWidth: 100,
                                 width: 400,
                                 backgroundColor:
-                                  it2.data[k - 1]?.percent > 0
+                                  it2.data[k]?.percent > 0
                                     ? "#BDECB6"
-                                    : it2.data[k - 1]?.percent !== 0 &&
-                                        it2.data[k - 1]?.percent !== undefined
+                                    : it2.data[k]?.percent !== 0 &&
+                                        it2.data[k]?.percent !== undefined
                                       ? "#CD5C5C"
                                       : "#fbf3f3",
                               }}
@@ -371,7 +371,7 @@ function LkPage() {
                                   alignItems: "center",
                                 }}
                               >
-                                {it2.data[k - 1]?.percent ? (
+                                {it2.data[k]?.percent ? (
                                   <h5
                                     style={{
                                       backgroundColor: "white",
@@ -382,9 +382,9 @@ function LkPage() {
                                       marginBottom: "8px !important",
                                     }}
                                   >
-                                    {it2.data[k - 1]?.percent > 0
-                                      ? `↓ ${Math.abs(it2.data[k - 1]?.percent)}%`
-                                      : `↑ ${Math.abs(it2.data[k - 1]?.percent)}%`}
+                                    {it2.data[k]?.percent > 0
+                                      ? `↑ ${Math.abs(it2.data[k]?.percent)}%`
+                                      : `↓ ${Math.abs(it2.data[k]?.percent)}%`}
                                   </h5>
                                 ) : null}
                                 <h3>{it3.one_price}</h3>
