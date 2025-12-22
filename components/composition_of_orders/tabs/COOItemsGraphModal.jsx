@@ -193,24 +193,30 @@ export default function COOItemsGraphModal({
           yAxis,
           valueYField: `${metric}_${id}`,
           valueXField: "date",
-          stroke: c,
           tension: 0.3,
           tooltip: am5.Tooltip.new(root, {
             labelText: `{name}: {valueY.formatNumber('#,###')}`,
           }),
         }),
       );
-      s.strokes.template.setAll({ strokeWidth: 2, stroke: c });
+      s.set("fill", am5.color(color || "#999"));
+      s.set("stroke", am5.color(color || "#999"));
+      s.strokes.template.setAll({
+        strokeWidth: 2,
+        stroke: am5.color(color || "#999"),
+      });
+
       s.bullets.push(() =>
         am5.Bullet.new(root, {
           sprite: am5.Circle.new(root, {
             radius: 4,
-            fill: c,
+            fill: am5.color(color || "#999"),
             strokeWidth: 1,
             stroke: root.interfaceColors.get("background"),
           }),
         }),
       );
+
       s.data.setAll(chartData);
     };
 
