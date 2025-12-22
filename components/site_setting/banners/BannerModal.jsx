@@ -338,9 +338,11 @@ export function BannerModal({ getData, showAlert, id, action }) {
               sm: 6,
             }}
           >
-            <Typography>Картинка на ПК разрешением 3700x1000 только JPG</Typography>
+            <Typography>
+              Картинка на ПК разрешением 3700x1000 только JPG или видео 1920х1080
+            </Typography>
 
-            {banner?.this_ban?.img?.length > 0 && (
+            {banner?.this_ban?.img?.length > 0 && banner?.this_ban?.type_illustration === "img" ? (
               <div style={{ height: 400, display: "flex" }}>
                 <img
                   style={{ width: "100%", height: "auto", alignSelf: "center", borderRadius: 20 }}
@@ -352,7 +354,23 @@ export function BannerModal({ getData, showAlert, id, action }) {
                   }
                 />
               </div>
-            )}
+            ) : null}
+
+            {banner?.this_ban?.type_illustration === "video" ? (
+              <div>
+                <video
+                  controls
+                  style={{ width: "100%", height: "300px", alignSelf: "center", borderRadius: 20 }}
+                >
+                  <source
+                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.link}_video_1920x1080.mp4`}
+                  />
+                  <source
+                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.link}_video_1920x1080.webm`}
+                  />
+                </video>
+              </div>
+            ) : null}
 
             <div
               className="dropzone"
@@ -375,10 +393,11 @@ export function BannerModal({ getData, showAlert, id, action }) {
             }}
           >
             <Typography>
-              Картинка мобильная соотношением 2:1 (например: 1000x500) только JPG
+              Картинка мобильная соотношением 2:1 (например: 1000x500) только JPG или видео
+              1080х1920
             </Typography>
 
-            {banner?.this_ban?.img.length > 0 && (
+            {banner?.this_ban?.img.length > 0 && banner?.this_ban?.type_illustration === "img" ? (
               <div style={{ height: 400, display: "flex" }}>
                 <img
                   style={{ width: "100%", height: "auto", alignSelf: "center", borderRadius: 40 }}
@@ -390,7 +409,23 @@ export function BannerModal({ getData, showAlert, id, action }) {
                   }
                 />
               </div>
-            )}
+            ) : null}
+
+            {banner?.this_ban?.type_illustration === "video" ? (
+              <div>
+                <video
+                  controls
+                  style={{ width: "100%", height: "300px", alignSelf: "center", borderRadius: 20 }}
+                >
+                  <source
+                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.link}_video_1080x1920.mp4`}
+                  />
+                  <source
+                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.link}_video_1080x1920.webm`}
+                  />
+                </video>
+              </div>
+            ) : null}
 
             <div
               className="dropzone"

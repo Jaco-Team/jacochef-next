@@ -49,6 +49,7 @@
     "node-tls": "^0.10.2",
     "query-string": "^9.3.1",
     "react": "19.2.3",
+    "react-colorful": "^5.6.1",
     "react-dev-utils": "^12.0.1",
     "react-dom": "19.2.3",
     "react-imask": "^7.6.1",

@@ -18,6 +18,7 @@ import { useSiteSettingStore } from "../useSiteSettingStore";
 import { MyTextInput } from "@/ui/Forms";
 import { CategoryModal } from "./CategoryModal";
 import { useDebounce } from "@/src/hooks/useDebounce";
+import { ColorPickerCell } from "@/ui/Forms/ColorPickerCell";
 
 export function SiteSettingCategory() {
   const submodule = "category";
@@ -37,6 +38,7 @@ export function SiteSettingCategory() {
     [categories],
   );
   const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle);
+  const [color, setColor] = useState("#000000");
 
   const fetchCoreData = useCallback(async () => {
     const data = {
@@ -158,6 +160,8 @@ export function SiteSettingCategory() {
                 <TableCell sx={{ minWidth: "200px" }}>Название</TableCell>
                 <TableCell>Сортировка</TableCell>
                 <TableCell sx={{ minWidth: "200px" }}>Сроки хранения</TableCell>
+                <TableCell sx={{ minWidth: "200px" }}>Для курьеров</TableCell>
+                <TableCell sx={{ minWidth: "200px" }}>Для кухни</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -189,6 +193,14 @@ export function SiteSettingCategory() {
                         />
                       </TableCell>
                       <TableCell sx={{ minWidth: "200px" }}>{item.shelf_life}</TableCell>
+                      <ColorPickerCell
+                        value={color}
+                        onChange={(e) => setColor(e)}
+                      />
+                      <ColorPickerCell
+                        value={color}
+                        onChange={(e) => setColor(e)}
+                      />
                     </TableRow>
                     {subcategories.map((subcat, key) => (
                       <TableRow
@@ -220,6 +232,14 @@ export function SiteSettingCategory() {
                           />
                         </TableCell>
                         <TableCell sx={{ minWidth: "200px" }}>{subcat.shelf_life}</TableCell>
+                        <ColorPickerCell
+                          value={color}
+                          onChange={(e) => setColor(e)}
+                        />
+                        <ColorPickerCell
+                          value={color}
+                          onChange={(e) => setColor(e)}
+                        />
                       </TableRow>
                     ))}
                   </Fragment>
@@ -247,6 +267,14 @@ export function SiteSettingCategory() {
                       />
                     </TableCell>
                     <TableCell sx={{ minWidth: "200px" }}>{item.shelf_life}</TableCell>
+                    <ColorPickerCell
+                      value={color}
+                      onChange={(e) => setColor(e)}
+                    />
+                    <ColorPickerCell
+                      value={color}
+                      onChange={(e) => setColor(e)}
+                    />
                   </TableRow>
                 );
               })}
