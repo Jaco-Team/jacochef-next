@@ -9,3 +9,5 @@ export const formatDateMin = (date) =>
   date && dayjs(date).isValid() ? dayjs(date).format("YYYY-MM") : "";
 
 export const formatDate = (date) => dayjs(date);
+
+export const formatYMD = (date) => dayjs(date).format("YYYY-MM-DD");

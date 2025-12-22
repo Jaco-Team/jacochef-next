@@ -1,6 +1,6 @@
 import dynamic from "next/dynamic";
 
-const DynamicCafeEdit = dynamic(() => import("@/components/cafe_edit/CafeEdit"), {
+const DynamicCafeEdit = dynamic(() => import("@/components/bi/dds/DDS"), {
   ssr: false,
 });
 
