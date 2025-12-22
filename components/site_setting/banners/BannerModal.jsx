@@ -363,10 +363,10 @@ export function BannerModal({ getData, showAlert, id, action }) {
                   style={{ width: "100%", height: "300px", alignSelf: "center", borderRadius: 20 }}
                 >
                   <source
-                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.link}_video_1920x1080.mp4`}
+                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.img}_video_1920x1080.mp4`}
                   />
                   <source
-                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.link}_video_1920x1080.webm`}
+                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.img}_video_1920x1080.webm`}
                   />
                 </video>
               </div>
@@ -418,10 +418,10 @@ export function BannerModal({ getData, showAlert, id, action }) {
                   style={{ width: "100%", height: "300px", alignSelf: "center", borderRadius: 20 }}
                 >
                   <source
-                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.link}_video_1080x1920.mp4`}
+                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.img}_video_1080x1920.mp4`}
                   />
                   <source
-                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.link}_video_1080x1920.webm`}
+                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.img}_video_1080x1920.webm`}
                   />
                 </video>
               </div>
