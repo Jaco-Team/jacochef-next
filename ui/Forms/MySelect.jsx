@@ -46,9 +46,7 @@ export function MySelect(props) {
         size="small"
         style={props.style}
       >
-        <InputLabel shrink={props.value !== undefined && props.value !== null}>
-          {props.label}
-        </InputLabel>
+        <InputLabel>{props.label}</InputLabel>
         <Select
           value={normalizedValue}
           label={props.label}

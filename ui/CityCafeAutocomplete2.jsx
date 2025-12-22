@@ -231,70 +231,69 @@ export default function CityCafeAutocomplete2({
   );
 
   const CustomPaper = React.forwardRef(function CustomPaper(props, ref) {
-    if (!cafesByOrganization.size) return null;
     const { children, ...other } = props;
+    const hasOrganizations = cafesByOrganization.size > 0;
 
     return (
       <Paper
         ref={ref}
         {...other}
       >
-        <Box
-          sx={{
-            px: 1.5,
-            py: 1,
-            // mb: 0.5,
-            display: "flex",
-            justifyContent: "center",
-            // borderBottom: "1px solid",
-            // borderColor: "divider",
-            position: "sticky",
-            top: 0,
-            backgroundColor: "background.paper",
-            zIndex: 2,
-          }}
-        >
-          <ButtonGroup
-            size="small"
-            variant="outlined"
-            fullWidth
+        {hasOrganizations && (
+          <Box
             sx={{
-              "& .MuiButton-root": {
-                textTransform: "none",
-                minWidth: 100,
-              },
+              px: 1.5,
+              py: 1,
+              display: "flex",
+              justifyContent: "center",
+              position: "sticky",
+              top: 0,
+              backgroundColor: "background.paper",
+              zIndex: 2,
             }}
           >
-            <Button
-              variant={groupMode === "city" ? "contained" : "outlined"}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setGroupMode("city");
-              }}
-            >
-              По городам
-            </Button>
-            <Button
-              variant={groupMode === "org" ? "contained" : "outlined"}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setGroupMode("org");
+            <ButtonGroup
+              size="small"
+              variant="outlined"
+              fullWidth
+              sx={{
+                "& .MuiButton-root": {
+                  textTransform: "none",
+                  minWidth: 100,
+                },
               }}
             >
-              По организациям
-            </Button>
-          </ButtonGroup>
-        </Box>
+              <Button
+                variant={groupMode === "city" ? "contained" : "outlined"}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setGroupMode("city");
+                }}
+              >
+                По городам
+              </Button>
+              <Button
+                variant={groupMode === "org" ? "contained" : "outlined"}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setGroupMode("org");
+                }}
+              >
+                По организациям
+              </Button>
+            </ButtonGroup>
+          </Box>
+        )}
         {children}
       </Paper>
     );

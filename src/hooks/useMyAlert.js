@@ -22,7 +22,7 @@ export default function useMyAlert(delay = defaultDelay) {
 
   const closeAlert = () => {
     setIsAlert(false);
-    setAlertMessage("");
+    // setAlertMessage("");
   };
 
   return {
