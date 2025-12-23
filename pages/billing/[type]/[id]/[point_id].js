@@ -1357,6 +1357,7 @@ const useStore = create((set, get) => ({
     nds[7] = "7 %";
     nds[10] = "10 %";
     nds[20] = "20 %";
+    nds[22] = "22 %";
     nds[18] = "18 %";
 
     return nds[Math.round(value)] ? nds[Math.round(value)] : false;
