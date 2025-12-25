@@ -805,7 +805,7 @@ const useStore = create((set, get) => ({
             parseFloat(b.price_w_nds) == parseFloat(item.price_w_nds),
         );
 
-        console.log("test123", this_bill, item);
+        console.log("test123", check_this_bill, this_bill, item);
 
         if (check_this_bill) {
           if (this_bill) {
@@ -1343,6 +1343,8 @@ const useStore = create((set, get) => ({
       .reduce((all, item) => all + Number(item.price_w_nds), 0)
       .toFixed(2);
 
+    console.log("bill_items_final", bill_items);
+
     set({
       bill_items,
       allPrice,
@@ -1357,6 +1359,7 @@ const useStore = create((set, get) => ({
     nds[7] = "7 %";
     nds[10] = "10 %";
     nds[20] = "20 %";
+    nds[22] = "22 %";
     nds[18] = "18 %";
 
     return nds[Math.round(value)] ? nds[Math.round(value)] : false;
@@ -3738,12 +3741,14 @@ class Billing_Edit_ extends React.Component {
       return;
     }
 
+    console.log("save bill_items", bill_items);
+
     const items = bill_items.reduce((newItems, item) => {
       let it = {};
 
       it.pq = item.pq;
       it.count = item.count;
-      it.item_id = item.item_id ?? item.id;
+      it.item_id = !item.item_id || item.item_id == "" ? item.id : item.item_id;
       it.summ = item.price_item;
       it.summ_w_nds = item.price_w_nds;
       it.color = item.color;
@@ -3772,6 +3777,12 @@ class Billing_Edit_ extends React.Component {
 
       return newItems;
     }, []);
+
+    console.log("save items", items);
+
+    // this.isClick = false;
+
+    // return;
 
     if (check_err === true && items_color.length > 0) {
       this.setState({

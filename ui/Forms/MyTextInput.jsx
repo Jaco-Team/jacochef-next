@@ -1,43 +1,88 @@
 "use client";
 
-import { TextField } from "@mui/material";
+import { InputAdornment, TextField } from "@mui/material";
+import { isValidElement } from "react";
 
 export function MyTextInput(props) {
+  const {
+    value,
+    func,
+    type = "text",
+    min,
+    max,
+    step,
+    inputProps,
+    slotProps,
+    InputAdornment: legacyInputAdornment = null, // legacy hack
+    inputAdornment,
+    rows,
+    minRows,
+    maxRows,
+    multiline,
+    ...rest
+  } = props;
+
+  const isNumber = type === "number";
+  const isMultiline = Boolean(multiline || rows || minRows || maxRows);
+
+  // это костыль для легаси
+  // TODO: find all adornments, use slotProps.input AS IN DOCS https://mui.com/material-ui/react-text-field/
+  const rawEndAdornment =
+    (inputAdornment && typeof inputAdornment === "object") || legacyInputAdornment?.endAdornment
+      ? (inputAdornment?.endAdornment ?? legacyInputAdornment?.endAdornment ?? inputAdornment)
+      : inputAdornment;
+
+  let endAdornment = rest?.endAdornment;
+
+  if (isValidElement(rawEndAdornment)) {
+    if (rawEndAdornment.type === InputAdornment) {
+      endAdornment = rawEndAdornment;
+    } else {
+      endAdornment = <InputAdornment position="end">{rawEndAdornment}</InputAdornment>;
+    }
+  }
+  const rawStartAdornment =
+    legacyInputAdornment?.startAdornment || inputAdornment?.startAdornment
+      ? (inputAdornment?.startAdornment ?? legacyInputAdornment?.startAdornment)
+      : null;
+
+  let startAdornment = rest?.startAdornment;
+
+  if (isValidElement(rawStartAdornment)) {
+    if (rawStartAdornment.type === InputAdornment) {
+      startAdornment = rawStartAdornment;
+    } else {
+      startAdornment = (
+        <InputAdornment
+          position="start"
+          sx={{ mr: -1 }}
+        >
+          {rawStartAdornment}
+        </InputAdornment>
+      );
+    }
+  }
+  //
+
   return (
     <TextField
-      id={props.id ?? undefined}
-      label={props.label}
-      value={props.value ?? ""}
-      onChange={props.func}
-      onBlur={props.onBlur ?? undefined}
-      disabled={!!props.disabled}
-      variant="outlined"
       size="small"
-      rows={!props.maxRows && !props.minRows ? (props.rows ?? 1) : undefined}
-      placeholder={props.placeholder}
-      color="primary"
-      multiline={!props.rows && (props.multiline ?? false)}
-      maxRows={props.maxRows ?? 1}
-      type={props.type ?? "text"}
-      sx={{ width: "100%" }}
-      style={props.style ?? {}}
-      onKeyUp={props.enter}
-      autoComplete={props.autoComplete ?? ""}
-      autoCorrect={props.autoCorrect ?? ""}
-      autoCapitalize={props.autoCapitalize ?? ""}
-      spellCheck={props.autoCapitalize ?? ""} // intentional binding
-      className={props.className}
-      onWheel={props.onWheel ?? undefined}
-      slots={{
-        input: props.inputAdornment ? undefined : undefined, // no custom slot, but kept placeholder for clarity
-      }}
+      {...rest}
+      value={value ?? ""}
+      onChange={func}
+      type={type}
+      multiline={isMultiline}
+      rows={rows}
+      minRows={minRows}
+      maxRows={maxRows}
+      sx={{ width: "100%", ...(rest.sx || {}) }}
       slotProps={{
+        htmlInput: isNumber ? { min, max, step, ...(inputProps || {}) } : inputProps,
         input: {
-          min: props.min ?? 0,
-          tabIndex: props.tabindex,
-          ...(props.inputProps || {}),
+          startAdornment: startAdornment || null,
+          endAdornment: endAdornment || null,
         },
-        inputAdornment: props.inputAdornment, // replaces InputProps
+        ...slotProps,
       }}
     />
   );

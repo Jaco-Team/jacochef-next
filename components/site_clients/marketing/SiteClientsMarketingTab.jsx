@@ -17,9 +17,10 @@ import useMarketingClientStore from "./useMarketingClientStore";
 import SiteClientsMarketingOrdersModal from "./SiteClientsMarketingOrdersModal";
 import SiteClientsClientModal from "./SiteClientsClientModal";
 import { LoadingProvider } from "./useClientsLoadingContext";
+import { useSiteClientsStore } from "../useSiteClientsStore";
 
 export default function SiteClientsMarketingTab(props) {
-  const { points: allPoints = [], showAlert, getData, canAccess, isLoading, setIsLoading } = props;
+  const { showAlert, getData, canAccess } = props;
 
   // TODO: move order modal state out
   const [order, setOrder] = useState(null);
@@ -28,30 +29,32 @@ export default function SiteClientsMarketingTab(props) {
   const [activeTab, setActiveTab] = useState(0);
 
   const {
-    dateStart,
-    dateEnd,
-    isModalOpen,
-    setDateStart,
-    setDateEnd,
-    setIsModalOpen,
-    points,
-    setPoints,
-  } = useMarketingTabStore();
+    points: allPoints = [],
+    is_load,
+    update,
+    date_start_marketing,
+    date_end_marketing,
+  } = useSiteClientsStore();
 
-  const [tabDateStart, setTabDateStart] = useState(dateStart || dayjs());
-  const [tabDateEnd, setTabDateEnd] = useState(dateEnd || dayjs());
+  const { isModalOpen, setIsModalOpen, points, setPoints, refresh } = useMarketingTabStore();
+
+  const [tabDateStart, setTabDateStart] = useState(date_start_marketing || dayjs());
+  const [tabDateEnd, setTabDateEnd] = useState(date_end_marketing || dayjs());
   const [tabPoints, setTabPoints] = useState(points || []);
 
   const applyRange = () => {
-    setDateStart(tabDateStart);
-    setDateEnd(tabDateEnd);
+    update({
+      date_start_marketing: tabDateStart,
+      date_end_marketing: tabDateEnd,
+    });
     setPoints(tabPoints);
+    refresh();
   };
 
   const openOrder = async (point_id, order_id) => {
     try {
       setOrder(null);
-      setIsLoading(true);
+      update({ is_load: true });
       const resData = await getData("get_order", { point_id, order_id });
       if (!resData) {
         showAlert(resData?.text || "Ошибка запроса заказа", false);
@@ -62,7 +65,7 @@ export default function SiteClientsMarketingTab(props) {
     } catch (error) {
       console.error("Error fetching order:", error);
     } finally {
-      setIsLoading(false);
+      update({ is_load: false });
     }
   };
 
@@ -70,15 +73,15 @@ export default function SiteClientsMarketingTab(props) {
 
   const openClient = async (login) => {
     const { setClientLogin, setClientModalOpened } = useMarketingClientStore.getState();
-    setIsLoading(true);
+    update({ is_load: true });
     setClientLogin(login);
     setClientModalOpened(true);
   };
 
   return (
     <LoadingProvider
-      isLoading={isLoading}
-      setIsLoading={setIsLoading}
+      isLoading={is_load}
+      setIsLoading={(loading) => update({ is_load: loading })}
     >
       <SiteClientsMarketingOrdersModal
         isOpen={isModalOpen}
@@ -98,10 +101,7 @@ export default function SiteClientsMarketingTab(props) {
       <ModalOrder
         open={isOrderModalOpen}
         onClose={() => setIsOrderModalOpen(false)}
-        order={order?.order}
-        order_items={order?.order_items}
-        err_order={order?.err_order}
-        feedback_forms={order?.feedback_forms}
+        order={order}
       />
       {clientModalOpened && (
         <SiteClientsClientModal

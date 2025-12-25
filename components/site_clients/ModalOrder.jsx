@@ -20,7 +20,9 @@ import {
 } from "@mui/material";
 import { memo } from "react";
 
-const ModalOrder = ({ open, onClose, order, order_items, err_order }) => {
+const ModalOrder = ({ open, onClose, order: orderObj }) => {
+  if (!orderObj) return null;
+  const { order, order_items = [], err_order = null } = orderObj;
   return (
     <Dialog
       open={open}
@@ -207,16 +209,14 @@ const ModalOrder = ({ open, onClose, order, order_items, err_order }) => {
               style={{ marginTop: 15 }}
             >
               <TableBody>
-                {order_items
-                  ? order_items.map((item, key) => (
-                      <TableRow key={key}>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.count ? `${item.count} шт` : ""}</TableCell>
-                        <TableCell>{item.price ? `${item.price} р` : ""}</TableCell>
-                        <TableCell></TableCell>
-                      </TableRow>
-                    ))
-                  : null}
+                {order_items?.map((item, key) => (
+                  <TableRow key={key}>
+                    <TableCell>{item.name}</TableCell>
+                    <TableCell>{item.count ? `${item.count} шт` : ""}</TableCell>
+                    <TableCell>{item.price ? `${item.price} р` : ""}</TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
               <TableFooter>
                 <TableRow>

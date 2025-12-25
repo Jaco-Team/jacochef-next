@@ -20,9 +20,11 @@ import { useDebounce } from "@/src/hooks/useDebounce";
 import dayjs from "dayjs";
 import useXLSExport from "@/src/hooks/useXLSXExport";
 import ExcelIcon from "@/ui/ExcelIcon";
+import { useSiteClientsStore } from "../useSiteClientsStore";
 
 function InnerTabUtm({ getData, showAlert, canExport }) {
-  const { dateStart, dateEnd, points, setPage } = useMarketingTabStore();
+  const { date_start_marketing, date_end_marketing } = useSiteClientsStore();
+  const { points, setPage } = useMarketingTabStore();
 
   const [utmStats, setUtmStats] = useState(null);
 
@@ -33,14 +35,14 @@ function InnerTabUtm({ getData, showAlert, canExport }) {
   const [sortDir, setSortDir] = useState("desc");
 
   const getUtmStats = async () => {
-    if (!points.length || !dateStart || !dateEnd) {
+    if (!points.length || !date_start_marketing || !date_end_marketing) {
       return;
     }
     try {
       const resData = await getData("get_marketing_utm_orders", {
         points: points,
-        date_start: dayjs(dateStart).format("YYYY-MM-DD"),
-        date_end: dayjs(dateEnd).format("YYYY-MM-DD"),
+        date_start: dayjs(date_start_marketing).format("YYYY-MM-DD"),
+        date_end: dayjs(date_end_marketing).format("YYYY-MM-DD"),
       });
 
       if (!resData?.st) {
@@ -92,7 +94,7 @@ function InnerTabUtm({ getData, showAlert, canExport }) {
   const debouncedGetOrdersStats = useDebounce(getUtmStats, 500);
   useEffect(() => {
     debouncedGetOrdersStats();
-  }, [dateStart, dateEnd, points]);
+  }, [date_start_marketing, date_end_marketing, points]);
 
   return utmStats ? (
     <>

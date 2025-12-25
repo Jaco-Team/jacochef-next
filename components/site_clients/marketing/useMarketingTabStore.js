@@ -27,8 +27,6 @@ export const defaultFilters = {
 
 const useMarketingTabStore = create((set, get) => ({
   points: [],
-  dateStart: dayjs(),
-  dateEnd: dayjs(),
   isModalOpen: false,
   orderIds: null,
   orders: [],
@@ -39,10 +37,11 @@ const useMarketingTabStore = create((set, get) => ({
   filters: defaultFilters,
   slices: defaultSlices,
   subtitle: "",
+  refreshToken: Date.now(),
+
+  refresh: () => set({ refreshToken: Date.now() }),
 
   setPoints: (points) => set({ points }),
-  setDateStart: (dateStart) => set({ dateStart }),
-  setDateEnd: (dateEnd) => set({ dateEnd }),
   setIsModalOpen: (isModalOpen) => set({ isModalOpen }),
   setOrderIds: (orderIds) => set({ orderIds }),
   setOrders: (orders) => set({ orders }),
