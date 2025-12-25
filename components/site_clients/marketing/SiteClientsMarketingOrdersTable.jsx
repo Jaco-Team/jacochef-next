@@ -152,7 +152,7 @@ function SiteClientsMarketingOrdersTable({
   const debouncedGetOrders = useDebounce(getOrders);
 
   useEffect(() => {
-    setIsLoading(true);
+    // setIsLoading(true);
     debouncedGetOrders();
   }, [filters, page, perPage, slices, orderIds]);
 

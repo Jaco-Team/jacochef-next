@@ -113,6 +113,7 @@ export default function SiteClientsMarketingTab(props) {
       <Grid
         container
         spacing={3}
+        maxWidth="lg"
       >
         <Grid
           size={{
@@ -189,7 +190,13 @@ export default function SiteClientsMarketingTab(props) {
             </Button>
           </Stack>
         </Grid>
+      </Grid>
 
+      <Grid
+        container
+        spacing={0}
+        sx={{ mt: 3 }}
+      >
         <Grid
           style={{ paddingBottom: 24 }}
           size={{
@@ -226,11 +233,6 @@ export default function SiteClientsMarketingTab(props) {
             />
           </Tabs>
         </Grid>
-      </Grid>
-      <Grid
-        container
-        spacing={0}
-      >
         {/* статистика */}
         <Grid
           size={{

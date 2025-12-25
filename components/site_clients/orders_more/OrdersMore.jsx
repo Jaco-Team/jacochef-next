@@ -116,7 +116,7 @@ export default function OrdersMore({ getData, showAlert, canAccess }) {
 
   const openOrder = async (point_id, order_id) => {
     try {
-      const res = await getData("get_order", { point_id, order_id });
+      const res = await getData("get_order_orders", { point_id, order_id });
       if (!res) throw new Error("Получен пустой ответ");
       setOrder(res);
       setOpenModalOrder(true);
@@ -259,6 +259,7 @@ export default function OrdersMore({ getData, showAlert, canAccess }) {
           open={openModalOrder}
           onClose={() => setOpenModalOrder(false)}
           order={order}
+          openOrder={openOrder}
         />
       ) : (
         <ModalOrder
