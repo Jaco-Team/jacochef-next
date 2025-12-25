@@ -3748,7 +3748,7 @@ class Billing_Edit_ extends React.Component {
 
       it.pq = item.pq;
       it.count = item.count;
-      it.item_id = item.item_id == "" ? item.id : item.item_id;
+      it.item_id = !item.item_id || item.item_id == "" ? item.id : item.item_id;
       it.summ = item.price_item;
       it.summ_w_nds = item.price_w_nds;
       it.color = item.color;
