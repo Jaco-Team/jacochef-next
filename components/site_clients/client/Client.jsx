@@ -91,64 +91,54 @@ export default function Client({ getData, showAlert }) {
   };
 
   return (
-    <Grid
-      container
-      spacing={3}
-    >
+    <>
       <Grid
-        size={{
-          xs: 12,
-          sm: 6,
-        }}
+        container
+        spacing={3}
+        maxWidth="lg"
       >
-        <MyTextInput
-          type="text"
-          className="input_login"
-          label="Поиск по номеру телефона"
-          value={search}
-          func={changeSearch}
-          inputAdornment={{
-            endAdornment: !!search && (
-              <IconButton>
-                <Clear onClick={() => changeSearch("")} />
-              </IconButton>
-            ),
+        <Grid
+          size={{
+            xs: 12,
+            sm: 6,
           }}
-          // slotProps={{
-          //   input: {
-          //     endAdornment: !!search && (
-          //       <IconButton>
-          //         <Clear onClick={() => changeSearch("")} />
-          //       </IconButton>
-          //     ),
-          //   },
-          // }}
-        />
-      </Grid>
-
-      <Grid
-        size={{
-          xs: 12,
-          sm: 4,
-        }}
-      >
-        <Button
-          onClick={getClients}
-          variant="contained"
         >
-          Показать
-        </Button>
+          <MyTextInput
+            type="text"
+            className="input_login"
+            label="Поиск по номеру телефона"
+            value={search}
+            func={changeSearch}
+            slotProps={{
+              input: {
+                endAdornment: !!search && (
+                  <IconButton>
+                    <Clear onClick={() => changeSearch("")} />
+                  </IconButton>
+                ),
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid
+          size={{
+            xs: 12,
+            sm: 4,
+          }}
+        >
+          <Button
+            onClick={getClients}
+            variant="contained"
+          >
+            Показать
+          </Button>
+        </Grid>
       </Grid>
 
-      <Grid
-        mt={5}
-        size={{
-          xs: 12,
-          sm: 12,
-        }}
-      >
+      {clients.length > 0 && (
         <TableContainer
-          sx={{ maxHeight: { xs: "none", sm: 570 } }}
+          sx={{ maxHeight: { xs: "none", sm: 570 }, mt: 3 }}
           component={Paper}
         >
           <Table
@@ -178,7 +168,7 @@ export default function Client({ getData, showAlert }) {
             </TableBody>
           </Table>
         </TableContainer>
-      </Grid>
-    </Grid>
+      )}
+    </>
   );
 }

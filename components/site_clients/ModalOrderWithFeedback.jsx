@@ -25,10 +25,14 @@ import {
   TableRow,
   TableCell,
   Button,
+  TableContainer,
+  TableHead,
 } from "@mui/material";
 import { Close, ExpandMore } from "@mui/icons-material";
 
 import { ModalAccept } from "@/components/general/ModalAccept";
+import { formatYMD } from "@/src/helpers/ui/formatDate";
+import { formatRUR } from "@/src/helpers/utils/i18n";
 
 const ModalOrderWithFeedback = ({
   open,
@@ -38,7 +42,7 @@ const ModalOrderWithFeedback = ({
   showAlert,
   openOrder,
 }) => {
-  const { order_items, err_order, feedback_forms, order } = orderObj;
+  const { order_items, err_order, feedback_forms, order, other_orders } = orderObj;
   const [values, setValues] = useState([]);
   const [discountValue, setDiscountValue] = useState(0);
   const [answerValue, setAnswerValue] = useState(0);
@@ -568,11 +572,43 @@ const ModalOrderWithFeedback = ({
             </Grid>
           )}
 
-          <Grid
-            size={{
-              xs: 12,
-            }}
-          >
+          <Grid size={12}>
+            {other_orders?.length > 0 && (
+              <Accordion sx={{ width: "100%", mt: 2 }}>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                  <Typography style={{ fontWeight: "bold" }}>Все заказы</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <TableContainer sx={{ maxHeight: "60dvh" }}>
+                    <Table stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>#</TableCell>
+                          <TableCell>ID</TableCell>
+                          <TableCell>Дата заказа</TableCell>
+                          <TableCell>Кафе</TableCell>
+                          <TableCell>Сумма</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {other_orders.map((o, i) => (
+                          <TableRow
+                            hover
+                            onClick={async () => await openOrder(o.point_id, o.order_id)}
+                          >
+                            <TableCell>{i + 1}</TableCell>
+                            <TableCell>{o.order_id}</TableCell>
+                            <TableCell>{formatYMD(o.time_order)}</TableCell>
+                            <TableCell>{o.addr}</TableCell>
+                            <TableCell>{formatRUR(o.summ)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </AccordionDetails>
+              </Accordion>
+            )}
             <Table
               size={"small"}
               style={{ marginTop: 15 }}
@@ -606,6 +642,7 @@ const ModalOrderWithFeedback = ({
                     </TableRow>
                   </>
                 ) : null}
+
                 {order_items
                   ? order_items.map((item, key) => (
                       <TableRow key={key}>

@@ -67,6 +67,7 @@ export default function Orders({ getOrders, openClientOrder, downLoad, canAccess
       <Grid
         container
         spacing={3}
+        maxWidth={"lg"}
       >
         <Grid
           size={{
@@ -323,196 +324,195 @@ export default function Orders({ getOrders, openClientOrder, downLoad, canAccess
         </Grid>
       </Grid>
 
-      <Grid
-        mt={5}
-        size={{
-          xs: 12,
-          sm: 12,
-        }}
-      >
-        <TableContainer
-          sx={{ maxHeight: { xs: "none", sm: 570 } }}
-          component={Paper}
+      {search_orders.length > 0 && (
+        <Grid
+          container
+          mt={5}
         >
-          <Table
-            size={"small"}
-            stickyHeader
+          <TableContainer
+            sx={{ maxHeight: { xs: "none", sm: 570 } }}
+            component={Paper}
           >
-            <TableHead>
-              <TableRow>
-                <TableCell>#</TableCell>
-                <TableCell>Заказ</TableCell>
-                <TableCell>Дата заказа</TableCell>
-                <TableCell>Точка</TableCell>
-                <TableCell>Оформил</TableCell>
-                <TableCell>Номер клиента</TableCell>
-                <TableCell>Адрес доставки</TableCell>
-                <TableCell>Время открытия заказа</TableCell>
-                <TableCell>Ко времени</TableCell>
-                <TableCell>Закрыт на кухне</TableCell>
-                <TableCell>Получен клиентом</TableCell>
-                <TableCell>Время обещ</TableCell>
-                <TableCell>Тип</TableCell>
-                <TableCell>Статус</TableCell>
-                <TableCell>Сумма</TableCell>
-                <TableCell>Оплата</TableCell>
-                <TableCell>Водитель</TableCell>
-              </TableRow>
-            </TableHead>
+            <Table
+              size={"small"}
+              stickyHeader
+            >
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Заказ</TableCell>
+                  <TableCell>Дата заказа</TableCell>
+                  <TableCell>Точка</TableCell>
+                  <TableCell>Оформил</TableCell>
+                  <TableCell>Номер клиента</TableCell>
+                  <TableCell>Адрес доставки</TableCell>
+                  <TableCell>Время открытия заказа</TableCell>
+                  <TableCell>Ко времени</TableCell>
+                  <TableCell>Закрыт на кухне</TableCell>
+                  <TableCell>Получен клиентом</TableCell>
+                  <TableCell>Время обещ</TableCell>
+                  <TableCell>Тип</TableCell>
+                  <TableCell>Статус</TableCell>
+                  <TableCell>Сумма</TableCell>
+                  <TableCell>Оплата</TableCell>
+                  <TableCell>Водитель</TableCell>
+                </TableRow>
+              </TableHead>
 
-            <TableBody>
-              {search_orders.map((item, key) => (
-                <TableRow
-                  hover
-                  key={key}
-                  style={
-                    parseInt(item.is_delete) == 1
-                      ? {
-                          backgroundColor: "red",
-                          color: "#fff",
-                          fontWeight: "bold",
-                        }
-                      : {}
-                  }
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => openClientOrder(item.id, item.point_id)}
-                >
-                  <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                    {key + 1}
-                  </TableCell>
-                  <TableCell
+              <TableBody>
+                {search_orders.map((item, key) => (
+                  <TableRow
+                    hover
+                    key={key}
                     style={
-                      parseInt(item.dist) >= 0
+                      parseInt(item.is_delete) == 1
                         ? {
-                            backgroundColor: "yellow",
-                            color: "#000",
-                            cursor: "pointer",
-                            fontWeight: "inherit",
+                            backgroundColor: "red",
+                            color: "#fff",
+                            fontWeight: "bold",
                           }
-                        : { color: "inherit", cursor: "pointer", fontWeight: "inherit" }
+                        : {}
                     }
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => openClientOrder(item.id, item.point_id)}
                   >
-                    {item.id}
-                  </TableCell>
-                  <TableCell>
-                    <span
+                    <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                      {key + 1}
+                    </TableCell>
+                    <TableCell
+                      style={
+                        parseInt(item.dist) >= 0
+                          ? {
+                              backgroundColor: "yellow",
+                              color: "#000",
+                              cursor: "pointer",
+                              fontWeight: "inherit",
+                            }
+                          : { color: "inherit", cursor: "pointer", fontWeight: "inherit" }
+                      }
+                    >
+                      {item.id}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          lineHeight: 1,
+                          color: item.is_preorder ? "green" : "inherit",
+                        }}
+                      >
+                        {dayjs(item.unix_time * 1000).format("D/M/YY hh:mm:ss")}
+                      </span>
+                    </TableCell>
+                    <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                      {item.point_addr}
+                    </TableCell>
+                    <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                      {item.type_user}
+                    </TableCell>
+                    <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                      {item.number}
+                    </TableCell>
+                    <TableCell
                       style={{
-                        fontSize: "10px",
-                        lineHeight: 1,
-                        color: item.is_preorder ? "green" : "inherit",
+                        color: "inherit",
+                        fontWeight: "inherit",
                       }}
                     >
-                      {dayjs(item.unix_time * 1000).format("D/M/YY hh:mm:ss")}
-                    </span>
-                  </TableCell>
-                  <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                    {item.point_addr}
-                  </TableCell>
-                  <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                    {item.type_user}
-                  </TableCell>
-                  <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                    {item.number}
-                  </TableCell>
-                  <TableCell
-                    style={{
-                      color: "inherit",
-                      fontWeight: "inherit",
-                    }}
-                  >
-                    {item.street} {item.home}
-                  </TableCell>
-                  <TableCell
-                    style={{
-                      color: "inherit",
-                      fontWeight: "inherit",
-                    }}
-                  >
-                    {item.date_time_order}
-                  </TableCell>
-                  <TableCell
-                    style={{
-                      color: "inherit",
-                      fontWeight: "inherit",
-                      backgroundColor: parseInt(item.is_preorder) == 1 ? "#bababa" : "inherit",
-                    }}
-                  >
-                    {item.need_time}
-                  </TableCell>
-                  <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                    {item.give_data_time == "00:00:00" ? "" : item.give_data_time}
-                  </TableCell>
-                  <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                    {item.close_order}
-                  </TableCell>
-                  <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                    {item.unix_time_to_client == "0" || parseInt(item.is_preorder) == 1
-                      ? ""
-                      : item.unix_time_to_client}
-                  </TableCell>
-                  <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                    {item.type_order}
-                  </TableCell>
-                  <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                    {item.status}
-                  </TableCell>
-                  <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                    {item.order_price}
-                  </TableCell>
-                  <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                    {item.type_pay}
-                  </TableCell>
-                  <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                    {item.driver}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        {search_orders.length ? (
-          <Box
-            sx={{
-              backgroundColor: "#f5f5f5",
-              padding: "10px",
-              borderTop: "1px solid #ddd",
-              fontWeight: "bold",
-              marginBottom: "1rem",
-              textAlign: "center",
-              position: "sticky",
-              bottom: 0,
-            }}
-          >
-            <span
-              style={{
-                marginRight: "24px",
-                marginLeft: "10px",
+                      {item.street} {item.home}
+                    </TableCell>
+                    <TableCell
+                      style={{
+                        color: "inherit",
+                        fontWeight: "inherit",
+                      }}
+                    >
+                      {item.date_time_order}
+                    </TableCell>
+                    <TableCell
+                      style={{
+                        color: "inherit",
+                        fontWeight: "inherit",
+                        backgroundColor: parseInt(item.is_preorder) == 1 ? "#bababa" : "inherit",
+                      }}
+                    >
+                      {item.need_time}
+                    </TableCell>
+                    <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                      {item.give_data_time == "00:00:00" ? "" : item.give_data_time}
+                    </TableCell>
+                    <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                      {item.close_order}
+                    </TableCell>
+                    <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                      {item.unix_time_to_client == "0" || parseInt(item.is_preorder) == 1
+                        ? ""
+                        : item.unix_time_to_client}
+                    </TableCell>
+                    <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                      {item.type_order}
+                    </TableCell>
+                    <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                      {item.status}
+                    </TableCell>
+                    <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                      {item.order_price}
+                    </TableCell>
+                    <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                      {item.type_pay}
+                    </TableCell>
+                    <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                      {item.driver}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {search_orders.length ? (
+            <Box
+              sx={{
+                backgroundColor: "#f5f5f5",
+                padding: "10px",
+                borderTop: "1px solid #ddd",
+                fontWeight: "bold",
+                marginBottom: "1rem",
+                textAlign: "center",
+                position: "sticky",
+                bottom: 0,
               }}
             >
-              Кол-во заказов: {search_orders.length}
-            </span>
-            {canAccess("count_complete_order") && (
-              <>
-                <span style={{ color: "green", marginRight: "24px" }}>
-                  Кол-во завершенных заказов:{" "}
-                  {search_orders.filter((src) => src.status_order === 6)?.length}
-                </span>
-                <span style={{ color: "blue" }}>
-                  Сумма завершенных заказов:{" "}
-                  {search_orders
-                    .filter((src) => src.status_order === 6)
-                    .reduce((sum, order) => sum + (parseFloat(order.order_price) || 0), 0)
-                    .toLocaleString("ru-RU", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}{" "}
-                  руб.
-                </span>
-              </>
-            )}
-          </Box>
-        ) : null}
-      </Grid>
+              <span
+                style={{
+                  marginRight: "24px",
+                  marginLeft: "10px",
+                }}
+              >
+                Кол-во заказов: {search_orders.length}
+              </span>
+              {canAccess("count_complete_order") && (
+                <>
+                  <span style={{ color: "green", marginRight: "24px" }}>
+                    Кол-во завершенных заказов:{" "}
+                    {search_orders.filter((src) => src.status_order === 6)?.length}
+                  </span>
+                  <span style={{ color: "blue" }}>
+                    Сумма завершенных заказов:{" "}
+                    {search_orders
+                      .filter((src) => src.status_order === 6)
+                      .reduce((sum, order) => sum + (parseFloat(order.order_price) || 0), 0)
+                      .toLocaleString("ru-RU", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                    руб.
+                  </span>
+                </>
+              )}
+            </Box>
+          ) : null}
+        </Grid>
+      )}
     </>
   );
 }

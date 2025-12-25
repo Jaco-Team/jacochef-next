@@ -120,179 +120,180 @@ export default function RecursiveOrdersTab({ getData, showAlert }) {
   }, [items_recursive]);
 
   return (
-    <Grid
-      container
-      spacing={3}
-    >
-      <DialogUser
-        open={openModalUser}
-        onClose={() => setOpenModalUser(false)}
-        user={user}
-        openOrder={openOrder}
-      />
-      <ModalOrder
-        getData={getData}
-        openOrder={openOrder}
-        open={openModalOrder}
-        onClose={() => setOpenModalOrder(false)}
-        order={order}
-      />
+    <>
       <Grid
-        size={{
-          xs: 12,
-          sm: 4,
-        }}
+        container
+        spacing={3}
+        maxWidth="lg"
       >
-        <MyAutocomplite
-          label="Кафе"
-          multiple={true}
-          data={points}
-          value={points_recursive}
-          func={(_, v) => update({ points_recursive: v })}
+        <DialogUser
+          open={openModalUser}
+          onClose={() => setOpenModalUser(false)}
+          user={user}
+          openOrder={openOrder}
         />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 5 }}>
+        <ModalOrder
+          getData={getData}
+          openOrder={openOrder}
+          open={openModalOrder}
+          onClose={() => setOpenModalOrder(false)}
+          order={order}
+        />
         <Grid
-          container
-          spacing={2}
+          size={{
+            xs: 12,
+            sm: 4,
+          }}
         >
+          <MyAutocomplite
+            label="Кафе"
+            multiple={true}
+            data={points}
+            value={points_recursive}
+            func={(_, v) => update({ points_recursive: v })}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 5 }}>
           <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
+            container
+            spacing={2}
           >
-            <MyDatePickerNew
-              label="Дата от"
-              customActions={true}
-              value={dayjs(date_start_recur)}
-              func={(v) => update({ date_start_recur: v })}
-            />
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <MyDatePickerNew
-              label="Дата до"
-              customActions={true}
-              value={dayjs(date_end_recur)}
-              func={(v) => update({ date_end_recur: v })}
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <MyAutocomplite
-              label="Позиции"
-              multiple={true}
-              data={all_items}
-              value={items_recursive}
-              func={(_, v) => update({ items_recursive: v })}
-            />
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <MyTextInput
-              label="Промокод"
-              value={promo_recursive}
-              func={({ target }) => update({ promo_recursive: target?.value || "" })}
-              type="text"
-              slotProps={{
-                input: {
-                  endAdornment: promo_recursive ? (
-                    <Close
-                      sx={{ cursor: "pointer" }}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => update({ promo_recursive: "" })}
-                    />
-                  ) : null,
-                },
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
               }}
-            />
+            >
+              <MyDatePickerNew
+                label="Дата от"
+                customActions={true}
+                value={dayjs(date_start_recur)}
+                func={(v) => update({ date_start_recur: v })}
+              />
+            </Grid>
+
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+              }}
+            >
+              <MyDatePickerNew
+                label="Дата до"
+                customActions={true}
+                value={dayjs(date_end_recur)}
+                func={(v) => update({ date_end_recur: v })}
+              />
+            </Grid>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+              }}
+            >
+              <MyAutocomplite
+                label="Позиции"
+                multiple={true}
+                data={all_items}
+                value={items_recursive}
+                func={(_, v) => update({ items_recursive: v })}
+              />
+            </Grid>
+
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+              }}
+            >
+              <MyTextInput
+                label="Промокод"
+                value={promo_recursive}
+                func={({ target }) => update({ promo_recursive: target?.value || "" })}
+                type="text"
+                slotProps={{
+                  input: {
+                    endAdornment: promo_recursive ? (
+                      <Close
+                        sx={{ cursor: "pointer" }}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => update({ promo_recursive: "" })}
+                      />
+                    ) : null,
+                  },
+                }}
+              />
+            </Grid>
           </Grid>
         </Grid>
-      </Grid>
 
-      <Grid
-        size={{
-          xs: 12,
-          sm: 3,
-        }}
-      >
-        <Button
-          onClick={getOrders}
-          variant="contained"
+        <Grid
+          size={{
+            xs: 12,
+            sm: 3,
+          }}
         >
-          Показать
-        </Button>
+          <Button
+            onClick={getOrders}
+            variant="contained"
+          >
+            Показать
+          </Button>
+        </Grid>
       </Grid>
 
       {!sortedRows?.length ? (
         orders_recursive !== null && <Typography variant="h6">Нет совпадений</Typography>
       ) : (
-        <Grid size={12}>
-          <TableContainer sx={{ maxHeight: "60dvh" }}>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell sortDirection={orderBy === "number" ? sortOrder : false}>
-                    <TableSortLabel
-                      active={orderBy === "number"}
-                      direction={orderBy === "number" ? sortOrder : "asc"}
-                      onClick={() => handleSort("number")}
-                    >
-                      Клиент
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sortDirection={orderBy === "count" ? sortOrder : false}>
-                    <TableSortLabel
-                      active={orderBy === "count"}
-                      direction={orderBy === "count" ? sortOrder : "asc"}
-                      onClick={() => handleSort("count")}
-                    >
-                      Количество заказов
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sortDirection={orderBy === "sum_order" ? sortOrder : false}>
-                    <TableSortLabel
-                      active={orderBy === "sum_order"}
-                      direction={orderBy === "sum_order" ? sortOrder : "asc"}
-                      onClick={() => handleSort("sum_order")}
-                    >
-                      Сумма
-                    </TableSortLabel>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sortedRows.map((client) => (
-                  <TableRow
-                    key={client.number}
-                    style={{ cursor: "pointer" }}
-                    onClick={() => openUser(client.number)}
+        <TableContainer sx={{ maxHeight: "60dvh", mt: 4 }}>
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell sortDirection={orderBy === "number" ? sortOrder : false}>
+                  <TableSortLabel
+                    active={orderBy === "number"}
+                    direction={orderBy === "number" ? sortOrder : "asc"}
+                    onClick={() => handleSort("number")}
                   >
-                    <TableCell>{client.number}</TableCell>
-                    <TableCell>{client.count}</TableCell>
-                    <TableCell>{formatNumber(client.sum_order)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Grid>
+                    Клиент
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell sortDirection={orderBy === "count" ? sortOrder : false}>
+                  <TableSortLabel
+                    active={orderBy === "count"}
+                    direction={orderBy === "count" ? sortOrder : "asc"}
+                    onClick={() => handleSort("count")}
+                  >
+                    Количество заказов
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell sortDirection={orderBy === "sum_order" ? sortOrder : false}>
+                  <TableSortLabel
+                    active={orderBy === "sum_order"}
+                    direction={orderBy === "sum_order" ? sortOrder : "asc"}
+                    onClick={() => handleSort("sum_order")}
+                  >
+                    Сумма
+                  </TableSortLabel>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {sortedRows.map((client) => (
+                <TableRow
+                  key={client.number}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => openUser(client.number)}
+                >
+                  <TableCell>{client.number}</TableCell>
+                  <TableCell>{client.count}</TableCell>
+                  <TableCell>{formatNumber(client.sum_order)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
-    </Grid>
+    </>
   );
 }
