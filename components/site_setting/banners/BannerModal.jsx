@@ -365,9 +365,6 @@ export function BannerModal({ getData, showAlert, id, action }) {
                   <source
                     src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.img}_video_1920x1080.mp4`}
                   />
-                  <source
-                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.img}_video_1920x1080.webm`}
-                  />
                 </video>
               </div>
             ) : null}
@@ -419,9 +416,6 @@ export function BannerModal({ getData, showAlert, id, action }) {
                 >
                   <source
                     src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.img}_video_1080x1920.mp4`}
-                  />
-                  <source
-                    src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.img}_video_1080x1920.webm`}
                   />
                 </video>
               </div>

@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { useSiteSettingStore } from "../useSiteSettingStore";
-import { api_laravel } from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 export const useBannersStore = create((set, get) => ({
   moduleName: "",
