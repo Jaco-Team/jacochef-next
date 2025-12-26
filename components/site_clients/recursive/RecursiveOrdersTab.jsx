@@ -4,25 +4,38 @@ import { MyAutocomplite, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 import {
   Button,
   Grid,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TableSortLabel,
+  // TableSortLabel,
   Typography,
 } from "@mui/material";
 import { useSiteClientsStore } from "../useSiteClientsStore";
 import dayjs from "dayjs";
-import { formatNumber } from "@/src/helpers/utils/i18n";
-import { useEffect, useState } from "react";
+import { formatRUR } from "@/src/helpers/utils/i18n";
+import { memo, useEffect, useMemo, useState } from "react";
 import DialogUser from "../DialogUser";
 import ModalOrder from "../ModalOrder";
-import useSortTable from "@/src/hooks/useSortTable";
+// import useSortTable from "@/src/hooks/useSortTable";
 import { Close } from "@mui/icons-material";
 
-export default function RecursiveOrdersTab({ getData, showAlert }) {
+const BUCKETS = [
+  { key: "2", label: "2", match: (n) => n === 2 },
+  { key: "3", label: "3", match: (n) => n === 3 },
+  { key: "4", label: "4", match: (n) => n === 4 },
+  { key: "5+", label: "5+", match: (n) => n >= 5 },
+];
+const COLUMNS = [
+  { key: "orders", label: "Заказов", align: "left" },
+  { key: "clients", label: "Клиентов", align: "right" },
+  { key: "sum", label: "Сумма", align: "right" },
+];
+
+const RecursiveOrdersTab = ({ getData, showAlert }) => {
   const {
     update,
     points,
@@ -96,12 +109,41 @@ export default function RecursiveOrdersTab({ getData, showAlert }) {
   };
 
   // sorting
-  const {
-    order: sortOrder,
-    orderBy,
-    handleSort,
-    sortedRows,
-  } = useSortTable(orders_recursive, "count");
+  // const {
+  //   order: sortOrder,
+  //   orderBy,
+  //   handleSort,
+  //   sortedRows,
+  // } = useSortTable(orders_recursive, "count");
+
+  const buildBuckets = (rows) => {
+    if (!rows?.length) return [];
+
+    const acc = Object.fromEntries(
+      BUCKETS.map((b) => [b.key, { orders: b.label, clients: 0, sum: 0 }]),
+    );
+
+    let total = { orders: "Всего", clients: 0, sum: 0 };
+
+    for (const { orders_count, sum_order } of rows) {
+      const bucket = BUCKETS.find((b) => b.match(orders_count));
+      if (!bucket) continue;
+
+      acc[bucket.key].clients += 1;
+      acc[bucket.key].sum += sum_order;
+
+      total.clients += 1;
+      total.sum += sum_order;
+    }
+
+    return [...Object.values(acc), total];
+  };
+  const allBuckets = useMemo(() => buildBuckets(orders_recursive), [orders_recursive]);
+
+  const newBuckets = useMemo(
+    () => buildBuckets(orders_recursive?.filter((r) => r.is_new === 1)),
+    [orders_recursive],
+  );
 
   useEffect(() => {
     if (promo_recursive && items_recursive?.length > 0) {
@@ -242,7 +284,26 @@ export default function RecursiveOrdersTab({ getData, showAlert }) {
         </Grid>
       </Grid>
 
-      {!sortedRows?.length ? (
+      <Grid
+        container
+        spacing={3}
+      >
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <OrdersTable
+            title="Всего заказов"
+            rows={allBuckets}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <OrdersTable
+            title="Новые клиенты"
+            rows={newBuckets}
+          />
+        </Grid>
+      </Grid>
+
+      {/* {!sortedRows?.length ? (
         orders_recursive !== null && <Typography variant="h6">Нет совпадений</Typography>
       ) : (
         <TableContainer sx={{ maxHeight: "60dvh", mt: 4 }}>
@@ -293,7 +354,55 @@ export default function RecursiveOrdersTab({ getData, showAlert }) {
             </TableBody>
           </Table>
         </TableContainer>
-      )}
+      )} */}
     </>
   );
-}
+};
+
+const OrdersTable = ({ title, rows }) => (
+  <TableContainer
+    sx={{ mt: 4 }}
+    component={Paper}
+    variant="outlined"
+  >
+    <Typography
+      variant="subtitle2"
+      sx={{ p: 2 }}
+    >
+      {title}
+    </Typography>
+
+    <Table
+      stickyHeader
+      size="small"
+    >
+      <TableHead>
+        <TableRow>
+          {COLUMNS.map((col) => (
+            <TableCell
+              key={col.key}
+              align={col.align}
+            >
+              {col.label}
+            </TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+
+      <TableBody>
+        {rows.map((row) => (
+          <TableRow
+            key={row.orders}
+            hover
+          >
+            <TableCell>{row.orders}</TableCell>
+            <TableCell align="right">{row.clients}</TableCell>
+            <TableCell align="right">{formatRUR(row.sum)}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+);
+
+export default memo(RecursiveOrdersTab);
