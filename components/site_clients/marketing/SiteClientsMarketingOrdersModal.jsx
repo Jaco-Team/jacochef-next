@@ -39,7 +39,9 @@ function SiteClientsMarketingOrdersModal({ isOpen, onClose, title, children }) {
       fullWidth={true}
       maxWidth={"xl"}
       fullScreen={fullScreen}
-      TransitionComponent={Transition}
+      slots={{
+        transition: Transition,
+      }}
       sx={{ opacity: isLoading ? 0 : 1 }}
     >
       <DialogTitle

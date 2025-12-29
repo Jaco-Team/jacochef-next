@@ -294,6 +294,7 @@ export default function OrdersMore({ getData, showAlert, canAccess }) {
             <MyDatePickerNew
               label="Делал заказ от"
               value={formData.date_start_true}
+              maxDate={dayjs(formData.date_end_true) ?? dayjs()}
               func={(e) => handleChange(e, "date_start_true")}
             />
           </Grid>
@@ -301,6 +302,8 @@ export default function OrdersMore({ getData, showAlert, canAccess }) {
             <MyDatePickerNew
               label="Делал заказ до"
               value={formData.date_end_true}
+              minDate={dayjs(formData.date_start_true)}
+              maxDate={dayjs()}
               func={(e) => handleChange(e, "date_end_true")}
             />
           </Grid>

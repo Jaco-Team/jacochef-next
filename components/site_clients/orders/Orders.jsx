@@ -145,6 +145,7 @@ export default function Orders({ getOrders, openClientOrder, downLoad, canAccess
             label="Дата от"
             customActions={true}
             value={dayjs(date_start)}
+            maxDate={dayjs(date_end) ?? dayjs()}
             func={(e) => update({ date_start: e })}
           />
         </Grid>
@@ -159,6 +160,8 @@ export default function Orders({ getOrders, openClientOrder, downLoad, canAccess
             label="Дата до"
             customActions={true}
             value={dayjs(date_end)}
+            minDate={dayjs(date_start)}
+            maxDate={dayjs()}
             func={(e) => update({ date_end: e })}
           />
         </Grid>
@@ -310,15 +313,16 @@ export default function Orders({ getOrders, openClientOrder, downLoad, canAccess
           </Button>
 
           {canAccess("download_file") && search_orders?.length > 0 && (
-            <Tooltip title={<Typography color="inherit">{"Скачать таблицу в Excel"}</Typography>}>
-              <Button
-                variant="contained"
-                disableRipple
-                sx={{ padding: 0, backgroundColor: "#3cb623ff" }}
-                onClick={downLoad}
-              >
-                <Download />
-              </Button>
+            <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
+              <span>
+                <Button
+                  variant="contained"
+                  sx={{ padding: 0, backgroundColor: "#3cb623ff" }}
+                  onClick={downLoad}
+                >
+                  <Download />
+                </Button>
+              </span>
             </Tooltip>
           )}
         </Grid>
