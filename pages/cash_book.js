@@ -772,8 +772,6 @@ class CashBook_ extends React.Component {
   }
 
   changePoint(type = "point", event, value) {
-    console.log(event, value, type);
-
     let data = value;
 
     this.setState({
@@ -815,8 +813,6 @@ class CashBook_ extends React.Component {
     }
 
     if (this.state.openModalType == "transfer_cash") {
-      console.log(this.state.point.id, this.state.point_to.id);
-
       if (!this.state.point.id || !this.state.point_to.id) {
         alert("Необходимо указать оба кафе");
 
@@ -1056,8 +1052,6 @@ class CashBook_ extends React.Component {
   }
 
   render() {
-    console.log(this.state.openModalType);
-
     return (
       <>
         <Backdrop
@@ -1122,35 +1116,39 @@ class CashBook_ extends React.Component {
               )}
 
               {this.state.openModalType == "transfer_cash" ? (
-                <>
-                  <Grid
-                    size={{
-                      xs: 6,
-                    }}
-                  >
-                    <MyAutocomplite
-                      label="Откуда"
-                      multiple={false}
-                      data={this.state.points}
-                      value={this.state.point}
-                      disabled
-                      func={this.changePoint.bind(this, "point")}
-                    />
-                  </Grid>
-                  <Grid
-                    size={{
-                      xs: 6,
-                    }}
-                  >
-                    <MyAutocomplite
-                      label="Куда"
-                      multiple={false}
-                      data={this.state.points}
-                      value={this.state.point_to}
-                      func={this.changePoint.bind(this, "point_to")}
-                    />
-                  </Grid>
-                </>
+                this.state.openModalType_edit === false ? (
+                  false
+                ) : (
+                  <>
+                    <Grid
+                      size={{
+                        xs: 6,
+                      }}
+                    >
+                      <MyAutocomplite
+                        label="Откуда"
+                        multiple={false}
+                        data={this.state.points}
+                        value={this.state.point}
+                        disabled
+                        func={this.changePoint.bind(this, "point")}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 6,
+                      }}
+                    >
+                      <MyAutocomplite
+                        label="Куда"
+                        multiple={false}
+                        data={this.state.points}
+                        value={this.state.point_to}
+                        func={this.changePoint.bind(this, "point_to")}
+                      />
+                    </Grid>
+                  </>
+                )
               ) : (
                 false
               )}
