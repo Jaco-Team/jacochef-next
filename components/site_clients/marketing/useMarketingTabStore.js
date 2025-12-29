@@ -7,6 +7,7 @@ const defaultSlices = {
   new_old: null,
   online_offline: null,
   promo_nopromo: null,
+  origin: null,
 };
 
 export const defaultFilters = {
@@ -15,6 +16,7 @@ export const defaultFilters = {
   number: null,
   is_new: null,
   type_order: null,
+  origin: null,
   point_addr: null,
   promo_name: null,
   /**
@@ -25,7 +27,7 @@ export const defaultFilters = {
   sortDir: "desc",
 };
 
-const useMarketingTabStore = create((set, get) => ({
+const useMarketingTabStore = create((set) => ({
   points: [],
   isModalOpen: false,
   orderIds: null,
@@ -71,6 +73,10 @@ const useMarketingTabStore = create((set, get) => ({
       subtitle: type === "promo" ? "с Промо" : "без промо",
       page: 1,
     })),
+  /**
+   * @param {'online' | 'offline' | null} type
+   * @returns
+   */
   sliceOnline: (type = "online") =>
     set(() => ({
       slices: {
@@ -81,6 +87,10 @@ const useMarketingTabStore = create((set, get) => ({
       subtitle: type === "online" ? "Онлайн" : "Офлайн",
       page: 1,
     })),
+  /**
+   * @param {'new' | 'old' | null} type
+   * @returns
+   */
   sliceNew: (type = "new") =>
     set(() => ({
       slices: {
@@ -89,6 +99,20 @@ const useMarketingTabStore = create((set, get) => ({
       },
       filters: defaultFilters,
       subtitle: type === "new" ? "Новые клиенты" : "Постоянные клиенты",
+      page: 1,
+    })),
+  /**
+   * @param {'cafe' | 'cc' | 'site' | null} type
+   * @returns
+   */
+  sliceOrigin: (type = "cafe") =>
+    set(() => ({
+      slices: {
+        ...defaultSlices,
+        origin: type,
+      },
+      filters: defaultFilters,
+      subtitle: type === "cafe" ? "Кафе" : type === "cc" ? "КЦ" : "Сайт",
       page: 1,
     })),
   sliceReset: () =>
