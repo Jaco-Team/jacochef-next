@@ -310,7 +310,7 @@ export default function Orders({ getOrders, openClientOrder, downLoad, canAccess
           </Button>
 
           {canAccess("download_file") && search_orders?.length > 0 && (
-            <Tooltip title={<Typography color="inherit">{"Скачать таблицу в Excel"}</Typography>}>
+            <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
               <Button
                 variant="contained"
                 disableRipple
