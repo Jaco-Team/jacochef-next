@@ -31,9 +31,9 @@
     "@mui/icons-material": "^7.3.6",
     "@mui/lab": "^7.0.1-beta.18",
     "@mui/material": "^7.3.6",
-    "@mui/x-date-pickers": "^8.22.1",
+    "@mui/x-date-pickers": "^8.23.0",
     "@sentry/cli": "^3.0.1",
-    "@sentry/react": "^10.32.0",
+    "@sentry/react": "^10.32.1",
     "@tinymce/tinymce-react": "^6.3.0",
     "axios": "^1.13.2",
     "childprocess": "^2.0.2",
@@ -45,7 +45,7 @@
     "js-cookie": "^3.0.5",
     "mathjs": "^15.1.0",
     "moment": "^2.30.1",
-    "next": "16.0.10",
+    "next": "16.1.1",
     "node-tls": "^0.10.2",
     "query-string": "^9.3.1",
     "react": "19.2.3",
@@ -66,10 +66,10 @@
     "@types/file-saver": "^2.0.7",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "baseline-browser-mapping": "^2.9.10",
+    "baseline-browser-mapping": "^2.9.11",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
-    "sass": "^1.97.0"
+    "sass": "^1.97.1"
   }
 }

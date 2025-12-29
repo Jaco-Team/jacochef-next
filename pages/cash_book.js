@@ -31,7 +31,7 @@ import Collapse from "@mui/material/Collapse";
 
 import HelpIcon from "@mui/icons-material/Help";
 
-import { MySelect, MyTextInput, MyDatePickerNew } from "@/ui/Forms";
+import { MyAutocomplite, MyTextInput, MyDatePickerNew } from "@/ui/Forms";
 
 import queryString from "query-string";
 
@@ -63,6 +63,8 @@ const text = {
     "Проставляется бухгалтерией, после того как управляющий снимет наличные в банк, например на выдачу з/платы",
   cash_from_bank_driver:
     "Проставляется бухгалтерией, после того как управляющий снимет наличные в банк, например на выдачу з/платы",
+  transfer_cash:
+    "Необходимо в случае, если в одном кафе накопились наличные, а в другом их не хватает (например на выплату заработной платы)",
 };
 
 class MainTableRow extends React.Component {
@@ -440,6 +442,32 @@ class MainTable extends React.Component {
               false
             )}
 
+            {this.props.table == "fiz" ? (
+              this.props?.transfer_cash_is_edit === false ? (
+                false
+              ) : (
+                <MainTableRow
+                  label={"Перемещение денежных средств между кафе"}
+                  is_edit={this.props?.transfer_cash_is_edit}
+                  is_open={this.props?.transfer_cash_is_open}
+                  type={"transfer_cash"}
+                  table={this.props.table}
+                  data_plus={this.props?.transfer_cash_plus}
+                  data_minus={this.props?.transfer_cash_minus}
+                  data_hist={this.props?.transfer_cash_arr}
+                  tooltip={text.transfer_cash}
+                  toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+                  toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+                  addData={this.props.addData.bind(this)}
+                  is_delete={this.props?.transfer_cash_is_edit}
+                  deleteData={this.props.deleteData.bind(this)}
+                  updateData={this.props.updateData.bind(this)}
+                />
+              )
+            ) : (
+              false
+            )}
+
             {this.props?.zaim_is_edit === false ? (
               false
             ) : (
@@ -631,7 +659,9 @@ class CashBook_ extends React.Component {
       is_load: false,
 
       points: [],
-      point: "0",
+      point: "",
+      point_from: "",
+      point_to: "",
 
       date_start: formatDate(new Date()),
       date_end: formatDate(new Date()),
@@ -679,7 +709,7 @@ class CashBook_ extends React.Component {
 
     this.setState({
       points: data.points,
-      point: data.points[0].id,
+      point: data.points[0],
       module_name: data.module_info.name,
     });
 
@@ -695,7 +725,7 @@ class CashBook_ extends React.Component {
       is_load: true,
     });
 
-    let res = api_laravel(this.state.module, method, data)
+    let res = api_laravel_local(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {
@@ -710,7 +740,7 @@ class CashBook_ extends React.Component {
 
   async updateData() {
     let data = {
-      point_id: this.state.point,
+      point_id: this.state.point?.id,
       date_start: dayjs(this.state.date_start).format("YYYY-MM-DD"),
       date_end: dayjs(this.state.date_end).format("YYYY-MM-DD"),
     };
@@ -741,11 +771,13 @@ class CashBook_ extends React.Component {
     }
   }
 
-  changePoint(event) {
-    let data = event.target.value;
+  changePoint(type = "point", event, value) {
+    console.log(event, value, type);
+
+    let data = value;
 
     this.setState({
-      point: data,
+      [type]: data,
     });
   }
 
@@ -782,13 +814,39 @@ class CashBook_ extends React.Component {
       return;
     }
 
+    if (this.state.openModalType == "transfer_cash") {
+      console.log(this.state.point.id, this.state.point_to.id);
+
+      if (!this.state.point.id || !this.state.point_to.id) {
+        alert("Необходимо указать оба кафе");
+
+        setTimeout(() => {
+          this.click = false;
+        }, 300);
+
+        return;
+      }
+
+      if (this.state.point.id == this.state.point_to.id) {
+        alert("Необходимо указать разные кафе");
+
+        setTimeout(() => {
+          this.click = false;
+        }, 300);
+
+        return;
+      }
+    }
+
     let data = {
-      point_id: this.state.point,
+      point_id: this.state.point?.id,
       price: this.state.summ,
       comment: this.state.comment,
       type: this.state.openModalType,
       kassa: this.state.openModalKassa,
       date: dayjs(this.state.date).format("YYYY-MM-DD"),
+      point_from: this.state.point.id,
+      point_to: this.state.point_to.id,
     };
 
     let res = await this.getData("save_give", data);
@@ -893,7 +951,7 @@ class CashBook_ extends React.Component {
       type: this.state.type_action,
       item: this.state.data_action,
       comment: this.state.comment_action,
-      point_id: this.state.point,
+      point_id: this.state.point?.id,
     };
 
     let res = await this.getData("save_action", data);
@@ -934,7 +992,7 @@ class CashBook_ extends React.Component {
       type: "update",
       item: item,
       comment: "",
-      point_id: this.state.point,
+      point_id: this.state.point?.id,
     };
 
     let res = await this.getData("save_action", data);
@@ -958,7 +1016,7 @@ class CashBook_ extends React.Component {
 
   async getHist(type, date) {
     let data = {
-      point_id: this.state.point,
+      point_id: this.state.point?.id,
       date: dayjs(date).format("YYYY-MM-DD"),
       type: type,
     };
@@ -992,10 +1050,14 @@ class CashBook_ extends React.Component {
       openModalType: "",
       openModalKassa: "",
       summ: 0,
+      point_from: "",
+      point_to: "",
     });
   }
 
   render() {
+    console.log(this.state.openModalType);
+
     return (
       <>
         <Backdrop
@@ -1057,6 +1119,40 @@ class CashBook_ extends React.Component {
                     func={this.changeDate.bind(this, "date")}
                   />
                 </Grid>
+              )}
+
+              {this.state.openModalType == "transfer_cash" ? (
+                <>
+                  <Grid
+                    size={{
+                      xs: 6,
+                    }}
+                  >
+                    <MyAutocomplite
+                      label="Откуда"
+                      multiple={false}
+                      data={this.state.points}
+                      value={this.state.point}
+                      disabled
+                      func={this.changePoint.bind(this, "point")}
+                    />
+                  </Grid>
+                  <Grid
+                    size={{
+                      xs: 6,
+                    }}
+                  >
+                    <MyAutocomplite
+                      label="Куда"
+                      multiple={false}
+                      data={this.state.points}
+                      value={this.state.point_to}
+                      func={this.changePoint.bind(this, "point_to")}
+                    />
+                  </Grid>
+                </>
+              ) : (
+                false
               )}
 
               {this.state.openModalType_edit === false ? (
@@ -1267,6 +1363,7 @@ class CashBook_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
+
         <Grid
           container
           spacing={3}
@@ -1288,11 +1385,12 @@ class CashBook_ extends React.Component {
               sm: 6,
             }}
           >
-            <MySelect
+            <MyAutocomplite
+              label="Кафе"
+              multiple={false}
               data={this.state.points}
               value={this.state.point}
-              func={this.changePoint.bind(this)}
-              label="Точка"
+              func={this.changePoint.bind(this, "point")}
             />
           </Grid>
 
@@ -1381,6 +1479,12 @@ class CashBook_ extends React.Component {
               vidacha_otchet_arr={this.state.fiz_kassa?.vidacha_otchet_arr}
               itog_plus={this.state.fiz_kassa?.itog_plus}
               itog_minus={this.state.fiz_kassa?.itog_minus}
+              transfer_cash={this.state.fiz_kassa?.transfer_cash}
+              transfer_cash_plus={this.state.fiz_kassa?.transfer_cash_plus}
+              transfer_cash_minus={this.state.fiz_kassa?.transfer_cash_minus}
+              transfer_cash_is_edit={this.state.fiz_kassa?.transfer_cash_is_edit}
+              transfer_cash_is_open={this.state.fiz_kassa?.transfer_cash_is_open}
+              transfer_cash_arr={this.state.fiz_kassa?.transfer_cash_arr}
               ostatok_konec_dnya={this.state.fiz_kassa?.ostatok_konec_dnya}
             />
           </Grid>
