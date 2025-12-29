@@ -151,6 +151,7 @@ export default function SiteClientsMarketingTab(props) {
                 label="Дата от"
                 customActions={true}
                 value={dayjs(tabDateStart)}
+                maxDate={dayjs(tabDateEnd ?? dayjs().subtract(1, "day"))}
                 func={setTabDateStart}
               />
             </Grid>
@@ -165,6 +166,8 @@ export default function SiteClientsMarketingTab(props) {
                 label="Дата до"
                 customActions={true}
                 value={dayjs(tabDateEnd)}
+                minDate={dayjs(tabDateStart)}
+                maxDate={dayjs().subtract(1, "day")}
                 func={setTabDateEnd}
               />
             </Grid>
@@ -216,11 +219,11 @@ export default function SiteClientsMarketingTab(props) {
               {...a11yProps("stats")}
               key={"stats"}
             />
-            <Tab
+            {/* <Tab
               label={"Источники"}
               {...a11yProps("sources")}
               key={"sources"}
-            />
+            /> */}
             <Tab
               label={"UTM"}
               {...a11yProps("utm")}
