@@ -40,8 +40,7 @@ const InnerTabStats = ({ getData, showAlert }) => {
     });
 
     if (!resData?.st) {
-      showAlert(resData?.text || "За период нет статистики", false);
-      return;
+      return showAlert(resData?.text || "За период нет статистики", false);
     }
     setOrders(null);
     resetFilters();

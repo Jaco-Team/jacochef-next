@@ -435,6 +435,7 @@ export default function SiteClients() {
         <Client
           getData={getData}
           showAlert={showAlert}
+          canAccess={canAccess}
         />
       ),
     },
@@ -503,7 +504,7 @@ export default function SiteClients() {
 
   const tabs = useMemo(() => TAB_CONFIG.filter((tab) => canAccess(tab.key)), [canAccess]);
 
-  const [activeTab, setActiveTab] = useState(6);
+  const [activeTab, setActiveTab] = useState(0);
   const tabsIdx = useMemo(() => {
     const m = {};
     tabs.forEach((t, i) => canAccess(t.key) && (m[t.key] = i));

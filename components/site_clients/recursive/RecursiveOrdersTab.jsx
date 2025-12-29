@@ -35,7 +35,7 @@ const COLUMNS = [
   { key: "sum", label: "Сумма", align: "right" },
 ];
 
-const RecursiveOrdersTab = ({ getData, showAlert }) => {
+const RecursiveOrdersTab = ({ getData, showAlert, canAccess }) => {
   const {
     update,
     points,
@@ -190,6 +190,7 @@ const RecursiveOrdersTab = ({ getData, showAlert }) => {
                 label="Дата от"
                 customActions={true}
                 value={dayjs(date_start_recur)}
+                maxDate={dayjs(date_end_recur) ?? dayjs()}
                 func={(v) => update({ date_start_recur: v })}
               />
             </Grid>
@@ -204,6 +205,8 @@ const RecursiveOrdersTab = ({ getData, showAlert }) => {
                 label="Дата до"
                 customActions={true}
                 value={dayjs(date_end_recur)}
+                minDate={dayjs(date_start_recur)}
+                maxDate={dayjs()}
                 func={(v) => update({ date_end_recur: v })}
               />
             </Grid>
@@ -262,16 +265,20 @@ const RecursiveOrdersTab = ({ getData, showAlert }) => {
           >
             Показать
           </Button>
-          <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
-            <Button
-              variant="contained"
-              color="success"
-              disabled={!allBuckets?.length}
-              onClick={() => exportStatsXlsx()}
-            >
-              <Download />
-            </Button>
-          </Tooltip>
+          {canAccess("download_file") && (
+            <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
+              <span>
+                <Button
+                  variant="contained"
+                  color="success"
+                  disabled={!allBuckets?.length}
+                  onClick={() => exportStatsXlsx()}
+                >
+                  <Download />
+                </Button>
+              </span>
+            </Tooltip>
+          )}
         </Grid>
       </Grid>
 

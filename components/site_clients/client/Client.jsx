@@ -22,7 +22,7 @@ import { useSiteClientsStore } from "../useSiteClientsStore";
 import dayjs from "dayjs";
 import * as XLSX from "xlsx";
 
-export default function Client({ getData, showAlert }) {
+export default function Client({ getData, showAlert, canAccess }) {
   const { update, clients, search } = useSiteClientsStore();
 
   const changeSearch = (v) => {
@@ -157,16 +157,20 @@ export default function Client({ getData, showAlert }) {
           >
             Показать
           </Button>
-          <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
-            <Button
-              variant="contained"
-              color="success"
-              disabled={!clients?.length}
-              onClick={() => exportXlsx()}
-            >
-              <Download />
-            </Button>
-          </Tooltip>
+          {canAccess("download_file") && (
+            <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
+              <span>
+                <Button
+                  variant="contained"
+                  color="success"
+                  disabled={!clients?.length}
+                  onClick={() => exportXlsx()}
+                >
+                  <Download />
+                </Button>
+              </span>
+            </Tooltip>
+          )}
         </Grid>
       </Grid>
 
