@@ -12,18 +12,38 @@ import {
   TableRow,
   Paper,
   IconButton,
+  Tooltip,
+  Typography,
 } from "@mui/material";
+import { Clear, Download } from "@mui/icons-material";
 
 import { MyTextInput } from "@/ui/Forms";
 import { useSiteClientsStore } from "../useSiteClientsStore";
 import dayjs from "dayjs";
-import { Clear } from "@mui/icons-material";
+import * as XLSX from "xlsx";
 
-export default function Client({ getData, showAlert }) {
+export default function Client({ getData, showAlert, canAccess }) {
   const { update, clients, search } = useSiteClientsStore();
+
   const changeSearch = (v) => {
     const newVal = v?.target?.value || "";
     update({ search: newVal });
+  };
+
+  const exportXlsx = () => {
+    const rows = clients.map((c, i) => ({
+      "#": i + 1,
+      Имя: c.name ?? "",
+      "Номер телефона": c.login ?? "",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(wb, ws, `Клиенты-сайта`);
+
+    const ts = dayjs().format("YYYY-MM-DD_HH-mm");
+    XLSX.writeFile(wb, `clients_${search}_${ts}.xlsx`);
   };
 
   const openModalClient = async (login, type) => {
@@ -70,6 +90,9 @@ export default function Client({ getData, showAlert }) {
     const search = useSiteClientsStore.getState().search;
 
     if (search?.length < 4) {
+      update({
+        clients: [],
+      });
       return showAlert("Необходимо указать минимум 4 цифры из номера телефона", false);
     }
 
@@ -126,6 +149,7 @@ export default function Client({ getData, showAlert }) {
             xs: 12,
             sm: 4,
           }}
+          sx={{ display: "flex", gap: 1 }}
         >
           <Button
             onClick={getClients}
@@ -133,6 +157,20 @@ export default function Client({ getData, showAlert }) {
           >
             Показать
           </Button>
+          {canAccess("download_file") && (
+            <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
+              <span>
+                <Button
+                  variant="contained"
+                  color="success"
+                  disabled={!clients?.length}
+                  onClick={() => exportXlsx()}
+                >
+                  <Download />
+                </Button>
+              </span>
+            </Tooltip>
+          )}
         </Grid>
       </Grid>
 

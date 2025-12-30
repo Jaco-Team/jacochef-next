@@ -19,6 +19,7 @@ const InnerTabStats = ({ getData, showAlert }) => {
     setIsModalOpen,
     setOrderIds, // drop if exists to get orders by slices
     sliceOnline,
+    sliceOrigin,
     sliceNew,
     slicePromo,
     sliceReset,
@@ -39,8 +40,7 @@ const InnerTabStats = ({ getData, showAlert }) => {
     });
 
     if (!resData?.st) {
-      showAlert(resData?.text || "За период нет статистики", false);
-      return;
+      return showAlert(resData?.text || "За период нет статистики", false);
     }
     setOrders(null);
     resetFilters();
@@ -106,6 +106,60 @@ const InnerTabStats = ({ getData, showAlert }) => {
               onClick={() => {
                 setIsLoading(true);
                 sliceOnline("offline");
+                setOrderIds(null);
+                setIsModalOpen(true);
+              }}
+            />
+          </Grid>
+
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4,
+            }}
+          >
+            <SiteClientsMarketingStatCard
+              title="Кафе"
+              value={stats?.cafe_orders}
+              onClick={() => {
+                setIsLoading(true);
+                sliceOrigin("cafe");
+                setOrderIds(null);
+                setIsModalOpen(true);
+              }}
+            />
+          </Grid>
+
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4,
+            }}
+          >
+            <SiteClientsMarketingStatCard
+              title="КЦ"
+              value={stats?.cc_orders}
+              onClick={() => {
+                setIsLoading(true);
+                sliceOrigin("cc");
+                setOrderIds(null);
+                setIsModalOpen(true);
+              }}
+            />
+          </Grid>
+
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4,
+            }}
+          >
+            <SiteClientsMarketingStatCard
+              title="Сайт"
+              value={stats?.site_orders}
+              onClick={() => {
+                setIsLoading(true);
+                sliceOrigin("site");
                 setOrderIds(null);
                 setIsModalOpen(true);
               }}
