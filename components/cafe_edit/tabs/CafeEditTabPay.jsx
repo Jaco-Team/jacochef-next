@@ -14,7 +14,11 @@ function CafeEditTabPay({ canView, canEdit, openHistModal }) {
       mark: "pay",
     });
   };
-  const [point_info, point_pay_hist] = useCafeEditStore((s) => [s.point_info, s.point_pay_hist]);
+  const [point_info, point_pay_hist, changePointInfoData] = useCafeEditStore((s) => [
+    s.point_info,
+    s.point_pay_hist,
+    s.changePointInfoData,
+  ]);
   return (
     <Grid
       container
