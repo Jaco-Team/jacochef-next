@@ -56,6 +56,7 @@ class KitchenStat_ extends React.Component {
       module_name: "",
       is_load: false,
       is_load_parts: {},
+      access: null,
 
       points: [],
       point: [],
