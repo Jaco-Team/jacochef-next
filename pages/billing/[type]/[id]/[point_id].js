@@ -1476,7 +1476,7 @@ const useStore = create((set, get) => ({
           item.fact_unit = (Number(item[type]) * Number(item.count)).toFixed(2);
 
           /*const range_price_item = get().check_price_item(item.price, item.vend_percent, item.price_item, item.pq)
-  
+
           if(range_price_item) {
             item.color = false;
           } else {
@@ -2948,16 +2948,16 @@ class Billing_Accordion extends React.Component {
                     flexDirection: "row",
                   }}
                 >
-                  <Typography style={{ width: "1%" }}></Typography>
-                  <Typography style={{ width: "4%", minWidth: "210px" }}>Тип документа</Typography>
+                  <Typography style={{ width: "4px" }}></Typography>
+                  <Typography style={{ width: "205px" }}>Тип документа</Typography>
 
-                  <Typography style={{ width: "11%" }}>Номер документа</Typography>
-                  <Typography style={{ width: "11%" }}>Дата в документе</Typography>
-                  <Typography style={{ width: "14%", minWidth: "200px" }}>Создатель</Typography>
-                  <Typography style={{ width: "10%" }}>Дата обновления</Typography>
-                  <Typography style={{ width: "14%", minWidth: "200px" }}>Редактор</Typography>
-                  <Typography style={{ width: "11%" }}>Время обновления</Typography>
-                  <Typography style={{ width: "8%" }}>Сумма с НДС</Typography>
+                  <Typography style={{ width: "122px" }}>Номер документа</Typography>
+                  <Typography style={{ width: "100px" }}>Дата в документе</Typography>
+                  <Typography style={{ width: "200px" }}>Создатель</Typography>
+                  <Typography style={{ width: "110px" }}>Дата обновления</Typography>
+                  <Typography style={{ width: "195px" }}>Редактор</Typography>
+                  <Typography style={{ width: "130px" }}>Время обновления</Typography>
+                  <Typography style={{ width: "150px" }}>Сумма с НДС</Typography>
                 </Grid>
               </AccordionSummary>
 
@@ -3066,44 +3066,38 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
         >
           <Typography
             component="div"
-            style={{ width: "1%", backgroundColor: item.color, marginRight: "1%" }}
+            style={{ width: "4px", backgroundColor: item.color, marginRight: "1%" }}
           ></Typography>
 
-          <Typography
-            style={{ width: "4%", minWidth: "210px", display: "flex", alignItems: "center" }}
-          >
+          <Typography style={{ width: "210px", display: "flex", alignItems: "center" }}>
             {item.name}
           </Typography>
 
-          <Typography style={{ width: "11%", display: "flex", alignItems: "center" }}>
+          <Typography style={{ width: "125px", display: "flex", alignItems: "center" }}>
             {item.number?.color ? item.number.key : item.number}
           </Typography>
 
-          <Typography style={{ width: "11%", display: "flex", alignItems: "center" }}>
+          <Typography style={{ width: "100px", display: "flex", alignItems: "center" }}>
             {date_create?.color ? date_create?.key : formatDateReverse(date_create)}
           </Typography>
 
-          <Typography
-            style={{ width: "14%", minWidth: "200px", display: "flex", alignItems: "center" }}
-          >
+          <Typography style={{ width: "200px", display: "flex", alignItems: "center" }}>
             {item.creator_id}
           </Typography>
 
-          <Typography style={{ width: "10%", display: "flex", alignItems: "center" }}>
+          <Typography style={{ width: "110px", display: "flex", alignItems: "center" }}>
             {formatDateReverse(item.date_update)}
           </Typography>
 
-          <Typography
-            style={{ width: "14%", minWidth: "200px", display: "flex", alignItems: "center" }}
-          >
+          <Typography style={{ width: "200px", display: "flex", alignItems: "center" }}>
             {item.editor_id}
           </Typography>
 
-          <Typography style={{ width: "11%", display: "flex", alignItems: "center" }}>
+          <Typography style={{ width: "160px", display: "flex", alignItems: "center" }}>
             {item.time_update}
           </Typography>
 
-          <Typography style={{ width: "8%", display: "flex", alignItems: "center" }}>
+          <Typography style={{ width: "100px", display: "flex", alignItems: "center" }}>
             {item.sum_w_nds}
           </Typography>
         </Grid>
