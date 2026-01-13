@@ -1,6 +1,12 @@
 import React, { Component } from "react";
 import { TableContainer, Table, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
 import { MyCheckBox } from "@/ui/Forms";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import Typography from "@mui/material/Typography";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import Accordion from "@mui/material/Accordion";
+import Box from "@mui/material/Box";
 
 export default class ErrCatsTable extends Component {
   parseSiteCats(csv) {
@@ -29,49 +35,79 @@ export default class ErrCatsTable extends Component {
   }
 
   // Recursive renderer
-  renderRows(nodes, siteCats, level = 0, indexOffset = { i: 0 }) {
-    return nodes.flatMap((node) => {
-      const indent = (level + 1) * 16; // clearer depth: 0, 24, 48, 72 px...
+  renderRows(nodes, siteCats, level = 0) {
+    return nodes.map((node) => {
+      const hasChildren = node?.children?.length > 0;
 
-      const row = (
-        <TableRow
+      const indent = level * 16;
+      const levelBg = {
+        0: "#fff",
+        1: "#fafafa",
+        2: "#f5f5f5",
+        3: "#f0f0f0",
+        4: "#ebebeb",
+      };
+      return (
+        <Box
           key={node.id}
-          hover
+          sx={{ mb: 1 }}
         >
-          <TableCell>{++indexOffset.i}</TableCell>
-
-          <TableCell
-            onClick={() => this.props.openModal(node.id)}
-            style={{
-              fontWeight: level < 2 ? 600 : 400,
-              cursor: "pointer",
-              paddingLeft: indent,
-              whiteSpace: "nowrap",
+          <Accordion
+            sx={{
+              boxShadow: "none",
+              borderRadius: "8px !important",
+              backgroundColor: levelBg[level],
+              padding: "4px",
+              border: "1px solid #ebebeb",
+              "&:before": { display: "none" },
             }}
           >
-            {node.name}
-          </TableCell>
-          {/* <TableCell>
-            {this.parseSiteCats(node.site_cats)
-              .map((id) => siteCats.find((x) => x.id === id)?.name)
-              .filter(Boolean)
-              .join(", ")}
-          </TableCell> */}
-          <TableCell>
-            <MyCheckBox
-              value={parseInt(node.is_active) === 1}
-              func={() => this.props.changeActive(node)}
-            />
-          </TableCell>
-        </TableRow>
-      );
+            <AccordionSummary
+              expandIcon={hasChildren ? <ExpandMoreIcon /> : null}
+              sx={{
+                pl: `${indent + 6}px`,
+                pr: 2,
+              }}
+            >
+              <Typography
+                variant="body1"
+                fontWeight={level < 2 ? 600 : 400}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  this.props.openModal(node.id);
+                }}
+                sx={{
+                  cursor: "pointer",
+                  flex: 1,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                <span style={{ paddingRight: "65px" }}>{node.id}</span> {node.name}
+              </Typography>
 
-      return [
-        row,
-        node?.children?.length > 0
-          ? this.renderRows(node.children, siteCats, level + 1, indexOffset)
-          : null,
-      ];
+              <MyCheckBox
+                value={parseInt(node.is_active) === 1}
+                func={() => this.props.changeActive(node)}
+                sx={{ ml: 2 }}
+              />
+            </AccordionSummary>
+
+            {hasChildren && (
+              <AccordionDetails
+                sx={{
+                  p: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1,
+                }}
+              >
+                {this.renderRows(node.children, siteCats, level + 1)}
+              </AccordionDetails>
+            )}
+          </Accordion>
+        </Box>
+      );
     });
   }
 
@@ -80,20 +116,23 @@ export default class ErrCatsTable extends Component {
     const tree = this.buildTree(errCats);
 
     return (
-      <TableContainer>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell style={{ width: "50px" }}>#</TableCell>
-              <TableCell style={{ width: "55%" }}>Категория</TableCell>
-              {/* <TableCell style={{ width: "35%" }}>Связанные категории сайта</TableCell> */}
-              <TableCell>Активность</TableCell>
-            </TableRow>
-          </TableHead>
+      <>
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell style={{ width: "50px" }}>#</TableCell>
+                <TableCell style={{ width: "83%" }}>Категория</TableCell>
+                {/* <TableCell style={{ width: "35%" }}>Связанные категории сайта</TableCell> */}
+                <TableCell>Активность</TableCell>
+              </TableRow>
+            </TableHead>
 
-          <TableBody>{this.renderRows(tree, siteCats)}</TableBody>
-        </Table>
-      </TableContainer>
+            <TableBody></TableBody>
+          </Table>
+        </TableContainer>
+        {this.renderRows(tree, siteCats)}
+      </>
     );
   }
 }
