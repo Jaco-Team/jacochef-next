@@ -280,9 +280,17 @@ export default class HotMap extends React.PureComponent {
   };
 
   getOrders = (home, all_points, drivers = {}, groups = []) => {
-    var new_data = all_points
-      .filter((item) => item && item[0] && item[1])
-      .map((item) => [parseFloat(item[0]), parseFloat(item[1])]);
+    const new_data = all_points
+      .map((item) => {
+        if (!item || !Array.isArray(item) || item.length < 2) return null;
+        const lat = parseFloat(item[0]);
+        const lon = parseFloat(item[1]);
+        if (isNaN(lat) || isNaN(lon)) return null;
+        // Опционально: проверка на валидные координаты
+        if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+        return [lat, lon, 1];
+      })
+      .filter(Boolean);
 
     if (!this.map) {
       ymaps.ready(() => {
@@ -299,6 +307,16 @@ export default class HotMap extends React.PureComponent {
 
         if (this.state.is_driver) {
           ymaps.modules.require(["Heatmap"], (Heatmap) => {
+            if (!Heatmap) {
+              console.error("Модуль Heatmap не доступен");
+              return;
+            }
+            const heatmapData = this.state.is_driver ? drivers : new_data;
+            if (!heatmapData || heatmapData.length === 0) {
+              console.warn("Нет данных для тепловой карты");
+              return;
+            }
+
             this.heatmap = new Heatmap(drivers, {
               gradient: gradients[0],
               radius: radiuses[1],
@@ -308,6 +326,15 @@ export default class HotMap extends React.PureComponent {
           });
         } else {
           ymaps.modules.require(["Heatmap"], (Heatmap) => {
+            if (!Heatmap) {
+              console.error("Модуль Heatmap не доступен");
+              return;
+            }
+            const heatmapData = this.state.is_driver ? drivers : new_data;
+            if (!heatmapData || heatmapData.length === 0) {
+              console.warn("Нет данных для тепловой карты");
+              return;
+            }
             this.heatmap = new Heatmap(new_data, {
               gradient: gradients[0],
               radius: radiuses[1],
@@ -417,7 +444,9 @@ export default class HotMap extends React.PureComponent {
       this.map.geoObjects.events.remove("click", this.changeColorPolygon);
 
       this.map.geoObjects.removeAll();
-      this.heatmap.destroy();
+      if (this.heatmap) {
+        this.heatmap.destroy();
+      }
 
       this.map.setCenter([home[0].home.latitude, home[0].home.longitude]);
 
@@ -917,8 +946,10 @@ export default class HotMap extends React.PureComponent {
     }
 
     this.selectedZone = null;
-    this.map.hint.close();
-    this.map.balloon.close();
+    if (this.map) {
+      this.map.hint.close();
+      this.map.balloon.close();
+    }
     this.setState({
       isDrawing: false,
       is_chooseZone: false,
