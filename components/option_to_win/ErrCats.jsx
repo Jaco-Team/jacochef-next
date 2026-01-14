@@ -7,6 +7,8 @@ import Typography from "@mui/material/Typography";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Accordion from "@mui/material/Accordion";
 import Box from "@mui/material/Box";
+import EditIcon from "@mui/icons-material/Edit";
+import IconButton from "@mui/material/IconButton";
 
 export default class ErrCatsTable extends Component {
   parseSiteCats(csv) {
@@ -70,10 +72,6 @@ export default class ErrCatsTable extends Component {
               <Typography
                 variant="body1"
                 fontWeight={level < 2 ? 600 : 400}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  this.props.openModal(node.id);
-                }}
                 sx={{
                   cursor: "pointer",
                   flex: 1,
@@ -87,8 +85,16 @@ export default class ErrCatsTable extends Component {
               <MyCheckBox
                 value={parseInt(node.is_active) === 1}
                 func={() => this.props.changeActive(node)}
-                sx={{ ml: 2 }}
+                style={{ paddingRight: hasChildren ? "0" : `${level > 1 ? level + 8 : 10}px` }}
               />
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  this.props.openModal(node.id);
+                }}
+              >
+                <EditIcon />
+              </IconButton>
             </AccordionSummary>
 
             {hasChildren && (
@@ -114,7 +120,7 @@ export default class ErrCatsTable extends Component {
     const tree = this.buildTree(errCats);
 
     return (
-      <>
+      <div style={{ width: "50%" }}>
         <TableContainer>
           <Table size="small">
             <TableHead>
@@ -129,7 +135,7 @@ export default class ErrCatsTable extends Component {
           </Table>
         </TableContainer>
         {this.renderRows(tree, siteCats)}
-      </>
+      </div>
     );
   }
 }
