@@ -54,21 +54,12 @@ export default class ErrCatsTable extends Component {
         >
           <Accordion
             sx={{
-              boxShadow: "none",
-              borderRadius: "8px !important",
               backgroundColor: levelBg[level],
               padding: "4px",
-              border: "1px solid #ebebeb",
               "&:before": { display: "none" },
             }}
           >
-            <AccordionSummary
-              expandIcon={hasChildren ? <ExpandMoreIcon /> : null}
-              sx={{
-                pl: `${indent + 6}px`,
-                pr: 2,
-              }}
-            >
+            <AccordionSummary expandIcon={hasChildren ? <ExpandMoreIcon /> : null}>
               <Typography
                 variant="body1"
                 fontWeight={level < 2 ? 600 : 400}
@@ -83,7 +74,7 @@ export default class ErrCatsTable extends Component {
                   textOverflow: "ellipsis",
                 }}
               >
-                <span style={{ paddingRight: "65px" }}>{node.id}</span> {node.name}
+                {node.name}
               </Typography>
 
               <MyCheckBox
@@ -121,8 +112,7 @@ export default class ErrCatsTable extends Component {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell style={{ width: "50px" }}>#</TableCell>
-                <TableCell style={{ width: "83%" }}>Категория</TableCell>
+                <TableCell style={{ width: "91%" }}>Категория</TableCell>
                 {/* <TableCell style={{ width: "35%" }}>Связанные категории сайта</TableCell> */}
                 <TableCell>Активность</TableCell>
               </TableRow>
