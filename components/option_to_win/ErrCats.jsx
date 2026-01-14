@@ -59,7 +59,14 @@ export default class ErrCatsTable extends Component {
               "&:before": { display: "none" },
             }}
           >
-            <AccordionSummary expandIcon={hasChildren ? <ExpandMoreIcon /> : null}>
+            <AccordionSummary
+              expandIcon={hasChildren ? <ExpandMoreIcon /> : null}
+              sx={{
+                "& .MuiAccordionSummary-content": {
+                  alignItems: "center !important",
+                },
+              }}
+            >
               <Typography
                 variant="body1"
                 fontWeight={level < 2 ? 600 : 400}
