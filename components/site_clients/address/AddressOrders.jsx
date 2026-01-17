@@ -145,6 +145,7 @@ export default function AddressOrders({ canAccess, getData, openClientOrder }) {
             label="Дата от"
             customActions={true}
             value={dayjs(date_start_addr)}
+            maxDate={dayjs(date_end_addr) ?? dayjs()}
             func={(v) => update({ date_start_addr: v })}
           />
         </Grid>
@@ -159,6 +160,8 @@ export default function AddressOrders({ canAccess, getData, openClientOrder }) {
             label="Дата до"
             customActions={true}
             value={dayjs(date_end_addr)}
+            maxDate={dayjs()}
+            minDate={dayjs(date_start_addr)}
             func={(v) => update({ date_end_addr: v })}
           />
         </Grid>
@@ -203,16 +206,18 @@ export default function AddressOrders({ canAccess, getData, openClientOrder }) {
           >
             Показать
           </Button>
-          {orders_list?.length > 0 && canAccess("orders_address_export") && (
-            <Tooltip title="Экспортировать заказы в Excel">
-              <Button
-                variant="contained"
-                sx={{ ml: 2, backgroundColor: "#3cb623ff" }}
-                disabled={!orders_list?.length}
-                onClick={exportOrdersToExcel}
-              >
-                <Download />
-              </Button>
+          {canAccess("orders_address_export") && (
+            <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
+              <span>
+                <Button
+                  variant="contained"
+                  sx={{ ml: 2, backgroundColor: "#3cb623ff" }}
+                  disabled={!orders_list?.length}
+                  onClick={exportOrdersToExcel}
+                >
+                  <Download />
+                </Button>
+              </span>
             </Tooltip>
           )}
         </Grid>

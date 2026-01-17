@@ -15,6 +15,7 @@ import TablePagination from "@mui/material/TablePagination";
 import ModalOrder from "../ModalOrder";
 import { useSiteClientsStore } from "../useSiteClientsStore";
 import DialogUser from "../DialogUser";
+import ModalOrderWithFeedback from "../ModalOrderWithFeedback";
 
 const DEFAULT_FORM_DATA = {
   date_start_true: null,
@@ -266,13 +267,29 @@ export default function Clients({ getData, showAlert, canAccess }) {
         user={user}
         openOrder={openOrder}
       />
-      <ModalOrder
+      {canAccess("send_feedback") ? (
+        <ModalOrderWithFeedback
+          getData={getData}
+          showAlert={showAlert}
+          open={openModalOrder}
+          onClose={() => setOpenModalOrder(false)}
+          order={order}
+          openOrder={openOrder}
+        />
+      ) : (
+        <ModalOrder
+          open={openModalOrder}
+          onClose={() => setOpenModalOrder(false)}
+          order={order}
+        />
+      )}
+      {/* <ModalOrder
         getData={getData}
         openOrder={openOrder}
         open={openModalOrder}
         onClose={() => setOpenModalOrder(false)}
         order={order}
-      />
+      /> */}
       <Grid
         container
         spacing={3}
@@ -287,6 +304,7 @@ export default function Clients({ getData, showAlert, canAccess }) {
           <MyDatePickerNew
             label="Делал заказ от"
             value={formData.date_start_true}
+            maxDate={dayjs(formData.date_end_true) ?? dayjs()}
             func={(e) => handleChange(e, "date_start_true")}
           />
         </Grid>
@@ -300,6 +318,8 @@ export default function Clients({ getData, showAlert, canAccess }) {
           <MyDatePickerNew
             label="Делал заказ до"
             value={formData.date_end_true}
+            maxDate={dayjs()}
+            minDate={dayjs(formData.date_start_true)}
             func={(e) => handleChange(e, "date_end_true")}
           />
         </Grid>
@@ -334,6 +354,7 @@ export default function Clients({ getData, showAlert, canAccess }) {
           <MyDatePickerNew
             label="Не заказывал от"
             value={formData.date_start_false}
+            maxDate={dayjs(formData.date_end_false) ?? dayjs()}
             disabled={formData.param.id === "new"}
             func={(e) => handleChange(e, "date_start_false")}
           />
@@ -349,6 +370,8 @@ export default function Clients({ getData, showAlert, canAccess }) {
             label="Не заказывал до"
             disabled={formData.param.id === "new"}
             value={formData.date_end_false}
+            maxDate={dayjs()}
+            minDate={dayjs(formData.date_start_false)}
             func={(e) => handleChange(e, "date_end_false")}
           />
         </Grid>
@@ -560,28 +583,31 @@ export default function Clients({ getData, showAlert, canAccess }) {
           >
             Получить список клиентов
           </Button>
-
-          <Button
-            variant="contained"
-            style={{ marginLeft: 10, backgroundColor: !!url ? "#3cb623ff" : "#ffcc00" }}
-            disabled={!users.length || !canAccess("export_items")}
-            onClick={onDownload}
-          >
-            <DownloadIcon />
-            Excel
-          </Button>
-          <Button
-            variant="contained"
-            style={{
-              marginLeft: 10,
-              backgroundColor: !!urlCsv ? "#3cb62388" : "rgba(215,184,111,0.55)",
-            }}
-            disabled={!users.length || !canAccess("export_items")}
-            onClick={onDownloadCsv}
-          >
-            <DownloadIcon />
-            CSV
-          </Button>
+          {canAccess("download_file") && (
+            <>
+              <Button
+                variant="contained"
+                style={{ marginLeft: 10, backgroundColor: !!url ? "#3cb623ff" : "#ffcc00" }}
+                disabled={!users.length || !canAccess("export_items")}
+                onClick={onDownload}
+              >
+                <DownloadIcon />
+                Excel
+              </Button>
+              <Button
+                variant="contained"
+                style={{
+                  marginLeft: 10,
+                  backgroundColor: !!urlCsv ? "#3cb62388" : "rgba(215,184,111,0.55)",
+                }}
+                disabled={!users.length || !canAccess("export_items")}
+                onClick={onDownloadCsv}
+              >
+                <DownloadIcon />
+                CSV
+              </Button>
+            </>
+          )}
         </Grid>
       </Grid>
       {!users.length ? null : (

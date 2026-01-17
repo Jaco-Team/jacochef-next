@@ -9,7 +9,6 @@ import ModalOrder from "../ModalOrder";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 import TabPanel from "@/ui/TabPanel/TabPanel";
 import InnerTabStats from "./InnerTabStats";
-import InnerTabSources from "./InnerTabSources";
 import SiteClientsMarketingOrdersTable from "./SiteClientsMarketingOrdersTable";
 import InnerTabUtm from "./InnerTabUtm";
 import InnerTabPromo from "./InnerTabPromo";
@@ -18,6 +17,8 @@ import SiteClientsMarketingOrdersModal from "./SiteClientsMarketingOrdersModal";
 import SiteClientsClientModal from "./SiteClientsClientModal";
 import { LoadingProvider } from "./useClientsLoadingContext";
 import { useSiteClientsStore } from "../useSiteClientsStore";
+import SiteClientsMarketingOrdersTree from "./SiteClientsMarketingOrdersTree";
+import SiteClientsMarketingOrdersStat from "./SiteClientsMarketingOrdersStat";
 
 export default function SiteClientsMarketingTab(props) {
   const { showAlert, getData, canAccess } = props;
@@ -34,20 +35,29 @@ export default function SiteClientsMarketingTab(props) {
     update,
     date_start_marketing,
     date_end_marketing,
+    points_marketing,
   } = useSiteClientsStore();
 
-  const { isModalOpen, setIsModalOpen, points, setPoints, refresh } = useMarketingTabStore();
+  const {
+    isModalOpen,
+    setIsModalOpen,
+    isTreeModalOpen,
+    setIsTreeModalOpen,
+    isStatModalOpen,
+    setIsStatModalOpen,
+    refresh,
+  } = useMarketingTabStore();
 
   const [tabDateStart, setTabDateStart] = useState(date_start_marketing || dayjs());
   const [tabDateEnd, setTabDateEnd] = useState(date_end_marketing || dayjs());
-  const [tabPoints, setTabPoints] = useState(points || []);
+  const [tabPoints, setTabPoints] = useState(points_marketing || []);
 
   const applyRange = () => {
     update({
       date_start_marketing: tabDateStart,
       date_end_marketing: tabDateEnd,
+      points_marketing: tabPoints,
     });
-    setPoints(tabPoints);
     refresh();
   };
 
@@ -98,6 +108,32 @@ export default function SiteClientsMarketingTab(props) {
           />
         </>
       </SiteClientsMarketingOrdersModal>
+      <SiteClientsMarketingOrdersModal
+        isOpen={isTreeModalOpen}
+        onClose={() => setIsTreeModalOpen(false)}
+        title="Источники заказов"
+      >
+        <>
+          <SiteClientsMarketingOrdersTree
+            showAlert={showAlert}
+            getData={getData}
+            canExport={canAccess("export_items")}
+          />
+        </>
+      </SiteClientsMarketingOrdersModal>
+      <SiteClientsMarketingOrdersModal
+        isOpen={isStatModalOpen}
+        onClose={() => setIsStatModalOpen(false)}
+        title="Источники заказов"
+      >
+        <>
+          <SiteClientsMarketingOrdersStat
+            showAlert={showAlert}
+            getData={getData}
+            canExport={canAccess("export_items")}
+          />
+        </>
+      </SiteClientsMarketingOrdersModal>
       <ModalOrder
         open={isOrderModalOpen}
         onClose={() => setIsOrderModalOpen(false)}
@@ -113,7 +149,7 @@ export default function SiteClientsMarketingTab(props) {
       <Grid
         container
         spacing={3}
-        maxWidth="lg"
+        sx={{ maxWidth: "lg" }}
       >
         <Grid
           size={{
@@ -151,6 +187,7 @@ export default function SiteClientsMarketingTab(props) {
                 label="Дата от"
                 customActions={true}
                 value={dayjs(tabDateStart)}
+                maxDate={dayjs(tabDateEnd ?? dayjs().subtract(1, "day"))}
                 func={setTabDateStart}
               />
             </Grid>
@@ -165,6 +202,8 @@ export default function SiteClientsMarketingTab(props) {
                 label="Дата до"
                 customActions={true}
                 value={dayjs(tabDateEnd)}
+                minDate={dayjs(tabDateStart)}
+                maxDate={dayjs().subtract(1, "day")}
                 func={setTabDateEnd}
               />
             </Grid>
@@ -195,7 +234,7 @@ export default function SiteClientsMarketingTab(props) {
       <Grid
         container
         spacing={0}
-        sx={{ mt: 3 }}
+        sx={{ mt: 3, maxWidth: "lg" }}
       >
         <Grid
           style={{ paddingBottom: 24 }}
@@ -215,11 +254,6 @@ export default function SiteClientsMarketingTab(props) {
               label={"Статистика"}
               {...a11yProps("stats")}
               key={"stats"}
-            />
-            <Tab
-              label={"Источники"}
-              {...a11yProps("sources")}
-              key={"sources"}
             />
             <Tab
               label={"UTM"}
@@ -251,25 +285,6 @@ export default function SiteClientsMarketingTab(props) {
           </TabPanel>
         </Grid>
 
-        {/* источники */}
-        <Grid
-          size={{
-            xs: 12,
-          }}
-        >
-          <TabPanel
-            value={activeTab}
-            index={1}
-            id="sources"
-          >
-            <InnerTabSources
-              getData={getData}
-              showAlert={showAlert}
-              canExport={canAccess("export_items")}
-            />
-          </TabPanel>
-        </Grid>
-
         {/* utm */}
         <Grid
           size={{
@@ -278,7 +293,7 @@ export default function SiteClientsMarketingTab(props) {
         >
           <TabPanel
             value={activeTab}
-            index={2}
+            index={1}
             id="utm"
           >
             <InnerTabUtm
@@ -297,7 +312,7 @@ export default function SiteClientsMarketingTab(props) {
         >
           <TabPanel
             value={activeTab}
-            index={3}
+            index={2}
             id="promo"
           >
             <InnerTabPromo

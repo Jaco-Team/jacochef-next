@@ -435,6 +435,7 @@ export default function SiteClients() {
         <Client
           getData={getData}
           showAlert={showAlert}
+          canAccess={canAccess}
         />
       ),
     },

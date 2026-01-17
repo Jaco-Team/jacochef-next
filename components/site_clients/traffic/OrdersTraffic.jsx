@@ -53,6 +53,7 @@ export default function OrdersTraffic({ getData }) {
             label="Дата от"
             customActions={true}
             value={dayjs(date_start_traffic)}
+            maxDate={dayjs(date_end_traffic) ?? dayjs()}
             func={(v) => update({ date_start_traffic: v })}
           />
         </Grid>
@@ -67,6 +68,8 @@ export default function OrdersTraffic({ getData }) {
             label="Дата до"
             customActions={true}
             value={dayjs(date_end_traffic)}
+            minDate={dayjs(date_start_traffic)}
+            maxDate={dayjs()}
             func={(v) => update({ date_end_traffic: v })}
           />
         </Grid>

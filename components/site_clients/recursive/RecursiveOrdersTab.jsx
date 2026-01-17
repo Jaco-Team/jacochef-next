@@ -11,19 +11,20 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   // TableSortLabel,
   Typography,
 } from "@mui/material";
+import { Close, Download } from "@mui/icons-material";
 import { useSiteClientsStore } from "../useSiteClientsStore";
 import dayjs from "dayjs";
 import { formatRUR } from "@/src/helpers/utils/i18n";
-import { memo, useEffect, useMemo, useState } from "react";
-import DialogUser from "../DialogUser";
-import ModalOrder from "../ModalOrder";
+import { memo, useEffect, useMemo } from "react";
+import * as XLSX from "xlsx";
 // import useSortTable from "@/src/hooks/useSortTable";
-import { Close } from "@mui/icons-material";
 
 const BUCKETS = [
+  { key: "1", label: "1", match: (n) => n === 1 },
   { key: "2", label: "2", match: (n) => n === 2 },
   { key: "3", label: "3", match: (n) => n === 3 },
   { key: "4", label: "4", match: (n) => n === 4 },
@@ -35,7 +36,7 @@ const COLUMNS = [
   { key: "sum", label: "Сумма", align: "right" },
 ];
 
-const RecursiveOrdersTab = ({ getData, showAlert }) => {
+const RecursiveOrdersTab = ({ getData, showAlert, canAccess }) => {
   const {
     update,
     points,
@@ -48,40 +49,41 @@ const RecursiveOrdersTab = ({ getData, showAlert }) => {
     orders_recursive,
   } = useSiteClientsStore();
 
-  // user modal
-  const [user, setUser] = useState([]);
-  const [openModalUser, setOpenModalUser] = useState(false);
-  const openUser = async (number) => {
-    try {
-      const res = await getData("get_one", { number });
-      if (!res) throw new Error(res?.text || "Ошибка получения клиента");
-
-      setUser(res);
-      setOpenModalUser(true);
-    } catch (error) {
-      showAlert(error.message || "Ошибка запроса клиента");
+  const exportStatsXlsx = () => {
+    if (!allBuckets?.length && !newBuckets?.length) {
+      return showAlert("Нет данных для экспорта", false);
     }
-  };
 
-  // order modal
-  const [order, setOrder] = useState({});
-  const [openModalOrder, setOpenModalOrder] = useState(false);
-  const openOrder = async (point_id, order_id) => {
-    try {
-      const res = await getData("get_order", { point_id, order_id });
-      if (!res?.order) throw new Error(res?.text || "Ошибка получения заказа");
-      setOrder(res);
-      setOpenModalOrder(true);
-    } catch (error) {
-      showAlert(error.message || "Ошибка запроса заказа");
+    const wb = XLSX.utils.book_new();
+
+    const mapRows = (rows) =>
+      rows?.map((r) => ({
+        Заказов: r.orders,
+        Клиентов: r.clients,
+        Сумма: r.sum,
+      })) || [];
+
+    if (allBuckets?.length) {
+      const wsAll = XLSX.utils.json_to_sheet(mapRows(allBuckets));
+      XLSX.utils.book_append_sheet(wb, wsAll, "Всего заказов");
     }
+
+    if (newBuckets?.length) {
+      const wsNew = XLSX.utils.json_to_sheet(mapRows(newBuckets));
+      XLSX.utils.book_append_sheet(wb, wsNew, "Новые клиенты");
+    }
+
+    const name = `recursive_stats_${dayjs().format("YYYY-MM-DD_HH-mm")}.xlsx`;
+    XLSX.writeFile(wb, name);
   };
 
   const getOrders = async () => {
     const points = points_recursive;
     const date_start = dayjs(date_start_recur)?.format("YYYY-MM-DD") || "";
     const date_end = dayjs(date_end_recur)?.format("YYYY-MM-DD") || "";
-
+    update({
+      orders_recursive: [],
+    });
     if (!points?.length) {
       return showAlert("Необходимо выбрать кафе", false);
     }
@@ -107,14 +109,6 @@ const RecursiveOrdersTab = ({ getData, showAlert }) => {
       showAlert(res?.text || "Ошибка получения повторных заказов", false);
     }
   };
-
-  // sorting
-  // const {
-  //   order: sortOrder,
-  //   orderBy,
-  //   handleSort,
-  //   sortedRows,
-  // } = useSortTable(orders_recursive, "count");
 
   const buildBuckets = (rows) => {
     if (!rows?.length) return [];
@@ -168,19 +162,6 @@ const RecursiveOrdersTab = ({ getData, showAlert }) => {
         spacing={3}
         maxWidth="lg"
       >
-        <DialogUser
-          open={openModalUser}
-          onClose={() => setOpenModalUser(false)}
-          user={user}
-          openOrder={openOrder}
-        />
-        <ModalOrder
-          getData={getData}
-          openOrder={openOrder}
-          open={openModalOrder}
-          onClose={() => setOpenModalOrder(false)}
-          order={order}
-        />
         <Grid
           size={{
             xs: 12,
@@ -210,6 +191,7 @@ const RecursiveOrdersTab = ({ getData, showAlert }) => {
                 label="Дата от"
                 customActions={true}
                 value={dayjs(date_start_recur)}
+                maxDate={dayjs(date_end_recur) ?? dayjs()}
                 func={(v) => update({ date_start_recur: v })}
               />
             </Grid>
@@ -224,6 +206,8 @@ const RecursiveOrdersTab = ({ getData, showAlert }) => {
                 label="Дата до"
                 customActions={true}
                 value={dayjs(date_end_recur)}
+                minDate={dayjs(date_start_recur)}
+                maxDate={dayjs()}
                 func={(v) => update({ date_end_recur: v })}
               />
             </Grid>
@@ -274,6 +258,7 @@ const RecursiveOrdersTab = ({ getData, showAlert }) => {
             xs: 12,
             sm: 3,
           }}
+          sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}
         >
           <Button
             onClick={getOrders}
@@ -281,6 +266,20 @@ const RecursiveOrdersTab = ({ getData, showAlert }) => {
           >
             Показать
           </Button>
+          {canAccess("download_file") && (
+            <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
+              <span>
+                <Button
+                  variant="contained"
+                  color="success"
+                  disabled={!allBuckets?.length}
+                  onClick={() => exportStatsXlsx()}
+                >
+                  <Download />
+                </Button>
+              </span>
+            </Tooltip>
+          )}
         </Grid>
       </Grid>
 
@@ -288,73 +287,24 @@ const RecursiveOrdersTab = ({ getData, showAlert }) => {
         container
         spacing={3}
       >
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <OrdersTable
-            title="Всего заказов"
-            rows={allBuckets}
-          />
-        </Grid>
+        {allBuckets?.length > 0 && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <OrdersTable
+              title="Всего заказов"
+              rows={allBuckets}
+            />
+          </Grid>
+        )}
 
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <OrdersTable
-            title="Новые клиенты"
-            rows={newBuckets}
-          />
-        </Grid>
+        {newBuckets?.length > 0 && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <OrdersTable
+              title="Новые клиенты"
+              rows={newBuckets}
+            />
+          </Grid>
+        )}
       </Grid>
-
-      {/* {!sortedRows?.length ? (
-        orders_recursive !== null && <Typography variant="h6">Нет совпадений</Typography>
-      ) : (
-        <TableContainer sx={{ maxHeight: "60dvh", mt: 4 }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell sortDirection={orderBy === "number" ? sortOrder : false}>
-                  <TableSortLabel
-                    active={orderBy === "number"}
-                    direction={orderBy === "number" ? sortOrder : "asc"}
-                    onClick={() => handleSort("number")}
-                  >
-                    Клиент
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sortDirection={orderBy === "count" ? sortOrder : false}>
-                  <TableSortLabel
-                    active={orderBy === "count"}
-                    direction={orderBy === "count" ? sortOrder : "asc"}
-                    onClick={() => handleSort("count")}
-                  >
-                    Количество заказов
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sortDirection={orderBy === "sum_order" ? sortOrder : false}>
-                  <TableSortLabel
-                    active={orderBy === "sum_order"}
-                    direction={orderBy === "sum_order" ? sortOrder : "asc"}
-                    onClick={() => handleSort("sum_order")}
-                  >
-                    Сумма
-                  </TableSortLabel>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {sortedRows.map((client) => (
-                <TableRow
-                  key={client.number}
-                  style={{ cursor: "pointer" }}
-                  onClick={() => openUser(client.number)}
-                >
-                  <TableCell>{client.number}</TableCell>
-                  <TableCell>{client.count}</TableCell>
-                  <TableCell>{formatNumber(client.sum_order)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )} */}
     </>
   );
 };

@@ -1,12 +1,11 @@
 "use client";
 
-import dayjs from "dayjs";
 import { create } from "zustand";
 
 const defaultSlices = {
   new_old: null,
-  online_offline: null,
   promo_nopromo: null,
+  origin: null,
 };
 
 export const defaultFilters = {
@@ -15,6 +14,7 @@ export const defaultFilters = {
   number: null,
   is_new: null,
   type_order: null,
+  origin: null,
   point_addr: null,
   promo_name: null,
   /**
@@ -25,9 +25,11 @@ export const defaultFilters = {
   sortDir: "desc",
 };
 
-const useMarketingTabStore = create((set, get) => ({
+const useMarketingTabStore = create((set) => ({
   points: [],
   isModalOpen: false,
+  isTreeModalOpen: false,
+  isStatModalOpen: false,
   orderIds: null,
   orders: [],
   stats: null,
@@ -43,6 +45,8 @@ const useMarketingTabStore = create((set, get) => ({
 
   setPoints: (points) => set({ points }),
   setIsModalOpen: (isModalOpen) => set({ isModalOpen }),
+  setIsTreeModalOpen: (isTreeModalOpen) => set({ isTreeModalOpen }),
+  setIsStatModalOpen: (isStatModalOpen) => set({ isStatModalOpen }),
   setOrderIds: (orderIds) => set({ orderIds }),
   setOrders: (orders) => set({ orders }),
   setStats: (stats) => set({ stats }),
@@ -71,16 +75,10 @@ const useMarketingTabStore = create((set, get) => ({
       subtitle: type === "promo" ? "с Промо" : "без промо",
       page: 1,
     })),
-  sliceOnline: (type = "online") =>
-    set(() => ({
-      slices: {
-        ...defaultSlices,
-        online_offline: type === "online" ? "online" : "offline",
-      },
-      filters: defaultFilters,
-      subtitle: type === "online" ? "Онлайн" : "Офлайн",
-      page: 1,
-    })),
+  /**
+   * @param {'new' | 'old' | null} type
+   * @returns
+   */
   sliceNew: (type = "new") =>
     set(() => ({
       slices: {
@@ -89,6 +87,20 @@ const useMarketingTabStore = create((set, get) => ({
       },
       filters: defaultFilters,
       subtitle: type === "new" ? "Новые клиенты" : "Постоянные клиенты",
+      page: 1,
+    })),
+  /**
+   * @param {'cafe' | 'cc' | 'site' | null} type
+   * @returns
+   */
+  sliceOrigin: (type = "cafe") =>
+    set(() => ({
+      slices: {
+        ...defaultSlices,
+        origin: type,
+      },
+      filters: defaultFilters,
+      subtitle: type === "cafe" ? "Кафе" : type === "cc" ? "КЦ" : "Сайт",
       page: 1,
     })),
   sliceReset: () =>

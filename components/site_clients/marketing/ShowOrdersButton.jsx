@@ -6,7 +6,7 @@ import { memo } from "react";
 import { useLoading } from "./useClientsLoadingContext";
 
 function ShowOrdersButton({ orders, modalTitle }) {
-  const ids = orders.map((o) => o.order_id);
+  const ids = orders.map((o) => o.order_id ?? o);
   const { setIsModalOpen, setOrderIds, setSubtitle, resetFilters } = useMarketingTabStore();
   const { setIsLoading } = useLoading();
 

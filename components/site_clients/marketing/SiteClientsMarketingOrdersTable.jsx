@@ -31,6 +31,7 @@ import ExcelIcon from "@/ui/ExcelIcon";
 import DownloadButton from "@/ui/DownloadButton";
 import { useLoading } from "./useClientsLoadingContext";
 import { useSiteClientsStore } from "../useSiteClientsStore";
+import { checkDates } from "@/src/helpers/ui/formatDate";
 
 function SiteClientsMarketingOrdersTable({
   openOrder,
@@ -53,9 +54,10 @@ function SiteClientsMarketingOrdersTable({
     setFiltersItem,
     resetFilters,
     toggleSortDir,
+    refreshToken,
   } = useMarketingTabStore();
 
-  const { isLoading, setIsLoading } = useLoading();
+  const { isLoading } = useLoading();
 
   const handleSort = (key) => {
     if (filters.sortBy === key) {
@@ -73,20 +75,14 @@ function SiteClientsMarketingOrdersTable({
     setOpenFilters((prev) => ({ ...prev, [key]: value !== null ? value : !prev[key] }));
   };
 
-  const checkDates = (from, to) => {
-    if (!from || !to) return false;
-    const fromDate = dayjs(from);
-    const toDate = dayjs(to);
-    return fromDate.isValid() && toDate.isValid() && fromDate.diff(toDate) <= 0;
-  };
-
   // core orders fetcher
   const getOrders = async () => {
-    const { date_start_marketing, date_end_marketing, update } = useSiteClientsStore.getState();
-    const { points, orderIds, page, perPage, filters, slices, setOrders, setTotal } =
+    const { points_marketing, date_start_marketing, date_end_marketing, update } =
+      useSiteClientsStore.getState();
+    const { orderIds, page, perPage, filters, slices, setOrders, setTotal } =
       useMarketingTabStore.getState();
     try {
-      if (!points.length || !date_start_marketing || !date_end_marketing) {
+      if (!points_marketing.length || !date_start_marketing || !date_end_marketing) {
         return;
       }
       if (!checkDates(date_start_marketing, date_end_marketing)) {
@@ -97,7 +93,7 @@ function SiteClientsMarketingOrdersTable({
       setOrders(null);
       setTotal(0);
       const resData = await getData("get_marketing_orders", {
-        points: points,
+        points: points_marketing,
         date_start: dayjs(date_start_marketing).format("YYYY-MM-DD"),
         date_end: dayjs(date_end_marketing).format("YYYY-MM-DD"),
         ids: orderIds,
@@ -123,17 +119,18 @@ function SiteClientsMarketingOrdersTable({
 
   // export handler
   const getExportLink = async () => {
-    const { points, dateStart, dateEnd, orderIds, filters, slices } =
-      useMarketingTabStore.getState();
-    if (!checkDates(dateStart, dateEnd)) {
+    const { points_marketing, date_start_marketing, date_end_marketing } =
+      useSiteClientsStore.getState();
+    const { orderIds, filters, slices } = useMarketingTabStore.getState();
+    if (!checkDates(date_start_marketing, date_end_marketing)) {
       showAlert("Дата начала должна быть перед датой окончания", false);
       return;
     }
     try {
       const linkData = await getData("get_marketing_orders_export", {
-        points: points,
-        date_start: dayjs(dateStart).format("YYYY-MM-DD"),
-        date_end: dayjs(dateEnd).format("YYYY-MM-DD"),
+        points: points_marketing,
+        date_start: dayjs(date_start_marketing).format("YYYY-MM-DD"),
+        date_end: dayjs(date_end_marketing).format("YYYY-MM-DD"),
         ids: orderIds,
         filters,
         slices,
@@ -154,7 +151,7 @@ function SiteClientsMarketingOrdersTable({
   useEffect(() => {
     // setIsLoading(true);
     debouncedGetOrders();
-  }, [filters, page, perPage, slices, orderIds]);
+  }, [filters, page, perPage, slices, orderIds, refreshToken]);
 
   return isLoading ? (
     <CircularProgress />
