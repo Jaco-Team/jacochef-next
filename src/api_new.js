@@ -49,7 +49,8 @@ export function api_laravel(module = "", method = "", data = {}, dop_type = {}) 
   // const urlApi_dev = '/api/proxy/api/'+module+'/'+method+'?x=1';
   // const urlApi_dev = 'https://apitmp2.jacochef.ru/api/'+module+'/'+method;
 
-  const urlApi_dev = "https://8f6c370c1c72.ngrok-free.app/api/" + module + "/" + method;
+  const urlApi_dev =
+    "https://rhode-tiles-midnight-bars.trycloudflare.com/api/" + module + "/" + method;
 
   const this_data = queryString.stringify({
     method: method,
