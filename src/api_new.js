@@ -47,10 +47,10 @@ export function api_laravel(module = "", method = "", data = {}, dop_type = {}) 
   //const urlApi_dev = 'https://79.174.91.113/api/'+module+'/'+method;
   // const urlApi_dev = 'https://apichef.jacochef.ru/api/'+module+'/'+method;
   // const urlApi_dev = '/api/proxy/api/'+module+'/'+method+'?x=1';
-  // const urlApi_dev = 'https://apitmp2.jacochef.ru/api/'+module+'/'+method;
+  const urlApi_dev = "https://apitmp2.jacochef.ru/api/" + module + "/" + method;
 
-  const urlApi_dev =
-    "https://rhode-tiles-midnight-bars.trycloudflare.com/api/" + module + "/" + method;
+  // const urlApi_dev =
+  //   "https://rhode-tiles-midnight-bars.trycloudflare.com/api/" + module + "/" + method;
 
   const this_data = queryString.stringify({
     method: method,
