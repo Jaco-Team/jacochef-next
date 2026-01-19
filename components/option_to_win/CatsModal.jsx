@@ -15,7 +15,7 @@ import { MyAutocomplite, MyTextInput, MyCheckBox } from "@/ui/Forms";
 
 const splitCsv = (input) => {
   if (!input) return [];
-  if (Array.isArray(input)) return input; // already array, FE edit case
+  if (Array.isArray(input)) return input;
   if (typeof input !== "string") return [];
 
   return input
@@ -25,12 +25,10 @@ const splitCsv = (input) => {
 };
 
 const matchById = (csvOrArray, sourceList) => {
-  // If already array of objects → return directly
   if (Array.isArray(csvOrArray) && typeof csvOrArray[0] === "object") {
     return csvOrArray;
   }
 
-  // Convert CSV or array of ids → ids array
   const ids = Array.isArray(csvOrArray)
     ? csvOrArray.map((x) => +x)
     : splitCsv(csvOrArray).map((x) => +x);
@@ -54,20 +52,17 @@ export default function CatsModal({
   canDelete = true,
 }) {
   const empty = {
-    // cat
     name: "",
     site_cats: [],
     is_active: 1,
     parent_id: null,
 
-    // new fields
     id_win: [],
     stage_err_1: [],
     stage_err_2: [],
     stage_err_3: [],
     need_photo: 0,
 
-    // old API compatibility
     err_to_win: [],
     all_wins: [],
     all_stages: [],
@@ -78,6 +73,40 @@ export default function CatsModal({
   const [cat1, setCat1] = useState(0);
   const [cat2, setCat2] = useState(0);
   const [isCreate, setIsCreate] = useState(false);
+
+  const normalizeSiteCats = (input) => {
+    if (!input) return [];
+    if (Array.isArray(input)) {
+      if (typeof input[0] === "object") return input;
+      return input.map(String);
+    }
+    return splitCsv(input);
+  };
+
+  const parentSiteCats = useMemo(() => {
+    const parentCat = errCats.find((x) => x.id === cat1);
+    if (!parentCat) return [];
+
+    const normalized = normalizeSiteCats(parentCat.site_cats || []);
+    if (!normalized.length) return [];
+
+    if (typeof normalized[0] === "object") return normalized;
+
+    return normalized.map((id) => siteCats.find((sc) => +sc.id === +id)).filter(Boolean);
+  }, [cat1, errCats, siteCats]);
+
+  const itemSiteCats = useMemo(() => {
+    if (isCreate && cat1 > 0) {
+      return parentSiteCats;
+    }
+
+    const normalized = normalizeSiteCats(localItem?.site_cats || []);
+    if (!normalized.length) return [];
+
+    if (typeof normalized[0] === "object") return normalized;
+
+    return normalized.map((id) => siteCats.find((sc) => +sc.id === +id)).filter(Boolean);
+  }, [localItem?.site_cats, siteCats, isCreate, cat1, parentSiteCats]);
 
   useEffect(() => {
     if (!open) return;
@@ -90,10 +119,7 @@ export default function CatsModal({
     }
 
     setIsCreate(!item.id);
-
     setLocalItem(item);
-
-    // console.log("Work with: ", item);
 
     const parent = errCats.find((x) => x.id === item?.parent_id);
 
@@ -112,32 +138,6 @@ export default function CatsModal({
     setCat1(parent.parent_id);
     setCat2(parent.id);
   }, [open, item, errCats]);
-
-  const normalizeSiteCats = (input) => {
-    if (!input) return [];
-    if (Array.isArray(input)) {
-      // array of objects
-      if (typeof input[0] === "object") return input;
-      // array of numbers/strings
-      return input.map(String);
-    }
-    // CSV → array of strings
-    return splitCsv(input);
-  };
-
-  const itemSiteCats = useMemo(() => {
-    // const normalized = normalizeSiteCats(localItem?.site_cats); // own site_cats
-    const normalized = normalizeSiteCats(errCats.find((x) => x.id === cat1)?.site_cats || []); // parent cat site_cats
-
-    // now normalized is either: array of strings OR array of objects
-    if (!normalized.length) return [];
-
-    // objects → return as is
-    if (typeof normalized[0] === "object") return normalized;
-
-    // ids → resolve
-    return normalized.map((id) => siteCats.find((sc) => +sc.id === +id)).filter(Boolean);
-  }, [localItem, siteCats]);
 
   const itemSolutions = useMemo(
     () => matchById(localItem.solutions, solutions) || [],
@@ -168,14 +168,37 @@ export default function CatsModal({
     const id = v?.id ?? 0;
     setCat1(id);
     setCat2(0);
+
+    if (id > 0 && isCreate) {
+      const parentCat = errCats.find((x) => x.id === id);
+      if (parentCat) {
+        const normalized = normalizeSiteCats(parentCat.site_cats || []);
+        setLocalItem((prev) => ({ ...prev, site_cats: normalized }));
+      }
+    }
   };
 
   const handleSub = (_, v) => {
     setCat2(v?.id ?? 0);
   };
 
+  const handleSiteCatsChange = (event, data) => {
+    const siteCatIds = data.map((item) => item.id);
+    update("site_cats", siteCatIds);
+  };
+
   const handleSave = () => {
-    save({ ...localItem, parent_id: finalParent });
+    const saveData = { ...localItem, parent_id: finalParent };
+
+    if (
+      Array.isArray(saveData.site_cats) &&
+      saveData.site_cats.length > 0 &&
+      typeof saveData.site_cats[0] === "object"
+    ) {
+      saveData.site_cats = saveData.site_cats.map((item) => item.id);
+    }
+
+    save(saveData);
     handleClose();
   };
 
@@ -232,8 +255,8 @@ export default function CatsModal({
               multiple
               data={siteCats || []}
               value={itemSiteCats}
-              func={(_, v) => update("site_cats", v)}
-              disabled={localItem.parent_id > 0}
+              func={handleSiteCatsChange}
+              disabled={!isCreate && localItem.parent_id > 0}
             />
           </Grid>
 

@@ -1,5 +1,13 @@
 import React, { Component } from "react";
-import { TableContainer, Table, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
+import {
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Switch,
+} from "@mui/material";
 import { MyCheckBox } from "@/ui/Forms";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -42,13 +50,6 @@ export default class ErrCatsTable extends Component {
       const hasChildren = node?.children?.length > 0;
 
       const indent = level * 16;
-      const levelBg = {
-        0: "#fff",
-        1: "#fafafa",
-        2: "#f5f5f5",
-        3: "#f0f0f0",
-        4: "#ebebeb",
-      };
       return (
         <Box
           key={node.id}
@@ -56,16 +57,27 @@ export default class ErrCatsTable extends Component {
         >
           <Accordion
             sx={{
-              backgroundColor: levelBg[level],
               padding: "4px",
               "&:before": { display: "none" },
             }}
           >
             <AccordionSummary
-              expandIcon={hasChildren ? <ExpandMoreIcon /> : null}
+              expandIcon={
+                hasChildren ? <ExpandMoreIcon style={{ transform: "rotate(270deg)" }} /> : null
+              }
               sx={{
+                flexDirection: "row-reverse",
+                pl: level * 2,
+                "& .MuiAccordionSummary-expandIconWrapper": {
+                  marginRight: "8px",
+                  marginLeft: hasChildren ? "4px" : `${level * 18}px`,
+                  "&.Mui-expanded": {
+                    transform: "rotate(90deg)",
+                  },
+                },
                 "& .MuiAccordionSummary-content": {
                   alignItems: "center !important",
+                  marginLeft: hasChildren ? "4px" : "20px",
                 },
               }}
             >
@@ -77,14 +89,15 @@ export default class ErrCatsTable extends Component {
                   flex: 1,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
+                  ml: hasChildren ? 0 : 2, // Отступ если нет детей
                 }}
               >
                 {node.name}
               </Typography>
 
-              <MyCheckBox
-                value={parseInt(node.is_active) === 1}
-                func={() => this.props.changeActive(node)}
+              <Switch
+                checked={parseInt(node.is_active) === 1}
+                onChange={() => this.props.changeActive(node)}
                 style={{ paddingRight: hasChildren ? "0" : `${level > 1 ? level + 8 : 10}px` }}
               />
               <IconButton
@@ -123,14 +136,6 @@ export default class ErrCatsTable extends Component {
       <div style={{ width: "50%" }}>
         <TableContainer>
           <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell style={{ width: "91%" }}>Категория</TableCell>
-                {/* <TableCell style={{ width: "35%" }}>Связанные категории сайта</TableCell> */}
-                <TableCell>Активность</TableCell>
-              </TableRow>
-            </TableHead>
-
             <TableBody></TableBody>
           </Table>
         </TableContainer>
