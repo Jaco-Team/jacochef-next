@@ -12,10 +12,10 @@ import InnerTabStats from "./InnerTabStats";
 import SiteClientsMarketingOrdersTable from "./SiteClientsMarketingOrdersTable";
 import InnerTabUtm from "./InnerTabUtm";
 import InnerTabPromo from "./InnerTabPromo";
-import useMarketingClientStore from "./useMarketingClientStore";
+import useMarketingClientStore from "../useMarketingClientStore";
 import SiteClientsMarketingOrdersModal from "./SiteClientsMarketingOrdersModal";
 import SiteClientsClientModal from "./SiteClientsClientModal";
-import { LoadingProvider } from "./useClientsLoadingContext";
+import { LoadingProvider } from "../useClientsLoadingContext";
 import { useSiteClientsStore } from "../useSiteClientsStore";
 import SiteClientsMarketingOrdersTree from "./SiteClientsMarketingOrdersTree";
 import SiteClientsMarketingOrdersStat from "./SiteClientsMarketingOrdersStat";
@@ -24,8 +24,14 @@ export default function SiteClientsMarketingTab(props) {
   const { showAlert, getData, canAccess } = props;
 
   // TODO: move order modal state out
-  const [order, setOrder] = useState(null);
-  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const {
+    order,
+    setOrder,
+    clientModalOpened,
+    setClientModalOpened,
+    isOrderModalOpen,
+    setIsOrderModalOpen,
+  } = useMarketingClientStore();
 
   const [activeTab, setActiveTab] = useState(0);
 
@@ -81,8 +87,6 @@ export default function SiteClientsMarketingTab(props) {
     }
   };
 
-  const { clientModalOpened } = useMarketingClientStore();
-
   const openClient = async (login) => {
     const { setClientLogin, setClientModalOpened } = useMarketingClientStore.getState();
     update({ is_load: true });
@@ -93,7 +97,7 @@ export default function SiteClientsMarketingTab(props) {
   return (
     <LoadingProvider
       isLoading={is_load}
-      setIsLoading={(loading) => update({ is_load: loading })}
+      setIsLoading={(is_load) => update({ is_load })}
     >
       <SiteClientsMarketingOrdersModal
         isOpen={isModalOpen}
@@ -146,6 +150,8 @@ export default function SiteClientsMarketingTab(props) {
           canAccess={canAccess}
           showAlert={showAlert}
           openOrder={openOrder}
+          open={clientModalOpened}
+          onClose={() => setClientModalOpened(false)}
         />
       )}
       <Grid

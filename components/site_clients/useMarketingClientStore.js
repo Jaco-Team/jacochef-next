@@ -2,16 +2,24 @@
 
 import { create } from "zustand";
 
-const useMarketingClientStore = create((set, get) => ({
+const useMarketingClientStore = create((set) => ({
   clientLogin: null,
   client: null,
   clientLoading: false,
   clientModalOpened: false,
 
+  isOrderModalOpen: false,
+
+  order: null,
+
   setClientLogin: (clientLogin) => set({ clientLogin }),
   setClient: (client) => set({ client }),
   setClientLoading: (clientLoading) => set({ clientLoading }),
   setClientModalOpened: (clientModalOpened) => set({ clientModalOpened }),
+
+  setIsOrderModalOpen: (isOrderModalOpen) => set({ isOrderModalOpen }),
+
+  setOrder: (order) => set({ order }),
 
   setClientLoginSms: (record) => {
     set((state) => ({
@@ -33,18 +41,3 @@ const useMarketingClientStore = create((set, get) => ({
 }));
 
 export default useMarketingClientStore;
-
-const months = [
-  { id: 1, name: "января" },
-  { id: 2, name: "февраля" },
-  { id: 3, name: "марта" },
-  { id: 4, name: "апреля" },
-  { id: 5, name: "мая" },
-  { id: 6, name: "июня" },
-  { id: 7, name: "июля" },
-  { id: 8, name: "августа" },
-  { id: 9, name: "сентября" },
-  { id: 10, name: "октября" },
-  { id: 11, name: "ноября" },
-  { id: 12, name: "декабря" },
-];

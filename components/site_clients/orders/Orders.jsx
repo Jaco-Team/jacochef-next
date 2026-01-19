@@ -240,7 +240,7 @@ export default function Orders({ getOrders, openClientOrder, downLoad, canAccess
         >
           <MyCheckBox
             value={promo_dr}
-            func={(e) => changeDataCheck("promo_dr", e)}
+            func={({ target }) => update({ promo_dr: +!!target.checked })}
             label="Промик на ДР"
           />
         </Grid>
