@@ -54,17 +54,45 @@ const AppointmentModal = (props) => {
   // filter by name
   const [moduleNameFilter, setModuleNameFilter] = useState("");
   const [fullMenuFiltered, setFullMenuFiltered] = useState(full_menu);
-  const filterFullMenu = () => {
-    const filtered = moduleNameFilter
-      ? full_menu?.map((item) => ({
+  const filterFullMenu = useCallback(() => {
+    if (!moduleNameFilter) {
+      // IMPORTANT: still annotate indices even without filter
+      const withIndices = full_menu?.map((item, mainIndex) => ({
+        ...item,
+        __mainIndex: mainIndex,
+        chaild: item.chaild?.map((child, childIndex) => ({
+          ...child,
+          __mainIndex: mainIndex,
+          __childIndex: childIndex,
+        })),
+      }));
+
+      setFullMenuFiltered(withIndices);
+      return;
+    }
+
+    const q = moduleNameFilter.toLowerCase();
+
+    const filtered = full_menu
+      ?.map((item, mainIndex) => {
+        const children = item.chaild
+          ?.map((child, childIndex) => ({
+            ...child,
+            __mainIndex: mainIndex,
+            __childIndex: childIndex,
+          }))
+          .filter((child) => child.name?.toLowerCase().includes(q));
+
+        return {
           ...item,
-          chaild: item.chaild?.filter((child) =>
-            child.name?.toLowerCase()?.includes(moduleNameFilter?.toLowerCase()),
-          ),
-        }))
-      : full_menu;
+          __mainIndex: mainIndex,
+          chaild: children,
+        };
+      })
+      .filter((item) => item.chaild && item.chaild.length > 0);
+
     setFullMenuFiltered(filtered);
-  };
+  }, [full_menu, moduleNameFilter]);
   const debouncedFilterFullMenu = useDebounce(filterFullMenu, 400);
   useEffect(() => {
     debouncedFilterFullMenu();
@@ -119,7 +147,7 @@ const AppointmentModal = (props) => {
     setParamModal(true);
   };
 
-  const { fullScreen, open, units, canEdit, canView } = props;
+  const { fullScreen, open, units, canEdit } = props;
 
   return (
     <>
@@ -241,11 +269,11 @@ const AppointmentModal = (props) => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {fullMenuFiltered.map((item, key) =>
+                      {fullMenuFiltered.map((item) =>
                         item.chaild?.length > 0 ? (
-                          <Fragment key={key}>
+                          <Fragment key={item.__mainIndex}>
                             <TableRow sx={{ "& th": { border: "none" } }}>
-                              <TableCell>{key + 1}</TableCell>
+                              <TableCell>{item.__mainIndex + 1}</TableCell>
                               <TableCell
                                 colSpan={3}
                                 sx={{ fontWeight: "bold" }}
@@ -253,9 +281,9 @@ const AppointmentModal = (props) => {
                                 {item?.parent?.name}
                               </TableCell>
                             </TableRow>
-                            {item.chaild.map((it, k) =>
+                            {item.chaild.map((it) =>
                               it.features.length ? (
-                                <Fragment key={k}>
+                                <Fragment key={`${item.__mainIndex}-${it.__childIndex}`}>
                                   <TableRow hover>
                                     <TableCell></TableCell>
                                     <TableCell
@@ -268,8 +296,8 @@ const AppointmentModal = (props) => {
                                       onClick={() =>
                                         openParams(
                                           `Редактирование параметров модуля: ${it.name}`,
-                                          key,
-                                          k,
+                                          item.__mainIndex,
+                                          it.__childIndex,
                                           "one",
                                         )
                                       }
@@ -287,7 +315,9 @@ const AppointmentModal = (props) => {
                                     <TableCell>
                                       <Checkbox
                                         edge="end"
-                                        onChange={(e) => changeActiveModule(key, k, e)}
+                                        onChange={(e) =>
+                                          changeActiveModule(item.__mainIndex, it.__childIndex, e)
+                                        }
                                         disabled={!canEdit("module_active")}
                                         checked={!!+it.is_active}
                                       />
@@ -295,7 +325,7 @@ const AppointmentModal = (props) => {
                                   </TableRow>
                                 </Fragment>
                               ) : it?.features_cat?.length ? (
-                                <Fragment key={k}>
+                                <Fragment key={it.__childIndex}>
                                   <TableRow hover>
                                     <TableCell></TableCell>
                                     <TableCell
@@ -308,8 +338,8 @@ const AppointmentModal = (props) => {
                                       onClick={() =>
                                         openParams(
                                           `Редактирование параметров модуля: ${it.name}`,
-                                          key,
-                                          k,
+                                          item.__mainIndex,
+                                          it.__childIndex,
                                           "two",
                                         )
                                       }
@@ -327,7 +357,9 @@ const AppointmentModal = (props) => {
                                     <TableCell>
                                       <Checkbox
                                         edge="end"
-                                        onChange={(e) => changeActiveModule(key, k, e)}
+                                        onChange={(e) =>
+                                          changeActiveModule(item.__mainIndex, it.__childIndex, e)
+                                        }
                                         disabled={!canEdit("module_active")}
                                         checked={!!+it.is_active}
                                       />
@@ -337,7 +369,7 @@ const AppointmentModal = (props) => {
                               ) : (
                                 <TableRow
                                   hover
-                                  key={k}
+                                  key={it.__childIndex}
                                 >
                                   <TableCell></TableCell>
                                   <TableCell
@@ -349,7 +381,9 @@ const AppointmentModal = (props) => {
                                   <TableCell>
                                     <Checkbox
                                       edge="end"
-                                      onChange={(e) => changeActiveModule(key, k, e)}
+                                      onChange={(e) =>
+                                        changeActiveModule(item.__mainIndex, it.__childIndex, e)
+                                      }
                                       checked={!!+it.is_active}
                                       disabled={
                                         !canEdit("module_active") ||
@@ -365,10 +399,10 @@ const AppointmentModal = (props) => {
                         ) : (
                           <TableRow
                             hover
-                            key={key}
+                            key={item.__mainIndex}
                             sx={{ "& th": { border: "none" } }}
                           >
-                            <TableCell>{key + 1}</TableCell>
+                            <TableCell>{item.__mainIndex + 1}</TableCell>
                             <TableCell
                               colSpan={3}
                               sx={{ fontWeight: "bold" }}
