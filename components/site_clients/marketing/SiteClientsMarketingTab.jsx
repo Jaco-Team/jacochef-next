@@ -48,16 +48,19 @@ export default function SiteClientsMarketingTab(props) {
     refresh,
   } = useMarketingTabStore();
 
-  const [tabDateStart, setTabDateStart] = useState(date_start_marketing || dayjs());
-  const [tabDateEnd, setTabDateEnd] = useState(date_end_marketing || dayjs());
-  const [tabPoints, setTabPoints] = useState(points_marketing || []);
+  // const [tabDateStart, setTabDateStart] = useState(date_start_marketing);
+  // const [tabDateEnd, setTabDateEnd] = useState(date_end_marketing);
+  // const [tabPoints, setTabPoints] = useState(points_marketing || []);
 
   const applyRange = () => {
-    update({
-      date_start_marketing: tabDateStart,
-      date_end_marketing: tabDateEnd,
-      points_marketing: tabPoints,
-    });
+    if (!date_start_marketing || !date_end_marketing || !points_marketing.length) {
+      return showAlert("Пожалуйста, выберите кафе и даты", false);
+    }
+    // update({
+    //   date_start_marketing: tabDateStart,
+    //   date_end_marketing: tabDateEnd,
+    //   points_marketing: tabPoints,
+    // });
     refresh();
   };
 
@@ -67,8 +70,7 @@ export default function SiteClientsMarketingTab(props) {
       update({ is_load: true });
       const resData = await getData("get_order", { point_id, order_id });
       if (!resData) {
-        showAlert(resData?.text || "Ошибка запроса заказа", false);
-        return;
+        return showAlert(resData?.text || "Ошибка запроса заказа", false);
       }
       setOrder(resData || null);
       setIsOrderModalOpen(true);
@@ -161,8 +163,8 @@ export default function SiteClientsMarketingTab(props) {
             label="Кафе"
             multiple={true}
             data={allPoints ?? []}
-            value={tabPoints ?? []}
-            func={(_, value) => setTabPoints(value)}
+            value={points_marketing ?? []}
+            func={(_, value) => update({ points_marketing: value })}
             // onBlur={() => setPoints(pointsTemp)}
           />
         </Grid>
@@ -186,9 +188,9 @@ export default function SiteClientsMarketingTab(props) {
               <MyDatePickerNew
                 label="Дата от"
                 customActions={true}
-                value={dayjs(tabDateStart)}
-                maxDate={dayjs(tabDateEnd ?? dayjs().subtract(1, "day"))}
-                func={setTabDateStart}
+                value={dayjs(date_start_marketing)}
+                maxDate={dayjs(date_end_marketing ?? dayjs().subtract(1, "day"))}
+                func={(v) => update({ date_start_marketing: v })}
               />
             </Grid>
 
@@ -201,10 +203,11 @@ export default function SiteClientsMarketingTab(props) {
               <MyDatePickerNew
                 label="Дата до"
                 customActions={true}
-                value={dayjs(tabDateEnd)}
-                minDate={dayjs(tabDateStart)}
-                maxDate={dayjs().subtract(1, "day")}
-                func={setTabDateEnd}
+                value={dayjs(date_end_marketing)}
+                minDate={dayjs(date_start_marketing)}
+                // maxDate={dayjs().subtract(1, "day")}
+                maxDate={dayjs()}
+                func={(v) => update({ date_end_marketing: v })}
               />
             </Grid>
           </Grid>
