@@ -50,5 +50,5 @@ export function formatRUR(num, round = true) {
     style: "currency",
     currency: "RUB",
     maximumFractionDigits: round ? 0 : 2,
-  }).format(Number(num));
+  }).format(Number(num ?? 0));
 }

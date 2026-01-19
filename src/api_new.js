@@ -1,97 +1,94 @@
-import queryString from 'query-string';
-import axios from 'axios';
+import queryString from "query-string";
+import axios from "axios";
 
-export function api(module = '', method = '', data = {}, dop_type = {}) {
+export function api(module = "", method = "", data = {}, dop_type = {}) {
   //const urlApi_dev = 'http://127.0.0.1:8000/api/'+module+'/'+method;
   //const urlApi_dev = 'https://79.174.91.113/api/'+module+'/'+method;
 
-  const urlApi_dev = 'https://jacochef.ru/api/index_new.php';
+  const urlApi_dev = "https://jacochef.ru/api/index_new.php";
 
   const this_data = queryString.stringify({
     method: method,
     module: module,
     version: 2,
 
-    login: localStorage.getItem('token'),
+    login: localStorage.getItem("token"),
     data: JSON.stringify(data),
-  })
+  });
 
-  return axios.post(urlApi_dev, this_data, dop_type)
-    .then( (response) => {
-
-      if( typeof response.data == 'string' ){
+  return axios
+    .post(urlApi_dev, this_data, dop_type)
+    .then((response) => {
+      if (typeof response.data == "string") {
         return {
           st: false,
-          text: response.data
+          text: response.data,
         };
       }
 
-     return response; // react
-     //return response.data; // lara
+      return response; // react
+      //return response.data; // lara
     })
-    .catch( (error) => {
+    .catch((error) => {
       console.log(error?.response?.status);
 
-      if( error?.response?.status == 401 ){
-        window.location.pathname = '/auth';
+      if (error?.response?.status == 401) {
+        window.location.pathname = "/auth";
       }
 
-      if( error?.response?.status == 403 ){
-        window.location.pathname = '/';
+      if (error?.response?.status == 403) {
+        window.location.pathname = "/";
       }
-
     });
 }
 
-export function api_laravel(module = '', method = '', data = {}, dop_type = {}) {
+export function api_laravel(module = "", method = "", data = {}, dop_type = {}) {
   // const urlApi_dev = 'http://127.0.0.1:8000/api/'+module+'/'+method;
   //const urlApi_dev = 'https://79.174.91.113/api/'+module+'/'+method;
-  const urlApi_dev = 'https://apichef.jacochef.ru/api/'+module+'/'+method;
+  // const urlApi_dev = 'https://apichef.jacochef.ru/api/'+module+'/'+method;
   // const urlApi_dev = '/api/proxy/api/'+module+'/'+method+'?x=1';
-  // const urlApi_dev = 'https://apitmp2.jacochef.ru/api/'+module+'/'+method;
-  
-  
+  const urlApi_dev = "https://apitmp2.jacochef.ru/api/" + module + "/" + method;
 
-  //const urlApi_dev = 'https://jacochef.ru/api/index_new.php';
+  // const urlApi_dev =
+  //   "https://rhode-tiles-midnight-bars.trycloudflare.com/api/" + module + "/" + method;
 
   const this_data = queryString.stringify({
     method: method,
     module: module,
     version: 2,
 
-    login: localStorage.getItem('token'),
+    login: localStorage.getItem("token"),
     data: JSON.stringify(data),
-  })
+  });
 
-  return axios.post(urlApi_dev, this_data, dop_type)
-    .then( (response) => {
-
-      if( typeof response.data == 'string' ){
+  return axios
+    .post(urlApi_dev, this_data, dop_type)
+    .then((response) => {
+      if (typeof response.data == "string") {
         return {
           st: false,
-          text: response.data
+          text: response.data,
         };
       }
 
       //return response;
       return response.data;
     })
-    .catch( (error) => {
+    .catch((error) => {
       console.log(error?.response?.status);
 
-      if( error?.response?.status == 401 ){
-        window.location = '/auth';
+      if (error?.response?.status == 401) {
+        window.location = "/auth";
       }
 
-      if( error?.response?.status == 403 ){
-        window.location = '/';
+      if (error?.response?.status == 403) {
+        window.location = "/";
       }
-
     });
 }
 
-export function api_laravel_local(module = '', method = '', data = {}, dop_type = {}) {
-  const urlApi_dev = 'http://127.0.0.1:8000/api/'+module+'/'+method;
+export function api_laravel_local(module = "", method = "", data = {}, dop_type = {}) {
+  const urlApi_dev = "http://127.0.0.1:8000/api/" + module + "/" + method;
   //const urlApi_dev = 'https://79.174.91.113/api/'+module+'/'+method;
   //const urlApi_dev = 'https://apichef.jacochef.ru/api/'+module+'/'+method;
 
@@ -102,33 +99,32 @@ export function api_laravel_local(module = '', method = '', data = {}, dop_type 
     module: module,
     version: 2,
 
-    login: localStorage.getItem('token'),
+    login: localStorage.getItem("token"),
     data: JSON.stringify(data),
-  })
+  });
 
-  return axios.post(urlApi_dev, this_data, dop_type)
-    .then( (response) => {
-
-      if( typeof response.data == 'string' ){
+  return axios
+    .post(urlApi_dev, this_data, dop_type)
+    .then((response) => {
+      if (typeof response.data == "string") {
         return {
           st: false,
-          text: response.data
+          text: response.data,
         };
       }
 
       //return response;
       return response.data;
     })
-    .catch( (error) => {
+    .catch((error) => {
       console.log(error?.response?.status);
 
-      if( error?.response?.status == 401 ){
-        window.location = '/auth';
+      if (error?.response?.status == 401) {
+        window.location = "/auth";
       }
 
-      if( error?.response?.status == 403 ){
-        window.location = '/';
+      if (error?.response?.status == 403) {
+        window.location = "/";
       }
-
     });
 }

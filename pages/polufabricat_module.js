@@ -159,6 +159,18 @@ class PolufabricatModule_Modal extends React.Component {
             <Grid
               size={{
                 xs: 12,
+              }}
+            >
+              <MyTextInput
+                label="Название для маркейтинга"
+                value={this.state.item ? this.state.item.item.name_marc : ""}
+                func={this.changeItem.bind(this, "name_marc")}
+              />
+            </Grid>
+
+            <Grid
+              size={{
+                xs: 12,
                 sm: 6,
               }}
             >
@@ -641,10 +653,13 @@ class PolufabricatModule_ extends React.Component {
                           <TableHead>
                             <TableRow>
                               <TableCell style={{ width: "5%" }}>id</TableCell>
-                              <TableCell style={{ width: "10%" }}>Активность</TableCell>
-                              <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
-                              <TableCell style={{ width: "10%" }}>Заявка</TableCell>
-                              <TableCell style={{ width: "20%" }}>Название заготовки</TableCell>
+                              <TableCell style={{ width: "7%" }}>Активность</TableCell>
+                              <TableCell style={{ width: "7%" }}>Ревизия</TableCell>
+                              <TableCell style={{ width: "7%" }}>Заявка</TableCell>
+                              <TableCell style={{ width: "15%" }}>Название заготовки</TableCell>
+                              <TableCell style={{ width: "15%" }}>
+                                Название для маркейтинга
+                              </TableCell>
                               <TableCell style={{ width: "10%" }}>Мин. ост.</TableCell>
                               <TableCell style={{ width: "10%" }}>Ед. измер</TableCell>
                               <TableCell style={{ width: "25%" }}>Место хранения</TableCell>
@@ -711,6 +726,7 @@ class PolufabricatModule_ extends React.Component {
                                 >
                                   {it.name}
                                 </TableCell>
+                                <TableCell>{it.name_marc}</TableCell>
                                 <TableCell>{it.min_count}</TableCell>
                                 <TableCell>{it.ei_name}</TableCell>
                                 <TableCell>{it.storage_name}</TableCell>
@@ -734,10 +750,11 @@ class PolufabricatModule_ extends React.Component {
                     <TableHead>
                       <TableRow>
                         <TableCell style={{ width: "5%" }}>id</TableCell>
-                        <TableCell style={{ width: "10%" }}>Активность</TableCell>
-                        <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
-                        <TableCell style={{ width: "10%" }}>Заявка</TableCell>
-                        <TableCell style={{ width: "20%" }}>Название заготовки</TableCell>
+                        <TableCell style={{ width: "7%" }}>Активность</TableCell>
+                        <TableCell style={{ width: "7%" }}>Ревизия</TableCell>
+                        <TableCell style={{ width: "7%" }}>Заявка</TableCell>
+                        <TableCell style={{ width: "15%" }}>Название заготовки</TableCell>
+                        <TableCell style={{ width: "15%" }}>Название для маркейтинга</TableCell>
                         <TableCell style={{ width: "10%" }}>Мин. ост.</TableCell>
                         <TableCell style={{ width: "10%" }}>Ед. измер</TableCell>
                         <TableCell style={{ width: "25%" }}>Место хранения</TableCell>
@@ -804,6 +821,7 @@ class PolufabricatModule_ extends React.Component {
                           >
                             {cat.name}
                           </TableCell>
+                          <TableCell>{cat.name_marc}</TableCell>
                           <TableCell>{cat.min_count}</TableCell>
                           <TableCell>{cat.ei_name}</TableCell>
                           <TableCell>{cat.storage_name}</TableCell>

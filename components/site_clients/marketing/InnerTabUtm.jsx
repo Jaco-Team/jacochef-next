@@ -7,40 +7,77 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TableFooter,
   TableHead,
-  TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
 } from "@mui/material";
-import { memo, useEffect, useState } from "react";
-import ShowOrdersButton from "./ShowOrdersButton";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import useMarketingTabStore from "./useMarketingTabStore";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import dayjs from "dayjs";
 import useXLSExport from "@/src/hooks/useXLSXExport";
 import ExcelIcon from "@/ui/ExcelIcon";
 import { useSiteClientsStore } from "../useSiteClientsStore";
+import { formatRUR } from "@/src/helpers/utils/i18n";
+import { formatYMD } from "@/src/helpers/ui/formatDate";
+import { COL_WIDTHS, StatsRow, utmStatsColumns } from "./StatsRow";
+import ShowOrdersButton from "./ShowOrdersButton";
 
 function InnerTabUtm({ getData, showAlert, canExport }) {
   const { date_start_marketing, date_end_marketing } = useSiteClientsStore();
-  const { points, setPage } = useMarketingTabStore();
+  const { setPage, refreshToken } = useMarketingTabStore();
 
+  const [utmTree, setUtmTree] = useState(null);
   const [utmStats, setUtmStats] = useState(null);
 
   const exportXLSX = useXLSExport();
 
   // stats sorting state
-  const [sortBy, setSortBy] = useState("orders"); // by utmStatsColumns.key
-  const [sortDir, setSortDir] = useState("desc");
+  const [sort, setSort] = useState({ key: "orders", dir: "desc" });
+  const handleSort = useCallback((key) => {
+    setSort((prev) => ({
+      key,
+      dir: prev.key === key && prev.dir === "desc" ? "asc" : "desc",
+    }));
+  }, []);
+
+  const sortedTree = useMemo(() => {
+    if (!utmTree) return [];
+
+    let nodes = Object.values(utmTree);
+
+    nodes.sort((a, b) => {
+      const av =
+        sort.key === "avg"
+          ? a._stats.orders
+            ? a._stats.sum / a._stats.orders
+            : 0
+          : (a._stats?.[sort.key] ?? 0);
+
+      const bv =
+        sort.key === "avg"
+          ? b._stats.orders
+            ? b._stats.sum / b._stats.orders
+            : 0
+          : (b._stats?.[sort.key] ?? 0);
+
+      return sort.dir === "asc" ? av - bv : bv - av;
+    });
+
+    return nodes;
+  }, [sort, utmTree]);
 
   const getUtmStats = async () => {
-    if (!points.length || !date_start_marketing || !date_end_marketing) {
+    const { points_marketing, date_start_marketing, date_end_marketing } =
+      useSiteClientsStore.getState();
+    if (!points_marketing.length || !date_start_marketing || !date_end_marketing) {
       return;
     }
     try {
-      const resData = await getData("get_marketing_utm_orders", {
-        points: points,
+      const resData = await getData("get_marketing_source_orders", {
+        points: points_marketing,
         date_start: dayjs(date_start_marketing).format("YYYY-MM-DD"),
         date_end: dayjs(date_end_marketing).format("YYYY-MM-DD"),
       });
@@ -50,59 +87,60 @@ function InnerTabUtm({ getData, showAlert, canExport }) {
         return;
       }
       setPage(1);
-      setUtmStats(sortUtmStats(resData.stats, sortBy, sortDir));
+      setUtmTree(resData.tree);
+      setUtmStats(resData.stat);
     } catch (e) {
       showAlert(`Ошибка при загрузке статистики utm: ${e.message}`, false);
     }
   };
 
-  const sortUtmStats = (data, sortBy, sortDir) => {
-    return data?.slice().sort((a, b) => {
-      let valA, valB;
+  const totalStats = useMemo(() => {
+    if (!utmTree) {
+      return { orders: 0, sum: 0, avg: 0 };
+    }
 
-      // Columns that are arrays → sort by length
-      if (["orders", "new", "old", "promo"].includes(sortBy)) {
-        valA = (a[sortBy] || []).length;
-        valB = (b[sortBy] || []).length;
-      } else {
-        valA = (a[sortBy] || "").toString().toLowerCase();
-        valB = (b[sortBy] || "").toString().toLowerCase();
-      }
+    const acc = Object.values(utmTree).reduce(
+      (res, node) => {
+        res.orders += node?._stats?.orders || 0;
+        res.sum += node?._stats?.sum || 0;
+        return res;
+      },
+      { orders: 0, sum: 0 },
+    );
 
-      if (valA === valB) return 0;
-      if (valA < valB) return sortDir === "asc" ? -1 : 1;
-      return sortDir === "asc" ? 1 : -1;
-    });
+    acc.avg = acc.orders ? acc.sum / acc.orders : 0;
+    return acc;
+  }, [utmTree]);
+
+  // expanding rows
+  const [expanded, setExpanded] = useState({});
+  const toggle = (path) => {
+    setExpanded((prev) => ({
+      ...prev,
+      [path]: !prev[path],
+    }));
   };
 
-  function handleSortClick(columnKey) {
-    const isAsc = sortBy === columnKey && sortDir === "asc";
-    const newOrder = isAsc ? "desc" : "asc";
-
-    setSortBy(columnKey);
-    setSortDir(newOrder);
-
-    // compute filtered arrays per row for sorting columns if needed
-    const sorted = sortUtmStats(utmStats, columnKey, newOrder);
-    setUtmStats(sorted);
-  }
-
-  // pagination
-  const [page, setLocalPage] = useState(1);
-  const [perPage, setPerPage] = useState(50);
-
+  // update on form change
   const debouncedGetOrdersStats = useDebounce(getUtmStats, 500);
   useEffect(() => {
     debouncedGetOrdersStats();
-  }, [date_start_marketing, date_end_marketing, points]);
+  }, [refreshToken]);
 
-  return utmStats ? (
+  return sortedTree ? (
     <>
       {canExport && (
         <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
           <IconButton
             style={{ cursor: "pointer", padding: 10 }}
-            onClick={() => exportXLSX(utmStats, utmStatsColumns, "utm-stats.xlsx")}
+            onClick={() =>
+              exportXLSX(
+                utmStats.sources,
+                utmStatsColumns,
+                "utm-stats.xlsx",
+                `Источники заказов с ${formatYMD(date_start_marketing)} по ${formatYMD(date_end_marketing)}`,
+              )
+            }
             title="Экспортировать в Excel"
           >
             <ExcelIcon />
@@ -110,133 +148,126 @@ function InnerTabUtm({ getData, showAlert, canExport }) {
         </Box>
       )}
       <TableContainer
-        sx={{
-          maxHeight: "70dvh",
-        }}
+      // sx={{
+      //   maxHeight: "70dvh",
+      // }}
       >
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              {utmStatsColumns.map((col) => (
-                <TableCell key={col.key}>
-                  <TableSortLabel
-                    active={sortBy === col.key}
-                    direction={sortBy === col.key ? sortDir : "asc"}
-                    onClick={() => handleSortClick(col.key)}
-                  >
-                    {col.label}
-                  </TableSortLabel>
-                </TableCell>
-              ))}
+              <TableCell sx={{ width: COL_WIDTHS.label }}>Источник</TableCell>
+              <TableCell sx={{ width: COL_WIDTHS.orders }}>
+                <TableSortLabel
+                  active={sort.key === "orders"}
+                  direction={sort.key === "orders" ? sort.dir : "asc"}
+                  onClick={() => handleSort("orders")}
+                >
+                  Заказов
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ width: COL_WIDTHS.sum }}>
+                <TableSortLabel
+                  active={sort.key === "sum"}
+                  direction={sort.key === "sum" ? sort.dir : "asc"}
+                  onClick={() => handleSort("sum")}
+                >
+                  Сумма
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ width: COL_WIDTHS.avg }}>
+                <TableSortLabel
+                  active={sort.key === "avg"}
+                  direction={sort.key === "avg" ? sort.dir : "asc"}
+                  onClick={() => handleSort("avg")}
+                >
+                  Средний чек
+                </TableSortLabel>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {utmStats?.slice((page - 1) * perPage, page * perPage)?.map((group, key) => {
-              const orders = group["orders"] || [];
-              const newOrders = orders?.filter((o) => o.is_new);
-              const oldOrders = orders?.filter((o) => !o.is_new);
-              const withPromo = orders?.filter((o) => o.promo_id);
-              return (
-                <TableRow key={key}>
-                  <TableCell>{group.utm_source}</TableCell>
-                  <TableCell>
-                    <Typography
-                      sx={{
-                        maxWidth: 150,
-                        // overflow: "hidden",
-                        // textOverflow: "ellipsis",
-                        wordBreak: "break-all",
-                      }}
-                      title={group.utm_medium}
-                    >
-                      {group.utm_medium}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography
-                      sx={{
-                        maxWidth: 150,
-                        // overflow: "hidden",
-                        // textOverflow: "ellipsis",
-                        wordBreak: "break-all",
-                      }}
-                      title={group.utm_campaign}
-                    >
-                      {group.utm_campaign}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography
-                      sx={{
-                        maxWidth: 150,
-                        // overflow: "hidden",
-                        // textOverflow: "ellipsis",
-                        wordBreak: "break-all",
-                      }}
-                      title={group.utm_content}
-                    >
-                      {group.utm_content}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography
-                      // noWrap
-                      sx={{
-                        maxWidth: 200,
-                        wordBreak: "break-all",
-                      }}
-                      title={group.utm_term}
-                    >
-                      {group.utm_term}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <ShowOrdersButton
-                      orders={orders}
-                      modalTitle={`Все ${group.utm_source}/${group.utm_medium}/${group.utm_campaign}/${group.utm_content}/${group.utm_term}`}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <ShowOrdersButton
-                      orders={newOrders}
-                      modalTitle={`Новые ${group.utm_source}/${group.utm_medium}/${group.utm_campaign}/${group.utm_content}/${group.utm_term}`}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <ShowOrdersButton
-                      orders={oldOrders}
-                      modalTitle={`Повторные ${group.utm_source}/${group.utm_medium}/${group.utm_campaign}/${group.utm_content}/${group.utm_term}`}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <ShowOrdersButton
-                      orders={withPromo}
-                      modalTitle={`с Промо ${group.utm_source}/${group.utm_medium}/${group.utm_campaign}/${group.utm_content}/${group.utm_term}`}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {sortedTree.map((node) => (
+              <StatsRow
+                key={node._key}
+                label={node._key}
+                node={node}
+                depth={0}
+                path={node._key}
+                expanded={expanded}
+                toggle={toggle}
+              />
+            ))}
           </TableBody>
         </Table>
+        {utmStats && (
+          <Box
+            sx={{
+              position: "sticky",
+              bottom: 0,
+              backgroundColor: "background.paper",
+              borderTop: "1px solid",
+              borderColor: "divider",
+              zIndex: 3,
+            }}
+          >
+            <Table size="small">
+              <TableBody>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: "bold", width: COL_WIDTHS.label }}>
+                    Новые клиенты:
+                  </TableCell>
+                  <TableCell sx={{ width: COL_WIDTHS.orders }}>
+                    <ShowOrdersButton
+                      orders={utmStats.new?.order_ids}
+                      modalTitle={`Новые клиенты`}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ width: COL_WIDTHS.sum }}>
+                    {formatRUR(utmStats.new?.sum)}
+                  </TableCell>
+                  <TableCell sx={{ width: COL_WIDTHS.avg }}>
+                    {formatRUR(utmStats.new?.avg)}
+                  </TableCell>
+                </TableRow>
+                <TableRow
+                  sx={{
+                    fontWeight: "bold",
+                  }}
+                >
+                  <TableCell sx={{ fontWeight: "bold", width: COL_WIDTHS.label }}>
+                    Постоянные клиенты:
+                  </TableCell>
+                  <TableCell sx={{ width: COL_WIDTHS.orders }}>
+                    <ShowOrdersButton
+                      orders={utmStats?.existing?.order_ids}
+                      modalTitle={`Постоянные клиенты`}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ width: COL_WIDTHS.sum }}>
+                    {formatRUR(utmStats.existing?.sum)}
+                  </TableCell>
+                  <TableCell sx={{ width: COL_WIDTHS.avg }}>
+                    {formatRUR(utmStats.existing?.avg)}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ textAlign: "right" }}>Всего:</TableCell>
+                  <TableCell>
+                    <Typography
+                      variant="body2"
+                      sx={{ pl: 2 }}
+                    >
+                      {totalStats.orders}
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ width: COL_WIDTHS.sum }}>{formatRUR(totalStats.sum)}</TableCell>
+                  <TableCell sx={{ width: COL_WIDTHS.avg }}>{formatRUR(totalStats.avg)}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </Box>
+        )}
       </TableContainer>
-      <TablePagination
-        rowsPerPageOptions={[10, 50, 100, 300]}
-        labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
-        labelRowsPerPage="Строк на странице:"
-        component="div"
-        count={utmStats?.length ?? 0}
-        rowsPerPage={perPage}
-        page={page - 1}
-        onPageChange={(_, newPage) => {
-          setLocalPage(newPage + 1);
-        }}
-        onRowsPerPageChange={(event) => {
-          const newPerPage = parseInt(event.target.value, 10);
-          setPerPage(newPerPage);
-          setLocalPage(1);
-        }}
-      />
     </>
   ) : (
     <Typography>Нет данных</Typography>
@@ -244,32 +275,3 @@ function InnerTabUtm({ getData, showAlert, canExport }) {
 }
 
 export default memo(InnerTabUtm);
-
-// config
-const utmStatsColumns = [
-  { label: "Источник (utm_source)", key: "utm_source" },
-  { label: "Тип (utm_medium)", key: "utm_medium" },
-  { label: "Кампания (utm_campaign)", key: "utm_campaign" },
-  { label: "ID (utm_content)", key: "utm_content" },
-  { label: "Ключевое слово (utm_term)", key: "utm_term" },
-  {
-    key: "orders",
-    label: "Все заказы",
-    format: (row) => (row.orders ? row.orders.length : 0),
-  },
-  {
-    key: "new",
-    label: "Новые",
-    format: (row) => (row.orders ? row.orders.filter((o) => o.is_new).length : 0),
-  },
-  {
-    key: "old",
-    label: "Повторные",
-    format: (row) => (row.orders ? row.orders.filter((o) => !o.is_new).length : 0),
-  },
-  {
-    key: "promo",
-    label: "С промо",
-    format: (row) => (row.orders ? row.orders.filter((o) => o.promo_id).length : 0),
-  },
-];

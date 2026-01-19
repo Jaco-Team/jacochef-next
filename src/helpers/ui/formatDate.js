@@ -11,3 +11,16 @@ export const formatDateMin = (date) =>
 export const formatDate = (date) => dayjs(date);
 
 export const formatYMD = (date) => dayjs(date).format("YYYY-MM-DD");
+
+/**
+ * checks that end is after start date
+ * @param {string} from
+ * @param {string} to
+ * @returns boolean validity
+ */
+export const checkDates = (from, to) => {
+  if (!from || !to) return false;
+  const fromDate = dayjs(from);
+  const toDate = dayjs(to);
+  return fromDate.isValid() && toDate.isValid() && fromDate.diff(toDate) <= 0;
+};

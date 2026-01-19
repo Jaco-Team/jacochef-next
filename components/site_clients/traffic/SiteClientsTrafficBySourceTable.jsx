@@ -5,11 +5,14 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TableFooter,
   TableHead,
   TableRow,
 } from "@mui/material";
+import { useMemo } from "react";
 
 export default function SiteClientsTrafficBySourceTable({ rows }) {
+  const totalVisits = useMemo(() => rows?.reduce((a, r) => a + Number(r.visits), 0), [rows]);
   return (
     <TableContainer
       sx={{ maxHeight: { xs: "none", sm: "70dvh" }, marginTop: "1em" }}
@@ -39,6 +42,18 @@ export default function SiteClientsTrafficBySourceTable({ rows }) {
             </TableRow>
           ))}
         </TableBody>
+        <TableFooter sx={{ position: "sticky", bottom: 0, backgroundColor: "background.paper" }}>
+          <TableRow>
+            <TableCell
+              colSpan={3}
+              sx={{ textAlign: "right" }}
+            >
+              Всего:
+            </TableCell>
+            <TableCell>{totalVisits}</TableCell>
+            <TableCell>100%</TableCell>
+          </TableRow>
+        </TableFooter>
       </Table>
     </TableContainer>
   );
