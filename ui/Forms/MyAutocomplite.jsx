@@ -1,6 +1,7 @@
 "use client";
 
 import { Autocomplete, NoSsr, Stack, TextField } from "@mui/material";
+import Chip from "@mui/material/Chip";
 
 export function MyAutocomplite(props) {
   return (
@@ -33,6 +34,25 @@ export function MyAutocomplite(props) {
           isOptionEqualToValue={
             props.isOptionEqualToValue ||
             ((option, value) => parseInt(option?.id) === parseInt(value?.id))
+          }
+          renderTags={(value, getTagProps) =>
+            value.map((option, index) => (
+              <Chip
+                {...getTagProps({ index })}
+                key={option.id}
+                label={option.name}
+                size="small"
+                sx={{
+                  color: props.disabled ? "rgba(0, 0, 0, 0.38)" : undefined,
+                  "&.Mui-disabled": {
+                    backgroundColor: props.disabled ? "rgba(0, 0, 0, 0.08) !important" : undefined,
+                  },
+                  "& .MuiChip-deleteIcon": {
+                    color: props.disabled ? "rgba(0, 0, 0, 0.26)" : undefined,
+                  },
+                }}
+              />
+            ))
           }
           renderInput={
             props.renderInput ||

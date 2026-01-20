@@ -117,6 +117,18 @@ th[class*="tableCelHead"] {
   }
 }
 
+span.group-items-label {
+  font-size: 12px !important;
+  color: #49454f;
+  margin-left: 8px;
+}
+
+span.items-label-all {
+  font-size: 16px !important;
+  color: #79747e;
+  margin-top: 1px;
+}
+
 .sklad_storage {
   td[class*="tableCel"] {
     text-align: left !important;

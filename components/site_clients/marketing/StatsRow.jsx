@@ -1,7 +1,6 @@
 import { Add, Remove } from "@mui/icons-material";
 import {
   Box,
-  Button,
   Collapse,
   IconButton,
   Table,
@@ -13,7 +12,6 @@ import {
 import { memo } from "react";
 import ShowOrdersButton from "./ShowOrdersButton";
 import { formatRUR } from "@/src/helpers/utils/i18n";
-import Link from "next/link";
 
 export const COL_WIDTHS = {
   label: "auto",

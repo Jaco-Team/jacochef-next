@@ -353,7 +353,14 @@ class OptionToWin_ extends React.Component {
           <Grid size={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
-
+          <Grid
+            size={{
+              xs: 12,
+              sm: 4.7,
+            }}
+          >
+            Дерево категорий
+          </Grid>
           <Grid
             size={{
               xs: 12,
@@ -364,7 +371,7 @@ class OptionToWin_ extends React.Component {
               onClick={this.openCatsModal.bind(this, "Новая категория", "addCat")}
               variant="contained"
             >
-              Добавить
+              Добавить категорию
             </Button>
           </Grid>
 
