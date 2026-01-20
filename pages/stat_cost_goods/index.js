@@ -43,6 +43,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import DehazeIcon from "@mui/icons-material/Dehaze";
 import AddIcon from "@mui/icons-material/Add";
 import PercentChangeChart from "@/components/stat_cost_goods/PercentChangeChart";
+import CityCafeAutocompleteNew from "@/ui/TabPanel/CityCafeAutocompleteNew";
 
 const ModalGraph = ({ open, onClose, data, title = "Графики" }) => {
   const [tab, setTab] = useState("1");
@@ -230,7 +231,7 @@ function LkPage() {
           sm: 6,
         }}
       >
-        <CityCafeAutocomplete2
+        <CityCafeAutocompleteNew
           label="Кафе"
           points={points}
           value={point}

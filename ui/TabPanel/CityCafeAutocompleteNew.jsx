@@ -43,7 +43,7 @@ const TopPopper = (props) => {
         {
           name: "offset",
           options: {
-            offset: [0, -110], // [x, y] - сдвиг по горизонтали и вертикали
+            offset: [0, -80], // [x, y] - сдвиг по горизонтали и вертикали
           },
         },
       ]}
@@ -222,18 +222,18 @@ const CustomPaper = React.memo(
               size="small"
               checked={allSelected}
               onChange={handleSelectAll}
-              sx={{ mr: 1 }}
+              sx={{ mr: 0.25 }}
             />
-            <Typography
-              sx={{ color: "#79747E", fontWeight: "bold", cursor: "pointer", fontSize: "12px" }}
+            <span
+              className="items-label-all"
               onClick={handleSelectAll}
             >
               Выбрать все
-            </Typography>
+            </span>
           </Box>
         </Box>
 
-        <Box sx={{ px: 2, py: 1.5 }}>
+        <Box sx={{ px: 2 }}>
           <TextField
             fullWidth
             size="small"
@@ -244,7 +244,7 @@ const CustomPaper = React.memo(
             onMouseDown={handleSearchMouseDown}
             onClick={handleSearchClick}
             InputProps={{
-              startAdornment: (
+              endAdornment: (
                 <InputAdornment
                   position="end"
                   onMouseDown={handleSearchMouseDown}
@@ -541,57 +541,6 @@ export default function CityCafeAutocompleteNew({
     }
   };
 
-  const CustomChip = (props) => {
-    const { label, option, onDelete, ...other } = props;
-    return (
-      <Chip
-        {...other}
-        label={
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Typography
-              variant="body2"
-              sx={{ ml: 0.5, color: "#fff" }}
-            >
-              {option.name}
-            </Typography>
-          </Box>
-        }
-        onDelete={onDelete}
-        deleteIcon={<ClearIcon />}
-        sx={{
-          backgroundColor: "#79747e",
-          borderRadius: "8px",
-          height: "32px",
-          margin: "2px 4px 2px 0",
-          "& .MuiChip-label": {
-            paddingLeft: "8px",
-            paddingRight: "4px",
-          },
-          "& .MuiChip-deleteIcon": {
-            color: "#fff",
-            fontSize: "18px",
-            marginRight: "4px",
-            "&:hover": {
-              color: "#333",
-            },
-          },
-          "&:hover": {
-            backgroundColor: "#837e87",
-          },
-        }}
-      />
-    );
-  };
-
-  function getPluralForm(number, forms) {
-    const n = Math.abs(number) % 100;
-    const n1 = n % 10;
-    if (n > 10 && n < 20) return forms[2]; // 11–19 → "кафе"
-    if (n1 > 1 && n1 < 5) return forms[1]; // 2–4 → "кафе"
-    if (n1 === 1) return forms[0]; // 1 → "кафе"
-    return forms[2]; // остальное → "кафе"
-  }
-
   return (
     <ClickAwayListener onClickAway={handleClickAway}>
       <Box ref={containerRef}>
@@ -616,7 +565,6 @@ export default function CityCafeAutocompleteNew({
 
             return (
               <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                {/* Первая строка: счетчик кафе */}
                 <Typography
                   variant="body2"
                   sx={{
@@ -627,10 +575,9 @@ export default function CityCafeAutocompleteNew({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {count} {getPluralForm(count, ["кафе", "кафе", "кафе"])}
+                  {count === 1 && value[0]?.id === "__ALL__" ? filteredCafes.length : 1} кафе
                 </Typography>
 
-                {/* Вторая строка: чипы */}
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                   {value.map((option, index) => {
                     const { key, ...tagProps } = getTagProps({ index });
