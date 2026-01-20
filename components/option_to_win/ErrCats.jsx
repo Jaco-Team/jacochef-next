@@ -51,34 +51,87 @@ export default class ErrCatsTable extends Component {
 
       const indent = level * 16;
       return (
-        <Box
-          key={node.id}
-          sx={{ mb: 1 }}
-        >
-          <Accordion
-            sx={{
-              padding: "4px",
-              "&:before": { display: "none" },
-            }}
-          >
-            <AccordionSummary
-              expandIcon={
-                hasChildren ? <ExpandMoreIcon style={{ transform: "rotate(270deg)" }} /> : null
-              }
+        <Box key={node.id}>
+          {hasChildren ? (
+            <Accordion
               sx={{
-                flexDirection: "row-reverse",
-                pl: level * 2,
-                "& .MuiAccordionSummary-expandIconWrapper": {
-                  marginRight: "8px",
-                  marginLeft: hasChildren ? "4px" : `${level * 18}px`,
-                  "&.Mui-expanded": {
-                    transform: "rotate(90deg)",
+                padding: "4px",
+                boxShadow: "none",
+                "&:before": { display: "none" },
+              }}
+            >
+              <AccordionSummary
+                expandIcon={
+                  hasChildren ? <ExpandMoreIcon style={{ transform: "rotate(270deg)" }} /> : null
+                }
+                sx={{
+                  flexDirection: "row-reverse",
+                  pl: level * 2,
+                  "& .MuiAccordionSummary-expandIconWrapper": {
+                    marginRight: "8px",
+                    marginLeft: hasChildren ? "4px" : `${level * 18}px`,
+                    "&.Mui-expanded": {
+                      transform: "rotate(90deg)",
+                    },
                   },
-                },
-                "& .MuiAccordionSummary-content": {
-                  alignItems: "center !important",
-                  marginLeft: hasChildren ? "4px" : "20px",
-                },
+                  "& .MuiAccordionSummary-content": {
+                    alignItems: "center !important",
+                    marginLeft: hasChildren ? "4px" : "20px",
+                  },
+                }}
+              >
+                <Typography
+                  variant="body1"
+                  fontWeight={level < 2 ? 600 : 400}
+                  sx={{
+                    cursor: "pointer",
+                    flex: 1,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    ml: hasChildren ? 0 : 2, // Отступ если нет детей
+                  }}
+                >
+                  {node.name}
+                </Typography>
+
+                <Switch
+                  checked={parseInt(node.is_active) === 1}
+                  onChange={() => this.props.changeActive(node)}
+                  style={{ paddingRight: hasChildren ? "0" : `${level > 1 ? level + 8 : 10}px` }}
+                />
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    this.props.openModal(node.id);
+                  }}
+                >
+                  <EditIcon />
+                </IconButton>
+              </AccordionSummary>
+
+              {hasChildren && (
+                <AccordionDetails
+                  sx={{
+                    p: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                  }}
+                >
+                  {this.renderRows(node.children, siteCats, level + 1)}
+                </AccordionDetails>
+              )}
+            </Accordion>
+          ) : (
+            <li
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                paddingLeft: "40px",
+                paddingTop: "10px",
+                paddingBottom: "10px",
+                paddingRight: "20px",
               }}
             >
               <Typography
@@ -89,7 +142,7 @@ export default class ErrCatsTable extends Component {
                   flex: 1,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
-                  ml: hasChildren ? 0 : 2, // Отступ если нет детей
+                  ml: 3,
                 }}
               >
                 {node.name}
@@ -108,21 +161,8 @@ export default class ErrCatsTable extends Component {
               >
                 <EditIcon />
               </IconButton>
-            </AccordionSummary>
-
-            {hasChildren && (
-              <AccordionDetails
-                sx={{
-                  p: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 1,
-                }}
-              >
-                {this.renderRows(node.children, siteCats, level + 1)}
-              </AccordionDetails>
-            )}
-          </Accordion>
+            </li>
+          )}
         </Box>
       );
     });
