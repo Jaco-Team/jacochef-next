@@ -30,7 +30,7 @@ import {
 import { Close } from "@mui/icons-material";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 import TabPanel from "@/ui/TabPanel/TabPanel";
-import useMarketingClientStore from "./useMarketingClientStore";
+import useMarketingClientStore from "../useMarketingClientStore";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import dayjs from "dayjs";
 import ExcelIcon from "@/ui/ExcelIcon";
@@ -41,9 +41,8 @@ import { useLoading } from "./useClientsLoadingContext";
 
 dayjs.locale("ru");
 
-function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
-  const { clientLogin, clientModalOpened, setClientModalOpened, setClientHistory } =
-    useMarketingClientStore();
+function SiteClientsClientModal({ canAccess, showAlert, openOrder, open, onClose }) {
+  const { clientLogin, setClientModalOpened, setClientHistory } = useMarketingClientStore();
 
   // global isLoading
   const { isLoading, setIsLoading } = useLoading();
@@ -127,8 +126,8 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder }) {
   return (
     <>
       <Dialog
-        open={clientModalOpened}
-        onClose={() => setClientModalOpened(false)}
+        open={open}
+        onClose={onClose}
         fullScreen={fullScreen}
         fullWidth={true}
         maxWidth={"xl"}

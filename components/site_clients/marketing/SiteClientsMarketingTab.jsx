@@ -12,7 +12,7 @@ import InnerTabStats from "./InnerTabStats";
 import SiteClientsMarketingOrdersTable from "./SiteClientsMarketingOrdersTable";
 import InnerTabUtm from "./InnerTabUtm";
 import InnerTabPromo from "./InnerTabPromo";
-import useMarketingClientStore from "./useMarketingClientStore";
+import useMarketingClientStore from "../useMarketingClientStore";
 import SiteClientsMarketingOrdersModal from "./SiteClientsMarketingOrdersModal";
 import SiteClientsClientModal from "./SiteClientsClientModal";
 import { LoadingProvider } from "./useClientsLoadingContext";

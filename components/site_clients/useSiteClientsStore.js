@@ -9,6 +9,7 @@ const PERSIST_KEYS = [
   "keepParams",
   "number",
   "order",
+  "order_types",
   "addr",
   "address_list",
   "promo",
@@ -94,6 +95,8 @@ const defaultState = {
     { id: 2, name: "Контакт-центр" },
     { id: 3, name: "Кафе" },
   ],
+
+  order_types: [],
 
   days: [],
 

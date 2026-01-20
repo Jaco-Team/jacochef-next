@@ -1,7 +1,14 @@
 import { create } from "zustand";
 
 export const useClientHistoryStore = create((set) => ({
-  refreshToken: Date.now(),
+  refreshToken: false,
+  clientHistory: [],
+
+  update: (data) =>
+    set((state) => ({
+      ...state,
+      ...data,
+    })),
 
   refresh: () =>
     set({
