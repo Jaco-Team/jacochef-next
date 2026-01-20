@@ -178,25 +178,19 @@ const status = [
 
 class CheckCheck_Accordion_online extends React.Component {
   render() {
-    const { orders } = this.props;
+    const { orders = [], title = "Не фискализированные онлайн заказы", onCorrection } = this.props;
+    const showAction = typeof onCorrection === "function";
 
     return (
       <Box>
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography sx={{ fontWeight: "bold" }}>Не фискализированные онлайн заказы</Typography>
-            <Tooltip
-              title="Количество заказов"
-              arrow
-            >
-              <Chip
-                label={orders.length}
-                color="primary"
-                size="small"
-                sx={{ ml: 1 }}
-              />
+            <Typography sx={{ fontWeight: "bold" }}>{title}</Typography>
+            <Tooltip title="Количество заказов" arrow>
+              <Chip label={orders.length} color="primary" size="small" sx={{ ml: 1 }} />
             </Tooltip>
           </AccordionSummary>
+
           <AccordionDetails>
             <Table>
               <TableHead>
@@ -208,17 +202,30 @@ class CheckCheck_Accordion_online extends React.Component {
                   <TableCell>Сумма заказа</TableCell>
                 </TableRow>
               </TableHead>
+
               <TableBody>
                 {orders.map((order, k) => (
-                  <TableRow
-                    key={k}
-                    hover
-                  >
+                  <TableRow key={k} hover>
                     <TableCell>{k + 1}</TableCell>
                     <TableCell>{order.id}</TableCell>
                     <TableCell>{order.date_time}</TableCell>
                     <TableCell>{order.type_pay_text}</TableCell>
                     <TableCell>{formatNumber(order?.summ_order ?? 0)} ₽</TableCell>
+
+                    {showAction && (
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          onClick={(e) => {
+                            e.stopPropagation?.();
+                            onCorrection(order);
+                          }}
+                          sx={{ whiteSpace: "nowrap" }}
+                        >
+                          Коррекция возврата
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -241,6 +248,9 @@ class CheckCheck_Accordion extends React.Component {
       comment: "",
       activeTab: 0,
       activeKassaTab: 0,
+      mismatchOrders: [],
+      corrConfirmOpen: false,
+      corrOrder: null,
     };
   }
 
@@ -439,15 +449,121 @@ class CheckCheck_Accordion extends React.Component {
     return result;
   };
 
-  openMismatch = (ctx) => {
+  getMismatchOrders = async (ctx) => {
+    const { point, getData } = this.props;
+
+    if (!ctx?.kassaId || Number(ctx.kassaId) === 2) return [];
+    if (!point?.base) return [];
+
+    const summ = Math.abs((Number(ctx?.ofd) || 0) - (Number(ctx?.chef) || 0));
+    if (summ <= 0) return [];
+
+    const data = {
+      point,
+      date: ctx.date,
+      summ,
+      kassaId: ctx.kassaId,
+    };
+
+    const res = await getData("get_mismatch_orders", data);
+
+    return res?.orders || [];
+  };
+
+  openCorrConfirm = (order) => {
+    this.setState({
+      corrConfirmOpen: true,
+      corrOrder: order,
+    });
+  };
+
+  closeCorrConfirm = () => {
+    this.setState({
+      corrConfirmOpen: false,
+      corrOrder: null,
+    });
+  };
+
+  sendCorrReturn = async () => {
+    const { point, getData, openAlert, refreshOrders } = this.props;
+    const { mismatchCtx, corrOrder } = this.state;
+
+    if (!point?.base) return;
+    if (!mismatchCtx?.date) return;
+    if (!mismatchCtx?.kassaId || Number(mismatchCtx.kassaId) === 2) return;
+    if (!corrOrder?.id) return;
+
+    const data = {
+      point,
+      date: mismatchCtx.date,
+      kassaId: mismatchCtx.kassaId,
+      smena_list: mismatchCtx.smena_list || "",
+      order_id: corrOrder.id,
+    };
+
+    const res = await getData("correction_return", data);
+
+    openAlert?.(res?.st, res?.text || "");
+    // console.log("correction_return res", res);
+
+    if (res?.st) {
+
+      this.setState(
+        {
+          corrConfirmOpen: false,
+          corrOrder: null,
+          mismatchOpen: false,
+          mismatchCtx: null,
+          mismatchOrders: [],
+          comment: "",
+        },
+        () => {
+          setTimeout(() => {
+            refreshOrders?.();
+          }, 500);
+        },
+      );
+      return;
+    }
+
+    this.setState({
+      corrConfirmOpen: false,
+      corrOrder: null,
+    });
+
+  };
+
+  openMismatch = async (ctx) => {
+    if (!(ctx?.scope === "kassa_day" || ctx?.scope === "smena")) {
+
+      this.setState({ 
+        mismatchOpen: true, 
+        mismatchCtx: ctx, 
+        comment: ctx?.comment ?? "",
+        mismatchOrders: [],
+      });
+
+      return;
+    }
+
+    const orders = await this.getMismatchOrders(ctx);
+
     this.setState({
       mismatchOpen: true,
       mismatchCtx: ctx,
       comment: ctx?.comment ?? "",
+      mismatchOrders: orders,
     });
   };
 
-  closeMismatch = () => this.setState({ mismatchOpen: false, mismatchCtx: null, comment: "" });
+  closeMismatch = () =>
+    this.setState({
+      mismatchOpen: false,
+      mismatchCtx: null,
+      comment: "",
+      mismatchOrders: [],
+    }
+  );
 
   handleCommentChange = (e) => this.setState({ comment: e.target.value });
 
@@ -506,8 +622,7 @@ class CheckCheck_Accordion extends React.Component {
 
   render() {
     const { summ_ofd, summ_chef, acces_comment } = this.props;
-    const { openRows, openSummary, mismatchOpen, mismatchCtx, comment, activeTab, activeKassaTab } =
-      this.state;
+    const { openRows, openSummary, mismatchOpen, mismatchCtx, comment, activeTab, activeKassaTab, mismatchOrders, corrConfirmOpen, corrOrder } = this.state;
 
     const daysMerged = this.getPreparedDays(summ_ofd, summ_chef);
     const kassTotals = this.getKassTotals(summ_ofd, summ_chef);
@@ -1497,7 +1612,7 @@ class CheckCheck_Accordion extends React.Component {
         <Dialog
           open={mismatchOpen}
           onClose={this.closeMismatch}
-          maxWidth="md"
+          maxWidth="lg"
           fullWidth
         >
           <DialogTitle>
@@ -1514,7 +1629,7 @@ class CheckCheck_Accordion extends React.Component {
               const c = mismatchCtx || {};
               const nOfd = Number(c.ofd) || 0;
               const nChef = Number(c.chef) || 0;
-              const diff = nOfd - nChef;
+              const diff = Math.abs(nOfd - nChef);
               const smenaList = (typeof c.smena_list === "string" ? c.smena_list : "").trim();
               const num = (v) => Number(v) || 0;
 
@@ -1578,6 +1693,18 @@ class CheckCheck_Accordion extends React.Component {
                       Разница: <b>{formatNumber ? formatNumber(diff) : diff} ₽</b>
                     </Typography>
                   </Box>
+
+                  {(c.scope === "kassa_day" || c.scope === "smena") &&
+                    Number(c.kassaId) !== 2 &&
+                    mismatchOrders?.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <CheckCheck_Accordion_online
+                          title="Заказы по расхождению (разнице) сумм"
+                          orders={mismatchOrders}
+                          onCorrection={this.openCorrConfirm}
+                        />
+                      </Box>
+                  )}
 
                   {c.scope === "day" && dayCommentRows.length > 0 && (
                     <TableContainer component={Paper}>
@@ -1647,6 +1774,26 @@ class CheckCheck_Accordion extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Подтверждение коррекции возврата */}
+        <Dialog open={corrConfirmOpen} onClose={this.closeCorrConfirm}>
+          <DialogTitle>Подтвердите действие</DialogTitle>
+
+          <DialogContent dividers>
+            Коррекция возврата по заказу <b>{corrOrder?.id}</b> ?
+          </DialogContent>
+
+          <DialogActions>
+            <Button variant="contained" style={{ color: "#fff", backgroundColor: "#000" }} onClick={this.closeCorrConfirm}>
+              Отмена
+            </Button>
+            <Button variant="contained" onClick={this.sendCorrReturn}>
+              Подтвердить
+            </Button>
+          </DialogActions>
+
+        </Dialog>
+
       </Box>
     );
   }
@@ -1877,7 +2024,7 @@ class CheckCheck_ extends React.Component {
       point_id: "",
       kassa: [],
 
-      openAlert: false,
+      open_alert: false,
       err_status: true,
       err_text: "",
 
@@ -2059,7 +2206,7 @@ class CheckCheck_ extends React.Component {
 
   openAlert = (status, text) => {
     this.setState({
-      openAlert: true,
+      open_alert: true,
       err_status: status,
       err_text: text,
     });
@@ -2151,7 +2298,7 @@ class CheckCheck_ extends React.Component {
   render() {
     const {
       is_load,
-      openAlert,
+      open_alert,
       err_status,
       err_text,
       modalOrder,
@@ -2181,14 +2328,17 @@ class CheckCheck_ extends React.Component {
       ? "Выгрузить данные в 1C"
       : "Все равно выгрузить данные в 1С (возможны дубли!)";
 
+    const point = points.find((p) => Number(p.id) === Number(point_id));
+
     return (
       <>
         <Backdrop
-          style={{ zIndex: 99 }}
+          style={{ zIndex: 2000 }}
           open={is_load}
         >
           <CircularProgress color="inherit" />
         </Backdrop>
+
         <Dialog
           sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 600 } }}
           maxWidth="md"
@@ -2304,12 +2454,14 @@ class CheckCheck_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
+
         <MyAlert
-          isOpen={openAlert}
-          onClose={() => this.setState({ openAlert: false })}
+          isOpen={open_alert}
+          onClose={() => this.setState({ open_alert: false })}
           status={err_status}
           text={err_text}
         />
+
         <CheckCheck_Modal
           open={modalOrder}
           onClose={() => this.setState({ modalOrder: false, orders: [], order: null })}
@@ -2318,6 +2470,7 @@ class CheckCheck_ extends React.Component {
           order={order}
           saveOrder={this.saveOrder}
         />
+
         <Grid
           container
           spacing={3}
@@ -2601,6 +2754,10 @@ class CheckCheck_ extends React.Component {
                 summ_chef={summ_chef}
                 save_comment={this.save_comment}
                 acces_comment={acces.comment_access}
+                point={point}
+                getData={this.getData}
+                openAlert={this.openAlert}
+                refreshOrders={this.getOrders}
               />
             </Grid>
           )}
