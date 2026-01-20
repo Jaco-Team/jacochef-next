@@ -17,6 +17,7 @@ import Accordion from "@mui/material/Accordion";
 import Box from "@mui/material/Box";
 import EditIcon from "@mui/icons-material/Edit";
 import IconButton from "@mui/material/IconButton";
+import AddIcon from "@mui/icons-material/Add";
 
 export default class ErrCatsTable extends Component {
   parseSiteCats(csv) {
@@ -35,7 +36,7 @@ export default class ErrCatsTable extends Component {
 
     list.forEach((item) => {
       if (item.parent_id) {
-        map[item.parent_id].children.push(map[item.id]);
+        map[item.parent_id]?.children.push(map[item.id]);
       } else {
         roots.push(map[item.id]);
       }
@@ -93,20 +94,65 @@ export default class ErrCatsTable extends Component {
                 >
                   {node.name}
                 </Typography>
-
+                <Box
+                  component="div"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    this.props.openNewModalCats(node.id, true);
+                  }}
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                    backgroundColor: "transparent",
+                    border: "none",
+                    margin: 0,
+                    padding: "8px",
+                    cursor: "pointer",
+                    borderRadius: "50%",
+                    "&:hover": {
+                      backgroundColor: "action.hover",
+                    },
+                  }}
+                >
+                  <AddIcon
+                    fontSize="small"
+                    style={{ color: "#a29999" }}
+                  />
+                </Box>
                 <Switch
                   checked={parseInt(node.is_active) === 1}
                   onChange={() => this.props.changeActive(node)}
                   style={{ paddingRight: hasChildren ? "0" : `${level > 1 ? level + 8 : 10}px` }}
                 />
-                <IconButton
+                <Box
+                  component="div"
                   onClick={(e) => {
                     e.stopPropagation();
                     this.props.openModal(node.id);
                   }}
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                    backgroundColor: "transparent",
+                    border: "none",
+                    margin: 0,
+                    padding: "8px",
+                    cursor: "pointer",
+                    borderRadius: "50%",
+                    "&:hover": {
+                      backgroundColor: "action.hover",
+                    },
+                  }}
                 >
-                  <EditIcon />
-                </IconButton>
+                  <EditIcon
+                    fontSize="small"
+                    style={{ color: "#a29999" }}
+                  />
+                </Box>
               </AccordionSummary>
 
               {hasChildren && (
@@ -142,12 +188,11 @@ export default class ErrCatsTable extends Component {
                   flex: 1,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
-                  ml: 3,
+                  ml: level ? 3 : 0,
                 }}
               >
                 {node.name}
               </Typography>
-
               <Switch
                 checked={parseInt(node.is_active) === 1}
                 onChange={() => this.props.changeActive(node)}

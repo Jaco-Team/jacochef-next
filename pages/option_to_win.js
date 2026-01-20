@@ -59,6 +59,7 @@ class OptionToWin_ extends React.Component {
       catItem: null,
       catName: "",
       solutions: [],
+      parentValue: false,
 
       items: [],
 
@@ -247,12 +248,16 @@ class OptionToWin_ extends React.Component {
     });
   }
 
-  async openCatsModal(title, mark, id = null) {
-    const catItem = this.state.err_cats?.find((c) => +c.id === +id) || null;
+  async openCatsModal(title, mark, id = null, parentValue = false) {
+    let catItem = this.state.err_cats?.find((c) => +c.id === +id) || null;
     const itemName = catItem?.name || "";
+    if (parentValue) {
+      catItem = { ...catItem, name: "" };
+    }
     this.setState({
       mark,
       modalCats: true,
+      parentValue,
       modalCatsTitle: title,
       itemName,
       catItem,
@@ -338,6 +343,7 @@ class OptionToWin_ extends React.Component {
           catName={this.state.catName}
           errCats={this.state.err_cats}
           siteCats={this.state.site_cats}
+          parentValue={this.state.parentValue}
           solutions={this.state.solutions}
           allStages={this.state.all_stages}
           item={this.state.catItem}
@@ -380,6 +386,7 @@ class OptionToWin_ extends React.Component {
               errCats={this.state.err_cats}
               siteCats={this.state.site_cats}
               openModal={this.openCatsModal.bind(this, "Редактировать", "editCat")}
+              openNewModalCats={this.openCatsModal.bind(this, "Новая категория", "addCat")}
               changeActive={this.changeCatActive.bind(this)}
             />
           </Grid>

@@ -50,6 +50,7 @@ export default function CatsModal({
   allStages = [],
   item = null,
   canDelete = true,
+  parentValue = {},
 }) {
   const empty = {
     name: "",
@@ -76,11 +77,15 @@ export default function CatsModal({
 
   const normalizeSiteCats = (input) => {
     if (!input) return [];
-    if (Array.isArray(input)) {
-      if (typeof input[0] === "object") return input;
-      return input.map(String);
+
+    // Если уже объекты — вернуть как есть (для отображения)
+    if (Array.isArray(input) && input.length > 0 && typeof input[0] === "object") {
+      return input;
     }
-    return splitCsv(input);
+
+    // Иначе — обрабатываем как CSV/массив строк/чисел
+    const ids = Array.isArray(input) ? input : splitCsv(input);
+    return ids.map(String).filter((s) => s.trim() !== "");
   };
 
   const parentSiteCats = useMemo(() => {
@@ -96,17 +101,32 @@ export default function CatsModal({
   }, [cat1, errCats, siteCats]);
 
   const itemSiteCats = useMemo(() => {
+    let sourceIds;
+
     if (isCreate && cat1 > 0) {
-      return parentSiteCats;
+      // Берём ID из родителя
+      const parentCat = errCats.find((x) => x.id === cat1);
+      if (parentCat) {
+        sourceIds = normalizeSiteCats(parentCat.site_cats || []);
+        // Если normalize вернул объекты — извлекаем ID
+        if (sourceIds.length > 0 && typeof sourceIds[0] === "object") {
+          sourceIds = sourceIds.map((item) => String(item.id));
+        }
+      } else {
+        sourceIds = [];
+      }
+    } else {
+      sourceIds = normalizeSiteCats(localItem?.site_cats || []);
+      if (sourceIds.length > 0 && typeof sourceIds[0] === "object") {
+        sourceIds = sourceIds.map((item) => String(item.id));
+      }
     }
 
-    const normalized = normalizeSiteCats(localItem?.site_cats || []);
-    if (!normalized.length) return [];
-
-    if (typeof normalized[0] === "object") return normalized;
-
-    return normalized.map((id) => siteCats.find((sc) => +sc.id === +id)).filter(Boolean);
-  }, [localItem?.site_cats, siteCats, isCreate, cat1, parentSiteCats]);
+    // Преобразуем ID в объекты для Autocomplete
+    return sourceIds
+      .map((id) => siteCats.find((sc) => String(sc.id) === String(id)))
+      .filter(Boolean);
+  }, [localItem?.site_cats, siteCats, isCreate, cat1, errCats]);
 
   useEffect(() => {
     if (!open) return;
@@ -122,6 +142,16 @@ export default function CatsModal({
     setLocalItem(item);
 
     const parent = errCats.find((x) => x.id === item?.parent_id);
+
+    if (parentValue && item?.parent_id) {
+      setCat1(item?.parent_id);
+      setCat2(item.id);
+      return;
+    } else if (parentValue && item?.parent_id === null) {
+      setCat1(item?.id);
+      setCat2(0);
+      return;
+    }
 
     if (!parent) {
       setCat1(0);
@@ -172,8 +202,18 @@ export default function CatsModal({
     if (id > 0 && isCreate) {
       const parentCat = errCats.find((x) => x.id === id);
       if (parentCat) {
-        const normalized = normalizeSiteCats(parentCat.site_cats || []);
-        setLocalItem((prev) => ({ ...prev, site_cats: normalized }));
+        // Извлекаем ТОЛЬКО ID (как строки или числа)
+        const rawIds = normalizeSiteCats(parentCat.site_cats || []); // это может быть [str, str] или [obj, obj]
+
+        // Приводим к массиву ID (строки)
+        let siteCatIds;
+        if (rawIds.length > 0 && typeof rawIds[0] === "object") {
+          siteCatIds = rawIds.map((item) => String(item.id));
+        } else {
+          siteCatIds = rawIds.map(String); // гарантируем строки
+        }
+
+        setLocalItem((prev) => ({ ...prev, site_cats: siteCatIds }));
       }
     }
   };
@@ -188,15 +228,14 @@ export default function CatsModal({
   };
 
   const handleSave = () => {
-    const saveData = { ...localItem, parent_id: finalParent };
-
-    if (
-      Array.isArray(saveData.site_cats) &&
-      saveData.site_cats.length > 0 &&
-      typeof saveData.site_cats[0] === "object"
-    ) {
-      saveData.site_cats = saveData.site_cats.map((item) => item.id);
-    }
+    console.log(localItem.site_cats);
+    const saveData = {
+      ...localItem,
+      parent_id: finalParent,
+      site_cats: Array.isArray(localItem.site_cats)
+        ? localItem.site_cats.join(",")
+        : localItem.site_cats,
+    };
 
     save(saveData);
     handleClose();
@@ -248,7 +287,6 @@ export default function CatsModal({
               func={(e) => update("name", e.target.value)}
             />
           </Grid>
-
           <Grid size={{ xs: 12, sm: 6 }}>
             <MyAutocomplite
               label="Категории сайта"
@@ -256,7 +294,9 @@ export default function CatsModal({
               data={siteCats || []}
               value={itemSiteCats}
               func={handleSiteCatsChange}
-              disabled={!isCreate && localItem.parent_id > 0}
+              disabled={
+                (!isCreate && localItem.parent_id > 0) || (isCreate && localItem.parent_id > 0)
+              }
             />
           </Grid>
 
@@ -279,7 +319,6 @@ export default function CatsModal({
                 data={[{ id: 0, name: "Главная" }, ...childCats]}
                 value={subVal ?? null}
                 func={handleSub}
-                disabled={!isCreate}
               />
             </Grid>
           )}
@@ -353,14 +392,8 @@ export default function CatsModal({
         </Grid>
       </DialogContent>
 
-      <DialogActions>
-        <Button
-          color="primary"
-          onClick={handleSave}
-        >
-          {isCreate ? "Добавить" : "Сохранить"}
-        </Button>
-        {canDelete && !isCreate && (
+      <DialogActions style={{ display: "flex", justifyContent: "space-between" }}>
+        {canDelete && !isCreate ? (
           <Button
             variant="contained"
             color="error"
@@ -368,7 +401,15 @@ export default function CatsModal({
           >
             Удалить
           </Button>
+        ) : (
+          <div></div>
         )}
+        <Button
+          color="primary"
+          onClick={handleSave}
+        >
+          {isCreate ? "Добавить" : "Сохранить"}
+        </Button>
       </DialogActions>
     </Dialog>
   );
