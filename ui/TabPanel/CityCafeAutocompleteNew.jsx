@@ -33,23 +33,43 @@ const cityNames = {
 
 const ALL_OPTION = { id: "__ALL__", name: "Все кафе", cityId: null, cityName: null };
 
-const TopPopper = (props) => {
+const TopPopper = React.memo((props) => {
+  const { open, anchorEl, ...rest } = props;
+  const [frozenPosition, setFrozenPosition] = React.useState(null);
+
+  React.useEffect(() => {
+    if (open && anchorEl && !frozenPosition) {
+      const rect = anchorEl.getBoundingClientRect();
+      setFrozenPosition({
+        top: rect.top + window.scrollY + 75,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+
+    if (!open) {
+      setFrozenPosition(null);
+    }
+  }, [open, anchorEl]);
+
+  if (!open) return null;
+
   return (
-    <Popper
-      {...props}
-      placement="top"
-      sx={{ top: 100 }}
-      modifiers={[
-        {
-          name: "offset",
-          options: {
-            offset: [0, -80], // [x, y] - сдвиг по горизонтали и вертикали
-          },
-        },
-      ]}
-    />
+    <div
+      style={{
+        position: "fixed",
+        top: frozenPosition ? frozenPosition.top - 80 : 0,
+        left: frozenPosition?.left || 0,
+        width: frozenPosition?.width || "auto",
+        zIndex: 1500,
+        pointerEvents: "auto",
+      }}
+      ref={rest.popperRef}
+    >
+      {props.children}
+    </div>
   );
-};
+});
 
 const CustomPaper = React.memo(
   React.forwardRef(function CustomPaper(
@@ -565,19 +585,6 @@ export default function CityCafeAutocompleteNew({
 
             return (
               <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: "#49454f",
-                    display: "flex",
-                    alignItems: "center",
-                    m: 1,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {count === 1 && value[0]?.id === "__ALL__" ? filteredCafes.length : 1} кафе
-                </Typography>
-
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                   {value.map((option, index) => {
                     const { key, ...tagProps } = getTagProps({ index });
@@ -631,7 +638,6 @@ export default function CityCafeAutocompleteNew({
             <TextField
               {...params}
               label={label}
-              placeholder={placeholder}
               onClick={(e) => {
                 e.stopPropagation();
                 if (!disabled && !open) {
