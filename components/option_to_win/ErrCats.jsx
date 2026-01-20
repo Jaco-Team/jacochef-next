@@ -138,7 +138,7 @@ export default class ErrCatsTable extends Component {
                 variant="body1"
                 fontWeight={level < 2 ? 600 : 400}
                 sx={{
-                  cursor: "pointer",
+                  cursor: "default",
                   flex: 1,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
