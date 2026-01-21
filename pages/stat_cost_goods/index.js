@@ -302,102 +302,106 @@ function LkPage() {
         {data.length ? (
           <>
             {data.map((it, k) => (
-              <Accordion key={k}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography>{it.name}</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  {it.data.map((it2, k2) => (
-                    <TableContainer>
-                      <Table style={{ border: "1px solid #e0e0e0", marginBottom: "24px" }}>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>#</TableCell>
-                            <TableCell
-                              sx={{
-                                borderLeft: "none",
-                                minWidth: 250,
-                                width: 250,
-                              }}
-                            >
-                              Товар
-                            </TableCell>
-                            {it2.data.map((it3) => (
-                              <TableCell
-                                sx={{
-                                  textAlign: "center",
-                                  borderLeft: "none",
-                                  minWidth: 100,
-                                  width: 400,
-                                }}
-                              >
-                                {it3.date_create}
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          <TableCell>{k2 + 1}</TableCell>
-                          <TableCell
-                            sx={{
-                              borderLeft: "none",
-                              minWidth: 250,
-                              width: 250,
-                            }}
-                          >
-                            {it2.name}{" "}
-                            <IconButton onClick={() => openModalGrap(it2.data)}>
-                              <QueryStats />
-                            </IconButton>
-                          </TableCell>
-                          {it2.data.map((it3, k) => (
-                            <TableCell
-                              sx={{
-                                borderLeft: "none",
-                                minWidth: 100,
-                                width: 400,
-                                backgroundColor:
-                                  it2.data[k]?.percent > 0
-                                    ? "#BDECB6"
-                                    : it2.data[k]?.percent !== 0 &&
-                                        it2.data[k]?.percent !== undefined
-                                      ? "#CD5C5C"
-                                      : "#fbf3f3",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  alignItems: "center",
-                                }}
-                              >
-                                {it2.data[k]?.percent ? (
-                                  <h5
-                                    style={{
-                                      backgroundColor: "white",
-                                      fontColor: "bold",
-                                      padding: "4px",
+              <>
+                {it.data?.length ? (
+                  <Accordion key={k}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>{it.name}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      {it.data.map((it2, k2) => (
+                        <TableContainer>
+                          <Table style={{ border: "1px solid #e0e0e0", marginBottom: "24px" }}>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>#</TableCell>
+                                <TableCell
+                                  sx={{
+                                    borderLeft: "none",
+                                    minWidth: 250,
+                                    width: 250,
+                                  }}
+                                >
+                                  Товар
+                                </TableCell>
+                                {it2.data.map((it3) => (
+                                  <TableCell
+                                    sx={{
                                       textAlign: "center",
-                                      borderRadius: "12px",
-                                      marginBottom: "8px !important",
+                                      borderLeft: "none",
+                                      minWidth: 100,
+                                      width: 400,
                                     }}
                                   >
-                                    {it2.data[k]?.percent > 0
-                                      ? `↑ ${Math.abs(it2.data[k]?.percent)}%`
-                                      : `↓ ${Math.abs(it2.data[k]?.percent)}%`}
-                                  </h5>
-                                ) : null}
-                                <h3>{it3.one_price}</h3>
-                              </div>
-                            </TableCell>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  ))}
-                </AccordionDetails>
-              </Accordion>
+                                    {it3.date_create}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              <TableCell>{k2 + 1}</TableCell>
+                              <TableCell
+                                sx={{
+                                  borderLeft: "none",
+                                  minWidth: 250,
+                                  width: 250,
+                                }}
+                              >
+                                {it2.name}{" "}
+                                <IconButton onClick={() => openModalGrap(it2.data)}>
+                                  <QueryStats />
+                                </IconButton>
+                              </TableCell>
+                              {it2.data.map((it3, k) => (
+                                <TableCell
+                                  sx={{
+                                    borderLeft: "none",
+                                    minWidth: 100,
+                                    width: 400,
+                                    backgroundColor:
+                                      it2.data[k]?.percent > 0
+                                        ? "#BDECB6"
+                                        : it2.data[k]?.percent !== 0 &&
+                                            it2.data[k]?.percent !== undefined
+                                          ? "#CD5C5C"
+                                          : "#fbf3f3",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    {it2.data[k]?.percent ? (
+                                      <h5
+                                        style={{
+                                          backgroundColor: "white",
+                                          fontColor: "bold",
+                                          padding: "4px",
+                                          textAlign: "center",
+                                          borderRadius: "12px",
+                                          marginBottom: "8px !important",
+                                        }}
+                                      >
+                                        {it2.data[k]?.percent > 0
+                                          ? `↑ ${Math.abs(it2.data[k]?.percent)}%`
+                                          : `↓ ${Math.abs(it2.data[k]?.percent)}%`}
+                                      </h5>
+                                    ) : null}
+                                    <h3>{it3.one_price}</h3>
+                                  </div>
+                                </TableCell>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      ))}
+                    </AccordionDetails>
+                  </Accordion>
+                ) : null}
+              </>
             ))}
           </>
         ) : null}

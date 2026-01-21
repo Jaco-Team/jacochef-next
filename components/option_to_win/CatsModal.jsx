@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { MyAutocomplite, MyTextInput, MyCheckBox } from "@/ui/Forms";
+import { ModalAccept } from "@/components/general/ModalAccept";
 
 const splitCsv = (input) => {
   if (!input) return [];
@@ -264,6 +265,7 @@ export default function CatsModal({
   const parentVal = topLevel?.find((x) => x.id === cat1) || null;
   const subVal =
     cat2 === 0 ? { id: 0, name: "Главная" } : childCats?.find((x) => +x.id === +cat2) || null;
+  const [openDelete, setOpenDelete] = useState(false);
 
   return (
     <Dialog
@@ -273,6 +275,17 @@ export default function CatsModal({
       fullWidth
       maxWidth="lg"
     >
+      {openDelete && (
+        <ModalAccept
+          open={openDelete}
+          onClose={() => setOpenDelete(false)}
+          title="Удалить категорию?"
+          save={() => {
+            handleRemove();
+            setOpenDelete(false);
+          }}
+        />
+      )}
       <DialogTitle className="button">
         {title}
         {itemName ? `: ${itemName}` : null}
@@ -303,7 +316,9 @@ export default function CatsModal({
               value={itemSiteCats}
               func={handleSiteCatsChange}
               disabled={
-                (!isCreate && localItem.parent_id > 0) || (isCreate && localItem.parent_id > 0)
+                (!isCreate && localItem.parent_id > 0) ||
+                (isCreate && localItem.parent_id > 0) ||
+                (parentValue && level === 1)
               }
             />
           </Grid>
@@ -404,7 +419,7 @@ export default function CatsModal({
           <Button
             variant="contained"
             color="error"
-            onClick={handleRemove}
+            onClick={() => setOpenDelete(true)}
           >
             Удалить
           </Button>
