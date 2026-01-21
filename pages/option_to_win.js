@@ -3,14 +3,6 @@ import React from "react";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 
-import IconButton from "@mui/material/IconButton";
-import CloseIcon from "@mui/icons-material/Close";
-
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -27,6 +19,7 @@ import { api, api_laravel, api_laravel_local } from "@/src/api_new";
 import ErrCats from "@/components/option_to_win/ErrCats";
 import OptionToWin_Modal from "@/components/option_to_win/OptionToWin_Modal";
 import CatsModal from "@/components/option_to_win/CatsModal";
+import MyAlert from "@/ui/MyAlert";
 
 const toCsv = (v) =>
   !v
@@ -56,6 +49,9 @@ class OptionToWin_ extends React.Component {
 
       modalCats: false,
       modalCatsTitle: "",
+      openAlert: false,
+      err_status: true,
+      err_text: "",
       catItem: null,
       catName: "",
       solutions: [],
@@ -176,6 +172,7 @@ class OptionToWin_ extends React.Component {
   async save(item) {
     try {
       // LEGACY
+      console.log(this.state.mark);
       this.setState({ is_load: true });
       if (this.state.mark === "newItem") {
         const data = item;
@@ -202,7 +199,7 @@ class OptionToWin_ extends React.Component {
         return;
       }
       // CATS
-      const type = item.id ? "editCat" : "addCat";
+      const type = item.id && !this.state.parentValue ? "editCat" : "addCat";
       const properSiteCats = Array.isArray(item?.site_cats)
         ? item?.site_cats?.map((c) => c.id).join(",") || null
         : item?.site_cats;
@@ -218,11 +215,23 @@ class OptionToWin_ extends React.Component {
       };
       if (type === "editCat") {
         const res = await this.getData("update_cat", request);
-        if (!res?.st) throw new Error(res?.text || "Ошибка сохранения категории");
+        if (!res?.st) {
+          this.setState({
+            openAlert: true,
+            err_status: res.st,
+            err_text: res.text,
+          });
+        }
       }
       if (type === "addCat") {
         const res = await this.getData("add_cat", request);
-        if (!res?.st) throw new Error(res?.text || "Ошибка добавления категории");
+        if (!res?.st) {
+          this.setState({
+            openAlert: true,
+            err_status: res.st,
+            err_text: res.text,
+          });
+        }
       }
     } catch (e) {
       console.error(e?.message || "ERROOORRR");
@@ -254,6 +263,7 @@ class OptionToWin_ extends React.Component {
     if (parentValue) {
       catItem = { ...catItem, name: "" };
     }
+    console.log(mark);
     this.setState({
       mark,
       modalCats: true,
@@ -325,6 +335,12 @@ class OptionToWin_ extends React.Component {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
 
         <OptionToWin_Modal
           open={this.state.modalDialog}

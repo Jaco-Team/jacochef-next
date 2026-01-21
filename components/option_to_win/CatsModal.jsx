@@ -74,6 +74,7 @@ export default function CatsModal({
   const [cat1, setCat1] = useState(0);
   const [cat2, setCat2] = useState(0);
   const [isCreate, setIsCreate] = useState(false);
+  const [level, setLevel] = useState(0);
 
   const normalizeSiteCats = (input) => {
     if (!input) return [];
@@ -135,6 +136,7 @@ export default function CatsModal({
       setIsCreate(true);
       setCat1(0);
       setCat2(0);
+      setLevel(1);
       return;
     }
 
@@ -146,27 +148,34 @@ export default function CatsModal({
     if (parentValue && item?.parent_id) {
       setCat1(item?.parent_id);
       setCat2(item.id);
+      setLevel(2);
+      setIsCreate(true);
       return;
     } else if (parentValue && item?.parent_id === null) {
       setCat1(item?.id);
       setCat2(0);
+      setLevel(1);
+      setIsCreate(true);
       return;
     }
 
     if (!parent) {
       setCat1(0);
       setCat2(0);
+      setLevel(1);
       return;
     }
 
     if (parent.parent_id === null) {
       setCat1(parent.id);
       setCat2(0);
+      setLevel(1);
       return;
     }
 
     setCat1(parent.parent_id);
     setCat2(parent.id);
+    setLevel(2);
   }, [open, item, errCats]);
 
   const itemSolutions = useMemo(
@@ -228,7 +237,6 @@ export default function CatsModal({
   };
 
   const handleSave = () => {
-    console.log(localItem.site_cats);
     const saveData = {
       ...localItem,
       parent_id: finalParent,
@@ -311,7 +319,7 @@ export default function CatsModal({
             />
           </Grid>
 
-          {cat1 !== 0 && (
+          {level === 2 && (
             <Grid size={{ xs: 12, sm: 6 }}>
               <MyAutocomplite
                 label="Подкатегория"
@@ -323,7 +331,6 @@ export default function CatsModal({
             </Grid>
           )}
 
-          {/* SHOW ONLY WHEN CATEGORY 2 IS CHOSEN */}
           {cat2 !== 0 && (
             <>
               {/* Варианты решения */}

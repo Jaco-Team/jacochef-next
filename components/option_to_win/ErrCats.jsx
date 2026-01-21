@@ -193,6 +193,35 @@ export default class ErrCatsTable extends Component {
               >
                 {node.name}
               </Typography>
+              {level < 2 ? (
+                <Box
+                  component="div"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    this.props.openNewModalCats(node.id, true);
+                  }}
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                    backgroundColor: "transparent",
+                    border: "none",
+                    margin: 0,
+                    padding: "8px",
+                    cursor: "pointer",
+                    borderRadius: "50%",
+                    "&:hover": {
+                      backgroundColor: "action.hover",
+                    },
+                  }}
+                >
+                  <AddIcon
+                    fontSize="small"
+                    style={{ color: "#a29999" }}
+                  />
+                </Box>
+              ) : null}
               <Switch
                 checked={parseInt(node.is_active) === 1}
                 onChange={() => this.props.changeActive(node)}
