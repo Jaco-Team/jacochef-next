@@ -1,6 +1,12 @@
 "use client";
 
-import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
+import {
+  MyAutoCompleteWithAll,
+  MyAutocomplite,
+  MyCheckBox,
+  MyDatePickerNew,
+  MyTextInput,
+} from "@/ui/Forms";
 import { Button, Grid, IconButton, Tooltip, Typography } from "@mui/material";
 import { useSiteClientsStore } from "../useSiteClientsStore";
 import { useClientHistoryStore } from "./useClientHistoryStore";
@@ -161,8 +167,8 @@ function ClientHistory({ getData, showAlert, canAccess }) {
         numeric: true,
         formatRaw: (value) => value,
       },
-      { key: "total_orders", label: "Всего заказов", numeric: true },
       { key: "total_orders_range", label: "Заказов за период", numeric: true },
+      { key: "total_orders", label: "Всего заказов", numeric: true },
       {
         key: "avg_check",
         label: "Средний чек",
@@ -359,12 +365,13 @@ function ClientHistory({ getData, showAlert, canAccess }) {
             sm: 4,
           }}
         >
-          <MyAutocomplite
+          <MyAutoCompleteWithAll
+            withAll={true}
             label="Кто оформил"
             multiple={true}
-            data={order_types_all}
+            options={order_types_all}
             value={form.order_types}
-            func={(_, e) => setField("order_types", e)}
+            onChange={(e) => setField("order_types", e)}
           />
         </Grid>
 
