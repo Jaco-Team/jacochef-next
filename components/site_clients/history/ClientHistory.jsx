@@ -23,10 +23,9 @@ import { Clear, Download } from "@mui/icons-material";
 import dayjs from "dayjs";
 import { memo, useEffect, useMemo, useState } from "react";
 import { formatRUR } from "@/src/helpers/utils/i18n";
-import useMarketingClientStore from "../useMarketingClientStore";
-import SiteClientsClientModal from "../marketing/SiteClientsClientModal";
 import ModalOrder from "../ModalOrder";
-import { LoadingProvider } from "../marketing/useClientsLoadingContext";
+import { LoadingProvider } from "../useClientsLoadingContext";
+import HistoryClientModal from "./HistoryClientModal";
 
 const delivery_types = [
   { id: 1, name: "Доставка" },
@@ -60,6 +59,11 @@ function ClientHistory({ getData, showAlert, canAccess }) {
       label: "Источник",
       format: (value) => order_types_all.find((t) => t.id === value)?.name || value,
     },
+    {
+      key: "promo_name",
+      label: "Промокод",
+      format: (value) => value || "-",
+    },
     { key: "point_id", label: "Кафе", format: (value) => getPointAddress(value) },
     { key: "order_sum", label: "Сумма", format: (value) => formatRUR(value), numeric: true },
     { key: "total_orders", label: "Всего заказов", numeric: true },
@@ -77,7 +81,6 @@ function ClientHistory({ getData, showAlert, canAccess }) {
     points,
     items,
     number,
-    search_orders,
     date_start,
     date_end,
     orders_count,
@@ -85,16 +88,18 @@ function ClientHistory({ getData, showAlert, canAccess }) {
     update: updateMain,
   } = useSiteClientsStore();
 
-  const { refresh, refreshToken, clientHistory, update } = useClientHistoryStore();
-
   const {
+    refresh,
+    refreshToken,
+    clientHistory,
     order,
     setOrder,
     clientModalOpened,
     setClientModalOpened,
     isOrderModalOpen,
     setIsOrderModalOpen,
-  } = useMarketingClientStore();
+    update,
+  } = useClientHistoryStore();
 
   const getPointAddress = (point_id) => {
     const point = points.find((p) => p.id === point_id);
@@ -195,7 +200,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
 
   const openClient = async (login) => {
     if (!login) return;
-    const { setClientLogin, setClientModalOpened } = useMarketingClientStore.getState();
+    const { setClientLogin, setClientModalOpened } = useClientHistoryStore.getState();
     updateMain({ is_load: true });
     setClientLogin(login);
     setClientModalOpened(true);
@@ -211,7 +216,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
       setIsLoading={(is_load) => updateMain({ is_load })}
     >
       {clientModalOpened && (
-        <SiteClientsClientModal
+        <HistoryClientModal
           canAccess={canAccess}
           showAlert={showAlert}
           openOrder={openOrder}
@@ -268,7 +273,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
         >
           <MyTextInput
             type="number"
-            label="Заказов за период"
+            label="Заказов за период, от"
             value={orders_count}
             func={({ target }) => updateMain({ orders_count: target?.value })}
           />
@@ -288,7 +293,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
           <MyTextInput
             type="text"
             className="input_promo"
-            label="Промокод"
+            label="Промокод содержит"
             value={promo}
             func={({ target }) => updateMain({ promo: target?.value })}
             inputAdornment={
@@ -315,7 +320,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
         >
           <MyTextInput
             type="text"
-            label="UTM метка"
+            label="UTM содержит"
             value={order_utm}
             func={({ target }) => updateMain({ order_utm: target?.value })}
             inputAdornment={
@@ -377,12 +382,12 @@ function ClientHistory({ getData, showAlert, canAccess }) {
             Показать
           </Button>
 
-          {canAccess("download_file") && search_orders?.length > 0 && (
+          {canAccess("download_file") && clientHistory?.length > 0 && (
             <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
               <span>
                 <Button
                   variant="contained"
-                  sx={{ padding: 0, backgroundColor: "#3cb623ff" }}
+                  sx={{ backgroundColor: "#3cb623ff" }}
                   onClick={() => alert("Download")}
                 >
                   <Download />
@@ -432,7 +437,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
                       align={c.numeric ? "right" : "left"}
                     >
                       <Button
-                        size="small"
+                        // size="small"
                         variant="text"
                         onClick={() => openClient(row[c.key])}
                       >
@@ -455,6 +460,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
       </TableContainer>
       <TablePagination
         component="div"
+        labelRowsPerPage="Строк на странице:"
         count={sortedRows.length}
         page={page}
         onPageChange={(_, p) => setPage(p)}

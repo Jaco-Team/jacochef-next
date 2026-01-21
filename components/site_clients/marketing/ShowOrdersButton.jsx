@@ -3,7 +3,7 @@
 import { Button } from "@mui/material";
 import useMarketingTabStore from "./useMarketingTabStore";
 import { memo } from "react";
-import { useLoading } from "./useClientsLoadingContext";
+import { useLoading } from "../useClientsLoadingContext";
 
 function ShowOrdersButton({ orders, modalTitle }) {
   const ids = orders.map((o) => o.order_id ?? o);
