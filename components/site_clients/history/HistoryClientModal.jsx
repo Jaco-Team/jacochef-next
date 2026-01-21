@@ -37,11 +37,14 @@ import useXLSExport from "@/src/hooks/useXLSXExport";
 import formatPrice from "@/src/helpers/ui/formatPrice";
 import { useLoading } from "../useClientsLoadingContext";
 import { useClientHistoryStore } from "./useClientHistoryStore";
+import { delivery_types, order_types_all } from "../config";
+import { formatYMD } from "@/src/helpers/ui/formatDate";
 
 dayjs.locale("ru");
 
 function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) {
-  const { clientLogin, setClientModalOpened, setClientHistory } = useClientHistoryStore();
+  const { client, clientLogin, clientLoading, setClientModalOpened } = useClientHistoryStore();
+  const clientInfo = client?.client_info;
 
   // global isLoading
   const { isLoading, setIsLoading } = useLoading();
@@ -129,11 +132,6 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
   // fullscreen hook
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
-
-  // rendering subscriptions
-  const client = useClientHistoryStore((state) => state.client);
-  const clientInfo = useClientHistoryStore((state) => state.client?.client_info);
-  const clientLoading = useClientHistoryStore((state) => state.clientLoading);
 
   return (
     <>
@@ -469,7 +467,7 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                                 key={col.key}
                                 align={col.numeric ? "right" : "left"}
                               >
-                                {col.format ? col.format(item) : (item[col.key] ?? "-")}
+                                {col.format ? col.format(item[col.key]) : (item[col.key] ?? "-")}
                               </TableCell>
                             ))}
                           </TableRow>
@@ -500,26 +498,53 @@ export default memo(HistoryClientModal);
 
 const ordersColumns = [
   {
+    label: "Дата заказа",
+    key: "date_time",
+    format: (v) => formatYMD(v),
+  },
+  {
+    label: "ID заказа",
+    key: "order_id",
+    format: (v) => `#${v}`,
+  },
+  {
     label: "Кафе",
     key: "point_addr",
   },
   {
     label: "Тип заказа",
     key: "new_type_order",
+    format: (v) => delivery_types.find((t) => t.id === Number(v))?.name || "Неизвестно",
   },
   {
-    label: "Дата заказа",
-    key: "date_time",
+    label: "Источник",
+    key: "is_client",
+    format: (v) => order_types_all.find((t) => t.id === Number(v))?.name || "Неизвестно",
   },
   {
-    label: "ID заказа",
-    key: "order_id",
-    format: (row) => `#${row.order_id}`,
+    label: "UTM",
+    key: "utm",
   },
+  {
+    label: "Прокод",
+    key: "promo_name",
+  },
+  {
+    label: "Позиции",
+    key: "items",
+    format: (v) =>
+      (
+        <div style={{ fontSize: ".7rem" }}>
+          {v.reduce((acc, item) => `${acc} ${item.name}: ${item.count};`, "")}
+        </div>
+      ) || "",
+    formatRaw: (v) => v.reduce((acc, item) => `${acc} ${item.name}: ${item.count};`, "") || "",
+  },
+
   {
     label: "Сумма",
     key: "summ",
     numeric: true,
-    format: (row) => `${row.summ} р.`,
+    format: (v) => `${v} р.`,
   },
 ];

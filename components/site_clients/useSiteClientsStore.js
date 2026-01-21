@@ -127,7 +127,7 @@ const defaultState = {
 
   orders_recursive: null,
 
-  orders_count: 1,
+  orders_count: 0,
   order_utm: "",
 
   promo_dr: false,

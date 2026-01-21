@@ -1,93 +1,56 @@
 "use client";
 
 import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
-import {
-  Button,
-  Grid,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TableSortLabel,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Button, Grid, IconButton, Tooltip, Typography } from "@mui/material";
 import { useSiteClientsStore } from "../useSiteClientsStore";
 import { useClientHistoryStore } from "./useClientHistoryStore";
 import { Clear, Download } from "@mui/icons-material";
 import dayjs from "dayjs";
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { formatRUR } from "@/src/helpers/utils/i18n";
 import ModalOrder from "../ModalOrder";
 import { LoadingProvider } from "../useClientsLoadingContext";
 import HistoryClientModal from "./HistoryClientModal";
-
-const delivery_types = [
-  { id: 1, name: "Доставка" },
-  { id: 2, name: "Самовывоз" },
-  { id: 3, name: "В зале" },
-  { id: 4, name: "На вынос" },
-];
-
-const order_types_all = [
-  { id: 0, name: "Кафе" },
-  { id: 1, name: "КЦ" },
-  { id: 2, name: "Сайт" },
-];
+import { delivery_types, order_types_all } from "../config";
+import { formatYMD } from "@/src/helpers/ui/formatDate";
+import useXLSExport from "@/src/hooks/useXLSXExport";
+import ClientHistoryTable from "./ClientHistoryTable";
 
 function ClientHistory({ getData, showAlert, canAccess }) {
-  const columns = [
-    // { key: "order_id", label: "Заказ" },
-    {
-      key: "date_time_order",
-      label: "Дата",
-      format: (value) => <div style={{ fontSize: 10 }}>{value}</div>,
-    },
-    { key: "number", label: "Клиент" },
-    {
-      key: "type_order",
-      label: "Тип",
-      format: (value) => delivery_types.find((t) => t.id === value)?.name || value,
-    },
-    {
-      key: "is_client",
-      label: "Источник",
-      format: (value) => order_types_all.find((t) => t.id === value)?.name || value,
-    },
-    {
-      key: "promo_name",
-      label: "Промокод",
-      format: (value) => value || "-",
-    },
-    { key: "point_id", label: "Кафе", format: (value) => getPointAddress(value) },
-    { key: "order_sum", label: "Сумма", format: (value) => formatRUR(value), numeric: true },
-    { key: "total_orders", label: "Всего заказов", numeric: true },
-    { key: "avg_check", label: "Средний чек", format: (value) => formatRUR(value), numeric: true },
-    { key: "days_from_first", label: "Дней с первого", numeric: true },
-    { key: "days_from_last", label: "Дней с последнего", numeric: true },
-  ];
-
+  //// bind to main module store
   const {
     is_load,
-    promo,
-    promo_dr,
-    order_types,
     all_items,
     points,
-    items,
-    number,
-    date_start,
-    date_end,
-    orders_count,
-    order_utm,
     update: updateMain,
-  } = useSiteClientsStore();
+  } = useSiteClientsStore((s) => ({
+    is_load: s.is_load,
+    all_items: s.all_items,
+    points: s.points,
+    update: s.update,
+  }));
 
+  // localizing form state for speed
+  const initialForm = useSiteClientsStore.getState();
+
+  const [form, setForm] = useState(() => ({
+    promo: initialForm.promo,
+    promo_dr: initialForm.promo_dr,
+    order_types: initialForm.order_types,
+    items: initialForm.items,
+    number: initialForm.number,
+    date_start: initialForm.date_start,
+    date_end: initialForm.date_end,
+    orders_count: initialForm.orders_count,
+    order_utm: initialForm.order_utm,
+  }));
+
+  const setField = (key, value) => {
+    setForm((f) => ({ ...f, [key]: value }));
+  };
+  //
+
+  //// submodule store
   const {
     refresh,
     refreshToken,
@@ -99,57 +62,138 @@ function ClientHistory({ getData, showAlert, canAccess }) {
     isOrderModalOpen,
     setIsOrderModalOpen,
     update,
-  } = useClientHistoryStore();
-
-  const getPointAddress = (point_id) => {
-    const point = points.find((p) => p.id === point_id);
-    return point ? point.name : point_id;
-  };
-
-  // sorting and pagination
-  const [orderBy, setOrderBy] = useState("date_time_order");
-  const [orderDir, setOrderDir] = useState("desc");
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
-  const sortedRows = useMemo(() => {
-    const rows = [...clientHistory];
-    rows.sort((a, b) => {
-      const av = a[orderBy];
-      const bv = b[orderBy];
-
-      if (av == null && bv == null) return 0;
-      if (av == null) return 1;
-      if (bv == null) return -1;
-
-      if (typeof av === "number" && typeof bv === "number") {
-        return orderDir === "asc" ? av - bv : bv - av;
-      }
-
-      return orderDir === "asc"
-        ? String(av).localeCompare(String(bv))
-        : String(bv).localeCompare(String(av));
-    });
-    return rows;
-  }, [clientHistory, orderBy, orderDir]);
-
-  const pagedRows = useMemo(() => {
-    const start = page * rowsPerPage;
-    return sortedRows.slice(start, start + rowsPerPage);
-  }, [sortedRows, page, rowsPerPage]);
-
-  const onSort = (key) => {
-    if (orderBy === key) {
-      setOrderDir((v) => (v === "asc" ? "desc" : "asc"));
-    } else {
-      setOrderBy(key);
-      setOrderDir("asc");
-    }
-  };
-
+  } = useClientHistoryStore((s) => ({
+    refresh: s.refresh,
+    refreshToken: s.refreshToken,
+    clientHistory: s.clientHistory,
+    order: s.order,
+    setOrder: s.setOrder,
+    clientModalOpened: s.clientModalOpened,
+    setClientModalOpened: s.setClientModalOpened,
+    isOrderModalOpen: s.isOrderModalOpen,
+    setIsOrderModalOpen: s.setIsOrderModalOpen,
+    update: s.update,
+  }));
   //
+
+  const getPointAddress = useCallback(
+    (point_id) => {
+      const point = points.find((p) => p.id === point_id);
+      return point ? point.name : point_id;
+    },
+    [points],
+  );
+
+  const openOrder = useCallback(async (point_id, order_id) => {
+    try {
+      setOrder(null);
+      updateMain({ is_load: true });
+      const resData = await getData("get_order", { point_id, order_id });
+      console.log(resData);
+      if (!resData?.st) {
+        return showAlert(resData?.text || "Ошибка запроса заказа", false);
+      }
+      setOrder(resData);
+      setIsOrderModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching order:", error);
+    } finally {
+      updateMain({ is_load: false });
+    }
+  }, []);
+
+  const openClient = useCallback(async (login) => {
+    if (!login) return;
+    const { setClientLogin, setClientModalOpened } = useClientHistoryStore.getState();
+    updateMain({ is_load: true });
+    setClientLogin(login);
+    setClientModalOpened(true);
+  }, []);
+
+  const columns = useMemo(
+    () => [
+      // { key: "order_id", label: "Заказ" },
+      {
+        key: "date_time_order",
+        label: "Дата",
+        format: (value) => <div style={{ fontSize: ".7rem" }}>{formatYMD(value)}</div>,
+        formatRaw: (value) => value,
+      },
+      {
+        key: "number",
+        label: "Клиент",
+        format: (v) => (
+          <Button
+            // size="small"
+            variant="text"
+            onClick={() => openClient(v)}
+          >
+            {v}
+          </Button>
+        ),
+        formatRaw: (value) => String(value).replace(/^8/, "+7"),
+      },
+      {
+        key: "type_order",
+        label: "Тип",
+        format: (value) => delivery_types.find((t) => t.id === value)?.name || value,
+      },
+      {
+        key: "is_client",
+        label: "Источник",
+        format: (value) => order_types_all.find((t) => t.id === value)?.name || value,
+      },
+      {
+        key: "utm",
+        label: "UTM",
+        format: (value) => value || "-",
+      },
+      {
+        key: "promo_name",
+        label: "Промокод",
+        format: (value) => value || "-",
+      },
+      { key: "point_id", label: "Кафе", format: (value) => getPointAddress(value) },
+      {
+        key: "order_sum",
+        label: "Сумма",
+        format: (value) => formatRUR(value),
+        numeric: true,
+        formatRaw: (value) => value,
+      },
+      { key: "total_orders", label: "Всего заказов", numeric: true },
+      { key: "total_orders_range", label: "Заказов за период", numeric: true },
+      {
+        key: "avg_check",
+        label: "Средний чек",
+        format: (value) => formatRUR(value),
+        numeric: true,
+        formatRaw: (value) => value,
+      },
+      { key: "days_from_first", label: "Дней с первого", numeric: true },
+      { key: "days_from_last", label: "Дней с последнего", numeric: true },
+    ],
+    [getPointAddress, openClient],
+  );
+
   const getClientHistory = async () => {
-    const { refreshToken } = useClientHistoryStore.getState();
+    const {
+      date_start,
+      date_end,
+      number,
+      promo,
+      promo_dr,
+      order_types,
+      items,
+      orders_count,
+      order_utm,
+    } = useSiteClientsStore.getState();
+
+    const refreshToken = useClientHistoryStore.getState().refreshToken;
+
+    // validate
     if (!date_start || !date_end || !order_types?.length || !refreshToken) {
+      console.log("Skipping fetch client history due to missing params");
       return;
     }
     // TODO more variants to skip
@@ -169,42 +213,18 @@ function ClientHistory({ getData, showAlert, canAccess }) {
     if (!resData?.st) {
       return showAlert(resData?.text || "За период нет данных", false);
     }
-    update({ clientHistory: resData.history });
-    setPage(0);
+    update({ clientHistory: resData.history, page: 0 });
   };
 
   const applyRequest = () => {
-    if (!date_start || !date_end) {
+    if (!form.date_start || !form.date_end) {
       return showAlert("Пожалуйста, выберите обе даты", false);
     }
+    updateMain(form);
     refresh();
   };
 
-  const openOrder = async (point_id, order_id) => {
-    try {
-      setOrder(null);
-      updateMain({ is_load: true });
-      const resData = await getData("get_order", { point_id, order_id });
-      console.log(resData);
-      if (!resData?.st) {
-        return showAlert(resData?.text || "Ошибка запроса заказа", false);
-      }
-      setOrder(resData);
-      setIsOrderModalOpen(true);
-    } catch (error) {
-      console.error("Error fetching order:", error);
-    } finally {
-      updateMain({ is_load: false });
-    }
-  };
-
-  const openClient = async (login) => {
-    if (!login) return;
-    const { setClientLogin, setClientModalOpened } = useClientHistoryStore.getState();
-    updateMain({ is_load: true });
-    setClientLogin(login);
-    setClientModalOpened(true);
-  };
+  const exportXLSX = useXLSExport();
 
   useEffect(() => {
     getClientHistory();
@@ -243,9 +263,9 @@ function ClientHistory({ getData, showAlert, canAccess }) {
           <MyDatePickerNew
             label="Дата от"
             customActions={true}
-            value={dayjs(date_start)}
-            maxDate={dayjs(date_end) ?? dayjs()}
-            func={(e) => updateMain({ date_start: e })}
+            value={dayjs(form.date_start)}
+            maxDate={dayjs(form.date_end) ?? dayjs()}
+            func={(e) => setField("date_start", e)}
           />
         </Grid>
 
@@ -258,10 +278,10 @@ function ClientHistory({ getData, showAlert, canAccess }) {
           <MyDatePickerNew
             label="Дата до"
             customActions={true}
-            value={dayjs(date_end)}
-            minDate={dayjs(date_start)}
+            value={dayjs(form.date_end)}
+            minDate={dayjs(form.date_start)}
             maxDate={dayjs()}
-            func={(e) => updateMain({ date_end: e })}
+            func={(e) => setField("date_end", e)}
           />
         </Grid>
 
@@ -274,8 +294,8 @@ function ClientHistory({ getData, showAlert, canAccess }) {
           <MyTextInput
             type="number"
             label="Заказов за период, от"
-            value={orders_count}
-            func={({ target }) => updateMain({ orders_count: target?.value })}
+            value={form.orders_count}
+            func={({ target }) => setField("orders_count", target?.value)}
           />
         </Grid>
 
@@ -294,20 +314,20 @@ function ClientHistory({ getData, showAlert, canAccess }) {
             type="text"
             className="input_promo"
             label="Промокод содержит"
-            value={promo}
-            func={({ target }) => updateMain({ promo: target?.value })}
+            value={form.promo}
+            func={({ target }) => setField("promo", target?.value)}
             inputAdornment={
-              !promo ? null : (
+              !form.promo ? null : (
                 <IconButton>
-                  <Clear onClick={() => updateMain({ promo: "" })} />
+                  <Clear onClick={() => setField("promo", "")} />
                 </IconButton>
               )
             }
             sx={{ width: "55%" }}
           />
           <MyCheckBox
-            value={promo_dr}
-            func={({ target }) => updateMain({ promo_dr: Number(target?.checked) })}
+            value={form.promo_dr}
+            func={({ target }) => setField("promo_dr", Number(target?.checked) || 0)}
             label="Промик на ДР"
           />
         </Grid>
@@ -321,12 +341,12 @@ function ClientHistory({ getData, showAlert, canAccess }) {
           <MyTextInput
             type="text"
             label="UTM содержит"
-            value={order_utm}
-            func={({ target }) => updateMain({ order_utm: target?.value })}
+            value={form.order_utm}
+            func={({ target }) => setField("order_utm", target?.value)}
             inputAdornment={
-              !order_utm ? null : (
+              !form.order_utm ? null : (
                 <IconButton>
-                  <Clear onClick={() => updateMain({ order_utm: "" })} />
+                  <Clear onClick={() => setField("order_utm", "")} />
                 </IconButton>
               )
             }
@@ -343,8 +363,8 @@ function ClientHistory({ getData, showAlert, canAccess }) {
             label="Кто оформил"
             multiple={true}
             data={order_types_all}
-            value={order_types}
-            func={(_, e) => updateMain({ order_types: e })}
+            value={form.order_types}
+            func={(_, e) => setField("order_types", e)}
           />
         </Grid>
 
@@ -358,8 +378,8 @@ function ClientHistory({ getData, showAlert, canAccess }) {
             label="Позиции в заказе"
             multiple={true}
             data={all_items}
-            value={items}
-            func={(_, v) => updateMain({ items: v })}
+            value={form.items}
+            func={(_, v) => setField("items", v)}
           />
         </Grid>
 
@@ -388,7 +408,13 @@ function ClientHistory({ getData, showAlert, canAccess }) {
                 <Button
                   variant="contained"
                   sx={{ backgroundColor: "#3cb623ff" }}
-                  onClick={() => alert("Download")}
+                  onClick={() =>
+                    exportXLSX(
+                      sortedRows,
+                      columns,
+                      `client_history_${formatYMD(form.date_start)}-${formatYMD(form.date_end)}.xlsx`,
+                    )
+                  }
                 >
                   <Download />
                 </Button>
@@ -397,80 +423,14 @@ function ClientHistory({ getData, showAlert, canAccess }) {
           )}
         </Grid>
       </Grid>
-      <TableContainer
-        component={Paper}
-        sx={{ mt: 3, maxHeight: "50dvh" }}
-      >
-        <Table
-          size="small"
-          stickyHeader
-        >
-          <TableHead>
-            <TableRow>
-              {columns.map((c) => (
-                <TableCell
-                  key={c.key}
-                  align={c.numeric ? "right" : "left"}
-                >
-                  <TableSortLabel
-                    active={orderBy === c.key}
-                    direction={orderBy === c.key ? orderDir : "asc"}
-                    onClick={() => onSort(c.key)}
-                  >
-                    {c.label}
-                  </TableSortLabel>
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {pagedRows.map((row) => (
-              <TableRow
-                key={row.order_id}
-                hover
-              >
-                {columns.map((c) => {
-                  return c.key === "number" ? (
-                    <TableCell
-                      key={c.key}
-                      align={c.numeric ? "right" : "left"}
-                    >
-                      <Button
-                        // size="small"
-                        variant="text"
-                        onClick={() => openClient(row[c.key])}
-                      >
-                        {row[c.key]}
-                      </Button>
-                    </TableCell>
-                  ) : (
-                    <TableCell
-                      key={c.key}
-                      align={c.numeric ? "right" : "left"}
-                    >
-                      {c.format ? c.format(row[c.key]) : (row[c.key] ?? "-")}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <TablePagination
-        component="div"
-        labelRowsPerPage="Строк на странице:"
-        count={sortedRows.length}
-        page={page}
-        onPageChange={(_, p) => setPage(p)}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={(e) => {
-          setRowsPerPage(+e.target.value);
-          setPage(0);
-        }}
-        rowsPerPageOptions={[10, 25, 50]}
-      />
+      {!!clientHistory.length ? (
+        <ClientHistoryTable
+          columns={columns}
+          rows={clientHistory}
+        />
+      ) : (
+        <Typography sx={{ mt: 3 }}>Нет данных</Typography>
+      )}
     </LoadingProvider>
   );
 }

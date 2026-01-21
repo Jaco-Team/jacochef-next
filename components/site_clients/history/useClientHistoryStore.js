@@ -3,6 +3,9 @@ import { create } from "zustand";
 export const useClientHistoryStore = create((set) => ({
   refreshToken: false,
   clientHistory: [],
+  page: 1,
+  perPage: 50,
+  total: 0,
 
   clientLogin: null,
   client: null,
