@@ -17,7 +17,9 @@ import {
 } from "@mui/material";
 import Image from "next/image";
 import Office from "../../public/Office.png";
+import OfficeWhite from "../../public/OfficeWhite.png";
 import City from "../../public/City.png";
+import CityGray from "../../public/CityGray.png";
 import Spacing from "../../public/Spacing.png";
 import SearchIcon from "@mui/icons-material/Search";
 import { ExpandMore, ExpandLess } from "@mui/icons-material";
@@ -156,7 +158,7 @@ const CustomPaper = React.memo(
                 }}
               >
                 <Image
-                  src={City}
+                  src={groupMode === "city" ? City : CityGray}
                   alt=""
                   width={16}
                   height={16}
@@ -178,7 +180,7 @@ const CustomPaper = React.memo(
                 }}
               >
                 <Image
-                  src={Office}
+                  src={groupMode === "org" ? OfficeWhite : Office}
                   alt=""
                   width={16}
                   height={16}
@@ -191,7 +193,6 @@ const CustomPaper = React.memo(
           </Box>
         )}
 
-        {/* Select All row */}
         <Box
           sx={{
             px: 2,
@@ -208,33 +209,45 @@ const CustomPaper = React.memo(
               borderRadius: "6px",
               display: "flex",
               alignItems: "center",
-              border: "1px solid #CAC4D0",
               cursor: "pointer",
+              border: expanded.size > 0 ? "1px solid #CAC4D0" : "1px solid #cc0033",
             }}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
+
               setSearchQuery("");
 
-              const newExpanded = new Set();
+              const hasExpandedGroups = expanded.size > 0;
+              const allGroups = [];
+
               if (groupMode === "city") {
                 cafesByCity.forEach((cafes, cityId) => {
-                  if (cafes.length > 0) newExpanded.add(cityId);
+                  if (cafes.length > 0) allGroups.push(cityId);
                 });
               } else {
                 cafesByOrganization.forEach((cafes, orgName) => {
-                  if (cafes.length > 0) newExpanded.add(orgName);
+                  if (cafes.length > 0) allGroups.push(orgName);
                 });
               }
-              setExpanded(newExpanded);
+
+              if (hasExpandedGroups) {
+                setExpanded(new Set());
+              } else {
+                setExpanded(new Set(allGroups));
+              }
             }}
+            title={expanded.size > 0 ? "Скрыть все группы" : "Раскрыть все группы"}
           >
             <Image
               src={Spacing}
-              alt="Clear search"
+              alt={expanded.size > 0 ? "Скрыть все" : "Раскрыть все"}
               width={20}
               height={20}
               loading="lazy"
+              style={{
+                transition: "transform 0.2s ease",
+              }}
             />
           </button>
           <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -634,18 +647,44 @@ export default function CityCafeAutocompleteNew({
           disabled={disabled}
           autoFocus={autoFocus}
           filterOptions={(options) => options}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label={label}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!disabled && !open) {
-                  setOpen(true);
-                }
-              }}
-            />
-          )}
+          renderInput={(params) => {
+            const { InputProps, ...otherParams } = params;
+
+            const hasTags = actualValue.length > 0;
+
+            return (
+              <TextField
+                {...otherParams}
+                label={label}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!disabled && !open) {
+                    setOpen(true);
+                  }
+                }}
+                InputProps={{
+                  ...InputProps,
+                  className: hasTags
+                    ? InputProps.className
+                        ?.replace(/\s?MuiAutocomplete-input\s?/g, " ")
+                        .replace(/\s?MuiAutocomplete-inputFocused\s?/g, " ")
+                        .trim()
+                    : InputProps.className,
+                }}
+                sx={{
+                  "& .MuiInputBase-root": {
+                    minHeight: hasTags ? "auto" : undefined,
+                    alignItems: hasTags ? "flex-start" : "center",
+                    paddingTop: hasTags ? "4px" : undefined,
+                  },
+                  "& .MuiInputBase-input": {
+                    paddingTop: hasTags ? "2px" : undefined,
+                    paddingBottom: hasTags ? "2px" : undefined,
+                  },
+                }}
+              />
+            );
+          }}
           limitTags={6}
           getLimitTagsText={(more) => `+${more}`}
           size="small"
