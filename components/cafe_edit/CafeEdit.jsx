@@ -782,8 +782,6 @@ export default function CafeEdit() {
   };
 
   const save_kkt = async (data) => {
-    const type_modal = type_modal;
-
     data.point_id = point?.id;
 
     let res;
