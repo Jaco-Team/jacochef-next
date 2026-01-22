@@ -43,6 +43,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
     promo: initialForm.promo,
     promo_dr: initialForm.promo_dr,
     order_types: initialForm.order_types,
+    delivery_type: initialForm.delivery_type,
     items: initialForm.items,
     number: initialForm.number,
     date_start: initialForm.date_start,
@@ -190,6 +191,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
       promo,
       promo_dr,
       order_types,
+      delivery_type,
       items,
       orders_count,
       order_utm,
@@ -211,6 +213,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
       promo,
       promo_dr,
       order_types,
+      delivery_type,
       items,
       orders_count,
       order_utm,
@@ -362,7 +365,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
         <Grid
           size={{
             xs: 12,
-            sm: 4,
+            sm: 3,
           }}
         >
           <MyAutoCompleteWithAll
@@ -374,11 +377,26 @@ function ClientHistory({ getData, showAlert, canAccess }) {
             onChange={(e) => setField("order_types", e)}
           />
         </Grid>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 3,
+          }}
+        >
+          <MyAutoCompleteWithAll
+            withAll={true}
+            label="Тип доставки"
+            multiple={true}
+            options={delivery_types}
+            value={form.delivery_type}
+            onChange={(e) => setField("delivery_type", e)}
+          />
+        </Grid>
 
         <Grid
           size={{
             xs: 12,
-            sm: 6,
+            sm: 4,
           }}
         >
           <MyAutocomplite

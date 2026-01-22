@@ -136,6 +136,8 @@ const defaultState = {
 
   promo_dr: false,
   promo_recursive: "",
+
+  delivery_type: [],
 };
 
 export const useSiteClientsStore = create((set, get) => ({
