@@ -436,7 +436,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
           rows={clientHistory}
         />
       ) : (
-        <Typography sx={{ mt: 3 }}>Нет данных</Typography>
+        <Typography sx={{ mt: 3, mx: "auto" }}>Нет данных</Typography>
       )}
     </LoadingProvider>
   );

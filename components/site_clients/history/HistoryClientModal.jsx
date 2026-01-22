@@ -14,6 +14,7 @@ import {
   Grid,
   IconButton,
   Paper,
+  Stack,
   Tab,
   Table,
   TableBody,
@@ -27,7 +28,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { Close } from "@mui/icons-material";
+import { Clear, Close } from "@mui/icons-material";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 import TabPanel from "@/ui/TabPanel/TabPanel";
 import { useDebounce } from "@/src/hooks/useDebounce";
@@ -39,6 +40,7 @@ import { useLoading } from "../useClientsLoadingContext";
 import { useClientHistoryStore } from "./useClientHistoryStore";
 import { delivery_types, order_types_all } from "../config";
 import { formatYMD } from "@/src/helpers/ui/formatDate";
+import { MyTextInput } from "@/ui/Forms";
 
 dayjs.locale("ru");
 
@@ -51,14 +53,35 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
 
   const exportXLSX = useXLSExport();
 
-  // sorting
+  // sorting & filtering
   const [sortBy, setSortBy] = useState("date_time");
   const [sortDir, setSortDir] = useState("desc");
+  const [searchPromo, setSearchPromo] = useState("");
+  const [searchUTM, setSearchUTM] = useState("");
+  const [searchItem, setSearchItem] = useState("");
 
-  const sortedOrders = useMemo(() => {
+  const sortedFilteredOrders = useMemo(() => {
     if (!client?.client_orders) return [];
 
-    const rows = [...client.client_orders];
+    let rows = [...client.client_orders];
+
+    if (searchPromo?.length > 0) {
+      rows = rows.filter((item) => {
+        return String(item.promo_name).toLowerCase().includes(searchPromo.toLowerCase());
+      });
+    }
+    if (searchUTM?.length > 0) {
+      rows = rows.filter((item) => {
+        return String(item.utm).toLowerCase().includes(searchUTM.toLowerCase());
+      });
+    }
+    if (searchItem?.length > 0) {
+      rows = rows.filter((item) => {
+        return item.items.some((it) =>
+          String(it.name).toLowerCase().includes(searchItem.toLowerCase()),
+        );
+      });
+    }
 
     rows.sort((a, b) => {
       const av = a[sortBy];
@@ -78,7 +101,7 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
     });
 
     return rows;
-  }, [client?.client_orders, sortBy, sortDir]);
+  }, [client?.client_orders, sortBy, sortDir, searchPromo, searchUTM, searchItem]);
 
   const handleSort = (key) => {
     if (sortBy === key) {
@@ -401,23 +424,65 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                   index={1}
                   id="history"
                 >
-                  {canAccess("export_items") && (
-                    <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                      <IconButton
-                        style={{ cursor: "pointer", padding: 10 }}
-                        onClick={() =>
-                          exportXLSX(
-                            sortedOrders,
-                            ordersColumns,
-                            `client-orders-history-${clientLogin}.xlsx`,
-                          )
-                        }
-                        title="Экспортировать в Excel"
-                      >
-                        <ExcelIcon />
-                      </IconButton>
-                    </Box>
-                  )}
+                  <Stack
+                    direction={"row"}
+                    gap={2}
+                    sx={{ mt: 2 }}
+                  >
+                    <MyTextInput
+                      label="Поиск по промокоду..."
+                      value={searchPromo}
+                      func={({ target }) => setSearchPromo(target.value)}
+                      inputAdornment={
+                        !searchPromo ? null : (
+                          <IconButton>
+                            <Clear onClick={() => setSearchPromo("")} />
+                          </IconButton>
+                        )
+                      }
+                    />
+                    <MyTextInput
+                      label="Поиск по UTM..."
+                      value={searchUTM}
+                      func={({ target }) => setSearchUTM(target.value)}
+                      inputAdornment={
+                        !searchUTM ? null : (
+                          <IconButton>
+                            <Clear onClick={() => setSearchUTM("")} />
+                          </IconButton>
+                        )
+                      }
+                    />
+                    <MyTextInput
+                      label="Поиск по Позиции..."
+                      value={searchItem}
+                      func={({ target }) => setSearchItem(target.value)}
+                      inputAdornment={
+                        !searchItem ? null : (
+                          <IconButton>
+                            <Clear onClick={() => setSearchItem("")} />
+                          </IconButton>
+                        )
+                      }
+                    />
+                    {canAccess("export_items") && (
+                      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                        <IconButton
+                          style={{ cursor: "pointer", padding: 10 }}
+                          onClick={() =>
+                            exportXLSX(
+                              sortedFilteredOrders,
+                              ordersColumns,
+                              `client-orders-history-${clientLogin}.xlsx`,
+                            )
+                          }
+                          title="Экспортировать в Excel"
+                        >
+                          <ExcelIcon />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </Stack>
                   <TableContainer
                     sx={{ maxHeight: { xs: "none", sm: 607 } }}
                     component={Paper}
@@ -447,7 +512,7 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {sortedOrders.map((item, idx) => (
+                        {sortedFilteredOrders.map((item, idx) => (
                           <TableRow
                             hover
                             key={item.order_id || idx}
