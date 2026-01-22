@@ -13,6 +13,7 @@ export function MyTextInput(props) {
     step,
     inputProps,
     slotProps,
+    isTimeMask,
     InputAdornment: legacyInputAdornment = null, // legacy hack
     inputAdornment,
     rows,
@@ -24,6 +25,18 @@ export function MyTextInput(props) {
 
   const isNumber = type === "number";
   const isMultiline = Boolean(multiline || rows || minRows || maxRows);
+
+  const handleSimpleTimeMask = (e) => {
+    let input = e.target.value.replace(/\D/g, "");
+    if (input.length > 4) input = input.slice(0, 4);
+
+    if (input.length >= 3) {
+      input = input.slice(0, 2) + ":" + input.slice(2);
+    }
+
+    e.target.value = input;
+    if (func) func(e);
+  };
 
   // это костыль для легаси
   // TODO: find all adornments, use slotProps.input AS IN DOCS https://mui.com/material-ui/react-text-field/
@@ -68,13 +81,14 @@ export function MyTextInput(props) {
     <TextField
       size="small"
       {...rest}
+      onChange={isTimeMask ? handleSimpleTimeMask : func}
       value={value ?? ""}
-      onChange={func}
       type={type}
       multiline={isMultiline}
       rows={rows}
       minRows={minRows}
       maxRows={maxRows}
+      inputProps={isTimeMask ? { maxLength: 5, ...inputProps } : inputProps}
       sx={{ width: "100%", ...(rest.sx || {}) }}
       slotProps={{
         htmlInput: isNumber ? { min, max, step, ...(inputProps || {}) } : inputProps,

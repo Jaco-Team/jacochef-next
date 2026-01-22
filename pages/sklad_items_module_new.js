@@ -356,32 +356,6 @@ class SkladItemsModule_Modal_History_View extends React.Component {
               }}
             >
               <MyTextInput
-                label="Состав"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.pf_id?.color
-                      ? this.state.itemView.pf_id.key
-                      : this.state.itemView.pf_id
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.pf_id?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <MyTextInput
                 label="Аллергены"
                 value={
                   this.state.itemView
@@ -971,6 +945,8 @@ class SkladItemsModule_Modal extends React.Component {
                 <MyTextInput
                   label="Максимальное количество заказов в месяц (0 - без ограничений)"
                   value={this.state.itemEdit ? this.state.itemEdit.item.max_count_in_m : ""}
+                  type="number"
+                  onWheel={(e) => e.target.blur()}
                   disabled={
                     this.props.method === "Редактирование товара" &&
                     !this.props.acces?.max_count_in_m_edit
@@ -1039,6 +1015,8 @@ class SkladItemsModule_Modal extends React.Component {
               >
                 <MyTextInput
                   label="Количество в упаковке"
+                  type="number"
+                  onWheel={(e) => e.target.blur()}
                   value={this.state.itemEdit ? this.state.itemEdit.item.pq : ""}
                   disabled={
                     this.props.method === "Редактирование товара" && !this.props.acces?.pq_edit
@@ -1061,6 +1039,8 @@ class SkladItemsModule_Modal extends React.Component {
               >
                 <MyTextInput
                   label="% заявки"
+                  type="number"
+                  onWheel={(e) => e.target.blur()}
                   value={this.state.itemEdit ? this.state.itemEdit.item.percent : ""}
                   disabled={
                     this.props.method === "Редактирование товара" && !this.props.acces?.percent_edit
@@ -1083,6 +1063,8 @@ class SkladItemsModule_Modal extends React.Component {
               >
                 <MyTextInput
                   label="Разрешенный % повышения ценника"
+                  type="number"
+                  onWheel={(e) => e.target.blur()}
                   value={this.state.itemEdit ? this.state.itemEdit.item.vend_percent : ""}
                   disabled={
                     this.props.method === "Редактирование товара" &&
@@ -1128,6 +1110,8 @@ class SkladItemsModule_Modal extends React.Component {
               >
                 <MyTextInput
                   label="Минимальный остаток"
+                  type="number"
+                  onWheel={(e) => e.target.blur()}
                   value={this.state.itemEdit ? this.state.itemEdit.item.min_count : ""}
                   disabled={
                     this.props.method === "Редактирование товара" &&
@@ -1284,6 +1268,7 @@ class SkladItemsModule_Modal extends React.Component {
                       >
                         <MyTextInput
                           label="Время ММ:SS за 1кг / 1шт / 1л (15:20)"
+                          isTimeMask
                           value={this.state.itemEdit ? this.state.itemEdit.item.time_min_other : ""}
                           disabled={
                             this.props.method === "Редактирование товара" &&
