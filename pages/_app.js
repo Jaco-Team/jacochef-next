@@ -11,6 +11,9 @@ import "@/styles/global.scss";
 import "@/styles/tender.scss";
 import Head from "next/head";
 
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+
 Sentry.init({
   dsn: "https://5f1483a8fb0efb009af305503f334119@sentry.jacochef.ru/6",
 });
@@ -34,21 +37,26 @@ export default function MyApp(props) {
   return (
     <StyledEngineProvider injectFirst>
       <ThemeProvider theme={theme}>
-        {/* <CssBaseline /> */}
-        <Head>
-          <meta
-            name="viewport"
-            content="initial-scale=1, width=device-width"
-          />
-        </Head>
-        {isHeader && <Header suppressHydrationWarning />}
+        <LocalizationProvider
+          dateAdapter={AdapterDayjs}
+          adapterLocale="ru"
+        >
+          {/* <CssBaseline /> */}
+          <Head>
+            <meta
+              name="viewport"
+              content="initial-scale=1, width=device-width"
+            />
+          </Head>
+          {isHeader && <Header suppressHydrationWarning />}
 
-        <div className={font.className}>
-          <Component
-            {...pageProps}
-            router={router}
-          />
-        </div>
+          <div className={font.className}>
+            <Component
+              {...pageProps}
+              router={router}
+            />
+          </div>
+        </LocalizationProvider>
       </ThemeProvider>
     </StyledEngineProvider>
   );
