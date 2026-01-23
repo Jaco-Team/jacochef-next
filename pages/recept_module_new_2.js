@@ -309,31 +309,6 @@ class ReceptModule_Modal_History_View extends React.Component {
               }}
             >
               <MyTextInput
-                label="по"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.date_end?.color
-                      ? this.state.itemView.date_end.key
-                      : this.state.itemView.date_end
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.date_end?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <MyTextInput
                 label="Время приготовления 1 кг ММ:SS (15:20)"
                 value={
                   this.state.itemView
@@ -1212,6 +1187,7 @@ class ReceptModule_Modal extends React.Component {
               >
                 <MyDatePickerNew
                   label="Действует с"
+                  format="DD.MM.YYYY"
                   maxDate={this.state.date_end ? dayjs(this.state.date_end) : null}
                   minDate={dayjs(new Date()).add(1, "day")}
                   value={this.state.date_start}
@@ -1239,6 +1215,7 @@ class ReceptModule_Modal extends React.Component {
               >
                 <MyDatePickerNew
                   label="Действует до"
+                  format="DD.MM.YYYY"
                   minDate={dayjs(new Date()).add(1, "day")}
                   value={this.state.date_end}
                   disabled={
@@ -1266,6 +1243,7 @@ class ReceptModule_Modal extends React.Component {
                 <MyTextInput
                   label="Время приготовления 1 кг ММ:SS (15:20)"
                   value={this.state.time}
+                  isTimeMask
                   disabled={
                     this.props.method !== "Новый рецепт" &&
                     this.props.method !== "Новый полуфабрикат" &&
@@ -1291,6 +1269,7 @@ class ReceptModule_Modal extends React.Component {
                 <MyTextInput
                   label="Доп. время (уборка рабочего места) MM:SS (15:20)"
                   value={this.state.dop_time}
+                  isTimeMask
                   disabled={
                     this.props.method !== "Новый рецепт" &&
                     this.props.method !== "Новый полуфабрикат" &&
