@@ -11,13 +11,15 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 
-import { api_laravel } from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 import AllergensModal from "@/components/allergens/AllergensModal";
 import MyAlert from "@/ui/MyAlert";
+import { MyTextInput } from "@/ui/Forms";
 
 class Allergens_ extends React.Component {
   constructor(props) {
     super(props);
+    this.debounceTimer = null;
 
     this.state = {
       module: "allergens",
@@ -141,7 +143,30 @@ class Allergens_ extends React.Component {
     });
   }
 
+  async saveSort() {
+    const allergens = this.state.allergens;
+    const aller = allergens.filter((item) => item.sort);
+    if (aller.length > 0) {
+      const data = await this.getData("save_sort", { aller });
+      if (data) {
+        await this.update();
+      }
+    }
+  }
+
+  async changeSort(e, id) {
+    const { value } = e.target;
+
+    const updatedAllergens = this.state.allergens.map((item) =>
+      item.id === id ? { ...item, sort: value } : item,
+    );
+
+    this.setState({ allergens: updatedAllergens });
+  }
+
   render() {
+    const { allergens } = this.state;
+
     return (
       <>
         <Backdrop
@@ -205,18 +230,27 @@ class Allergens_ extends React.Component {
               mb: 5,
             }}
           >
-            {!this.state.allergens ? null : (
+            {!allergens ? null : (
               <Table>
                 <TableHead>
                   <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                     <TableCell>#</TableCell>
                     <TableCell>Название</TableCell>
                     <TableCell>Доп. название</TableCell>
+                    <TableCell style={{ width: "2%" }}>
+                      Сортировка{" "}
+                      <Button
+                        onClick={this.saveSort.bind(this)}
+                        variant="contained"
+                      >
+                        Сохранить
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 </TableHead>
 
                 <TableBody>
-                  {this.state.allergens.map((item, key) => (
+                  {allergens.map((item, key) => (
                     <TableRow key={key}>
                       <TableCell>{key + 1}</TableCell>
                       <TableCell
@@ -226,6 +260,14 @@ class Allergens_ extends React.Component {
                         {item.name}
                       </TableCell>
                       <TableCell>{item.dop_name}</TableCell>
+                      <TableCell style={{ width: "2%" }}>
+                        <MyTextInput
+                          value={item.sort}
+                          style={{ width: "50px" }}
+                          func={(e) => this.changeSort(e, item.id)}
+                          label=""
+                        />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
