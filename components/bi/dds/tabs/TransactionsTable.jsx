@@ -31,7 +31,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import useDDSStore from "../useDDSStore";
-import { formatNumber } from "@/src/helpers/utils/i18n";
+import { formatRUR } from "@/src/helpers/utils/i18n";
 import useApi from "@/src/hooks/useApi";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import { formatYMD } from "@/src/helpers/ui/formatDate";
@@ -67,8 +67,12 @@ export default function TransactionsTable({ showAlert }) {
     s.searchQuery,
     s.txArticlesSet,
   ]);
+
   const { api_laravel } = useApi(module);
   const setState = useDDSStore.setState;
+
+  // make a ref for table to scroll up
+  const tableRef = useRef(null);
 
   const { withConfirm, ConfirmDialog } = useConfirm();
 
@@ -162,6 +166,7 @@ export default function TransactionsTable({ showAlert }) {
         txTotal: meta?.total || 0,
       });
       setSelected([]);
+      tableRef?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (e) {
       showAlert(e.message || "Ошибка получения транзакций");
     } finally {
@@ -304,6 +309,7 @@ export default function TransactionsTable({ showAlert }) {
           <Table
             size="small"
             stickyHeader
+            ref={tableRef}
           >
             <TableHead>
               <TableRow>
@@ -347,12 +353,15 @@ export default function TransactionsTable({ showAlert }) {
             </TableHead>
 
             <TableBody>
-              {transactions.map((r) => {
-                const checked = selected.some((s) => s.id === r.id);
-                const article = articles?.find((a) => +a.id === +r.article_id) || null;
+              {transactions.map((t) => {
+                const checked = selected.some((s) => s.id === t.id);
+                const article = articles?.find((a) => +a.id === +t.article_id) || null;
+                const isIncome = t.type === "income";
+                const isExpense = t.type === "expense";
+                const amountFormatted = formatRUR(+t.amount);
                 return (
                   <TableRow
-                    key={r.id || r.order_id}
+                    key={t.id || t.order_id}
                     hover
                   >
                     <TableCell padding="checkbox">
@@ -361,28 +370,28 @@ export default function TransactionsTable({ showAlert }) {
                           <Checkbox
                             checked={checked}
                             title="Выбрать"
-                            onChange={() => toggleSelect(r)}
+                            onChange={() => toggleSelect(t)}
                             sx={{ p: 1 }}
                           />
                         </span>
                       </Tooltip>
                     </TableCell>
-                    <TableCell>{r.date || "—"}</TableCell>
-                    <TableCell>{r.number || "—"}</TableCell>
-                    <TableCell>{points?.find((p) => p.id === r.point_id)?.name || "—"}</TableCell>
-                    <TableCell>{r.contractor || "—"}</TableCell>
+                    <TableCell>{t.date || "—"}</TableCell>
+                    <TableCell>{t.number || "—"}</TableCell>
+                    <TableCell>{points?.find((p) => p.id === t.point_id)?.name || "—"}</TableCell>
+                    <TableCell>{t.contractor || "—"}</TableCell>
                     <TableCell sx={{ color: "success.main", fontWeight: 500 }}>
-                      {r.income ? `${formatNumber(r.income, 2, 2)} ₽` : "—"}
+                      {isIncome ? amountFormatted : "—"}
                     </TableCell>
                     <TableCell sx={{ color: "secondary.main", fontWeight: 500 }}>
-                      {r.expense ? `-${formatNumber(r.expense, 2, 2)} ₽` : "—"}
+                      {isExpense ? `-${amountFormatted} ₽` : "—"}
                     </TableCell>
                     <TableCell
                       sx={{
                         maxWidth: 360,
                       }}
                     >
-                      {r.purpose}
+                      {t.purpose}
                     </TableCell>
                     <TableCell>
                       <Chip
@@ -395,7 +404,7 @@ export default function TransactionsTable({ showAlert }) {
                       />
                     </TableCell>
                     <TableCell align="right">
-                      {!r.is_order && (
+                      {!t.is_order && (
                         <Stack
                           direction="row"
                           spacing={1}
@@ -403,7 +412,7 @@ export default function TransactionsTable({ showAlert }) {
                           <IconButton
                             size="small"
                             color="primary"
-                            onClick={() => handleEdit(r)}
+                            onClick={() => handleEdit(t)}
                           >
                             <EditOutlined fontSize="inherit" />
                           </IconButton>
@@ -412,7 +421,7 @@ export default function TransactionsTable({ showAlert }) {
                             size="small"
                             color="success"
                             onClick={withConfirm(
-                              () => removeOneTransaction(r.id),
+                              () => removeOneTransaction(t.id),
                               "Вы уверены, что хотите удалить эту транзакцию?",
                             )}
                           >

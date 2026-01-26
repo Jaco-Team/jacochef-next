@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   IconButton,
   Paper,
@@ -13,13 +12,12 @@ import {
 import useDDSStore from "../useDDSStore";
 import { useEffect, useRef, useState } from "react";
 import useApi from "@/src/hooks/useApi";
-import { formatNumber } from "@/src/helpers/utils/i18n";
-import { useIntersectionObserver } from "@/src/hooks/useIntersectionObserver";
-import { useDebounce } from "@/src/hooks/useDebounce";
+import { formatRUR } from "@/src/helpers/utils/i18n";
 import { EditOutlined } from "@mui/icons-material";
+import { formatYMD } from "@/src/helpers/ui/formatDate";
 
 // globals
-const FIRST_PAGE = 0;
+const FIRST_PAGE = 1;
 const PER_PAGE = 50;
 
 export default function ArticleTxTable({ articleId, type }) {
@@ -37,6 +35,7 @@ export default function ArticleTxTable({ articleId, type }) {
   const { api_laravel } = useApi(module);
 
   const [articleTx, setArticleTx] = useState([]);
+  const [page, setPage] = useState(FIRST_PAGE);
   const [hasMore, setHasMore] = useState(false);
 
   const loadArticleTx = async () => {
@@ -46,15 +45,14 @@ export default function ArticleTxTable({ articleId, type }) {
       const state = useDDSStore.getState();
       const statRow = state.stats.find((s) => s.article_id === articleId);
       if (!statRow) return [];
-      const page = statRow.page ?? FIRST_PAGE;
       const currentTx = statRow.transactions ?? [];
 
       const req = {
         article_ids: [articleId],
-        date_start,
-        date_end,
+        date_start: formatYMD(date_start),
+        date_end: formatYMD(date_end),
         points: point,
-        page: page + 1,
+        page: page,
         limit: PER_PAGE,
       };
       const res = await api_laravel("get_transactions_by_article", req);
@@ -62,7 +60,8 @@ export default function ArticleTxTable({ articleId, type }) {
       if (res?.transactions?.length) {
         newTx.push(...res.transactions);
         setHasMore(res.has_more);
-        setStatsArticleTx(articleId, [...currentTx, ...newTx], res.page, res.total);
+        setPage(res.page + 1);
+        setStatsArticleTx(articleId, [...currentTx, ...newTx], res.total);
       }
 
       // transform for rendering
@@ -102,10 +101,7 @@ export default function ArticleTxTable({ articleId, type }) {
   // Load on dependency change
   useEffect(() => {
     if (!articleId && articleId !== null) return;
-    const run = async () => {
-      await loadArticleTx();
-    };
-    run();
+    loadArticleTx();
   }, [articleId, type]);
 
   return (
@@ -140,6 +136,9 @@ export default function ArticleTxTable({ articleId, type }) {
         <TableBody>
           {articleTx?.map((t) => {
             const txKey = `${articleId}-${t.id || t.order_id}`;
+            const isIncome = t.type === "income";
+            const isExpense = t.type === "expense";
+            const amountFormatted = formatRUR(+t.amount);
             return (
               <TableRow
                 key={txKey}
@@ -148,10 +147,10 @@ export default function ArticleTxTable({ articleId, type }) {
                 <TableCell>{t.date || "—"}</TableCell>
                 <TableCell>{t.number || "—"}</TableCell>
                 <TableCell sx={{ color: "success.main" }}>
-                  {(t.income || 0) > 0 ? `${formatNumber(t.income, 2, 2)} ₽` : "—"}
+                  {isIncome ? amountFormatted : "—"}
                 </TableCell>
                 <TableCell sx={{ color: "secondary.main" }}>
-                  {(t.expense || 0) > 0 ? `-${formatNumber(t.expense, 2, 2)} ₽` : "—"}
+                  {isExpense ? amountFormatted : "—"}
                 </TableCell>
                 <TableCell>{t.contractor || "—"}</TableCell>
                 <TableCell sx={{ minWidth: 300 }}>{t.naznachenie_platezha || "—"}</TableCell>
@@ -183,18 +182,19 @@ export default function ArticleTxTable({ articleId, type }) {
               >
                 {is_load && "Загрузка..."}
               </Box> */}
-              <Button
-                ref={loaderRefBtn}
-                variant="text"
-                sx={{
-                  textAlign: "center",
-                  visibility: hasMore ? "visible" : "hidden",
-                }}
-                disabled={is_load}
-                onClick={loadArticleTx}
-              >
-                Показать больше
-              </Button>
+              {!!hasMore && (
+                <Button
+                  ref={loaderRefBtn}
+                  variant="text"
+                  sx={{
+                    textAlign: "center",
+                  }}
+                  disabled={is_load}
+                  onClick={loadArticleTx}
+                >
+                  Показать больше
+                </Button>
+              )}
             </TableCell>
           </TableRow>
         </TableBody>
