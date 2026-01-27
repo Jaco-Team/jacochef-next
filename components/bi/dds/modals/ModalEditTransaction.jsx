@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 import useDDSStore from "../useDDSStore";
 import MyModal from "@/ui/MyModal";
 import { MyAutocomplite } from "@/ui/Forms";
-import { formatNumber } from "@/src/helpers/utils/i18n";
+import { formatRUR } from "@/src/helpers/utils/i18n";
 import useApi from "@/src/hooks/useApi";
 
 export default function ModalEditTransaction({ onClose, showAlert }) {
@@ -86,6 +86,10 @@ export default function ModalEditTransaction({ onClose, showAlert }) {
   };
 
   if (!tx) return null;
+
+  const isIncome = tx.type === "income";
+  const isExpense = tx.type === "expense";
+  const amountFormatted = formatRUR(tx.amount);
 
   return (
     <MyModal
@@ -160,10 +164,10 @@ export default function ModalEditTransaction({ onClose, showAlert }) {
                 <TableRow hover>
                   <TableCell>{tx.date || "—"}</TableCell>
                   <TableCell sx={{ color: "success.main", fontWeight: 500 }}>
-                    {tx.income ? `${formatNumber(tx.income, 2, 2)} ₽` : "—"}
+                    {isIncome ? amountFormatted : "—"}
                   </TableCell>
                   <TableCell sx={{ color: "secondary.main", fontWeight: 500 }}>
-                    {tx.expense ? `-${formatNumber(tx.expense, 2, 2)} ₽` : "—"}
+                    {isExpense ? `-${amountFormatted}` : "—"}
                   </TableCell>
                   <TableCell>{tx.contractor}</TableCell>
                   <TableCell>{tx.purpose || tx.naznachenie_platezha || "—"}</TableCell>
