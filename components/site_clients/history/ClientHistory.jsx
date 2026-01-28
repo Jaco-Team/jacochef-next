@@ -435,7 +435,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
                   sx={{ backgroundColor: "#3cb623ff" }}
                   onClick={() =>
                     exportXLSX(
-                      sortedRows,
+                      clientHistory,
                       columns,
                       `client_history_${formatYMD(form.date_start)}-${formatYMD(form.date_end)}.xlsx`,
                     )
