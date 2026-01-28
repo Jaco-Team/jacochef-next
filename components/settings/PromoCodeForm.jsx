@@ -30,6 +30,7 @@ import DialogPromoHistory from "./DialogPromoHistory";
 import ModalDelete from "./ModalDelete";
 import DateModal from "./DateModal";
 import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
+import dayjs from "dayjs";
 
 export default function PromoCodeForm({
   mockItems,
@@ -144,7 +145,7 @@ export default function PromoCodeForm({
     setFormData((prev) => ({
       ...prev,
       discountValue: "",
-      products: [...prev.products, { ...position, price, count }],
+      products: [...prev.products, { ...position, price, count, item_id: position.id }],
     }));
     setCount(0);
     setPrice(0);
