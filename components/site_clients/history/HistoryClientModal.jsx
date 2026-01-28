@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { api_laravel } from "@/src/api_new";
 import {
   Box,
@@ -14,6 +14,7 @@ import {
   Grid,
   IconButton,
   Paper,
+  Stack,
   Tab,
   Table,
   TableBody,
@@ -27,51 +28,89 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { Close } from "@mui/icons-material";
+import { Clear, Close } from "@mui/icons-material";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 import TabPanel from "@/ui/TabPanel/TabPanel";
-import useMarketingClientStore from "../useMarketingClientStore";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import dayjs from "dayjs";
 import ExcelIcon from "@/ui/ExcelIcon";
 import useXLSExport from "@/src/hooks/useXLSXExport";
 import formatPrice from "@/src/helpers/ui/formatPrice";
-import vocabulary from "./vocabulary";
 import { useLoading } from "../useClientsLoadingContext";
+import { useClientHistoryStore } from "./useClientHistoryStore";
+import { delivery_types, order_types_all } from "../config";
+import { formatYMD } from "@/src/helpers/ui/formatDate";
+import { MyTextInput } from "@/ui/Forms";
 
 dayjs.locale("ru");
 
-function SiteClientsClientModal({ canAccess, showAlert, openOrder, open, onClose }) {
-  const { clientLogin, setClientModalOpened, setClientHistory } = useMarketingClientStore();
+function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) {
+  const { client, clientLogin, clientLoading, setClientModalOpened } = useClientHistoryStore();
+  const clientInfo = client?.client_info;
 
   // global isLoading
   const { isLoading, setIsLoading } = useLoading();
 
   const exportXLSX = useXLSExport();
 
-  // sorting
-  const [sortBy, setSortBy] = useState("event_date"); // by historyColumns.key
-  const [sortDir, setSortDir] = useState("asc");
-  const sortHistory = (data, sortBy, sortDir) => {
-    return data.slice().sort((a, b) => {
-      const valA = (a[sortBy] || "").toString().toLowerCase();
-      const valB = (b[sortBy] || "").toString().toLowerCase();
-      if (valA === valB) return 0;
-      if (valA < valB) return sortDir === "asc" ? -1 : 1;
-      return sortDir === "asc" ? 1 : -1;
+  // sorting & filtering
+  const [sortBy, setSortBy] = useState("date_time");
+  const [sortDir, setSortDir] = useState("desc");
+  const [searchPromo, setSearchPromo] = useState("");
+  const [searchUTM, setSearchUTM] = useState("");
+  const [searchItem, setSearchItem] = useState("");
+
+  const sortedFilteredOrders = useMemo(() => {
+    if (!client?.client_orders) return [];
+
+    let rows = [...client.client_orders];
+
+    if (searchPromo?.length > 0) {
+      rows = rows.filter((item) => {
+        return String(item.promo_name).toLowerCase().includes(searchPromo.toLowerCase());
+      });
+    }
+    if (searchUTM?.length > 0) {
+      rows = rows.filter((item) => {
+        return String(item.utm).toLowerCase().includes(searchUTM.toLowerCase());
+      });
+    }
+    if (searchItem?.length > 0) {
+      rows = rows.filter((item) => {
+        return item.items.some((it) =>
+          String(it.name).toLowerCase().includes(searchItem.toLowerCase()),
+        );
+      });
+    }
+
+    rows.sort((a, b) => {
+      const av = a[sortBy];
+      const bv = b[sortBy];
+
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+
+      if (typeof av === "number" && typeof bv === "number") {
+        return sortDir === "asc" ? av - bv : bv - av;
+      }
+
+      return sortDir === "asc"
+        ? String(av).localeCompare(String(bv))
+        : String(bv).localeCompare(String(av));
     });
+
+    return rows;
+  }, [client?.client_orders, sortBy, sortDir, searchPromo, searchUTM, searchItem]);
+
+  const handleSort = (key) => {
+    if (sortBy === key) {
+      setSortDir((v) => (v === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(key);
+      setSortDir("asc");
+    }
   };
-
-  function handleSortClick(columnKey) {
-    const isAsc = sortBy === columnKey && sortDir === "asc";
-    const newOrder = isAsc ? "desc" : "asc";
-
-    setSortBy(columnKey);
-    setSortDir(newOrder);
-
-    const sorted = sortHistory(client.history, columnKey, newOrder);
-    setClientHistory(sorted);
-  }
 
   // tabs
   const [activeTab, setActiveTab] = useState(0);
@@ -90,16 +129,15 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder, open, onClose
   };
 
   const getClient = async () => {
-    const { clientLogin, setClient, setClientLoading } = useMarketingClientStore.getState();
+    const { clientLogin, setClient, setClientLoading } = useClientHistoryStore.getState();
     try {
       setClientLoading(true);
       setIsLoading(true);
       setClient(null);
-      const res = await getData("get_one_client", { login: clientLogin });
+      const res = await getData("get_one_client_history", { login: clientLogin });
       if (!res?.st) {
         throw new Error(res?.text || "Ошибка загрузки данных клиента");
       }
-      // console.log(useMarketingClientStore.getState());
       setClient(res);
     } catch (error) {
       showAlert(`Error fetching client data: ${error.message}`, false);
@@ -117,11 +155,6 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder, open, onClose
   // fullscreen hook
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
-
-  // rendering subscriptions
-  const client = useMarketingClientStore((state) => state.client);
-  const clientInfo = useMarketingClientStore((state) => state.client?.client_info);
-  const clientLoading = useMarketingClientStore((state) => state.clientLoading);
 
   return (
     <>
@@ -189,9 +222,7 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder, open, onClose
                   <Typography variant="body2">Источник (первого заказа):</Typography>
                   <Typography variant="body1">
                     {clientInfo?.source || clientInfo?.medium
-                      ? `${vocabulary(clientInfo?.source || "n/a")}: ${vocabulary(
-                          clientInfo?.medium || "n/a",
-                        )}`
+                      ? `${clientInfo?.source || "n/a"}: ${clientInfo?.medium || "n/a"}`
                       : "Не указан"}
                   </Typography>
                 </Grid>
@@ -233,16 +264,8 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder, open, onClose
                     {...a11yProps(0)}
                   />
                   <Tab
-                    label="История"
+                    label="История заказов"
                     {...a11yProps(1)}
-                  />
-                  <Tab
-                    label="Заказы"
-                    {...a11yProps(2)}
-                  />
-                  <Tab
-                    label="Оформленные ошибки"
-                    {...a11yProps(3)}
                   />
                 </Tabs>
               </Paper>
@@ -389,109 +412,6 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder, open, onClose
             {/* /О клиенте */}
 
             {/* История */}
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <TabPanel
-                value={activeTab}
-                index={1}
-                id="history"
-              >
-                {canAccess("export_items") && (
-                  <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                    <IconButton
-                      style={{ cursor: "pointer", padding: 10 }}
-                      onClick={() =>
-                        exportXLSX(client?.history, historyColumns, "history-stats.xlsx")
-                      }
-                      title="Экспортировать в Excel"
-                    >
-                      <ExcelIcon />
-                    </IconButton>
-                  </Box>
-                )}
-                <TableContainer style={{ maxHeight: "55dvh", position: "relative" }}>
-                  <Table
-                    size="small"
-                    stickyHeader
-                  >
-                    <TableHead>
-                      <TableRow>
-                        {historyColumns.map((col) => (
-                          <TableCell key={col.key}>
-                            <TableSortLabel
-                              active={sortBy === col.key}
-                              direction={sortBy === col.key ? sortDir : "asc"}
-                              onClick={() => handleSortClick(col.key)}
-                            >
-                              {col.label}
-                            </TableSortLabel>
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {client?.history?.map((row, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell>{row.event_date}</TableCell>
-                          <TableCell>
-                            {row.event === "order" ? (
-                              <>
-                                <Button
-                                  variant="text"
-                                  onClick={() => openOrder(row.point_id, row.order_id)}
-                                >
-                                  Заказ #{row.order_id}
-                                  <br />
-                                </Button>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ marginLeft: 1 }}
-                                >
-                                  ({row.type_order === 1 ? "Доставка" : "Самовывоз"})
-                                </Typography>
-                              </>
-                            ) : (
-                              row.event
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {" "}
-                            {row.source || row.medium
-                              ? `${vocabulary(row.source || "n/a")}: ${vocabulary(
-                                  row.medium || "n/a",
-                                )}`
-                              : "n/a"}{" "}
-                          </TableCell>
-                          <TableCell>
-                            {row.details ? (
-                              <Box sx={{ display: "flex", flexDirection: "column" }}>
-                                {row.details.split("\n").map((line, i) => (
-                                  <Typography
-                                    key={i}
-                                    variant="body2"
-                                  >
-                                    {line}
-                                  </Typography>
-                                ))}
-                              </Box>
-                            ) : (
-                              "-"
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </TabPanel>
-            </Grid>
-            {/* /История */}
-
-            {/* Заказы */}
             {canAccess("view_orders") && (
               <Grid
                 size={{
@@ -501,9 +421,68 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder, open, onClose
               >
                 <TabPanel
                   value={activeTab}
-                  index={2}
-                  id="client"
+                  index={1}
+                  id="history"
                 >
+                  <Stack
+                    direction={"row"}
+                    gap={2}
+                    sx={{ mt: 2 }}
+                  >
+                    <MyTextInput
+                      label="Поиск по промокоду..."
+                      value={searchPromo}
+                      func={({ target }) => setSearchPromo(target.value)}
+                      inputAdornment={
+                        !searchPromo ? null : (
+                          <IconButton>
+                            <Clear onClick={() => setSearchPromo("")} />
+                          </IconButton>
+                        )
+                      }
+                    />
+                    <MyTextInput
+                      label="Поиск по UTM..."
+                      value={searchUTM}
+                      func={({ target }) => setSearchUTM(target.value)}
+                      inputAdornment={
+                        !searchUTM ? null : (
+                          <IconButton>
+                            <Clear onClick={() => setSearchUTM("")} />
+                          </IconButton>
+                        )
+                      }
+                    />
+                    <MyTextInput
+                      label="Поиск по Позиции..."
+                      value={searchItem}
+                      func={({ target }) => setSearchItem(target.value)}
+                      inputAdornment={
+                        !searchItem ? null : (
+                          <IconButton>
+                            <Clear onClick={() => setSearchItem("")} />
+                          </IconButton>
+                        )
+                      }
+                    />
+                    {canAccess("export_items") && (
+                      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                        <IconButton
+                          style={{ cursor: "pointer", padding: 10 }}
+                          onClick={() =>
+                            exportXLSX(
+                              sortedFilteredOrders,
+                              ordersColumns,
+                              `client-orders-history-${clientLogin}.xlsx`,
+                            )
+                          }
+                          title="Экспортировать в Excel"
+                        >
+                          <ExcelIcon />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </Stack>
                   <TableContainer
                     sx={{ maxHeight: { xs: "none", sm: 607 } }}
                     component={Paper}
@@ -514,85 +493,48 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder, open, onClose
                     >
                       <TableHead>
                         <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                          <TableCell style={{ width: "5%" }}>#</TableCell>
-                          <TableCell style={{ width: "20%" }}>Точка</TableCell>
-                          <TableCell style={{ width: "20%" }}>Тип заказа</TableCell>
-                          <TableCell style={{ width: "20%" }}>Дата заказа</TableCell>
-                          <TableCell style={{ width: "15%" }}>ID заказа</TableCell>
-                          <TableCell style={{ width: "20%" }}>Сумма заказа</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {client?.client_orders?.map((item, key) => (
-                          <TableRow
-                            hover
-                            key={key}
-                            onClick={() => openOrder(item.point_id, item.order_id)}
-                            style={{
-                              cursor: "pointer",
-                              backgroundColor: parseInt(item.is_delete) ? "rgb(204, 0, 51)" : null,
-                            }}
-                            sx={{ "& td": { color: parseInt(item.is_delete) ? "#fff" : "#000" } }}
-                          >
-                            <TableCell>{key + 1}</TableCell>
-                            <TableCell>{item.point}</TableCell>
-                            <TableCell>{item.new_type_order}</TableCell>
-                            <TableCell>{item.date_time}</TableCell>
-                            <TableCell>{`#${item.order_id}`}</TableCell>
-                            <TableCell>{`${item.summ} р.`}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </TabPanel>
-              </Grid>
-            )}
-            {/* /Заказы */}
+                          <TableCell>#</TableCell>
 
-            {/* Оформленные ошибки */}
-            {canAccess("view_err") && (
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
-              >
-                <TabPanel
-                  value={activeTab}
-                  index={3}
-                  id="client"
-                >
-                  <TableContainer
-                    sx={{ maxHeight: { xs: "none", sm: 607 } }}
-                    component={Paper}
-                  >
-                    <Table
-                      size="small"
-                      stickyHeader
-                    >
-                      <TableHead>
-                        <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                          <TableCell style={{ width: "5%" }}>#</TableCell>
-                          <TableCell style={{ width: "15%" }}>Точка</TableCell>
-                          <TableCell style={{ width: "10%" }}>ID заказа</TableCell>
-                          <TableCell style={{ width: "20%" }}>Дата</TableCell>
-                          <TableCell style={{ width: "25%" }}>Описание</TableCell>
-                          <TableCell style={{ width: "25%" }}>Действия</TableCell>
+                          {ordersColumns.map((col) => (
+                            <TableCell
+                              key={col.key}
+                              align={col.numeric ? "right" : "left"}
+                            >
+                              <TableSortLabel
+                                active={sortBy === col.key}
+                                direction={sortBy === col.key ? sortDir : "asc"}
+                                onClick={() => handleSort(col.key)}
+                              >
+                                {col.label}
+                              </TableSortLabel>
+                            </TableCell>
+                          ))}
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {client?.err_orders?.map((item, key) => (
+                        {sortedFilteredOrders.map((item, idx) => (
                           <TableRow
                             hover
-                            key={key}
+                            key={item.order_id || idx}
+                            onClick={() => openOrder(item.point_id, item.order_id)}
+                            sx={{
+                              cursor: "pointer",
+                              backgroundColor: Number(item.is_delete)
+                                ? "rgb(204, 0, 51)"
+                                : undefined,
+                              "& td": { color: Number(item.is_delete) ? "#fff" : "#000" },
+                            }}
                           >
-                            <TableCell>{key + 1}</TableCell>
-                            <TableCell>{item.point}</TableCell>
-                            <TableCell>{`#${item.order_id}`}</TableCell>
-                            <TableCell>{item.date_time_desc}</TableCell>
-                            <TableCell>{item.order_desc}</TableCell>
-                            <TableCell>{item.text_win}</TableCell>
+                            <TableCell>{idx + 1}</TableCell>
+
+                            {ordersColumns.map((col) => (
+                              <TableCell
+                                key={col.key}
+                                align={col.numeric ? "right" : "left"}
+                              >
+                                {col.format ? col.format(item[col.key]) : (item[col.key] ?? "-")}
+                              </TableCell>
+                            ))}
                           </TableRow>
                         ))}
                       </TableBody>
@@ -601,7 +543,7 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder, open, onClose
                 </TabPanel>
               </Grid>
             )}
-            {/* /Оформленные ошибки */}
+            {/* /История */}
           </DialogContent>
         )}
         <DialogActions>
@@ -617,19 +559,57 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder, open, onClose
   );
 }
 
-export default memo(SiteClientsClientModal);
+export default memo(HistoryClientModal);
 
-const historyColumns = [
-  { label: "Дата", key: "event_date" },
+const ordersColumns = [
   {
-    label: "Событие",
-    key: "event",
-    format: (row) => {
-      return row.event === "order"
-        ? `#${row.order_id} (${row.type_order === 1 ? "Доставка" : 2 ? "Самовывоз" : "Зал"})`
-        : row.event;
-    },
+    label: "Дата заказа",
+    key: "date_time",
+    format: (v) => formatYMD(v),
   },
-  { label: "Источник", key: "source" },
-  { label: "Детали", key: "details" },
+  {
+    label: "ID заказа",
+    key: "order_id",
+    format: (v) => `#${v}`,
+  },
+  {
+    label: "Кафе",
+    key: "point_addr",
+  },
+  {
+    label: "Тип заказа",
+    key: "new_type_order",
+    format: (v) => delivery_types.find((t) => t.id === Number(v))?.name || "Неизвестно",
+  },
+  {
+    label: "Источник",
+    key: "is_client",
+    format: (v) => order_types_all.find((t) => t.id === Number(v))?.name || "Неизвестно",
+  },
+  {
+    label: "UTM",
+    key: "utm",
+  },
+  {
+    label: "Прокод",
+    key: "promo_name",
+  },
+  {
+    label: "Позиции",
+    key: "items",
+    format: (v) =>
+      (
+        <div style={{ fontSize: ".7rem" }}>
+          {v.reduce((acc, item) => `${acc} ${item.name}: ${item.count};`, "")}
+        </div>
+      ) || "",
+    formatRaw: (v) => v.reduce((acc, item) => `${acc} ${item.name}: ${item.count};`, "") || "",
+  },
+
+  {
+    label: "Сумма",
+    key: "summ",
+    numeric: true,
+    format: (v) => `${v} р.`,
+  },
 ];

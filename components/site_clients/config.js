@@ -14,3 +14,16 @@ export const MONTHS = [
 ];
 
 export const DAYS = Array.from({ length: 31 }, (_, i) => ({ id: i + 1, name: i + 1 }));
+
+export const delivery_types = [
+  { id: 1, name: "Доставка" },
+  { id: 2, name: "Самовывоз" },
+  { id: 3, name: "В зале" },
+  { id: 4, name: "На вынос" },
+];
+
+export const order_types_all = [
+  { id: 0, name: "Кафе" },
+  { id: 1, name: "КЦ" },
+  { id: 2, name: "Сайт" },
+];
