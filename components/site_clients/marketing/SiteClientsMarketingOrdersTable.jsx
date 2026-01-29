@@ -29,7 +29,7 @@ import { Clear, FilterAlt, FilterAltOff, Sort, SwapVert } from "@mui/icons-mater
 import { useDebounce } from "@/src/hooks/useDebounce";
 import ExcelIcon from "@/ui/ExcelIcon";
 import DownloadButton from "@/ui/DownloadButton";
-import { useLoading } from "./useClientsLoadingContext";
+import { useLoading } from "../useClientsLoadingContext";
 import { useSiteClientsStore } from "../useSiteClientsStore";
 import { checkDates } from "@/src/helpers/ui/formatDate";
 

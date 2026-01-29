@@ -9,6 +9,9 @@ const PERSIST_KEYS = [
   "keepParams",
   "number",
   "order",
+  "order_utm",
+  "order_types",
+  "orders_count",
   "addr",
   "address_list",
   "promo",
@@ -18,7 +21,9 @@ const PERSIST_KEYS = [
   "point_id",
   "points_recursive",
   "points_marketing",
+  "promo",
   "promo_recursive",
+  "promo_dr",
   "items_recursive",
   "items",
   "date_start",
@@ -95,6 +100,8 @@ const defaultState = {
     { id: 3, name: "Кафе" },
   ],
 
+  order_types: [],
+
   days: [],
 
   modalDialog_order: false,
@@ -124,8 +131,13 @@ const defaultState = {
 
   orders_recursive: null,
 
+  orders_count: 0,
+  order_utm: "",
+
   promo_dr: false,
   promo_recursive: "",
+
+  delivery_type: [],
 };
 
 export const useSiteClientsStore = create((set, get) => ({

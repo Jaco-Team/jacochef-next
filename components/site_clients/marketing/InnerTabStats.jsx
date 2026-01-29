@@ -6,7 +6,7 @@ import SiteClientsMarketingStatCard from "./SiteClientsMarketingStatCard";
 import useMarketingTabStore from "./useMarketingTabStore";
 import dayjs from "dayjs";
 import { useDebounce } from "@/src/hooks/useDebounce";
-import { useLoading } from "./useClientsLoadingContext";
+import { useLoading } from "../useClientsLoadingContext";
 import { useSiteClientsStore } from "../useSiteClientsStore";
 
 const InnerTabStats = ({ getData, showAlert }) => {
@@ -48,7 +48,9 @@ const InnerTabStats = ({ getData, showAlert }) => {
   };
 
   const debouncedGetStats = useDebounce(getStats, 500);
-  useEffect(() => debouncedGetStats(), [refreshToken]);
+  useEffect(() => {
+    if (refreshToken) debouncedGetStats();
+  }, [refreshToken]);
 
   return (
     <>
