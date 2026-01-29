@@ -11,6 +11,7 @@ import {
   DialogTitle,
   IconButton,
 } from "@mui/material";
+import dayjs from "dayjs";
 import { memo, useState } from "react";
 
 const DateModal = ({ open, onClose, onSave }) => {
@@ -51,8 +52,9 @@ const DateModal = ({ open, onClose, onSave }) => {
         <Box sx={{ mt: 2 }}>
           <MyDatePickerNew
             label="Дата изменений"
-            value={newDate}
+            value={dayjs(newDate)}
             func={handleChange}
+            minDate={dayjs().add(1, "day")}
           />
         </Box>
       </DialogContent>

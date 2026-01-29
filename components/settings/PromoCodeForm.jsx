@@ -145,7 +145,14 @@ export default function PromoCodeForm({
     setFormData((prev) => ({
       ...prev,
       discountValue: "",
-      products: [...prev.products, { ...position, price, count, item_id: position.id }],
+      products: [
+        ...prev.products,
+        {
+          ...position,
+          price: Math.round(Number(price)) || 0,
+          count: Math.trunc(Number(count)) || 0,
+        },
+      ],
     }));
     setCount(0);
     setPrice(0);
@@ -259,7 +266,7 @@ export default function PromoCodeForm({
                 <MyAutocomplite
                   data={mockItems}
                   value={position}
-                  func={(event, data) => {
+                  func={(_, data) => {
                     setPosition(data);
                   }}
                   label="Позиция"
