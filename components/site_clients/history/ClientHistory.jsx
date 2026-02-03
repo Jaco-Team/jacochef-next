@@ -28,11 +28,13 @@ function ClientHistory({ getData, showAlert, canAccess }) {
     is_load,
     all_items,
     points,
+    points_history,
     update: updateMain,
   } = useSiteClientsStore((s) => ({
     is_load: s.is_load,
     all_items: s.all_items,
     points: s.points,
+    points_history: s.points_history,
     update: s.update,
   }));
 
@@ -40,6 +42,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
   const initialForm = useSiteClientsStore.getState();
 
   const [form, setForm] = useState(() => ({
+    points_history: initialForm.points_history,
     promo: initialForm.promo,
     promo_dr: initialForm.promo_dr,
     order_types: initialForm.order_types,
@@ -195,6 +198,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
       items,
       orders_count,
       order_utm,
+      points_history,
     } = useSiteClientsStore.getState();
 
     const refreshToken = useClientHistoryStore.getState().refreshToken;
@@ -217,6 +221,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
       items,
       orders_count,
       order_utm,
+      points: points_history,
     });
 
     if (!resData?.st) {
@@ -266,7 +271,21 @@ function ClientHistory({ getData, showAlert, canAccess }) {
         <Grid
           size={{
             xs: 12,
-            sm: 6,
+            sm: 4,
+          }}
+        >
+          <MyAutocomplite
+            label="Кафе"
+            multiple={true}
+            data={points}
+            value={form.points_history}
+            func={(_, v) => setField("points_history", v)}
+          />
+        </Grid>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 4,
           }}
         >
           <MyDatePickerNew
@@ -281,7 +300,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
         <Grid
           size={{
             xs: 12,
-            sm: 6,
+            sm: 4,
           }}
         >
           <MyDatePickerNew

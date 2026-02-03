@@ -19,6 +19,7 @@ const PERSIST_KEYS = [
   "city_id_addr",
   "city_id_traffic",
   "point_id",
+  "points_history",
   "points_recursive",
   "points_marketing",
   "promo",
@@ -123,6 +124,7 @@ const defaultState = {
   orders_by_utm: [],
 
   points: [],
+  points_history: [],
   points_recursive: [],
   points_marketing: [],
 
