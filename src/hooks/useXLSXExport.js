@@ -6,6 +6,7 @@ import { saveAs } from "file-saver";
  * @property {string} key - Field name in the row object.
  * @property {string} label - Column header text.
  * @property {(row: Object) => any} [format] - Optional formatter for cell value.
+ * @property {(row: Object) => any} [formatRaw] - Optional raw formatter for cell value no JSX.
  */
 
 /**
@@ -36,10 +37,14 @@ export default function useXLSExport() {
     // Body with formatters
     const data = rows.map((row) =>
       columns.map((c) => {
-        if (typeof c.format === "function") {
-          return c.format(row);
-        }
         const v = row[c.key];
+        if (typeof c.formatRaw === "function") {
+          return String(c.formatRaw(v)) ?? "-";
+        }
+        if (typeof c.format === "function") {
+          return String(c.format(v)) ?? "-";
+        }
+
         if (typeof v === "number") return v;
         return String(v) ?? "-";
       }),
