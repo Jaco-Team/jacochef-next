@@ -39,7 +39,7 @@ const useMarketingTabStore = create((set) => ({
   filters: defaultFilters,
   slices: defaultSlices,
   subtitle: "",
-  refreshToken: Date.now(),
+  refreshToken: false, //Date.now()
 
   refresh: () => set({ refreshToken: Date.now() }),
 

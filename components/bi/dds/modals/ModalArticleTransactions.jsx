@@ -17,7 +17,7 @@ import useDDSStore from "../useDDSStore";
 import MyModal from "@/ui/MyModal";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import { MyAutocomplite } from "@/ui/Forms";
-import { formatNumber } from "@/src/helpers/utils/i18n";
+import { formatRUR } from "@/src/helpers/utils/i18n";
 import useApi from "@/src/hooks/useApi";
 
 // confirmation timer for mass change, seconds
@@ -118,22 +118,27 @@ export default function ModalArticleTransactions({ onClose, showAlert }) {
                 <TableBody>
                   {selectedTx
                     // ?.filter((t) => !t.is_order)
-                    ?.map((tx) => (
-                      <TableRow
-                        key={tx.id}
-                        hover
-                      >
-                        <TableCell>{tx.date || "—"}</TableCell>
-                        <TableCell sx={{ color: "success.main" }}>
-                          {tx.income ? `${formatNumber(tx.income, 2, 2)} ₽` : "—"}
-                        </TableCell>
-                        <TableCell sx={{ color: "secondary.main" }}>
-                          {tx.expense ? `-${formatNumber(tx.expense, 2, 2)} ₽` : "—"}
-                        </TableCell>
-                        <TableCell>{tx.contractor}</TableCell>
-                        <TableCell>{tx.naznachenie_platezha || "—"}</TableCell>
-                      </TableRow>
-                    ))}
+                    ?.map((tx) => {
+                      const isIncome = tx.type === "income";
+                      const isExpense = tx.type === "expense";
+                      const amountFormatted = formatRUR(tx.amount);
+                      return (
+                        <TableRow
+                          key={tx.id}
+                          hover
+                        >
+                          <TableCell>{tx.date || "—"}</TableCell>
+                          <TableCell sx={{ color: "success.main" }}>
+                            {isIncome ? amountFormatted : "—"}
+                          </TableCell>
+                          <TableCell sx={{ color: "secondary.main" }}>
+                            {isExpense ? amountFormatted : "—"}
+                          </TableCell>
+                          <TableCell>{tx.contractor}</TableCell>
+                          <TableCell>{tx.naznachenie_platezha || "—"}</TableCell>
+                        </TableRow>
+                      );
+                    })}
                 </TableBody>
               </Table>
             </TableContainer>

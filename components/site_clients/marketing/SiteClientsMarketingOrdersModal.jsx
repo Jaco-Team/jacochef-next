@@ -13,7 +13,7 @@ import {
 import { forwardRef, memo } from "react";
 import useMarketingTabStore from "./useMarketingTabStore";
 import { Close } from "@mui/icons-material";
-import { useLoading } from "./useClientsLoadingContext";
+import { useLoading } from "../useClientsLoadingContext";
 
 const Transition = forwardRef(function Transition(props, ref) {
   return (

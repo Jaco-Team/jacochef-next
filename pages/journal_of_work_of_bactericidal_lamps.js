@@ -2,15 +2,6 @@ import React, { Fragment } from "react";
 
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
-
-import IconButton from "@mui/material/IconButton";
-import CloseIcon from "@mui/icons-material/Close";
-
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
 
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -22,13 +13,10 @@ import TableRow from "@mui/material/TableRow";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 
-import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import TextField from "@mui/material/TextField";
+import { MySelect, MyDatePickerNewViews } from "@/ui/Forms";
 
-import { MySelect, MyTextInput, MyDatePickerNewViews, MyDateTimePickerNew } from "@/ui/Forms";
-
-import { api_laravel_local, api_laravel } from "@/src/api_new";
+import { api_laravel } from "@/src/api_new";
+// import { api_laravel_local as api_laravel } from "@/src/api_new";
 
 import dayjs from "dayjs";
 import "dayjs/locale/ru"; // импортируем русскую локаль
@@ -36,465 +24,9 @@ import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import TestAccess from "@/ui/TestAccess";
 import MyAlert from "@/ui/MyAlert";
 import { formatDateMin } from "@/src/helpers/ui/formatDate";
-
-// для редактирования времени (при этом дату нельзя редактировать)
-class DateWithEditableTimePicker extends React.PureComponent {
-  handleTimeChange = (newTime) => {
-    const { value, onChange } = this.props;
-    if (!newTime) return;
-
-    const fixedDate = value ? dayjs(value).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD");
-    const updated = dayjs(`${fixedDate} ${dayjs(newTime).format("HH:mm")}`);
-    onChange(updated);
-  };
-
-  render() {
-    const { value, labelDate, labelTime, disabled, ...rest } = this.props;
-    const dateValue = value ? dayjs(value) : null;
-
-    return (
-      <LocalizationProvider
-        dateAdapter={AdapterDayjs}
-        adapterLocale="ru"
-      >
-        <div style={{ display: "flex", gap: 8 }}>
-          <TextField
-            label={labelDate || "Дата"}
-            value={value ? dayjs(value).format("YYYY-MM-DD") : ""}
-            slotProps={{
-              input: {
-                readOnly: true,
-              },
-            }}
-            size="small"
-            fullWidth
-          />
-          <TimePicker
-            label={labelTime || "Время"}
-            value={dateValue}
-            onChange={this.handleTimeChange}
-            disabled={disabled}
-            ampm={false}
-            views={["hours", "minutes"]}
-            slotProps={{
-              textField: {
-                size: "small",
-                inputProps: { readOnly: true },
-              },
-            }}
-            {...rest}
-          />
-        </div>
-      </LocalizationProvider>
-    );
-  }
-}
-
-class Lamps_Modal_Add extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      active_id: "",
-      number: "",
-      name: "",
-      resource: "",
-      place: "",
-    };
-  }
-
-  componentDidUpdate(prevProps) {
-    //console.log(this.props.lampEdit);
-
-    if (!this.props.lampEdit) {
-      return;
-    }
-
-    if (this.props.lampEdit !== prevProps.lampEdit) {
-      this.setState({
-        active_id: this.props.lampEdit?.id ?? "",
-        number: this.props.lampEdit?.number ?? "",
-        name: this.props.lampEdit?.name ?? "",
-        resource: this.props.lampEdit?.resource ?? "",
-        place: this.props.lampEdit?.place ?? "",
-      });
-    }
-  }
-
-  changeItem(data, event) {
-    this.setState({
-      [data]: event.target.value,
-    });
-  }
-
-  add() {
-    const data = {
-      id: this.state.active_id,
-      number: this.state.number,
-      name: this.state.name,
-      resource: this.state.resource,
-      place: this.state.place,
-    };
-
-    this.props.add(data);
-
-    //this.onClose();
-  }
-
-  onClose() {
-    this.setState({
-      active_id: "",
-      number: "",
-      name: "",
-      resource: "",
-      place: "",
-    });
-
-    this.props.onClose();
-  }
-
-  render() {
-    return (
-      <Dialog
-        open={this.props.open}
-        onClose={this.onClose.bind(this)}
-        fullScreen={this.props.fullScreen}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle style={{ display: "flex", justifyContent: "flex-end" }}>
-          <IconButton onClick={this.onClose.bind(this)}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <MyTextInput
-                label="Порядковый номер"
-                value={this.state.number}
-                func={this.changeItem.bind(this, "number")}
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <MyTextInput
-                label="Модель"
-                value={this.state.name}
-                func={this.changeItem.bind(this, "name")}
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <MyTextInput
-                label="Ресурс (часов)"
-                value={this.state.resource}
-                type={"number"}
-                func={this.changeItem.bind(this, "resource")}
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <MyTextInput
-                label="Где размещена"
-                value={this.state.place}
-                func={this.changeItem.bind(this, "place")}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant="contained"
-            onClick={this.add.bind(this)}
-          >
-            Сохранить
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  }
-}
-
-class Lamps_Modal_Add_Active extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      active_id: "",
-      lamp_id: "",
-      time_start: null,
-      time_end: null,
-      name_lamp: "",
-      confirmDialog: false,
-
-      openAlert: false,
-      err_status: true,
-      err_text: "",
-    };
-  }
-
-  componentDidUpdate(prevProps) {
-    //console.log(this.props.itemEdit);
-
-    if (!this.props.itemEdit) {
-      return;
-    }
-
-    if (this.props.itemEdit !== prevProps.itemEdit) {
-      this.setState({
-        name_lamp: this.props.itemEdit?.name ?? "",
-        active_id: this.props.typeActive === "edit" ? (this.props.itemEdit?.id ?? "") : "",
-        lamp_id:
-          this.props.typeActive === "edit"
-            ? (this.props.itemEdit?.lamp_id ?? "")
-            : (this.props.itemEdit?.id ?? ""),
-        time_start: this.props.itemEdit?.time_start ? dayjs(this.props.itemEdit.time_start) : null,
-        time_end: this.props.itemEdit?.time_end ? dayjs(this.props.itemEdit.time_end) : null,
-      });
-    }
-  }
-
-  changeItem(data, event) {
-    this.setState({
-      [data]: event.target.value,
-    });
-  }
-
-  add() {
-    const time_start = this.state.time_start;
-    const time_end = this.state.time_end;
-
-    if (!time_start || !time_end) {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: "Выберите оба времени!",
-      });
-
-      return;
-    }
-
-    const diffInMinutes = time_end.diff(time_start, "minute");
-
-    if (diffInMinutes <= 0) {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: "Конечное время должно быть позже начального!",
-      });
-
-      return;
-    }
-
-    if (diffInMinutes > 5 * 60) {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: "Разница во времени не должна превышать 5 часов!",
-      });
-
-      return;
-    }
-
-    const data = {
-      id: this.state.active_id,
-      lamp_id: this.state.lamp_id,
-      time_start: dayjs(this.state.time_start).format("YYYY-MM-DD HH:mm"),
-      time_end: dayjs(this.state.time_end).format("YYYY-MM-DD HH:mm"),
-    };
-
-    this.props.add(data);
-  }
-
-  changeLamp() {
-    this.setState({
-      confirmDialog: false,
-    });
-
-    const data = {
-      lamp_id: this.state.lamp_id,
-    };
-
-    this.props.changeLamp(data);
-  }
-
-  onClose() {
-    this.setState({
-      active_id: "",
-      lamp_id: "",
-      time_start: null,
-      time_end: null,
-      name_lamp: "",
-      confirmDialog: false,
-      openAlert: false,
-      err_status: true,
-      err_text: "",
-    });
-
-    this.props.onClose();
-  }
-
-  changeDateRange(data, newValue) {
-    const time_end = this.state.time_end;
-
-    if (data === "time_start" && !time_end && newValue) {
-      // console.log(`Try new time start: ${newValue}`);
-      const updatedEvent = dayjs(newValue);
-      const time_end = updatedEvent.add(1, "hour");
-      // console.log(`Try new time end: ${time_end}`);
-      this.setState({
-        time_end,
-      });
-    }
-
-    this.setState({
-      [data]: newValue ? newValue : null,
-    });
-  }
-
-  render() {
-    const { typeActive } = this.props;
-
-    return (
-      <>
-        <MyAlert
-          isOpen={this.state.openAlert}
-          onClose={() => this.setState({ openAlert: false })}
-          status={this.state.err_status}
-          text={this.state.err_text}
-        />
-        <Dialog
-          sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
-          maxWidth="sm"
-          open={this.state.confirmDialog}
-          onClose={() => this.setState({ confirmDialog: false })}
-        >
-          <DialogTitle>Подтвердите действие</DialogTitle>
-          <DialogContent
-            align="center"
-            sx={{ fontWeight: "bold" }}
-          >
-            <Typography>Точно заменить лампу ?</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => this.setState({ confirmDialog: false })}>Отмена</Button>
-            <Button onClick={this.changeLamp.bind(this)}>Заменить</Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog
-          open={this.props.open}
-          onClose={this.onClose.bind(this)}
-          fullScreen={this.props.fullScreen}
-          fullWidth
-          maxWidth="md"
-        >
-          <DialogTitle style={{ display: "flex", justifyContent: "flex-end" }}>
-            <IconButton onClick={this.onClose.bind(this)}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <Grid
-              container
-              spacing={3}
-            >
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
-              >
-                <MyTextInput
-                  label="Лампа"
-                  value={this.state.name_lamp}
-                  className="disabled_input"
-                />
-              </Grid>
-
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 6,
-                }}
-              >
-                {typeActive === "new" ? (
-                  <MyDateTimePickerNew
-                    value={this.state.time_start}
-                    func={(newValue) => this.changeDateRange("time_start", newValue)}
-                    label="Время начала работы"
-                  />
-                ) : (
-                  <DateWithEditableTimePicker
-                    value={this.state.time_start}
-                    onChange={(newValue) => this.changeDateRange("time_start", newValue)}
-                    labelDate="Дата начала работы"
-                    labelTime="Время начала"
-                  />
-                )}
-              </Grid>
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 6,
-                }}
-              >
-                {typeActive === "new" ? (
-                  <MyDateTimePickerNew
-                    value={this.state.time_end}
-                    func={(newValue) => this.changeDateRange("time_end", newValue)}
-                    label="Время окончания работы"
-                  />
-                ) : (
-                  <DateWithEditableTimePicker
-                    value={this.state.time_end}
-                    onChange={(newValue) => this.changeDateRange("time_end", newValue)}
-                    labelDate="Дата окончания работы"
-                    labelTime="Время окончания"
-                  />
-                )}
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions style={{ justifyContent: "space-between" }}>
-            <Button
-              variant="contained"
-              onClick={() => this.setState({ confirmDialog: true })}
-            >
-              Замена лампы
-            </Button>
-            <Button
-              variant="contained"
-              onClick={this.add.bind(this)}
-            >
-              Сохранить
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </>
-    );
-  }
-}
+import Lamps_Modal_Add_Active from "@/components/journal_of_work_of_bactericidal_lamps/Lamps_Modal_Add_Active";
+import Lamps_Modal_Add from "@/components/journal_of_work_of_bactericidal_lamps/Lamps_Modal_Add";
+import { Paper } from "@mui/material";
 
 class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
   constructor(props) {
@@ -605,18 +137,13 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
 
     const res = await this.getData("get_lamps", data);
 
-    if (res.st) {
-      this.setState({
-        lampList: res.list,
-        lampListActive: res.active_lamp,
-      });
-    } else {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: res.text,
-      });
+    if (!res?.st) {
+      return this.showAlert(res.text);
     }
+    this.setState({
+      lampList: res.list,
+      lampListActive: res.active_lamp,
+    });
   }
 
   async add(data) {
@@ -624,25 +151,17 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
 
     const res = await this.getData("add_lamp", data);
 
-    if (res.st) {
-      this.setState({
-        openAlert: true,
-        err_status: true,
-        err_text: "Успешно сохранено!",
-
-        modalAddLamp: false,
-      });
-
-      setTimeout(() => {
-        this.getLamps();
-      }, 500);
-    } else {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: res.text,
-      });
+    if (!res?.st) {
+      return this.showAlert(res.text);
     }
+    this.showAlert("Успешно сохранено!", true);
+    this.setState({
+      modalAddLamp: false,
+    });
+
+    setTimeout(() => {
+      this.getLamps();
+    }, 500);
   }
 
   async addActive(data) {
@@ -650,24 +169,17 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
 
     const res = await this.getData("add_lamp_active", data);
 
-    if (res.st) {
-      this.setState({
-        openAlert: true,
-        err_status: true,
-        err_text: "Успешно сохранено!",
-        modalAddActiveLamp: false,
-      });
-
-      setTimeout(() => {
-        this.getLamps();
-      }, 500);
-    } else {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: res.text,
-      });
+    if (!res?.st) {
+      return this.showAlert(res.text);
     }
+    this.showAlert("Успешно сохранено!", true);
+    this.setState({
+      modalAddActiveLamp: false,
+    });
+
+    setTimeout(() => {
+      this.getLamps();
+    }, 500);
   }
 
   openModalAddLamp() {
@@ -738,16 +250,22 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
     });
   }
 
+  showAlert(err_text, err_status = false) {
+    this.setState({
+      openAlert: true,
+      err_status,
+      err_text,
+    });
+  }
+
   async changeLamp(data) {
     data.point_id = this.state.point;
 
     const res = await this.getData("changeLamp", data);
 
     if (res.st) {
+      this.showAlert("Успешно сохранено!", true);
       this.setState({
-        openAlert: true,
-        err_status: true,
-        err_text: "Успешно сохранено!",
         modalAddActiveLamp: false,
       });
 
@@ -755,11 +273,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
         this.getLamps();
       }, 500);
     } else {
-      this.setState({
-        openAlert: true,
-        err_status: false,
-        err_text: res.text,
-      });
+      this.showAlert(res.text);
     }
   }
 
@@ -853,6 +367,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
             }}
           >
             <MySelect
+              id="select_point"
               is_none={false}
               data={this.state.points}
               value={this.state.point}
@@ -913,34 +428,36 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
               mb: 5,
             }}
           >
-            <TableContainer>
-              <Table style={{ whiteSpace: "nowrap" }}>
+            <TableContainer
+              component={Paper}
+              sx={{ borderRadius: 2 }}
+            >
+              <Table
+                sx={{
+                  borderCollapse: "collapse", // classic grid
+                  "& th, & td": {
+                    border: "1px solid #e5e5e5",
+                    textAlign: "center",
+                    verticalAlign: "middle",
+                  },
+                }}
+              >
                 <TableHead>
                   <TableRow>
-                    <TableCell
-                      rowSpan={5}
-                      style={{ border: "1px solid #e5e5e5" }}
-                    >
-                      Дата проверки
-                    </TableCell>
+                    <TableCell rowSpan={5}>Дата проверки</TableCell>
                   </TableRow>
                   <TableRow>
                     {this.state.lampList.map((item, key) => (
                       <TableCell
                         key={key}
                         colSpan={3}
-                        style={{ textAlign: "center", border: "1px solid #e5e5e5" }}
+                        style={{ textAlign: "center" }}
                       >
                         Размещение: {item.place}
                       </TableCell>
                     ))}
 
-                    <TableCell
-                      rowSpan={5}
-                      style={{ border: "1px solid #e5e5e5" }}
-                    >
-                      Подпись менеджера смены
-                    </TableCell>
+                    <TableCell rowSpan={5}>Подпись менеджера смены</TableCell>
                   </TableRow>
                   <TableRow>
                     {this.state.lampList.map((item, key) => (
@@ -951,7 +468,6 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
                           textAlign: "center",
                           cursor: "pointer",
                           color: "red",
-                          border: "1px solid #e5e5e5",
                         }}
                         onClick={this.editLamp.bind(this, item)}
                       >
@@ -964,7 +480,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
                       <TableCell
                         key={key}
                         colSpan={3}
-                        style={{ textAlign: "center", border: "1px solid #e5e5e5" }}
+                        style={{ textAlign: "center" }}
                       >
                         Ресурс лампы: {item.resource}
                       </TableCell>
@@ -972,14 +488,10 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
                   </TableRow>
                   <TableRow>
                     {this.state.lampList.map((item, key) => (
-                      <Fragment key={key}>
+                      <Fragment key={item.id || key}>
                         <TableCell style={{ textAlign: "center" }}>Включение</TableCell>
                         <TableCell style={{ textAlign: "center" }}>Выключение</TableCell>
-                        <TableCell
-                          style={{ textAlign: "center", borderRight: "1px solid #e5e5e5" }}
-                        >
-                          Время работы
-                        </TableCell>
+                        <TableCell style={{ textAlign: "center" }}>Время работы</TableCell>
                       </Fragment>
                     ))}
                   </TableRow>
@@ -991,12 +503,15 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
                       style={{ cursor: "pointer" }}
                       hover
                     >
-                      <TableCell style={{ border: "1px solid #e5e5e5" }}>{item.date}</TableCell>
+                      <TableCell>{item.date}</TableCell>
 
                       {item.lamps.map((lamp, k) => (
                         <Fragment key={k}>
                           <TableCell
-                            style={{ textAlign: "center", color: "red" }}
+                            style={{
+                              textAlign: "center",
+                              color: "red",
+                            }}
                             onClick={
                               lamp.id == ""
                                 ? () => {}
@@ -1019,7 +534,6 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
                             style={{
                               textAlign: "center",
                               color: "red",
-                              borderRight: "1px solid #e5e5e5",
                             }}
                             onClick={
                               lamp.id == ""
@@ -1032,47 +546,41 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
                         </Fragment>
                       ))}
 
-                      <TableCell style={{ border: "1px solid #e5e5e5" }}>{item.manager}</TableCell>
+                      <TableCell>{item.manager}</TableCell>
                     </TableRow>
                   ))}
 
                   <TableRow>
-                    <TableCell
-                      style={{ borderRight: "1px solid #e5e5e5", borderLeft: "1px solid #e5e5e5" }}
-                    />
+                    <TableCell />
                     {this.state.lampList.map((item, key) => (
                       <TableCell
                         colSpan={3}
                         key={key}
-                        style={{ borderRight: "1px solid #e5e5e5", textAlign: "right" }}
+                        style={{ textAlign: "center" }}
                       >
                         <Button
                           variant="contained"
                           onClick={this.openModalAddActiveLamp.bind(this, item, "new")}
+                          sx={{ w: "100%" }}
                         >
                           Добавить активацию
                         </Button>
                       </TableCell>
                     ))}
-                    <TableCell style={{ borderRight: "1px solid #e5e5e5" }} />
                   </TableRow>
 
                   <TableRow>
-                    <TableCell style={{ border: "1px solid #e5e5e5" }}>Отработано часов</TableCell>
+                    <TableCell>Отработано часов</TableCell>
 
                     {this.state.lampList.map((lamp, k) => (
                       <Fragment key={k}>
                         <TableCell style={{ textAlign: "center" }}></TableCell>
                         <TableCell style={{ textAlign: "center" }}></TableCell>
-                        <TableCell
-                          style={{ textAlign: "center", borderRight: "1px solid #e5e5e5" }}
-                        >
-                          {lamp.svod}
-                        </TableCell>
+                        <TableCell style={{ textAlign: "center" }}>{lamp.svod}</TableCell>
                       </Fragment>
                     ))}
 
-                    <TableCell style={{ border: "1px solid #e5e5e5" }}></TableCell>
+                    <TableCell></TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
@@ -1088,7 +596,7 @@ export default function Journal_of_work_of_bactericidal_lamps() {
   return <Journal_of_work_of_bactericidal_lamps_ />;
 }
 
-export async function getServerSideProps({ req, res, query }) {
+export async function getServerSideProps({ res }) {
   res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(

@@ -52,11 +52,12 @@ export default function ArticlesTable() {
     const base = {
       income: { title: "Операционные поступления", articles: [], totals: {} },
       expense: { title: "Операционные платежи", articles: [], totals: {} },
+      undefined: { title: "Без классификации", articles: [], totals: {} },
     };
 
     for (const a of stats || []) {
       const type = a.type;
-      if (!type) continue;
+      // if (!type) continue;
 
       const safeId = `${type}-${a.article_id}`;
 
@@ -94,7 +95,7 @@ export default function ArticlesTable() {
     [groups],
   );
 
-  const balance = totalIncome - totalExpense;
+  const balance = useMemo(() => totalIncome - totalExpense, [totalIncome, totalExpense]);
 
   const balanceColor =
     balance > 0 ? "success.main" : balance < 0 ? "secondary.main" : "text.primary";
@@ -106,6 +107,7 @@ export default function ArticlesTable() {
           <IconButton
             size="small"
             onClick={() => toggleArticle(a.id)}
+            sx={{ mr: 1 }}
           >
             {openArticles[a.id] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
           </IconButton>
@@ -156,13 +158,15 @@ export default function ArticlesTable() {
 
   const renderGroup = (key) => {
     const g = groups[key];
+    if (!g.articles?.length) return null;
     return (
       <Fragment key={`group-${key}`}>
         <TableRow sx={{ bgcolor: "action.hover" }}>
-          <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+          <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", pl: 1 }}>
             <IconButton
               size="small"
               onClick={() => toggleGroup(key)}
+              sx={{ mr: 1 }}
             >
               {openGroups[key] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
             </IconButton>
@@ -238,6 +242,7 @@ export default function ArticlesTable() {
           <TableBody>
             {renderGroup("income")}
             {renderGroup("expense")}
+            {renderGroup("undefined")}
           </TableBody>
         </Table>
       </TableContainer>

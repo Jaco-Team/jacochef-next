@@ -36,6 +36,7 @@ import Orders from "./orders/Orders";
 import AddressOrders from "./address/AddressOrders";
 import OrdersTraffic from "./traffic/OrdersTraffic";
 import RecursiveOrdersTab from "./recursive/RecursiveOrdersTab";
+import ClientHistory from "./history/ClientHistory";
 
 export default function SiteClients() {
   const {
@@ -181,20 +182,20 @@ export default function SiteClients() {
     setActiveTab(val);
   };
 
-  const changeSearch = (data, e) => {
-    if (data === "clear") {
-      update({
-        [data]: "",
-        clients: [],
-      });
-    } else {
-      let login = e?.target?.value;
+  // const changeSearch = (data, e) => {
+  //   if (data === "clear") {
+  //     update({
+  //       [data]: "",
+  //       clients: [],
+  //     });
+  //   } else {
+  //     let login = e?.target?.value;
 
-      update({
-        [data]: login,
-      });
-    }
-  };
+  //     update({
+  //       [data]: login,
+  //     });
+  //   }
+  // };
 
   const downLoad = async () => {
     const data = buildRequest();
@@ -346,10 +347,7 @@ export default function SiteClients() {
     }
 
     if (start && end && end.diff(start, "day") > 31) {
-      return showAlert(
-        "Побойся Боба, эти инструменты не для экспорта базы! 31 день максимум.",
-        false,
-      );
+      return showAlert("Эти инструменты не для экспорта базы! 31 день максимум.", false);
     }
 
     if (!city_id.length) {
@@ -494,6 +492,17 @@ export default function SiteClients() {
       name: "Повторные заказы",
       component: (
         <RecursiveOrdersTab
+          getData={getData}
+          showAlert={showAlert}
+          canAccess={canAccess}
+        />
+      ),
+    },
+    {
+      key: "client_history",
+      name: "История клиента",
+      component: (
+        <ClientHistory
           getData={getData}
           showAlert={showAlert}
           canAccess={canAccess}

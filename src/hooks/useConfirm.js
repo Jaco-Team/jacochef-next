@@ -110,7 +110,7 @@ export function useConfirm() {
         <Button
           onClick={handleOk}
           variant="contained"
-          color="primary"
+          color="success"
           disabled={isLockedRef.current}
         >
           ОК
