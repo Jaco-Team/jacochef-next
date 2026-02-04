@@ -44,6 +44,10 @@ import MyAlert from "@/ui/MyAlert";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import { NumericTextField } from "@/ui/Forms/MyNumericFormat";
+import { Box } from "@mui/material";
+import WriteOffReasons from "@/ui/Forms/WriteOffReasons";
+import CheckIcon from "@mui/icons-material/Check";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 class Write_off_journal_View extends React.Component {
   constructor(props) {
@@ -127,172 +131,265 @@ class Write_off_journal_View extends React.Component {
       <Dialog
         open={open}
         fullWidth={true}
-        maxWidth={"lg"}
+        maxWidth={"xl"}
         onClose={this.onClose.bind(this)}
-        fullScreen={fullScreen}
+        fullScreen={true}
       >
-        <DialogTitle>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            flexDirection: "row-reverse",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div></div>
           Списание
           <IconButton
             onClick={this.onClose.bind(this)}
             style={{ cursor: "pointer", float: "right" }}
           >
-            <CloseIcon />
+            <KeyboardArrowDownIcon style={{ color: "#3C3B3B", rotate: "90deg" }} />
           </IconButton>
         </DialogTitle>
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <TableContainer component={Paper}>
-            <Table
-              stickyHeader
-              aria-label="sticky table"
-              sx={{
-                width: "100%",
-                tableLayout: "fixed",
-              }}
-            >
-              <TableHead>
-                <TableRow>
-                  <TableCell
-                    sx={{
-                      width: "10%",
-                      fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
-                      padding: { xs: "8px 4px", sm: "16px" },
-                    }}
-                  >
-                    #
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      width: "20%",
-                      fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
-                      padding: { xs: "8px 4px", sm: "16px" },
-                    }}
-                  >
-                    Тип
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      width: "40%",
-                      fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
-                      padding: { xs: "8px 4px", sm: "16px" },
-                    }}
-                  >
-                    Наименование
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      width: "20%",
-                      fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
-                      padding: { xs: "8px 4px", sm: "16px" },
-                    }}
-                  >
-                    Кол-во
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {this.state.itemView?.items.map((it, key) => (
-                  <TableRow
-                    key={key}
-                    sx={{
-                      "& td": {
-                        color: it?.color ? "#fff" : "rgba(0, 0, 0, 0.87)",
-                        fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
-                        padding: { xs: "8px 4px", sm: "16px" },
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      },
-                    }}
+        <DialogContent style={{ padding: 12, backgroundColor: "#F2F2F2" }}>
+          <Grid
+            container
+            spacing={3}
+          >
+            {this.state.itemView?.items.map((it) => {
+              return (
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 6,
+                  }}
+                >
+                  <div
                     style={{
-                      backgroundColor: it?.color
-                        ? it.color === "add"
-                          ? "rgb(255, 204, 0)"
-                          : "red"
-                        : "#fff",
+                      backgroundColor: "#fff",
+                      display: "flex",
+                      flexDirection: "column",
+                      borderRadius: "12px",
+                      padding: "8px 12px",
+                      marginBottom: "12px",
                     }}
                   >
-                    <TableCell sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
-                      {key + 1}
-                    </TableCell>
-                    <TableCell sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
-                      {it.type_name}
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                        maxWidth: "150px",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: "10px",
                       }}
                     >
-                      {it.item_name}
-                    </TableCell>
-                    <TableCell sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
-                      {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <Accordion sx={{ marginTop: "10px", maxHeight: { xs: "none", sm: 600 } }}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography style={{ fontWeight: "bold" }}>История изменений</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <TableContainer component={Paper}>
-                <Table
-                  stickyHeader
-                  aria-label="sticky table"
-                >
-                  <TableHead>
-                    <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                      <TableCell style={{ width: "5%" }}>#</TableCell>
-                      <TableCell style={{ width: "20%" }}>Дата создания</TableCell>
-                      <TableCell style={{ width: "25%" }}>Дата редактирования/удаления</TableCell>
-                      <TableCell style={{ width: "25%" }}>Время редактирования/удаления</TableCell>
-                      <TableCell style={{ width: "20%" }}>Редактор</TableCell>
-                      <TableCell style={{ width: "5%" }}>Просмотр</TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {this.state.itemHist.map((it, key) => (
-                      <TableRow
-                        key={key}
-                        hover
+                      <span style={{ color: "#666666", fontWeight: "500" }}>Тип</span>
+                      <span style={{ color: "#666666", fontWeight: "400" }}>{it.type_name}</span>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      <span style={{ color: "#666666", fontWeight: "500" }}>Наименование</span>
+                      <span style={{ color: "#666666", fontWeight: "400" }}>{it.item_name}</span>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      <span style={{ color: "#666666", fontWeight: "500" }}>Количество</span>
+                      <span
+                        style={{
+                          color: "#666666",
+                          fontWeight: "400",
+                        }}
                       >
-                        <TableCell>{key + 1}</TableCell>
-                        <TableCell>{it.date_create}</TableCell>
-                        <TableCell>
-                          {it.date_update === "0000-00-00" ? "" : it.date_update}
-                        </TableCell>
-                        <TableCell>{parseInt(it.time_update) ? it.time_update : ""}</TableCell>
-                        <TableCell>{it.user_update ?? it.user_create}</TableCell>
-                        <TableCell
-                          style={{ cursor: "pointer" }}
+                        {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
+                      </span>
+                    </div>
+                  </div>
+                </Grid>
+              );
+            })}
+          </Grid>
+          <Accordion
+            sx={{
+              color: "#666666",
+              borderRadius: "12px !important",
+              boxShadow: "none",
+              "&::before": {
+                display: "none",
+              },
+              "&.MuiAccordion-root::before": {
+                display: "none",
+              },
+            }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon style={{ color: "#A6A6A6" }} />}>
+              <Typography style={{ fontWeight: "400" }}>История изменений</Typography>
+            </AccordionSummary>
+            <AccordionDetails style={{ backgroundColor: "#F2F2F2", padding: "12px 0 0 0" }}>
+              <Grid
+                container
+                spacing={3}
+              >
+                {this.state.itemHist?.map((it, key) => {
+                  return (
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6,
+                      }}
+                    >
+                      <div
+                        style={{ display: "flex", flexDirection: "column", marginBottom: "12px" }}
+                      >
+                        <div
+                          style={{
+                            backgroundColor: "#fff",
+                            display: "flex",
+                            flexDirection: "column",
+                            borderRadius: "12px",
+                            marginBottom: "12px",
+                            border: "1px solid #E5E5E5",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              padding: "8px 12px",
+                              borderBottom: "1px solid #E5E5E5",
+                            }}
+                          >
+                            <span style={{ color: "#666666", fontWeight: "500" }}>№ {key + 1}</span>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              padding: "8px 12px",
+                            }}
+                          >
+                            <span style={{ color: "#666666", fontWeight: "500" }}>
+                              Дата создания
+                            </span>
+                            <span style={{ color: "#666666", fontWeight: "400" }}>
+                              {it.date_create}
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              padding: "8px 12px",
+                            }}
+                          >
+                            <span style={{ color: "#666666", fontWeight: "500" }}>
+                              Дата редактирования/удаления
+                            </span>
+                            <span
+                              style={{
+                                color: "#666666",
+                                fontWeight: "400",
+                              }}
+                            >
+                              {it.date_update === "0000-00-00" ? "" : it.date_update}
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              padding: "8px 12px",
+                            }}
+                          >
+                            <span style={{ color: "#666666", fontWeight: "500" }}>
+                              Время редактирования/удаления
+                            </span>
+                            <span
+                              style={{
+                                color: "#666666",
+                                fontWeight: "400",
+                              }}
+                            >
+                              {parseInt(it.time_update) ? it.time_update : ""}
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              padding: "8px 12px",
+                            }}
+                          >
+                            <span style={{ color: "#666666", fontWeight: "500" }}>Редактор</span>
+                            <span
+                              style={{
+                                color: "#666666",
+                                fontWeight: "400",
+                              }}
+                            >
+                              {it.user_update ?? it.user_create}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
                           onClick={this.props.openModalHistoryView.bind(
                             this,
                             key,
                             this.state.itemHist,
                           )}
+                          style={{
+                            backgroundColor: "#fff",
+                            borderRadius: "12px",
+                            height: "48px",
+                            border: "1px solid #2F7D33",
+                            color: "#2F7D33",
+                          }}
                         >
-                          <TextSnippetOutlinedIcon />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                          Посмотреть
+                        </Button>
+                      </div>
+                    </Grid>
+                  );
+                })}
+              </Grid>
             </AccordionDetails>
           </Accordion>
         </DialogContent>
-        <DialogActions>
+        <DialogActions style={{ backgroundColor: "#F2F2F2" }}>
           {this.props.acces?.edit_write_off_access ? (
             <Button
-              color="success"
+              style={{
+                backgroundColor: "#2F7D33",
+                borderRadius: "12px",
+                height: "48px",
+                textTransform: "capitalize",
+                color: "#2FFF",
+                boxShadow: "none",
+              }}
               variant="contained"
               onClick={() => this.props.openItem(this.state.itemView?.id, "Редактрование списания")}
             >
@@ -301,11 +398,270 @@ class Write_off_journal_View extends React.Component {
           ) : null}
           <Button
             variant="contained"
+            style={{
+              backgroundColor: "#DD1A32",
+              borderRadius: "12px",
+              height: "48px",
+              textTransform: "capitalize",
+              color: "#2FFF",
+              boxShadow: "none",
+            }}
             onClick={this.onClose.bind(this)}
           >
             Закрыть
           </Button>
         </DialogActions>
+      </Dialog>
+    );
+  }
+}
+
+class Write_off_journal_View_Tags extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      reason: "",
+      tags: [],
+      tag: {},
+    };
+  }
+
+  onClose() {
+    this.setState({
+      itemView: null,
+    });
+
+    this.props.onClose();
+  }
+
+  render() {
+    const { open, fullScreen } = this.props;
+
+    return (
+      <Dialog
+        open={open}
+        fullWidth={true}
+        maxWidth={"lg"}
+        onClose={this.onClose.bind(this)}
+        fullScreen={fullScreen}
+        PaperProps={{
+          sx: {
+            margin: 0,
+            position: "absolute",
+            bottom: 0,
+            width: "100%",
+            borderRadius: "40px 40px 0 0",
+            height: "auto",
+            maxHeight: "90vh",
+            overflow: "hidden",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            paddingTop: 1,
+            paddingBottom: 2,
+            position: "relative",
+            cursor: "pointer",
+            "&:active": {
+              "& .drag-indicator": {
+                backgroundColor: "#888",
+              },
+            },
+          }}
+          onClick={this.onClose.bind(this)}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          <Box
+            className="drag-indicator"
+            sx={{
+              width: 36,
+              height: 5,
+              backgroundColor: "#BABABA",
+              borderRadius: 2,
+              transition: "background-color 0.2s",
+            }}
+          />
+        </Box>
+
+        <Box
+          sx={{
+            overflow: "auto",
+            height: "100%",
+            maxHeight: "calc(90vh - 60px)",
+          }}
+        >
+          <DialogTitle sx={{ textAlign: "center", padding: "0 12px" }}>
+            Создание новой причины
+            <IconButton
+              onClick={this.onClose.bind(this)}
+              style={{ cursor: "pointer", float: "right" }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent
+            style={{ padding: "16px 0 360px 0", backgroundColor: "#f5f5f5", width: "100%" }}
+          >
+            <Grid
+              container
+              spacing={3}
+              sx={{ padding: "16px" }}
+            >
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                }}
+              >
+                <MyTextInput
+                  value={this.state.reason}
+                  func={(e) => this.setState({ reason: e.target.value })}
+                  customRI="journal"
+                  label="Причина списания"
+                />
+                {this.state.reason &&
+                this.props.tags_journal.filter((it) => it.name.includes(this.state.reason))
+                  ?.length !== 0 ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      backgroundColor: "#fff",
+                      padding: "8px 12px",
+                      borderRadius: "12px",
+                      marginTop: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <Typography sx={{ fontSize: "14px !important", color: "#DD1A32" }}>
+                          Найдено несколько совпадений.
+                        </Typography>
+                        <Typography
+                          sx={{ fontSize: "14px !important", color: "#666666", marginTop: "4px" }}
+                        >
+                          Вернуться к выбору по списку?
+                        </Typography>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                        <Button
+                          style={{
+                            backgroundColor: "#FFF",
+                            borderRadius: "12px",
+                            height: "40px",
+                            textTransform: "capitalize",
+                            color: "#2F7D33",
+                            border: "1px solid #2F7D33",
+                            marginRight: "12px",
+                          }}
+                          onClick={this.onClose.bind(this)}
+                        >
+                          Да
+                        </Button>
+                        <Button
+                          style={{
+                            backgroundColor: "#FFF",
+                            borderRadius: "12px",
+                            height: "40px",
+                            textTransform: "capitalize",
+                            color: "#F43331",
+                            border: "1px solid #E5E5E5",
+                          }}
+                        >
+                          Нет
+                        </Button>
+                      </div>
+                    </div>
+                    {this.props.tags_journal?.length ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          marginTop: "12px",
+                        }}
+                      >
+                        <Typography sx={{ fontSize: "14px !important", color: "#625B71" }}>
+                          {this.props.tags_journal
+                            .filter((it) => it.name.includes(this.state.reason))
+                            .map((it) => it.name)
+                            .join(", ")}
+                        </Typography>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                }}
+              >
+                <MyAutocomplite
+                  label="Тег"
+                  multiple={false}
+                  customRI="journal"
+                  data={this.props.tags}
+                  value={this.state.tag}
+                  func={(event, value) => this.setState({ tag: value })}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 6,
+                  sm: 6,
+                }}
+              >
+                <Button
+                  style={{
+                    backgroundColor: "#2F7D33",
+                    borderRadius: "12px",
+                    height: "48px",
+                    textTransform: "capitalize",
+                    color: "#FFF",
+                    width: "100%",
+                  }}
+                  onClick={() => this.props.createTags(this.state.reason, this.state.tag)}
+                >
+                  Создать причину
+                </Button>
+              </Grid>
+              <Grid
+                size={{
+                  xs: 6,
+                  sm: 6,
+                }}
+              >
+                <Button
+                  style={{
+                    backgroundColor: "#FFF",
+                    borderRadius: "12px",
+                    height: "48px",
+                    textTransform: "capitalize",
+                    color: "#F43331",
+                    width: "100%",
+                  }}
+                  onClick={this.onClose.bind(this)}
+                >
+                  Отменть
+                </Button>
+              </Grid>
+            </Grid>
+          </DialogContent>
+        </Box>
       </Dialog>
     );
   }
@@ -352,103 +708,203 @@ class Write_off_journal_View_Disabled extends React.Component {
         maxWidth={"lg"}
         onClose={this.onClose.bind(this)}
         fullScreen={fullScreen}
+        PaperProps={{
+          sx: {
+            margin: 0,
+            position: "absolute",
+            bottom: 0,
+            borderRadius: "40px 40px 0 0",
+            height: "auto",
+            overflow: "hidden",
+            maxHeight: "90vh",
+          },
+        }}
       >
-        <DialogTitle>
-          <IconButton
-            onClick={this.onClose.bind(this)}
-            style={{ cursor: "pointer", float: "right" }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <TableContainer component={Paper}>
-            <Table
-              stickyHeader
-              aria-label="sticky table"
+        <Box
+          sx={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            paddingTop: 1,
+            paddingBottom: 2,
+            position: "relative",
+            cursor: "pointer",
+            "&:active": {
+              "& .drag-indicator": {
+                backgroundColor: "#888",
+              },
+            },
+          }}
+          onClick={this.onClose.bind(this)}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          <Box
+            className="drag-indicator"
+            sx={{
+              width: 36,
+              height: 5,
+              backgroundColor: "#BABABA",
+              borderRadius: 2,
+              transition: "background-color 0.2s",
+            }}
+          />
+        </Box>
+
+        <Box
+          sx={{
+            overflow: "auto",
+            maxHeight: "calc(90vh - 60px)",
+          }}
+        >
+          <DialogTitle sx={{ textAlign: "center", padding: "0 12px" }}>
+            История изменений
+            <IconButton
+              onClick={this.onClose.bind(this)}
+              style={{ cursor: "pointer", float: "right" }}
             >
-              <TableHead>
-                <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                  <TableCell></TableCell>
-                  <TableCell style={{ width: "10%" }}>#</TableCell>
-                  <TableCell style={{ width: "20%" }}>Тип</TableCell>
-                  <TableCell style={{ width: "40%" }}>Наименование</TableCell>
-                  <TableCell style={{ width: "20%" }}>Количество</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {this.props.itemView?.items.map((it, key) => (
-                  <TableRow key={key}>
-                    <TableCell
-                      style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-                    >
-                      {it.color === "add" ? (
-                        <AddIcon
-                          style={{
-                            color: "green",
-                            fontWeight: "bold",
-                            border: "2px solid green",
-                            borderRadius: "6px",
-                            padding: "6px",
-                          }}
-                        />
-                      ) : it.color === "edit" ? (
-                        <EditIcon
-                          style={{
-                            color: "yellow",
-                            fontWeight: "bold",
-                            border: "2px solid yellow",
-                            borderRadius: "6px",
-                            padding: "6px",
-                          }}
-                        />
-                      ) : (
-                        <RemoveIcon
-                          style={{
-                            color: "red",
-                            border: "2px solid red",
-                            borderRadius: "6px",
-                            padding: "6px",
-                          }}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell>{key + 1}</TableCell>
-                    <TableCell>{it.type_name}</TableCell>
-                    <TableCell>{it.item_name}</TableCell>
-                    <TableCell>{it.value + " " + it.ei_name}</TableCell>
-                  </TableRow>
-                ))}
-                <TableRow>
-                  <TableCell colSpan={4}>
-                    <MyTextInput
-                      label="Комментарий"
-                      value={
-                        this.props.itemView?.coment?.color
-                          ? this.props.itemView?.coment?.key
-                          : this.props.itemView?.coment
-                      }
-                      disabled={true}
-                      className={
-                        this.state.itemView?.coment?.color
-                          ? "disabled_input disabled_input_color"
-                          : "disabled_input"
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant="contained"
-            onClick={this.onClose.bind(this)}
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent
+            style={{ backgroundColor: "#f5f5f5", width: "100%", padding: "0 0 120px 0" }}
           >
-            Закрыть
-          </Button>
-        </DialogActions>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                padding: "8px",
+              }}
+            >
+              <div
+                style={{
+                  padding: "12px",
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor: "#fff",
+                  justifyContent: "space-between",
+                  borderRadius: "12px",
+                  marginBottom: "16px",
+                  width: "95%",
+                }}
+              >
+                <span style={{ color: "#666666" }}>Изменение №1</span>
+                <span style={{ color: "#666666" }}>Дата создания 2025-12-01</span>
+              </div>
+              <Grid
+                container
+                spacing={3}
+              >
+                {this.props.itemView?.items?.map((it, key) => {
+                  return (
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 6,
+                      }}
+                    >
+                      <div
+                        style={{
+                          backgroundColor: "#fff",
+                          display: "flex",
+                          flexDirection: "column",
+                          borderRadius: "12px",
+                          border: "1px solid #E5E5E5",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "12px 8px",
+                            borderRadius: "12px 12px 0 0",
+                            borderBottom: "1px solid #E5E5E5",
+                          }}
+                        >
+                          <span style={{ color: "#666" }}>#{key + 1}</span>
+                          <span
+                            style={{
+                              color:
+                                it.color === "add"
+                                  ? it.color === "edit"
+                                    ? "yellow"
+                                    : "#2F7D33"
+                                  : "#F43331",
+                            }}
+                          >
+                            {it.color === "add"
+                              ? it.color === "edit"
+                                ? "Изменён"
+                                : "Добавлен"
+                              : "Удалён"}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "8px 12px",
+                          }}
+                        >
+                          <span style={{ color: "#666", fontWeight: "500" }}>Тип</span>
+                          <span style={{ color: "#666", fontWeight: "400" }}>{it.type_name}</span>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "8px 12px",
+                          }}
+                        >
+                          <span style={{ color: "#666", fontWeight: "500" }}>Наименование</span>
+                          <span style={{ color: "#666", fontWeight: "400" }}>{it.item_name}</span>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "8px 12px",
+                          }}
+                        >
+                          <span style={{ color: "#666", fontWeight: "500" }}>Количество</span>
+                          <span style={{ color: "#666", fontWeight: "400" }}>
+                            {it.value + " " + it.ei_name}
+                          </span>
+                        </div>
+                      </div>
+                    </Grid>
+                  );
+                })}
+                <div
+                  style={{
+                    padding: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    backgroundColor: "#fff",
+                    justifyContent: "space-between",
+                    borderRadius: "12px",
+                    marginTop: "12px",
+                    width: "100%",
+                  }}
+                >
+                  <span style={{ color: "#666666", fontWeight: "500" }}>Комментарий</span>
+                  <span style={{ color: "#666666", fontWeight: "400", marginTop: "8px" }}>
+                    {this.props.itemView?.coment}
+                  </span>
+                </div>
+              </Grid>
+            </div>
+          </DialogContent>
+        </Box>
       </Dialog>
     );
   }
@@ -504,7 +960,7 @@ class Write_off_journal_History extends React.Component {
           </IconButton>
         </DialogTitle>
 
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+        <DialogContent style={{ padding: 10 }}>
           <TableContainer component={Paper}>
             <Table
               stickyHeader
@@ -567,6 +1023,7 @@ class Write_off_journal_modal extends React.Component {
 
       types: [],
       type: "",
+      openTags: false,
 
       items: [],
       item: "",
@@ -581,7 +1038,8 @@ class Write_off_journal_modal extends React.Component {
       openAlert: false,
       err_status: true,
       err_text: "",
-
+      confirmDialogTag: false,
+      reason: "",
       confirmDialog: false,
     };
   }
@@ -713,6 +1171,21 @@ class Write_off_journal_modal extends React.Component {
     this.setState({ confirmDialog: false });
   }
 
+  createTags = (reason, tag) => {
+    this.props.getData("save_tag", { name: reason, tag_id: tag.id }).then((res) => {
+      if (res.st) {
+        this.setState({ openTags: false, reason, confirmDialogTag: true });
+        this.props.update();
+      } else {
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: res.text,
+        });
+      }
+    });
+  };
+
   save() {
     const writeOffItems = this.state.writeOffItems;
     const cleanComment = this.state.comment.replace(/\s/g, "");
@@ -791,6 +1264,15 @@ class Write_off_journal_modal extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
+        {this.state.openTags ? (
+          <Write_off_journal_View_Tags
+            open={this.state.openTags}
+            onClose={() => this.setState({ openTags: false })}
+            tags={this.props.itemEdit?.tags}
+            tags_journal={this.props.itemEdit?.tags_journal}
+            createTags={this.createTags}
+          />
+        ) : null}
         <Dialog
           sx={{
             "& .MuiDialog-paper": {
@@ -800,6 +1282,7 @@ class Write_off_journal_modal extends React.Component {
           }}
           maxWidth="sm"
           open={this.state.confirmDialog}
+          fullScreen={true}
           onClose={() => this.setState({ confirmDialog: false })}
         >
           <DialogTitle>Подтвердите действие</DialogTitle>
@@ -820,23 +1303,77 @@ class Write_off_journal_modal extends React.Component {
           </DialogActions>
         </Dialog>
         <Dialog
-          open={open}
-          fullWidth={true}
-          maxWidth={"lg"}
-          onClose={this.onClose.bind(this)}
-          fullScreen={fullScreen}
+          sx={{
+            "&& .MuiDialog-paper": {
+              width: "382px !important",
+              borderRadius: "12px !important",
+              maxHeight: 210,
+            },
+          }}
+          maxWidth="sm"
+          open={this.state.confirmDialogTag}
+          fullScreen={true}
+          onClose={() => this.setState({ confirmDialogTag: false })}
         >
-          <DialogTitle className="button">
-            <Typography>{method}</Typography>
+          <DialogTitle
+            sx={{
+              backgroundColor: "#F2F2F2",
+              borderBottom: "1px solid #E5E5E5",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography sx={{ color: "#666666" }}>Добавлена новая причина списания</Typography>
             <IconButton
-              onClick={this.onClose.bind(this)}
-              style={{ cursor: "pointer" }}
+              onClick={() => this.setState({ confirmDialogTag: false })}
+              style={{ cursor: "pointer", color: "#666666" }}
             >
               <CloseIcon />
             </IconButton>
           </DialogTitle>
+          <DialogContent>
+            <Typography sx={{ color: "#666666", fontSize: "16px", marginBottom: "8px" }}>
+              В список добавлена новая причина
+            </Typography>
+            <Typography
+              sx={{
+                color: "#666666",
+                fontSize: "20px !important",
+                marginBottom: "8px",
+                marginTop: "8px",
+              }}
+            >
+              {this.state.reason}
+            </Typography>
+          </DialogContent>
+        </Dialog>
+        <Dialog
+          open={open}
+          fullWidth={true}
+          maxWidth={"xl"}
+          onClose={this.onClose.bind(this)}
+          fullScreen={true}
+        >
+          <DialogTitle
+            sx={{
+              display: "flex",
+              flexDirection: "row-reverse",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div></div>
+            {method}
+            <IconButton
+              onClick={this.onClose.bind(this)}
+              style={{ cursor: "pointer", float: "right" }}
+            >
+              <KeyboardArrowDownIcon style={{ color: "#3C3B3B", rotate: "90deg" }} />
+            </IconButton>
+          </DialogTitle>
 
-          <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          <DialogContent style={{ padding: 12, backgroundColor: "#F2F2F2" }}>
             <Grid
               container
               spacing={3}
@@ -855,6 +1392,7 @@ class Write_off_journal_modal extends React.Component {
                     is_none={false}
                     disabled={true}
                     data={this.state.points}
+                    customRI="journal"
                     value={this.state.point?.id}
                     func={this.changePoint.bind(this, "point")}
                     label="Точка"
@@ -884,6 +1422,7 @@ class Write_off_journal_modal extends React.Component {
                   is_none={false}
                   data={this.state.types}
                   value={this.state.type}
+                  customRI="journal"
                   func={this.changeType.bind(this, "type")}
                   label="Тип"
                 />
@@ -899,6 +1438,7 @@ class Write_off_journal_modal extends React.Component {
                   multiple={false}
                   data={this.state.items}
                   value={this.state.item}
+                  customRI="journal"
                   func={this.changeItemData.bind(this, "item")}
                 />
               </Grid>
@@ -911,6 +1451,7 @@ class Write_off_journal_modal extends React.Component {
                 <NumericTextField
                   label="Количество"
                   value={this.state.count}
+                  customRI="journal"
                   onChange={this.changeItem.bind(this, "count")}
                 />
               </Grid>
@@ -924,6 +1465,7 @@ class Write_off_journal_modal extends React.Component {
                   label="Ед измерения"
                   value={this.state.ed_izmer}
                   disabled={true}
+                  customRI="journal"
                   className="disabled_input"
                 />
               </Grid>
@@ -943,7 +1485,15 @@ class Write_off_journal_modal extends React.Component {
                 <Button
                   onClick={this.addItems.bind(this)}
                   variant="contained"
-                  color="success"
+                  style={{
+                    backgroundColor: "#FFF",
+                    borderRadius: "12px",
+                    height: "48px",
+                    textTransform: "capitalize",
+                    color: "#2F7D33",
+                    border: "1px solid #2F7D33",
+                    boxShadow: "none",
+                  }}
                 >
                   Добавить
                 </Button>
@@ -951,160 +1501,148 @@ class Write_off_journal_modal extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12,
+                  sm: 9,
                 }}
               >
-                <Divider />
-              </Grid>
-            </Grid>
-            <TableContainer
-              component={Paper}
-              sx={{
-                width: "100%",
-                overflow: "hidden",
-                fontSize: { xs: "12px", sm: "14px", md: "16px" },
-              }}
-            >
-              <Table
-                stickyHeader
-                aria-label="sticky table"
-                size="small"
-                sx={{
-                  width: "100%",
-                  tableLayout: "fixed",
-                }}
-              >
-                <TableHead>
-                  <TableRow
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    width: "100%",
+                  }}
+                >
+                  <WriteOffReasons
+                    value={this.state.comment}
+                    onChange={(e) => this.setState({ comment: e })}
+                    list={
+                      this.props.itemEdit?.tags_journal?.length
+                        ? this.props.itemEdit?.tags_journal
+                        : []
+                    }
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => this.setState({ openTags: true })}
                     sx={{
-                      "& th": {
-                        fontWeight: "bold",
-                        fontSize: "inherit",
-                        padding: { xs: "8px 4px", sm: "16px" },
-                      },
+                      color: "#2F7D33",
+                      borderRadius: "50%",
+                      border: "1px solid #2F7D33",
+                      ml: 0.5,
+                      backgroundColor: "white",
                     }}
                   >
-                    <TableCell sx={{ width: { xs: "15%", sm: "10%" } }}>#</TableCell>
-                    <TableCell sx={{ width: { xs: "25%", sm: "20%" } }}>Тип</TableCell>
-                    <TableCell
-                      sx={{
-                        width: { xs: "35%", sm: "40%" },
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      Наименование
-                    </TableCell>
-                    <TableCell sx={{ width: { xs: "15%", sm: "20%" } }}>Кол-во</TableCell>
-                    <TableCell sx={{ width: { xs: "5%", sm: "10%" } }}></TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {this.state.writeOffItems.map((it, key) => (
-                    <TableRow key={key}>
-                      <TableCell
-                        sx={{
-                          fontSize: "inherit",
-                          padding: { xs: "8px 4px", sm: "16px" },
-                        }}
-                      >
-                        {key + 1}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          fontSize: "inherit",
-                          padding: { xs: "8px 4px", sm: "16px" },
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {it.type_name}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          fontSize: "inherit",
-                          padding: { xs: "8px 4px", sm: "16px" },
-                          maxWidth: { xs: "120px", sm: "none" },
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          wordBreak: "break-word",
-                        }}
-                      >
-                        {it.name}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          fontSize: "inherit",
-                          padding: { xs: "8px 4px", sm: "16px" },
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
-                      </TableCell>
-                      <TableCell
+                    <AddIcon fontSize="small" />
+                  </IconButton>
+                </div>
+              </Grid>
+            </Grid>
+            {this.state.writeOffItems.map((it, key) => {
+              return (
+                <div
+                  style={{
+                    borderRadius: "8px",
+                    backgroundColor: "#fff",
+                    display: "flex",
+                    flexDirection: "column",
+                    border: "1px solid #E5E5E5",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "12px 10px",
+                      justifyContent: "space-between",
+                      borderRadius: "8px 8px 0 0",
+                    }}
+                  >
+                    <span style={{ color: "#666", fontWeight: "500" }}>Тип</span>
+                    <span style={{ color: "#666", fontWeight: "400" }}>
+                      {it.type_name}
+                      <IconButton
+                        size="small"
                         onClick={this.deleteItem.bind(this, key)}
                         sx={{
-                          padding: { xs: "8px 2px", sm: "16px" },
-                          textAlign: "center",
-                        }}
-                      >
-                        <IconButton
-                          size="small" // Маленькая кнопка на мобилке
-                          sx={{
-                            cursor: "pointer",
-                            padding: { xs: "4px", sm: "8px" },
-                            "& svg": {
-                              fontSize: { xs: "18px", sm: "24px" }, // Размер иконки
-                            },
-                          }}
-                        >
-                          <CloseIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow>
-                    <TableCell
-                      colSpan={5} // Изменил с 4 на 5, так как теперь 5 колонок
-                      sx={{
-                        padding: { xs: "8px", sm: "16px" },
-                        borderTop: "1px solid #e0e0e0",
-                      }}
-                    >
-                      <MyTextInput
-                        label="Комментарий"
-                        value={this.state.comment}
-                        func={this.changeItem.bind(this, "comment")}
-                        size="small" // Компактный размер поля ввода
-                        sx={{
-                          fontSize: "inherit", // Наследуем размер шрифта
-                          "& .MuiInputBase-input": {
-                            fontSize: { xs: "12px", sm: "14px" },
+                          cursor: "pointer",
+                          padding: { xs: "4px", sm: "8px" },
+                          "& svg": {
+                            fontSize: { xs: "18px", sm: "24px" },
                           },
                         }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
+                      >
+                        <CloseIcon />
+                      </IconButton>
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "12px 10px",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span style={{ color: "#666", fontWeight: "500" }}>Наименование</span>
+                    <span style={{ color: "#666", fontWeight: "400" }}>{it.name}</span>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "12px 10px",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span style={{ color: "#666", fontWeight: "500" }}>Количество</span>
+                    <span style={{ color: "#666", fontWeight: "400" }}>
+                      {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      flexDirection: "column",
+                      padding: "12px 10px",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span style={{ color: "#666", fontWeight: "500" }}>Причина списания</span>
+                    <span style={{ color: "#666", fontWeight: "400" }}>{this.state.comment}</span>
+                  </div>
+                </div>
+              );
+            })}
           </DialogContent>
-          <DialogActions>
+          <DialogActions style={{ paddingBottom: 10, paddingTop: 10, backgroundColor: "#F2F2F2" }}>
             {method !== "Новое списание" &&
             parseInt(this.props.acces?.delete_write_off_access) == 1 ? (
               <Button
                 onClick={() => this.setState({ confirmDialog: true })}
                 variant="contained"
-                style={{ backgroundColor: "rgba(53,59,72,1.000)" }}
+                style={{
+                  backgroundColor: "#fff",
+                  borderRadius: "12px",
+                  color: "#F43331",
+                  height: "48px",
+                  textTransform: "capitalize",
+                }}
               >
-                Удалить
+                Отменить
               </Button>
             ) : null}
             <Button
               onClick={this.save.bind(this)}
               variant="contained"
+              style={{
+                backgroundColor: "#2F7D33",
+                borderRadius: "12px",
+                height: "48px",
+                textTransform: "capitalize",
+              }}
             >
-              Сохранить
+              {method !== "Новое списание" ? "Сохранить" : "Создать списание"}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1439,6 +1977,20 @@ class Write_off_journal_ extends React.Component {
     });
   }
 
+  updateNew = async () => {
+    let res = await this.getData("get_all_for_new");
+
+    res.types = [
+      { id: "1", name: "Товар" },
+      { id: "2", name: "Заготовка" },
+      { id: "3", name: "Сайт" },
+    ];
+
+    this.setState({
+      itemEdit: res,
+    });
+  };
+
   async openItem(woj_id, method, list) {
     const open_item = list.find((item) => parseInt(item.id) === parseInt(woj_id));
 
@@ -1698,7 +2250,6 @@ class Write_off_journal_ extends React.Component {
       }
     }
 
-    console.log(itemView);
     this.setState({
       modalDialogViewHistDisabled: true,
       itemViewHistDisabled: itemView,
@@ -1707,7 +2258,7 @@ class Write_off_journal_ extends React.Component {
 
   render() {
     return (
-      <>
+      <div style={{ backgroundColor: "#F2F2F2", height: "100vh" }}>
         <Backdrop
           style={{ zIndex: 99 }}
           open={this.state.is_load}
@@ -1728,6 +2279,8 @@ class Write_off_journal_ extends React.Component {
         />
         <Write_off_journal_modal
           open={this.state.modalDialog}
+          getData={this.getData}
+          update={this.updateNew}
           onClose={() =>
             this.setState({
               modalDialog: false,
@@ -1787,23 +2340,41 @@ class Write_off_journal_ extends React.Component {
         <Grid
           container
           spacing={3}
-          className="container_first_child"
+          style={{ padding: "88px 24px 24px 24px", backgroundColor: "#f2f2f2" }}
         >
           <Grid size={12}>
             <h1>{this.state.module_name}</h1>
           </Grid>
-
+          <Grid
+            size={{
+              xs: 12,
+              sm: 10,
+            }}
+          />
           {parseInt(this.state.acces?.create_write_off_access) == 1 && (
             <Grid
               size={{
                 xs: 12,
-                sm: 3,
+                sm: 2,
               }}
+              style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}
             >
               <Button
                 onClick={this.openNewItem.bind(this, "Новое списание")}
-                variant="contained"
+                style={{
+                  color: "#2F7D33",
+                  border: "1px solid #2F7D33",
+                  borderRadius: "12px",
+                  backgroundColor: "#fff",
+                  textTransform: "math-auto",
+                  padding: "12px 20px",
+                  fontWeight: "400",
+                  height: "40px",
+                }}
               >
+                <AddIcon
+                  style={{ width: "20px", height: "20px", marginRight: "4px", marginBottom: "1px" }}
+                />{" "}
                 Новое списание
               </Button>
             </Grid>
@@ -1812,18 +2383,13 @@ class Write_off_journal_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 8,
-            }}
-          />
-
-          <Grid
-            size={{
-              xs: 12,
               sm: 4,
             }}
           >
             <MyAutocomplite
-              label="Точка"
+              label="Кафе"
+              customRI="journal"
+              clearable={true}
               multiple={false}
               data={this.state.points}
               value={this.state.point}
@@ -1846,6 +2412,7 @@ class Write_off_journal_ extends React.Component {
           >
             <MyDatePickerNew
               label="Дата от"
+              customRI="journal"
               value={this.state.date_start}
               func={this.changeDateRange.bind(this, "date_start")}
             />
@@ -1860,6 +2427,7 @@ class Write_off_journal_ extends React.Component {
             <MyDatePickerNew
               label="Дата до"
               value={this.state.date_end}
+              customRI="journal"
               func={this.changeDateRange.bind(this, "date_end")}
             />
           </Grid>
@@ -1867,13 +2435,14 @@ class Write_off_journal_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 6,
+              sm: 3,
             }}
           >
             <MyAutocomplite
               label="Поиск позиции списания"
               multiple={true}
               data={this.state.items}
+              customRI="journal"
               value={this.state.item}
               func={this.changeComplite.bind(this)}
             />
@@ -1882,15 +2451,42 @@ class Write_off_journal_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 2,
+              sm: 5,
             }}
           >
-            <Button
-              onClick={this.getPointData.bind(this)}
-              variant="contained"
-            >
-              Посмотреть
-            </Button>
+            <div style={{ display: "flex" }}>
+              <Button
+                onClick={this.getPointData.bind(this)}
+                variant="contained"
+                style={{
+                  backgroundColor: "#2F7D33",
+                  borderRadius: "12px",
+                  textTransform: "math-auto",
+                  padding: "8px 46px",
+                  fontWeight: "400",
+                  height: "40px",
+                  marginRight: "12px",
+                }}
+              >
+                Посмотреть
+              </Button>
+              <Button
+                onClick={this.getPointData.bind(this)}
+                variant="contained"
+                style={{
+                  backgroundColor: "#FFFFFF",
+                  color: "#F43331",
+                  borderRadius: "12px",
+                  textTransform: "math-auto",
+                  padding: "8px 46px",
+                  fontWeight: "400",
+                  height: "40px",
+                  boxShadow: "none",
+                }}
+              >
+                Сбросить фильтры
+              </Button>
+            </div>
           </Grid>
 
           <Grid
@@ -1899,9 +2495,15 @@ class Write_off_journal_ extends React.Component {
               sm: 4,
             }}
           >
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: "bold" }}>Количество по материалам</Typography>
+            <Accordion
+              sx={{
+                color: "#666666",
+                borderRadius: "12px !important",
+                boxShadow: "none",
+              }}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon style={{ color: "#A6A6A6" }} />}>
+                <Typography>Количество по материалам</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <TableContainer component={Paper}>
@@ -1946,9 +2548,15 @@ class Write_off_journal_ extends React.Component {
               sm: 4,
             }}
           >
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: "bold" }}>Количество по блюдам</Typography>
+            <Accordion
+              sx={{
+                color: "#666666",
+                borderRadius: "12px !important",
+                boxShadow: "none",
+              }}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon style={{ color: "#A6A6A6" }} />}>
+                <Typography>Количество по блюдам</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <TableContainer component={Paper}>
@@ -1993,9 +2601,15 @@ class Write_off_journal_ extends React.Component {
               sm: 4,
             }}
           >
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: "bold" }}>Количество по создателям</Typography>
+            <Accordion
+              sx={{
+                color: "#666666",
+                borderRadius: "12px !important",
+                boxShadow: "none",
+              }}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon style={{ color: "#A6A6A6" }} />}>
+                <Typography>Количество по создателям</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <TableContainer component={Paper}>
@@ -2035,80 +2649,141 @@ class Write_off_journal_ extends React.Component {
               mb: 5,
             }}
           >
-            <TableContainer
-              component={Paper}
-              sx={{
-                maxHeight: 500, // Фиксированная высота
-                overflow: "auto", // Внутренний скролл
-              }}
-            >
-              <Table
-                stickyHeader
-                aria-label="sticky table"
+            {this.state.list?.length ? (
+              <TableContainer
+                component={Paper}
+                sx={{
+                  maxHeight: 500,
+                  overflow: "auto",
+                  borderRadius: "12px",
+                  border: "1px solid #E5E5E5",
+                  boxShadow: "none",
+                  "& .MuiPaper-root": {
+                    borderRadius: "12px",
+                  },
+                }}
               >
-                <TableHead>
-                  <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                    <TableCell style={{ width: "5%" }}>№</TableCell>
-                    <TableCell style={{ width: "17%" }}>Дата</TableCell>
-                    <TableCell style={{ width: "17%" }}>Время</TableCell>
-                    <TableCell style={{ width: "15%" }}>Себестоимость</TableCell>
-                    <TableCell style={{ width: "17%" }}>Создатель</TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {this.state.list.map((item, key) => (
-                    <TableRow
-                      hover
-                      key={key}
-                      sx={{
-                        "& td": {
-                          color:
-                            parseInt(item?.status) === 2 || item?.date_update
-                              ? "#fff"
-                              : "rgba(0, 0, 0, 0.87)",
-                        },
-                      }}
-                      style={{
-                        backgroundColor:
-                          parseInt(item?.status) === 2
-                            ? "red"
-                            : item?.date_update
-                              ? "rgb(255, 204, 0)"
-                              : "#fff",
-                      }}
-                    >
-                      <TableCell
-                        style={{
-                          cursor: "pointer",
-                          fontWeight: "bold",
+                <div style={{ maxHeight: 500, overflow: "auto" }}>
+                  <Table
+                    stickyHeader
+                    aria-label="sticky table"
+                  >
+                    <TableHead>
+                      <TableRow
+                        sx={{
+                          backgroundColor: "#F5F5F5",
+                          "& th": {
+                            fontWeight: 500,
+                            fontSize: "14px",
+                            border: "none",
+                            padding: "9px",
+                            color: "#3C3B3B",
+                            "&:first-of-type": {
+                              borderTopLeftRadius: "12px",
+                            },
+                            "&:last-of-type": {
+                              borderTopRightRadius: "12px",
+                            },
+                            borderBottom: "1px solid #E5E5E5",
+                          },
+                          borderBottom: "1px solid #E5E5E5",
                         }}
-                        onClick={this.openViewItem.bind(this, item?.items, item.coment)}
                       >
-                        {key + 1}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="contained"
-                          onClick={this.openModalHistoryView.bind(this, item)}
+                        <TableCell
+                          style={{ width: "5%" }}
+                          className="text-14px"
                         >
-                          {item.date}
-                        </Button>
-                      </TableCell>
-                      <TableCell>{item.time}</TableCell>
-                      <TableCell>
-                        {" "}
-                        {new Intl.NumberFormat("ru-RU").format(item?.price ?? "")} ₽
-                      </TableCell>
-                      <TableCell>{item.user_name}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                          №
+                        </TableCell>
+                        <TableCell
+                          style={{ width: "17%" }}
+                          className="text-14px"
+                        >
+                          Дата/Время
+                        </TableCell>
+                        <TableCell
+                          style={{ width: "15%" }}
+                          className="text-14px"
+                        >
+                          Себестоимость
+                        </TableCell>
+                        <TableCell
+                          style={{ width: "17%" }}
+                          className="text-14px"
+                        >
+                          Создатель
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {this.state.list.map((item, key) => (
+                        <TableRow
+                          hover
+                          key={key}
+                          sx={{
+                            "&:last-of-type": {
+                              "& td:first-of-type": {
+                                borderBottomLeftRadius: "12px",
+                              },
+                              "& td:last-of-type": {
+                                borderBottomRightRadius: "12px",
+                              },
+                            },
+                            "& td": {
+                              color: "#666666",
+                              padding: "9px",
+                            },
+                            backgroundColor:
+                              parseInt(item?.status) === 2
+                                ? "rgba(244,51,49,0.66)"
+                                : item?.date_update
+                                  ? "rgba(255,204,0,0.66)"
+                                  : key % 2 === 0
+                                    ? "#fff"
+                                    : "#F2F2F2",
+                          }}
+                        >
+                          <TableCell
+                            style={{
+                              cursor: "pointer",
+                              fontWeight: "bold",
+                              fontSize: "14px !important",
+                            }}
+                            className="text-14px"
+                            onClick={this.openViewItem.bind(this, item?.items, item.coment)}
+                          >
+                            {key + 1}.
+                          </TableCell>
+                          <TableCell className="text-14px">
+                            <Button
+                              variant="text"
+                              sx={{
+                                textTransform: "none",
+                                padding: 0,
+                                fontWeight: 400,
+                              }}
+                              onClick={this.openModalHistoryView.bind(this, item)}
+                            >
+                              {item.date}
+                              <br />
+                              {item.time}
+                            </Button>
+                          </TableCell>
+                          <TableCell className="text-14px">
+                            {new Intl.NumberFormat("ru-RU").format(item?.price ?? "")} ₽
+                          </TableCell>
+                          <TableCell className="text-14px">{item.user_name}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TableContainer>
+            ) : null}
           </Grid>
         </Grid>
-      </>
+      </div>
     );
   }
 }

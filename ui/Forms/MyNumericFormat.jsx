@@ -16,6 +16,54 @@ export const NumericTextField = (props) => {
     }
   };
 
+  // Стили для journal варианта
+  const customStyles =
+    props.customRI === "journal"
+      ? {
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "12px",
+            border: "1px solid #E5E5E5",
+            color: "#BABABA",
+            backgroundColor: props.disabled ? "#F5F5F5" : "#FFFFFF",
+            "&:hover": {
+              backgroundColor: props.disabled ? "#F5F5F5" : "#FFFFFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E5E5E5",
+              },
+            },
+            "&.Mui-focused": {
+              color: "#666666",
+              backgroundColor: "#FFFFFF",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#E5E5E5",
+                borderWidth: "2px",
+              },
+            },
+            "&.Mui-disabled": {
+              backgroundColor: "#F5F5F5",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(0, 0, 0, 0.12)",
+              },
+            },
+          },
+          "& .MuiInputLabel-root": {
+            color: "#666666",
+            backgroundColor: "#fff",
+            paddingInline: "12px",
+            borderRadius: "4px 4px 0 0",
+            "&.Mui-focused": {
+              color: "#A6A6A6",
+            },
+            "&.Mui-disabled": {
+              color: "rgba(0, 0, 0, 0.38)",
+            },
+          },
+          "& .MuiOutlinedInput-notchedOutline": {
+            display: "none",
+          },
+        }
+      : {};
+
   return (
     <NumericFormat
       customInput={TextField}
@@ -33,7 +81,11 @@ export const NumericTextField = (props) => {
       variant="outlined"
       size="small"
       placeholder={props.placeholder}
-      sx={{ width: "100%" }}
+      sx={{
+        width: "100%",
+        ...customStyles,
+        ...(props.sx || {}),
+      }}
       style={props.style}
       className={props.className}
       slotProps={{

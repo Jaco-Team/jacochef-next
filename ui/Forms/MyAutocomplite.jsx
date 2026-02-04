@@ -2,13 +2,73 @@
 
 import { Autocomplete, NoSsr, Stack, TextField } from "@mui/material";
 import Chip from "@mui/material/Chip";
+import CloseIcon from "@mui/icons-material/Close";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 export function MyAutocomplite(props) {
+  const customStylesRenderInput = {
+    journal: {
+      "& .MuiOutlinedInput-root": {
+        borderRadius: "12px",
+        border: "1px solid #E5E5E5",
+        color: "#BABABA",
+        backgroundColor: props.disabled ? "#F5F5F5" : "#FFFFFF",
+        "&:hover": {
+          backgroundColor: props.disabled ? "#F5F5F5" : "#FFFFFF",
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#E5E5E5",
+          },
+        },
+        "&.Mui-focused": {
+          color: "#666666",
+          backgroundColor: "#FFFFFF",
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#E5E5E5",
+            borderWidth: "2px",
+          },
+        },
+        "&.Mui-disabled": {
+          backgroundColor: "#F5F5F5",
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "rgba(0, 0, 0, 0.12)",
+          },
+        },
+      },
+      "& .MuiInputLabel-root": {
+        color: "#666666",
+        backgroundColor: "#fff",
+        paddingInline: "12px",
+        borderRadius: "12px",
+        "&.Mui-focused": {
+          color: "#A6A6A6",
+        },
+        "&.Mui-disabled": {
+          color: "rgba(0, 0, 0, 0.38)",
+        },
+      },
+      "& .MuiOutlinedInput-notchedOutline": {
+        display: "none",
+      },
+    },
+  };
   return (
     <NoSsr>
       <Stack spacing={3}>
         <Autocomplete
           size="small"
+          clearIcon={
+            props.customRI === "journal" ? (
+              <CloseIcon
+                fontSize="small"
+                style={{ color: "#BABABA" }}
+              />
+            ) : undefined
+          }
+          popupIcon={
+            props.customRI === "journal" ? (
+              <KeyboardArrowDownIcon style={{ color: "#BABABA" }} />
+            ) : undefined
+          }
           disableCloseOnSelect={
             props.disableCloseOnSelect ?? (props.multiple === false ? false : true)
           }
@@ -61,6 +121,7 @@ export function MyAutocomplite(props) {
                 {...params}
                 label={props.label}
                 placeholder={props.placeholder}
+                sx={props.customRI ? customStylesRenderInput[props.customRI] : {}}
               />
             ))
           }
