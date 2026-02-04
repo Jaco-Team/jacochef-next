@@ -169,7 +169,7 @@ const AppointmentModal = (props) => {
       >
         <DialogTitle>
           {method}
-          {item?.name}
+          {item?.name && `: ${item?.name}`}
           <IconButton
             onClick={onClose}
             style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
