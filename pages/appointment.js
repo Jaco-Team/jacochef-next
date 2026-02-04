@@ -201,7 +201,7 @@ class Appointment_ extends React.Component {
       modalDialog: true,
       openApp: res.appointment,
       full_menu: res.full_menu,
-      method: "Редактирование должности: ",
+      method: "Редактирование должности",
     });
   }
 
