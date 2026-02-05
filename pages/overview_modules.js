@@ -464,6 +464,7 @@ class OverviewModules_SearchBar extends React.PureComponent {
   render() {
     return (
       <MyTextInput
+        type="search"
         className="input_login_white"
         label="Поиск по статьям"
         value={this.state.localValue}
@@ -526,7 +527,7 @@ class OverviewModules_ extends React.Component {
       category: data.category,
       acces: data.acces,
       tags: data.tags,
-      module_name: data.module_info.name,
+      module_name: data.module_info?.name,
     });
 
     document.title = data.module_info.name;
@@ -966,7 +967,7 @@ class OverviewModules_ extends React.Component {
                 sm: 12,
               }}
             >
-              {category.map((item, key) => (
+              {category?.map((item, key) => (
                 <Accordion key={key}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Typography sx={{ fontWeight: "bold" }}>{item.name}</Typography>
