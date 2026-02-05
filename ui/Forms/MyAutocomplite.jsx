@@ -11,7 +11,7 @@ export function MyAutocomplite(props) {
       "& .MuiOutlinedInput-root": {
         borderRadius: "12px",
         border: "1px solid #E5E5E5",
-        color: "#BABABA",
+        color: "#666666",
         backgroundColor: props.disabled ? "#F5F5F5" : "#FFFFFF",
         "&:hover": {
           backgroundColor: props.disabled ? "#F5F5F5" : "#FFFFFF",

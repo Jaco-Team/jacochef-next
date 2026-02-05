@@ -56,6 +56,7 @@ class Write_off_journal_View extends React.Component {
     this.state = {
       itemView: null,
       itemHist: [],
+      isMobile: window.innerWidth <= 600,
     };
   }
 
@@ -77,7 +78,18 @@ class Write_off_journal_View extends React.Component {
     if (this.props.point) {
       this.openHistoryItem();
     }
+    window.addEventListener("resize", this.handleResize);
   }
+
+  componentWillUnmount() {
+    window.removeEventListener("resize", this.handleResize);
+  }
+
+  handleResize = () => {
+    this.setState({
+      isMobile: window.innerWidth <= 600,
+    });
+  };
 
   onClose() {
     this.setState({
@@ -133,28 +145,48 @@ class Write_off_journal_View extends React.Component {
         fullWidth={true}
         maxWidth={"xl"}
         onClose={this.onClose.bind(this)}
-        fullScreen={true}
+        fullScreen={this.state.isMobile}
       >
-        <DialogTitle
-          sx={{
-            display: "flex",
-            flexDirection: "row-reverse",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div></div>
-          Списание
-          <IconButton
-            onClick={this.onClose.bind(this)}
-            style={{ cursor: "pointer", float: "right" }}
+        {this.state.isMobile ? (
+          <DialogTitle
+            sx={{
+              display: "flex",
+              flexDirection: "row-reverse",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
           >
-            <KeyboardArrowDownIcon style={{ color: "#3C3B3B", rotate: "90deg" }} />
-          </IconButton>
-        </DialogTitle>
+            <div></div>
+            Списание
+            <IconButton
+              onClick={this.onClose.bind(this)}
+              style={{ cursor: "pointer", float: "right" }}
+            >
+              <KeyboardArrowDownIcon style={{ color: "#3C3B3B", rotate: "90deg" }} />
+            </IconButton>
+          </DialogTitle>
+        ) : (
+          <DialogTitle
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            Списание
+            <IconButton
+              onClick={this.onClose.bind(this)}
+              style={{ cursor: "pointer", float: "right" }}
+            >
+              <CloseIcon style={{ color: "#3C3B3B" }} />
+            </IconButton>
+          </DialogTitle>
+        )}
         <DialogContent style={{ padding: 12, backgroundColor: "#F2F2F2" }}>
           <Grid
             container
+            rowSpacing={1}
             spacing={3}
           >
             {this.state.itemView?.items.map((it) => {
@@ -216,6 +248,25 @@ class Write_off_journal_View extends React.Component {
                         }}
                       >
                         {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      <span style={{ color: "#666666", fontWeight: "500" }}>Причина списания</span>
+                      <span
+                        style={{
+                          color: "#666666",
+                          fontWeight: "400",
+                        }}
+                      >
+                        {this.state.itemView.coment}
                       </span>
                     </div>
                   </div>
@@ -424,6 +475,7 @@ class Write_off_journal_View_Tags extends React.Component {
       reason: "",
       tags: [],
       tag: {},
+      isMobile: window.innerWidth <= 600,
     };
   }
 
@@ -434,6 +486,20 @@ class Write_off_journal_View_Tags extends React.Component {
 
     this.props.onClose();
   }
+
+  componentDidMount() {
+    window.addEventListener("resize", this.handleResize);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("resize", this.handleResize);
+  }
+
+  handleResize = () => {
+    this.setState({
+      isMobile: window.innerWidth <= 600,
+    });
+  };
 
   render() {
     const { open, fullScreen } = this.props;
@@ -448,10 +514,10 @@ class Write_off_journal_View_Tags extends React.Component {
         PaperProps={{
           sx: {
             margin: 0,
-            position: "absolute",
+            position: this.state.isMobile ? "absolute" : "initial",
             bottom: 0,
             width: "100%",
-            borderRadius: "40px 40px 0 0",
+            borderRadius: this.state.isMobile ? "40px 40px 0 0" : "12px",
             height: "auto",
             maxHeight: "90vh",
             overflow: "hidden",
@@ -476,16 +542,18 @@ class Write_off_journal_View_Tags extends React.Component {
           onClick={this.onClose.bind(this)}
           onTouchStart={(e) => e.stopPropagation()}
         >
-          <Box
-            className="drag-indicator"
-            sx={{
-              width: 36,
-              height: 5,
-              backgroundColor: "#BABABA",
-              borderRadius: 2,
-              transition: "background-color 0.2s",
-            }}
-          />
+          {this.state.isMobile ? (
+            <Box
+              className="drag-indicator"
+              sx={{
+                width: 36,
+                height: 5,
+                backgroundColor: "#BABABA",
+                borderRadius: 2,
+                transition: "background-color 0.2s",
+              }}
+            />
+          ) : null}
         </Box>
 
         <Box
@@ -673,8 +741,26 @@ class Write_off_journal_View_Disabled extends React.Component {
 
     this.state = {
       itemView: null,
+      width: window.innerWidth,
+      height: window.innerHeight,
     };
+    this.containerRef = React.createRef();
   }
+
+  componentDidMount() {
+    window.addEventListener("resize", this.handleResize);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("resize", this.handleResize);
+  }
+
+  handleResize = () => {
+    this.setState({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+  };
 
   componentDidUpdate(prevProps) {
     //console.log(this.props);
@@ -700,7 +786,7 @@ class Write_off_journal_View_Disabled extends React.Component {
 
   render() {
     const { open, fullScreen } = this.props;
-
+    const { width, height } = this.state;
     return (
       <Dialog
         open={open}
@@ -711,9 +797,9 @@ class Write_off_journal_View_Disabled extends React.Component {
         PaperProps={{
           sx: {
             margin: 0,
-            position: "absolute",
+            position: width < 585 ? "absolute" : "initial",
             bottom: 0,
-            borderRadius: "40px 40px 0 0",
+            borderRadius: width < 585 ? "40px 40px 0 0" : "12px",
             height: "auto",
             overflow: "hidden",
             maxHeight: "90vh",
@@ -738,16 +824,18 @@ class Write_off_journal_View_Disabled extends React.Component {
           onClick={this.onClose.bind(this)}
           onTouchStart={(e) => e.stopPropagation()}
         >
-          <Box
-            className="drag-indicator"
-            sx={{
-              width: 36,
-              height: 5,
-              backgroundColor: "#BABABA",
-              borderRadius: 2,
-              transition: "background-color 0.2s",
-            }}
-          />
+          {width < 585 ? (
+            <Box
+              className="drag-indicator"
+              sx={{
+                width: 36,
+                height: 5,
+                backgroundColor: "#BABABA",
+                borderRadius: 2,
+                transition: "background-color 0.2s",
+              }}
+            />
+          ) : null}
         </Box>
 
         <Box
@@ -1029,6 +1117,7 @@ class Write_off_journal_modal extends React.Component {
       item: "",
 
       ed_izmer: "",
+      isMobile: false,
 
       count: "",
       writeOffItems: [],
@@ -1232,6 +1321,23 @@ class Write_off_journal_modal extends React.Component {
     this.onClose();
   }
 
+  componentDidMount() {
+    this.setState({
+      isMobile: window.innerWidth <= 600,
+    });
+    window.addEventListener("resize", this.handleResize);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("resize", this.handleResize);
+  }
+
+  handleResize = () => {
+    this.setState({
+      isMobile: window.innerWidth <= 600,
+    });
+  };
+
   onClose() {
     this.setState({
       point: "",
@@ -1282,7 +1388,7 @@ class Write_off_journal_modal extends React.Component {
           }}
           maxWidth="sm"
           open={this.state.confirmDialog}
-          fullScreen={true}
+          fullScreen={this.state.isMobile}
           onClose={() => this.setState({ confirmDialog: false })}
         >
           <DialogTitle>Подтвердите действие</DialogTitle>
@@ -1312,7 +1418,7 @@ class Write_off_journal_modal extends React.Component {
           }}
           maxWidth="sm"
           open={this.state.confirmDialogTag}
-          fullScreen={true}
+          fullScreen={this.state.isMobile}
           onClose={() => this.setState({ confirmDialogTag: false })}
         >
           <DialogTitle
@@ -1353,25 +1459,44 @@ class Write_off_journal_modal extends React.Component {
           fullWidth={true}
           maxWidth={"xl"}
           onClose={this.onClose.bind(this)}
-          fullScreen={true}
+          fullScreen={this.state.isMobile}
         >
-          <DialogTitle
-            sx={{
-              display: "flex",
-              flexDirection: "row-reverse",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div></div>
-            {method}
-            <IconButton
-              onClick={this.onClose.bind(this)}
-              style={{ cursor: "pointer", float: "right" }}
+          {this.state.isMobile ? (
+            <DialogTitle
+              sx={{
+                display: "flex",
+                flexDirection: "row-reverse",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
             >
-              <KeyboardArrowDownIcon style={{ color: "#3C3B3B", rotate: "90deg" }} />
-            </IconButton>
-          </DialogTitle>
+              <div></div>
+              {method}
+              <IconButton
+                onClick={this.onClose.bind(this)}
+                style={{ cursor: "pointer", float: "right" }}
+              >
+                <KeyboardArrowDownIcon style={{ color: "#3C3B3B", rotate: "90deg" }} />
+              </IconButton>
+            </DialogTitle>
+          ) : (
+            <DialogTitle
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              {method}
+              <IconButton
+                onClick={this.onClose.bind(this)}
+                style={{ cursor: "pointer", float: "right" }}
+              >
+                <CloseIcon style={{ color: "#3C3B3B" }} />
+              </IconButton>
+            </DialogTitle>
+          )}
 
           <DialogContent style={{ padding: 12, backgroundColor: "#F2F2F2" }}>
             <Grid
@@ -1402,6 +1527,7 @@ class Write_off_journal_modal extends React.Component {
                     label="Точка"
                     value={this.state.point.name}
                     disabled={true}
+                    customRI="journal"
                     className="disabled_input"
                   />
                 )}
@@ -1546,6 +1672,7 @@ class Write_off_journal_modal extends React.Component {
                     display: "flex",
                     flexDirection: "column",
                     border: "1px solid #E5E5E5",
+                    marginBottom: "4px",
                   }}
                 >
                   <div
@@ -1598,18 +1725,6 @@ class Write_off_journal_modal extends React.Component {
                     <span style={{ color: "#666", fontWeight: "400" }}>
                       {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
                     </span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      flexDirection: "column",
-                      padding: "12px 10px",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <span style={{ color: "#666", fontWeight: "500" }}>Причина списания</span>
-                    <span style={{ color: "#666", fontWeight: "400" }}>{this.state.comment}</span>
                   </div>
                 </div>
               );
@@ -2028,7 +2143,6 @@ class Write_off_journal_ extends React.Component {
     };
 
     let res = await this.getData("get_one", data);
-
     res.woj_items = res.woj_items.map((item) => {
       if (item.type === "pos") {
         item.type_name = "Сайт";
@@ -2471,7 +2585,14 @@ class Write_off_journal_ extends React.Component {
                 Посмотреть
               </Button>
               <Button
-                onClick={this.getPointData.bind(this)}
+                onClick={() => {
+                  this.setState({
+                    date_start: null,
+                    date_end: null,
+                    item: [],
+                    point: {},
+                  });
+                }}
                 variant="contained"
                 style={{
                   backgroundColor: "#FFFFFF",
@@ -2484,7 +2605,7 @@ class Write_off_journal_ extends React.Component {
                   boxShadow: "none",
                 }}
               >
-                Сбросить фильтры
+                Сбросить
               </Button>
             </div>
           </Grid>
