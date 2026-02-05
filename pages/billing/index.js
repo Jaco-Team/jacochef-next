@@ -232,17 +232,42 @@ class Billing_ extends React.Component {
       is_load: true,
     });
 
-    let res = api_laravel_local(this.state.module, method, data)
-      .then((result) => result.data)
-      .finally(() => {
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: queryString.stringify({
+        method: method,
+        module: this.state.module,
+        version: 2,
+        login: localStorage.getItem("token"),
+        data: JSON.stringify(data),
+      }),
+    })
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/";
+          return;
+        }
+
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
+          return;
+        }
+
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 500);
-      });
+        }, 300);
 
-    return res;
+        return json;
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   changeDateRange(data, event) {
