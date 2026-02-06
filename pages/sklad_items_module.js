@@ -267,6 +267,7 @@ class SkladItemsModule_Modal extends React.Component {
                 >
                   <MyTextInput
                     label="Название товара"
+                    disabled={!this.props.acces_edit}
                     value={this.state.itemEdit ? this.state.itemEdit.item.name : ""}
                     func={this.changeItem.bind(this, "name")}
                   />
@@ -280,6 +281,7 @@ class SkladItemsModule_Modal extends React.Component {
                   <MyAutocomplite
                     label="Заготовка"
                     multiple={false}
+                    disabled={!this.props.acces_edit}
                     data={this.state.itemEdit ? this.state.itemEdit.pf_list : []}
                     value={
                       this.state.itemEdit
@@ -303,6 +305,7 @@ class SkladItemsModule_Modal extends React.Component {
                 >
                   <MyTextInput
                     label="Название товара для поставщика"
+                    disabled={!this.props.acces_edit}
                     value={this.state.itemEdit ? this.state.itemEdit.item.name_for_vendor : ""}
                     func={this.changeItem.bind(this, "name_for_vendor")}
                   />
@@ -315,6 +318,7 @@ class SkladItemsModule_Modal extends React.Component {
                 >
                   <MyTextInput
                     label="Код для 1с"
+                    disabled={!this.props.acces_edit}
                     value={this.state.itemEdit ? this.state.itemEdit.item.art : ""}
                     func={this.changeItem.bind(this, "art")}
                   />
@@ -326,6 +330,7 @@ class SkladItemsModule_Modal extends React.Component {
                   }}
                 >
                   <MyTextInput
+                    disabled={!this.props.acces_edit}
                     label="Максимальное количество заказов в месяц (0 - без ограничений)"
                     value={this.state.itemEdit ? this.state.itemEdit.item.max_count_in_m : ""}
                     func={this.changeItem.bind(this, "max_count_in_m")}
@@ -340,6 +345,7 @@ class SkladItemsModule_Modal extends React.Component {
                   <MyAutocomplite
                     label="Категория"
                     multiple={false}
+                    disabled={!this.props.acces_edit}
                     data={this.state.itemEdit ? this.state.itemEdit.cats : []}
                     value={
                       this.state.itemEdit
@@ -366,6 +372,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MyTextInput
                 label="Количество в упаковке"
+                disabled={!this.props.acces_edit}
                 value={this.state.itemEdit ? this.state.itemEdit.item.pq : ""}
                 func={this.changeItem.bind(this, "pq")}
               />
@@ -378,6 +385,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MySelect
                 data={this.state.itemEdit ? this.state.itemEdit.ed_izmer : []}
+                disabled={!this.props.acces_edit}
                 value={
                   this.state.itemEdit
                     ? this.state.itemEdit.item.ed_izmer_id === "0"
@@ -397,6 +405,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MySelect
                 data={this.state.itemEdit ? this.state.itemEdit.apps : []}
+                disabled={!this.props.acces_edit}
                 value={
                   this.state.itemEdit
                     ? this.state.itemEdit.item.app_id === "0"
@@ -417,6 +426,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MyTextInput
                 label="Время приготовления ММ:SS (15:20)"
+                disabled={!this.props.acces_edit}
                 value={this.state.itemEdit ? this.state.itemEdit.item.time_min : ""}
                 func={this.changeItem.bind(this, "time_min")}
               />
@@ -429,6 +439,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MyTextInput
                 label="Дополнительное время ММ:SS (15:20)"
+                disabled={!this.props.acces_edit}
                 value={this.state.itemEdit ? this.state.itemEdit.item.time_dop_min : ""}
                 func={this.changeItem.bind(this, "time_dop_min")}
               />
@@ -441,6 +452,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MyTextInput
                 label="Время разгрузки ММ:SS.iiii (00:20.004)"
+                disabled={!this.props.acces_edit}
                 value={this.state.itemEdit ? this.state.itemEdit.item.time_min_other : ""}
                 func={this.changeItem.bind(this, "time_min_other")}
               />
@@ -454,6 +466,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MyTextInput
                 label="% потерь"
+                disabled={!this.props.acces_edit}
                 value={this.state.itemEdit ? this.state.itemEdit.item.los_percent : ""}
                 func={this.changeItem.bind(this, "los_percent")}
               />
@@ -466,6 +479,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MyTextInput
                 label="% заявки"
+                disabled={!this.props.acces_edit}
                 value={this.state.itemEdit ? this.state.itemEdit.item.percent : ""}
                 func={this.changeItem.bind(this, "percent")}
               />
@@ -478,6 +492,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MyTextInput
                 label="% повышения ценника"
+                disabled={!this.props.acces_edit}
                 value={this.state.itemEdit ? this.state.itemEdit.item.vend_percent : ""}
                 func={this.changeItem.bind(this, "vend_percent")}
               />
@@ -491,6 +506,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MyCheckBox
                 label="Вес заготовки"
+                disabled={!this.props.acces_edit}
                 value={
                   this.state.itemEdit
                     ? parseInt(this.state.itemEdit.item.w_pf) == 1
@@ -509,6 +525,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MyCheckBox
                 label="Вес отхода"
+                disabled={!this.props.acces_edit}
                 value={
                   this.state.itemEdit
                     ? parseInt(this.state.itemEdit.item.w_trash) == 1
@@ -527,6 +544,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MyCheckBox
                 label="Вес товара"
+                disabled={!this.props.acces_edit}
                 value={
                   this.state.itemEdit
                     ? parseInt(this.state.itemEdit.item.w_item) == 1
@@ -545,6 +563,7 @@ class SkladItemsModule_Modal extends React.Component {
             >
               <MyCheckBox
                 label="Два сотрудника"
+                disabled={!this.props.acces_edit}
                 value={
                   this.state.itemEdit
                     ? parseInt(this.state.itemEdit.item.two_user) == 1
@@ -564,6 +583,7 @@ class SkladItemsModule_Modal extends React.Component {
               <MyAutocomplite
                 label="Места хранения"
                 multiple={true}
+                disabled={!this.props.acces_edit}
                 data={this.state.itemEdit ? this.state.itemEdit.storages : []}
                 value={this.state.itemEdit ? this.state.itemEdit.this_storages : ""}
                 func={(event, value) => {
@@ -582,6 +602,7 @@ class SkladItemsModule_Modal extends React.Component {
               >
                 <MyCheckBox
                   label="Активность"
+                  disabled={!this.props.acces_edit}
                   value={parseInt(this.state.itemEdit.item.is_show) == 1 ? true : false}
                   func={this.changeItemChecked.bind(this, "is_show")}
                 />
@@ -591,6 +612,7 @@ class SkladItemsModule_Modal extends React.Component {
         </DialogContent>
         <DialogActions>
           <Button
+            disabled={!this.props.acces_edit}
             onClick={
               this.props.method === "Редактирование товара"
                 ? this.props.checkArt.bind(this, this.state.itemEdit)
@@ -614,7 +636,8 @@ class SkladItemsModule_ extends React.Component {
       module: "sklad_items_module",
       module_name: "",
       is_load: false,
-
+      acces_edit: false,
+      acces_view: false,
       cats: [],
       allItems: [],
       vendor_items: [],
@@ -647,11 +670,13 @@ class SkladItemsModule_ extends React.Component {
     let data = await this.getData("get_all");
 
     // console.log(data)
-
+    const acces = data.acces.find((i) => i.param === "form");
     this.setState({
       module_name: data.module_info.name,
       cats: data.cats,
       freeItems: data.items_free,
+      acces_edit: acces?.edit === "1",
+      acces_view: acces?.view === "1",
     });
 
     document.title = data.module_info.name;
@@ -1011,6 +1036,7 @@ class SkladItemsModule_ extends React.Component {
           checkArt={this.checkArt.bind(this)}
           method={this.state.method}
           event={this.state.itemEdit}
+          acces_edit={this.state.acces_edit}
           itemName={this.state.itemName}
           fullScreen={this.state.fullScreen}
         />
@@ -1051,6 +1077,7 @@ class SkladItemsModule_ extends React.Component {
             <Button
               onClick={this.openModalItemNew.bind(this, "Новый товар")}
               variant="contained"
+              disabled={!this.state.acces_edit}
             >
               Добавить товар
             </Button>
@@ -1123,6 +1150,7 @@ class SkladItemsModule_ extends React.Component {
                                 >
                                   <MyCheckBox
                                     label=""
+                                    disabled={!this.state.acces_edit}
                                     value={parseInt(it.is_show) == 1 ? true : false}
                                   />
                                 </TableCell>
@@ -1139,6 +1167,7 @@ class SkladItemsModule_ extends React.Component {
                                 >
                                   <MyCheckBox
                                     label=""
+                                    disabled={!this.state.acces_edit}
                                     value={parseInt(it.show_in_rev) == 1 ? true : false}
                                   />
                                 </TableCell>

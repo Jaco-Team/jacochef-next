@@ -500,6 +500,7 @@ class Checkworks_ extends React.Component {
       modalDialogNew: false,
       works: [],
       method: "",
+      acces_edit: false,
 
       modalDialogEdit: false,
       itemEdit: null,
@@ -520,6 +521,7 @@ class Checkworks_ extends React.Component {
       point: data.points[0].id,
       check_cook: data.check_cook,
       module_name: data.module_info.name,
+      acces_edit: data.acces?.form_edit,
     });
 
     document.title = data.module_info.name;
@@ -849,6 +851,7 @@ class Checkworks_ extends React.Component {
               <Button
                 onClick={this.openModal.bind(this, "newItem", "Добавление уборки")}
                 variant="contained"
+                disabled={!this.state.acces_edit}
               >
                 Добавить уборку
               </Button>
@@ -962,6 +965,7 @@ class Checkworks_ extends React.Component {
                         variant="contained"
                         onClick={() => this.setState({ filter: !filter })}
                         style={{ backgroundColor: "#9e9e9e" }}
+                        disabled={!this.state.acces_edit}
                       >
                         Только удаленные / Все
                       </Button>
@@ -1019,6 +1023,7 @@ class Checkworks_ extends React.Component {
                                     onClick={this.openConfirm.bind(this, item, "clearWork")}
                                     style={{ cursor: "pointer", backgroundColor: "yellow" }}
                                     variant="contained"
+                                    disabled={!this.state.acces_edit}
                                   >
                                     <KeyboardBackspaceIcon />
                                   </Button>
@@ -1026,6 +1031,7 @@ class Checkworks_ extends React.Component {
                                   <Button
                                     onClick={this.openConfirm.bind(this, item, "deleteWork")}
                                     style={{ cursor: "pointer" }}
+                                    disabled={!this.state.acces_edit}
                                     color="error"
                                     variant="contained"
                                   >
@@ -1036,6 +1042,7 @@ class Checkworks_ extends React.Component {
                                     <Button
                                       onClick={this.openConfirm.bind(this, item, "saveWork")}
                                       style={{ cursor: "pointer" }}
+                                      disabled={!this.state.acces_edit}
                                       color="success"
                                       variant="contained"
                                     >
@@ -1095,6 +1102,7 @@ class Checkworks_ extends React.Component {
                                   onClick={this.openConfirm.bind(this, item, "deleteWork")}
                                   style={{ cursor: "pointer" }}
                                   color="error"
+                                  disabled={!this.state.acces_edit}
                                   variant="contained"
                                 >
                                   <ClearIcon />
@@ -1204,12 +1212,14 @@ class Checkworks_ extends React.Component {
                                     style={{ cursor: "pointer" }}
                                     color="success"
                                     variant="contained"
+                                    disabled={!this.state.acces_edit}
                                   >
                                     <CheckIcon />
                                   </Button>
                                   <Button
                                     onClick={this.openConfirm.bind(this, item, "deletePf")}
                                     style={{ cursor: "pointer" }}
+                                    disabled={!this.state.acces_edit}
                                     color="error"
                                     variant="contained"
                                   >
