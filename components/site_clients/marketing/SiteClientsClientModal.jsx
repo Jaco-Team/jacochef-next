@@ -102,7 +102,7 @@ function SiteClientsClientModal({ canAccess, showAlert, openOrder, open, onClose
       // console.log(useMarketingClientStore.getState());
       setClient(res);
     } catch (error) {
-      showAlert(`Error fetching client data: ${error.message}`, false);
+      return showAlert(`Error fetching client data: ${error.message}`, false);
     } finally {
       setClientLoading(false);
       setIsLoading(false);

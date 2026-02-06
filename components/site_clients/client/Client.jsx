@@ -67,13 +67,8 @@ export default function Client({ getData, showAlert, canAccess }) {
         }
       }
 
-      if (type === "open") {
-        update({
-          modalDialog: true,
-        });
-      }
-
       update({
+        modalDialog: type === "open",
         client_id: res.client_info.id,
         client_login: login,
         client: res.client_info,
