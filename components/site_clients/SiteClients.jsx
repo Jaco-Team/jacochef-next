@@ -586,7 +586,7 @@ export default function SiteClients() {
       <Grid
         container
         spacing={0}
-        mb={3}
+        mb={1}
         className="container_first_child"
       >
         <Grid
@@ -632,7 +632,7 @@ export default function SiteClients() {
         </Grid>
 
         <Grid
-          sx={{ pb: 5 }}
+          sx={{ pb: 2 }}
           size={12}
         >
           <Paper>

@@ -428,6 +428,21 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                       true,
                     )}`}</Typography>
                   </Grid>
+
+                  <Grid
+                    style={{ display: "flex" }}
+                    mb={3}
+                    size={{
+                      xs: 12,
+                    }}
+                  >
+                    <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
+                      Средний чек:
+                    </Typography>
+                    <Typography>
+                      {formatPrice(+clientInfo.summ / +clientInfo.all_count_order, true)}
+                    </Typography>
+                  </Grid>
                 </Paper>
               </TabPanel>
             </Grid>
