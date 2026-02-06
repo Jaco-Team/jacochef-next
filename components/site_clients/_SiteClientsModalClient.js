@@ -23,11 +23,11 @@ import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AccordionDetails from "@mui/material/AccordionDetails";
-import Box from "@mui/material/Box";
-import PropTypes from "prop-types";
 import a11yProps from "../../ui/TabPanel/a11yProps";
 import TabPanel from "../../ui/TabPanel/TabPanel";
 import MyAlert from "@/ui/MyAlert";
+
+// TODO: переписать это всё или заменить на SiteClientsClientModal
 
 export default class SiteClients_Modal_Client extends React.Component {
   click = false;
@@ -48,20 +48,20 @@ export default class SiteClients_Modal_Client extends React.Component {
       confirmDialog: false,
     };
   }
+  // это кажется лишнее
+  // componentDidUpdate(prevProps) {
+  //   // console.log('componentDidUpdate', this.props);
 
-  componentDidUpdate(prevProps) {
-    //console.log('componentDidUpdate', this.props);
+  //   if (!this.props.item) {
+  //     return;
+  //   }
 
-    if (!this.props.item) {
-      return;
-    }
-
-    if (this.props.item !== prevProps.item) {
-      this.setState({
-        item: this.props.item,
-      });
-    }
-  }
+  //   if (this.props.item !== prevProps.item) {
+  //     this.setState({
+  //       item: this.props.item,
+  //     });
+  //   }
+  // }
 
   changeItem(data, event) {
     const item = this.state.item;
@@ -87,6 +87,7 @@ export default class SiteClients_Modal_Client extends React.Component {
   }
 
   changeTab(event, val) {
+    // console.log(`TAB SET TO ${val}`)
     this.setState({
       activeTab: val,
     });
@@ -288,22 +289,27 @@ export default class SiteClients_Modal_Client extends React.Component {
                   variant="fullWidth"
                 >
                   <Tab
+                    value={0}
                     label="О клиенте"
                     {...a11yProps(0)}
                   />
                   <Tab
+                    value={1}
                     label="Заказы"
                     {...a11yProps(1)}
                   />
                   <Tab
+                    value={2}
                     label="Оформленные ошибки"
                     {...a11yProps(2)}
                   />
                   <Tab
+                    value={3}
                     label="Обращения"
                     {...a11yProps(3)}
                   />
                   <Tab
+                    value={4}
                     label="Авторизации"
                     {...a11yProps(4)}
                   />
@@ -486,8 +492,7 @@ export default class SiteClients_Modal_Client extends React.Component {
                       sm: 12,
                     }}
                   >
-                    {!parseInt(acces?.edit_bir_access) &&
-                    !parseInt(acces?.edit_mail_access) ? null : (
+                    {!!acces?.edit_bir_access && !!acces?.edit_mail_access && (
                       <Button
                         variant="contained"
                         color="success"
@@ -503,20 +508,15 @@ export default class SiteClients_Modal_Client extends React.Component {
             {/* О клиенте */}
 
             {/* Заказы */}
-            {parseInt(acces?.view_orders_access) ? null : (
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
-              >
+            {!!acces?.view_orders_access && (
+              <Grid size={12}>
                 <TabPanel
                   value={this.state.activeTab}
                   index={1}
                   id="client"
                 >
                   <TableContainer
-                    sx={{ maxHeight: { xs: "none", sm: 607 } }}
+                    sx={{ maxHeight: { xs: "auto", sm: 607 } }}
                     component={Paper}
                   >
                     <Table
@@ -534,7 +534,7 @@ export default class SiteClients_Modal_Client extends React.Component {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {orders.map((item, key) => (
+                        {orders?.map((item, key) => (
                           <TableRow
                             hover
                             key={key}
@@ -562,7 +562,7 @@ export default class SiteClients_Modal_Client extends React.Component {
             {/* Заказы */}
 
             {/* Оформленные ошибки */}
-            {!parseInt(acces?.view_err_access) ? null : (
+            {!!acces?.view_err_access && (
               <Grid
                 size={{
                   xs: 12,
@@ -615,7 +615,7 @@ export default class SiteClients_Modal_Client extends React.Component {
             {/* Оформленные ошибки */}
 
             {/* Обращения */}
-            {!parseInt(acces?.view_comment_access) ? null : (
+            {!!acces?.view_comment_access && (
               <Grid
                 size={{
                   xs: 12,
@@ -727,7 +727,7 @@ export default class SiteClients_Modal_Client extends React.Component {
             {/* Обращения */}
 
             {/* Авторизации */}
-            {!parseInt(acces?.view_auth_access) ? null : (
+            {!!acces?.view_auth_access && (
               <Grid
                 size={{
                   xs: 12,

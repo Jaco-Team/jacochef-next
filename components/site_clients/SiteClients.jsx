@@ -239,17 +239,25 @@ export default function SiteClients() {
   };
 
   const openClientOrder = async (order_id, point_id) => {
-    const data = {
-      order_id,
-      point_id,
-    };
+    try {
+      update({ is_load: true });
 
-    const res = await getData("get_one_order", data);
+      const data = {
+        order_id,
+        point_id,
+      };
 
-    update({
-      showOrder: res,
-      modalDialog_order: true,
-    });
+      const res = await getData("get_one_order", data);
+      if (!res) throw new Error(res?.text || "Ошибка получения заказа");
+      update({
+        showOrder: res,
+        modalDialog_order: true,
+      });
+    } catch (e) {
+      return showAlert(e.message, false);
+    } finally {
+      update({ is_load: false });
+    }
   };
 
   const openSaveAction = (comment_id) => {
@@ -533,7 +541,7 @@ export default function SiteClients() {
   return (
     <>
       <Backdrop
-        sx={{ zIndex: 1111 }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
         open={is_load}
       >
         <CircularProgress color="inherit" />
