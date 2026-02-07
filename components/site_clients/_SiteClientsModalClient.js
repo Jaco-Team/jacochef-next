@@ -38,7 +38,7 @@ export default class SiteClients_Modal_Client extends React.Component {
     this.myRef = React.createRef();
 
     this.state = {
-      item: null,
+      localItem: props.item,
       activeTab: 0,
 
       openAlert: false,
@@ -48,42 +48,41 @@ export default class SiteClients_Modal_Client extends React.Component {
       confirmDialog: false,
     };
   }
-  // это кажется лишнее
-  // componentDidUpdate(prevProps) {
-  //   // console.log('componentDidUpdate', this.props);
 
-  //   if (!this.props.item) {
-  //     return;
-  //   }
+  componentDidUpdate(prevProps) {
+    if (this.props.item?.id !== prevProps.item?.id) {
+      this.setState({ localItem: this.props.item });
+    }
+  }
 
-  //   if (this.props.item !== prevProps.item) {
-  //     this.setState({
-  //       item: this.props.item,
-  //     });
-  //   }
-  // }
-
-  changeItem(data, event) {
-    const item = this.state.item;
+  changeItem(key, event) {
     const value = event.target.value;
 
-    item[data] = value;
-
-    this.setState({
-      item,
-    });
+    this.setState((s) => ({
+      ...s,
+      localItem: {
+        ...s.localItem,
+        [key]: value,
+      },
+    }));
   }
 
   resetDateBR() {
-    const item = this.state.item;
+    const item = this.state.localItem;
 
     item.date_bir = "";
     item.day = "";
     item.month = "";
 
-    this.setState({
-      item,
-    });
+    this.setState((s) => ({
+      ...s,
+      localItem: {
+        ...s.localItem,
+        date_bir: "",
+        day: "",
+        month: "",
+      },
+    }));
   }
 
   changeTab(event, val) {
@@ -94,7 +93,7 @@ export default class SiteClients_Modal_Client extends React.Component {
   }
 
   saveEdit() {
-    const item = this.state.item;
+    const item = this.state.localItem;
 
     if ((item.day && !item.month) || (!item.day && item.month)) {
       this.setState({
@@ -198,6 +197,7 @@ export default class SiteClients_Modal_Client extends React.Component {
 
   render() {
     const {
+      item,
       open,
       fullScreen,
       item_login,
@@ -339,7 +339,7 @@ export default class SiteClients_Modal_Client extends React.Component {
                     }}
                   >
                     <Typography style={{ fontWeight: "bold" }}>Имя: &nbsp;</Typography>
-                    <Typography>{this.state.item?.name ?? "Не указано"}</Typography>
+                    <Typography>{this.state.localItem?.name ?? "Не указано"}</Typography>
                   </Grid>
 
                   <Grid
@@ -351,7 +351,7 @@ export default class SiteClients_Modal_Client extends React.Component {
                     }}
                   >
                     <Typography style={{ fontWeight: "bold" }}>Телефон: &nbsp;</Typography>
-                    <Typography>{this.state.item?.login ?? "Не указан"}</Typography>
+                    <Typography>{this.state.localItem?.login ?? "Не указан"}</Typography>
                   </Grid>
 
                   {parseInt(acces?.edit_mail_access) ? (
@@ -369,7 +369,7 @@ export default class SiteClients_Modal_Client extends React.Component {
                       <MyTextInput
                         label="Электронная @ почта"
                         func={this.changeItem.bind(this, "mail")}
-                        value={this.state.item?.mail ?? ""}
+                        value={this.state.localItem?.mail ?? ""}
                         type="email"
                       />
                     </Grid>
@@ -383,7 +383,7 @@ export default class SiteClients_Modal_Client extends React.Component {
                       }}
                     >
                       <Typography style={{ fontWeight: "bold" }}>Эл почта: &nbsp;</Typography>
-                      <Typography>{this.state.item?.mail ?? "Не указана"}</Typography>
+                      <Typography>{this.state.localItem?.mail ?? "Не указана"}</Typography>
                     </Grid>
                   )}
 
@@ -396,7 +396,7 @@ export default class SiteClients_Modal_Client extends React.Component {
                     }}
                   >
                     <Typography style={{ fontWeight: "bold" }}>Регистрация: &nbsp;</Typography>
-                    <Typography>{this.state.item?.date_reg ?? "Не указана"}</Typography>
+                    <Typography>{this.state.localItem?.date_reg ?? "Не указана"}</Typography>
                   </Grid>
 
                   {parseInt(acces?.edit_bir_access) ? (
@@ -413,13 +413,13 @@ export default class SiteClients_Modal_Client extends React.Component {
                       </Typography>
                       <MySelect
                         data={days}
-                        value={this.state.item?.day ?? ""}
+                        value={this.state.localItem?.day ?? ""}
                         func={this.changeItem.bind(this, "day")}
                         label="День"
                       />
                       <MySelect
                         data={months}
-                        value={this.state.item?.month ?? ""}
+                        value={this.state.localItem?.month ?? ""}
                         func={this.changeItem.bind(this, "month")}
                         label="Месяц"
                       />
@@ -440,7 +440,7 @@ export default class SiteClients_Modal_Client extends React.Component {
                       }}
                     >
                       <Typography style={{ fontWeight: "bold" }}>Дата рождения: &nbsp;</Typography>
-                      <Typography>{this.state.item?.date_bir ?? "Не указана"}</Typography>
+                      <Typography>{this.state.localItem?.date_bir ?? "Не указана"}</Typography>
                     </Grid>
                   )}
 
@@ -454,7 +454,7 @@ export default class SiteClients_Modal_Client extends React.Component {
                   >
                     <Typography style={{ fontWeight: "bold" }}>Заказов: &nbsp;</Typography>
                     <Typography>
-                      {`${this.state.item?.all_count_order} / ${this.state.item?.summ} р.`}
+                      {`${this.state.localItem?.all_count_order} / ${this.state.localItem?.summ} р.`}
                     </Typography>
                   </Grid>
 
@@ -468,7 +468,7 @@ export default class SiteClients_Modal_Client extends React.Component {
                   >
                     <Typography style={{ fontWeight: "bold" }}>Доставок: &nbsp;</Typography>
                     <Typography>
-                      {`${this.state.item?.count_dev} / ${this.state.item?.summ_dev} р.`}
+                      {`${this.state.localItem?.count_dev} / ${this.state.localItem?.summ_dev} р.`}
                     </Typography>
                   </Grid>
 
@@ -482,7 +482,7 @@ export default class SiteClients_Modal_Client extends React.Component {
                   >
                     <Typography style={{ fontWeight: "bold" }}>Самовывозов: &nbsp;</Typography>
                     <Typography>
-                      {`${this.state.item?.count_pic} / ${this.state.item?.summ_pic} р.`}
+                      {`${this.state.localItem?.count_pic} / ${this.state.localItem?.summ_pic} р.`}
                     </Typography>
                   </Grid>
 
