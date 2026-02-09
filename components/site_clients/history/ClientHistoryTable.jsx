@@ -61,7 +61,7 @@ const ClientHistoryTable = ({ columns, rows }) => {
     <>
       <TableContainer
         component={Paper}
-        sx={{ mt: 3, maxHeight: "50dvh" }}
+        sx={{ mt: 3, maxHeight: "45dvh" }}
       >
         <Table
           size="small"

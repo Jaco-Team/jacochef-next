@@ -10,7 +10,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   Grid,
   IconButton,
   Paper,
@@ -25,8 +24,6 @@ import {
   TableSortLabel,
   Tabs,
   Typography,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
 import { Clear, Close } from "@mui/icons-material";
 import a11yProps from "@/ui/TabPanel/a11yProps";
@@ -40,7 +37,10 @@ import { useLoading } from "../useClientsLoadingContext";
 import { useClientHistoryStore } from "./useClientHistoryStore";
 import { delivery_types, order_types_all } from "../config";
 import { formatYMD } from "@/src/helpers/ui/formatDate";
-import { MyTextInput } from "@/ui/Forms";
+import { MyAutocomplite, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
+import { useSiteClientsStore } from "../useSiteClientsStore";
+import useFullScreen from "@/src/hooks/useFullScreen";
+import { formatPlural, formatRUR } from "@/src/helpers/utils/i18n";
 
 dayjs.locale("ru");
 
@@ -56,31 +56,81 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
   // sorting & filtering
   const [sortBy, setSortBy] = useState("date_time");
   const [sortDir, setSortDir] = useState("desc");
-  const [searchPromo, setSearchPromo] = useState("");
-  const [searchUTM, setSearchUTM] = useState("");
-  const [searchItem, setSearchItem] = useState("");
+
+  const initialForm = useSiteClientsStore.getState();
+  const [form, setForm] = useState(() => ({
+    points_history: [],
+    promo: "",
+    order_types: [],
+    delivery_type: [],
+    items: [],
+    date_start: null,
+    date_end: null,
+    order_utm: "",
+  }));
+  const setField = (key, value) => {
+    setForm((f) => ({ ...f, [key]: value }));
+  };
+
+  const clientPoints = useMemo(() => {
+    const orders = client?.client_orders;
+    if (!orders?.length) return [];
+    const usedIds = new Set(orders.map((o) => o.point_id).filter((id) => id != null));
+    return initialForm.points.filter((p) => usedIds.has(p.id));
+  }, [client?.client_orders, initialForm?.points]);
+
+  const clientItems = useMemo(() => {
+    const orders = client?.client_orders;
+    if (!orders?.length) return [];
+    const usedIds = new Set(
+      orders.flatMap((o) => (Array.isArray(o.items) ? o.items.map((it) => it.id) : [])),
+    );
+    return initialForm.all_items.filter((it) => usedIds.has(it.id));
+  }, [client?.client_orders, initialForm.all_items]);
 
   const sortedFilteredOrders = useMemo(() => {
     if (!client?.client_orders) return [];
 
     let rows = [...client.client_orders];
 
-    if (searchPromo?.length > 0) {
-      rows = rows.filter((item) => {
-        return String(item.promo_name).toLowerCase().includes(searchPromo.toLowerCase());
-      });
+    if (form.promo) {
+      const v = form.promo.toLowerCase();
+      rows = rows.filter((r) => String(r.promo_name).toLowerCase().includes(v));
     }
-    if (searchUTM?.length > 0) {
-      rows = rows.filter((item) => {
-        return String(item.utm).toLowerCase().includes(searchUTM.toLowerCase());
-      });
+
+    if (form.order_utm) {
+      const v = form.order_utm.toLowerCase();
+      rows = rows.filter((r) => String(r.utm).toLowerCase().includes(v));
     }
-    if (searchItem?.length > 0) {
-      rows = rows.filter((item) => {
-        return item.items.some((it) =>
-          String(it.name).toLowerCase().includes(searchItem.toLowerCase()),
-        );
-      });
+
+    if (form.date_start) {
+      const start = form.date_start.startOf("day").valueOf();
+      rows = rows.filter((r) => dayjs(r.date_time).valueOf() >= start);
+    }
+
+    if (form.date_end) {
+      const end = form.date_end.endOf("day").valueOf();
+      rows = rows.filter((r) => dayjs(r.date_time).valueOf() <= end);
+    }
+
+    if (form.items?.length) {
+      const ids = form.items.map((i) => i.id);
+      rows = rows.filter((r) => ids.every((id) => r.items?.some((it) => it.id === id)));
+    }
+
+    if (form.order_types?.length) {
+      const ids = form.order_types.map((i) => i.id);
+      rows = rows.filter((r) => ids.includes(r.is_client));
+    }
+
+    if (form.delivery_type?.length) {
+      const ids = form.delivery_type.map((i) => i.id);
+      rows = rows.filter((r) => ids.includes(r.new_type_order));
+    }
+
+    if (form.points_history.length) {
+      const ids = form.points_history.map((i) => i.id);
+      rows = rows.filter((r) => ids.includes(r.point_id));
     }
 
     rows.sort((a, b) => {
@@ -101,7 +151,7 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
     });
 
     return rows;
-  }, [client?.client_orders, sortBy, sortDir, searchPromo, searchUTM, searchItem]);
+  }, [client?.client_orders, sortBy, sortDir, form]);
 
   const handleSort = (key) => {
     if (sortBy === key) {
@@ -152,9 +202,19 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
     debouncedGetClient();
   }, [clientLogin]);
 
+  useEffect(() => {
+    const range = getDateRangeFromOrders(client?.client_orders);
+    if (!range) return;
+
+    setForm((f) => ({
+      ...f,
+      date_start: f.date_start ?? range.start,
+      date_end: f.date_end ?? range.end,
+    }));
+  }, [client?.client_orders]);
+
   // fullscreen hook
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const fullScreen = useFullScreen();
 
   return (
     <>
@@ -170,7 +230,7 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
           <Grid
             container
             spacing={0}
-            mb={3}
+            mb={1}
           >
             <Grid
               mb={2}
@@ -191,61 +251,12 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                 <Close />
               </IconButton>
             </Grid>
-            {!!client && (
-              <>
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 3,
-                  }}
-                >
-                  <Typography variant="body2">Имя:</Typography>
-                  <Typography variant="h5">{clientInfo?.name ?? "Не указано"}</Typography>
-                </Grid>
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 3,
-                  }}
-                >
-                  <Typography variant="body2">Зарегистрировался:</Typography>
-                  <Typography variant="body1">
-                    {dayjs(clientInfo?.date_reg)?.format("DD MMMM YYYY в HH:mm") ?? "Неизвестно"}
-                  </Typography>
-                </Grid>
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 3,
-                  }}
-                >
-                  <Typography variant="body2">Источник (первого заказа):</Typography>
-                  <Typography variant="body1">
-                    {clientInfo?.source || clientInfo?.medium
-                      ? `${clientInfo?.source || "n/a"}: ${clientInfo?.medium || "n/a"}`
-                      : "Не указан"}
-                  </Typography>
-                </Grid>
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 3,
-                  }}
-                >
-                  <Typography variant="body2">Сумма заказов:</Typography>
-                  <Typography variant="h5">
-                    {formatPrice(clientInfo?.summ) ?? 0} {"\u20bd"}
-                  </Typography>
-                </Grid>
-              </>
-            )}
           </Grid>
         </DialogTitle>
-        <Divider />
         {clientLoading ? (
           <CircularProgress sx={{ padding: 20 }} />
         ) : (
-          <DialogContent style={{ paddingBottom: 10 }}>
+          <DialogContent>
             <Grid
               size={{
                 xs: 12,
@@ -272,12 +283,7 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
             </Grid>
 
             {/* О клиенте */}
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
+            <Grid size={12}>
               <TabPanel
                 value={activeTab}
                 index={0}
@@ -287,9 +293,7 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                   <Grid
                     style={{ display: "flex" }}
                     mb={3}
-                    size={{
-                      xs: 12,
-                    }}
+                    size={12}
                   >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>Имя:</Typography>
                     <Typography>{clientInfo?.name || "Не указано"}</Typography>
@@ -339,6 +343,23 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                       {(clientInfo?.date_reg &&
                         dayjs(clientInfo?.date_reg).format("DD MMMM YYYY")) ??
                         "Не указано"}
+                    </Typography>
+                  </Grid>
+
+                  <Grid
+                    style={{ display: "flex" }}
+                    mb={3}
+                    size={{
+                      xs: 12,
+                    }}
+                  >
+                    <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
+                      Источник первого заказа:
+                    </Typography>
+                    <Typography>
+                      {clientInfo?.source || clientInfo?.medium
+                        ? `${clientInfo?.source || "n/a"}: ${clientInfo?.medium || "n/a"}`
+                        : "Не указан"}
                     </Typography>
                   </Grid>
 
@@ -406,6 +427,21 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                       true,
                     )}`}</Typography>
                   </Grid>
+
+                  <Grid
+                    style={{ display: "flex" }}
+                    mb={3}
+                    size={{
+                      xs: 12,
+                    }}
+                  >
+                    <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
+                      Средний чек:
+                    </Typography>
+                    <Typography>
+                      {formatPrice(+clientInfo?.summ / +clientInfo?.all_count_order || 0, true)}
+                    </Typography>
+                  </Grid>
                 </Paper>
               </TabPanel>
             </Grid>
@@ -414,77 +450,174 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
             {/* История */}
             {canAccess("view_orders") && (
               <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
+                size={12}
+                sx={{ mt: 2 }}
               >
                 <TabPanel
                   value={activeTab}
                   index={1}
                   id="history"
                 >
-                  <Stack
-                    direction={"row"}
-                    gap={2}
-                    sx={{ mt: 2 }}
+                  <Grid
+                    container
+                    spacing={1}
                   >
-                    <MyTextInput
-                      label="Поиск по промокоду..."
-                      value={searchPromo}
-                      func={({ target }) => setSearchPromo(target.value)}
-                      inputAdornment={
-                        !searchPromo ? null : (
-                          <IconButton>
-                            <Clear onClick={() => setSearchPromo("")} />
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                    >
+                      <MyAutocomplite
+                        label="Кафе"
+                        multiple={true}
+                        data={clientPoints}
+                        value={form.points_history}
+                        func={(_, v) => setField("points_history", v)}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                    >
+                      <MyDatePickerNew
+                        label="Дата от"
+                        customActions={true}
+                        value={dayjs(form.date_start)}
+                        maxDate={dayjs(form.date_end) ?? dayjs()}
+                        func={(e) => setField("date_start", e)}
+                      />
+                    </Grid>
+
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                    >
+                      <MyDatePickerNew
+                        label="Дата до"
+                        customActions={true}
+                        value={dayjs(form.date_end)}
+                        minDate={dayjs(form.date_start)}
+                        maxDate={dayjs()}
+                        func={(e) => setField("date_end", e)}
+                      />
+                    </Grid>
+
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                    >
+                      <MyAutocomplite
+                        label="Кто оформил"
+                        multiple={true}
+                        data={order_types_all}
+                        value={form.order_types}
+                        func={(_, v) => setField("order_types", v)}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                    >
+                      <MyAutocomplite
+                        label="Тип доставки"
+                        multiple={true}
+                        data={delivery_types}
+                        value={form.delivery_type}
+                        func={(_, v) => setField("delivery_type", v)}
+                      />
+                    </Grid>
+
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                    >
+                      <MyAutocomplite
+                        label="Позиции в заказе"
+                        multiple={true}
+                        data={clientItems}
+                        value={form.items}
+                        func={(_, v) => setField("items", v)}
+                      />
+                    </Grid>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                    >
+                      <MyTextInput
+                        type="text"
+                        className="input_promo"
+                        label="Промокод содержит"
+                        value={form.promo}
+                        func={({ target }) => setField("promo", target?.value)}
+                        inputAdornment={
+                          !form.promo ? null : (
+                            <IconButton>
+                              <Clear onClick={() => setField("promo", "")} />
+                            </IconButton>
+                          )
+                        }
+                      />
+                    </Grid>
+
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm: 4,
+                      }}
+                    >
+                      <MyTextInput
+                        type="text"
+                        label="UTM содержит"
+                        value={form.order_utm}
+                        func={({ target }) => setField("order_utm", target?.value)}
+                        inputAdornment={
+                          !form.order_utm ? null : (
+                            <IconButton>
+                              <Clear onClick={() => setField("order_utm", "")} />
+                            </IconButton>
+                          )
+                        }
+                      />
+                    </Grid>
+                    <Grid
+                      size={12}
+                      sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}
+                    >
+                      {canAccess("export_items") && (
+                        <Box>
+                          <IconButton
+                            style={{ cursor: "pointer", padding: 10 }}
+                            onClick={() =>
+                              exportXLSX(
+                                sortedFilteredOrders,
+                                ordersColumns,
+                                `client-orders-history-${clientLogin}.xlsx`,
+                              )
+                            }
+                            title="Экспортировать в Excel"
+                          >
+                            <ExcelIcon />
                           </IconButton>
-                        )
-                      }
-                    />
-                    <MyTextInput
-                      label="Поиск по UTM..."
-                      value={searchUTM}
-                      func={({ target }) => setSearchUTM(target.value)}
-                      inputAdornment={
-                        !searchUTM ? null : (
-                          <IconButton>
-                            <Clear onClick={() => setSearchUTM("")} />
-                          </IconButton>
-                        )
-                      }
-                    />
-                    <MyTextInput
-                      label="Поиск по Позиции..."
-                      value={searchItem}
-                      func={({ target }) => setSearchItem(target.value)}
-                      inputAdornment={
-                        !searchItem ? null : (
-                          <IconButton>
-                            <Clear onClick={() => setSearchItem("")} />
-                          </IconButton>
-                        )
-                      }
-                    />
-                    {canAccess("export_items") && (
-                      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                        <IconButton
-                          style={{ cursor: "pointer", padding: 10 }}
-                          onClick={() =>
-                            exportXLSX(
-                              sortedFilteredOrders,
-                              ordersColumns,
-                              `client-orders-history-${clientLogin}.xlsx`,
-                            )
-                          }
-                          title="Экспортировать в Excel"
-                        >
-                          <ExcelIcon />
-                        </IconButton>
-                      </Box>
-                    )}
-                  </Stack>
+                        </Box>
+                      )}
+                    </Grid>
+                  </Grid>
+
                   <TableContainer
-                    sx={{ maxHeight: { xs: "none", sm: 607 } }}
+                    sx={{ maxHeight: { xs: "none", sm: "45dvh" } }}
                     component={Paper}
                   >
                     <Table
@@ -540,6 +673,16 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                       </TableBody>
                     </Table>
                   </TableContainer>
+                  <Stack
+                    direction={"row"}
+                    justifyContent={"flex-end"}
+                    sx={{ mt: 1 }}
+                  >
+                    Всего:{" "}
+                    {formatPlural(sortedFilteredOrders.length, ["заказ", "заказа", "заказов"])} на
+                    сумму{" "}
+                    {formatRUR(sortedFilteredOrders.reduce((res, o) => res + Number(o.summ), 0))}
+                  </Stack>
                 </TabPanel>
               </Grid>
             )}
@@ -613,3 +756,25 @@ const ordersColumns = [
     format: (v) => `${v} р.`,
   },
 ];
+
+const getDateRangeFromOrders = (orders) => {
+  if (!Array.isArray(orders) || !orders.length) return null;
+
+  let min;
+  let max;
+
+  for (const { date_time } of orders) {
+    const d = dayjs(date_time);
+    if (!d.isValid()) continue;
+
+    if (!min || d.isBefore(min)) min = d;
+    if (!max || d.isAfter(max)) max = d;
+  }
+
+  if (!min || !max) return null;
+
+  return {
+    start: min.startOf("day"),
+    end: max.endOf("day"),
+  };
+};

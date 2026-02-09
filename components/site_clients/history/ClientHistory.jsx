@@ -28,7 +28,6 @@ function ClientHistory({ getData, showAlert, canAccess }) {
     is_load,
     all_items,
     points,
-    points_history,
     update: updateMain,
   } = useSiteClientsStore((s) => ({
     is_load: s.is_load,
@@ -265,7 +264,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
       />
       <Grid
         container
-        spacing={3}
+        spacing={2}
         maxWidth={"lg"}
       >
         <Grid
