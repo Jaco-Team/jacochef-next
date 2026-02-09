@@ -1974,6 +1974,10 @@ function FormHeader_new({ page, type_edit }) {
 
   //doc
 
+  console.log(kinds);
+  console.log(doc_base_id);
+  console.log(type);
+
   return (
     <>
       {page === "new" ? (
@@ -3066,7 +3070,7 @@ class Billing_Edit_ extends React.Component {
       is_load: true,
     });
 
-    let res = api_laravel_local(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {
