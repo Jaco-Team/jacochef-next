@@ -83,6 +83,7 @@ class TableStages extends React.Component {
                 <MyTextInput
                   label=""
                   value={item.count}
+                  disabled={!this.props.acces_edit}
                   func={this.props.changeData.bind(
                     this,
                     this.props.type,
@@ -97,6 +98,7 @@ class TableStages extends React.Component {
                 <MyTextInput
                   label=""
                   value={item.sort}
+                  disabled={!this.props.acces_edit}
                   func={this.props.changeData.bind(
                     this,
                     this.props.type,
@@ -109,7 +111,7 @@ class TableStages extends React.Component {
               <TableCell>
                 <CloseIcon
                   onClick={this.props.delItem.bind(this, this.props.type, this.props.arr, key)}
-                  style={{ cursor: "pointer" }}
+                  style={{ cursor: !this.props.acces_edit ? "not-allowed" : "pointer" }}
                 />
               </TableCell>
             </TableRow>
@@ -175,6 +177,7 @@ class SiteItemsTable extends React.Component {
                           <MyDatePickerNew
                             label=""
                             value={dayjs(it.date_update)}
+                            disabled={!this.props.acces_edit}
                             func={this.props.changeDateUpdate.bind(this, key, k, it.date_update_id)}
                           />
                         </TableCell>
@@ -186,6 +189,7 @@ class SiteItemsTable extends React.Component {
                           label=""
                           value={it.sort}
                           func={this.props.changeSort.bind(this, key, k)}
+                          disabled={!this.props.acces_edit}
                           onBlur={this.props.saveSort.bind(this, it.id)}
                         />
                       </TableCell>
@@ -310,6 +314,7 @@ class SiteItems_ extends React.Component {
 
       searchItems: "",
       item_items_render: [],
+      acces_edit: false,
 
       openHist: [],
       timeUpdate: new Date(),
@@ -321,11 +326,12 @@ class SiteItems_ extends React.Component {
 
   async componentDidMount() {
     let data = await this.getData("get_all");
-
+    const acces = data.acces?.find((i) => i.param === "form");
     this.setState({
       module_name: data.module_info.name,
       cats: data.cats,
       cat_list: data.cat_list,
+      acces_edit: acces?.edit === "1",
       cat_list_new: data.cat_list_new,
       timeUpdate: new Date(),
     });
@@ -1845,6 +1851,7 @@ class SiteItems_ extends React.Component {
                                     <MyDatePickerNew
                                       label="Дата обновления"
                                       value={this.state.date_update}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeDateRange.bind(this, "date_update")}
                                     />
                                   </Grid>
@@ -1857,6 +1864,7 @@ class SiteItems_ extends React.Component {
                                     >
                                       <Button
                                         onClick={this.delUpdateItem.bind(this)}
+                                        disabled={!this.state.acces_edit}
                                         style={{
                                           backgroundColor: "#c03",
                                           color: "#fff",
@@ -1889,6 +1897,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Название"
                                     value={this.state.editItem.name}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "name")}
                                   />
                                 </Grid>
@@ -1901,6 +1910,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Короткое название (20 сим.)"
                                     value={this.state.editItem.short_name}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "short_name")}
                                   />
                                 </Grid>
@@ -1939,6 +1949,7 @@ class SiteItems_ extends React.Component {
                                   <MySelect
                                     data={this.state.cat_list}
                                     value={this.state.editItem.category_id}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "category_id")}
                                     label="Категория"
                                   />
@@ -1952,6 +1963,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Код из 1с"
                                     value={this.state.editItem.art}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "art")}
                                   />
                                 </Grid>
@@ -1975,6 +1987,7 @@ class SiteItems_ extends React.Component {
                                   <MySelect
                                     data={this.state.cat_list_new}
                                     value={this.state.editItem.category_id2}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "category_id2")}
                                     label="Категория для нового сайта"
                                   />
@@ -1999,6 +2012,7 @@ class SiteItems_ extends React.Component {
                                 >
                                   <MyTextInput
                                     label="Стол"
+                                    disabled={!this.state.acces_edit}
                                     value={this.state.editItem.stol}
                                     func={this.changeItem.bind(this, "stol")}
                                   />
@@ -2013,6 +2027,7 @@ class SiteItems_ extends React.Component {
                                   >
                                     <MyTextInput
                                       label="Объем"
+                                      disabled={!this.state.acces_edit}
                                       value={this.state.editItem.weight}
                                       func={this.changeItem.bind(this, "weight")}
                                     />
@@ -2026,6 +2041,7 @@ class SiteItems_ extends React.Component {
                                   >
                                     <MyTextInput
                                       label="Вес"
+                                      disabled={!this.state.acces_edit}
                                       value={this.state.editItem.weight}
                                       func={this.changeItem.bind(this, "weight")}
                                     />
@@ -2041,6 +2057,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Кол-во кусочков"
                                     value={this.state.editItem.count_part}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "count_part")}
                                   />
                                 </Grid>
@@ -2054,6 +2071,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Размер"
                                     value={this.state.editItem.size_pizza}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "size_pizza")}
                                   />
                                 </Grid>
@@ -2079,6 +2097,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Белки"
                                       value={this.state.editItem.protein}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "protein")}
                                     />
                                   </Grid>
@@ -2091,6 +2110,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Жиры"
                                       value={this.state.editItem.fat}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "fat")}
                                     />
                                   </Grid>
@@ -2103,6 +2123,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Углеводы"
                                       value={this.state.editItem.carbohydrates}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "carbohydrates")}
                                     />
                                   </Grid>
@@ -2129,6 +2150,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Время на 1 этап (ММ:СС)"
                                       value={this.state.editItem.time_stage_1}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "time_stage_1")}
                                     />
                                   </Grid>
@@ -2141,6 +2163,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Время на 2 этап (ММ:СС)"
                                       value={this.state.editItem.time_stage_2}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "time_stage_2")}
                                     />
                                   </Grid>
@@ -2153,6 +2176,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Время на 3 этап (ММ:СС)"
                                       value={this.state.editItem.time_stage_3}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "time_stage_3")}
                                     />
                                   </Grid>
@@ -2208,7 +2232,34 @@ class SiteItems_ extends React.Component {
                                   <div
                                     className="dropzone"
                                     id="for_img_edit_new"
-                                    style={{ width: "100%", minHeight: 150 }}
+                                    onClick={(e) => {
+                                      if (!this.state.acces_edit) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        return;
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (
+                                        !this.state.acces_edit &&
+                                        (e.key === "Enter" || e.key === " ")
+                                      ) {
+                                        e.preventDefault();
+                                      }
+                                    }}
+                                    style={{
+                                      width: "100%",
+                                      minHeight: 150,
+                                      backgroundColor: !this.state.acces_edit
+                                        ? "#f5f5f5"
+                                        : "transparent",
+                                      cursor: !this.state.acces_edit ? "not-allowed" : "pointer",
+                                      opacity: !this.state.acces_edit ? 0.6 : 1,
+                                      pointerEvents: !this.state.acces_edit ? "none" : "auto",
+                                    }}
+                                    role="button"
+                                    tabIndex={this.state.acces_edit ? 0 : -1}
+                                    aria-disabled={!this.state.acces_edit}
                                   />
                                 </Grid>
                               </Grid>
@@ -2231,6 +2282,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Состав"
                                     value={this.state.editItem.tmp_desc}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "tmp_desc")}
                                   />
                                 </Grid>
@@ -2242,6 +2294,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Короткое описание (в списке)"
                                     value={this.state.editItem.marc_desc}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "marc_desc")}
                                   />
                                 </Grid>
@@ -2253,6 +2306,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Полное описание (в карточке)"
                                     value={this.state.editItem.marc_desc_full}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "marc_desc_full")}
                                   />
                                 </Grid>
@@ -2269,6 +2323,7 @@ class SiteItems_ extends React.Component {
                                 multiple={true}
                                 data={this.state.tags_all}
                                 value={this.state.tags_my}
+                                disabled={!this.state.acces_edit}
                                 func={this.changeAutocomplite.bind(this, "tags_my")}
                               />
                             </Grid>
@@ -2292,6 +2347,7 @@ class SiteItems_ extends React.Component {
                                     label="Новинка"
                                     value={parseInt(this.state.editItem.is_new) == 1 ? true : false}
                                     func={this.changeItem.bind(this, "is_new")}
+                                    disabled={!this.state.acces_edit}
                                     style={{ justifyContent: "center" }}
                                   />
                                 </Grid>
@@ -2305,6 +2361,7 @@ class SiteItems_ extends React.Component {
                                     label="Хит"
                                     value={parseInt(this.state.editItem.is_hit) == 1 ? true : false}
                                     func={this.changeItem.bind(this, "is_hit")}
+                                    disabled={!this.state.acces_edit}
                                     style={{ justifyContent: "center" }}
                                   />
                                 </Grid>
@@ -2320,6 +2377,7 @@ class SiteItems_ extends React.Component {
                                       parseInt(this.state.editItem.is_updated) == 1 ? true : false
                                     }
                                     func={this.changeItem.bind(this, "is_updated")}
+                                    disabled={!this.state.acces_edit}
                                     style={{ justifyContent: "center" }}
                                   />
                                 </Grid>
@@ -2346,6 +2404,7 @@ class SiteItems_ extends React.Component {
                                     value={
                                       parseInt(this.state.editItem.is_show) == 1 ? true : false
                                     }
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "is_show")}
                                     style={{ justifyContent: "center" }}
                                   />
@@ -2361,6 +2420,7 @@ class SiteItems_ extends React.Component {
                                     value={
                                       parseInt(this.state.editItem.show_site) == 1 ? true : false
                                     }
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "show_site")}
                                     style={{ justifyContent: "center" }}
                                   />
@@ -2376,6 +2436,7 @@ class SiteItems_ extends React.Component {
                                     value={
                                       parseInt(this.state.editItem.show_program) == 1 ? true : false
                                     }
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "show_program")}
                                     style={{ justifyContent: "center" }}
                                   />
@@ -2436,11 +2497,13 @@ class SiteItems_ extends React.Component {
                                   xs: 12,
                                   sm: 8,
                                 }}
+                                disabled={!this.state.acces_edit}
                               >
                                 <TableStages
                                   title={"1 этап"}
                                   type={"pf"}
                                   arr={"pf_stage_1"}
+                                  acces_edit={this.state.acces_edit}
                                   data={this.state.pf_stage_1}
                                   changeData={this.changeData.bind(this)}
                                   delItem={this.delItem.bind(this)}
@@ -2448,6 +2511,7 @@ class SiteItems_ extends React.Component {
                                 <TableStages
                                   title={"2 этап"}
                                   type={"pf"}
+                                  acces_edit={this.state.acces_edit}
                                   arr={"pf_stage_2"}
                                   data={this.state.pf_stage_2}
                                   changeData={this.changeData.bind(this)}
@@ -2458,6 +2522,7 @@ class SiteItems_ extends React.Component {
                                   type={"pf"}
                                   arr={"pf_stage_3"}
                                   data={this.state.pf_stage_3}
+                                  acces_edit={this.state.acces_edit}
                                   changeData={this.changeData.bind(this)}
                                   delItem={this.delItem.bind(this)}
                                 />
@@ -2470,6 +2535,7 @@ class SiteItems_ extends React.Component {
                           <Grid
                             container
                             spacing={3}
+                            disabled={!this.state.acces_edit}
                           >
                             {!this.state.item_pf ? null : (
                               <Grid
@@ -2518,6 +2584,7 @@ class SiteItems_ extends React.Component {
                                   xs: 12,
                                   sm: 8,
                                 }}
+                                disabled={!this.state.acces_edit}
                               >
                                 <Table size="small">
                                   <TableHead>
@@ -2602,12 +2669,14 @@ class SiteItems_ extends React.Component {
               <Button
                 onClick={this.saveNewItemHist.bind(this)}
                 color="primary"
+                disabled={!this.state.acces_edit}
               >
                 Сохранить
               </Button>
             ) : parseInt(this.state.ItemTab1) == 0 ? (
               <Button
                 onClick={this.saveEditItem.bind(this)}
+                disabled={!this.state.acces_edit}
                 color="primary"
               >
                 Сохранить
@@ -2616,6 +2685,7 @@ class SiteItems_ extends React.Component {
               <Button
                 onClick={this.saveEditItemHist.bind(this)}
                 color="primary"
+                disabled={!this.state.acces_edit}
               >
                 Сохранить
               </Button>
@@ -2698,6 +2768,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Название"
                                     value={this.state.editItem.name}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "name")}
                                   />
                                 </Grid>
@@ -2710,6 +2781,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Короткое название (20 сим.)"
                                     value={this.state.editItem.short_name}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "short_name")}
                                   />
                                 </Grid>
@@ -2735,7 +2807,7 @@ class SiteItems_ extends React.Component {
                                     data={this.state.types}
                                     value={this.state.editItem.type}
                                     func={this.changeItem.bind(this, "type")}
-                                    disabled={true}
+                                    disabled={!this.state.acces_edit}
                                     label="Тип"
                                   />
                                 </Grid>
@@ -2748,6 +2820,7 @@ class SiteItems_ extends React.Component {
                                   <MySelect
                                     data={this.state.cat_list}
                                     value={this.state.editItem.category_id}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "category_id")}
                                     label="Категория"
                                   />
@@ -2761,6 +2834,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Код из 1с"
                                     value={this.state.editItem.art}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "art")}
                                   />
                                 </Grid>
@@ -2784,6 +2858,7 @@ class SiteItems_ extends React.Component {
                                   <MySelect
                                     data={this.state.cat_list_new}
                                     value={this.state.editItem.category_id2}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "category_id2")}
                                     label="Категория для нового сайта"
                                   />
@@ -2809,6 +2884,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Стол"
                                     value={this.state.editItem.stol}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "stol")}
                                   />
                                 </Grid>
@@ -2823,6 +2899,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Объем"
                                       value={this.state.editItem.weight}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "weight")}
                                     />
                                   </Grid>
@@ -2836,6 +2913,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Вес"
                                       value={this.state.editItem.weight}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "weight")}
                                     />
                                   </Grid>
@@ -2850,6 +2928,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Кол-во кусочков"
                                     value={this.state.editItem.count_part}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "count_part")}
                                   />
                                 </Grid>
@@ -2863,6 +2942,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Размер"
                                     value={this.state.editItem.size_pizza}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "size_pizza")}
                                   />
                                 </Grid>
@@ -2888,6 +2968,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Белки"
                                       value={this.state.editItem.protein}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "protein")}
                                     />
                                   </Grid>
@@ -2900,6 +2981,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Жиры"
                                       value={this.state.editItem.fat}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "fat")}
                                     />
                                   </Grid>
@@ -2912,6 +2994,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Углеводы"
                                       value={this.state.editItem.carbohydrates}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "carbohydrates")}
                                     />
                                   </Grid>
@@ -2938,6 +3021,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Время на 1 этап (ММ:СС)"
                                       value={this.state.editItem.time_stage_1}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "time_stage_1")}
                                     />
                                   </Grid>
@@ -2950,6 +3034,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Время на 2 этап (ММ:СС)"
                                       value={this.state.editItem.time_stage_2}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "time_stage_2")}
                                     />
                                   </Grid>
@@ -2962,6 +3047,7 @@ class SiteItems_ extends React.Component {
                                     <MyTextInput
                                       label="Время на 3 этап (ММ:СС)"
                                       value={this.state.editItem.time_stage_3}
+                                      disabled={!this.state.acces_edit}
                                       func={this.changeItem.bind(this, "time_stage_3")}
                                     />
                                   </Grid>
@@ -3028,7 +3114,34 @@ class SiteItems_ extends React.Component {
                                   <div
                                     className="dropzone"
                                     id="for_img_edit_new"
-                                    style={{ width: "100%", minHeight: 150 }}
+                                    onClick={(e) => {
+                                      if (!this.state.acces_edit) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        return;
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (
+                                        !this.state.acces_edit &&
+                                        (e.key === "Enter" || e.key === " ")
+                                      ) {
+                                        e.preventDefault();
+                                      }
+                                    }}
+                                    style={{
+                                      width: "100%",
+                                      minHeight: 150,
+                                      backgroundColor: !this.state.acces_edit
+                                        ? "#f5f5f5"
+                                        : "transparent",
+                                      cursor: !this.state.acces_edit ? "not-allowed" : "pointer",
+                                      opacity: !this.state.acces_edit ? 0.6 : 1,
+                                      pointerEvents: !this.state.acces_edit ? "none" : "auto",
+                                    }}
+                                    role="button"
+                                    tabIndex={this.state.acces_edit ? 0 : -1}
+                                    aria-disabled={!this.state.acces_edit}
                                   />
                                 </Grid>
                               </Grid>
@@ -3051,6 +3164,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Состав"
                                     value={this.state.editItem.tmp_desc}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "tmp_desc")}
                                   />
                                 </Grid>
@@ -3062,6 +3176,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Короткое описание (в карточке)"
                                     value={this.state.editItem.marc_desc}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "marc_desc")}
                                   />
                                 </Grid>
@@ -3073,6 +3188,7 @@ class SiteItems_ extends React.Component {
                                   <MyTextInput
                                     label="Полное описание (в карточке)"
                                     value={this.state.editItem.marc_desc_full}
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "marc_desc_full")}
                                   />
                                 </Grid>
@@ -3089,6 +3205,7 @@ class SiteItems_ extends React.Component {
                                 multiple={true}
                                 data={this.state.tags_all}
                                 value={this.state.tags_my}
+                                disabled={!this.state.acces_edit}
                                 func={this.changeAutocomplite.bind(this, "tags_my")}
                               />
                             </Grid>
@@ -3112,6 +3229,7 @@ class SiteItems_ extends React.Component {
                                     label="Новинка"
                                     value={parseInt(this.state.editItem.is_new) == 1 ? true : false}
                                     func={this.changeItem.bind(this, "is_new")}
+                                    disabled={!this.state.acces_edit}
                                     style={{ justifyContent: "center" }}
                                   />
                                 </Grid>
@@ -3125,6 +3243,7 @@ class SiteItems_ extends React.Component {
                                     label="Хит"
                                     value={parseInt(this.state.editItem.is_hit) == 1 ? true : false}
                                     func={this.changeItem.bind(this, "is_hit")}
+                                    disabled={!this.state.acces_edit}
                                     style={{ justifyContent: "center" }}
                                   />
                                 </Grid>
@@ -3140,6 +3259,7 @@ class SiteItems_ extends React.Component {
                                       parseInt(this.state.editItem.is_updated) == 1 ? true : false
                                     }
                                     func={this.changeItem.bind(this, "is_updated")}
+                                    disabled={!this.state.acces_edit}
                                     style={{ justifyContent: "center" }}
                                   />
                                 </Grid>
@@ -3166,6 +3286,7 @@ class SiteItems_ extends React.Component {
                                     value={
                                       parseInt(this.state.editItem.is_show) == 1 ? true : false
                                     }
+                                    disabled={!this.state.acces_edit}
                                     func={this.changeItem.bind(this, "is_show")}
                                     style={{ justifyContent: "center" }}
                                   />
@@ -3178,6 +3299,7 @@ class SiteItems_ extends React.Component {
                                 >
                                   <MyCheckBox
                                     label="На сайте"
+                                    disabled={!this.state.acces_edit}
                                     value={
                                       parseInt(this.state.editItem.show_site) == 1 ? true : false
                                     }
@@ -3193,6 +3315,7 @@ class SiteItems_ extends React.Component {
                                 >
                                   <MyCheckBox
                                     label="На складе"
+                                    disabled={!this.state.acces_edit}
                                     value={
                                       parseInt(this.state.editItem.show_program) == 1 ? true : false
                                     }
@@ -3255,11 +3378,13 @@ class SiteItems_ extends React.Component {
                                   xs: 12,
                                   sm: 8,
                                 }}
+                                disabled={!this.state.acces_edit}
                               >
                                 <TableStages
                                   title={"1 этап"}
                                   type={"pf"}
                                   arr={"pf_stage_1"}
+                                  acces_edit={this.state.acces_edit}
                                   data={this.state.pf_stage_1}
                                   changeData={this.changeData.bind(this)}
                                   delItem={this.delItem.bind(this)}
@@ -3268,6 +3393,7 @@ class SiteItems_ extends React.Component {
                                   title={"2 этап"}
                                   type={"pf"}
                                   arr={"pf_stage_2"}
+                                  acces_edit={this.state.acces_edit}
                                   data={this.state.pf_stage_2}
                                   changeData={this.changeData.bind(this)}
                                   delItem={this.delItem.bind(this)}
@@ -3277,6 +3403,7 @@ class SiteItems_ extends React.Component {
                                   type={"pf"}
                                   arr={"pf_stage_3"}
                                   data={this.state.pf_stage_3}
+                                  acces_edit={this.state.acces_edit}
                                   changeData={this.changeData.bind(this)}
                                   delItem={this.delItem.bind(this)}
                                 />
@@ -3362,6 +3489,7 @@ class SiteItems_ extends React.Component {
                                           <MyTextInput
                                             label=""
                                             value={item.count}
+                                            disabled={!this.state.acces_edit}
                                             func={this.changeData.bind(
                                               this,
                                               "item",
@@ -3373,6 +3501,7 @@ class SiteItems_ extends React.Component {
                                         </TableCell>
                                         <TableCell>
                                           <MyCheckBox
+                                            disabled={!this.state.acces_edit}
                                             label=""
                                             value={parseInt(item.is_add) == 1 ? true : false}
                                             func={this.changeData.bind(
@@ -3384,7 +3513,7 @@ class SiteItems_ extends React.Component {
                                             )}
                                           />
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell disabled={!this.state.acces_edit}>
                                           <CloseIcon
                                             onClick={this.delItem.bind(this, "item", "", key)}
                                             style={{ cursor: "pointer" }}
@@ -3419,6 +3548,7 @@ class SiteItems_ extends React.Component {
             <Button
               onClick={this.saveNewItem.bind(this)}
               color="primary"
+              disabled={!this.state.acces_edit}
             >
               Сохранить
             </Button>
@@ -3448,6 +3578,7 @@ class SiteItems_ extends React.Component {
               onClick={this.openNew.bind(this)}
               color="primary"
               variant="contained"
+              disabled={!this.state.acces_edit}
             >
               Новый товар
             </Button>
@@ -3463,6 +3594,7 @@ class SiteItems_ extends React.Component {
               onClick={this.updateVK.bind(this)}
               color="primary"
               variant="contained"
+              disabled={!this.state.acces_edit}
             >
               Обновить товары VK
             </Button>
@@ -3473,6 +3605,7 @@ class SiteItems_ extends React.Component {
               timeUpdate={this.state.timeUpdate}
               cats={this.state.cats}
               changeSort={this.changeSort.bind(this)}
+              acces_edit={this.state.acces_edit}
               saveSort={this.saveSort.bind(this)}
               changeDateUpdate={this.changeDateUpdate.bind(this)}
               openItem={this.openItem.bind(this)}
