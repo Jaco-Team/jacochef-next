@@ -64,6 +64,7 @@ import DraggableImage from "@/components/billing/DraggableImage";
 
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import MyAlert from "@/ui/MyAlert";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 const types = [
   {
@@ -128,8 +129,8 @@ var global_point_id = 0;
 var type_bill = "bill";
 var bill_type = 0;
 var is_return = false;
-const url_bill = "https://jacochef.ru/src/img/billing_items/upload.php";
-const url_bill_ex = "https://jacochef.ru/src/img/bill_ex_items/upload.php";
+const url_bill = "https://apichef.jacochef.ru/api/bill-items/upload";
+const url_bill_ex = "https://apichef.jacochef.ru/api/bill-ex-items/upload";
 
 var dropzoneOptions_bill = {
   autoProcessQueue: false,
@@ -246,7 +247,7 @@ var dropzoneOptions_bill_factur = {
       //show_modal_message('Результат операции', 'Накладная успешно сохранена');
       //window.location.pathname = '/billing';
 
-      window.location.pathname = "/billing";
+      //window.location.pathname = "/billing";
     });
 
     this.on("sending", function (file, xhr, data) {
@@ -425,45 +426,17 @@ const useStore = create((set, get) => ({
       is_load_store: true,
     });
 
-    return fetch("https://jacochef.ru/api/index_new.php", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: queryString.stringify({
-        method: method,
-        module: get().module,
-        version: 2,
-        login: localStorage.getItem("token"),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == "redir") {
-          window.location.pathname = "/";
-          return;
-        }
-
-        if (json.st === false && json.type == "auth") {
-          window.location.pathname = "/auth";
-          return;
-        }
-
+    let res = api_laravel(get().module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           set({
             is_load_store: false,
           });
-        }, 1100);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-        set({
-          is_load_store: false,
-        });
+        }, 500);
       });
+
+    return res;
   },
 
   changeAutocomplite: (type, data) => {
@@ -3093,45 +3066,17 @@ class Billing_Edit_ extends React.Component {
       is_load: true,
     });
 
-    return fetch("https://jacochef.ru/api/index_new.php", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem("token"),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == "redir") {
-          window.location.pathname = "/";
-          return;
-        }
-
-        if (json.st === false && json.type == "auth") {
-          window.location.pathname = "/auth";
-          return;
-        }
-
+    let res = api_laravel_local(this.state.module, method, data)
+      .then((result) => result.data)
+      .finally(() => {
         setTimeout(() => {
           this.setState({
             is_load: false,
           });
-        }, 1100);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({
-          is_load: false,
-        });
+        }, 500);
       });
+
+    return res;
   };
 
   async saveNewBill(type_save, check_err = true) {
