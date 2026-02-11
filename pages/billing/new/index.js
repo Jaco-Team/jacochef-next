@@ -3065,7 +3065,7 @@ class Billing_Edit_ extends React.Component {
     }, 500);
   }
 
-  getData = (method, data = {}) => {
+  getData_old = (method, data = {}) => {
     this.setState({
       is_load: true,
     });
@@ -3108,7 +3108,7 @@ class Billing_Edit_ extends React.Component {
       });
   };
 
-  getData_new = (method, data = {}) => {
+  getData = (method, data = {}) => {
     this.setState({
       is_load: true,
     });
