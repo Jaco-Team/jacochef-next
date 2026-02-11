@@ -205,6 +205,31 @@ class SkladItemsModule_Modal_History_View extends React.Component {
               }}
             >
               <MyTextInput
+                label="Маркетинговое название"
+                value={
+                  this.state.itemView
+                    ? this.state.itemView.mark_name?.color
+                      ? this.state.itemView.mark_name.key
+                      : this.state.itemView.mark_name
+                    : ""
+                }
+                disabled={true}
+                className={
+                  this.state.itemView
+                    ? this.state.itemView.mark_name?.color
+                      ? "disabled_input disabled_input_color"
+                      : "disabled_input"
+                    : "disabled_input"
+                }
+              />
+            </Grid>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3.5,
+              }}
+            >
+              <MyTextInput
                 label="Название товара для поставщика"
                 value={
                   this.state.itemView
@@ -508,6 +533,58 @@ class SkladItemsModule_Modal_History_View extends React.Component {
                 className={
                   this.state.itemView
                     ? this.state.itemView.show_in_rev?.color
+                      ? "disabled_input disabled_input_color"
+                      : "disabled_input"
+                    : "disabled_input"
+                }
+              />
+            </Grid>
+
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4,
+              }}
+            >
+              <MyTextInput
+                label="Честный знак"
+                value={
+                  this.state.itemView
+                    ? this.state.itemView.honest_sign?.color
+                      ? this.state.itemView.honest_sign.key
+                      : this.state.itemView.honest_sign
+                    : ""
+                }
+                disabled={true}
+                className={
+                  this.state.itemView
+                    ? this.state.itemView.honest_sign?.color
+                      ? "disabled_input disabled_input_color"
+                      : "disabled_input"
+                    : "disabled_input"
+                }
+              />
+            </Grid>
+
+            <Grid
+              size={{
+                xs: 12,
+                sm: 4,
+              }}
+            >
+              <MyTextInput
+                label="Меркурий"
+                value={
+                  this.state.itemView
+                    ? this.state.itemView.mercury?.color
+                      ? this.state.itemView.mercury.key
+                      : this.state.itemView.mercury
+                    : ""
+                }
+                disabled={true}
+                className={
+                  this.state.itemView
+                    ? this.state.itemView.mercury?.color
                       ? "disabled_input disabled_input_color"
                       : "disabled_input"
                     : "disabled_input"
@@ -1181,6 +1258,126 @@ class SkladItemsModule_Modal extends React.Component {
                 />
               </Grid>
               <Grid
+                size={{
+                  xs: 12,
+                  sm: 4,
+                }}
+                style={
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.is_show_edit &&
+                  !this.props.acces?.is_show_view
+                    ? { display: "none" }
+                    : {}
+                }
+              >
+                <MyCheckBox
+                  label="Активность"
+                  disabled={!this.props.acces?.is_show_edit}
+                  value={parseInt(this.state.itemEdit?.item?.is_show) == 1 ? true : false}
+                  func={(e) => {
+                    let this_storages = this.state.itemEdit;
+                    this_storages.item.is_show = e.target.checked === true ? 1 : 0;
+                    this.setState({ itemEdit: this_storages });
+                  }}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4,
+                }}
+                style={
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.show_in_order_edit &&
+                  !this.props.acces?.show_in_order_view
+                    ? { display: "none" }
+                    : {}
+                }
+              >
+                <MyCheckBox
+                  label="Заявка"
+                  disabled={!this.props.acces?.show_in_order_edit}
+                  value={parseInt(this.state.itemEdit?.item?.show_in_order) == 1 ? true : false}
+                  func={(e) => {
+                    let this_storages = this.state.itemEdit;
+                    this_storages.item.show_in_order = e.target.checked === true ? 1 : 0;
+                    this.setState({ itemEdit: this_storages });
+                  }}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4,
+                }}
+                style={
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.show_in_rev_edit &&
+                  !this.props.acces?.show_in_rev_view
+                    ? { display: "none" }
+                    : {}
+                }
+              >
+                <MyCheckBox
+                  label="Ревизия"
+                  disabled={!this.props.acces?.show_in_rev_edit}
+                  value={parseInt(this.state.itemEdit?.item?.show_in_rev) == 1 ? true : false}
+                  func={(e) => {
+                    let this_storages = this.state.itemEdit;
+                    this_storages.item.show_in_rev = e.target.checked === true ? 1 : 0;
+                    this.setState({ itemEdit: this_storages });
+                  }}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4,
+                }}
+                style={
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.honest_sign_edit &&
+                  !this.props.acces?.honest_sign_view
+                    ? { display: "none" }
+                    : {}
+                }
+              >
+                <MyCheckBox
+                  label="Честный знак"
+                  disabled={!this.props.acces?.honest_sign_edit}
+                  value={parseInt(this.state.itemEdit?.item?.honest_sign) == 1 ? true : false}
+                  func={(e) => {
+                    let this_storages = this.state.itemEdit;
+                    this_storages.item.honest_sign = e.target.checked === true ? 1 : 0;
+                    this.setState({ itemEdit: this_storages });
+                  }}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4,
+                }}
+                style={
+                  this.props.method === "Редактирование товара" &&
+                  !this.props.acces?.mercury_edit &&
+                  !this.props.acces?.mercury_view
+                    ? { display: "none" }
+                    : {}
+                }
+              >
+                <MyCheckBox
+                  label="Меркурий"
+                  disabled={!this.props.acces?.mercury_edit}
+                  value={parseInt(this.state.itemEdit?.item?.mercury) == 1 ? true : false}
+                  func={(e) => {
+                    let this_storages = this.state.itemEdit;
+                    this_storages.item.mercury = e.target.checked === true ? 1 : 0;
+                    this.setState({ itemEdit: this_storages });
+                  }}
+                />
+              </Grid>
+              <Grid
                 container
                 spacing={2}
                 sx={{ marginTop: 2 }}
@@ -1730,6 +1927,8 @@ class SkladItemsModule_ extends React.Component {
     itemView.show_in_rev = parseInt(itemView.show_in_rev) ? "Да" : "Нет";
     itemView.is_show = parseInt(itemView.is_show) ? "Да" : "Нет";
     itemView.show_in_order = parseInt(itemView.show_in_order) ? "Да" : "Нет";
+    itemView.honest_sign = parseInt(itemView.honest_sign) ? "Да" : "Нет";
+    itemView.mercury = parseInt(itemView.mercury) ? "Да" : "Нет";
 
     if (parseInt(index) !== 0) {
       let itemView_old = JSON.parse(JSON.stringify(item[index - 1]));
@@ -1737,6 +1936,8 @@ class SkladItemsModule_ extends React.Component {
       itemView_old.show_in_rev = parseInt(itemView_old.show_in_rev) ? "Да" : "Нет";
       itemView_old.is_show = parseInt(itemView_old.is_show) ? "Да" : "Нет";
       itemView_old.show_in_order = parseInt(itemView_old.show_in_order) ? "Да" : "Нет";
+      itemView_old.honest_sign = parseInt(itemView_old.honest_sign) ? "Да" : "Нет";
+      itemView_old.mercury = parseInt(itemView_old.mercury) ? "Да" : "Нет";
 
       for (let key in itemView) {
         if (itemView[key] !== itemView_old[key]) {
