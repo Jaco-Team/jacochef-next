@@ -38,6 +38,7 @@ import dayjs from "dayjs";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 import { ModalAccept } from "@/components/general/ModalAccept";
+import { TableSortLabel } from "@mui/material";
 
 const SwapIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -1358,18 +1359,11 @@ class ReceptModule_Modal extends React.Component {
                         <TableCell>
                           <MyAutocomplite
                             multiple={false}
-                            optionKey="id"
+                            optionKey="id_name"
                             getOptionKey={(option) => `${option?.id}-${option?.name}`}
                             data={all_pf_list}
                             isOptionEqualToValue={(option, value) => {
                               const isEqual = option?.name === value?.name;
-
-                              if (isEqual) {
-                                console.log("Match found:");
-                                console.log("Option:", option);
-                                console.log("Value:", value);
-                              }
-
                               return isEqual;
                             }}
                             value={item.item_id}
@@ -1431,6 +1425,7 @@ class ReceptModule_Modal extends React.Component {
                         <MyAutocomplite
                           multiple={false}
                           data={all_pf_list}
+                          optionKey="id_name"
                           getOptionLabel={(option) => option?.name || ""}
                           disabledItemsFocusable={true}
                           value={null}
@@ -1527,6 +1522,9 @@ class ReceptModule_Table extends React.Component {
     this.state = {
       openChange: false,
       itemId: 1,
+      data: this.props.data || [],
+      sortField: "name",
+      sortOrder: "asc",
       type: "",
     };
   }
@@ -1547,10 +1545,74 @@ class ReceptModule_Table extends React.Component {
     }
   };
 
+  componentDidUpdate(prevProps) {
+    if (prevProps.data !== this.props.data) {
+      this.setState({
+        data: this.props.data || [],
+        sortField: "name",
+        sortOrder: "asc",
+      });
+    }
+  }
+
+  handleSort = (field) => {
+    let sortOrder = "asc";
+    if (this.state.sortField === field) {
+      sortOrder = this.state.sortOrder === "asc" ? "desc" : "asc";
+    }
+
+    const sortedData = [...this.state.data];
+
+    sortedData.sort((a, b) => {
+      if (this.state.acces?.rev_table_view && this.state.acces?.rev_table_edit) {
+        const showInRevA = parseInt(a.show_in_rev) === 1 ? 1 : 0;
+        const showInRevB = parseInt(b.show_in_rev) === 1 ? 1 : 0;
+
+        if (showInRevA !== showInRevB) {
+          return showInRevB - showInRevA;
+        }
+      }
+
+      let valueA = this.prepareValueForSort(a[field], field);
+      let valueB = this.prepareValueForSort(b[field], field);
+
+      if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
+      if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    this.setState({
+      data: sortedData,
+      sortField: field,
+      sortOrder: sortOrder,
+    });
+  };
+
+  prepareValueForSort = (value, field) => {
+    if (value === null || value === undefined) return "";
+
+    switch (field) {
+      case "name":
+        return value.toString().toLowerCase();
+      case "date_start":
+      case "date_update":
+        const date = new Date(value.replace(/(\d{2})\.(\d{2})\.(\d{4})/, "$3-$2-$1"));
+        return date.getTime() || 0;
+      default:
+        return value;
+    }
+  };
+
+  getSortProps = (field) => ({
+    active: this.state.sortField === field,
+    direction: this.state.sortField === field ? this.state.sortOrder : "asc",
+    onClick: () => this.handleSort(field),
+  });
+
   render() {
     const { data, method, openItemEdit, checkTable, openHistoryItem, type, acces, getData } =
       this.props;
-    const { openChange } = this.state;
+    const { openChange, sortField, sortOrder } = this.state;
 
     return (
       <>
@@ -1594,8 +1656,16 @@ class ReceptModule_Table extends React.Component {
                         {acces?.rev_table_view && acces?.rev_table_edit ? (
                           <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
                         ) : null}
-                        <TableCell style={{ width: "18%" }}>Наименование</TableCell>
-                        <TableCell style={{ width: "18%" }}>Действует с</TableCell>
+                        <TableCell style={{ width: "18%" }}>
+                          <TableSortLabel {...this.getSortProps("name")}>
+                            Наименование
+                          </TableSortLabel>
+                        </TableCell>
+                        <TableCell style={{ width: "12%" }}>
+                          <TableSortLabel {...this.getSortProps("date_start")}>
+                            Дата создания
+                          </TableSortLabel>
+                        </TableCell>
                         <TableCell style={{ width: "18%" }}>Обновление</TableCell>
                         <TableCell style={{ width: "18%" }}>Редактирование</TableCell>
                         <TableCell style={{ width: "18%" }}>История изменений</TableCell>
@@ -1604,7 +1674,7 @@ class ReceptModule_Table extends React.Component {
                     </TableHead>
 
                     <TableBody>
-                      {data.map((item, key) => (
+                      {this.state.data.map((item, key) => (
                         <TableRow key={key}>
                           {acces?.rev_table_view && acces?.rev_table_edit ? (
                             <TableCell>
