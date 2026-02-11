@@ -442,7 +442,7 @@ class Billing_ extends React.Component {
 
       const bills = res.res.map((bill) => {
         bill_status.map((item) => {
-          if (item.id === bill.status && bill.status !== "0") {
+          if (parseInt(item.id) === parseInt(bill.status) && parseInt(bill.status) !== 0) {
             bill.color = item.clr;
           }
         });
