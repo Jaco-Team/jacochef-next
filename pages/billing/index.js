@@ -227,6 +227,49 @@ class Billing_ extends React.Component {
     }, 300);
   }
 
+  getData_old = (method, data = {}) => {
+    this.setState({
+      is_load: true,
+    });
+
+    return fetch("https://jacochef.ru/api/index_new.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: queryString.stringify({
+        method: method,
+        module: this.state.module,
+        version: 2,
+        login: localStorage.getItem("token"),
+        data: JSON.stringify(data),
+      }),
+    })
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.st === false && json.type == "redir") {
+          window.location.pathname = "/";
+          return;
+        }
+
+        if (json.st === false && json.type == "auth") {
+          window.location.pathname = "/auth";
+          return;
+        }
+
+        setTimeout(() => {
+          this.setState({
+            is_load: false,
+          });
+        }, 300);
+
+        return json;
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
   getData = (method, data = {}) => {
     this.setState({
       is_load: true,
