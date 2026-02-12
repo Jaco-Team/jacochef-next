@@ -39,6 +39,7 @@ import dayjs from "dayjs";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 import { SiteItemsModalTech } from "@/components/site_items_new/site_items_tech_modal";
+import { TableSortLabel } from "@mui/material";
 
 function roundTo(n, digits) {
   if (n.length == 0) {
@@ -2105,13 +2106,132 @@ const ModalEditTags = ({ open, onClose, save, title = "Редактирован�
 };
 
 class SiteItems_Table extends React.Component {
-  shouldComponentUpdate(nextProps) {
-    return nextProps.timeUpdate !== this.props.timeUpdate;
+  constructor(props) {
+    super(props);
+    this.state = {
+      openChange: false,
+      itemId: 1,
+      cats: this.props.cats || [],
+      sortField: "name",
+      sortOrder: "asc",
+      type: "",
+    };
   }
 
+  componentDidUpdate(prevProps) {
+    // Обновляем состояние только если изменились данные и они не равны текущим
+    if (prevProps.cats !== this.props.cats && this.props.cats) {
+      this.setState({
+        cats: this.props.cats,
+        sortField: "name",
+        sortOrder: "asc",
+      });
+    }
+  }
+
+  // Удалить shouldComponentUpdate или исправить:
+  shouldComponentUpdate(nextProps, nextState) {
+    // Проверяем, изменились ли пропсы или состояние
+    if (this.props.timeUpdate !== nextProps.timeUpdate) return true;
+    if (this.state.sortField !== nextState.sortField) return true;
+    if (this.state.sortOrder !== nextState.sortOrder) return true;
+    if (JSON.stringify(this.state.cats) !== JSON.stringify(nextState.cats)) return true;
+    if (this.props.user_app !== nextProps.user_app) return true;
+    if (this.props.acces !== nextProps.acces) return true;
+
+    return false;
+  }
+
+  handleSort = (field) => {
+    let sortOrder = "asc";
+    if (this.state.sortField === field) {
+      sortOrder = this.state.sortOrder === "asc" ? "desc" : "asc";
+    }
+
+    const sortedData = [...this.state.cats];
+
+    sortedData.forEach((category) => {
+      if (category.items && Array.isArray(category.items)) {
+        category.items.sort((a, b) => {
+          let valueA = this.prepareValueForSort(a[field], field);
+          let valueB = this.prepareValueForSort(b[field], field);
+
+          if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
+          if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
+          return 0;
+        });
+      }
+    });
+
+    // Также сортируем категории, если нужно
+    if (field === "name") {
+      sortedData.sort((a, b) => {
+        let valueA = this.prepareValueForSort(a[field], field);
+        let valueB = this.prepareValueForSort(b[field], field);
+
+        if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
+        if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    this.setState({
+      cats: sortedData,
+      sortField: field,
+      sortOrder: sortOrder,
+    });
+  };
+
+  prepareValueForSort = (value, field) => {
+    if (value === null || value === undefined) return "";
+    if (value === "") return "";
+
+    switch (field) {
+      case "name":
+        return value.toString().toLowerCase();
+
+      case "date_start":
+      case "date_update":
+        if (typeof value === "string") {
+          const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (isoMatch) {
+            const [_, year, month, day] = isoMatch;
+            return new Date(year, month - 1, day).getTime();
+          }
+
+          const ruMatch = value.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
+          if (ruMatch) {
+            const [_, day, month, year] = ruMatch;
+            return new Date(year, month - 1, day).getTime();
+          }
+        }
+        return 0;
+
+      case "sort":
+        return parseInt(value) || 0;
+
+      case "weight":
+        return parseFloat(value) || 0;
+
+      case "id":
+        return parseInt(value) || 0;
+
+      default:
+        if (typeof value === "number") return value;
+        return value.toString().toLowerCase();
+    }
+  };
+
+  getSortProps = (field) => ({
+    active: this.state.sortField === field,
+    direction: this.state.sortField === field ? this.state.sortOrder : "asc",
+    onClick: () => this.handleSort(field),
+  });
+
   render() {
-    const { cats, user_app, changeSort, saveSort, changeTableCheck, openItem, openHistoryItem } =
-      this.props;
+    const { cats, user_app, acces } = this.props;
+    const { changeSort, saveSort, changeTableCheck, openItem, openHistoryItem } = this.props;
+
     return (
       <Grid
         style={{ paddingBottom: "50px" }}
@@ -2120,10 +2240,13 @@ class SiteItems_Table extends React.Component {
           sm: 12,
         }}
       >
-        {cats.map((cat, key) => (
+        {this.state.cats.map((cat, key) => (
           <Accordion key={key}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>{cat.name}</Typography>
+              <Typography>
+                {cat.name}
+                {cat.items ? ` (${cat.items.length})` : ""}
+              </Typography>
             </AccordionSummary>
             <AccordionDetails className="accordion_details">
               <TableContainer
@@ -2137,98 +2260,139 @@ class SiteItems_Table extends React.Component {
                   <TableHead>
                     <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                       <TableCell style={{ width: "1%" }}>№</TableCell>
-                      {this.props.acces?.site_kc_edit || this.props.acces?.site_kc_view ? (
+
+                      {(acces?.site_kc_edit || acces?.site_kc_view) && (
                         <TableCell style={{ width: "11%" }}>
-                          {user_app === "technologist" ? "Активность" : "Сайт и КЦ"}
+                          <TableSortLabel
+                            {...this.getSortProps(
+                              user_app === "technologist" ? "is_show" : "show_site",
+                            )}
+                          >
+                            {user_app === "technologist" ? "Активность" : "Сайт и КЦ"}
+                          </TableSortLabel>
                         </TableCell>
-                      ) : null}
-                      {this.props.acces?.kassa_edit || this.props.acces?.kassa_view ? (
-                        <TableCell style={{ width: "11%" }}>Касса</TableCell>
-                      ) : null}
-                      {user_app === "marketing" ? (
-                        <TableCell style={{ width: "11%" }}>Сортировка</TableCell>
-                      ) : null}
-                      <TableCell style={{ width: "11%" }}>Название</TableCell>
-                      <TableCell style={{ width: "11%" }}>Действует с</TableCell>
-                      <TableCell style={{ width: "11%" }}>по</TableCell>
-                      <TableCell style={{ width: "11%" }}>Обновление</TableCell>
-                      {user_app === "technologist" ? (
-                        <TableCell style={{ width: "11%" }}>Код для 1С</TableCell>
-                      ) : null}
+                      )}
+
+                      {(acces?.kassa_edit || acces?.kassa_view) && (
+                        <TableCell style={{ width: "11%" }}>
+                          <TableSortLabel {...this.getSortProps("show_program")}>
+                            Касса
+                          </TableSortLabel>
+                        </TableCell>
+                      )}
+
+                      {user_app === "marketing" && (
+                        <TableCell style={{ width: "11%" }}>
+                          <TableSortLabel {...this.getSortProps("sort")}>Сортировка</TableSortLabel>
+                        </TableCell>
+                      )}
+
+                      <TableCell style={{ width: "11%" }}>
+                        <TableSortLabel {...this.getSortProps("name")}>Название</TableSortLabel>
+                      </TableCell>
+
+                      <TableCell style={{ width: "11%" }}>
+                        <TableSortLabel {...this.getSortProps("date_start")}>
+                          Действует с
+                        </TableSortLabel>
+                      </TableCell>
+
+                      <TableCell style={{ width: "11%" }}>
+                        <TableSortLabel {...this.getSortProps("date_end")}>по</TableSortLabel>
+                      </TableCell>
+
+                      <TableCell style={{ width: "11%" }}>
+                        <TableSortLabel {...this.getSortProps("date_update")}>
+                          Обновление
+                        </TableSortLabel>
+                      </TableCell>
+
+                      {user_app === "technologist" && (
+                        <TableCell style={{ width: "11%" }}>
+                          <TableSortLabel {...this.getSortProps("art")}>Код для 1С</TableSortLabel>
+                        </TableCell>
+                      )}
+
                       <TableCell style={{ width: "11%" }}>Редактирование</TableCell>
                       <TableCell style={{ width: "11%" }}>История изменений</TableCell>
                     </TableRow>
                   </TableHead>
 
                   <TableBody>
-                    {cat.items.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{index + 1}</TableCell>
-                        {this.props.acces?.site_kc_edit || this.props.acces?.site_kc_view ? (
-                          <TableCell>
-                            <MyCheckBox
-                              label=""
-                              value={
-                                parseInt(
-                                  user_app === "technologist" ? item.is_show : item.show_site,
-                                ) === 1
-                                  ? true
-                                  : false
-                              }
-                              func={changeTableCheck.bind(
-                                this,
-                                key,
-                                index,
-                                item.id,
-                                user_app === "technologist" ? "is_show" : "show_site",
-                              )}
-                            />
+                    {cat.items &&
+                      cat.items.map((item, index) => (
+                        <TableRow key={item.id || index}>
+                          <TableCell>{index + 1}</TableCell>
+
+                          {(acces?.site_kc_edit || acces?.site_kc_view) && (
+                            <TableCell>
+                              <MyCheckBox
+                                label=""
+                                value={
+                                  parseInt(
+                                    user_app === "technologist" ? item.is_show : item.show_site,
+                                  ) === 1
+                                }
+                                func={changeTableCheck.bind(
+                                  this,
+                                  key,
+                                  index,
+                                  item.id,
+                                  user_app === "technologist" ? "is_show" : "show_site",
+                                )}
+                              />
+                            </TableCell>
+                          )}
+
+                          {(acces?.kassa_edit || acces?.kassa_view) && (
+                            <TableCell>
+                              <MyCheckBox
+                                label=""
+                                value={parseInt(item.show_program) === 1}
+                                func={changeTableCheck.bind(
+                                  this,
+                                  key,
+                                  index,
+                                  item.id,
+                                  "show_program",
+                                )}
+                              />
+                            </TableCell>
+                          )}
+
+                          {user_app === "marketing" && (
+                            <TableCell>
+                              <MyTextInput
+                                label=""
+                                value={item.sort}
+                                func={changeSort.bind(this, key, index)}
+                                onBlur={saveSort.bind(this, item.id, "sort")}
+                              />
+                            </TableCell>
+                          )}
+
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>{item.date_start}</TableCell>
+                          <TableCell>{item.date_end}</TableCell>
+                          <TableCell>{item.date_update || item.update_item}</TableCell>
+
+                          {user_app === "technologist" && <TableCell>{item.art}</TableCell>}
+
+                          <TableCell
+                            style={{ cursor: "pointer" }}
+                            onClick={openItem.bind(this, item.id, item.name)}
+                          >
+                            <EditIcon />
                           </TableCell>
-                        ) : null}
-                        {this.props.acces?.kassa_edit || this.props.acces?.kassa_view ? (
-                          <TableCell>
-                            <MyCheckBox
-                              label=""
-                              value={parseInt(item.show_program) === 1 ? true : false}
-                              func={changeTableCheck.bind(
-                                this,
-                                key,
-                                index,
-                                item.id,
-                                "show_program",
-                              )}
-                            />
+
+                          <TableCell
+                            style={{ cursor: "pointer" }}
+                            onClick={openHistoryItem.bind(this, item.id, "История изменений")}
+                          >
+                            <EditNoteIcon />
                           </TableCell>
-                        ) : null}
-                        {user_app === "marketing" ? (
-                          <TableCell>
-                            <MyTextInput
-                              label=""
-                              value={item.sort}
-                              func={changeSort.bind(this, key, index)}
-                              onBlur={saveSort.bind(this, item.id, "sort")}
-                            />
-                          </TableCell>
-                        ) : null}
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.date_start}</TableCell>
-                        <TableCell>{item.date_end}</TableCell>
-                        <TableCell>{item.date_update}</TableCell>
-                        {user_app === "technologist" ? <TableCell>{item.art}</TableCell> : null}
-                        <TableCell
-                          style={{ cursor: "pointer" }}
-                          onClick={openItem.bind(this, item.id, item.name)}
-                        >
-                          <EditIcon />
-                        </TableCell>
-                        <TableCell
-                          style={{ cursor: "pointer" }}
-                          onClick={openHistoryItem.bind(this, item.id, "История изменений")}
-                        >
-                          <EditNoteIcon />
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                        </TableRow>
+                      ))}
                   </TableBody>
                 </Table>
               </TableContainer>
