@@ -839,16 +839,15 @@ class SkladItemsModule_Modal extends React.Component {
     console.log(item.item);
     let { this_storages } = item;
     if (
-      (!name ||
-        !cat_id ||
-        !ed_izmer_id ||
-        !name_for_vendor ||
-        !pq ||
-        !art ||
-        !my_allergens.length ||
-        !my_allergens_other.length ||
-        !this_storages.length) &&
-      this.props.method !== "Редактирование товара"
+      !name ||
+      !cat_id ||
+      !ed_izmer_id ||
+      !name_for_vendor ||
+      !pq ||
+      !art ||
+      !my_allergens.length ||
+      !my_allergens_other.length ||
+      !this_storages.length
     ) {
       this.setState({
         openAlert: true,
