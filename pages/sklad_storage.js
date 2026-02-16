@@ -18,11 +18,38 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
+
 import { MyTextInput } from "@/ui/Forms";
 
 import queryString from "query-string";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 import MyAlert from "@/ui/MyAlert";
+
+function CustomTabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
+function a11yProps(index) {
+  return {
+    id: `simple-tab-${index}`,
+    "aria-controls": `simple-tabpanel-${index}`,
+  };
+}
 
 class SkladStorage_Modal extends React.Component {
   constructor(props) {
@@ -136,16 +163,20 @@ class SkladStorage_ extends React.Component {
       fullScreen: false,
 
       list: null,
+      accounting_system: null,
       item: null,
 
       mark: null,
       modalDialog: false,
       method: "",
       itemName: "",
+      type: "",
 
       itemNew: {
         name: "",
       },
+
+      activeTab: 0,
 
       openAlert: false,
       err_status: true,
@@ -158,6 +189,7 @@ class SkladStorage_ extends React.Component {
 
     this.setState({
       list: data.list,
+      accounting_system: data.accounting_system,
       module_name: data.module_info.name,
     });
 
@@ -199,6 +231,7 @@ class SkladStorage_ extends React.Component {
 
     if (mark === "add") {
       this.setState({
+        type: "SS",
         mark,
         item: JSON.parse(JSON.stringify(this.state.itemNew)),
         modalDialog: true,
@@ -214,6 +247,7 @@ class SkladStorage_ extends React.Component {
       const res = await this.getData("get_one", data);
 
       this.setState({
+        type: "SS",
         mark,
         item: res.item,
         itemName: res.item.name,
@@ -223,17 +257,53 @@ class SkladStorage_ extends React.Component {
     }
   }
 
+  async openModalAS(mark, id) {
+    this.handleResize();
+
+    if (mark === "add") {
+      this.setState({
+        type: "AS",
+        mark,
+        item: JSON.parse(JSON.stringify(this.state.itemNew)),
+        modalDialog: true,
+        method: "Новая система учета",
+      });
+    }
+
+    if (mark === "edit") {
+      const data = {
+        id,
+      };
+
+      const res = await this.getData("get_one_as", data);
+
+      this.setState({
+        type: "AS",
+        mark,
+        item: res.item,
+        itemName: res.item.name,
+        modalDialog: true,
+        method: "Редактирование системы учета",
+      });
+    }
+  }
+
   async save(data) {
     const mark = this.state.mark;
+    const type = this.state.type;
 
     let res;
 
     if (mark === "add") {
-      res = await this.getData("save_new", data);
+      if (type == "SS") res = await this.getData("save_new", data);
+
+      if (type == "AS") res = await this.getData("save_new_as", data);
     }
 
     if (mark === "edit") {
-      res = await this.getData("save_edit", data);
+      if (type == "SS") res = await this.getData("save_edit", data);
+
+      if (type == "AS") res = await this.getData("save_edit_as", data);
     }
 
     if (!res.st) {
@@ -250,12 +320,19 @@ class SkladStorage_ extends React.Component {
   }
 
   changeSort(index, event) {
+    const type = this.state.type;
     const list = this.state.list;
+    const accounting_system = this.state.accounting_system;
 
+    type == "SS";
     list[index].sort = event.target.value;
+
+    type == "AS";
+    accounting_system[index].sort = event.target.value;
 
     this.setState({
       list,
+      accounting_system,
     });
   }
 
@@ -265,7 +342,9 @@ class SkladStorage_ extends React.Component {
       value: event.target.value,
     };
 
-    const res = await this.getData("save_sort", data);
+    const type = this.state.type;
+
+    const res = await this.getData(type == "SS" ? "save_sort" : "save_sort_as", data);
 
     if (!res.st) {
       this.setState({
@@ -285,6 +364,13 @@ class SkladStorage_ extends React.Component {
 
     this.setState({
       list: data.list,
+      accounting_system: data.accounting_system,
+    });
+  }
+
+  handleChangeTab(event, index) {
+    this.setState({
+      activeTab: index,
     });
   }
 
@@ -311,6 +397,7 @@ class SkladStorage_ extends React.Component {
           method={this.state.method}
           itemName={this.state.itemName}
           fullScreen={this.state.fullScreen}
+          type={this.state.type}
           save={this.save.bind(this)}
         />
         <Grid
@@ -327,66 +414,154 @@ class SkladStorage_ extends React.Component {
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <Button
-              variant="contained"
-              color="primary"
-              style={{ whiteSpace: "nowrap" }}
-              onClick={this.openModal.bind(this, "add", null)}
+          <Box sx={{ width: "100%" }}>
+            <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+              <Tabs
+                value={this.state.activeTab}
+                onChange={this.handleChangeTab.bind(this)}
+                aria-label="basic tabs example"
+              >
+                <Tab
+                  label="Места хранения"
+                  {...a11yProps(0)}
+                />
+                <Tab
+                  label="Система учета"
+                  {...a11yProps(1)}
+                />
+              </Tabs>
+            </Box>
+            <CustomTabPanel
+              value={this.state.activeTab}
+              index={0}
             >
-              Добавить
-            </Button>
-          </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  style={{ whiteSpace: "nowrap" }}
+                  onClick={this.openModal.bind(this, "add", null)}
+                >
+                  Добавить
+                </Button>
+              </Grid>
 
-          <Grid
-            className="sklad_storage"
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-            sx={{
-              mb: 5,
-            }}
-          >
-            {!this.state.list ? null : (
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                    <TableCell>#</TableCell>
-                    <TableCell>Сортировка</TableCell>
-                    <TableCell>Название</TableCell>
-                  </TableRow>
-                </TableHead>
+              <Grid
+                className="sklad_storage"
+                size={{
+                  xs: 12,
+                  sm: 8,
+                }}
+                sx={{
+                  mb: 5,
+                }}
+              >
+                {!this.state.list ? null : (
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                        <TableCell>#</TableCell>
+                        <TableCell>Сортировка</TableCell>
+                        <TableCell>Название</TableCell>
+                      </TableRow>
+                    </TableHead>
 
-                <TableBody>
-                  {this.state.list.map((item, key) => (
-                    <TableRow key={key}>
-                      <TableCell>{key + 1}</TableCell>
-                      <TableCell className="tableCellInput">
-                        <MyTextInput
-                          label=""
-                          value={item.sort}
-                          func={this.changeSort.bind(this, key)}
-                          onBlur={this.saveSort.bind(this, item.id)}
-                        />
-                      </TableCell>
-                      <TableCell
-                        onClick={this.openModal.bind(this, "edit", item.id)}
-                        style={{ color: "#c03", fontWeight: 700, cursor: "pointer" }}
-                      >
-                        {item.name}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </Grid>
+                    <TableBody>
+                      {this.state.list.map((item, key) => (
+                        <TableRow key={key}>
+                          <TableCell>{key + 1}</TableCell>
+                          <TableCell className="tableCellInput">
+                            <MyTextInput
+                              label=""
+                              value={item.sort}
+                              func={this.changeSort.bind(this, key)}
+                              onBlur={this.saveSort.bind(this, item.id)}
+                            />
+                          </TableCell>
+                          <TableCell
+                            onClick={this.openModal.bind(this, "edit", item.id)}
+                            style={{ color: "#c03", fontWeight: 700, cursor: "pointer" }}
+                          >
+                            {item.name}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </Grid>
+            </CustomTabPanel>
+            <CustomTabPanel
+              value={this.state.activeTab}
+              index={1}
+            >
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  style={{ whiteSpace: "nowrap" }}
+                  onClick={this.openModalAS.bind(this, "add", null)}
+                >
+                  Добавить
+                </Button>
+              </Grid>
+
+              <Grid
+                className="sklad_storage"
+                size={{
+                  xs: 12,
+                  sm: 8,
+                }}
+                sx={{
+                  mb: 5,
+                }}
+              >
+                {!this.state.accounting_system ? null : (
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                        <TableCell>#</TableCell>
+                        <TableCell>Сортировка</TableCell>
+                        <TableCell>Название</TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {this.state.accounting_system.map((item, key) => (
+                        <TableRow key={key}>
+                          <TableCell>{key + 1}</TableCell>
+                          <TableCell className="tableCellInput">
+                            <MyTextInput
+                              label=""
+                              value={item.sort}
+                              func={this.changeSort.bind(this, key)}
+                              onBlur={this.saveSort.bind(this, item.id)}
+                            />
+                          </TableCell>
+                          <TableCell
+                            onClick={this.openModalAS.bind(this, "edit", item.id)}
+                            style={{ color: "#c03", fontWeight: 700, cursor: "pointer" }}
+                          >
+                            {item.name}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </Grid>
+            </CustomTabPanel>
+          </Box>
         </Grid>
       </>
     );

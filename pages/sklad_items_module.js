@@ -594,6 +594,25 @@ class SkladItemsModule_Modal extends React.Component {
               />
             </Grid>
 
+            <Grid
+              size={{
+                xs: 12,
+              }}
+            >
+              <MyAutocomplite
+                label="Системы учета"
+                multiple={true}
+                disabled={!this.props.acces_edit}
+                data={this.state.itemEdit ? this.state.itemEdit.accounting_system : []}
+                value={this.state.itemEdit ? this.state.itemEdit.this_accounting_system : ""}
+                func={(event, value) => {
+                  let this_storages = this.state.itemEdit;
+                  this_storages.this_accounting_system = value;
+                  this.setState({ itemEdit: this_storages });
+                }}
+              />
+            </Grid>
+
             {this.props.method === "Редактирование товара" ? (
               <Grid
                 size={{
@@ -801,6 +820,7 @@ class SkladItemsModule_ extends React.Component {
       id: itemEdit.item.id,
       item: itemEdit.item,
       storages: itemEdit.this_storages,
+      accounting_system: itemEdit.this_accounting_system,
       main_item_id: parseInt(main_item_id) == 0 ? itemEdit.item.id : parseInt(main_item_id),
     };
 
@@ -833,6 +853,7 @@ class SkladItemsModule_ extends React.Component {
       id: itemEdit.item.id,
       item: itemEdit.item,
       storages: itemEdit.this_storages,
+      accounting_system: itemEdit.this_accounting_system,
       main_item_id: parseInt(main_item_id) == 0 ? itemEdit.item.id : parseInt(main_item_id),
     };
 
