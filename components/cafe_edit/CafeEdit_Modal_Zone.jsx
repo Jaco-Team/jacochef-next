@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -14,12 +14,23 @@ import CloseIcon from "@mui/icons-material/Close";
 import { MyCheckBox } from "@/ui/Forms";
 
 function CafeEdit_Modal_Zone({ open, fullScreen, zone, save, onClose: parentOnClose }) {
-  const [isActive, setIsActive] = useState(zone?.is_active);
+  const [isActive, setIsActive] = useState(0);
   const [confirmDialog, setConfirmDialog] = useState(false);
 
+  useEffect(() => {
+    if (open) {
+      setIsActive(Number(zone?.is_active ?? 0));
+      setConfirmDialog(false);
+    }
+  }, [open, zone?.id]); // лучше по id, чтобы не реагировать на мутации объекта
+
+  // const changeItemChecked = (event) => {
+  //   const value = +event.target.checked;
+  //   setIsActive(value);
+  // };
+
   const changeItemChecked = (event) => {
-    const value = +event.target.checked;
-    setIsActive(value);
+    setIsActive(event.target.checked ? 1 : 0);
   };
 
   const handleSave = () => {
