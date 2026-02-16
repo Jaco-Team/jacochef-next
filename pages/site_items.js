@@ -2213,7 +2213,7 @@ class SiteItems_ extends React.Component {
                                   {this.state.editItem.img_app.length > 0 ? (
                                     <img
                                       src={
-                                        "https://cdnimg.jacofood.ru/" +
+                                        "https://storage.yandexcloud.net/site-img/" +
                                         this.state.editItem.img_app +
                                         "_732x732.jpg"
                                       }
