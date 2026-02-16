@@ -41,6 +41,7 @@ import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from "@/ui/Forms";
 import { api_laravel_local, api_laravel } from "@/src/api_new";
 import Box from "@mui/material/Box";
 import MyAlert from "@/ui/MyAlert";
+import { ModalAccept } from "@/components/general/ModalAccept";
 
 class SkladItemsModule_Modal_History_View extends React.Component {
   constructor(props) {
@@ -779,6 +780,8 @@ class SkladItemsModule_Modal extends React.Component {
     this.state = {
       itemEdit: null,
       condition: "new",
+      rules_save: true,
+      openDelete: false,
     };
   }
 
@@ -809,6 +812,33 @@ class SkladItemsModule_Modal extends React.Component {
           err_text: "",
         });
       }
+      if (
+        this.props.acces?.name_edit === 0 &&
+        this.props.acces?.cats_edit === 0 &&
+        this.props.acces?.ed_izmer_edit === 0 &&
+        this.props.acces?.max_count_in_m_edit === 0 &&
+        this.props.acces?.mark_name_edit === 0 &&
+        this.props.acces?.name_for_vendor_edit === 0 &&
+        this.props.acces?.pq_edit === 0 &&
+        this.props.acces?.percent_edit === 0 &&
+        this.props.acces?.vend_percent_edit === 0 &&
+        this.props.acces?.art_edit === 0 &&
+        this.props.acces?.min_count_edit === 0 &&
+        this.props.acces?.allergens_edit === 0 &&
+        this.props.acces?.my_allergens_other_edit === 0 &&
+        this.props.acces?.is_show_edit === 0 &&
+        this.props.acces?.show_in_order_edit === 0 &&
+        this.props.acces?.show_in_rev_edit === 0 &&
+        this.props.acces?.honest_sign_edit === 0 &&
+        this.props.acces?.mercury_edit === 0 &&
+        this.props.acces?.this_storages_edit === 0 &&
+        this.props.acces?.apps_edit === 0 &&
+        this.props.acces?.time_min_other_edit === 0
+      ) {
+        this.setState({
+          rules_save: false,
+        });
+      }
     }
   }
 
@@ -836,18 +866,17 @@ class SkladItemsModule_Modal extends React.Component {
       my_allergens_other,
       app_id,
     } = item.item;
-    console.log(item.item);
     let { this_storages } = item;
     if (
-      !name ||
-      !cat_id ||
-      !ed_izmer_id ||
-      !name_for_vendor ||
-      !pq ||
-      !art ||
-      !my_allergens.length ||
-      !my_allergens_other.length ||
-      !this_storages.length
+      (!name && this.props.acces?.name_edit) ||
+      (!cat_id && this.props.acces?.cats_edit) ||
+      (!ed_izmer_id && this.props.acces?.ed_izmer_edit) ||
+      (!name_for_vendor && this.props.acces?.name_for_vendor_edit) ||
+      (!pq && this.props.acces?.pq_edit) ||
+      (!art && this.props.acces?.art_edit) ||
+      (!my_allergens.length && this.props.acces?.allergens_edit) ||
+      (!my_allergens_other.length && this.props.acces?.my_allergens_other_edit) ||
+      (!this_storages.length && this.props.acces?.this_storages_edit)
     ) {
       this.setState({
         openAlert: true,
@@ -873,6 +902,19 @@ class SkladItemsModule_Modal extends React.Component {
       : this.props.checkArtNew(item);
   }
 
+  async delete() {
+    const res = await this.props.getData("delete_item", { id: this.state.itemEdit?.item?.id });
+    this.setState(
+      {
+        openDelete: false,
+      },
+      () => {
+        this.props.onClose();
+        this.props.update();
+      },
+    );
+  }
+
   onClose() {
     this.setState({
       itemEdit: this.props.event ? this.props.event : null,
@@ -893,6 +935,17 @@ class SkladItemsModule_Modal extends React.Component {
           status={this.state.err_status}
           text={this.state.err_text}
         />
+        {this.state.openDelete && (
+          <ModalAccept
+            open={this.state.openDelete}
+            onClose={() => this.setState({ openDelete: false })}
+            title="Удалить товар?"
+            save={() => {
+              this.delete();
+              this.setState({ openDelete: false });
+            }}
+          />
+        )}
         <Dialog
           open={this.props.open}
           fullWidth={true}
@@ -924,9 +977,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.name_edit &&
-                  !this.props.acces?.name_view
+                  !this.props.acces?.name_edit && !this.props.acces?.name_view
                     ? { display: "none" }
                     : {}
                 }
@@ -934,9 +985,7 @@ class SkladItemsModule_Modal extends React.Component {
                 <MyTextInput
                   label="Название товара"
                   value={this.state.itemEdit ? this.state.itemEdit.item.name : ""}
-                  disabled={
-                    this.props.method === "Редактирование товара" && !this.props.acces?.name_edit
-                  }
+                  disabled={!this.props.acces?.name_edit}
                   func={this.changeItem.bind(this, "name")}
                 />
               </Grid>
@@ -946,9 +995,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.cats_edit &&
-                  !this.props.acces?.cats_view
+                  !this.props.acces?.cats_edit && !this.props.acces?.cats_view
                     ? { display: "none" }
                     : {}
                 }
@@ -964,9 +1011,7 @@ class SkladItemsModule_Modal extends React.Component {
                         : this.state.itemEdit.item.cat_id
                       : ""
                   }
-                  disabled={
-                    this.props.method === "Редактирование товара" && !this.props.acces?.cats_edit
-                  }
+                  disabled={!this.props.acces?.cats_edit}
                   func={(event, value) => {
                     let this_storages = this.state.itemEdit;
                     this_storages.item.cat_id = value;
@@ -980,9 +1025,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 1.5,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.ed_izmer_edit &&
-                  !this.props.acces?.ed_izmer_view
+                  !this.props.acces?.ed_izmer_edit && !this.props.acces?.ed_izmer_view
                     ? { display: "none" }
                     : {}
                 }
@@ -997,10 +1040,7 @@ class SkladItemsModule_Modal extends React.Component {
                       : ""
                   }
                   func={this.changeItem.bind(this, "ed_izmer_id")}
-                  disabled={
-                    this.props.method === "Редактирование товара" &&
-                    !this.props.acces?.ed_izmer_edit
-                  }
+                  disabled={!this.props.acces?.ed_izmer_edit}
                   label="Ед измер"
                   is_none={false}
                 />
@@ -1011,9 +1051,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.max_count_in_m_edit &&
-                  !this.props.acces?.max_count_in_m_view
+                  !this.props.acces?.max_count_in_m_edit && !this.props.acces?.max_count_in_m_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1023,10 +1061,7 @@ class SkladItemsModule_Modal extends React.Component {
                   value={this.state.itemEdit ? this.state.itemEdit.item.max_count_in_m : ""}
                   type="number"
                   onWheel={(e) => e.target.blur()}
-                  disabled={
-                    this.props.method === "Редактирование товара" &&
-                    !this.props.acces?.max_count_in_m_edit
-                  }
+                  disabled={!this.props.acces?.max_count_in_m_edit}
                   func={this.changeItem.bind(this, "max_count_in_m")}
                 />
               </Grid>
@@ -1036,9 +1071,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.mark_name_edit &&
-                  !this.props.acces?.mark_name_view
+                  !this.props.acces?.mark_name_edit && !this.props.acces?.mark_name_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1046,10 +1079,7 @@ class SkladItemsModule_Modal extends React.Component {
                 <MyTextInput
                   label="Маркетинговое название"
                   value={this.state.itemEdit ? this.state.itemEdit.item.mark_name : ""}
-                  disabled={
-                    this.props.method === "Редактирование товара" &&
-                    !this.props.acces?.mark_name_edit
-                  }
+                  disabled={!this.props.acces?.mark_name_edit}
                   func={this.changeItem.bind(this, "mark_name")}
                 />
               </Grid>
@@ -1059,9 +1089,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.name_for_vendor_edit &&
-                  !this.props.acces?.name_for_vendor_view
+                  !this.props.acces?.name_for_vendor_edit && !this.props.acces?.name_for_vendor_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1069,10 +1097,7 @@ class SkladItemsModule_Modal extends React.Component {
                 <MyTextInput
                   label="Название товара для поставщика"
                   value={this.state.itemEdit ? this.state.itemEdit.item.name_for_vendor : ""}
-                  disabled={
-                    this.props.method === "Редактирование товара" &&
-                    !this.props.acces?.name_for_vendor_edit
-                  }
+                  disabled={!this.props.acces?.name_for_vendor_edit}
                   func={this.changeItem.bind(this, "name_for_vendor")}
                 />
               </Grid>
@@ -1082,9 +1107,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.pq_edit &&
-                  !this.props.acces?.pq_view
+                  !this.props.acces?.pq_edit && !this.props.acces?.pq_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1094,9 +1117,7 @@ class SkladItemsModule_Modal extends React.Component {
                   type="number"
                   onWheel={(e) => e.target.blur()}
                   value={this.state.itemEdit ? this.state.itemEdit.item.pq : ""}
-                  disabled={
-                    this.props.method === "Редактирование товара" && !this.props.acces?.pq_edit
-                  }
+                  disabled={!this.props.acces?.pq_edit}
                   func={this.changeItem.bind(this, "pq")}
                 />
               </Grid>
@@ -1106,9 +1127,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 1.5,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.percent_edit &&
-                  !this.props.acces?.percent_view
+                  !this.props.acces?.percent_edit && !this.props.acces?.percent_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1118,9 +1137,7 @@ class SkladItemsModule_Modal extends React.Component {
                   type="number"
                   onWheel={(e) => e.target.blur()}
                   value={this.state.itemEdit ? this.state.itemEdit.item.percent : ""}
-                  disabled={
-                    this.props.method === "Редактирование товара" && !this.props.acces?.percent_edit
-                  }
+                  disabled={!this.props.acces?.percent_edit}
                   func={this.changeItem.bind(this, "percent")}
                 />
               </Grid>
@@ -1130,9 +1147,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.vend_percent_edit &&
-                  !this.props.acces?.vend_percent_view
+                  !this.props.acces?.vend_percent_edit && !this.props.acces?.vend_percent_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1142,10 +1157,7 @@ class SkladItemsModule_Modal extends React.Component {
                   type="number"
                   onWheel={(e) => e.target.blur()}
                   value={this.state.itemEdit ? this.state.itemEdit.item.vend_percent : ""}
-                  disabled={
-                    this.props.method === "Редактирование товара" &&
-                    !this.props.acces?.vend_percent_edit
-                  }
+                  disabled={!this.props.acces?.vend_percent_edit}
                   func={this.changeItem.bind(this, "vend_percent")}
                 />
               </Grid>
@@ -1155,9 +1167,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.art_edit &&
-                  !this.props.acces?.art_view
+                  !this.props.acces?.art_edit && !this.props.acces?.art_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1165,9 +1175,7 @@ class SkladItemsModule_Modal extends React.Component {
                 <MyTextInput
                   label="Код для 1с"
                   value={this.state.itemEdit ? this.state.itemEdit.item.art : ""}
-                  disabled={
-                    this.props.method === "Редактирование товара" && !this.props.acces?.art_edit
-                  }
+                  disabled={!this.props.acces?.art_edit}
                   func={this.changeItem.bind(this, "art")}
                 />
               </Grid>
@@ -1177,9 +1185,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 3.5,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.min_count_edit &&
-                  !this.props.acces?.min_count_view
+                  !this.props.acces?.min_count_edit && !this.props.acces?.min_count_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1189,10 +1195,7 @@ class SkladItemsModule_Modal extends React.Component {
                   type="number"
                   onWheel={(e) => e.target.blur()}
                   value={this.state.itemEdit ? this.state.itemEdit.item.min_count : ""}
-                  disabled={
-                    this.props.method === "Редактирование товара" &&
-                    !this.props.acces?.min_count_edit
-                  }
+                  disabled={!this.props.acces?.min_count_edit}
                   func={this.changeItem.bind(this, "min_count")}
                 />
               </Grid>
@@ -1203,9 +1206,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 12,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.allergens_edit &&
-                  !this.props.acces?.allergens_view
+                  !this.props.acces?.allergens_edit && !this.props.acces?.allergens_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1215,10 +1216,7 @@ class SkladItemsModule_Modal extends React.Component {
                   multiple={true}
                   data={this.state.itemEdit ? this.state.itemEdit.allergens : []}
                   value={this.state.itemEdit ? this.state.itemEdit.item.my_allergens : ""}
-                  disabled={
-                    this.props.method === "Редактирование товара" &&
-                    !this.props.acces?.allergens_edit
-                  }
+                  disabled={!this.props.acces?.allergens_edit}
                   func={(event, value) => {
                     let this_storages = this.state.itemEdit;
                     this_storages.item.my_allergens = value;
@@ -1233,7 +1231,6 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 12,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
                   !this.props.acces?.my_allergens_other_edit &&
                   !this.props.acces?.my_allergens_other_view
                     ? { display: "none" }
@@ -1245,10 +1242,7 @@ class SkladItemsModule_Modal extends React.Component {
                   multiple={true}
                   data={this.state.itemEdit ? this.state.itemEdit.allergens : []}
                   value={this.state.itemEdit ? this.state.itemEdit.item.my_allergens_other : ""}
-                  disabled={
-                    this.props.method === "Редактирование товара" &&
-                    !this.props.acces?.my_allergens_other_edit
-                  }
+                  disabled={!this.props.acces?.my_allergens_other_edit}
                   func={(event, value) => {
                     let this_storages = this.state.itemEdit;
                     this_storages.item.my_allergens_other = value;
@@ -1262,9 +1256,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 4,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.is_show_edit &&
-                  !this.props.acces?.is_show_view
+                  !this.props.acces?.is_show_edit && !this.props.acces?.is_show_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1286,9 +1278,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 4,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.show_in_order_edit &&
-                  !this.props.acces?.show_in_order_view
+                  !this.props.acces?.show_in_order_edit && !this.props.acces?.show_in_order_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1310,9 +1300,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 4,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.show_in_rev_edit &&
-                  !this.props.acces?.show_in_rev_view
+                  !this.props.acces?.show_in_rev_edit && !this.props.acces?.show_in_rev_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1334,9 +1322,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 4,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.honest_sign_edit &&
-                  !this.props.acces?.honest_sign_view
+                  !this.props.acces?.honest_sign_edit && !this.props.acces?.honest_sign_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1358,9 +1344,7 @@ class SkladItemsModule_Modal extends React.Component {
                   sm: 4,
                 }}
                 style={
-                  this.props.method === "Редактирование товара" &&
-                  !this.props.acces?.mercury_edit &&
-                  !this.props.acces?.mercury_view
+                  !this.props.acces?.mercury_edit && !this.props.acces?.mercury_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1400,10 +1384,7 @@ class SkladItemsModule_Modal extends React.Component {
                       multiple={true}
                       data={this.state.itemEdit ? this.state.itemEdit.storages : []}
                       value={this.state.itemEdit ? this.state.itemEdit.this_storages : ""}
-                      disabled={
-                        this.props.method === "Редактирование товара" &&
-                        !this.props.acces?.this_storages_edit
-                      }
+                      disabled={!this.props.acces?.this_storages_edit}
                       func={(event, value) => {
                         let this_storages = { ...this.state.itemEdit };
                         this_storages.this_storages = value;
@@ -1442,10 +1423,7 @@ class SkladItemsModule_Modal extends React.Component {
                           label="Должность в кафе"
                           data={this.state.itemEdit ? this.state.itemEdit.apps : []}
                           value={this.state.itemEdit ? this.state.itemEdit.item.app_id : ""}
-                          disabled={
-                            this.props.method === "Редактирование товара" &&
-                            !this.props.acces?.apps_edit
-                          }
+                          disabled={!this.props.acces?.apps_edit}
                           func={this.changeItem.bind(this, "app_id")}
                           is_none={false}
                         />
@@ -1466,10 +1444,7 @@ class SkladItemsModule_Modal extends React.Component {
                           label="Время ММ:SS за 1кг / 1шт / 1л (15:20)"
                           isTimeMask
                           value={this.state.itemEdit ? this.state.itemEdit.item.time_min_other : ""}
-                          disabled={
-                            this.props.method === "Редактирование товара" &&
-                            !this.props.acces?.time_min_other_edit
-                          }
+                          disabled={!this.props.acces?.time_min_other_edit}
                           func={this.changeItem.bind(this, "time_min_other")}
                           placeholder="00:00"
                         />
@@ -1481,12 +1456,36 @@ class SkladItemsModule_Modal extends React.Component {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button
-              onClick={this.save.bind(this)}
-              variant="contained"
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                justifyContent:
+                  this.props.acces?.delete_item_access &&
+                  this.props.method === "Редактирование товара"
+                    ? "space-between"
+                    : "flex-end",
+              }}
             >
-              Сохранить
-            </Button>
+              {this.props.acces?.delete_item_access &&
+              this.props.method === "Редактирование товара" ? (
+                <Button
+                  color="primary"
+                  onClick={() => this.setState({ openDelete: true })}
+                  variant="contained"
+                >
+                  Удалить
+                </Button>
+              ) : null}
+              <Button
+                color="success"
+                disabled={!this.state.rules_save}
+                onClick={this.save.bind(this)}
+                variant="contained"
+              >
+                Сохранить
+              </Button>
+            </div>
           </DialogActions>
         </Dialog>
       </>
@@ -1593,6 +1592,20 @@ class SkladItemsModule_ extends React.Component {
   }
 
   async componentDidMount() {
+    const data = await this.getData("get_all");
+
+    this.setState({
+      module_name: data.module_info.name,
+      cats: data.cats,
+      freeItems: data.items_free,
+      unusedItems: data.unused_items,
+      acces: data.acces,
+    });
+
+    document.title = data.module_info.name;
+  }
+
+  async update() {
     const data = await this.getData("get_all");
 
     this.setState({
@@ -2028,6 +2041,8 @@ class SkladItemsModule_ extends React.Component {
           onClose={() => this.setState({ modalDialog: false, itemEdit: null })}
           checkArtNew={this.checkArtNew.bind(this)}
           checkArt={this.checkArt.bind(this)}
+          getData={this.getData.bind(this)}
+          update={this.update.bind(this)}
           method={this.state.method}
           event={this.state.itemEdit}
           acces={this.state.acces}
