@@ -1537,7 +1537,19 @@ function VendorItemsTableEdit() {
                       id={key}
                       onDragOver={(ev) => ev.preventDefault()}
                     >
-                      <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
+                      <TableCell rowSpan={2}>
+                        <div className="cell_as">
+                          {item?.name ?? item.item_name}
+                          {item?.accounting_system.map((as, key) => (
+                            <div
+                              key={as.id}
+                              className="box_as"
+                            >
+                              {as.name}
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
                       <TableCell>До</TableCell>
                       <TableCell>
                         {item?.data_bill?.pq} {item.ed_izmer_name}
@@ -1584,7 +1596,19 @@ function VendorItemsTableEdit() {
                     onDragOver={(ev) => ev.preventDefault()}
                   >
                     {item?.data_bill ? null : (
-                      <TableCell> {item?.name ?? item.item_name} </TableCell>
+                      <TableCell>
+                        <div className="cell_as">
+                          {item?.name ?? item.item_name}
+                          {item?.accounting_system.map((as, key) => (
+                            <div
+                              key={as.id}
+                              className="box_as"
+                            >
+                              {as.name}
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
                     )}
                     {!item?.data_bill ? null : <TableCell>После</TableCell>}
                     <TableCell className="ceil_white">

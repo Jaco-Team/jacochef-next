@@ -523,6 +523,8 @@ const useStore = create((set, get) => ({
         item.nds = "";
       }
 
+      console.log("item", item);
+
       return item;
     });
 
@@ -1971,6 +1973,8 @@ function VendorItemsTableEdit() {
 
   const draggable = parseInt(bill?.type) === 5 || parseInt(bill?.type) === 2 ? true : false;
 
+  console.log("bill_items", bill_items);
+
   return (
     <>
       <Grid
@@ -2020,7 +2024,19 @@ function VendorItemsTableEdit() {
                       id={key}
                       onDragOver={(ev) => ev.preventDefault()}
                     >
-                      <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
+                      <TableCell rowSpan={2}>
+                        <div className="cell_as">
+                          {item?.name ?? item.item_name}
+                          {item?.accounting_system.map((as, key) => (
+                            <div
+                              key={as.id}
+                              className="box_as"
+                            >
+                              {as.name}
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
                       <TableCell>До</TableCell>
                       <TableCell>
                         {item?.data_bill?.pq} {item.ed_izmer_name}
@@ -2067,7 +2083,19 @@ function VendorItemsTableEdit() {
                     onDragOver={(ev) => ev.preventDefault()}
                   >
                     {item?.data_bill ? null : (
-                      <TableCell> {item?.name ?? item.item_name} </TableCell>
+                      <TableCell>
+                        <div className="cell_as">
+                          {item?.name ?? item.item_name}
+                          {item?.accounting_system.map((as, key) => (
+                            <div
+                              key={as.id}
+                              className="box_as"
+                            >
+                              {as.name}
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
                     )}
                     {!item?.data_bill ? null : <TableCell>После</TableCell>}
                     <TableCell className="ceil_white">
@@ -2223,6 +2251,8 @@ function VendorItemsTableView() {
     summ_nds += parseFloat(item.summ_nds);
   });
 
+  console.log("bill_items", bill_items);
+
   return (
     <>
       <Grid
@@ -2265,7 +2295,20 @@ function VendorItemsTableView() {
                     <TableRow
                       style={{ backgroundColor: item?.color ? "rgb(255, 204, 0)" : "#fff" }}
                     >
-                      <TableCell rowSpan={2}>{item?.name ?? item.item_name}</TableCell>
+                      <TableCell
+                        rowSpan={2}
+                        className="cell_as"
+                      >
+                        {item?.name ?? item.item_name}
+                        {item?.accounting_system.map((as, key) => (
+                          <div
+                            key={as.id}
+                            className="box_as"
+                          >
+                            {as.name}
+                          </div>
+                        ))}
+                      </TableCell>
                       <TableCell>До</TableCell>
                       <TableCell>
                         {item?.data_bill?.pq} {item.ed_izmer_name}
@@ -2294,7 +2337,17 @@ function VendorItemsTableView() {
                     style={{ backgroundColor: item?.color ? "rgb(255, 204, 0)" : "#fff" }}
                   >
                     {item?.data_bill ? null : (
-                      <TableCell> {item?.name ?? item.item_name} </TableCell>
+                      <TableCell className="cell_as">
+                        {item?.name ?? item.item_name}
+                        {item?.accounting_system.map((as, key) => (
+                          <div
+                            key={as.id}
+                            className="box_as"
+                          >
+                            {as.name}
+                          </div>
+                        ))}
+                      </TableCell>
                     )}
                     {!item?.data_bill ? null : <TableCell>После</TableCell>}
                     <TableCell className="ceil_white">{item.pq}</TableCell>
