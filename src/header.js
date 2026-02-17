@@ -267,6 +267,7 @@ export default function Header() {
         >
           <Autocomplete
             size="small"
+            freeSolo
             options={FullMenu}
             getOptionLabel={(option) => option.name}
             filterOptions={(options, { inputValue }) => {
@@ -312,24 +313,30 @@ export default function Header() {
               // Используем комбинацию name и key_query для уникального ключа
               const uniqueKey = `${option.name}_${option.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
               return (
-                <li
+                <Box
+                  component="li"
                   {...props}
                   key={uniqueKey}
-                  style={{
+                  sx={{
                     padding: "8px 16px",
                     fontSize: "14px",
                     display: "flex",
                     flexDirection: "column",
+                    justifyContent: "flex-start",
                     alignItems: "flex-start",
                     borderBottom: "1px solid #e0e0e0",
+                    "&:last-child": {
+                      borderBottom: "none",
+                    },
                   }}
                 >
                   <i
                     style={{
-                      display: "flex",
+                      display: "block",
+                      width: "100%",
                       fontSize: "14px",
                       fontStyle: "normal",
-                      alignItems: "center",
+                      textAlign: "start",
                     }}
                   >
                     {option.name}
@@ -339,6 +346,8 @@ export default function Header() {
                       style={{
                         display: "flex",
                         flexWrap: "wrap",
+                        alignItems: "flex-start",
+                        width: "100%",
                         gap: "4px",
                         marginTop: "4px",
                       }}
@@ -370,7 +379,7 @@ export default function Header() {
                       ))}
                     </div>
                   )}
-                </li>
+                </Box>
               );
             }}
             getOptionKey={(option) =>
