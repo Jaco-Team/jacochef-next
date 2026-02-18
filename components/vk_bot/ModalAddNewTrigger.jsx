@@ -86,7 +86,7 @@ export const ModalAddNewTrigger = ({
         </Grid>
         <Grid style={{ marginTop: "20px" }}>
           <MyAutocomplite
-            label="Группы ВК"
+            label="Группа ВК"
             data={groups}
             multiple={false}
             value={data.vk_group_id}
