@@ -1578,7 +1578,7 @@ class SkladItemsModule_ extends React.Component {
       is_load: true,
     });
 
-    let res = api_laravel(this.state.module, method, data)
+    let res = api_laravel_local(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {
@@ -1781,15 +1781,18 @@ class SkladItemsModule_ extends React.Component {
       id: itemEdit.item.id,
       art: itemEdit.item.art,
     };
+    if (this.state.acces?.art_edit) {
+      const res = await this.getData("check_art", data);
 
-    const res = await this.getData("check_art", data);
-
-    if (res.st === false) {
-      this.setState({
-        checkArtDialog: true,
-        checkArtList: res.arts,
-        itemEdit: itemEdit,
-      });
+      if (res.st === false) {
+        this.setState({
+          checkArtDialog: true,
+          checkArtList: res.arts,
+          itemEdit: itemEdit,
+        });
+      } else {
+        this.saveEditItem(itemEdit);
+      }
     } else {
       this.saveEditItem(itemEdit);
     }
@@ -1801,18 +1804,20 @@ class SkladItemsModule_ extends React.Component {
       art: itemEdit.item.art,
     };
 
-    console.log(itemEdit);
+    if (this.state.acces?.art_edit) {
+      let res = await this.getData("check_art", data);
 
-    let res = await this.getData("check_art", data);
+      if (res.st === false) {
+        res.arts.push({ id: -1, name: this.state.itemEdit.item.name });
 
-    if (res.st === false) {
-      res.arts.push({ id: -1, name: this.state.itemEdit.item.name });
-
-      this.setState({
-        checkArtDialog: true,
-        checkArtList: res.arts,
-        itemEdit: itemEdit,
-      });
+        this.setState({
+          checkArtDialog: true,
+          checkArtList: res.arts,
+          itemEdit: itemEdit,
+        });
+      } else {
+        this.saveNewItem(itemEdit);
+      }
     } else {
       this.saveNewItem(itemEdit);
     }
