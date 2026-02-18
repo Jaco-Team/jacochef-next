@@ -551,41 +551,15 @@ class SkladItemsModule_Modal_History_View extends React.Component {
                 label="Честный знак"
                 value={
                   this.state.itemView
-                    ? this.state.itemView.honest_sign?.color
-                      ? this.state.itemView.honest_sign.key
-                      : this.state.itemView.honest_sign
+                    ? this.state.itemView.acc_sys?.color
+                      ? this.state.itemView.acc_sys.key
+                      : this.state.itemView.acc_sys
                     : ""
                 }
                 disabled={true}
                 className={
                   this.state.itemView
-                    ? this.state.itemView.honest_sign?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyTextInput
-                label="Меркурий"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.mercury?.color
-                      ? this.state.itemView.mercury.key
-                      : this.state.itemView.mercury
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.mercury?.color
+                    ? this.state.itemView.acc_sys?.color
                       ? "disabled_input disabled_input_color"
                       : "disabled_input"
                     : "disabled_input"
@@ -1327,35 +1301,15 @@ class SkladItemsModule_Modal extends React.Component {
                     : {}
                 }
               >
-                <MyCheckBox
-                  label="Честный знак"
+                <MyAutocomplite
+                  label="Системы учета"
+                  multiple={true}
+                  data={this.state.itemEdit ? this.state.itemEdit.acc_sys : []}
+                  value={this.state.itemEdit ? this.state.itemEdit?.item?.acc_sys : ""}
                   disabled={!this.props.acces?.honest_sign_edit}
-                  value={parseInt(this.state.itemEdit?.item?.honest_sign) == 1 ? true : false}
-                  func={(e) => {
-                    let this_storages = this.state.itemEdit;
-                    this_storages.item.honest_sign = e.target.checked === true ? 1 : 0;
-                    this.setState({ itemEdit: this_storages });
-                  }}
-                />
-              </Grid>
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 4,
-                }}
-                style={
-                  !this.props.acces?.mercury_edit && !this.props.acces?.mercury_view
-                    ? { display: "none" }
-                    : {}
-                }
-              >
-                <MyCheckBox
-                  label="Меркурий"
-                  disabled={!this.props.acces?.mercury_edit}
-                  value={parseInt(this.state.itemEdit?.item?.mercury) == 1 ? true : false}
-                  func={(e) => {
-                    let this_storages = this.state.itemEdit;
-                    this_storages.item.mercury = e.target.checked === true ? 1 : 0;
+                  func={(event, value) => {
+                    let this_storages = { ...this.state.itemEdit };
+                    this_storages.item.acc_sys = value;
                     this.setState({ itemEdit: this_storages });
                   }}
                 />
