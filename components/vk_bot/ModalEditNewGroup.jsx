@@ -8,6 +8,9 @@ import Grid from "@mui/material/Grid";
 import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { IOSSwitch } from "@/components/vk_bot/ModalAddNewGroup";
+import InputAdornment from "@mui/material/InputAdornment";
+import IconButton from "@mui/material/IconButton";
+import { EyeHide, EyeShow } from "@/ui/icons";
 
 export const ModalEditNewGroup = ({
   open,
@@ -28,6 +31,8 @@ export const ModalEditNewGroup = ({
     is_valid_token: 0,
   };
   const [data, setData] = useState(dV);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -76,7 +81,7 @@ export const ModalEditNewGroup = ({
         </Grid>
         <Grid style={{ marginTop: "20px" }}>
           <MyAutocomplite
-            label="Точки"
+            label="Города"
             data={cities}
             multiple={false}
             value={data.city_id}
@@ -103,15 +108,55 @@ export const ModalEditNewGroup = ({
         <Grid style={{ marginTop: "20px" }}>
           <MyTextInput
             value={data.token}
-            type="password"
+            type={showPassword ? "text" : "password"}
             func={(e) => handleChange("token", e.target.value)}
+            inputAdornment={{
+              endAdornment: (
+                <>
+                  <InputAdornment position="end">
+                    <IconButton
+                      size="small"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disableRipple
+                      disableFocusRipple
+                    >
+                      {showPassword ? (
+                        <EyeShow style={{ fontSize: 30 }} />
+                      ) : (
+                        <EyeHide style={{ fontSize: 30 }} />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                </>
+              ),
+            }}
             label="Token авторизации"
           />
         </Grid>
         <Grid style={{ marginTop: "20px" }}>
           <MyTextInput
             value={data.confirm}
-            type="password"
+            type={showPassword2 ? "text" : "password"}
+            inputAdornment={{
+              endAdornment: (
+                <>
+                  <InputAdornment position="end">
+                    <IconButton
+                      size="small"
+                      onClick={() => setShowPassword2(!showPassword2)}
+                      disableRipple
+                      disableFocusRipple
+                    >
+                      {showPassword2 ? (
+                        <EyeShow style={{ fontSize: 30 }} />
+                      ) : (
+                        <EyeHide style={{ fontSize: 30 }} />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                </>
+              ),
+            }}
             func={(e) => handleChange("confirm", e.target.value)}
             label="Confirm ключ"
           />

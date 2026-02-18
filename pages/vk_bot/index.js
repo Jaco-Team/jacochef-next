@@ -49,13 +49,16 @@ function TabPanel({ children, value, index }) {
 export const TYPE_VK = [
   { id: 1, type_vk: "message", name: "Сообщение" },
   { id: 2, type_vk: "group_join", name: "Вступление в группу" },
-  { id: 3, type_vk: "prize", name: "Приз" },
-  { id: 4, type_vk: "prize_failed", name: "Не найден приз" },
 ];
 
 export const MATCH_TYPE = [
   { id: 1, match_type: "contains", name: "Содержит" },
-  { id: 2, match_type: "exact", name: "Точная надпись" },
+  { id: 2, match_type: "exact", name: "Точное сообщение" },
+];
+
+export const SCENE_TYPE = [
+  { id: 1, name: "Текстовый ответ" },
+  { id: 2, name: "Сценарий" },
 ];
 
 function useDebounce(value, delay) {
@@ -87,6 +90,7 @@ export default function VkBotPage() {
   const [group, setGroup] = useState({});
   const [trigger, setTrigger] = useState({});
   const [cities, setCities] = useState([]);
+  const [scenes, setScenes] = useState([]);
   const [openModalAddGroup, setOpenModalGroup] = useState(false);
   const [openModalEditGroup, setOpenModalEditGroup] = useState(false);
   const [openModalDeleteGroup, setOpenModalDeleteGroup] = useState(false);
@@ -133,6 +137,7 @@ export default function VkBotPage() {
       document.title = data.module_info.name;
       setModule(data.module_info);
       setDataGroup(data.groups ?? []);
+      setScenes(data.scenes);
       setDataTrigger(data.triggers ?? []);
       setCities(data.cities);
     });
@@ -171,6 +176,7 @@ export default function VkBotPage() {
       setDataGroup(data.groups ?? []);
       setDataTrigger(data.triggers ?? []);
       setCities(data.cities);
+      setScenes(data.scenes);
     });
   };
 
@@ -213,6 +219,8 @@ export default function VkBotPage() {
         vk_group_id: dataGroup.find((i) => i.vk_group_id === data2.group.vk_group_id),
         type_vk: TYPE_VK.find((i) => i.type_vk === data2.group.type_vk),
         match_type: MATCH_TYPE.find((i) => i.match_type === data2.group.match_type),
+        scene: SCENE_TYPE.find((i) => i.id == data2.group.scene),
+        scene_id: scenes.find((i) => i.id == data2.group.scene_id),
       };
       setTrigger(group2);
       setOpenModalEditTrigger(true);
@@ -293,6 +301,7 @@ export default function VkBotPage() {
       {openModalAddTrigger ? (
         <ModalAddNewTrigger
           save={saveTrigger}
+          scenes={scenes}
           open={openModalAddTrigger}
           groups={dataGroup}
           onClose={() => setOpenModalTrigger(false)}
@@ -330,6 +339,7 @@ export default function VkBotPage() {
           save={editTrigger}
           open={openModalEditTrigger}
           defaultValue={trigger}
+          scenes={scenes}
           groups={dataGroup}
           onClose={() => setOpenModalEditTrigger(false)}
         />

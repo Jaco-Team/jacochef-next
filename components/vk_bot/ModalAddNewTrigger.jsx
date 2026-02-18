@@ -9,12 +9,13 @@ import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
 import { styled, Switch } from "@mui/material";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { IOSSwitch } from "@/components/vk_bot/ModalAddNewGroup";
-import { MATCH_TYPE, TYPE_VK } from "@/pages/vk_bot";
+import { MATCH_TYPE, SCENE_TYPE, TYPE_VK } from "@/pages/vk_bot";
 
 export const ModalAddNewTrigger = ({
   open,
   onClose,
   save,
+  scenes,
   groups,
   title = "Добавить триггер",
   defaultValue,
@@ -28,6 +29,8 @@ export const ModalAddNewTrigger = ({
     match_type: {},
     city_id: {},
     is_active: 0,
+    scene: {},
+    scene_id: {},
   };
   const [data, setData] = useState(dV);
 
@@ -48,6 +51,8 @@ export const ModalAddNewTrigger = ({
       vk_group_id: data.vk_group_id.vk_group_id,
       type_vk: data.type_vk.type_vk,
       match_type: data.match_type.match_type,
+      scene: data.scene.id,
+      scene_id: data.scene_id.id,
       city_id: data.vk_group_id.city_id,
     };
     save(data2);
@@ -120,12 +125,39 @@ export const ModalAddNewTrigger = ({
           />
         </Grid>
         <Grid style={{ marginTop: "20px" }}>
-          <MyTextInput
-            value={data.answer}
-            func={(e) => handleChange("answer", e.target.value)}
-            label="Ответ"
+          <MyAutocomplite
+            label="Сценарий"
+            data={SCENE_TYPE}
+            multiple={false}
+            value={data.scene}
+            func={(event, data) => {
+              handleChange("scene", data);
+            }}
           />
         </Grid>
+        {data.scene?.id === 2 ? (
+          <Grid style={{ marginTop: "20px" }}>
+            <MyAutocomplite
+              label="Выбор сценария"
+              data={scenes}
+              multiple={false}
+              value={data.scene_id}
+              func={(event, data) => {
+                handleChange("scene_id", data);
+              }}
+            />
+          </Grid>
+        ) : (
+          <Grid style={{ marginTop: "20px" }}>
+            <MyTextInput
+              value={data.answer}
+              multiline={true}
+              minRows={4}
+              func={(e) => handleChange("answer", e.target.value)}
+              label="Ответ"
+            />
+          </Grid>
+        )}
         <Grid style={{ marginTop: "20px", width: "100%" }}>
           <div style={{ display: "flex", justifyContent: "flex-start", marginLeft: "10px" }}>
             <FormControlLabel
