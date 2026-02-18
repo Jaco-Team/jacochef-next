@@ -637,3 +637,22 @@ a {
 .tox-statusbar__branding {
   display: none !important;
 }
+
+.cell_as {
+  display: flex;
+  flex-direction: row;
+  gap: 12;
+  @media (max-width: 600px) {
+    flex-direction: column;
+  }
+
+  .box_as {
+    border: 2px solid #e5e5e5;
+    border-radius: 60;
+    padding: 1px 14px;
+    font-size: 12;
+    width: fit-content;
+    background-color: #fff;
+    white-space: nowrap;
+  }
+}
