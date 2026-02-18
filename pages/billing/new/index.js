@@ -652,7 +652,7 @@ const useStore = create((set, get) => ({
           item.pq,
           item.item_id,
           test,
-          test.accounting_system,
+          test[0].accounting_system,
         );
       });
     } else {
