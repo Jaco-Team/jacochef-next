@@ -585,6 +585,8 @@ const useStore = create((set, get) => ({
       get().search_doc({ targer: { value: base_doc_name } }, base_doc_name);
     }
 
+    console.log("set bill_items", bill_items);
+
     set({
       bill_items,
     });
@@ -806,6 +808,7 @@ const useStore = create((set, get) => ({
               this_bill.item_id,
               test,
               1,
+              this_bill.accounting_system,
             );
           } else {
             get().addItem_fast(
@@ -818,6 +821,7 @@ const useStore = create((set, get) => ({
               notFoundBillingItems[0].item_id,
               test,
               1,
+              this_bill.accounting_system,
             );
           }
         } else {
@@ -831,6 +835,7 @@ const useStore = create((set, get) => ({
             item.item_id,
             test,
             0,
+            this_bill.accounting_system,
           );
         }
       });
@@ -1260,6 +1265,7 @@ const useStore = create((set, get) => ({
     item_id,
     vendor_items,
     is_add,
+    accounting_system,
   ) => {
     if (vendor_items.length == 0) {
       return;
@@ -1282,6 +1288,9 @@ const useStore = create((set, get) => ({
       is_add == 0 ? "" : Number(count) == 0 ? 0 : (Number(sum_w_nds) - Number(summ)).toFixed(2);
     vendor_items[0].nds = nds;
 
+    console.log("check 0", bill_items);
+    console.log("check 1", accounting_system);
+
     vendor_items[0].pq = is_add == 0 ? "" : pq;
     vendor_items[0].all_ed_izmer = all_ed_izmer;
     vendor_items[0].count = is_add == 0 ? "" : count;
@@ -1289,6 +1298,7 @@ const useStore = create((set, get) => ({
     vendor_items[0].price_item = is_add == 0 ? "" : summ;
     vendor_items[0].price_w_nds = is_add == 0 ? "" : Number(count) == 0 ? 0 : sum_w_nds;
     vendor_items[0].item_id = is_add == 0 ? "" : item_id;
+    vendor_items[0].accounting_system = accounting_system;
 
     vendor_items[0].one_price_bill =
       is_add == 0 || Number(count) == 0 ? "" : parseInt(sum_w_nds) / parseInt(fact_unit);

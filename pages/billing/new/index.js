@@ -602,6 +602,8 @@ const useStore = create((set, get) => ({
   search_doc: async (event, name) => {
     const search = event.target.value ? event.target.value : name ? name : "";
 
+    console.log("search", search);
+
     if (search) {
       const docs = get().docs;
       const vendor_id = get().vendor?.id;
@@ -639,6 +641,8 @@ const useStore = create((set, get) => ({
       res.billing_items.map((item) => {
         let test = res.items.filter((v) => parseInt(v.id) === parseInt(item.item_id));
 
+        console.log("test_item", item, test);
+
         get().addItem_fast(
           item.count,
           item.count * item.pq,
@@ -648,6 +652,7 @@ const useStore = create((set, get) => ({
           item.pq,
           item.item_id,
           test,
+          test[0].accounting_system,
         );
       });
     } else {
@@ -1019,6 +1024,8 @@ const useStore = create((set, get) => ({
 
     let bill_items = get().bill_items;
 
+    console.log("bill_items_bill_items", bill_items);
+
     if (!count || !fact_unit || !summ || !sum_w_nds || !pq || !all_ed_izmer.length) {
       set({
         openAlert: true,
@@ -1105,7 +1112,17 @@ const useStore = create((set, get) => ({
     get().check_price_item_new();
   },
 
-  addItem_fast: (count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, item_id, vendor_items) => {
+  addItem_fast: (
+    count,
+    fact_unit,
+    summ,
+    sum_w_nds,
+    all_ed_izmer,
+    pq,
+    item_id,
+    vendor_items,
+    accounting_system,
+  ) => {
     if (vendor_items.length == 0) {
       return;
     }
@@ -1118,6 +1135,8 @@ const useStore = create((set, get) => ({
 
     //const nds = get().check_nds_bill((Number(sum_w_nds) - Number(summ)) / (Number(summ) / 100))
 
+    console.log("accounting_system", accounting_system);
+
     vendor_items[0].color = false;
 
     vendor_items[0].summ_nds = "";
@@ -1128,6 +1147,7 @@ const useStore = create((set, get) => ({
     vendor_items[0].fact_unit = "";
     vendor_items[0].price_item = "";
     vendor_items[0].price_w_nds = "";
+    vendor_items[0].accounting_system = accounting_system;
 
     const bill_items_doc = get().bill_items_doc;
 
