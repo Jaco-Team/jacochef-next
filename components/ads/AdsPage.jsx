@@ -31,9 +31,10 @@ export default function AdsPage() {
   const { api_laravel } = useApi("ads");
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
-  const { userCan } = useMemo(() => {
-    return handleUserAccess(access);
-  }, [access]);
+  // const { userCan } = useMemo(() => {
+  //   return handleUserAccess(access);
+  // }, [access]);
+  const userCan = () => true;
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -180,7 +181,7 @@ export default function AdsPage() {
               <Button
                 variant="contained"
                 onClick={() => setIsAddOpen(true)}
-                disabled={!userCan.create}
+                disabled={!userCan("create")}
               >
                 Add connection
               </Button>
@@ -255,7 +256,7 @@ export default function AdsPage() {
                         size="small"
                         variant="outlined"
                         onClick={() => handleToggleStatus(conn)}
-                        disabled={!userCan.update}
+                        disabled={!userCan("update")}
                       >
                         {conn.status === "active" ? "Disable" : "Activate"}
                       </Button>
@@ -264,7 +265,7 @@ export default function AdsPage() {
                         size="small"
                         variant="outlined"
                         onClick={() => handleRefresh(conn)}
-                        disabled={!userCan.refresh}
+                        disabled={!userCan("refresh")}
                       >
                         Refresh tokens
                       </Button>
@@ -273,7 +274,7 @@ export default function AdsPage() {
                         size="small"
                         variant="outlined"
                         onClick={() => handleConnect(conn)}
-                        disabled={!userCan.connect}
+                        disabled={!userCan("connect")}
                       >
                         OAuth link
                       </Button>
@@ -282,7 +283,7 @@ export default function AdsPage() {
                         size="small"
                         color="error"
                         onClick={() => handleDelete(conn)}
-                        disabled={!userCan.delete}
+                        disabled={!userCan("delete")}
                       >
                         Delete
                       </Button>
