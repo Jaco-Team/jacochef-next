@@ -18,7 +18,20 @@ import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
 import AdsAddConnectionModal from "./AdsAddConnectionModal";
-import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import AdsOauthCodeModal from "./AdsOauthCodeModal";
+import AdsSyncModal from "./AdsSyncModal";
+// import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+
+const statusColorMap = {
+  connected: "success",
+  oauth_required: "warning",
+  refresh_failed: "error",
+  disabled: "default",
+};
+
+function isOauthRequired(status) {
+  return status === "oauth_required" || status === "refresh_failed";
+}
 
 export default function AdsPage() {
   const [connections, setConnections] = useState([]);
@@ -28,13 +41,22 @@ export default function AdsPage() {
   const [loading, setLoading] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
 
+  const [oauthModal, setOauthModal] = useState({
+    open: false,
+    connection: null,
+  });
+
+  const [syncModal, setSyncModal] = useState({
+    open: false,
+    connection: null,
+  });
+
   const { api_laravel } = useApi("ads");
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
-  // const { userCan } = useMemo(() => {
-  //   return handleUserAccess(access);
-  // }, [access]);
-  const userCan = () => true;
+  // enable later
+  // const { userCan } = useMemo(() => handleUserAccess(access), [access]);
+  const userCan = useCallback(() => true, []);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -51,21 +73,23 @@ export default function AdsPage() {
       setLoading(false);
     }
   }, []);
-  // keep your manual loader, but make it call the real endpoint consistently
-  const getProviders = useCallback(async () => {
-    await loadAll();
-  }, [loadAll]);
 
   useEffect(() => {
     loadAll();
-  }, [loadAll]);
+  }, []);
 
   const handleToggleStatus = async (conn) => {
     setLoading(true);
     try {
-      const nextStatus = conn.status === "active" ? "disabled" : "active";
-      const res = await api_laravel("update", { id: conn.id, status: nextStatus });
-      if (!res?.st) throw new Error(res?.message || "Ошибка изменения статуса");
+      const nextStatus = conn.status === "disabled" ? "active" : "disabled";
+
+      const res = await api_laravel("update", {
+        id: conn.id,
+        status: nextStatus,
+      });
+
+      if (!res?.st) throw new Error(res?.text || "Ошибка изменения статуса");
+
       await loadAll();
     } catch (e) {
       showAlert(e?.message || "Ошибка");
@@ -78,7 +102,7 @@ export default function AdsPage() {
     setLoading(true);
     try {
       const res = await api_laravel("delete", { id: conn.id });
-      if (!res?.st) throw new Error(res?.message || "Ошибка удаления");
+      if (!res?.st) throw new Error(res?.text || "Ошибка удаления");
       await loadAll();
     } catch (e) {
       showAlert(e?.message || "Ошибка");
@@ -91,7 +115,7 @@ export default function AdsPage() {
     setLoading(true);
     try {
       const res = await api_laravel("refresh", { id: conn.id });
-      if (!res?.st) throw new Error(res?.message || "Ошибка обновления токенов");
+      if (!res?.st) throw new Error(res?.text || "Ошибка обновления токенов");
       await loadAll();
     } catch (e) {
       showAlert(e?.message || "Ошибка");
@@ -100,19 +124,67 @@ export default function AdsPage() {
     }
   };
 
-  const handleConnect = async (conn) => {
+  // oauth: connect -> open url -> show modal to paste code -> exchange_code
+  const handleAuthorize = async (conn) => {
     setLoading(true);
     try {
       const res = await api_laravel("connect", { id: conn.id });
       if (!res?.st) throw new Error(res?.message || "Ошибка создания OAuth ссылки");
 
-      // contract options:
-      // 1) backend returns { url } — open it
-      // 2) backend returns { link } — open it
-      const url = res?.url || res?.link;
+      const url = res?.url;
       if (!url) throw new Error("Backend did not return oauth url");
 
       window.open(url, "_blank", "noopener,noreferrer");
+
+      // clipboard fallback if popup blocked
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {}
+
+      setOauthModal({ open: true, connection: conn });
+    } catch (e) {
+      showAlert(e?.message || "Ошибка");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExchangeCode = async ({ code }) => {
+    if (!oauthModal.connection) return;
+
+    setLoading(true);
+    try {
+      const res = await api_laravel("exchange_code", {
+        id: oauthModal.connection.id,
+        code,
+      });
+      if (!res?.st) throw new Error(res?.message || "Ошибка обмена кода");
+
+      setOauthModal({ open: false, connection: null });
+      await loadAll();
+    } catch (e) {
+      showAlert(e?.message || "Ошибка");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenSync = (conn) => {
+    setSyncModal({ open: true, connection: conn });
+  };
+
+  const handleSync = async ({ days }) => {
+    if (!syncModal.connection) return;
+
+    setLoading(true);
+    try {
+      const res = await api_laravel("sync_connection", {
+        id: syncModal.connection.id,
+        days,
+      });
+      if (!res?.st) throw new Error(res?.message || "Ошибка запуска синхронизации");
+
+      setSyncModal({ open: false, connection: null });
     } catch (e) {
       showAlert(e?.message || "Ошибка");
     } finally {
@@ -140,6 +212,21 @@ export default function AdsPage() {
         isOpened={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         onSuccess={loadAll}
+        showAlert={showAlert}
+      />
+
+      <AdsOauthCodeModal
+        open={oauthModal.open}
+        connection={oauthModal.connection}
+        onClose={() => setOauthModal({ open: false, connection: null })}
+        onSubmit={handleExchangeCode}
+      />
+
+      <AdsSyncModal
+        open={syncModal.open}
+        connection={syncModal.connection}
+        onClose={() => setSyncModal({ open: false, connection: null })}
+        onSubmit={handleSync}
       />
 
       <Grid
@@ -173,7 +260,7 @@ export default function AdsPage() {
             >
               <Button
                 variant="outlined"
-                onClick={getProviders}
+                onClick={loadAll}
               >
                 Reload
               </Button>
@@ -198,101 +285,117 @@ export default function AdsPage() {
             </Card>
           </Grid>
         ) : (
-          connections.map((conn) => (
-            <Grid
-              size={{ xs: 12, md: 6, lg: 4 }}
-              key={conn.id}
-            >
-              <Card>
-                <CardContent>
-                  <Stack spacing={1.25}>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="flex-start"
-                      gap={2}
-                    >
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography
-                          variant="h6"
-                          noWrap
-                          title={conn.name}
-                        >
-                          {conn.name}
+          connections.map((conn) => {
+            const oauthNeeded = isOauthRequired(conn.status);
+            const chipColor = statusColorMap[conn.status] || "default";
+
+            return (
+              <Grid
+                size={{ xs: 12, md: 6, lg: 4 }}
+                key={conn.id}
+              >
+                <Card>
+                  <CardContent>
+                    <Stack spacing={1.25}>
+                      <Stack
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="flex-start"
+                        gap={2}
+                      >
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography
+                            variant="h6"
+                            noWrap
+                            title={conn.name}
+                          >
+                            {conn.name || "—"}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ opacity: 0.7 }}
+                            noWrap
+                          >
+                            {conn.provider} • {conn.external_account_id || "—"}
+                          </Typography>
+                        </Box>
+
+                        <Chip
+                          size="small"
+                          label={conn.status}
+                          color={chipColor}
+                        />
+                      </Stack>
+
+                      <Divider />
+
+                      <Stack spacing={0.5}>
+                        <Typography variant="body2">Currency: {conn.currency || "—"}</Typography>
+                        <Typography variant="body2">
+                          Updated:{" "}
+                          {conn.updated_at ? new Date(conn.updated_at).toLocaleString() : "—"}
                         </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ opacity: 0.7 }}
-                          noWrap
+                      </Stack>
+
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        flexWrap="wrap"
+                        useFlexGap
+                      >
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => handleToggleStatus(conn)}
+                          disabled={!userCan("update")}
                         >
-                          {conn.provider} • {conn.external_account_id}
-                        </Typography>
-                      </Box>
+                          {conn.status === "disabled" ? "Enable" : "Disable"}
+                        </Button>
 
-                      <Chip
-                        size="small"
-                        label={conn.status}
-                        color={conn.status === "active" ? "success" : "default"}
-                      />
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => handleRefresh(conn)}
+                          disabled={!userCan("refresh")}
+                        >
+                          Refresh tokens
+                        </Button>
+
+                        {oauthNeeded ? (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() => handleAuthorize(conn)}
+                            disabled={!userCan("connect")}
+                          >
+                            Authorize
+                          </Button>
+                        ) : (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleOpenSync(conn)}
+                            disabled={!userCan("sync")}
+                          >
+                            Sync
+                          </Button>
+                        )}
+
+                        <Button
+                          size="small"
+                          color="error"
+                          onClick={() => handleDelete(conn)}
+                          disabled={!userCan("delete")}
+                        >
+                          Delete
+                        </Button>
+                      </Stack>
                     </Stack>
-
-                    <Divider />
-
-                    <Stack spacing={0.5}>
-                      <Typography variant="body2">Currency: {conn.currency || "—"}</Typography>
-                      <Typography variant="body2">
-                        Updated:{" "}
-                        {conn.updated_at ? new Date(conn.updated_at).toLocaleString() : "—"}
-                      </Typography>
-                    </Stack>
-
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      flexWrap="wrap"
-                      useFlexGap
-                    >
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => handleToggleStatus(conn)}
-                        disabled={!userCan("update")}
-                      >
-                        {conn.status === "active" ? "Disable" : "Activate"}
-                      </Button>
-
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => handleRefresh(conn)}
-                        disabled={!userCan("refresh")}
-                      >
-                        Refresh tokens
-                      </Button>
-
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => handleConnect(conn)}
-                        disabled={!userCan("connect")}
-                      >
-                        OAuth link
-                      </Button>
-
-                      <Button
-                        size="small"
-                        color="error"
-                        onClick={() => handleDelete(conn)}
-                        disabled={!userCan("delete")}
-                      >
-                        Delete
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })
         )}
       </Grid>
     </>

@@ -1,79 +1,92 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Typography, Button, Stack, TextField } from "@mui/material";
-import MyModal from "@/ui/MyModal";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Stack,
+} from "@mui/material";
 import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
+import MyAlert from "@/ui/MyAlert";
 
-export default function AdsAddConnectionModal({ isOpened, onClose, onSuccess }) {
+export default function AdsAddConnectionModal({ isOpened, onClose, onSuccess, showAlert }) {
   const { api_laravel } = useApi("ads");
-  const { showAlert } = useMyAlert();
 
-  const [provider, setProvider] = useState("yandex_direct");
-  const [externalAccountId, setExternalAccountId] = useState("");
-  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleCreate = async () => {
+  const [form, setForm] = useState({
+    provider: "yandex_direct",
+    title: "",
+  });
+
+  const setField = (k, v) => setForm((s) => ({ ...s, [k]: v }));
+
+  const handleSubmit = async () => {
+    setLoading(true);
     try {
-      const res = await api_laravel("create", {
-        provider,
-        external_account_id: externalAccountId,
-        name,
-      });
+      const res = await api_laravel("create", form);
       if (!res?.st) throw new Error(res?.message || "Ошибка создания");
 
-      onSuccess?.();
-      onClose?.();
+      onClose();
+      await onSuccess?.();
     } catch (e) {
       showAlert(e?.message || "Ошибка");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <MyModal
-      open={isOpened}
-      onClose={onClose}
-      title="Добавить рекламный кабинет"
-    >
-      <Box sx={{ p: 2 }}>
-        <Stack spacing={2}>
-          <Typography
-            variant="body2"
-            sx={{ opacity: 0.7 }}
+    <>
+      <Dialog
+        open={isOpened}
+        onClose={onClose}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Add connection</DialogTitle>
+        <DialogContent>
+          <Stack
+            spacing={2}
+            mt={1}
           >
-            Здесь будет форма добавления нового рекламного кабинета.
-          </Typography>
+            <TextField
+              fullWidth
+              label="Provider"
+              value={form.provider}
+              onChange={(e) => setField("provider", e.target.value)}
+              disabled
+            />
 
-          <TextField
-            label="Provider"
-            value={provider}
-            onChange={(e) => setProvider(e.target.value)}
-            fullWidth
-          />
-
-          <TextField
-            label="External account id"
-            value={externalAccountId}
-            onChange={(e) => setExternalAccountId(e.target.value)}
-            fullWidth
-          />
-
-          <TextField
-            label="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            fullWidth
-          />
-
+            <TextField
+              fullWidth
+              label="Name"
+              value={form.title}
+              onChange={(e) => setField("name", e.target.value)}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
           <Button
             variant="contained"
-            onClick={handleCreate}
+            onClick={handleSubmit}
+            disabled={loading || !form.provider}
           >
-            Добавить
+            Create
           </Button>
-        </Stack>
-      </Box>
-    </MyModal>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
