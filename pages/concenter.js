@@ -1824,7 +1824,9 @@ class Concenter_ extends React.Component {
                         {item.date_time_order}
                       </TableCell>
                       {this.hasAccess(acces?.start_stol_access) && (
-                        <TableCell>{item.start_stol}</TableCell>
+                        <TableCell>
+                          {item.start_stol == "04:00:00" ? "" : item.start_stol}
+                        </TableCell>
                       )}
 
                       <TableCell
