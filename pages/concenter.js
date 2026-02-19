@@ -25,6 +25,8 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
@@ -68,6 +70,23 @@ function a11yProps(index) {
     "aria-controls": `simple-tabpanel-${index}`,
   };
 }
+
+const Accordion2 = styled((props) => (
+  <MuiAccordion
+    disableGutters
+    elevation={0}
+    square
+    {...props}
+  />
+))(({ theme }) => ({
+  border: `1px solid ${theme.palette.divider}`,
+  "&:not(:last-child)": {
+    borderBottom: 0,
+  },
+  "&::before": {
+    display: "none",
+  },
+}));
 
 const IOSSwitch = styled((props) => (
   <Switch
@@ -597,6 +616,19 @@ class Concenter_ extends React.Component {
                 Заказ #{this.state.showOrder.order.order_id}
               </span>
             </DialogTitle>
+            <IconButton
+              onClick={() => {
+                this.setState({ modalDialog: false, checkedKey: {} });
+              }}
+              sx={(theme) => ({
+                position: "absolute",
+                right: 8,
+                top: 8,
+                color: theme.palette.grey[500],
+              })}
+            >
+              <CloseIcon />
+            </IconButton>
             {this.hasAccess(acces?.err_order_mod_access) ? (
               <div
                 style={{
@@ -678,7 +710,7 @@ class Concenter_ extends React.Component {
                 container
                 spacing={0}
               >
-                <Grid size={{ xs: 5 }}>
+                <Grid size={{ xs: 12, md: 5 }}>
                   <Grid
                     style={{ marginBottom: "12px" }}
                     size={{
@@ -911,7 +943,8 @@ class Concenter_ extends React.Component {
                 />
                 <Grid
                   size={{
-                    xs: 7,
+                    xs: 12,
+                    md: 7,
                   }}
                 >
                   <div
@@ -1184,7 +1217,7 @@ class Concenter_ extends React.Component {
                   {this.hasAccess(acces?.list_driver_access) &&
                     this.state.showOrder.order.type_order_ === 1 &&
                     this.state.showOrder.driver_stat.length > 0 && (
-                      <Accordion style={{ width: "100%" }}>
+                      <Accordion style={{ width: "100%", marginTop: 20 }}>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                           <Typography>Курьеры</Typography>
                         </AccordionSummary>
