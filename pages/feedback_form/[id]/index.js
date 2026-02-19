@@ -544,7 +544,7 @@ function FeedbackPage() {
   }, []);
 
   const openItem = (item_id) => {
-    getData("get_item_params", { item_id }).then((data) => {
+    getData("get_item_params", { item_id, form_id: id }).then((data) => {
       setParams(data.params);
       setOpenModalItem(true);
     });
@@ -947,7 +947,7 @@ function FeedbackPage() {
                 >
                   {rows.map((item, index) => (
                     <Grid
-                      key={item.order_id}
+                      key={index}
                       size={{
                         xs: 12,
                         sm: 6,
@@ -1313,6 +1313,7 @@ function FeedbackPage() {
                               <TableCell>Отзывов по товару</TableCell>
                               <TableCell>Отзывов по категории</TableCell>
                               <TableCell>Отзывов по типу заказа</TableCell>
+                              <TableCell>Обобщенный Отзывов</TableCell>
                               <TableCell>Дата отзыва</TableCell>
                             </TableRow>
                           </TableHead>
@@ -1330,6 +1331,7 @@ function FeedbackPage() {
                                 <TableCell>{it.count_things}</TableCell>
                                 <TableCell>{it.count_cat}</TableCell>
                                 <TableCell>{it.count_order}</TableCell>
+                                <TableCell>{it.count_all}</TableCell>
                                 <TableCell>{it.date}</TableCell>
                               </TableRow>
                             ))}
