@@ -67,7 +67,7 @@ export default function useApi(module) {
       }
       return response.data;
     } catch (error) {
-      console.error(error);
+      // console.error(error);
       throw error;
     }
   }

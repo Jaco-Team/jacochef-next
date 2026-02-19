@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -20,6 +20,7 @@ import MyAlert from "@/ui/MyAlert";
 import AdsAddConnectionModal from "./AdsAddConnectionModal";
 import AdsOauthCodeModal from "./AdsOauthCodeModal";
 import AdsSyncModal from "./AdsSyncModal";
+import { useConfirm } from "@/src/hooks/useConfirm";
 // import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 const statusColorMap = {
@@ -53,7 +54,7 @@ export default function AdsPage() {
 
   const { api_laravel } = useApi("ads");
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
-
+  const { ConfirmDialog, withConfirm } = useConfirm();
   // enable later
   // const { userCan } = useMemo(() => handleUserAccess(access), [access]);
   const userCan = useCallback(() => true, []);
@@ -200,6 +201,8 @@ export default function AdsPage() {
       >
         <CircularProgress />
       </Backdrop>
+
+      <ConfirmDialog />
 
       <MyAlert
         isOpen={isAlert}
@@ -368,7 +371,7 @@ export default function AdsPage() {
                             onClick={() => handleAuthorize(conn)}
                             disabled={!userCan("connect")}
                           >
-                            Authorize
+                            Connect
                           </Button>
                         ) : (
                           <Button
@@ -384,7 +387,7 @@ export default function AdsPage() {
                         <Button
                           size="small"
                           color="error"
-                          onClick={() => handleDelete(conn)}
+                          onClick={withConfirm(() => handleDelete(conn), "Подтвердите удаление", 5)}
                           disabled={!userCan("delete")}
                         >
                           Delete
