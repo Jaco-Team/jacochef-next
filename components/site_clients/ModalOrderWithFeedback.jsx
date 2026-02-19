@@ -108,6 +108,7 @@ const ModalOrderWithFeedback = ({
             <TextField
               fullWidth
               sx={{ pointerEvents: "none", opacity: 0.75 }}
+              value={element.data?.value}
               placeholder={element.data.placeholder}
               size="small"
             />

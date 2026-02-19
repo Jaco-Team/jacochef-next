@@ -75,6 +75,7 @@ const ModalOrder = ({ open, onClose, getData, pointId, orderId }) => {
             <Typography variant="h6">{element.data.title}</Typography>
             <TextField
               fullWidth
+              value={element.data?.value}
               sx={{ pointerEvents: "none", opacity: 0.75 }}
               placeholder={element.data.placeholder}
               size="small"
@@ -1313,7 +1314,7 @@ function FeedbackPage() {
                               <TableCell>Отзывов по товару</TableCell>
                               <TableCell>Отзывов по категории</TableCell>
                               <TableCell>Отзывов по типу заказа</TableCell>
-                              <TableCell>Обобщенный Отзывов</TableCell>
+                              <TableCell>Обобщенных Отзывов</TableCell>
                               <TableCell>Дата отзыва</TableCell>
                             </TableRow>
                           </TableHead>
