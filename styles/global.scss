@@ -640,7 +640,8 @@ a {
 
 .cell_as {
   display: flex;
-  flex-direction: row;
+  // flex-direction: row;
+  align-items: center;
   gap: 12;
   @media (max-width: 600px) {
     flex-direction: column;
