@@ -25,6 +25,8 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
@@ -51,12 +53,40 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
 import { ModalProblems } from "@/components/concenter/ModalProblems";
 
+// Функция для вычисления высоты экрана
+function convertPercentageToPixels(percent) {
+  // Получаем текущую высоту окна браузера
+  var screenHeight = window.innerHeight || document.documentElement.clientHeight;
+
+  // Переводим указанный процент в пиксели
+  var pixels = screenHeight * (percent / 100);
+
+  return Math.round(pixels); // округляем до ближайшего целого числа
+}
+
 function a11yProps(index) {
   return {
     id: `simple-tab-${index}`,
     "aria-controls": `simple-tabpanel-${index}`,
   };
 }
+
+const Accordion2 = styled((props) => (
+  <MuiAccordion
+    disableGutters
+    elevation={0}
+    square
+    {...props}
+  />
+))(({ theme }) => ({
+  border: `1px solid ${theme.palette.divider}`,
+  "&:not(:last-child)": {
+    borderBottom: 0,
+  },
+  "&::before": {
+    display: "none",
+  },
+}));
 
 const IOSSwitch = styled((props) => (
   <Switch
@@ -195,6 +225,7 @@ class Concenter_ extends React.Component {
     this.setState({
       module_name: data.module_info.name,
       cities: data.cities,
+      city_id: data.cities[0].id,
       checkedKey: {},
       point_list: data.points,
       need_point_list: need_points,
@@ -585,6 +616,19 @@ class Concenter_ extends React.Component {
                 Заказ #{this.state.showOrder.order.order_id}
               </span>
             </DialogTitle>
+            <IconButton
+              onClick={() => {
+                this.setState({ modalDialog: false, checkedKey: {} });
+              }}
+              sx={(theme) => ({
+                position: "absolute",
+                right: 8,
+                top: 8,
+                color: theme.palette.grey[500],
+              })}
+            >
+              <CloseIcon />
+            </IconButton>
             {this.hasAccess(acces?.err_order_mod_access) ? (
               <div
                 style={{
@@ -666,7 +710,7 @@ class Concenter_ extends React.Component {
                 container
                 spacing={0}
               >
-                <Grid size={{ xs: 5 }}>
+                <Grid size={{ xs: 12, md: 5 }}>
                   <Grid
                     style={{ marginBottom: "12px" }}
                     size={{
@@ -899,7 +943,8 @@ class Concenter_ extends React.Component {
                 />
                 <Grid
                   size={{
-                    xs: 7,
+                    xs: 12,
+                    md: 7,
                   }}
                 >
                   <div
@@ -1172,7 +1217,7 @@ class Concenter_ extends React.Component {
                   {this.hasAccess(acces?.list_driver_access) &&
                     this.state.showOrder.order.type_order_ === 1 &&
                     this.state.showOrder.driver_stat.length > 0 && (
-                      <Accordion style={{ width: "100%" }}>
+                      <Accordion style={{ width: "100%", marginTop: 20 }}>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                           <Typography>Курьеры</Typography>
                         </AccordionSummary>
@@ -1688,7 +1733,7 @@ class Concenter_ extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                lg: 6,
+                lg: 12,
               }}
             >
               <Accordion>
@@ -1728,225 +1773,236 @@ class Concenter_ extends React.Component {
             }}
           >
             {this.state.ordersRender.length ? (
-              <Table size={"small"}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Заказ</TableCell>
-                    {this.hasAccess(acces?.issuedd_access) && <TableCell>Оформил</TableCell>}
-                    {this.hasAccess(acces?.num_client_access) && (
-                      <TableCell>Номер клиента</TableCell>
-                    )}
-                    {this.hasAccess(acces?.address_access) && <TableCell>Адрес доставки</TableCell>}
-                    <TableCell>Время открытия заказа</TableCell>
-                    {this.hasAccess(acces?.start_stol_access) && (
-                      <TableCell>Время выхода на стол</TableCell>
-                    )}
+              <Paper sx={{ width: "100%", overflow: "hidden" }}>
+                <TableContainer sx={{ maxHeight: convertPercentageToPixels(80) }}>
+                  <Table
+                    size={"small"}
+                    stickyHeader
+                  >
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Заказ</TableCell>
+                        {this.hasAccess(acces?.issuedd_access) && <TableCell>Оформил</TableCell>}
+                        {this.hasAccess(acces?.num_client_access) && (
+                          <TableCell>Номер клиента</TableCell>
+                        )}
+                        {this.hasAccess(acces?.address_access) && (
+                          <TableCell>Адрес доставки</TableCell>
+                        )}
+                        <TableCell>Время открытия заказа</TableCell>
+                        {this.hasAccess(acces?.start_stol_access) && (
+                          <TableCell>Время выхода на стол</TableCell>
+                        )}
 
-                    <TableCell>Ко времени</TableCell>
-                    <TableCell>Закрыт на кухне</TableCell>
-                    {this.hasAccess(acces?.cook_time_access) && (
-                      <TableCell>Время на готовку</TableCell>
-                    )}
-                    <TableCell>Получен клиентом</TableCell>
-                    {this.hasAccess(acces?.delay_access) && <TableCell>До просрочки</TableCell>}
-                    {this.hasAccess(acces?.dif_access) && <TableCell>Разница</TableCell>}
-                    {this.hasAccess(acces?.diff2_access) && <TableCell>Готовки</TableCell>}
-                    {this.hasAccess(acces?.time_promise_access) && (
-                      <TableCell>Время обещ</TableCell>
-                    )}
-                    {this.hasAccess(acces?.time_dev_text_access) && (
-                      <TableCell>Время по проге/Реал время ДОСТАВКИ</TableCell>
-                    )}
+                        <TableCell>Ко времени</TableCell>
+                        <TableCell>Закрыт на кухне</TableCell>
+                        {this.hasAccess(acces?.cook_time_access) && (
+                          <TableCell>Время на готовку</TableCell>
+                        )}
+                        <TableCell>Получен клиентом</TableCell>
+                        {this.hasAccess(acces?.delay_access) && <TableCell>До просрочки</TableCell>}
+                        {this.hasAccess(acces?.dif_access) && <TableCell>Разница</TableCell>}
+                        {this.hasAccess(acces?.diff2_access) && <TableCell>Готовки</TableCell>}
+                        {this.hasAccess(acces?.time_promise_access) && (
+                          <TableCell>Время обещ</TableCell>
+                        )}
+                        {this.hasAccess(acces?.time_dev_text_access) && (
+                          <TableCell>Время по проге/Реал время ДОСТАВКИ</TableCell>
+                        )}
 
-                    <TableCell>Тип</TableCell>
-                    <TableCell>Статус</TableCell>
+                        <TableCell>Тип</TableCell>
+                        <TableCell>Статус</TableCell>
 
-                    {this.hasAccess(acces?.summ_access) && <TableCell>Сумма</TableCell>}
-                    {this.hasAccess(acces?.payment_access) && <TableCell>Оплата</TableCell>}
-                    {this.hasAccess(acces?.driver_access) && <TableCell>Водитель</TableCell>}
-                  </TableRow>
-                </TableHead>
+                        {this.hasAccess(acces?.summ_access) && <TableCell>Сумма</TableCell>}
+                        {this.hasAccess(acces?.payment_access) && <TableCell>Оплата</TableCell>}
+                        {this.hasAccess(acces?.driver_access) && <TableCell>Водитель</TableCell>}
+                      </TableRow>
+                    </TableHead>
 
-                <TableBody>
-                  {this.state.ordersRender.map((item, key) => (
-                    <TableRow
-                      key={key}
-                      style={
-                        parseInt(item.is_delete) == 1 && this.hasAccess(acces?.late_access)
-                          ? {
-                              backgroundColor: "red",
-                              color: "#fff",
-                              fontWeight: "bold",
+                    <TableBody>
+                      {this.state.ordersRender.map((item, key) => (
+                        <TableRow
+                          key={key}
+                          style={
+                            parseInt(item.is_delete) == 1 && this.hasAccess(acces?.late_access)
+                              ? {
+                                  backgroundColor: "red",
+                                  color: "#fff",
+                                  fontWeight: "bold",
+                                }
+                              : {}
+                          }
+                        >
+                          <TableCell
+                            style={
+                              parseInt(item.dist) >= 0
+                                ? {
+                                    backgroundColor: "yellow",
+                                    color: "#000",
+                                    cursor: "pointer",
+                                    fontWeight: "inherit",
+                                  }
+                                : {
+                                    color: "inherit",
+                                    cursor: "pointer",
+                                    fontWeight: "inherit",
+                                  }
                             }
-                          : {}
-                      }
-                    >
-                      <TableCell
-                        style={
-                          parseInt(item.dist) >= 0
-                            ? {
-                                backgroundColor: "yellow",
-                                color: "#000",
-                                cursor: "pointer",
-                                fontWeight: "inherit",
-                              }
-                            : {
+                            onClick={this.showOrder.bind(this, item.id)}
+                          >
+                            {item.id}
+                          </TableCell>
+                          {this.hasAccess(acces?.issuedd_access) && (
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.type_user}
+                            </TableCell>
+                          )}
+                          {this.hasAccess(acces?.num_client_access) && (
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.number}
+                            </TableCell>
+                          )}
+                          {this.hasAccess(acces?.address_access) && (
+                            <TableCell
+                              style={{
                                 color: "inherit",
-                                cursor: "pointer",
                                 fontWeight: "inherit",
-                              }
-                        }
-                        onClick={this.showOrder.bind(this, item.id)}
-                      >
-                        {item.id}
-                      </TableCell>
-                      {this.hasAccess(acces?.issuedd_access) && (
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.type_user}
-                        </TableCell>
-                      )}
-                      {this.hasAccess(acces?.num_client_access) && (
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.number}
-                        </TableCell>
-                      )}
-                      {this.hasAccess(acces?.address_access) && (
-                        <TableCell
-                          style={{
-                            color: "inherit",
-                            fontWeight: "inherit",
-                          }}
-                        >
-                          {item.street} {item.home}
-                        </TableCell>
-                      )}
-                      <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                        {item.date_time_order}
-                      </TableCell>
-                      {this.hasAccess(acces?.start_stol_access) && (
-                        <TableCell>
-                          {item.start_stol == "04:00:00" ? "" : item.start_stol}
-                        </TableCell>
-                      )}
+                              }}
+                            >
+                              {item.street} {item.home}
+                            </TableCell>
+                          )}
+                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                            {item.date_time_order}
+                          </TableCell>
+                          {this.hasAccess(acces?.start_stol_access) && (
+                            <TableCell>
+                              {item.start_stol == "04:00:00" ? "" : item.start_stol}
+                            </TableCell>
+                          )}
 
-                      <TableCell
-                        style={{
-                          color: "inherit",
-                          fontWeight: "inherit",
-                          backgroundColor: this.hasAccess(item.is_preorder) ? "#bababa" : "inherit",
-                        }}
-                      >
-                        {item.need_time}
-                      </TableCell>
-                      <TableCell
-                        style={{
-                          color: "inherit",
-                          fontWeight: "inherit",
-                          backgroundColor: this.hasAccess(acces?.late_access)
-                            ? item.cook_color
-                            : "",
-                        }}
-                      >
-                        {item.give_data_time == "00:00:00" ? "" : item.give_data_time}
-                      </TableCell>
-                      {this.hasAccess(acces?.cook_time_access) && (
-                        <TableCell
-                          style={{
-                            color: "inherit",
-                            fontWeight: "inherit",
-                            backgroundColor: this.hasAccess(acces?.cook_time_access)
-                              ? item.cook_color
-                              : "",
-                          }}
-                        >
-                          {item.cook_time}
-                        </TableCell>
-                      )}
-                      <TableCell
-                        style={{
-                          color: "inherit",
-                          fontWeight: "inherit",
-                          backgroundColor: this.hasAccess(acces?.late_access) ? item.all_color : "",
-                        }}
-                      >
-                        {item.close_order}
-                      </TableCell>
-                      {this.hasAccess(acces?.delay_access) && (
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.to_time}
-                        </TableCell>
-                      )}
-                      {this.hasAccess(acces?.dif_access) && (
-                        <TableCell
-                          style={{
-                            color: "inherit",
-                            fontWeight: "inherit",
-                            backgroundColor: this.hasAccess(acces?.dif_access)
-                              ? item.all_color
-                              : "",
-                          }}
-                        >
-                          {item.dif}
-                        </TableCell>
-                      )}
-                      {this.hasAccess(acces?.diff2_access) && (
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.diff2}
-                        </TableCell>
-                      )}
-                      {this.hasAccess(acces?.time_promise_access) && (
-                        <TableCell
-                          style={{
-                            color: "inherit",
-                            fontWeight: "inherit",
-                          }}
-                        >
-                          {item.unix_time_to_client == "0" ||
-                          this.hasAccess(item.is_preorder_access) == 1
-                            ? ""
-                            : item.unix_time_to_client}
-                        </TableCell>
-                      )}
-                      {this.hasAccess(acces?.time_dev_text_access) && (
-                        <TableCell
-                          style={{
-                            color: "inherit",
-                            fontWeight: "inherit",
-                            backgroundColor: this.hasAccess(acces?.time_dev_text_access)
-                              ? item.dev_color
-                              : "",
-                          }}
-                        >
-                          {item.time_dev_text}
-                        </TableCell>
-                      )}
+                          <TableCell
+                            style={{
+                              color: "inherit",
+                              fontWeight: "inherit",
+                              // backgroundColor: item.is_preorder ? "#bababa" : "inherit",
+                            }}
+                          >
+                            {item.is_preorder == 1 ? item.need_time : ""}
+                          </TableCell>
+                          <TableCell
+                            style={{
+                              color: "inherit",
+                              fontWeight: "inherit",
+                              backgroundColor: this.hasAccess(acces?.late_access)
+                                ? item.cook_color
+                                : "",
+                            }}
+                          >
+                            {item.give_data_time == "00:00:00" ? "" : item.give_data_time}
+                          </TableCell>
+                          {this.hasAccess(acces?.cook_time_access) && (
+                            <TableCell
+                              style={{
+                                color: "inherit",
+                                fontWeight: "inherit",
+                                backgroundColor: this.hasAccess(acces?.cook_time_access)
+                                  ? item.cook_color
+                                  : "",
+                              }}
+                            >
+                              {item.cook_time}
+                            </TableCell>
+                          )}
+                          <TableCell
+                            style={{
+                              color: "inherit",
+                              fontWeight: "inherit",
+                              backgroundColor: this.hasAccess(acces?.late_access)
+                                ? item.all_color
+                                : "",
+                            }}
+                          >
+                            {item.close_order}
+                          </TableCell>
+                          {this.hasAccess(acces?.delay_access) && (
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.to_time}
+                            </TableCell>
+                          )}
+                          {this.hasAccess(acces?.dif_access) && (
+                            <TableCell
+                              style={{
+                                color: "inherit",
+                                fontWeight: "inherit",
+                                backgroundColor: this.hasAccess(acces?.dif_access)
+                                  ? item.all_color
+                                  : "",
+                              }}
+                            >
+                              {item.dif}
+                            </TableCell>
+                          )}
+                          {this.hasAccess(acces?.diff2_access) && (
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.diff2}
+                            </TableCell>
+                          )}
+                          {this.hasAccess(acces?.time_promise_access) && (
+                            <TableCell
+                              style={{
+                                color: "inherit",
+                                fontWeight: "inherit",
+                              }}
+                            >
+                              {item.unix_time_to_client == "0" ||
+                              this.hasAccess(item.is_preorder_access) == 1
+                                ? ""
+                                : item.unix_time_to_client}
+                            </TableCell>
+                          )}
+                          {this.hasAccess(acces?.time_dev_text_access) && (
+                            <TableCell
+                              style={{
+                                color: "inherit",
+                                fontWeight: "inherit",
+                                backgroundColor: this.hasAccess(acces?.time_dev_text_access)
+                                  ? item.dev_color
+                                  : "",
+                              }}
+                            >
+                              {item.time_dev_text}
+                            </TableCell>
+                          )}
 
-                      <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                        {item.type_order}
-                      </TableCell>
-                      <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                        {item.status}
-                      </TableCell>
+                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                            {item.type_order}
+                          </TableCell>
+                          <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                            {item.status}
+                          </TableCell>
 
-                      {this.hasAccess(acces?.summ_access) && (
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.order_price}
-                        </TableCell>
-                      )}
-                      {this.hasAccess(acces?.payment_access) && (
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.type_pay}
-                        </TableCell>
-                      )}
-                      {this.hasAccess(acces?.driver_access) && (
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.driver}
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                          {this.hasAccess(acces?.summ_access) && (
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.order_price}
+                            </TableCell>
+                          )}
+                          {this.hasAccess(acces?.payment_access) && (
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.type_pay}
+                            </TableCell>
+                          )}
+                          {this.hasAccess(acces?.driver_access) && (
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.driver}
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
             ) : null}
           </Grid>
         </Grid>
