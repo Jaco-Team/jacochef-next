@@ -2265,7 +2265,7 @@ class ReceptModule_ extends React.Component {
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          {this.state.acces?.create_rec_access ? (
+          {this.state.acces?.create_rec_access || this.state.acces?.create_pol_access ? (
             <Grid
               size={{
                 xs: 12,
@@ -2279,26 +2279,7 @@ class ReceptModule_ extends React.Component {
                 onClick={this.openItemNew.bind(this, "Новый рецепт", "rec")}
                 variant="contained"
               >
-                Добавить рецепт
-              </Button>
-            </Grid>
-          ) : null}
-
-          {this.state.acces?.create_pol_access ? (
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-              sx={{
-                mb: 3,
-              }}
-            >
-              <Button
-                onClick={this.openItemNew.bind(this, "Новый полуфабрикат", "pf")}
-                variant="contained"
-              >
-                Добавить полуфабрикат
+                Добавить рецепт или полуфабрикат
               </Button>
             </Grid>
           ) : null}
