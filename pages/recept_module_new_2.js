@@ -714,6 +714,7 @@ class ReceptModule_Modal extends React.Component {
       name: "",
       shelf_life: "",
       storages: [],
+      addMethod: {},
       date_start: null,
       date_end: null,
       time: "",
@@ -721,6 +722,7 @@ class ReceptModule_Modal extends React.Component {
       two_user: "",
       rec_apps: [],
       rec_users: [],
+      acces_save: true,
       focusedRow: null,
       list: [],
       all_w: 0,
@@ -731,7 +733,24 @@ class ReceptModule_Modal extends React.Component {
       openAlert: false,
       err_status: false,
       err_text: "",
+      openDelete: false,
     };
+  }
+
+  async delete() {
+    const res = await this.props.getData("delete_item", {
+      id: this.props.rec.id,
+      type: this.props.type,
+    });
+    this.setState(
+      {
+        openDelete: false,
+      },
+      () => {
+        this.props.onClose();
+        this.props.update();
+      },
+    );
   }
 
   componentDidUpdate(prevProps) {
@@ -742,6 +761,19 @@ class ReceptModule_Modal extends React.Component {
     }
 
     if (this.props.rec !== prevProps.rec) {
+      let list = this.props.list;
+
+      let all_w_brutto = list.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
+
+      all_w_brutto = roundTo(all_w_brutto, 3);
+
+      let all_w_netto = list.reduce((sum, item) => sum + parseFloat(item.netto), 0);
+
+      all_w_netto = roundTo(all_w_netto, 3);
+
+      let all_w = list.reduce((sum, item) => sum + parseFloat(item.res), 0);
+
+      all_w = roundTo(all_w, 3);
       this.setState({
         name: this.props.rec?.name,
         shelf_life: this.props.rec?.shelf_life,
@@ -749,69 +781,52 @@ class ReceptModule_Modal extends React.Component {
         time: this.props.rec?.time_min,
         date_start: this.props.rec?.date_start ? formatDate(this.props.rec.date_start) : null,
         date_end: this.props.rec?.date_end ? formatDate(this.props.rec.date_end) : null,
-        list: this.props.list.length ? this.props.list : [],
+        list: this.props.list.length ? list : [],
         rec_apps: this.props.rec?.rec_apps ?? [],
         rec_users: this.props.rec?.rec_users ?? [],
         two_user: this.props.rec?.two_user,
-        all_w: this.props.rec?.all_w,
-        all_w_brutto: this.props.rec?.all_w_brutto,
-        all_w_netto: this.props.rec?.all_w_netto,
+        all_w: all_w,
+        all_w_brutto: all_w_brutto,
+        all_w_netto: all_w_netto,
         show_in_rev: this.props.rec?.show_in_rev,
         dop_time: this.props.rec?.time_min_dop,
       });
-      if (this.props.typeMethod === "edit_rec") {
-        let objAcces = {
-          name_edit: this.props.acces?.name_edit,
-          name_view: this.props.acces?.name_view,
-          shelf_life_edit: this.props.acces?.shelf_life_edit,
-          shelf_life_view: this.props.acces?.shelf_life_view,
-          two_user_edit: this.props.acces?.two_user_edit,
-          two_user_view: this.props.acces?.two_user_view,
-          show_in_rev_edit: this.props.acces?.show_in_rev_edit,
-          show_in_rev_view: this.props.acces?.show_in_rev_view,
-          date_start_edit: this.props.acces?.date_start_edit,
-          date_start_view: this.props.acces?.date_start_view,
-          date_end_edit: this.props.acces?.date_end_edit,
-          date_end_view: this.props.acces?.date_end_view,
-          time_edit: this.props.acces?.time_edit,
-          time_view: this.props.acces?.time_view,
-          dop_time_edit: this.props.acces?.dop_time_edit,
-          dop_time_view: this.props.acces?.dop_time_view,
-          rec_apps_edit: this.props.acces?.rec_apps_edit,
-          rec_apps_view: this.props.acces?.rec_apps_view,
-          storages_edit: this.props.acces?.storages_edit,
-          storages_view: this.props.acces?.storages_view,
-        };
-        this.setState({
-          acces: objAcces,
-        });
-      } else {
-        let objAcces = {
-          name_edit: this.props.acces?.name_pf_edit,
-          name_view: this.props.acces?.name_pf_view,
-          shelf_life_edit: this.props.acces?.shelf_life_pf_edit,
-          shelf_life_view: this.props.acces?.shelf_life_pf_view,
-          two_user_edit: this.props.acces?.two_user_pf_edit,
-          two_user_view: this.props.acces?.two_user_pf_view,
-          show_in_rev_edit: this.props.acces?.show_in_rev_pf_edit,
-          show_in_rev_view: this.props.acces?.show_in_rev_pf_view,
-          date_start_edit: this.props.acces?.date_start_pf_edit,
-          date_start_view: this.props.acces?.date_start_pf_view,
-          date_end_edit: this.props.acces?.date_end_pf_edit,
-          date_end_view: this.props.acces?.date_end_pf_view,
-          time_edit: this.props.acces?.time_pf_edit,
-          time_view: this.props.acces?.time_pf_view,
-          dop_time_edit: this.props.acces?.dop_time_pf_edit,
-          dop_time_view: this.props.acces?.dop_time_pf_view,
-          rec_apps_edit: this.props.acces?.rec_apps_pf_edit,
-          rec_apps_view: this.props.acces?.rec_apps_pf_view,
-          storages_edit: this.props.acces?.storages_pf_edit,
-          storages_view: this.props.acces?.storages_pf_view,
-        };
-        this.setState({
-          acces: objAcces,
-        });
-      }
+
+      let objAcces = {
+        name_edit: this.props.acces?.name_edit,
+        name_view: this.props.acces?.name_view,
+        shelf_life_edit: this.props.acces?.shelf_life_edit,
+        shelf_life_view: this.props.acces?.shelf_life_view,
+        two_user_edit: this.props.acces?.two_user_edit,
+        two_user_view: this.props.acces?.two_user_view,
+        show_in_rev_edit: this.props.acces?.show_in_rev_edit,
+        show_in_rev_view: this.props.acces?.show_in_rev_view,
+        date_start_edit: this.props.acces?.date_start_edit,
+        date_start_view: this.props.acces?.date_start_view,
+        date_end_edit: this.props.acces?.date_end_edit,
+        date_end_view: this.props.acces?.date_end_view,
+        time_edit: this.props.acces?.time_edit,
+        time_view: this.props.acces?.time_view,
+        dop_time_edit: this.props.acces?.dop_time_edit,
+        dop_time_view: this.props.acces?.dop_time_view,
+        rec_apps_edit: this.props.acces?.rec_apps_edit,
+        rec_apps_view: this.props.acces?.rec_apps_view,
+        storages_edit: this.props.acces?.storages_edit,
+        storages_view: this.props.acces?.storages_view,
+        items_edit: this.props.acces?.items_edit,
+        items_view: this.props.acces?.items_view,
+      };
+
+      this.setState({
+        acces: objAcces,
+        acces_save: Object.entries(objAcces).filter(
+          ([key, value]) => key.includes("_edit") && value,
+        )?.length,
+        addMethod:
+          this.props.method === "Новый рецепт"
+            ? { id: "rec", name: "Рецепт" }
+            : { id: "pf", name: "Полуфабрикат" },
+      });
     }
   }
 
@@ -1065,6 +1080,17 @@ class ReceptModule_Modal extends React.Component {
               <CloseIcon />
             </IconButton>
           </DialogTitle>
+          {this.state.openDelete && (
+            <ModalAccept
+              open={this.state.openDelete}
+              onClose={() => this.setState({ openDelete: false })}
+              title="Удалить товар?"
+              save={() => {
+                this.delete();
+                this.setState({ openDelete: false });
+              }}
+            />
+          )}
           <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
             <Grid
               container
@@ -1076,10 +1102,35 @@ class ReceptModule_Modal extends React.Component {
                   sm: 3,
                 }}
                 style={
-                  this.props.method !== "Новый рецепт" &&
-                  this.props.method !== "Новый полуфабрикат" &&
-                  !this.state.acces?.name_edit &&
-                  !this.state.acces?.name_view
+                  this.props.method === "Новый рецепт" || this.props.method === "Новый полуфабрикат"
+                    ? {}
+                    : { display: "none" }
+                }
+              >
+                <MyAutocomplite
+                  label="Тип"
+                  multiple={false}
+                  data={[
+                    { id: "rec", name: "Рецепт" },
+                    { id: "pf", name: "Полуфабрикат" },
+                  ]}
+                  value={this.state.addMethod}
+                  func={(event, value) => {
+                    if (value.id === "rec") {
+                      this.props.changeAddMethod("Новый рецепт", "rec");
+                    } else {
+                      this.props.changeAddMethod("Новый полуфабрикат", "pf");
+                    }
+                  }}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3,
+                }}
+                style={
+                  !this.state.acces?.name_edit && !this.state.acces?.name_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1087,11 +1138,7 @@ class ReceptModule_Modal extends React.Component {
                 <MyTextInput
                   label="Наименование"
                   value={this.state.name}
-                  disabled={
-                    this.props.method !== "Новый рецепт" &&
-                    this.props.method !== "Новый полуфабрикат" &&
-                    !this.state.acces?.name_edit
-                  }
+                  disabled={!this.state.acces?.name_edit}
                   func={this.changeItem.bind(this, "name")}
                 />
               </Grid>
@@ -1101,10 +1148,7 @@ class ReceptModule_Modal extends React.Component {
                   sm: 3,
                 }}
                 style={
-                  this.props.method !== "Новый рецепт" &&
-                  this.props.method !== "Новый полуфабрикат" &&
-                  !this.state.acces?.shelf_life_edit &&
-                  !this.state.acces?.shelf_life_view
+                  !this.state.acces?.shelf_life_edit && !this.state.acces?.shelf_life_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1112,11 +1156,7 @@ class ReceptModule_Modal extends React.Component {
                 <MyTextInput
                   label="Срок годности"
                   value={this.state.shelf_life}
-                  disabled={
-                    this.props.method !== "Новый рецепт" &&
-                    this.props.method !== "Новый полуфабрикат" &&
-                    !this.state.acces?.shelf_life_edit
-                  }
+                  disabled={!this.state.acces?.shelf_life_edit}
                   func={this.changeItem.bind(this, "shelf_life")}
                 />
               </Grid>
@@ -1126,10 +1166,7 @@ class ReceptModule_Modal extends React.Component {
                   sm: 3,
                 }}
                 style={
-                  this.props.method !== "Новый рецепт" &&
-                  this.props.method !== "Новый полуфабрикат" &&
-                  !this.state.acces?.two_user_edit &&
-                  !this.state.acces?.two_user_view
+                  !this.state.acces?.two_user_edit && !this.state.acces?.two_user_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1139,11 +1176,7 @@ class ReceptModule_Modal extends React.Component {
                   data={this.state.rec_users}
                   value={this.state.two_user}
                   func={this.changeItem.bind(this, "two_user")}
-                  disabled={
-                    this.props.method !== "Новый рецепт" &&
-                    this.props.method !== "Новый полуфабрикат" &&
-                    !this.state.acces?.two_user_edit
-                  }
+                  disabled={!this.state.acces?.two_user_edit}
                   label="Количество сотрудников"
                 />
               </Grid>
@@ -1153,10 +1186,7 @@ class ReceptModule_Modal extends React.Component {
                   sm: 3,
                 }}
                 style={
-                  this.props.method !== "Новый рецепт" &&
-                  this.props.method !== "Новый полуфабрикат" &&
-                  !this.state.acces?.show_in_rev_edit &&
-                  !this.state.acces?.show_in_rev_view
+                  !this.state.acces?.show_in_rev_edit && !this.state.acces?.show_in_rev_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1164,11 +1194,7 @@ class ReceptModule_Modal extends React.Component {
                 <MyCheckBox
                   label="Ревизия"
                   value={parseInt(this.state.show_in_rev) == 1 ? true : false}
-                  disabled={
-                    this.props.method !== "Новый рецепт" &&
-                    this.props.method !== "Новый полуфабрикат" &&
-                    !this.state.acces?.show_in_rev_edit
-                  }
+                  disabled={!this.state.acces?.show_in_rev_edit}
                   func={this.changeItemChecked.bind(this, "show_in_rev")}
                 />
               </Grid>
@@ -1178,10 +1204,7 @@ class ReceptModule_Modal extends React.Component {
                   sm: 3,
                 }}
                 style={
-                  this.props.method !== "Новый рецепт" &&
-                  this.props.method !== "Новый полуфабрикат" &&
-                  !this.state.acces?.date_start_edit &&
-                  !this.state.acces?.date_start_view
+                  !this.state.acces?.date_start_edit && !this.state.acces?.date_start_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1190,13 +1213,9 @@ class ReceptModule_Modal extends React.Component {
                   label="Действует с"
                   format="DD.MM.YYYY"
                   maxDate={this.state.date_end ? dayjs(this.state.date_end) : null}
-                  minDate={dayjs(new Date()).add(1, "day")}
+                  minDate={dayjs(new Date())}
                   value={this.state.date_start}
-                  disabled={
-                    this.props.method !== "Новый рецепт" &&
-                    this.props.method !== "Новый полуфабрикат" &&
-                    !this.state.acces?.date_start_edit
-                  }
+                  disabled={!this.state.acces?.date_start_edit}
                   func={this.changeDateRange.bind(this, "date_start")}
                 />
               </Grid>
@@ -1206,10 +1225,7 @@ class ReceptModule_Modal extends React.Component {
                   sm: 3,
                 }}
                 style={
-                  this.props.method !== "Новый рецепт" &&
-                  this.props.method !== "Новый полуфабрикат" &&
-                  !this.state.acces?.date_end_edit &&
-                  !this.state.acces?.date_end_view
+                  !this.state.acces?.date_end_edit && !this.state.acces?.date_end_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1219,11 +1235,7 @@ class ReceptModule_Modal extends React.Component {
                   format="DD.MM.YYYY"
                   minDate={dayjs(new Date()).add(1, "day")}
                   value={this.state.date_end}
-                  disabled={
-                    this.props.method !== "Новый рецепт" &&
-                    this.props.method !== "Новый полуфабрикат" &&
-                    !this.state.acces?.date_end_edit
-                  }
+                  disabled={!this.state.acces?.date_end_edit}
                   func={this.changeDateRange.bind(this, "date_end")}
                 />
               </Grid>
@@ -1233,10 +1245,7 @@ class ReceptModule_Modal extends React.Component {
                   sm: 3,
                 }}
                 style={
-                  this.props.method !== "Новый рецепт" &&
-                  this.props.method !== "Новый полуфабрикат" &&
-                  !this.state.acces?.time_edit &&
-                  !this.state.acces?.time_view
+                  !this.state.acces?.time_edit && !this.state.acces?.time_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1245,11 +1254,7 @@ class ReceptModule_Modal extends React.Component {
                   label="Время приготовления 1 кг ММ:SS (15:20)"
                   value={this.state.time}
                   isTimeMask
-                  disabled={
-                    this.props.method !== "Новый рецепт" &&
-                    this.props.method !== "Новый полуфабрикат" &&
-                    !this.state.acces?.time_edit
-                  }
+                  disabled={!this.state.acces?.time_edit}
                   func={this.changeItem.bind(this, "time")}
                 />
               </Grid>
@@ -1259,10 +1264,7 @@ class ReceptModule_Modal extends React.Component {
                   sm: 3,
                 }}
                 style={
-                  this.props.method !== "Новый рецепт" &&
-                  this.props.method !== "Новый полуфабрикат" &&
-                  !this.state.acces?.dop_time_edit &&
-                  !this.state.acces?.dop_time_view
+                  !this.state.acces?.dop_time_edit && !this.state.acces?.dop_time_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1271,11 +1273,7 @@ class ReceptModule_Modal extends React.Component {
                   label="Доп. время (уборка рабочего места) MM:SS (15:20)"
                   value={this.state.dop_time}
                   isTimeMask
-                  disabled={
-                    this.props.method !== "Новый рецепт" &&
-                    this.props.method !== "Новый полуфабрикат" &&
-                    !this.state.acces?.dop_time_edit
-                  }
+                  disabled={!this.state.acces?.dop_time_edit}
                   func={this.changeItem.bind(this, "dop_time")}
                 />
               </Grid>
@@ -1285,10 +1283,7 @@ class ReceptModule_Modal extends React.Component {
                   sm: 6,
                 }}
                 style={
-                  this.props.method !== "Новый рецепт" &&
-                  this.props.method !== "Новый полуфабрикат" &&
-                  !this.state.acces?.rec_apps_edit &&
-                  !this.state.acces?.rec_apps_view
+                  !this.state.acces?.rec_apps_edit && !this.state.acces?.rec_apps_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1297,11 +1292,7 @@ class ReceptModule_Modal extends React.Component {
                   label="Должность в кафе (кто будет готовить)"
                   multiple={true}
                   data={apps}
-                  disabled={
-                    this.props.method !== "Новый рецепт" &&
-                    this.props.method !== "Новый полуфабрикат" &&
-                    !this.state.acces?.rec_apps_edit
-                  }
+                  disabled={!this.state.acces?.rec_apps_edit}
                   value={this.state.rec_apps}
                   func={this.changeComplite.bind(this, "rec_apps")}
                 />
@@ -1312,10 +1303,7 @@ class ReceptModule_Modal extends React.Component {
                   sm: 6,
                 }}
                 style={
-                  this.props.method !== "Новый рецепт" &&
-                  this.props.method !== "Новый полуфабрикат" &&
-                  !this.state.acces?.storages_edit &&
-                  !this.state.acces?.storages_view
+                  !this.state.acces?.storages_edit && !this.state.acces?.storages_view
                     ? { display: "none" }
                     : {}
                 }
@@ -1325,11 +1313,7 @@ class ReceptModule_Modal extends React.Component {
                   multiple={true}
                   data={storages}
                   value={this.state.storages}
-                  disabled={
-                    this.props.method !== "Новый рецепт" &&
-                    this.props.method !== "Новый полуфабрикат" &&
-                    !this.state.acces?.storages_edit
-                  }
+                  disabled={!this.state.acces?.storages_edit}
                   func={this.changeComplite.bind(this, "storages")}
                 />
               </Grid>
@@ -1339,6 +1323,16 @@ class ReceptModule_Modal extends React.Component {
                   xs: 12,
                   sm: 12,
                 }}
+                style={
+                  !this.state.acces?.items_edit && !this.state.acces?.items_view
+                    ? {
+                        backgroundColor: "rgba(245,245,245,0.5)",
+                        pointerEvents: "none",
+                        cursor: "not-allowed",
+                        opacity: "0.6",
+                      }
+                    : {}
+                }
               >
                 <Table>
                   <TableHead>
@@ -1503,12 +1497,36 @@ class ReceptModule_Modal extends React.Component {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button
-              variant="contained"
-              onClick={this.save.bind(this)}
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                justifyContent:
+                  (this.props.acces?.delete_access && this.props.method !== "Новый рецепт") ||
+                  this.props.method !== "Новый полуфабрикат"
+                    ? "space-between"
+                    : "flex-end",
+              }}
             >
-              Сохранить
-            </Button>
+              {(this.props.acces?.delete_access && this.props.method !== "Новый рецепт") ||
+              this.props.method !== "Новый полуфабрикат" ? (
+                <Button
+                  color="primary"
+                  onClick={() => this.setState({ openDelete: true })}
+                  variant="contained"
+                >
+                  Удалить
+                </Button>
+              ) : null}
+              <Button
+                color="success"
+                disabled={!this.state.acces_save}
+                onClick={this.save.bind(this)}
+                variant="contained"
+              >
+                Сохранить
+              </Button>
+            </div>
           </DialogActions>
         </Dialog>
       </>
@@ -1871,7 +1889,6 @@ class ReceptModule_ extends React.Component {
 
     if (type === "rec") {
       const res = await this.getData("get_one_rec", data);
-
       res.pf_list.map((pf) => {
         const value = res.all_pf_list.find(
           (item) => parseInt(item.id) === parseInt(pf.item_id) && item.type_rec === pf.type_rec,
@@ -2203,12 +2220,15 @@ class ReceptModule_ extends React.Component {
           open={this.state.modalDialog}
           onClose={() => this.setState({ modalDialog: false })}
           all_pf_list={this.state.all_pf_list}
+          update={this.update.bind(this)}
           method={this.state.method}
           typeMethod={this.state.typeMethod}
+          changeAddMethod={this.openItemNew.bind(this)}
           storages={this.state.storages}
           apps={this.state.apps}
           rec={this.state.rec}
           acces={this.state.acces}
+          getData={this.getData.bind(this)}
           saveNew={this.saveNew.bind(this)}
           saveEdit={this.saveEdit.bind(this)}
           fullScreen={this.state.fullScreen}
