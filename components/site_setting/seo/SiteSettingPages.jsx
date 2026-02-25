@@ -56,19 +56,7 @@ export function SiteSettingPages() {
   }, [cityId]);
 
   useEffect(() => {
-    const data = {
-      submodule,
-      city_id: cityId,
-    };
-    getData("get_page_text_data", data)
-      .then((response) => {
-        setModuleName(response.submodule.name);
-        setPages(response.pages);
-        setCategories(response.categories);
-      })
-      .catch((e) => {
-        showAlert(`Fetch error: ${e}`, false);
-      });
+    fetchCoreData();
   }, [cityId]);
 
   const { saveNew, saveEdit, setPageItem } = useSavePage(
@@ -106,10 +94,6 @@ export function SiteSettingPages() {
       },
     );
   };
-
-  useEffect(() => {
-    fetchCoreData();
-  }, []);
 
   // update page name in modal title
   useEffect(

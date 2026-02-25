@@ -15,6 +15,7 @@ import Dropzone from "dropzone";
 import dayjs from "dayjs";
 import { dropzoneOptions } from "./bannerUtils";
 import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingStore";
+import HistoryLog from "../HistoryLog";
 
 export function BannerModal({ getData, showAlert, id, action }) {
   const banner = useBannerModalStore((state) => state.banner);
@@ -398,12 +399,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
               <div style={{ height: 400, display: "flex" }}>
                 <img
                   style={{ width: "100%", height: "auto", alignSelf: "center", borderRadius: 40 }}
-                  src={
-                    "https://storage.yandexcloud.net/site-home-img/" +
-                    banner?.this_ban?.img +
-                    "_1000x500.jpg?date_update=" +
-                    banner?.this_ban?.date_update
-                  }
+                  src={`https://storage.yandexcloud.net/site-home-img/${banner?.this_ban?.img}_1000x500.jpg?date_update=${banner?.this_ban?.date_update}`}
                 />
               </div>
             ) : null}
@@ -435,12 +431,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             />
           </Grid>
 
-          <Grid
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
+          <Grid size={12}>
             <TextEditor
               value={banner?.this_ban?.text || ""}
               func={(content) => changeThisBanField("text", null, content)}
@@ -448,6 +439,14 @@ export function BannerModal({ getData, showAlert, id, action }) {
               disabled={acces.banners_view && !acces.banners_edit}
             />
           </Grid>
+          {banner?.history?.length > 0 && (
+            <Grid size={12}>
+              <HistoryLog
+                history={banner.history}
+                type={banner.type_illustration}
+              />
+            </Grid>
+          )}
         </>
       )}
     </Grid>

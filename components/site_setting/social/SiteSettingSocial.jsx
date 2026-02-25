@@ -5,13 +5,41 @@ import { Button, Grid, Typography } from "@mui/material";
 import { useCallback, useEffect } from "react";
 import { useSocialStore } from "./useSocialStore";
 import { useSiteSettingStore } from "../useSiteSettingStore";
+import useApi from "@/src/hooks/useApi";
+import HistoryLog from "../HistoryLog";
 
 export function SiteSettingSocial() {
   const submodule = "social";
 
-  const [moduleName, dataInfo] = useSocialStore((state) => [state.moduleName, state.dataInfo]);
+  const { moduleName, dataInfo, history, setDataInfo, setModuleName, setHistory } = useSocialStore(
+    (s) => ({
+      moduleName: s.moduleName,
+      dataInfo: s.dataInfo,
+      history: s.history,
+      setDataInfo: s.setDataInfo,
+      setModuleName: s.setModuleName,
+      setHistory: s.setHistory,
+    }),
+  );
+  const setSocialState = useSocialStore.setState;
 
-  const { setDataInfo, setModuleName, getData } = useSocialStore.getState();
+  const parentModule = useSiteSettingStore.getState().module;
+  const { api_laravel } = useApi(parentModule);
+
+  const getData = async (method, data = {}) => {
+    const { setIsLoad } = useSiteSettingStore.getState();
+    setIsLoad(true);
+    try {
+      // inject submodule type
+      data.submodule = "social";
+      const result = await api_laravel(method, data);
+      return result;
+    } catch (e) {
+      throw e;
+    } finally {
+      setIsLoad(false);
+    }
+  };
 
   const [cityId, cities, acces, setCityId] = useSiteSettingStore((state) => [
     state.city_id,
@@ -32,6 +60,7 @@ export function SiteSettingSocial() {
     try {
       const res = await getData("get_social_data", data);
       setDataInfo(res?.links || []);
+      setHistory(res?.history || []);
       setModuleName(res?.submodule?.name || "");
     } catch (e) {
       console.log(`Error getting social networks data: ${e.message}`);
@@ -49,16 +78,42 @@ export function SiteSettingSocial() {
       fb: dataInfo.fb,
       file1: "",
     };
+    // console.log('Saving: ', data);
     await getData("save_social_data", data);
+    await updateData();
   };
 
   const changeData = (type, event) => {
-    setDataInfo((info) => ({ ...info, [type]: event.target?.value || "" }));
+    setSocialState((state) => ({
+      ...state,
+      dataInfo: { ...state.dataInfo, [type]: event.target?.value || "" },
+    }));
+  };
+
+  const restoreData = (id) => {
+    setSocialState((state) => {
+      const historyItem = state.history.find((item) => item.id === id);
+      if (!historyItem) return state;
+
+      let restoredData = { ...state.dataInfo };
+      try {
+        const diff = JSON.parse(historyItem.diff_json);
+        Object.entries(diff).forEach(([key, value]) => {
+          restoredData[key] = value.from || "";
+        });
+      } catch (e) {
+        console.error("Error parsing diff JSON for restore", e);
+      }
+      return {
+        ...state,
+        dataInfo: restoredData,
+      };
+    });
   };
 
   useEffect(() => {
     updateData();
-  }, [updateData]);
+  }, [cityId]);
 
   return (
     <Grid
@@ -192,6 +247,15 @@ export function SiteSettingSocial() {
             </Grid>
           )}
         </>
+      )}
+      {!!history?.length && (
+        <Grid size={12}>
+          <HistoryLog
+            history={history}
+            restoreFunc={restoreData}
+            mt={3}
+          />
+        </Grid>
       )}
     </Grid>
   );
