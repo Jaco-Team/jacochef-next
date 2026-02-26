@@ -1,21 +1,824 @@
 import * as React from "react";
 import Container from "@mui/material/Container";
-// import Typography from '@mui/material/Typography';
-// import Box from '@mui/material/Box';
-//import ProTip from '../src/ProTip';
-//import Link from '../src/Link';
-//import Copyright from '../src/Copyright';
+import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { useEffect, useMemo, useState } from "react";
+import TextField from "@mui/material/TextField";
+import Autocomplete from "@mui/material/Autocomplete";
+import InputAdornment from "@mui/material/InputAdornment";
+import SearchIcon from "@mui/icons-material/Search";
+import Collapse from "@mui/material/Collapse";
+import { SearchAutocomplete, StarIcon } from "@/ui/Forms/SearchAutocomplete";
+import { Grid, Paper, Typography, Box, Chip, IconButton } from "@mui/material";
+import Button from "@mui/material/Button";
+import { ModalAddLog } from "@/components/general/ModalAddLog";
+import AddIcon from "@mui/icons-material/Add";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { ModalAccept } from "@/components/general/ModalAccept";
+import EditIcon from "@mui/icons-material/Edit";
+import { ModalEditLog } from "@/components/general/ModaEditLog";
+import CloseIcon from "@mui/icons-material/Close";
+import CircularProgress from "@mui/material/CircularProgress";
+import Backdrop from "@mui/material/Backdrop";
+import MyAlert from "@/ui/MyAlert";
+
+const FAVORITES_STORAGE_KEY = "favorite_childs";
+const FAVORITES_ORDER_KEY = "favorite_childs_order";
+
+const SortableItem = ({ module, isClient, onFavoriteClick }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: module.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDragging ? "grabbing" : "default",
+    height: "100%",
+    display: "flex",
+  };
+  const [modules, setModules] = useState({});
+  const [openModal, setOpenModal] = useState(false);
+
+  const save = () => {
+    onFavoriteClick(modules);
+  };
+
+  return (
+    <Grid
+      item
+      xs={12}
+      sm={6}
+      md={6}
+      lg={4}
+      xl={3}
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      sx={{
+        display: "flex",
+      }}
+    >
+      {openModal ? (
+        <ModalAccept
+          open={openModal}
+          onClose={() => setOpenModal(false)}
+          title={"Удалить избранное"}
+          save={save}
+        />
+      ) : null}
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 2,
+          padding: "12px 20px",
+          height: "100%",
+          width: "100%",
+          backgroundColor: "#fff",
+          border: isDragging ? "2px solid #1977D2" : "1px solid #e5e5e5",
+          boxShadow: isDragging ? "0 8px 16px rgba(0,0,0,0.1)" : "none",
+          "&:hover": {
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          },
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          {...listeners}
+          sx={{
+            position: "absolute",
+            top: "12px",
+            left: "4px",
+            cursor: "grab",
+            color: "#A6A6A6",
+            "&:hover": { color: "#1977D2" },
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "24px",
+            height: "24px",
+            borderRadius: "4px",
+            zIndex: 1,
+          }}
+        >
+          <DragIndicatorIcon fontSize="small" />
+        </Box>
+
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            mb: 1,
+            pl: 3,
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              fontSize: "18px",
+              fontWeight: 500,
+              color: "#333",
+              pr: 2,
+              cursor: "pointer",
+              "&:hover": { color: "#1977D2" },
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (module.key_query) {
+                window.location = "/" + module.key_query;
+              }
+            }}
+          >
+            {module.name}
+          </Typography>
+          <IconButton
+            size="small"
+            sx={{ p: 0.5 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setModules(module);
+              setOpenModal(true);
+            }}
+          >
+            {module.isFavorite ? (
+              <StarIcon isActive={module.isFavorite} />
+            ) : (
+              <StarIcon sx={{ color: "#C9C9C9", fontSize: 18 }} />
+            )}
+          </IconButton>
+        </Box>
+
+        <Typography
+          variant="body2"
+          sx={{
+            color: "#666",
+            mb: 2,
+            fontSize: "14px",
+            lineHeight: 1.4,
+            pl: 3,
+            maxWidth: "358px",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {module.description || ""}
+        </Typography>
+
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 1,
+            ml: 3,
+            pt: 1,
+            borderTop: "1px solid #F3F3F3",
+            mt: "auto",
+            maxWidth: "358px",
+            overflow: "hidden",
+          }}
+        >
+          {module.navs_id?.slice(0, 6).map((tag, index) => (
+            <Chip
+              key={index}
+              label={tag.name}
+              size="small"
+              sx={{
+                backgroundColor: "#E3F2FD",
+                color: "#1977D2",
+                border: "1px solid #BCDEFB",
+                borderRadius: "8px",
+                fontSize: "12px",
+                fontWeight: 400,
+                height: "28px",
+                "&:hover": { backgroundColor: "#BBDEFB" },
+              }}
+            />
+          ))}
+          {module.navs_id?.length > 2 && (
+            <Chip
+              label={`+${module.navs_id.length - 6}`}
+              size="small"
+              sx={{
+                backgroundColor: "#F5F5F5",
+                fontSize: "12px",
+                height: "28px",
+              }}
+            />
+          )}
+        </Box>
+      </Paper>
+    </Grid>
+  );
+};
 
 export default function Index() {
+  const [isOpenMenu, setIsOpenMenu] = useState(false);
+  const [catMenu, setCatMenu] = useState([]);
+  const [fullMenu, setFullMenu] = useState([]);
+  const [openModal, setOpenModal] = useState(false);
+  const [openNews, setOpenNews] = useState(false);
+  const [openModalEdit, setOpenModalEdit] = useState(false);
+  const [navs, setNavs] = useState([]);
+  const [changelog, setChangelog] = useState([]);
+  const [openAlert, setOpenAlert] = useState(false);
+  const [errStatus, setErrStatus] = useState(false);
+  const [errText, setErrText] = useState("");
+  const [my, setMy] = useState({});
+  const [conts, setConts] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const [isClient, setIsClient] = useState(false);
+  const [modules, setModules] = useState([]);
+  const [module, setModule] = useState({});
+  const [moduleOrder, setModuleOrder] = useState([]);
+  const [windowWidth, setWindowWidth] = useState(0);
+
+  const getDeviceType = () => {
+    if (!isClient) return "desktop";
+    if (windowWidth < 600) return "mobile";
+    if (windowWidth < 960) return "tablet";
+    if (windowWidth < 1280) return "smallDesktop";
+    return "desktop";
+  };
+
+  const deviceType = getDeviceType();
+  const isMobile = deviceType === "mobile";
+  const isTablet = deviceType === "tablet";
+  const isSmallDesktop = deviceType === "smallDesktop";
+  const isDesktop = deviceType === "desktop";
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const getData = async (method, data = {}) => {
+    setLoading(true);
+    try {
+      const result = await api_laravel("header", method, data);
+      if (result?.data?.text) {
+        setErrStatus(result.data?.st);
+        setErrText(result.data?.text);
+        setOpenAlert(true);
+      }
+
+      return result.data;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  async function loadMenu() {
+    const response = await getData("get_all_main");
+    console.log(response);
+    if (response?.st === true) {
+      setCatMenu(response?.left_menu);
+      setMy(response?.my);
+      setNavs(response?.navs);
+      setConts(response?.conts);
+      setChangelog(response?.changelog);
+      setFullMenu(
+        response?.full_menu.filter(
+          (item, index, self) => index === self.findIndex((t) => t.name === item.name),
+        ),
+      );
+    }
+  }
+
+  useEffect(() => {
+    setIsClient(true);
+    setWindowWidth(window.innerWidth);
+
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      try {
+        const favorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
+        let parsedFavorites = favorites ? JSON.parse(favorites) : [];
+
+        const order = localStorage.getItem(FAVORITES_ORDER_KEY);
+        let parsedOrder = order ? JSON.parse(order) : [];
+
+        if (parsedOrder.length > 0 && parsedFavorites.length > 0) {
+          const sortedModules = [...parsedFavorites].sort((a, b) => {
+            const indexA = parsedOrder.indexOf(a.id);
+            const indexB = parsedOrder.indexOf(b.id);
+
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+          });
+
+          setModules(sortedModules);
+          setModuleOrder(sortedModules.map((m) => m.id));
+        } else {
+          setModules(parsedFavorites);
+          setModuleOrder(parsedFavorites.map((m) => m.id));
+        }
+      } catch (error) {
+        console.error("Ошибка при чтении из localStorage:", error);
+      }
+    }
+  }, [isClient]);
+
+  useEffect(() => {
+    if (isClient && modules.length > 0) {
+      try {
+        localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(modules));
+        localStorage.setItem(FAVORITES_ORDER_KEY, JSON.stringify(moduleOrder));
+      } catch (error) {
+        console.error("Ошибка при сохранении в localStorage:", error);
+      }
+    }
+  }, [modules, moduleOrder, isClient]);
+
+  useEffect(() => {
+    loadMenu();
+  }, []);
+
+  const saveModules = async (data) => {
+    const response = await getData("save_log", data);
+    if (response.st) {
+      setOpenModal(false);
+    }
+
+    loadMenu();
+  };
+
+  const editModules = async (data) => {
+    const response = await getData("edit_log", data);
+    if (response.st) {
+      setOpenModal(false);
+    }
+    setOpenModalEdit(false);
+    loadMenu();
+  };
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      setModules((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        const newItems = arrayMove(items, oldIndex, newIndex);
+
+        setModuleOrder(newItems.map((item) => item.id));
+
+        return newItems;
+      });
+    }
+  };
+
+  const getModules = () => {
+    if (isClient) {
+      try {
+        const favorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
+        let parsedFavorites = favorites ? JSON.parse(favorites) : [];
+
+        const order = localStorage.getItem(FAVORITES_ORDER_KEY);
+        let parsedOrder = order ? JSON.parse(order) : [];
+
+        if (parsedOrder.length > 0 && parsedFavorites.length > 0) {
+          const sortedModules = [...parsedFavorites].sort((a, b) => {
+            const indexA = parsedOrder.indexOf(a.id);
+            const indexB = parsedOrder.indexOf(b.id);
+
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+          });
+
+          setModules(sortedModules);
+          setModuleOrder(sortedModules.map((m) => m.id));
+        } else {
+          setModules(parsedFavorites);
+          setModuleOrder(parsedFavorites.map((m) => m.id));
+        }
+      } catch (error) {
+        console.error("Ошибка при чтении из localStorage:", error);
+      }
+    }
+  };
+
+  const handleFavoriteClick = (clickedModule) => {
+    setModules((prevModules) => {
+      const newModules = prevModules.filter((m) => m.id !== clickedModule.id);
+      const newOrder = newModules.map((m) => m.id);
+      setModuleOrder(newOrder);
+
+      if (isClient) {
+        localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(newModules));
+        localStorage.setItem(FAVORITES_ORDER_KEY, JSON.stringify(newOrder));
+      }
+
+      return newModules;
+    });
+  };
+
+  if (!isClient) {
+    return (
+      <Grid
+        container
+        spacing={2}
+        className="container_first_child"
+      >
+        <Grid size={{ xs: 12, xl: 9, lg: 8, md: 7, sm: 12 }}>
+          <Box sx={{ p: 3, backgroundColor: "#f5f5f5", minHeight: "582px", borderRadius: "12px" }}>
+            <Typography
+              variant="h6"
+              sx={{ mb: 3 }}
+            >
+              Избранное
+            </Typography>
+            <Box sx={{ textAlign: "center", py: 8, color: "#999" }}>Загрузка...</Box>
+          </Box>
+        </Grid>
+        <Grid size={{ xs: 12, xl: 3, lg: 4, md: 5, sm: 12 }}>
+          <div
+            style={{
+              width: "95%",
+              backgroundColor: "#F3F3F3",
+              borderRadius: "12px",
+              padding: "16px",
+            }}
+          >
+            <h3 style={{ color: "#3C3B3B", fontWeight: "400" }}>Обновления</h3>
+          </div>
+        </Grid>
+      </Grid>
+    );
+  }
+
   return (
-    <Container maxWidth="sm">
-      {/* <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
-          Material UI - Next.js example
-        </Typography>
-        
-      </Box> */}
-    </Container>
+    <>
+      <Grid
+        container
+        spacing={2}
+        className="container_first_child"
+        suppressHydrationWarning
+      >
+        {openModal ? (
+          <ModalAddLog
+            open={openModal}
+            save={saveModules}
+            onClose={() => setOpenModal(false)}
+            modules={[{ id: -100, name: "Общее" }, ...fullMenu]}
+          />
+        ) : null}
+        <MyAlert
+          isOpen={openAlert}
+          onClose={() => setOpenAlert(false)}
+          status={errStatus}
+          text={errText}
+        />
+        <Backdrop
+          open={loading}
+          style={{ zIndex: 99, position: "absolute", inset: 0 }}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+
+        {openModalEdit ? (
+          <ModalEditLog
+            open={openModalEdit}
+            save={editModules}
+            module={module}
+            onClose={() => setOpenModalEdit(false)}
+            modules={[{ id: -100, name: "Общее" }, ...fullMenu]}
+          />
+        ) : null}
+
+        {isTablet || isMobile ? (
+          <Grid
+            size={{ xs: 12, sm: 12 }}
+            suppressHydrationWarning
+          >
+            <SearchAutocomplete
+              catMenu={catMenu}
+              closeMenu={() => setIsOpenMenu(false)}
+              getModules={getModules}
+              navs={navs}
+              conts={conts}
+            />
+          </Grid>
+        ) : null}
+
+        {isMobile ? (
+          <Button
+            onClick={() => setOpenNews(true)}
+            sx={{
+              color: "#5E5E5E",
+              backgroundColor: "#E5E5E5",
+              textTransform: "capitalize",
+              padding: "12px 16px",
+              borderRadius: "12px",
+              width: "125px",
+            }}
+            suppressHydrationWarning
+          >
+            Обновление
+          </Button>
+        ) : null}
+
+        {isMobile && openNews ? (
+          <div
+            style={{
+              position: "fixed",
+              zIndex: 9999,
+              width: "100%",
+              left: 0,
+              bottom: 0,
+              height: "90vh",
+              borderRadius: "40px 40px 0 0",
+              backgroundColor: "#F3F3F3",
+            }}
+            suppressHydrationWarning
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                backgroundColor: "#fff",
+                padding: "22px",
+                borderRadius: "40px 40px 0 0",
+                justifyContent: "space-between",
+              }}
+            >
+              <div></div>
+              <h3 style={{ color: "#3C3B3B", fontWeight: "400", paddingLeft: "44px" }}>
+                Обновления
+              </h3>
+              <IconButton onClick={() => setOpenNews(false)}>
+                <CloseIcon />
+              </IconButton>
+            </div>
+            <Button
+              variant="contained"
+              onClick={() => setOpenModal(true)}
+              sx={{ m: 2 }}
+            >
+              <AddIcon />
+            </Button>
+
+            {changelog.map((it, i) => (
+              <div
+                style={{
+                  backgroundColor: "#fff",
+                  padding: "12px",
+                  marginLeft: "16px",
+                  marginRight: "16px",
+                  borderRadius: "8px",
+                  marginTop: "8px",
+                }}
+                key={i}
+                suppressHydrationWarning
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span style={{ color: "#5E5E5E" }}>{it.module_name}</span>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <span style={{ color: it.time.color }}>{it.time.time}</span>
+                    <IconButton
+                      onClick={() => {
+                        setModule(it);
+                        setOpenModalEdit(true);
+                      }}
+                    >
+                      <EditIcon style={{ width: "14px", height: "14px" }} />
+                    </IconButton>
+                  </div>
+                </div>
+                <div style={{ color: "#5E5E5E", marginTop: "12px" }}>{it.description}</div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        <Grid
+          size={{ xs: 12, xl: 9, lg: 8, md: 7, sm: 12 }}
+          suppressHydrationWarning
+        >
+          <div
+            style={{ marginBottom: "20px", display: isDesktop || isSmallDesktop ? "flex" : "none" }}
+          >
+            <SearchAutocomplete
+              catMenu={catMenu}
+              closeMenu={() => setIsOpenMenu(false)}
+              getModules={getModules}
+              navs={navs}
+              conts={conts}
+            />
+          </div>
+
+          <Box
+            sx={{
+              p: 3,
+              backgroundColor: "#f5f5f5",
+              minHeight: "582px",
+              marginBottom: "20px",
+              borderRadius: "12px",
+            }}
+            suppressHydrationWarning
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 3,
+                color: "#333",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
+              Избранное
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+              >
+                <g clipPath="url(#clip0_99_8836)">
+                  <path
+                    d="M8.56 1.24573L10.3771 4.9143C10.4185 5.00741 10.4835 5.08807 10.5657 5.14822C10.6479 5.20838 10.7445 5.24594 10.8457 5.25716L14.8571 5.85144C14.9733 5.86637 15.0828 5.91404 15.1729 5.98888C15.2629 6.06371 15.3299 6.16263 15.3658 6.27408C15.4018 6.38553 15.4053 6.50491 15.3759 6.61828C15.3465 6.73164 15.2855 6.83431 15.2 6.9143L12.3086 9.78287C12.2348 9.85182 12.1794 9.93812 12.1475 10.0339C12.1155 10.1297 12.108 10.232 12.1257 10.3314L12.8229 14.3657C12.843 14.4816 12.8303 14.6009 12.786 14.7099C12.7418 14.819 12.6678 14.9134 12.5726 14.9825C12.4773 15.0515 12.3646 15.0925 12.2472 15.1006C12.1298 15.1088 12.0125 15.0838 11.9086 15.0286L8.29715 13.12C8.20467 13.0746 8.10302 13.051 8 13.051C7.89699 13.051 7.79534 13.0746 7.70286 13.12L4.09143 15.0286C3.98753 15.0838 3.87022 15.1088 3.75283 15.1006C3.63545 15.0925 3.52271 15.0515 3.42745 14.9825C3.33218 14.9134 3.25822 14.819 3.21397 14.7099C3.16972 14.6009 3.15696 14.4816 3.17715 14.3657L3.87429 10.2857C3.89196 10.1863 3.88448 10.084 3.85255 9.98821C3.82061 9.8924 3.76523 9.8061 3.69143 9.73716L0.765717 6.9143C0.67916 6.83212 0.618289 6.72661 0.590476 6.61054C0.562664 6.49448 0.569104 6.37284 0.609017 6.26035C0.648929 6.14787 0.720602 6.04938 0.815352 5.9768C0.910103 5.90422 1.02387 5.86068 1.14286 5.85144L5.15429 5.25716C5.25554 5.24594 5.35209 5.20838 5.43431 5.14822C5.51652 5.08807 5.58153 5.00741 5.62286 4.9143L7.44 1.24573C7.48949 1.13888 7.56851 1.04842 7.66773 0.985022C7.76696 0.921626 7.88225 0.887939 8 0.887939C8.11775 0.887939 8.23305 0.921626 8.33227 0.985022C8.4315 1.04842 8.51052 1.13888 8.56 1.24573V1.24573Z"
+                    stroke="#DD1A32"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </g>
+                <defs>
+                  <clipPath id="clip0_99_8836">
+                    <rect
+                      width="16"
+                      height="16"
+                      fill="white"
+                    />
+                  </clipPath>
+                </defs>
+              </svg>
+            </Typography>
+
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={moduleOrder}
+                strategy={verticalListSortingStrategy}
+              >
+                <Grid
+                  container
+                  spacing={2}
+                  rowSpacing={"16px"}
+                >
+                  {modules.map((module) => (
+                    <SortableItem
+                      key={module.id}
+                      module={module}
+                      isClient={isClient}
+                      onFavoriteClick={handleFavoriteClick}
+                    />
+                  ))}
+                </Grid>
+              </SortableContext>
+            </DndContext>
+
+            {modules.length === 0 && (
+              <Box
+                sx={{
+                  textAlign: "center",
+                  py: 8,
+                  color: "#999",
+                  fontStyle: "italic",
+                }}
+              >
+                Нет избранных элементов. Добавьте их через поиск.
+              </Box>
+            )}
+          </Box>
+        </Grid>
+
+        <Grid
+          size={{ xs: 12, xl: 3, lg: 4, md: 5, sm: 12 }}
+          suppressHydrationWarning
+        >
+          <div
+            style={{
+              width: "95%",
+              backgroundColor: "#F3F3F3",
+              borderRadius: "12px",
+              padding: "16px",
+              display: isMobile ? "none" : "block",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <h3 style={{ color: "#3C3B3B", fontWeight: "400" }}>Обновления</h3>
+              <Button
+                variant="contained"
+                onClick={() => setOpenModal(true)}
+              >
+                <AddIcon />
+              </Button>
+            </div>
+
+            {changelog.map((it, i) => (
+              <div
+                style={{
+                  backgroundColor: "#fff",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  marginTop: "8px",
+                }}
+                key={i}
+                suppressHydrationWarning
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span style={{ color: "#5E5E5E" }}>{it.module_name}</span>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <span style={{ color: it.time.color }}>{it.time.time}</span>
+                    <IconButton
+                      onClick={() => {
+                        setModule(it);
+                        setOpenModalEdit(true);
+                      }}
+                    >
+                      <EditIcon style={{ width: "14px", height: "14px" }} />
+                    </IconButton>
+                  </div>
+                </div>
+                <div style={{ color: "#5E5E5E", marginTop: "12px" }}>{it.description}</div>
+              </div>
+            ))}
+          </div>
+        </Grid>
+      </Grid>
+    </>
   );
 }
 
