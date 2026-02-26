@@ -305,7 +305,6 @@ export default function Index() {
 
   async function loadMenu() {
     const response = await getData("get_all_main");
-    console.log(response);
     if (response?.st === true) {
       setCatMenu(response?.left_menu);
       setMy(response?.my);
