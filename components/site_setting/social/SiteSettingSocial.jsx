@@ -6,7 +6,7 @@ import { useCallback, useEffect } from "react";
 import { useSocialStore } from "./useSocialStore";
 import { useSiteSettingStore } from "../useSiteSettingStore";
 import useApi from "@/src/hooks/useApi";
-import HistoryLog from "../HistoryLog";
+import HistoryLog from "@/ui/history/HistoryLog";
 
 export function SiteSettingSocial() {
   const submodule = "social";
@@ -90,8 +90,10 @@ export function SiteSettingSocial() {
     }));
   };
 
-  const restoreData = (id) => {
+  const restoreData = (item) => {
+    const { id } = item;
     setSocialState((state) => {
+      console.log(state.history);
       const historyItem = state.history.find((item) => item.id === id);
       if (!historyItem) return state;
 

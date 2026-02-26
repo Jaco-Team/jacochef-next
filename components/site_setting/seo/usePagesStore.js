@@ -1,12 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { useSiteSettingStore } from "../useSiteSettingStore";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
 import { translit } from "./pageTextUtils";
-
-let timer = null;
-const debounceDelay = 300;
 
 export const usePagesStore = create((set, get) => ({
   moduleName: "",
@@ -15,6 +10,7 @@ export const usePagesStore = create((set, get) => ({
   pages: [],
   categories: [],
   filteredPages: [],
+  history: [],
 
   item: null,
   itemName: "",
@@ -23,41 +19,12 @@ export const usePagesStore = create((set, get) => ({
   setIsLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error }),
   setPages: (pages) => set({ pages, filteredPages: pages }),
+  setFilteredPages: (filteredPages) => set({ filteredPages }),
   setCategories: (categories) => set({ categories }),
-  // if search will come up
-  filterPages: (query) => {
-    clearTimeout(timer);
-    if (!query?.length < 3) {
-      set({ filteredPages: get().pages });
-      return;
-    }
-    timer = setTimeout(() => {
-      const q = query.toLowerCase();
-      const filtered = get().pages.filter((p) =>
-        [p.title, p.description, p.content].some((val) => val.toLowerCase().includes(q)),
-      );
-      set({ filteredPages: filtered });
-    }, debounceDelay);
-  },
+  setHistory: (history) => set({ history }),
+
   setItem: (item) => set({ item }),
   setItemName: (itemName) => set({ itemName }),
-
-  // fetching data
-  getData: async (method, data = {}) => {
-    const { setIsLoad } = useSiteSettingStore.getState();
-    setIsLoad(true);
-    try {
-      const parentModule = useSiteSettingStore.getState().module;
-      // inject submodule type
-      data.submodule = "seo";
-      const result = await api_laravel(parentModule, method, data);
-      return result.data;
-    } catch (e) {
-      throw e;
-    } finally {
-      setIsLoad(false);
-    }
-  },
 
   changeItemText: (key, value) => {
     set((state) => ({ item: { ...state.item, [key]: value } }));

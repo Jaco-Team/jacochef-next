@@ -8,14 +8,14 @@ import {
   MyTextInput,
   TextEditor,
 } from "@/ui/Forms";
-import { CircularProgress, Grid, TextField, Typography } from "@mui/material";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Box, CircularProgress, Grid, Stack, TextField, Typography } from "@mui/material";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBannerModalStore } from "./useBannerModalStore";
 import Dropzone from "dropzone";
 import dayjs from "dayjs";
 import { dropzoneOptions } from "./bannerUtils";
 import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingStore";
-import HistoryLog from "../HistoryLog";
+import HistoryLog from "@/ui/history/HistoryLog";
 
 export function BannerModal({ getData, showAlert, id, action }) {
   const banner = useBannerModalStore((state) => state.banner);
@@ -443,12 +443,108 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <Grid size={12}>
               <HistoryLog
                 history={banner.history}
-                type={banner.type_illustration}
+                customDiffView={DiffImgView}
               />
             </Grid>
           )}
         </>
       )}
     </Grid>
+  );
+}
+
+function DiffImgView({ item: historyItem }) {
+  const diff = useMemo(() => {
+    try {
+      return JSON.parse(historyItem.diff_json);
+    } catch (e) {
+      console.error("Invalid diff JSON", e);
+      return {};
+    }
+  }, [historyItem.diff_json]);
+
+  const { type, size } = historyItem.meta_json || {};
+
+  const basePath = "https://storage.yandexcloud.net/site-home-img/";
+
+  const renderMedia = (name) => {
+    if (!name) return null;
+
+    if (type === "video") {
+      return (
+        <Stack
+          spacing={1}
+          sx={{ minWidth: 240, flex: 1 }}
+        >
+          <Box
+            component="video"
+            controls
+            sx={{ width: "100%", height: 300, borderRadius: 2 }}
+          >
+            <source src={`${basePath}${name}`} />
+          </Box>
+        </Stack>
+      );
+    }
+
+    return (
+      <Stack
+        spacing={0.5}
+        sx={{ minWidth: 240, flex: 1 }}
+      >
+        <Box
+          component="img"
+          src={`${basePath}${name}?date_update=${Date.now()}`}
+          alt=""
+          sx={{ width: "100%", height: "auto", borderRadius: 2 }}
+        />
+      </Stack>
+    );
+  };
+  return (
+    <Stack spacing={1}>
+      {Object.entries(diff)
+        .slice(0, 1)
+        .map(([field, v]) => {
+          const from = typeof v?.from === "string" ? v.from : "";
+          const to = typeof v?.to === "string" ? v.to : "";
+          return (
+            <Stack
+              key={field}
+              spacing={1}
+            >
+              <Typography
+                variant="body2"
+                fontWeight={600}
+              >
+                {field}
+              </Typography>
+
+              <Stack
+                direction="row"
+                spacing={2}
+                alignContent={"center"}
+                justifyContent={"space-between"}
+                flexWrap="wrap"
+              >
+                {field.startsWith("img") ? (
+                  renderMedia(to)
+                ) : (
+                  <Typography sx={{ textDecoration: "line-through" }}>{from}</Typography>
+                )}
+
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  →
+                </Typography>
+
+                {field.startsWith("img") ? renderMedia(from) : <Typography>{to}</Typography>}
+              </Stack>
+            </Stack>
+          );
+        })}
+    </Stack>
   );
 }

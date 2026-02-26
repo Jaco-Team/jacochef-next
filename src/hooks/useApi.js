@@ -29,6 +29,8 @@ apiClient.interceptors.response.use(
 /**
  * NEW api_laravel wrapper (v2)
  *
+ * to work on local add .env.development with NEXT_PUBLIC_API_URL=http://127.0.0.1/8000/api/
+ *
  * ⚠️ WARNING:
  * Same name as legacy src/api_new api_laravel.
  * NOT fully backward compatible and may fail on old code
