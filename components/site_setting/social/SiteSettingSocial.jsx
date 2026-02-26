@@ -7,6 +7,7 @@ import { useSocialStore } from "./useSocialStore";
 import { useSiteSettingStore } from "../useSiteSettingStore";
 import useApi from "@/src/hooks/useApi";
 import HistoryLog from "@/ui/history/HistoryLog";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export function SiteSettingSocial() {
   const submodule = "social";
@@ -39,12 +40,14 @@ export function SiteSettingSocial() {
     }
   };
 
-  const [cityId, cities, acces, setCityId] = useSiteSettingStore((state) => [
+  const [cityId, cities, access, setCityId] = useSiteSettingStore((state) => [
     state.city_id,
     state.cities,
-    state.acces,
+    state.access,
     state.setCityId,
   ]);
+
+  const canEdit = (key) => handleUserAccess(access).userCan("edit", key);
 
   const updateData = useCallback(async () => {
     if (cityId < 0) {
@@ -170,7 +173,7 @@ export function SiteSettingSocial() {
                 >
                   <MyTextInput
                     label="Вконтакте"
-                    disabled={acces.social_view && !acces.social_edit}
+                    disabled={!canEdit("social")}
                     value={dataInfo?.vk || ""}
                     func={(e) => changeData("vk", e)}
                   />
@@ -183,7 +186,7 @@ export function SiteSettingSocial() {
                 >
                   <MyTextInput
                     label="RuTube"
-                    disabled={acces.social_view && !acces.social_edit}
+                    disabled={!canEdit("social")}
                     value={dataInfo?.rt || ""}
                     func={(e) => changeData("rt", e)}
                   />
@@ -198,7 +201,7 @@ export function SiteSettingSocial() {
                   <MyTextInput
                     label="Одноклассники"
                     value={dataInfo?.ok || ""}
-                    disabled={acces.social_view && !acces.social_edit}
+                    disabled={!canEdit("social")}
                     func={(e) => changeData("ok", e)}
                   />
                 </Grid>
@@ -211,7 +214,7 @@ export function SiteSettingSocial() {
                   <MyTextInput
                     label="Телеграм"
                     value={dataInfo?.tg || ""}
-                    disabled={acces.social_view && !acces.social_edit}
+                    disabled={!canEdit("social")}
                     func={(e) => changeData("tg", e)}
                   />
                 </Grid>
@@ -224,7 +227,7 @@ export function SiteSettingSocial() {
                   <MyTextInput
                     label="Facebook"
                     value={dataInfo?.fb || ""}
-                    disabled={acces.social_view && !acces.social_edit}
+                    disabled={!canEdit('social')}
                     func={(e) => changeData("fb", e)}
                   />
                 </Grid> */}
@@ -235,7 +238,7 @@ export function SiteSettingSocial() {
                     sm: 6,
                   }}
                 >
-                  {acces.social_edit ? (
+                  {canEdit("social") ? (
                     <Button
                       variant="contained"
                       onClick={saveData}

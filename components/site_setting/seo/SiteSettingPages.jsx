@@ -23,7 +23,7 @@ import { MySelect, MyTextInput } from "@/ui/Forms";
 import useApi from "@/src/hooks/useApi";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import HistoryLog from "@/ui/history/HistoryLog";
-import HistoryLogAccordion from "@/ui/history/HistoryLogAccordion";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export function SiteSettingPages() {
   const submodule = "seo";
@@ -31,7 +31,7 @@ export function SiteSettingPages() {
   const {
     city_id: cityId,
     cities,
-    acces,
+    access,
     setCityId,
     createModal,
     closeModal,
@@ -40,13 +40,16 @@ export function SiteSettingPages() {
   } = useSiteSettingStore((s) => ({
     city_id: s.city_id,
     cities: s.cities,
-    acces: s.acces,
+    access: s.access,
     setCityId: s.setCityId,
     createModal: s.createModal,
     closeModal: s.closeModal,
     setModalTitle: s.setModalTitle,
     showAlert: s.showAlert,
   }));
+
+  const canEdit = (key) => handleUserAccess(access).userCan("edit", key);
+
   // Page text state
   const {
     setModuleName,
@@ -156,7 +159,7 @@ export function SiteSettingPages() {
       modalPrefix,
       () => (
         <>
-          {acces.seo_edit ? (
+          {canEdit("seo") ? (
             <Button
               variant="contained"
               onClick={async () => (action === "newPage" ? await saveNew() : await saveEdit())}
@@ -209,7 +212,7 @@ export function SiteSettingPages() {
           sx={{ width: 300, ml: "auto" }}
         />
 
-        {acces.seo_edit ? (
+        {canEdit("seo") ? (
           <Button
             onClick={() => openModal("newPage", "Новая страница")}
             variant="contained"
@@ -275,10 +278,7 @@ export function SiteSettingPages() {
       </Grid>
       {history?.length > 0 && (
         <Grid size={12}>
-          <HistoryLogAccordion
-            history={history}
-            // customDiffView={CustomDiffView}
-          />
+          <HistoryLog history={history} />
         </Grid>
       )}
     </Grid>

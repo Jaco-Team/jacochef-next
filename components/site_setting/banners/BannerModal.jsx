@@ -16,6 +16,7 @@ import dayjs from "dayjs";
 import { dropzoneOptions } from "./bannerUtils";
 import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingStore";
 import HistoryLog from "@/ui/history/HistoryLog";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export function BannerModal({ getData, showAlert, id, action }) {
   const banner = useBannerModalStore((state) => state.banner);
@@ -32,7 +33,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
   const changeThisBanFieldBool = useBannerModalStore((state) => state.changeThisBanFieldBool);
   const changeAutoComplete = useBannerModalStore((state) => state.changeAutoComplete);
   const getNewBanner = useBannerModalStore((state) => state.getNewBanner);
-  const [acces] = useSiteSettingStore((state) => [state.acces]);
+  const access = useSiteSettingStore((state) => state.access);
+
+  const canEdit = (key) => handleUserAccess(access).userCan("edit", key);
 
   // dropZones
   const [dropZonesReady, setDropZonesReady] = useState(false);
@@ -154,7 +157,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <MyTextInput
               label="Название банера (внутреннее)"
               value={banner?.this_ban?.name || ""}
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               func={(e) => changeThisBanField("name", e)}
             />
           </Grid>
@@ -166,7 +169,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyTextInput
               label="Заголовок"
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               value={banner?.this_ban?.title || ""}
               func={(e) => changeThisBanField("title", e)}
             />
@@ -181,7 +184,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <MySelect
               is_none={false}
               label="Город"
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               data={banner?.cities || []}
               value={banner?.this_ban?.city_id || ""}
               func={(e) => changeThisBanField("city_id", e)}
@@ -196,7 +199,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyTextInput
               label="Ссылка"
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               value={banner?.this_ban?.link || ""}
               func={(e) => changeThisBanField("link", e)}
             />
@@ -210,7 +213,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyDatePickerNew
               label="Дата старта"
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               value={banner ? dayjs(banner?.this_ban?.date_start) : ""}
               func={(e) => changeDateRange("date_start", e)}
             />
@@ -224,7 +227,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyDatePickerNew
               label="Дата окончания"
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               value={banner ? dayjs(banner?.this_ban?.date_end) : ""}
               func={(e) => changeDateRange("date_end", e)}
             />
@@ -239,7 +242,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <MyAutocomplite
               label="Позиции (вместо промика)"
               multiple={true}
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               data={banner?.items || []}
               value={banner?.this_ban?.items || []}
               func={(...params) => changeAutoComplete("items", ...params)}
@@ -255,7 +258,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <MyAutocomplite
               label="Промокод (вместо позиций)"
               multiple={false}
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               data={promos || null}
               value={banner?.this_ban?.promo_id || null}
               func={(...params) => changeAutoComplete("promo_id", ...params)}
@@ -270,7 +273,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyCheckBox
               label="Активность"
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               value={!!+banner?.this_ban?.is_active}
               func={(e) => changeThisBanFieldBool("is_active", e)}
             />
@@ -283,7 +286,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyCheckBox
               label="Показывать в акциях"
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               value={!!+banner?.this_ban?.is_active_actii}
               func={(e) => changeThisBanFieldBool("is_active_actii", e)}
             />
@@ -296,7 +299,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
           >
             <MyCheckBox
               label="Показывать на главной"
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               value={!!+banner?.this_ban?.is_active_home}
               func={(e) => changeThisBanFieldBool("is_active_home", e)}
             />
@@ -310,7 +313,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <MyTextInput
               label="Заголовок SEO"
               value={banner?.this_ban?.seo_title || ""}
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               func={(e) => changeThisBanField("seo_title", e)}
             />
           </Grid>
@@ -323,7 +326,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             <TextField
               label="Описание SEO"
               value={banner?.this_ban?.seo_desc || ""}
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
               onChange={(e) => changeThisBanField("seo_desc", e)}
               multiline
               //rows={2}
@@ -377,9 +380,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
               style={{
                 width: "100%",
                 minHeight: 150,
-                opacity: acces.banners_view && !acces.banners_edit ? 0.6 : 1,
-                cursor: acces.banners_view && !acces.banners_edit ? "not-allowed" : "pointer",
-                pointerEvents: acces.banners_view && !acces.banners_edit ? "none" : "auto",
+                opacity: !canEdit("banners") ? 0.6 : 1,
+                cursor: !canEdit("banners") ? "not-allowed" : "pointer",
+                pointerEvents: !canEdit("banners") ? "none" : "auto",
               }}
             />
           </Grid>
@@ -424,9 +427,9 @@ export function BannerModal({ getData, showAlert, id, action }) {
               style={{
                 width: "100%",
                 minHeight: 150,
-                opacity: acces.banners_view && !acces.banners_edit ? 0.6 : 1,
-                cursor: acces.banners_view && !acces.banners_edit ? "not-allowed" : "pointer",
-                pointerEvents: acces.banners_view && !acces.banners_edit ? "none" : "auto",
+                opacity: !canEdit("banners") ? 0.6 : 1,
+                cursor: !canEdit("banners") ? "not-allowed" : "pointer",
+                pointerEvents: !canEdit("banners") ? "none" : "auto",
               }}
             />
           </Grid>
@@ -436,115 +439,16 @@ export function BannerModal({ getData, showAlert, id, action }) {
               value={banner?.this_ban?.text || ""}
               func={(content) => changeThisBanField("text", null, content)}
               language="ru"
-              disabled={acces.banners_view && !acces.banners_edit}
+              disabled={!canEdit("banners")}
             />
           </Grid>
           {banner?.history?.length > 0 && (
             <Grid size={12}>
-              <HistoryLog
-                history={banner.history}
-                customDiffView={DiffImgView}
-              />
+              <HistoryLog history={banner.history} />
             </Grid>
           )}
         </>
       )}
     </Grid>
-  );
-}
-
-function DiffImgView({ item: historyItem }) {
-  const diff = useMemo(() => {
-    try {
-      return JSON.parse(historyItem.diff_json);
-    } catch (e) {
-      console.error("Invalid diff JSON", e);
-      return {};
-    }
-  }, [historyItem.diff_json]);
-
-  const { type, size } = historyItem.meta_json || {};
-
-  const basePath = "https://storage.yandexcloud.net/site-home-img/";
-
-  const renderMedia = (name) => {
-    if (!name) return null;
-
-    if (type === "video") {
-      return (
-        <Stack
-          spacing={1}
-          sx={{ minWidth: 240, flex: 1 }}
-        >
-          <Box
-            component="video"
-            controls
-            sx={{ width: "100%", height: 300, borderRadius: 2 }}
-          >
-            <source src={`${basePath}${name}`} />
-          </Box>
-        </Stack>
-      );
-    }
-
-    return (
-      <Stack
-        spacing={0.5}
-        sx={{ minWidth: 240, flex: 1 }}
-      >
-        <Box
-          component="img"
-          src={`${basePath}${name}?date_update=${Date.now()}`}
-          alt=""
-          sx={{ width: "100%", height: "auto", borderRadius: 2 }}
-        />
-      </Stack>
-    );
-  };
-  return (
-    <Stack spacing={1}>
-      {Object.entries(diff)
-        .slice(0, 1)
-        .map(([field, v]) => {
-          const from = typeof v?.from === "string" ? v.from : "";
-          const to = typeof v?.to === "string" ? v.to : "";
-          return (
-            <Stack
-              key={field}
-              spacing={1}
-            >
-              <Typography
-                variant="body2"
-                fontWeight={600}
-              >
-                {field}
-              </Typography>
-
-              <Stack
-                direction="row"
-                spacing={2}
-                alignContent={"center"}
-                justifyContent={"space-between"}
-                flexWrap="wrap"
-              >
-                {field.startsWith("img") ? (
-                  renderMedia(to)
-                ) : (
-                  <Typography sx={{ textDecoration: "line-through" }}>{from}</Typography>
-                )}
-
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                >
-                  →
-                </Typography>
-
-                {field.startsWith("img") ? renderMedia(from) : <Typography>{to}</Typography>}
-              </Stack>
-            </Stack>
-          );
-        })}
-    </Stack>
   );
 }

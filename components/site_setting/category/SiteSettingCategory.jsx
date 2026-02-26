@@ -21,6 +21,7 @@ import { useDebounce } from "@/src/hooks/useDebounce";
 import { ColorPickerCell } from "@/ui/Forms/ColorPickerCell";
 import useApi from "@/src/hooks/useApi";
 import HistoryLog from "@/ui/history/HistoryLog";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export function SiteSettingCategory() {
   const submodule = "category";
@@ -45,6 +46,9 @@ export function SiteSettingCategory() {
   const closeModal = useSiteSettingStore((state) => state.closeModal);
   const setModalTitle = useSiteSettingStore((state) => state.setModalTitle);
   const showAlert = useSiteSettingStore((state) => state.showAlert);
+  const access = useSiteSettingStore((state) => state.access);
+
+  const canEdit = (key) => handleUserAccess(access).userCan("edit", key);
   // Category store
   const {
     itemName,
@@ -102,7 +106,6 @@ export function SiteSettingCategory() {
     getData,
     fetchCoreData,
   );
-  const [acces] = useSiteSettingStore((state) => [state.acces]);
 
   const saveSort = useDebounce(async (id, event) => {
     const targetCategory = useCategoryStore.getState().categories.find((cat) => cat.id === id);
@@ -132,7 +135,7 @@ export function SiteSettingCategory() {
       modalPrefix,
       () => (
         <>
-          {acces.category_edit ? (
+          {canEdit("category") ? (
             <Button
               variant="contained"
               onClick={async () => (action === "newCategory" ? await saveNew() : await saveEdit())}
@@ -179,7 +182,7 @@ export function SiteSettingCategory() {
         }}
       >
         <Typography variant="h5">{moduleName}</Typography>
-        {acces.category_edit ? (
+        {canEdit("category") ? (
           <Button
             onClick={() => openModal("newCategory", "Новая категория")}
             variant="contained"
@@ -232,7 +235,7 @@ export function SiteSettingCategory() {
                         <MyTextInput
                           type="number"
                           label=""
-                          disabled={acces.category_view && !acces.category_edit}
+                          disabled={!canEdit("category")}
                           value={item.sort}
                           func={(e) => changeSort(item.id, e)}
                           onBlur={(e) => saveSort(item.id, e)}
@@ -271,7 +274,7 @@ export function SiteSettingCategory() {
                           <MyTextInput
                             type="number"
                             label=""
-                            disabled={acces.category_view && !acces.category_edit}
+                            disabled={!canEdit("category")}
                             value={subcat.sort}
                             func={(e) => changeSort(subcat.id, e)}
                             onBlur={(e) => saveSort(subcat.id, e)}
@@ -306,7 +309,7 @@ export function SiteSettingCategory() {
                       <MyTextInput
                         type="number"
                         label=""
-                        disabled={acces.category_view && !acces.category_edit}
+                        disabled={!canEdit("category")}
                         value={item.sort}
                         func={(e) => changeSort(item.id, e)}
                         onBlur={(e) => saveSort(item.id, e)}

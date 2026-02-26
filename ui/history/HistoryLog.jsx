@@ -5,10 +5,8 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Box,
   IconButton,
   Paper,
-  Stack,
   Table,
   TableBody,
   TableCell,
@@ -18,10 +16,10 @@ import {
   Typography,
 } from "@mui/material";
 import dayjs from "dayjs";
-import { memo, useMemo } from "react";
+import { memo } from "react";
+import SmartDiff from "./SmartDiff";
 
-function HistoryLog({ history, title = "История изменений", restoreFunc = null, customDiffView }) {
-  const Diff = customDiffView ?? DiffView;
+function HistoryLog({ history, title = "История изменений", restoreFunc = null }) {
   return (
     <>
       <Accordion
@@ -49,7 +47,7 @@ function HistoryLog({ history, title = "История изменений", rest
                       <TableCell>{dayjs(item.created_at)?.format("DD.MM.YYYY HH:mm")}</TableCell>
                       <TableCell>{item.actor_name}</TableCell>
                       <TableCell>
-                        <Diff item={item} />
+                        <SmartDiff item={item} />
                       </TableCell>
                       {!!restoreFunc && (
                         <TableCell>
@@ -71,69 +69,3 @@ function HistoryLog({ history, title = "История изменений", rest
   );
 }
 export default memo(HistoryLog);
-
-function DiffView({ item }) {
-  if (!item?.diff_json) return null;
-
-  const diff = useMemo(() => {
-    try {
-      return JSON.parse(item.diff_json);
-    } catch (e) {
-      console.error("Invalid diff JSON", e);
-      return {};
-    }
-  }, [item.diff_json]);
-
-  return (
-    <Stack spacing={1}>
-      {Object.entries(diff).map(([field, value]) => {
-        const from = value?.from ?? "";
-        const to = value?.to ?? "";
-
-        return (
-          <Stack
-            key={field}
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            flexWrap="wrap"
-          >
-            <Typography
-              variant="body2"
-              fontWeight={600}
-              sx={{ minWidth: 70 }}
-            >
-              {field}:
-            </Typography>
-
-            <Typography
-              variant="body2"
-              sx={{
-                textDecoration: "line-through",
-                color: "text.secondary",
-                wordBreak: "break-all",
-              }}
-            >
-              {from}
-            </Typography>
-
-            <Typography
-              variant="body2"
-              color="text.secondary"
-            >
-              →
-            </Typography>
-
-            <Typography
-              variant="body2"
-              fontWeight={500}
-              sx={{ wordBreak: "break-all" }}
-            >
-              {to}
-            </Typography>
-          </Stack>
-        );
-      })}
-    </Stack>
-  );
-}

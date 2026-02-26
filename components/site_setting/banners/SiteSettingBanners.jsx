@@ -22,6 +22,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useBannerModalStore } from "./useBannerModalStore";
 import { BannerModal } from "./BannerModal";
 import useSaveBanner from "../hooks/useSaveBanner";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export function SiteSettingBanners(props) {
   const {} = props;
@@ -30,7 +31,7 @@ export function SiteSettingBanners(props) {
   const {
     city_id: cityId,
     cities,
-    acces,
+    access,
     createModal,
     setCityId,
     closeModal,
@@ -39,13 +40,15 @@ export function SiteSettingBanners(props) {
   } = useSiteSettingStore((s) => ({
     city_id: s.city_id,
     cities: s.cities,
-    acces: s.acces,
+    access: s.access,
     createModal: s.createModal,
     setCityId: s.setCityId,
     closeModal: s.closeModal,
     setModalTitle: s.setModalTitle,
     showAlert: s.showAlert,
   }));
+
+  const canEdit = (key) => handleUserAccess(access).userCan("edit", key);
 
   // banners store
   const {
@@ -80,8 +83,8 @@ export function SiteSettingBanners(props) {
   const updateItemSort = async (item, event) => {
     const oldSort = item.old_sort;
     const newSort = +event.target.value;
-    console.log("Old ", oldSort, ", New ", newSort);
-    if (!oldSort || oldSort === newSort) {
+    if (oldSort === undefined || oldSort === newSort) {
+      console.log(oldSort, newSort, "No sort change detected");
       return;
     }
     const newItem = {
@@ -144,7 +147,7 @@ export function SiteSettingBanners(props) {
       modalPrefix,
       () => (
         <>
-          {acces.banners_edit ? (
+          {canEdit("banners") && (
             <Button
               variant="contained"
               onClick={async () => {
@@ -154,7 +157,7 @@ export function SiteSettingBanners(props) {
             >
               Сохранить
             </Button>
-          ) : null}
+          )}
         </>
       ),
     );
@@ -189,14 +192,14 @@ export function SiteSettingBanners(props) {
       >
         <Typography variant="h5">{moduleName}</Typography>
 
-        {acces.banners_edit ? (
+        {canEdit("banners") && (
           <Button
             onClick={() => openModal("bannerNew", "Новый баннер")}
             variant="contained"
           >
             Добавить баннер
           </Button>
-        ) : null}
+        )}
       </Grid>
       <Grid size={12}>
         <MySelect
@@ -255,7 +258,7 @@ export function SiteSettingBanners(props) {
                       <MyTextInput
                         type="number"
                         value={item.sort}
-                        disabled={acces.banners_view && !acces.banners_edit}
+                        disabled={access.banners_view && !access.banners_edit}
                         func={(e) => setSort(item.id, e)}
                         onBlur={async (e) => await updateItemSort(item, e)}
                       />
@@ -266,7 +269,7 @@ export function SiteSettingBanners(props) {
                     <TableCell>
                       <MyCheckBox
                         value={!!item.is_active}
-                        disabled={acces.banners_view && !acces.banners_edit}
+                        disabled={access.banners_view && !access.banners_edit}
                         func={async (e) => await updateItemActive(item, e)}
                       />
                     </TableCell>
