@@ -1,8 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { api_laravel } from "@/src/api_new";
-import { useSiteSettingStore } from "../useSiteSettingStore";
 
 export const useSocialStore = create((set) => ({
   moduleName: "",

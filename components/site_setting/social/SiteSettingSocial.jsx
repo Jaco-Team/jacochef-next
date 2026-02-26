@@ -23,11 +23,9 @@ export function SiteSettingSocial() {
   );
   const setSocialState = useSocialStore.setState;
 
-  const parentModule = useSiteSettingStore.getState().module;
-  const { api_laravel } = useApi(parentModule);
-
   const getData = async (method, data = {}) => {
-    const { setIsLoad } = useSiteSettingStore.getState();
+    const { setIsLoad, module: parentModule } = useSiteSettingStore.getState();
+    const { api_laravel } = useApi(parentModule);
     setIsLoad(true);
     try {
       // inject submodule type
@@ -76,6 +74,7 @@ export function SiteSettingSocial() {
       ok: dataInfo.ok,
       tg: dataInfo.tg,
       fb: dataInfo.fb,
+      rt: dataInfo.rt,
       file1: "",
     };
     // console.log('Saving: ', data);
@@ -183,10 +182,10 @@ export function SiteSettingSocial() {
                   }}
                 >
                   <MyTextInput
-                    label="Инстаграм"
+                    label="RuTube"
                     disabled={acces.social_view && !acces.social_edit}
-                    value={dataInfo?.inst || ""}
-                    func={(e) => changeData("inst", e)}
+                    value={dataInfo?.rt || ""}
+                    func={(e) => changeData("rt", e)}
                   />
                 </Grid>
 
@@ -216,7 +215,7 @@ export function SiteSettingSocial() {
                     func={(e) => changeData("tg", e)}
                   />
                 </Grid>
-                <Grid
+                {/* <Grid
                   size={{
                     xs: 12,
                     sm: 6,
@@ -228,7 +227,7 @@ export function SiteSettingSocial() {
                     disabled={acces.social_view && !acces.social_edit}
                     func={(e) => changeData("fb", e)}
                   />
-                </Grid>
+                </Grid> */}
 
                 <Grid
                   size={{
