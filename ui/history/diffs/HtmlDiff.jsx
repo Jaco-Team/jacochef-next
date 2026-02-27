@@ -1,14 +1,12 @@
 "use client";
 
-import { ExpandMore, Restore } from "@mui/icons-material";
+import { ExpandMore } from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Box,
   Divider,
-  Grid,
-  IconButton,
   Stack,
   Typography,
 } from "@mui/material";
@@ -16,15 +14,6 @@ import { memo } from "react";
 
 function tokenizeHtml(html = "") {
   return html.match(/(<[^>]+>|&nbsp;|\s+|[^<\s]+)/g) || [];
-}
-
-function parseDiff(json) {
-  if (!json) return {};
-  try {
-    return JSON.parse(json);
-  } catch {
-    return {};
-  }
 }
 
 function buildHtmlDiff(oldHtml = "", newHtml = "") {
@@ -63,40 +52,34 @@ function buildHtmlDiff(oldHtml = "", newHtml = "") {
   return result;
 }
 
-/* field */
-const FieldDiff = memo(function FieldDiff({ field, from, to }) {
+const FieldDiff = memo(function FieldDiff({ from, to }) {
   const parts = buildHtmlDiff(from, to);
 
   const html = parts
     .map((part) => {
       if (part.type === "same") return part.value;
-
       if (part.type === "del") {
         return `<span style="background:rgba(255,0,0,0.2);text-decoration:line-through;">${part.value}</span>`;
       }
-
       return `<span style="background:rgba(0,200,0,0.2);">${part.value}</span>`;
     })
     .join("");
 
   return (
-    <Box key={field}>
-      <Typography
-        variant="body2"
-        sx={{ mb: 1, borderBottom: "1px solid", borderColor: "divider" }}
-      >
-        {field}
-      </Typography>
-
-      <Box
-        sx={{ wordBreak: "break-word" }}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    </Box>
+    <Box
+      sx={{
+        minWidth: 0,
+        maxWidth: "100%",
+        overflowWrap: "anywhere",
+        wordBreak: "break-word",
+        "& img, & video": { maxWidth: "100%", height: "auto", display: "block" },
+        "& pre": { maxWidth: "100%", overflowX: "auto", whiteSpace: "pre-wrap" },
+        "& table": { display: "block", maxWidth: "100%", overflowX: "auto" },
+      }}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
   );
 });
-
-/* item */
 
 function HtmlDiff({ items }) {
   return (
@@ -105,22 +88,30 @@ function HtmlDiff({ items }) {
         disableGutters
         elevation={0}
       >
-        <AccordionSummary expandIcon={<ExpandMore />}>
+        <AccordionSummary
+          expandIcon={<ExpandMore />}
+          sx={{
+            minWidth: 0,
+            "& .MuiAccordionSummary-content": { minWidth: 0 },
+          }}
+        >
           <Typography
             variant="body2"
             color="text.secondary"
-            sx={{ wordBreak: "break-word" }}
+            sx={{ minWidth: 0, overflowWrap: "anywhere" }}
           >
             {items.map((i) => i.field).join(", ")}
           </Typography>
         </AccordionSummary>
 
-        <AccordionDetails>
-          <Stack spacing={2}>
+        <AccordionDetails sx={{ p: 0, minWidth: 0 }}>
+          <Stack
+            spacing={2}
+            sx={{ minWidth: 0 }}
+          >
             {items.map(({ field, from, to }) => (
               <FieldDiff
                 key={field}
-                field={field}
                 from={from ?? ""}
                 to={to ?? ""}
               />
