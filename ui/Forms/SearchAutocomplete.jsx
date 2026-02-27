@@ -152,9 +152,11 @@ export const SearchAutocomplete = ({ catMenu, closeMenu, navs, conts, getModules
       options={preparedData}
       filterOptions={filterOptions}
       onChange={(event, newValue) => {
+        console.log(newValue);
+        // Проверяем, что newValue существует и это дочерний элемент (есть key_query)
         if (newValue && newValue.key_query) {
           window.location = "/" + newValue.key_query;
-          closeMenu();
+          return;
         }
       }}
       style={{ width: "100%" }}
@@ -180,6 +182,7 @@ export const SearchAutocomplete = ({ catMenu, closeMenu, navs, conts, getModules
             component="li"
             {...props}
             key={uniqueKey}
+            onClick={(e) => e.stopPropagation()}
             sx={{
               padding: 0,
               fontSize: "14px",

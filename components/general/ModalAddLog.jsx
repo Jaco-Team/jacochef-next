@@ -36,7 +36,7 @@ export const ModalAddLog = ({
   return (
     <Dialog
       sx={{ "& .MuiDialog-paper": { width: "100%" } }}
-      maxWidth="xs"
+      maxWidth="md"
       open={open}
       onClose={handleClose}
     >

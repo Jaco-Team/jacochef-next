@@ -42,7 +42,7 @@ import MyAlert from "@/ui/MyAlert";
 const FAVORITES_STORAGE_KEY = "favorite_childs";
 const FAVORITES_ORDER_KEY = "favorite_childs_order";
 
-const SortableItem = ({ module, isClient, onFavoriteClick }) => {
+const SortableItem = ({ module, onFavoriteClick }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: module.id,
   });
@@ -55,6 +55,7 @@ const SortableItem = ({ module, isClient, onFavoriteClick }) => {
     height: "100%",
     display: "flex",
   };
+
   const [modules, setModules] = useState({});
   const [openModal, setOpenModal] = useState(false);
 
@@ -75,6 +76,8 @@ const SortableItem = ({ module, isClient, onFavoriteClick }) => {
       {...attributes}
       sx={{
         display: "flex",
+        alignItems: "stretch",
+        height: "100%",
       }}
     >
       {openModal ? (
@@ -85,12 +88,13 @@ const SortableItem = ({ module, isClient, onFavoriteClick }) => {
           save={save}
         />
       ) : null}
+
       <Paper
         elevation={0}
         sx={{
           borderRadius: 2,
           padding: "12px 20px",
-          height: "100%",
+          height: "100%", // ← Полная высота
           width: "100%",
           backgroundColor: "#fff",
           border: isDragging ? "2px solid #1977D2" : "1px solid #e5e5e5",
@@ -99,11 +103,12 @@ const SortableItem = ({ module, isClient, onFavoriteClick }) => {
             boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
           },
           position: "relative",
-          display: "flex",
-          flexDirection: "column",
+          display: "flex", // ← Flex-контейнер
+          flexDirection: "column", // ← Вертикальное распределение
           overflow: "hidden",
         }}
       >
+        {/* Drag handle */}
         <Box
           {...listeners}
           sx={{
@@ -125,6 +130,7 @@ const SortableItem = ({ module, isClient, onFavoriteClick }) => {
           <DragIndicatorIcon fontSize="small" />
         </Box>
 
+        {/* Заголовок */}
         <Box
           sx={{
             display: "flex",
@@ -132,6 +138,7 @@ const SortableItem = ({ module, isClient, onFavoriteClick }) => {
             alignItems: "flex-start",
             mb: 1,
             pl: 3,
+            flexShrink: 0, // ← Не сжимается
           }}
         >
           <Typography
@@ -159,7 +166,7 @@ const SortableItem = ({ module, isClient, onFavoriteClick }) => {
           </Typography>
           <IconButton
             size="small"
-            sx={{ p: 0.5 }}
+            sx={{ p: 0.5, flexShrink: 0 }}
             onClick={(e) => {
               e.stopPropagation();
               setModules(module);
@@ -174,6 +181,7 @@ const SortableItem = ({ module, isClient, onFavoriteClick }) => {
           </IconButton>
         </Box>
 
+        {/* Описание - растягивается */}
         <Typography
           variant="body2"
           sx={{
@@ -188,11 +196,14 @@ const SortableItem = ({ module, isClient, onFavoriteClick }) => {
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
             textOverflow: "ellipsis",
+            flex: "1 1 auto", // ← Занимает свободное место
+            minHeight: "40px", // ← Балансировка высоты
           }}
         >
           {module.description || ""}
         </Typography>
 
+        {/* Теги - прижаты к низу */}
         <Box
           sx={{
             display: "flex",
@@ -201,9 +212,10 @@ const SortableItem = ({ module, isClient, onFavoriteClick }) => {
             ml: 3,
             pt: 1,
             borderTop: "1px solid #F3F3F3",
-            mt: "auto",
+            mt: "auto", // ← Прижимает к низу
             maxWidth: "358px",
             overflow: "hidden",
+            flexShrink: 0, // ← Не сжимается
           }}
         >
           {module.navs_id?.slice(0, 6).map((tag, index) => (
@@ -216,14 +228,14 @@ const SortableItem = ({ module, isClient, onFavoriteClick }) => {
                 color: "#1977D2",
                 border: "1px solid #BCDEFB",
                 borderRadius: "8px",
-                fontSize: "12px",
+                fontSize: "0.7rem",
                 fontWeight: 400,
-                height: "28px",
+                height: "22px",
                 "&:hover": { backgroundColor: "#BBDEFB" },
               }}
             />
           ))}
-          {module.navs_id?.length > 2 && (
+          {module.navs_id?.length > 6 && (
             <Chip
               label={`+${module.navs_id.length - 6}`}
               size="small"
@@ -255,12 +267,38 @@ export default function Index() {
   const [my, setMy] = useState({});
   const [conts, setConts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [displayCount, setDisplayCount] = useState(5);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const newsContainerRef = React.useRef(null);
 
   const [isClient, setIsClient] = useState(false);
   const [modules, setModules] = useState([]);
   const [module, setModule] = useState({});
   const [moduleOrder, setModuleOrder] = useState([]);
+  const [acces, setAcces] = useState({});
   const [windowWidth, setWindowWidth] = useState(0);
+
+  const handleNewsScroll = (e) => {
+    const container = e.target;
+    const scrollThreshold = 100;
+
+    if (
+      container.scrollHeight - container.scrollTop - container.clientHeight < scrollThreshold &&
+      !loadingMore &&
+      displayCount < changelog.length
+    ) {
+      setLoadingMore(true);
+
+      setTimeout(() => {
+        setDisplayCount((prev) => Math.min(prev + 5, changelog.length));
+        setLoadingMore(false);
+      }, 500);
+    }
+  };
+
+  useEffect(() => {
+    setDisplayCount(8);
+  }, [changelog]);
 
   const getDeviceType = () => {
     if (!isClient) return "desktop";
@@ -307,6 +345,7 @@ export default function Index() {
     const response = await getData("get_all_main");
     if (response?.st === true) {
       setCatMenu(response?.left_menu);
+      setAcces(response?.acces);
       setMy(response?.my);
       setNavs(response?.navs);
       setConts(response?.conts);
@@ -392,9 +431,16 @@ export default function Index() {
   const editModules = async (data) => {
     const response = await getData("edit_log", data);
     if (response.st) {
-      setOpenModal(false);
+      setOpenModalEdit(false);
     }
-    setOpenModalEdit(false);
+    loadMenu();
+  };
+
+  const deleteModules = async (data) => {
+    const response = await getData("delete_log", data);
+    if (response.st) {
+      setOpenModalEdit(false);
+    }
     loadMenu();
   };
 
@@ -531,6 +577,7 @@ export default function Index() {
             module={module}
             onClose={() => setOpenModalEdit(false)}
             modules={[{ id: -100, name: "Общее" }, ...fullMenu]}
+            deletes={deleteModules}
           />
         ) : null}
 
@@ -577,6 +624,8 @@ export default function Index() {
               height: "90vh",
               borderRadius: "40px 40px 0 0",
               backgroundColor: "#F3F3F3",
+              display: "flex",
+              flexDirection: "column",
             }}
             suppressHydrationWarning
           >
@@ -588,60 +637,156 @@ export default function Index() {
                 padding: "22px",
                 borderRadius: "40px 40px 0 0",
                 justifyContent: "space-between",
+                flexShrink: 0,
               }}
             >
               <div></div>
               <h3 style={{ color: "#3C3B3B", fontWeight: "400", paddingLeft: "44px" }}>
                 Обновления
               </h3>
-              <IconButton onClick={() => setOpenNews(false)}>
+              <IconButton
+                onClick={() => {
+                  setOpenNews(false);
+                  setDisplayCount(7);
+                }}
+              >
                 <CloseIcon />
               </IconButton>
             </div>
+
             <Button
               variant="contained"
               onClick={() => setOpenModal(true)}
               sx={{ m: 2 }}
+              style={{ display: acces?.create_news_access ? "flex" : "none", flexShrink: 0 }}
             >
-              <AddIcon />
+              Добавить новость
             </Button>
 
-            {changelog.map((it, i) => (
-              <div
-                style={{
-                  backgroundColor: "#fff",
-                  padding: "12px",
-                  marginLeft: "16px",
-                  marginRight: "16px",
-                  borderRadius: "8px",
-                  marginTop: "8px",
-                }}
-                key={i}
-                suppressHydrationWarning
-              >
+            <div
+              style={{
+                overflowY: "auto",
+                flex: 1,
+                scrollbarWidth: "none",
+                paddingBottom: "16px",
+              }}
+              onScroll={(e) => {
+                const container = e.target;
+                const scrollThreshold = 100;
+
+                if (
+                  container.scrollHeight - container.scrollTop - container.clientHeight <
+                    scrollThreshold &&
+                  !loadingMore &&
+                  displayCount < changelog.length
+                ) {
+                  setLoadingMore(true);
+
+                  setTimeout(() => {
+                    setDisplayCount((prev) => Math.min(prev + 5, changelog.length));
+                    setLoadingMore(false);
+                  }, 500);
+                }
+              }}
+            >
+              {changelog.slice(0, displayCount).map((it, i) => (
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    backgroundColor: "#fff",
+                    padding: "12px",
+                    marginLeft: "16px",
+                    marginRight: "16px",
+                    borderRadius: "8px",
+                    marginTop: "8px",
+                  }}
+                  key={i}
+                  suppressHydrationWarning
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span style={{ color: "#5E5E5E" }}>{it.module_name}</span>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <span style={{ color: it.time.color }}>{it.time.time}</span>
+                      <IconButton
+                        onClick={() => {
+                          setModule(it);
+                          setOpenModalEdit(true);
+                        }}
+                        style={{ display: acces?.edit_news_access ? "flex" : "none" }}
+                      >
+                        <EditIcon style={{ width: "14px", height: "14px" }} />
+                      </IconButton>
+                    </div>
+                  </div>
+                  <div style={{ color: "#5E5E5E", marginTop: "12px" }}>{it.description}</div>
+                </div>
+              ))}
+
+              {/* Индикатор загрузки */}
+              {loadingMore && (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              )}
+
+              {/* Кнопка "Загрузить еще" для мобильной версии */}
+              {!loadingMore && displayCount < changelog.length && (
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={() => setDisplayCount((prev) => Math.min(prev + 5, changelog.length))}
+                  sx={{
+                    mx: 2,
+                    my: 2,
+                    width: "calc(100% - 32px)",
+                    color: "#1977D2",
+                    borderColor: "#1977D2",
+                    textTransform: "none",
+                    "&:hover": {
+                      borderColor: "#1565C0",
+                      backgroundColor: "rgba(25, 118, 210, 0.04)",
+                    },
                   }}
                 >
-                  <span style={{ color: "#5E5E5E" }}>{it.module_name}</span>
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <span style={{ color: it.time.color }}>{it.time.time}</span>
-                    <IconButton
-                      onClick={() => {
-                        setModule(it);
-                        setOpenModalEdit(true);
-                      }}
-                    >
-                      <EditIcon style={{ width: "14px", height: "14px" }} />
-                    </IconButton>
-                  </div>
-                </div>
-                <div style={{ color: "#5E5E5E", marginTop: "12px" }}>{it.description}</div>
-              </div>
-            ))}
+                  Загрузить еще
+                </Button>
+              )}
+
+              {/* Сообщение о конце списка */}
+              {displayCount >= changelog.length && changelog.length > 0 && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    textAlign: "center",
+                    color: "#999",
+                    py: 2,
+                    fontStyle: "italic",
+                  }}
+                >
+                  Все обновления загружены
+                </Typography>
+              )}
+
+              {/* Сообщение, если нет обновлений */}
+              {changelog.length === 0 && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    textAlign: "center",
+                    color: "#999",
+                    py: 4,
+                    fontStyle: "italic",
+                  }}
+                >
+                  Нет обновлений
+                </Typography>
+              )}
+            </div>
           </div>
         ) : null}
 
@@ -664,6 +809,7 @@ export default function Index() {
           <Box
             sx={{
               p: 3,
+              pb: 5,
               backgroundColor: "#f5f5f5",
               minHeight: "582px",
               marginBottom: "20px",
@@ -719,10 +865,20 @@ export default function Index() {
                 items={moduleOrder}
                 strategy={verticalListSortingStrategy}
               >
-                <Grid
-                  container
-                  spacing={2}
-                  rowSpacing={"16px"}
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "repeat(1, 1fr)", // Мобильные: 1 колонка
+                      sm: "repeat(2, 1fr)", // Планшет маленький: 2 колонки
+                      md: "repeat(2, 1fr)", // Планшет большой: 2 колонки
+                      lg: "repeat(2, 1fr)", // Десктоп: 3 колонки
+                      xl: "repeat(3, 1fr)", // Большие экраны: 3 колонки
+                    },
+                    gridAutoRows: "1fr",
+                    gap: 2,
+                    rowGap: "40px",
+                  }}
                 >
                   {modules.map((module) => (
                     <SortableItem
@@ -732,7 +888,7 @@ export default function Index() {
                       onFavoriteClick={handleFavoriteClick}
                     />
                   ))}
-                </Grid>
+                </Box>
               </SortableContext>
             </DndContext>
 
@@ -756,31 +912,47 @@ export default function Index() {
           suppressHydrationWarning
         >
           <div
+            ref={newsContainerRef}
             style={{
               width: "95%",
               backgroundColor: "#F3F3F3",
               borderRadius: "12px",
-              padding: "16px",
+              paddingTop: "10px",
+              maxHeight: "620px",
+              overflowY: "auto",
+              scrollbarWidth: "none",
+              paddingLeft: "16px",
+              paddingRight: "16px",
+              paddingBottom: "16px",
               display: isMobile ? "none" : "block",
             }}
+            onScroll={handleNewsScroll}
           >
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
+                backgroundColor: "#F3F3F3",
+                zIndex: 1,
+                paddingBottom: "8px",
               }}
             >
               <h3 style={{ color: "#3C3B3B", fontWeight: "400" }}>Обновления</h3>
               <Button
                 variant="contained"
+                style={{
+                  padding: "4px 8px",
+                  width: "20px",
+                  display: acces?.create_news_access ? "flex" : "none",
+                }}
                 onClick={() => setOpenModal(true)}
               >
-                <AddIcon />
+                <AddIcon style={{ width: "20px", height: "20px" }} />
               </Button>
             </div>
 
-            {changelog.map((it, i) => (
+            {changelog.slice(0, displayCount).map((it, i) => (
               <div
                 style={{
                   backgroundColor: "#fff",
@@ -806,6 +978,7 @@ export default function Index() {
                         setModule(it);
                         setOpenModalEdit(true);
                       }}
+                      style={{ display: acces?.edit_news_access ? "flex" : "none" }}
                     >
                       <EditIcon style={{ width: "14px", height: "14px" }} />
                     </IconButton>
@@ -814,6 +987,13 @@ export default function Index() {
                 <div style={{ color: "#5E5E5E", marginTop: "12px" }}>{it.description}</div>
               </div>
             ))}
+
+            {/* Индикатор загрузки */}
+            {loadingMore && (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            )}
           </div>
         </Grid>
       </Grid>

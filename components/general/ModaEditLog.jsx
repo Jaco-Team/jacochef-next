@@ -16,9 +16,11 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
+import { ModalAccept } from "@/components/general/ModalAccept";
 
 export const ModalEditLog = ({
   open,
+  deletes,
   onClose,
   save,
   title = "Редактировать новость",
@@ -28,6 +30,7 @@ export const ModalEditLog = ({
 }) => {
   const [description, setDescription] = useState(defaultValue);
   const [module_id, setModule] = useState({});
+  const [openDelete, setOpenDelete] = useState(false);
   const [moduleHistory, setModuleHistory] = useState([]);
 
   useEffect(() => {
@@ -56,6 +59,14 @@ export const ModalEditLog = ({
       open={open}
       onClose={handleClose}
     >
+      {openDelete ? (
+        <ModalAccept
+          open={openDelete}
+          onClose={() => setOpenDelete(false)}
+          title="Удалить новость?"
+          save={() => deletes({ id: module.id })}
+        />
+      ) : null}
       <DialogTitle>{title}</DialogTitle>
       <DialogContent
         align="center"
@@ -162,13 +173,30 @@ export const ModalEditLog = ({
         ) : null}
       </DialogContent>
       <DialogActions>
-        <Button
-          autoFocus
-          onClick={handleClose}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+          }}
         >
-          Отмена
-        </Button>
-        <Button onClick={handleSave}>Сохранить</Button>
+          <Button
+            variant={"contained"}
+            onClick={() => setOpenDelete(true)}
+          >
+            Удалить
+          </Button>
+          <div>
+            <Button
+              autoFocus
+              onClick={handleClose}
+            >
+              Отмена
+            </Button>
+            <Button onClick={handleSave}>Сохранить</Button>
+          </div>
+        </div>
       </DialogActions>
     </Dialog>
   );
