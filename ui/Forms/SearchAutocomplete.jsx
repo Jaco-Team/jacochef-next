@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
 import TextField from "@mui/material/TextField";
 import * as React from "react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CircularProgress from "@mui/material/CircularProgress";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 export const StarIcon = ({ isActive = false }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -31,63 +33,96 @@ export const StarIcon = ({ isActive = false }) => {
   );
 };
 
-const FAVORITES_STORAGE_KEY = "favorite_childs";
-
-const getFavorites = () => {
-  try {
-    const favorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
-    return favorites ? JSON.parse(favorites) : [];
-  } catch (error) {
-    console.error("Ошибка при чтении из localStorage:", error);
-    return [];
-  }
-};
-
-const saveFavorites = (favorites) => {
-  try {
-    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
-  } catch (error) {
-    console.error("Ошибка при сохранении в localStorage:", error);
-  }
-};
-export const SearchAutocomplete = ({ catMenu, closeMenu, navs, conts, getModules }) => {
+export const SearchAutocomplete = ({
+  catMenu,
+  closeMenu,
+  navs,
+  conts,
+  loadFavorites,
+  favoritesParam,
+  getModules,
+}) => {
   const [expandedParents, setExpandedParents] = useState({});
-  const [favorites, setFavorites] = useState(() => getFavorites());
+  const [favorites, setFavorites] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
 
-  const toggleFavorite = (child, event) => {
-    event.stopPropagation(); // Предотвращаем всплытие события
+  useEffect(() => {
+    console.log(favoritesParam);
+    if (favoritesParam?.length) {
+      setFavorites(favoritesParam);
+    }
+  }, [favoritesParam]);
 
-    setFavorites((prevFavorites) => {
-      const isAlreadyFavorite = prevFavorites.some((fav) => fav.id === child.id);
-      let newFavorites;
+  // Добавление в избранное
+  const addFavorite = async (child) => {
+    setLoading(true);
+    try {
+      const description =
+        child.conts_id
+          ?.split(",")
+          .map((a) => {
+            return conts.find((i) => i.id == a)?.name;
+          })
+          .join(",") || "";
 
-      if (isAlreadyFavorite) {
-        newFavorites = prevFavorites.filter((fav) => fav.id !== child.id);
-      } else {
-        const description = child.conts_id.split(",").map((a) => {
-          return conts.find((i) => i.id == a).name;
-        });
-        newFavorites = [
-          ...prevFavorites,
-          {
-            id: child.id,
-            name: child.name,
-            key_query: child.key_query,
-            navs_id: child.navs_id,
-            description: description.join(","),
-            isFavorite: true,
-            sort: 0,
-            parentId: child.parent_id,
-            addedAt: new Date().toISOString(),
-          },
-        ];
+      const response = await api_laravel("header", "add_favorite", {
+        module_id: child.id,
+        module_name: child.name,
+        module_key: child.key_query,
+        module_description: description,
+        module_navs: child.navs_id,
+      });
+
+      if (response?.data?.st) {
+        setTimeout(() => getModules(), 500);
+        return true;
       }
+      return false;
+    } catch (error) {
+      console.error("Ошибка при добавлении в избранное:", error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      saveFavorites(newFavorites);
-      setTimeout(() => getModules(), 1500);
+  // Удаление из избранного
+  const removeFavorite = async (childId) => {
+    setLoading(true);
+    try {
+      const response = await api_laravel("header", "remove_favorite", {
+        module_id: childId,
+      });
 
-      return newFavorites;
-    });
+      if (response?.data?.st) {
+        setTimeout(() => getModules(), 500);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Ошибка при удалении из избранного:", error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFavorites();
+  }, []);
+
+  // Обработчик клика по звездочке
+  const toggleFavorite = async (child, event) => {
+    event.stopPropagation();
+
+    const isAlreadyFavorite = favorites.some((fav) => fav.module_id === child.id);
+
+    if (isAlreadyFavorite) {
+      await removeFavorite(child.id);
+    } else {
+      await addFavorite(child);
+    }
   };
 
   // Функция для проверки, находится ли элемент в избранном
@@ -129,12 +164,9 @@ export const SearchAutocomplete = ({ catMenu, closeMenu, navs, conts, getModules
     if (!searchTerm) return options;
 
     return options.filter((parent) => {
-      // Поиск по названию родителя
       if (parent.name.toLowerCase().includes(searchTerm)) {
         return true;
       }
-
-      // Поиск по дочерним элементам
       return parent.children.some(
         (child) =>
           child.name.toLowerCase().includes(searchTerm) ||
@@ -151,9 +183,8 @@ export const SearchAutocomplete = ({ catMenu, closeMenu, navs, conts, getModules
       freeSolo
       options={preparedData}
       filterOptions={filterOptions}
+      loading={favoritesLoading}
       onChange={(event, newValue) => {
-        console.log(newValue);
-        // Проверяем, что newValue существует и это дочерний элемент (есть key_query)
         if (newValue && newValue.key_query) {
           window.location = "/" + newValue.key_query;
           return;
@@ -164,7 +195,6 @@ export const SearchAutocomplete = ({ catMenu, closeMenu, navs, conts, getModules
         const searchTerm = inputValue.toLowerCase();
         const isExpanded = expandedParents[parent.id];
 
-        // Фильтруем дочерние элементы для поиска
         const filteredChildren = searchTerm
           ? parent.children.filter(
               (child) =>
@@ -229,7 +259,6 @@ export const SearchAutocomplete = ({ catMenu, closeMenu, navs, conts, getModules
               </span>
             </Box>
 
-            {/* Дочерние элементы (раскрывающиеся) */}
             <Collapse
               in={isExpanded || searchTerm !== ""}
               timeout="auto"
@@ -261,6 +290,8 @@ export const SearchAutocomplete = ({ catMenu, closeMenu, navs, conts, getModules
                         maxWidth: "520px",
                         borderRadius: "8px",
                         marginBottom: "8px",
+                        opacity: loading ? 0.7 : 1,
+                        position: "relative",
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -280,10 +311,19 @@ export const SearchAutocomplete = ({ catMenu, closeMenu, navs, conts, getModules
                       >
                         <span style={{ fontWeight: 400, color: "#5E5E5E" }}>{child.name}</span>
                         <span
-                          style={{ marginRight: "8px", fontSize: "14px", cursor: "pointer" }}
-                          onClick={(e) => toggleFavorite(child, e)}
+                          style={{
+                            marginRight: "15px",
+                            fontSize: "14px",
+                            cursor: loading ? "wait" : "pointer",
+                            paddingTop: "6px",
+                          }}
+                          onClick={(e) => !loading && toggleFavorite(child, e)}
                         >
-                          <StarIcon isActive={isFavoriteItem} />
+                          {loading ? (
+                            <CircularProgress size={16} />
+                          ) : (
+                            <StarIcon isActive={isFavoriteItem} />
+                          )}
                         </span>
                       </div>
 
@@ -315,20 +355,20 @@ export const SearchAutocomplete = ({ catMenu, closeMenu, navs, conts, getModules
                                 viewBox="0 0 16 16"
                                 fill="none"
                               >
-                                <g clip-path="url(#clip0_74_3936)">
+                                <g clipPath="url(#clip0_74_3936)">
                                   <path
                                     d="M12 13.1428L15.4286 9.71422L12 6.28564"
                                     stroke="#C9C9C9"
-                                    stroke-width="1.5"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
                                   />
                                   <path
                                     d="M0.571533 2.85718V5.14289C0.571533 6.35531 1.05316 7.51807 1.91047 8.37538C2.76778 9.23269 3.93054 9.71432 5.14296 9.71432H15.4287"
                                     stroke="#C9C9C9"
-                                    stroke-width="1.5"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
                                   />
                                 </g>
                                 <defs>
@@ -345,12 +385,13 @@ export const SearchAutocomplete = ({ catMenu, closeMenu, navs, conts, getModules
                             {child.navs_id.map((nav, navIndex) => (
                               <span
                                 key={`${childKey}_nav_${navIndex}`}
+                                className="text-14px"
                                 style={{
-                                  padding: "6px 8px",
+                                  padding: "4px",
                                   backgroundColor: "#E3F2FD",
                                   color: "#1977D2",
                                   borderRadius: "8px",
-                                  fontSize: "11px",
+                                  height: "20px",
                                   fontWeight: 400,
                                   border: "1px solid #BCDEFB",
                                   cursor: "pointer",
@@ -429,6 +470,20 @@ export const SearchAutocomplete = ({ catMenu, closeMenu, navs, conts, getModules
           label="Поиск"
           variant="outlined"
           autoComplete="off"
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              <>
+                {favoritesLoading ? (
+                  <CircularProgress
+                    color="inherit"
+                    size={20}
+                  />
+                ) : null}
+                {params.InputProps.endAdornment}
+              </>
+            ),
+          }}
           inputProps={{
             ...params.inputProps,
             autoComplete: "off",

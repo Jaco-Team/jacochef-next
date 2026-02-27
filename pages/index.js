@@ -1,7 +1,7 @@
 import * as React from "react";
 import Container from "@mui/material/Container";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -39,10 +39,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Backdrop from "@mui/material/Backdrop";
 import MyAlert from "@/ui/MyAlert";
 
-const FAVORITES_STORAGE_KEY = "favorite_childs";
-const FAVORITES_ORDER_KEY = "favorite_childs_order";
-
-const SortableItem = ({ module, onFavoriteClick }) => {
+const SortableItem = ({ module, onFavoriteClick, loading }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: module.id,
   });
@@ -86,6 +83,7 @@ const SortableItem = ({ module, onFavoriteClick }) => {
           onClose={() => setOpenModal(false)}
           title={"Удалить избранное"}
           save={save}
+          loading={loading}
         />
       ) : null}
 
@@ -94,7 +92,7 @@ const SortableItem = ({ module, onFavoriteClick }) => {
         sx={{
           borderRadius: 2,
           padding: "12px 20px",
-          height: "100%", // ← Полная высота
+          height: "100%",
           width: "100%",
           backgroundColor: "#fff",
           border: isDragging ? "2px solid #1977D2" : "1px solid #e5e5e5",
@@ -103,19 +101,19 @@ const SortableItem = ({ module, onFavoriteClick }) => {
             boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
           },
           position: "relative",
-          display: "flex", // ← Flex-контейнер
-          flexDirection: "column", // ← Вертикальное распределение
+          display: "flex",
+          flexDirection: "column",
           overflow: "hidden",
+          opacity: loading ? 0.7 : 1,
         }}
       >
-        {/* Drag handle */}
         <Box
           {...listeners}
           sx={{
             position: "absolute",
             top: "12px",
             left: "4px",
-            cursor: "grab",
+            cursor: loading ? "wait" : "grab",
             color: "#A6A6A6",
             "&:hover": { color: "#1977D2" },
             display: "flex",
@@ -127,10 +125,9 @@ const SortableItem = ({ module, onFavoriteClick }) => {
             zIndex: 1,
           }}
         >
-          <DragIndicatorIcon fontSize="small" />
+          {loading ? <CircularProgress size={16} /> : <DragIndicatorIcon fontSize="small" />}
         </Box>
 
-        {/* Заголовок */}
         <Box
           sx={{
             display: "flex",
@@ -138,7 +135,7 @@ const SortableItem = ({ module, onFavoriteClick }) => {
             alignItems: "flex-start",
             mb: 1,
             pl: 3,
-            flexShrink: 0, // ← Не сжимается
+            flexShrink: 0,
           }}
         >
           <Typography
@@ -148,7 +145,7 @@ const SortableItem = ({ module, onFavoriteClick }) => {
               fontWeight: 500,
               color: "#333",
               pr: 2,
-              cursor: "pointer",
+              cursor: loading ? "wait" : "pointer",
               "&:hover": { color: "#1977D2" },
               display: "-webkit-box",
               WebkitLineClamp: 2,
@@ -157,7 +154,7 @@ const SortableItem = ({ module, onFavoriteClick }) => {
             }}
             onClick={(e) => {
               e.stopPropagation();
-              if (module.key_query) {
+              if (!loading && module.key_query) {
                 window.location = "/" + module.key_query;
               }
             }}
@@ -169,19 +166,17 @@ const SortableItem = ({ module, onFavoriteClick }) => {
             sx={{ p: 0.5, flexShrink: 0 }}
             onClick={(e) => {
               e.stopPropagation();
-              setModules(module);
-              setOpenModal(true);
+              if (!loading) {
+                setModules(module);
+                setOpenModal(true);
+              }
             }}
+            disabled={loading}
           >
-            {module.isFavorite ? (
-              <StarIcon isActive={module.isFavorite} />
-            ) : (
-              <StarIcon sx={{ color: "#C9C9C9", fontSize: 18 }} />
-            )}
+            {loading ? <CircularProgress size={16} /> : <StarIcon isActive={true} />}
           </IconButton>
         </Box>
 
-        {/* Описание - растягивается */}
         <Typography
           variant="body2"
           sx={{
@@ -196,14 +191,13 @@ const SortableItem = ({ module, onFavoriteClick }) => {
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
             textOverflow: "ellipsis",
-            flex: "1 1 auto", // ← Занимает свободное место
-            minHeight: "40px", // ← Балансировка высоты
+            flex: "1 1 auto",
+            minHeight: "40px",
           }}
         >
           {module.description || ""}
         </Typography>
 
-        {/* Теги - прижаты к низу */}
         <Box
           sx={{
             display: "flex",
@@ -211,11 +205,11 @@ const SortableItem = ({ module, onFavoriteClick }) => {
             gap: 1,
             ml: 3,
             pt: 1,
-            borderTop: "1px solid #F3F3F3",
-            mt: "auto", // ← Прижимает к низу
+            borderTop: module.navs_id?.length ? "1px solid #F3F3F3" : "none",
+            mt: "auto",
             maxWidth: "358px",
             overflow: "hidden",
-            flexShrink: 0, // ← Не сжимается
+            flexShrink: 0,
           }}
         >
           {module.navs_id?.slice(0, 6).map((tag, index) => (
@@ -267,6 +261,7 @@ export default function Index() {
   const [my, setMy] = useState({});
   const [conts, setConts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
   const [displayCount, setDisplayCount] = useState(5);
   const [loadingMore, setLoadingMore] = useState(false);
   const newsContainerRef = React.useRef(null);
@@ -277,6 +272,115 @@ export default function Index() {
   const [moduleOrder, setModuleOrder] = useState([]);
   const [acces, setAcces] = useState({});
   const [windowWidth, setWindowWidth] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const scrollContainerRef = useRef(null);
+
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    setTouchStart(touch.clientY);
+    setTouchEnd(touch.clientY);
+    setIsSwiping(true);
+  };
+
+  const handleTouchMove = (e) => {
+    const touch = e.touches[0];
+    setTouchEnd(touch.clientY);
+
+    const container = scrollContainerRef.current;
+    if (container && container.scrollTop <= 0) {
+      const currentY = touch.clientY;
+      const diff = currentY - touchStart;
+
+      if (diff > 0) {
+        e.preventDefault();
+        setSwipeOffset(Math.min(diff, 200));
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchEnd - touchStart;
+
+    if (diff > 100) {
+      setOpenNews(false);
+      setDisplayCount(7);
+      setSwipeOffset(0);
+    } else {
+      setSwipeOffset(0);
+    }
+
+    setIsSwiping(false);
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
+
+  const loadFavorites = useCallback(async () => {
+    if (!my?.id) return;
+
+    setFavoritesLoading(true);
+    try {
+      const response = await getData("get_favorites");
+      if (response?.st && response.favorites) {
+        const formattedFavorites = response.favorites.map((fav) => ({
+          id: fav.module_id,
+          name: fav.module_name,
+          key_query: fav.module_key,
+          description: fav.module_description,
+          navs_id: fav.module_navs || [],
+          isFavorite: true,
+          sort: fav.sort,
+          favorite_id: fav.id,
+        }));
+
+        const sorted = formattedFavorites.sort((a, b) => a.sort - b.sort);
+        setModules(sorted);
+        setModuleOrder(sorted.map((m) => m.id));
+      }
+    } catch (error) {
+      console.error("Ошибка при загрузке избранного:", error);
+      showAlert(false, "Ошибка при загрузке избранного");
+    } finally {
+      setFavoritesLoading(false);
+    }
+  }, [my?.id]);
+
+  const removeFavorite = async (moduleId) => {
+    setFavoritesLoading(true);
+    try {
+      const response = await getData("remove_favorite", {
+        module_id: moduleId,
+      });
+
+      if (response?.st) {
+        await loadFavorites();
+        showAlert(true, "Модуль удален из избранного");
+        return true;
+      } else {
+        showAlert(false, response?.text || "Ошибка при удалении");
+        return false;
+      }
+    } catch (error) {
+      console.error("Ошибка при удалении из избранного:", error);
+      showAlert(false, "Ошибка при удалении из избранного");
+      return false;
+    } finally {
+      setFavoritesLoading(false);
+    }
+  };
+
+  const updateFavoritesOrder = async (orderedModules) => {
+    try {
+      const orderData = orderedModules.map((m) => m.id);
+      await getData("update_order", {
+        order: orderData,
+      });
+    } catch (error) {
+      console.error("Ошибка при обновлении порядка:", error);
+    }
+  };
 
   const handleNewsScroll = (e) => {
     const container = e.target;
@@ -341,6 +445,12 @@ export default function Index() {
     }
   };
 
+  const showAlert = (status, text) => {
+    setErrStatus(status);
+    setErrText(text);
+    setOpenAlert(true);
+  };
+
   async function loadMenu() {
     const response = await getData("get_all_main");
     if (response?.st === true) {
@@ -374,46 +484,10 @@ export default function Index() {
   }, []);
 
   useEffect(() => {
-    if (isClient) {
-      try {
-        const favorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
-        let parsedFavorites = favorites ? JSON.parse(favorites) : [];
-
-        const order = localStorage.getItem(FAVORITES_ORDER_KEY);
-        let parsedOrder = order ? JSON.parse(order) : [];
-
-        if (parsedOrder.length > 0 && parsedFavorites.length > 0) {
-          const sortedModules = [...parsedFavorites].sort((a, b) => {
-            const indexA = parsedOrder.indexOf(a.id);
-            const indexB = parsedOrder.indexOf(b.id);
-
-            if (indexA === -1) return 1;
-            if (indexB === -1) return -1;
-            return indexA - indexB;
-          });
-
-          setModules(sortedModules);
-          setModuleOrder(sortedModules.map((m) => m.id));
-        } else {
-          setModules(parsedFavorites);
-          setModuleOrder(parsedFavorites.map((m) => m.id));
-        }
-      } catch (error) {
-        console.error("Ошибка при чтении из localStorage:", error);
-      }
+    if (my?.id) {
+      loadFavorites();
     }
-  }, [isClient]);
-
-  useEffect(() => {
-    if (isClient && modules.length > 0) {
-      try {
-        localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(modules));
-        localStorage.setItem(FAVORITES_ORDER_KEY, JSON.stringify(moduleOrder));
-      } catch (error) {
-        console.error("Ошибка при сохранении в localStorage:", error);
-      }
-    }
-  }, [modules, moduleOrder, isClient]);
+  }, [my?.id, loadFavorites]);
 
   useEffect(() => {
     loadMenu();
@@ -424,7 +498,6 @@ export default function Index() {
     if (response.st) {
       setOpenModal(false);
     }
-
     loadMenu();
   };
 
@@ -444,7 +517,7 @@ export default function Index() {
     loadMenu();
   };
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = async (event) => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
@@ -453,58 +526,21 @@ export default function Index() {
         const newIndex = items.findIndex((item) => item.id === over.id);
 
         const newItems = arrayMove(items, oldIndex, newIndex);
-
         setModuleOrder(newItems.map((item) => item.id));
+
+        updateFavoritesOrder(newItems);
 
         return newItems;
       });
     }
   };
 
-  const getModules = () => {
-    if (isClient) {
-      try {
-        const favorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
-        let parsedFavorites = favorites ? JSON.parse(favorites) : [];
+  const getModules = useCallback(() => {
+    loadFavorites();
+  }, [loadFavorites]);
 
-        const order = localStorage.getItem(FAVORITES_ORDER_KEY);
-        let parsedOrder = order ? JSON.parse(order) : [];
-
-        if (parsedOrder.length > 0 && parsedFavorites.length > 0) {
-          const sortedModules = [...parsedFavorites].sort((a, b) => {
-            const indexA = parsedOrder.indexOf(a.id);
-            const indexB = parsedOrder.indexOf(b.id);
-
-            if (indexA === -1) return 1;
-            if (indexB === -1) return -1;
-            return indexA - indexB;
-          });
-
-          setModules(sortedModules);
-          setModuleOrder(sortedModules.map((m) => m.id));
-        } else {
-          setModules(parsedFavorites);
-          setModuleOrder(parsedFavorites.map((m) => m.id));
-        }
-      } catch (error) {
-        console.error("Ошибка при чтении из localStorage:", error);
-      }
-    }
-  };
-
-  const handleFavoriteClick = (clickedModule) => {
-    setModules((prevModules) => {
-      const newModules = prevModules.filter((m) => m.id !== clickedModule.id);
-      const newOrder = newModules.map((m) => m.id);
-      setModuleOrder(newOrder);
-
-      if (isClient) {
-        localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(newModules));
-        localStorage.setItem(FAVORITES_ORDER_KEY, JSON.stringify(newOrder));
-      }
-
-      return newModules;
-    });
+  const handleFavoriteClick = async (clickedModule) => {
+    await removeFavorite(clickedModule.id);
   };
 
   if (!isClient) {
@@ -564,7 +600,7 @@ export default function Index() {
           text={errText}
         />
         <Backdrop
-          open={loading}
+          open={loading || favoritesLoading}
           style={{ zIndex: 99, position: "absolute", inset: 0 }}
         >
           <CircularProgress color="inherit" />
@@ -590,8 +626,11 @@ export default function Index() {
               catMenu={catMenu}
               closeMenu={() => setIsOpenMenu(false)}
               getModules={getModules}
+              loadFavorites={loadFavorites}
               navs={navs}
+              favoritesParam={modules}
               conts={conts}
+              userId={my?.id}
             />
           </Grid>
         ) : null}
@@ -623,12 +662,39 @@ export default function Index() {
               bottom: 0,
               height: "90vh",
               borderRadius: "40px 40px 0 0",
+              border: "1px solid #E5E5E5",
               backgroundColor: "#F3F3F3",
               display: "flex",
               flexDirection: "column",
+              transform: `translateY(${swipeOffset}px)`,
+              transition: isSwiping ? "none" : "transform 0.3s ease-out",
+              touchAction: "none",
             }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             suppressHydrationWarning
           >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                padding: "12px 0",
+                cursor: "grab",
+                position: "absolute",
+                left: "46%",
+              }}
+            >
+              <div
+                style={{
+                  width: "40px",
+                  height: "4px",
+                  backgroundColor: "#C9C9C9",
+                  borderRadius: "2px",
+                }}
+              />
+            </div>
+
             <div
               style={{
                 display: "flex",
@@ -648,6 +714,7 @@ export default function Index() {
                 onClick={() => {
                   setOpenNews(false);
                   setDisplayCount(7);
+                  setSwipeOffset(0);
                 }}
               >
                 <CloseIcon />
@@ -664,6 +731,7 @@ export default function Index() {
             </Button>
 
             <div
+              ref={scrollContainerRef}
               style={{
                 overflowY: "auto",
                 flex: 1,
@@ -727,14 +795,12 @@ export default function Index() {
                 </div>
               ))}
 
-              {/* Индикатор загрузки */}
               {loadingMore && (
                 <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
                   <CircularProgress size={24} />
                 </Box>
               )}
 
-              {/* Кнопка "Загрузить еще" для мобильной версии */}
               {!loadingMore && displayCount < changelog.length && (
                 <Button
                   fullWidth
@@ -757,7 +823,6 @@ export default function Index() {
                 </Button>
               )}
 
-              {/* Сообщение о конце списка */}
               {displayCount >= changelog.length && changelog.length > 0 && (
                 <Typography
                   variant="body2"
@@ -772,7 +837,6 @@ export default function Index() {
                 </Typography>
               )}
 
-              {/* Сообщение, если нет обновлений */}
               {changelog.length === 0 && (
                 <Typography
                   variant="body2"
@@ -801,8 +865,11 @@ export default function Index() {
               catMenu={catMenu}
               closeMenu={() => setIsOpenMenu(false)}
               getModules={getModules}
+              loadFavorites={loadFavorites}
               navs={navs}
+              favoritesParam={modules}
               conts={conts}
+              userId={my?.id}
             />
           </div>
 
@@ -812,6 +879,7 @@ export default function Index() {
               pb: 5,
               backgroundColor: "#f5f5f5",
               minHeight: "582px",
+              padding: "16px",
               marginBottom: "20px",
               borderRadius: "12px",
             }}
@@ -837,7 +905,7 @@ export default function Index() {
               >
                 <g clipPath="url(#clip0_99_8836)">
                   <path
-                    d="M8.56 1.24573L10.3771 4.9143C10.4185 5.00741 10.4835 5.08807 10.5657 5.14822C10.6479 5.20838 10.7445 5.24594 10.8457 5.25716L14.8571 5.85144C14.9733 5.86637 15.0828 5.91404 15.1729 5.98888C15.2629 6.06371 15.3299 6.16263 15.3658 6.27408C15.4018 6.38553 15.4053 6.50491 15.3759 6.61828C15.3465 6.73164 15.2855 6.83431 15.2 6.9143L12.3086 9.78287C12.2348 9.85182 12.1794 9.93812 12.1475 10.0339C12.1155 10.1297 12.108 10.232 12.1257 10.3314L12.8229 14.3657C12.843 14.4816 12.8303 14.6009 12.786 14.7099C12.7418 14.819 12.6678 14.9134 12.5726 14.9825C12.4773 15.0515 12.3646 15.0925 12.2472 15.1006C12.1298 15.1088 12.0125 15.0838 11.9086 15.0286L8.29715 13.12C8.20467 13.0746 8.10302 13.051 8 13.051C7.89699 13.051 7.79534 13.0746 7.70286 13.12L4.09143 15.0286C3.98753 15.0838 3.87022 15.1088 3.75283 15.1006C3.63545 15.0925 3.52271 15.0515 3.42745 14.9825C3.33218 14.9134 3.25822 14.819 3.21397 14.7099C3.16972 14.6009 3.15696 14.4816 3.17715 14.3657L3.87429 10.2857C3.89196 10.1863 3.88448 10.084 3.85255 9.98821C3.82061 9.8924 3.76523 9.8061 3.69143 9.73716L0.765717 6.9143C0.67916 6.83212 0.618289 6.72661 0.590476 6.61054C0.562664 6.49448 0.569104 6.37284 0.609017 6.26035C0.648929 6.14787 0.720602 6.04938 0.815352 5.9768C0.910103 5.90422 1.02387 5.86068 1.14286 5.85144L5.15429 5.25716C5.25554 5.24594 5.35209 5.20838 5.43431 5.14822C5.51652 5.08807 5.58153 5.00741 5.62286 4.9143L7.44 1.24573C7.48949 1.13888 7.56851 1.04842 7.66773 0.985022C7.76696 0.921626 7.88225 0.887939 8 0.887939C8.11775 0.887939 8.23305 0.921626 8.33227 0.985022C8.4315 1.04842 8.51052 1.13888 8.56 1.24573V1.24573Z"
+                    d="M8.56 1.24573L10.3771 4.9143C10.4185 5.00741 10.4835 5.08807 10.5657 5.14822C10.6479 5.20838 10.7445 5.24594 10.8457 5.25716L14.8571 5.85144C14.9733 5.86637 15.0828 5.91404 15.1729 5.98888C15.2629 6.06371 15.3299 6.16263 15.3658 6.27408C15.4018 6.38553 15.4053 6.50491 15.3759 6.61828C15.3465 6.73164 15.2855 6.83431 15.2 6.9143L12.3086 9.78287C12.2348 9.85182 12.1794 9.93812 12.1475 10.0339C12.1155 10.1297 12.108 10.232 12.1257 10.3314L12.8229 14.3657C12.843 14.4816 12.8303 14.6009 12.786 14.7099C12.7418 14.819 12.6678 14.9134 12.5726 14.9825C12.4773 15.0515 12.3646 15.0925 12.2472 15.1006C12.1298 15.1088 12.0125 15.0838 11.9086 15.0286L8.29715 13.12C8.20467 13.0746 8.10302 13.051 8 13.051C7.89699 13.051 7.79534 13.0746 7.70286 13.12L4.09143 15.0286C3.98753 15.0838 3.87022 15.1088 3.75283 15.1006C3.63545 15.0925 3.52271 15.0515 3.42745 14.9825C3.33218 14.9134 3.25822 14.819 3.21397 14.7099C3.16972 14.6009 3.15696 14.5816 3.17715 14.3657L3.87429 10.2857C3.89196 10.1863 3.88448 10.084 3.85255 9.98821C3.82061 9.8924 3.76523 9.8061 3.69143 9.73716L0.765717 6.9143C0.67916 6.83212 0.618289 6.72661 0.590476 6.61054C0.562664 6.49448 0.569104 6.37284 0.609017 6.26035C0.648929 6.14787 0.720602 6.04938 0.815352 5.9768C0.910103 5.90422 1.02387 5.86068 1.14286 5.85144L5.15429 5.25716C5.25554 5.24594 5.35209 5.20838 5.43431 5.14822C5.51652 5.08807 5.58153 5.00741 5.62286 4.9143L7.44 1.24573C7.48949 1.13888 7.56851 1.04842 7.66773 0.985022C7.76696 0.921626 7.88225 0.887939 8 0.887939C8.11775 0.887939 8.23305 0.921626 8.33227 0.985022C8.4315 1.04842 8.51052 1.13888 8.56 1.24573V1.24573Z"
                     stroke="#DD1A32"
                     strokeWidth="1.5"
                     strokeLinecap="round"
@@ -869,13 +937,13 @@ export default function Index() {
                   sx={{
                     display: "grid",
                     gridTemplateColumns: {
-                      xs: "repeat(1, 1fr)", // Мобильные: 1 колонка
-                      sm: "repeat(2, 1fr)", // Планшет маленький: 2 колонки
-                      md: "repeat(2, 1fr)", // Планшет большой: 2 колонки
-                      lg: "repeat(2, 1fr)", // Десктоп: 3 колонки
-                      xl: "repeat(3, 1fr)", // Большие экраны: 3 колонки
+                      xs: "repeat(1, 1fr)",
+                      sm: "repeat(2, 1fr)",
+                      md: "repeat(2, 1fr)",
+                      lg: "repeat(2, 1fr)",
+                      xl: "repeat(3, 1fr)",
                     },
-                    gridAutoRows: "1fr",
+                    gridAutoRows: isMobile ? "auto" : "1fr",
                     gap: 2,
                     rowGap: "40px",
                   }}
@@ -886,13 +954,14 @@ export default function Index() {
                       module={module}
                       isClient={isClient}
                       onFavoriteClick={handleFavoriteClick}
+                      loading={favoritesLoading}
                     />
                   ))}
                 </Box>
               </SortableContext>
             </DndContext>
 
-            {modules.length === 0 && (
+            {modules.length === 0 && !favoritesLoading && (
               <Box
                 sx={{
                   textAlign: "center",
@@ -902,6 +971,12 @@ export default function Index() {
                 }}
               >
                 Нет избранных элементов. Добавьте их через поиск.
+              </Box>
+            )}
+
+            {favoritesLoading && modules.length === 0 && (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+                <CircularProgress />
               </Box>
             )}
           </Box>
@@ -988,7 +1063,6 @@ export default function Index() {
               </div>
             ))}
 
-            {/* Индикатор загрузки */}
             {loadingMore && (
               <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
                 <CircularProgress size={24} />
