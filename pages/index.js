@@ -13,12 +13,16 @@ import Button from "@mui/material/Button";
 import { ModalAddLog } from "@/components/general/ModalAddLog";
 import AddIcon from "@mui/icons-material/Add";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+import KeyboardArrowUpRoundedIcon from "@mui/icons-material/KeyboardArrowUpRounded";
 
 import {
   DndContext,
   closestCenter,
   KeyboardSensor,
+  MouseSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -47,18 +51,25 @@ const SortableItem = ({ module, onFavoriteClick, loading }) => {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.88 : 1,
     cursor: isDragging ? "grabbing" : "default",
     height: "100%",
     display: "flex",
+    position: "relative",
+    zIndex: isDragging ? 9999 : "auto",
   };
 
   const [modules, setModules] = useState({});
   const [openModal, setOpenModal] = useState(false);
+  const [isTagsExpanded, setIsTagsExpanded] = useState(false);
 
   const save = () => {
     onFavoriteClick(modules);
   };
+
+  const tags = module.navs_id || [];
+  const hasTags = tags.length > 0;
+  const visibleTags = isTagsExpanded ? tags : [];
 
   return (
     <Grid
@@ -91,12 +102,12 @@ const SortableItem = ({ module, onFavoriteClick, loading }) => {
         elevation={0}
         sx={{
           borderRadius: 2,
-          padding: "12px 20px",
+          padding: "10px 14px",
           height: "100%",
           width: "100%",
           backgroundColor: "#fff",
           border: isDragging ? "2px solid #1977D2" : "1px solid #e5e5e5",
-          boxShadow: isDragging ? "0 8px 16px rgba(0,0,0,0.1)" : "none",
+          boxShadow: isDragging ? "0 20px 40px rgba(0,0,0,0.22)" : "none",
           "&:hover": {
             boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
           },
@@ -111,9 +122,10 @@ const SortableItem = ({ module, onFavoriteClick, loading }) => {
           {...listeners}
           sx={{
             position: "absolute",
-            top: "12px",
+            top: "10px",
             left: "4px",
             cursor: loading ? "wait" : "grab",
+            touchAction: "none",
             color: "#A6A6A6",
             "&:hover": { color: "#1977D2" },
             display: "flex",
@@ -133,15 +145,16 @@ const SortableItem = ({ module, onFavoriteClick, loading }) => {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            mb: 1,
+            mb: { xs: 1.2, md: 0.5 },
             pl: 3,
             flexShrink: 0,
+            pr: 0.5,
           }}
         >
           <Typography
             variant="h6"
             sx={{
-              fontSize: "18px",
+              fontSize: "16px",
               fontWeight: 500,
               color: "#333",
               pr: 2,
@@ -161,86 +174,119 @@ const SortableItem = ({ module, onFavoriteClick, loading }) => {
           >
             {module.name}
           </Typography>
-          <IconButton
-            size="small"
-            sx={{ p: 0.5, flexShrink: 0 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!loading) {
-                setModules(module);
-                setOpenModal(true);
-              }
-            }}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={16} /> : <StarIcon isActive={true} />}
-          </IconButton>
+          <Box sx={{ width: 30, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+            <IconButton
+              size="small"
+              sx={{ p: 0.5 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!loading) {
+                  setModules(module);
+                  setOpenModal(true);
+                }
+              }}
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={16} /> : <StarIcon isActive={true} />}
+            </IconButton>
+          </Box>
         </Box>
-
-        <Typography
-          variant="body2"
-          sx={{
-            color: "#666",
-            mb: 2,
-            fontSize: "14px",
-            lineHeight: 1.4,
-            pl: 3,
-            maxWidth: "358px",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            flex: "1 1 auto",
-            minHeight: "40px",
-          }}
-        >
-          {module.description || ""}
-        </Typography>
 
         <Box
           sx={{
+            mb: 1,
+            pl: 3,
+            pr: 0.5,
             display: "flex",
-            flexWrap: "wrap",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
             gap: 1,
-            ml: 3,
-            pt: 1,
-            borderTop: module.navs_id?.length ? "1px solid #F3F3F3" : "none",
-            mt: "auto",
-            maxWidth: "358px",
-            overflow: "hidden",
-            flexShrink: 0,
           }}
         >
-          {module.navs_id?.slice(0, 6).map((tag, index) => (
-            <Chip
-              key={index}
-              label={tag.name}
-              size="small"
-              sx={{
-                backgroundColor: "#E3F2FD",
-                color: "#1977D2",
-                border: "1px solid #BCDEFB",
-                borderRadius: "8px",
-                fontSize: "0.7rem",
-                fontWeight: 400,
-                height: "22px",
-                "&:hover": { backgroundColor: "#BBDEFB" },
-              }}
-            />
-          ))}
-          {module.navs_id?.length > 6 && (
-            <Chip
-              label={`+${module.navs_id.length - 6}`}
-              size="small"
-              sx={{
-                backgroundColor: "#F5F5F5",
-                fontSize: "12px",
-                height: "28px",
-              }}
-            />
+          <Typography
+            variant="body2"
+            sx={{
+              color: "#666",
+              fontSize: "13px",
+              lineHeight: 1.3,
+              maxWidth: "358px",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              minHeight: "32px",
+              flex: 1,
+            }}
+          >
+            {module.description || ""}
+          </Typography>
+
+          {hasTags && (
+            <Box sx={{ width: 30, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+              <IconButton
+                size="small"
+                disabled={loading}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!loading) {
+                    setIsTagsExpanded((prev) => !prev);
+                  }
+                }}
+                sx={{
+                  color: "#1977D2",
+                  border: "1px solid #BCDEFB",
+                  bgcolor: "#E3F2FD",
+                  width: 22,
+                  height: 22,
+                  mt: { xs: 0.6, md: 0.1 },
+                  "&:hover": { bgcolor: "#BBDEFB" },
+                }}
+              >
+                {isTagsExpanded ? (
+                  <KeyboardArrowUpRoundedIcon fontSize="small" />
+                ) : (
+                  <KeyboardArrowDownRoundedIcon fontSize="small" />
+                )}
+              </IconButton>
+            </Box>
           )}
         </Box>
+
+        {isTagsExpanded && hasTags && (
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 0.75,
+              ml: 3,
+              mt: 0.75,
+              pt: 0.75,
+              borderTop: "1px solid #F3F3F3",
+              maxWidth: "358px",
+              overflow: "hidden",
+              flexShrink: 0,
+            }}
+          >
+            {visibleTags.map((tag, index) => (
+              <Chip
+                key={index}
+                label={tag.name}
+                size="small"
+                sx={{
+                  backgroundColor: "#E3F2FD",
+                  color: "#1977D2",
+                  border: "1px solid #BCDEFB",
+                  borderRadius: "8px",
+                  fontSize: "0.65rem",
+                  fontWeight: 400,
+                  height: "20px",
+                  "&:hover": { backgroundColor: "#BBDEFB" },
+                }}
+              />
+            ))}
+          </Box>
+        )}
       </Paper>
     </Grid>
   );
@@ -296,7 +342,8 @@ export default function Index() {
 
       if (diff > 0) {
         e.preventDefault();
-        setSwipeOffset(Math.min(diff, 200));
+        const maxOffset = Math.round(window.innerHeight * 0.9);
+        setSwipeOffset(Math.min(diff, maxOffset));
       }
     }
   };
@@ -419,6 +466,17 @@ export default function Index() {
   const isDesktop = deviceType === "desktop";
 
   const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 120,
+        tolerance: 8,
+      },
+    }),
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
@@ -652,11 +710,11 @@ export default function Index() {
           </Button>
         ) : null}
 
-        {isMobile && openNews ? (
+        {isMobile && openNews && !openModal && !openModalEdit ? (
           <div
             style={{
               position: "fixed",
-              zIndex: 9999,
+              zIndex: 1200,
               width: "100%",
               left: 0,
               bottom: 0,
@@ -723,11 +781,14 @@ export default function Index() {
 
             <Button
               variant="contained"
-              onClick={() => setOpenModal(true)}
+              onClick={() => {
+                setOpenNews(false);
+                setOpenModal(true);
+              }}
               sx={{ m: 2 }}
               style={{ display: acces?.create_news_access ? "flex" : "none", flexShrink: 0 }}
             >
-              Добавить новость
+              Добавить обновление
             </Button>
 
             <div
@@ -782,6 +843,7 @@ export default function Index() {
                       <span style={{ color: it.time.color }}>{it.time.time}</span>
                       <IconButton
                         onClick={() => {
+                          setOpenNews(false);
                           setModule(it);
                           setOpenModalEdit(true);
                         }}
@@ -943,7 +1005,8 @@ export default function Index() {
                       lg: "repeat(2, 1fr)",
                       xl: "repeat(3, 1fr)",
                     },
-                    gridAutoRows: isMobile ? "auto" : "1fr",
+                    // Equal height only inside each grid row; different rows keep independent heights
+                    gridAutoRows: "auto",
                     gap: 2,
                     rowGap: "40px",
                   }}

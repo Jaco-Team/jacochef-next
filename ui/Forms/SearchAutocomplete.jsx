@@ -233,6 +233,7 @@ export const SearchAutocomplete = ({
                 width: "100%",
                 display: "flex",
                 alignItems: "center",
+                minHeight: "28px",
                 backgroundColor: "transparent",
                 cursor: "pointer",
                 "&:hover": {
@@ -250,13 +251,24 @@ export const SearchAutocomplete = ({
               >
                 {parent.name}
               </span>
-              <span style={{ marginRight: "8px", fontSize: "16px" }}>
+              <Box
+                sx={{
+                  width: "32px",
+                  height: "100%",
+                  minHeight: "28px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mr: 1,
+                  flexShrink: 0,
+                }}
+              >
                 {isExpanded ? (
                   <ExpandMoreIcon style={{ color: "#A6A6A6", rotate: "180deg" }} />
                 ) : (
                   <ExpandMoreIcon style={{ color: "#A6A6A6" }} />
                 )}
-              </span>
+              </Box>
             </Box>
 
             <Collapse

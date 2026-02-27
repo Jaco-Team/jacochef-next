@@ -16,6 +16,8 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
+import TableContainer from "@mui/material/TableContainer";
+import Box from "@mui/material/Box";
 import { ModalAccept } from "@/components/general/ModalAccept";
 
 export const ModalEditLog = ({
@@ -23,7 +25,7 @@ export const ModalEditLog = ({
   deletes,
   onClose,
   save,
-  title = "Редактировать новость",
+  title = "Редактирование обновления",
   modules,
   defaultValue,
   module,
@@ -63,15 +65,12 @@ export const ModalEditLog = ({
         <ModalAccept
           open={openDelete}
           onClose={() => setOpenDelete(false)}
-          title="Удалить новость?"
+          title="Удалить обновление?"
           save={() => deletes({ id: module.id })}
         />
       ) : null}
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent
-        align="center"
-        sx={{ fontWeight: "bold" }}
-      >
+      <DialogContent sx={{ fontWeight: "bold", textAlign: "left" }}>
         <Grid style={{ marginTop: "20px" }}>
           <MyAutocomplite
             label="Модуль"
@@ -97,76 +96,88 @@ export const ModalEditLog = ({
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography style={{ fontWeight: "bold" }}>История изменений</Typography>
               </AccordionSummary>
-              <AccordionDetails>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>#</TableCell>
-                      <TableCell>Дата / время</TableCell>
-                      <TableCell>Сотрудник</TableCell>
-                      <TableCell>Тип</TableCell>
-                      <TableCell>Описание</TableCell>
-                      <TableCell>Модуль</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {moduleHistory.map((it, k) => (
-                      <TableRow
-                        hover
-                        key={k}
-                      >
-                        <TableCell>{k + 1}</TableCell>
-                        <TableCell>{it.time}</TableCell>
-                        <TableCell>{it.short_name}</TableCell>
-                        <TableCell>{it.type}</TableCell>
-                        <TableCell>
-                          {k !== 0 ? (
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                              }}
-                            >
-                              {moduleHistory[k - 1]?.description !== it.description ? (
-                                <>
-                                  <span>{moduleHistory[k - 1]?.description}</span>
-                                  <span>↓</span>
-                                  <span>{it.description}</span>
-                                </>
-                              ) : null}
-                            </div>
-                          ) : (
-                            <span>{it.description}</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {k !== 0 ? (
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                              }}
-                            >
-                              {moduleHistory[k - 1]?.module_name !== it.module_name ? (
-                                <>
-                                  <span>{moduleHistory[k - 1]?.module_name}</span>
-                                  <span>↓</span>
-                                  <span>{it.module_name}</span>
-                                </>
-                              ) : (
-                                <span>{it.module_name}</span>
-                              )}
-                            </div>
-                          ) : (
-                            <span>{it.module_name}</span>
-                          )}
-                        </TableCell>
+              <AccordionDetails sx={{ px: { xs: 0, sm: 2 }, pb: { xs: 1, sm: 2 } }}>
+                <TableContainer
+                  sx={{
+                    width: "100%",
+                    overflowX: "auto",
+                    maxHeight: { xs: 280, sm: 360 },
+                    border: "1px solid #F0F0F0",
+                    borderRadius: 1,
+                  }}
+                >
+                  <Table sx={{ minWidth: 720 }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>#</TableCell>
+                        <TableCell>Дата / время</TableCell>
+                        <TableCell>Сотрудник</TableCell>
+                        <TableCell>Тип</TableCell>
+                        <TableCell>Описание</TableCell>
+                        <TableCell>Модуль</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHead>
+                    <TableBody>
+                      {moduleHistory.map((it, k) => (
+                        <TableRow
+                          hover
+                          key={k}
+                        >
+                          <TableCell>{k + 1}</TableCell>
+                          <TableCell sx={{ whiteSpace: "nowrap" }}>{it.time}</TableCell>
+                          <TableCell sx={{ minWidth: 120 }}>{it.short_name}</TableCell>
+                          <TableCell sx={{ whiteSpace: "nowrap" }}>{it.type}</TableCell>
+                          <TableCell sx={{ minWidth: 180 }}>
+                            {k !== 0 ? (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "flex-start",
+                                  gap: 0.25,
+                                }}
+                              >
+                                {moduleHistory[k - 1]?.description !== it.description ? (
+                                  <>
+                                    <span>{moduleHistory[k - 1]?.description}</span>
+                                    <span>↓</span>
+                                    <span>{it.description}</span>
+                                  </>
+                                ) : null}
+                              </Box>
+                            ) : (
+                              <span>{it.description}</span>
+                            )}
+                          </TableCell>
+                          <TableCell sx={{ minWidth: 140 }}>
+                            {k !== 0 ? (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "flex-start",
+                                  gap: 0.25,
+                                }}
+                              >
+                                {moduleHistory[k - 1]?.module_name !== it.module_name ? (
+                                  <>
+                                    <span>{moduleHistory[k - 1]?.module_name}</span>
+                                    <span>↓</span>
+                                    <span>{it.module_name}</span>
+                                  </>
+                                ) : (
+                                  <span>{it.module_name}</span>
+                                )}
+                              </Box>
+                            ) : (
+                              <span>{it.module_name}</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </AccordionDetails>
             </Accordion>
           </Grid>

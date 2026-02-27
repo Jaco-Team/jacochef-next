@@ -11,7 +11,7 @@ export const ModalAddLog = ({
   open,
   onClose,
   save,
-  title = "Создать новость",
+  title = "Создать обновление",
   modules,
   defaultValue,
 }) => {
@@ -41,10 +41,7 @@ export const ModalAddLog = ({
       onClose={handleClose}
     >
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent
-        align="center"
-        sx={{ fontWeight: "bold" }}
-      >
+      <DialogContent sx={{ fontWeight: "bold", textAlign: "left" }}>
         <Grid style={{ marginTop: "20px" }}>
           <MyAutocomplite
             label="Модуль"
