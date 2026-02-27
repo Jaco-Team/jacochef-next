@@ -23,6 +23,7 @@ export const dropzoneOptions = {
   acceptedFiles: "image/jpeg, image/png, video/mp4, video/quicktime",
   addRemoveLinks: true,
   dictDefaultMessage: "Перетащите файлы сюда (изображения JPG/PNG, видео MP4/MOV)",
-  //url: 'http://127.0.0.1:8000/api/site_setting/upload_banner',
-  url: "https://apichef.jacochef.ru/api/site_setting/upload_banner",
+  url: `${process.env.NEXT_PUBLIC_API_URL}/site_setting/upload_banner`,
+  // url: 'http://127.0.0.1:8000/api/site_setting/upload_banner',
+  // url: "https://apichef.jacochef.ru/api/site_setting/upload_banner",
 };
