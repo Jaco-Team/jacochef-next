@@ -5,20 +5,49 @@ import { Button, Grid, Typography } from "@mui/material";
 import { useCallback, useEffect } from "react";
 import { useSocialStore } from "./useSocialStore";
 import { useSiteSettingStore } from "../useSiteSettingStore";
+import useApi from "@/src/hooks/useApi";
+import HistoryLog from "@/ui/history/HistoryLog";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export function SiteSettingSocial() {
   const submodule = "social";
 
-  const [moduleName, dataInfo] = useSocialStore((state) => [state.moduleName, state.dataInfo]);
+  const { moduleName, dataInfo, history, setDataInfo, setModuleName, setHistory } = useSocialStore(
+    (s) => ({
+      moduleName: s.moduleName,
+      dataInfo: s.dataInfo,
+      history: s.history,
+      setDataInfo: s.setDataInfo,
+      setModuleName: s.setModuleName,
+      setHistory: s.setHistory,
+    }),
+  );
+  const setSocialState = useSocialStore.setState;
 
-  const { setDataInfo, setModuleName, getData } = useSocialStore.getState();
+  const getData = async (method, data = {}) => {
+    const { setIsLoad, module: parentModule } = useSiteSettingStore.getState();
+    const { api_laravel } = useApi(parentModule);
+    setIsLoad(true);
+    try {
+      // inject submodule type
+      data.submodule = "social";
+      const result = await api_laravel(method, data);
+      return result;
+    } catch (e) {
+      throw e;
+    } finally {
+      setIsLoad(false);
+    }
+  };
 
-  const [cityId, cities, acces, setCityId] = useSiteSettingStore((state) => [
+  const [cityId, cities, access, setCityId] = useSiteSettingStore((state) => [
     state.city_id,
     state.cities,
-    state.acces,
+    state.access,
     state.setCityId,
   ]);
+
+  const canEdit = (key) => handleUserAccess(access).userCan("edit", key);
 
   const updateData = useCallback(async () => {
     if (cityId < 0) {
@@ -32,6 +61,7 @@ export function SiteSettingSocial() {
     try {
       const res = await getData("get_social_data", data);
       setDataInfo(res?.links || []);
+      setHistory(res?.history || []);
       setModuleName(res?.submodule?.name || "");
     } catch (e) {
       console.log(`Error getting social networks data: ${e.message}`);
@@ -47,18 +77,47 @@ export function SiteSettingSocial() {
       ok: dataInfo.ok,
       tg: dataInfo.tg,
       fb: dataInfo.fb,
+      rt: dataInfo.rt,
       file1: "",
     };
+    // console.log('Saving: ', data);
     await getData("save_social_data", data);
+    await updateData();
   };
 
   const changeData = (type, event) => {
-    setDataInfo((info) => ({ ...info, [type]: event.target?.value || "" }));
+    setSocialState((state) => ({
+      ...state,
+      dataInfo: { ...state.dataInfo, [type]: event.target?.value || "" },
+    }));
+  };
+
+  const restoreData = (item) => {
+    const { id } = item;
+    setSocialState((state) => {
+      console.log(state.history);
+      const historyItem = state.history.find((item) => item.id === id);
+      if (!historyItem) return state;
+
+      let restoredData = { ...state.dataInfo };
+      try {
+        const diff = JSON.parse(historyItem.diff_json);
+        Object.entries(diff).forEach(([key, value]) => {
+          restoredData[key] = value.from || "";
+        });
+      } catch (e) {
+        console.error("Error parsing diff JSON for restore", e);
+      }
+      return {
+        ...state,
+        dataInfo: restoredData,
+      };
+    });
   };
 
   useEffect(() => {
     updateData();
-  }, [updateData]);
+  }, [cityId]);
 
   return (
     <Grid
@@ -114,7 +173,7 @@ export function SiteSettingSocial() {
                 >
                   <MyTextInput
                     label="Вконтакте"
-                    disabled={acces.social_view && !acces.social_edit}
+                    disabled={!canEdit("social")}
                     value={dataInfo?.vk || ""}
                     func={(e) => changeData("vk", e)}
                   />
@@ -126,10 +185,10 @@ export function SiteSettingSocial() {
                   }}
                 >
                   <MyTextInput
-                    label="Инстаграм"
-                    disabled={acces.social_view && !acces.social_edit}
-                    value={dataInfo?.inst || ""}
-                    func={(e) => changeData("inst", e)}
+                    label="RuTube"
+                    disabled={!canEdit("social")}
+                    value={dataInfo?.rt || ""}
+                    func={(e) => changeData("rt", e)}
                   />
                 </Grid>
 
@@ -142,7 +201,7 @@ export function SiteSettingSocial() {
                   <MyTextInput
                     label="Одноклассники"
                     value={dataInfo?.ok || ""}
-                    disabled={acces.social_view && !acces.social_edit}
+                    disabled={!canEdit("social")}
                     func={(e) => changeData("ok", e)}
                   />
                 </Grid>
@@ -155,11 +214,11 @@ export function SiteSettingSocial() {
                   <MyTextInput
                     label="Телеграм"
                     value={dataInfo?.tg || ""}
-                    disabled={acces.social_view && !acces.social_edit}
+                    disabled={!canEdit("social")}
                     func={(e) => changeData("tg", e)}
                   />
                 </Grid>
-                <Grid
+                {/* <Grid
                   size={{
                     xs: 12,
                     sm: 6,
@@ -168,10 +227,10 @@ export function SiteSettingSocial() {
                   <MyTextInput
                     label="Facebook"
                     value={dataInfo?.fb || ""}
-                    disabled={acces.social_view && !acces.social_edit}
+                    disabled={!canEdit('social')}
                     func={(e) => changeData("fb", e)}
                   />
-                </Grid>
+                </Grid> */}
 
                 <Grid
                   size={{
@@ -179,7 +238,7 @@ export function SiteSettingSocial() {
                     sm: 6,
                   }}
                 >
-                  {acces.social_edit ? (
+                  {canEdit("social") ? (
                     <Button
                       variant="contained"
                       onClick={saveData}
@@ -192,6 +251,15 @@ export function SiteSettingSocial() {
             </Grid>
           )}
         </>
+      )}
+      {!!history?.length && (
+        <Grid size={12}>
+          <HistoryLog
+            history={history}
+            restoreFunc={restoreData}
+            mt={3}
+          />
+        </Grid>
       )}
     </Grid>
   );

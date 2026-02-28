@@ -29,7 +29,7 @@ export default function SiteSetting() {
     setOpenAlert,
     closeModal,
     setActiveTab,
-    setAcces,
+    setAccess,
   } = useSiteSettingStore.getState();
   const {
     subModules,
@@ -44,7 +44,6 @@ export default function SiteSetting() {
     customModalActions,
     openAlert,
     showAlert,
-    fullScreen,
   } = useSiteSettingStore((s) => ({
     subModules: s.subModules,
     activeTab: s.activeTab,
@@ -58,7 +57,6 @@ export default function SiteSetting() {
     customModalActions: s.customModalActions,
     openAlert: s.openAlert,
     showAlert: s.showAlert,
-    fullScreen: s.fullScreen,
   }));
 
   const [subList, setSubList] = useState([]);
@@ -74,7 +72,7 @@ export default function SiteSetting() {
           (sub) => data.access[`${sub.key}_view`] === 1 || data.access[`${sub.key}_edit`] === 1,
         ),
       );
-      setAcces(data.access);
+      setAccess(data.access);
       document.title = data.module_info.name;
     } catch (error) {
       showAlert(`Error loading data: ${error.message}`);

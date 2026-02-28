@@ -2,9 +2,10 @@
 
 import { useBannerModalStore } from "../banners/useBannerModalStore";
 import { buildBannerDTO } from "../banners/bannerUtils";
+import { formatPlural } from "@/src/helpers/utils/i18n";
 
 export default function useSaveBanner(showAlert, getData, onClose) {
-  const uploadFile = (dropzone, type, bannerId, bannerName) => {
+  const uploadFile = (dropzone, type, bannerId, bannerName, cityId) => {
     if (!dropzone.current || !dropzone.current?.getAcceptedFiles().length) {
       return Promise.resolve(true);
     }
@@ -15,6 +16,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
         formData.append("id", bannerId);
         formData.append("type", type);
         formData.append("login", localStorage.getItem("token"));
+        formData.append("city_id", cityId);
       });
 
       dropzone.current?.on("error", (file, message) => {
@@ -39,7 +41,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
   const saveBanner = async (isNew = true) => {
     const { desktopDropzone, mobileDropzone, banner } = useBannerModalStore.getState();
     const bannerDTO = buildBannerDTO(banner);
-
+    // console.log(bannerDTO)
     if (!bannerDTO?.this_ban) {
       showAlert("Заполните все требуемые поля");
       return;
@@ -61,11 +63,27 @@ export default function useSaveBanner(showAlert, getData, onClose) {
       const mobileFiles = mobileDropzone.current?.getAcceptedFiles();
 
       if (desktopFiles?.length) {
-        uploads.push(uploadFile(desktopDropzone, "full", bannerId, bannerDTO.this_ban.name));
+        uploads.push(
+          uploadFile(
+            desktopDropzone,
+            "full",
+            bannerId,
+            bannerDTO.this_ban.name,
+            bannerDTO.this_ban.city_id,
+          ),
+        );
       }
 
       if (mobileFiles?.length) {
-        uploads.push(uploadFile(mobileDropzone, "mobile", bannerId, bannerDTO.this_ban.name));
+        uploads.push(
+          uploadFile(
+            mobileDropzone,
+            "mobile",
+            bannerId,
+            bannerDTO.this_ban.name,
+            bannerDTO.this_ban.city_id,
+          ),
+        );
       }
 
       if (uploads.length) {
@@ -79,7 +97,7 @@ export default function useSaveBanner(showAlert, getData, onClose) {
       showAlert(
         `Баннер ${isNew ? "создан" : "обновлён"} успешно${
           uploads.length
-            ? ` с ${uploads.length} изображени${uploads.length > 1 ? "ями" : "ем"}`
+            ? ` с ${formatPlural(uploads.length, ["изображением", "изображениями", "изображениями"])}`
             : ""
         }`,
         true,
