@@ -56,7 +56,18 @@ export const ModalEditLog = ({
 
   return (
     <Dialog
-      sx={{ "& .MuiDialog-paper": { width: "100%" } }}
+      sx={{
+        "& .MuiDialog-paper": {
+          width: { xs: "calc(100% - 16px)", sm: "100%" },
+          maxWidth: 820,
+          margin: { xs: "8px", sm: "32px" },
+          maxHeight: { xs: "calc(100% - 16px)", sm: "calc(100% - 64px)" },
+          borderRadius: "14px",
+          border: "1px solid #E5E7EB",
+          backgroundColor: "#F6F7F9",
+          boxShadow: "0 18px 45px rgba(15, 23, 42, 0.25)",
+        },
+      }}
       maxWidth="md"
       open={open}
       onClose={handleClose}
@@ -69,32 +80,63 @@ export const ModalEditLog = ({
           save={() => deletes({ id: module.id })}
         />
       ) : null}
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent sx={{ fontWeight: "bold", textAlign: "left" }}>
-        <Grid style={{ marginTop: "20px" }}>
-          <MyAutocomplite
-            label="Модуль"
-            data={modules}
-            multiple={false}
-            value={module_id}
-            func={(event, data) => {
-              setModule(data);
-            }}
-          />
-        </Grid>
-        <Grid style={{ marginTop: "10px" }}>
-          <MyTextInput
-            minRows={3}
-            value={description}
-            func={(e) => setDescription(e.target.value)}
-            label="Описание"
-          />
-        </Grid>
-        {moduleHistory.length ? (
+      <DialogTitle
+        sx={{
+          fontSize: { xs: "18px", sm: "22px" },
+          fontWeight: 700,
+          color: "#2E2E33",
+          px: 3,
+          pt: { xs: 2, sm: 2.5 },
+          pb: 1,
+        }}
+      >
+        {title}
+      </DialogTitle>
+      <DialogContent sx={{ fontWeight: "bold", textAlign: "left", px: 3, pb: 2 }}>
+        <Box
+          sx={{
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: "12px",
+            border: "1px solid #E5E7EB",
+            backgroundColor: "#fff",
+          }}
+        >
+          <Grid style={{ marginTop: "2px" }}>
+            <MyAutocomplite
+              label="Модуль"
+              data={modules}
+              multiple={false}
+              value={module_id}
+              func={(event, data) => {
+                setModule(data);
+              }}
+            />
+          </Grid>
           <Grid style={{ marginTop: "10px" }}>
-            <Accordion style={{ width: "100%" }}>
+            <MyTextInput
+              minRows={3}
+              value={description}
+              func={(e) => setDescription(e.target.value)}
+              label="Описание"
+            />
+          </Grid>
+        </Box>
+        {moduleHistory.length ? (
+          <Grid style={{ marginTop: "12px" }}>
+            <Accordion
+              style={{ width: "100%" }}
+              sx={{
+                borderRadius: "12px !important",
+                border: "1px solid #E5E7EB",
+                boxShadow: "none",
+                overflow: "hidden",
+                backgroundColor: "#fff",
+              }}
+            >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography style={{ fontWeight: "bold" }}>История изменений</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: "20px", color: "#2E2E33" }}>
+                  История изменений
+                </Typography>
               </AccordionSummary>
               <AccordionDetails sx={{ px: { xs: 0, sm: 2 }, pb: { xs: 1, sm: 2 } }}>
                 <TableContainer
@@ -183,31 +225,79 @@ export const ModalEditLog = ({
           </Grid>
         ) : null}
       </DialogContent>
-      <DialogActions>
-        <div
-          style={{
+      <DialogActions
+        sx={{
+          px: 3,
+          py: 1.5,
+          borderTop: "1px solid #E5E7EB",
+          backgroundColor: "#fff",
+        }}
+      >
+        <Box
+          sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             width: "100%",
+            gap: { xs: 0.5, sm: 1 },
+            flexWrap: "nowrap",
           }}
         >
           <Button
-            variant={"contained"}
+            variant="contained"
             onClick={() => setOpenDelete(true)}
+            sx={{
+              backgroundColor: "#DD1A32",
+              borderRadius: "9px",
+              px: { xs: 1.4, sm: 2 },
+              py: 0.55,
+              fontWeight: 700,
+              fontSize: { xs: "12px", sm: "14px" },
+              textTransform: "uppercase",
+              minWidth: "auto",
+              "&:hover": {
+                backgroundColor: "#be1630",
+              },
+            }}
           >
             Удалить
           </Button>
-          <div>
+          <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 } }}>
             <Button
               autoFocus
               onClick={handleClose}
+              sx={{
+                color: "#DD1A32",
+                fontWeight: 700,
+                fontSize: { xs: "12px", sm: "14px" },
+                textTransform: "uppercase",
+                minWidth: "auto",
+                px: { xs: 0.5, sm: 1 },
+              }}
             >
               Отмена
             </Button>
-            <Button onClick={handleSave}>Сохранить</Button>
-          </div>
-        </div>
+            <Button
+              onClick={handleSave}
+              variant="contained"
+              sx={{
+                backgroundColor: "#2E7D32",
+                borderRadius: "9px",
+                px: { xs: 1.4, sm: 2 },
+                py: 0.55,
+                fontWeight: 700,
+                fontSize: { xs: "12px", sm: "14px" },
+                textTransform: "uppercase",
+                minWidth: "auto",
+                "&:hover": {
+                  backgroundColor: "#27692A",
+                },
+              }}
+            >
+              Сохранить
+            </Button>
+          </Box>
+        </Box>
       </DialogActions>
     </Dialog>
   );

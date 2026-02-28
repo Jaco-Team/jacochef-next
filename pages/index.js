@@ -43,254 +43,281 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Backdrop from "@mui/material/Backdrop";
 import MyAlert from "@/ui/MyAlert";
 
-const SortableItem = ({ module, onFavoriteClick, loading }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: module.id,
-  });
+const SortableItem = React.memo(
+  function SortableItem({ module, onFavoriteClick, loading }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+      id: module.id,
+    });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.88 : 1,
-    cursor: isDragging ? "grabbing" : "default",
-    height: "100%",
-    display: "flex",
-    position: "relative",
-    zIndex: isDragging ? 9999 : "auto",
-  };
-
-  const [modules, setModules] = useState({});
-  const [openModal, setOpenModal] = useState(false);
-  const [isTagsExpanded, setIsTagsExpanded] = useState(false);
-
-  const save = () => {
-    onFavoriteClick(modules);
-  };
-
-  const tags = module.navs_id || [];
-  const hasTags = tags.length > 0;
-  const visibleTags = isTagsExpanded ? tags : [];
-
-  return (
-    <Grid
-      item
-      xs={12}
-      sm={6}
-      md={6}
-      lg={4}
-      xl={3}
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      sx={{
-        display: "flex",
-        alignItems: "stretch",
+    const style = useMemo(
+      () => ({
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.88 : 1,
+        cursor: isDragging ? "grabbing" : "default",
         height: "100%",
-      }}
-    >
-      {openModal ? (
-        <ModalAccept
-          open={openModal}
-          onClose={() => setOpenModal(false)}
-          title={"Удалить избранное"}
-          save={save}
-          loading={loading}
-        />
-      ) : null}
+        display: "flex",
+        position: "relative",
+        zIndex: isDragging ? 9999 : "auto",
+      }),
+      [transform, transition, isDragging],
+    );
 
-      <Paper
-        elevation={0}
+    const [openModal, setOpenModal] = useState(false);
+    const [isTagsExpanded, setIsTagsExpanded] = useState(false);
+
+    const save = useCallback(() => onFavoriteClick(module), [onFavoriteClick, module]);
+
+    const openModule = useCallback(() => {
+      if (loading || !module.key_query) return;
+      window.location = "/" + module.key_query;
+    }, [loading, module.key_query]);
+
+    const handleCardClick = useCallback(
+      (event) => {
+        const target = event.target;
+        const blocked = target instanceof Element ? target.closest('[data-no-nav="true"]') : null;
+        if (blocked || isDragging) return;
+        openModule();
+      },
+      [isDragging, openModule],
+    );
+
+    const handleRemoveClick = useCallback(
+      (e) => {
+        e.stopPropagation();
+        if (!loading) {
+          setOpenModal(true);
+        }
+      },
+      [loading],
+    );
+
+    const handleToggleTags = useCallback(
+      (e) => {
+        e.stopPropagation();
+        if (!loading) {
+          setIsTagsExpanded((prev) => !prev);
+        }
+      },
+      [loading],
+    );
+
+    const tags = useMemo(() => module.navs_id || [], [module.navs_id]);
+    const hasTags = tags.length > 0;
+    const visibleTags = useMemo(() => (isTagsExpanded ? tags : []), [isTagsExpanded, tags]);
+
+    return (
+      <Grid
+        item
+        xs={12}
+        sm={6}
+        md={6}
+        lg={4}
+        xl={3}
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
         sx={{
-          borderRadius: 2,
-          padding: "10px 14px",
-          height: "100%",
-          width: "100%",
-          backgroundColor: "#fff",
-          border: isDragging ? "2px solid #1977D2" : "1px solid #e5e5e5",
-          boxShadow: isDragging ? "0 20px 40px rgba(0,0,0,0.22)" : "none",
-          "&:hover": {
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-          },
-          position: "relative",
           display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          opacity: loading ? 0.7 : 1,
+          alignItems: "stretch",
+          height: "100%",
         }}
       >
-        <Box
-          {...listeners}
-          sx={{
-            position: "absolute",
-            top: "10px",
-            left: "4px",
-            cursor: loading ? "wait" : "grab",
-            touchAction: "none",
-            color: "#A6A6A6",
-            "&:hover": { color: "#1977D2" },
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "24px",
-            height: "24px",
-            borderRadius: "4px",
-            zIndex: 1,
-          }}
-        >
-          {loading ? <CircularProgress size={16} /> : <DragIndicatorIcon fontSize="small" />}
-        </Box>
+        {openModal ? (
+          <ModalAccept
+            open={openModal}
+            onClose={() => setOpenModal(false)}
+            title={"Удалить избранное"}
+            save={save}
+            loading={loading}
+          />
+        ) : null}
 
-        <Box
+        <Paper
+          elevation={0}
+          onClick={handleCardClick}
           sx={{
+            borderRadius: 2,
+            padding: "10px 14px",
+            height: "100%",
+            width: "100%",
+            backgroundColor: "#fff",
+            border: isDragging ? "2px solid #1977D2" : "1px solid #e5e5e5",
+            boxShadow: isDragging ? "0 20px 40px rgba(0,0,0,0.22)" : "none",
+            "&:hover": {
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            },
+            position: "relative",
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: { xs: 1.2, md: 0.5 },
-            pl: 3,
-            flexShrink: 0,
-            pr: 0.5,
+            flexDirection: "column",
+            overflow: "hidden",
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? "wait" : "pointer",
           }}
         >
-          <Typography
-            variant="h6"
+          <Box
+            {...listeners}
+            data-no-nav="true"
             sx={{
-              fontSize: "16px",
-              fontWeight: 500,
-              color: "#333",
-              pr: 2,
-              cursor: loading ? "wait" : "pointer",
+              position: "absolute",
+              top: "10px",
+              left: "4px",
+              cursor: loading ? "wait" : "grab",
+              touchAction: "none",
+              color: "#A6A6A6",
               "&:hover": { color: "#1977D2" },
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!loading && module.key_query) {
-                window.location = "/" + module.key_query;
-              }
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "24px",
+              height: "24px",
+              borderRadius: "4px",
+              zIndex: 1,
             }}
           >
-            {module.name}
-          </Typography>
-          <Box sx={{ width: 30, display: "flex", justifyContent: "center", flexShrink: 0 }}>
-            <IconButton
-              size="small"
-              sx={{ p: 0.5 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!loading) {
-                  setModules(module);
-                  setOpenModal(true);
-                }
-              }}
-              disabled={loading}
-            >
-              {loading ? <CircularProgress size={16} /> : <StarIcon isActive={true} />}
-            </IconButton>
+            {loading ? <CircularProgress size={16} /> : <DragIndicatorIcon fontSize="small" />}
           </Box>
-        </Box>
 
-        <Box
-          sx={{
-            mb: 1,
-            pl: 3,
-            pr: 0.5,
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 1,
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              color: "#666",
-              fontSize: "13px",
-              lineHeight: 1.3,
-              maxWidth: "358px",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              minHeight: "32px",
-              flex: 1,
-            }}
-          >
-            {module.description || ""}
-          </Typography>
-
-          {hasTags && (
-            <Box sx={{ width: 30, display: "flex", justifyContent: "center", flexShrink: 0 }}>
-              <IconButton
-                size="small"
-                disabled={loading}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!loading) {
-                    setIsTagsExpanded((prev) => !prev);
-                  }
-                }}
-                sx={{
-                  color: "#1977D2",
-                  border: "1px solid #BCDEFB",
-                  bgcolor: "#E3F2FD",
-                  width: 22,
-                  height: 22,
-                  mt: { xs: 0.6, md: 0.1 },
-                  "&:hover": { bgcolor: "#BBDEFB" },
-                }}
-              >
-                {isTagsExpanded ? (
-                  <KeyboardArrowUpRoundedIcon fontSize="small" />
-                ) : (
-                  <KeyboardArrowDownRoundedIcon fontSize="small" />
-                )}
-              </IconButton>
-            </Box>
-          )}
-        </Box>
-
-        {isTagsExpanded && hasTags && (
           <Box
             sx={{
               display: "flex",
-              flexWrap: "wrap",
-              gap: 0.75,
-              ml: 3,
-              mt: 0.75,
-              pt: 0.75,
-              borderTop: "1px solid #F3F3F3",
-              maxWidth: "358px",
-              overflow: "hidden",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              mb: { xs: 1.2, md: 0.5 },
+              pl: 3,
               flexShrink: 0,
+              pr: 0.5,
             }}
           >
-            {visibleTags.map((tag, index) => (
-              <Chip
-                key={index}
-                label={tag.name}
+            <Typography
+              variant="h6"
+              sx={{
+                fontSize: "16px",
+                fontWeight: 500,
+                color: "#333",
+                pr: 2,
+                cursor: loading ? "wait" : "pointer",
+                "&:hover": { color: "#1977D2" },
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {module.name}
+            </Typography>
+            <Box sx={{ width: 30, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+              <IconButton
+                data-no-nav="true"
                 size="small"
-                sx={{
-                  backgroundColor: "#E3F2FD",
-                  color: "#1977D2",
-                  border: "1px solid #BCDEFB",
-                  borderRadius: "8px",
-                  fontSize: "0.65rem",
-                  fontWeight: 400,
-                  height: "20px",
-                  "&:hover": { backgroundColor: "#BBDEFB" },
-                }}
-              />
-            ))}
+                sx={{ p: 0.5 }}
+                onClick={handleRemoveClick}
+                disabled={loading}
+              >
+                {loading ? <CircularProgress size={16} /> : <StarIcon isActive={true} />}
+              </IconButton>
+            </Box>
           </Box>
-        )}
-      </Paper>
-    </Grid>
-  );
-};
+
+          <Box
+            sx={{
+              mb: 1,
+              pl: 3,
+              pr: 0.5,
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 1,
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                color: "#666",
+                fontSize: "13px",
+                lineHeight: 1.3,
+                maxWidth: "358px",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                // minHeight: "32px",
+                flex: 1,
+              }}
+            >
+              {/* {module.description || ""} */}
+            </Typography>
+
+            {hasTags && (
+              <Box sx={{ width: 30, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+                <IconButton
+                  data-no-nav="true"
+                  size="small"
+                  disabled={loading}
+                  onClick={handleToggleTags}
+                  sx={{
+                    color: "#1977D2",
+                    border: "1px solid #BCDEFB",
+                    bgcolor: "#E3F2FD",
+                    width: 22,
+                    height: 22,
+                    mt: { xs: 0.6, md: 0.1 },
+                    "&:hover": { bgcolor: "#BBDEFB" },
+                  }}
+                >
+                  {isTagsExpanded ? (
+                    <KeyboardArrowUpRoundedIcon fontSize="small" />
+                  ) : (
+                    <KeyboardArrowDownRoundedIcon fontSize="small" />
+                  )}
+                </IconButton>
+              </Box>
+            )}
+          </Box>
+
+          {isTagsExpanded && hasTags && (
+            <Box
+              data-no-nav="true"
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 0.75,
+                ml: 3,
+                mt: 0.75,
+                pt: 0.75,
+                borderTop: "1px solid #F3F3F3",
+                maxWidth: "358px",
+                overflow: "hidden",
+                flexShrink: 0,
+              }}
+            >
+              {visibleTags.map((tag, index) => (
+                <Chip
+                  key={index}
+                  label={tag.name}
+                  size="small"
+                  sx={{
+                    backgroundColor: "#E3F2FD",
+                    color: "#1977D2",
+                    border: "1px solid #BCDEFB",
+                    borderRadius: "8px",
+                    fontSize: "0.65rem",
+                    fontWeight: 400,
+                    height: "20px",
+                    "&:hover": { backgroundColor: "#BBDEFB" },
+                  }}
+                />
+              ))}
+            </Box>
+          )}
+        </Paper>
+      </Grid>
+    );
+  },
+  (prev, next) => prev.module === next.module && prev.loading === next.loading,
+);
 
 export default function Index() {
   const [isOpenMenu, setIsOpenMenu] = useState(false);
@@ -490,7 +517,7 @@ export default function Index() {
   const getData = async (method, data = {}) => {
     setLoading(true);
     try {
-      const result = await api_laravel("header", method, data);
+      const result = await api_laravel("home", method, data);
       if (result?.data?.text) {
         setErrStatus(result.data?.st);
         setErrText(result.data?.text);

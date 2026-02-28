@@ -48,10 +48,7 @@ export const SearchAutocomplete = ({
   const [favoritesLoading, setFavoritesLoading] = useState(false);
 
   useEffect(() => {
-    console.log(favoritesParam);
-    if (favoritesParam?.length) {
-      setFavorites(favoritesParam);
-    }
+    setFavorites(favoritesParam || []);
   }, [favoritesParam]);
 
   // Добавление в избранное
@@ -66,7 +63,7 @@ export const SearchAutocomplete = ({
           })
           .join(",") || "";
 
-      const response = await api_laravel("header", "add_favorite", {
+      const response = await api_laravel("home", "add_favorite", {
         module_id: child.id,
         module_name: child.name,
         module_key: child.key_query,
@@ -91,7 +88,7 @@ export const SearchAutocomplete = ({
   const removeFavorite = async (childId) => {
     setLoading(true);
     try {
-      const response = await api_laravel("header", "remove_favorite", {
+      const response = await api_laravel("home", "remove_favorite", {
         module_id: childId,
       });
 
@@ -116,7 +113,9 @@ export const SearchAutocomplete = ({
   const toggleFavorite = async (child, event) => {
     event.stopPropagation();
 
-    const isAlreadyFavorite = favorites.some((fav) => fav.module_id === child.id);
+    const isAlreadyFavorite = favorites.some(
+      (fav) => Number(fav?.id) === Number(child.id) || Number(fav?.module_id) === Number(child.id),
+    );
 
     if (isAlreadyFavorite) {
       await removeFavorite(child.id);
@@ -127,7 +126,9 @@ export const SearchAutocomplete = ({
 
   // Функция для проверки, находится ли элемент в избранном
   const isFavorite = (childId) => {
-    return favorites.some((fav) => fav.id === childId);
+    return favorites.some(
+      (fav) => Number(fav?.id) === Number(childId) || Number(fav?.module_id) === Number(childId),
+    );
   };
 
   const parseNavsId = (navsIdString) => {
