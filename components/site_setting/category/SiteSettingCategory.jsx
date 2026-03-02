@@ -19,19 +19,61 @@ import { MyTextInput } from "@/ui/Forms";
 import { CategoryModal } from "./CategoryModal";
 import { useDebounce } from "@/src/hooks/useDebounce";
 import { ColorPickerCell } from "@/ui/Forms/ColorPickerCell";
+import useApi from "@/src/hooks/useApi";
+import HistoryLog from "@/ui/history/HistoryLog";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export function SiteSettingCategory() {
   const submodule = "category";
-  // Settings state
+
+  const getData = async (method, data = {}) => {
+    const { setIsLoad, module: parentModule } = useSiteSettingStore.getState();
+    setIsLoad(true);
+    try {
+      const { api_laravel } = useApi(parentModule);
+      // inject submodule type
+      data.submodule = "category";
+      const result = await api_laravel(method, data);
+      return result;
+    } catch (e) {
+      throw e;
+    } finally {
+      setIsLoad(false);
+    }
+  };
+  // Settings store
   const createModal = useSiteSettingStore((state) => state.createModal);
   const closeModal = useSiteSettingStore((state) => state.closeModal);
   const setModalTitle = useSiteSettingStore((state) => state.setModalTitle);
   const showAlert = useSiteSettingStore((state) => state.showAlert);
+  const access = useSiteSettingStore((state) => state.access);
+
+  const canEdit = (key) => handleUserAccess(access).userCan("edit", key);
   // Category store
-  const { getData, setModuleName, setItem, setItemName, setCategories, changeSort } =
-    useCategoryStore.getState();
-  const [itemName, moduleName] = useCategoryStore((s) => [s.itemName, s.moduleName]);
-  const categories = useCategoryStore((state) => state.categories);
+  const {
+    itemName,
+    moduleName,
+    categories,
+    setModuleName,
+    setItem,
+    setItemName,
+    setCategories,
+    changeSort,
+    setHistory,
+    history,
+  } = useCategoryStore((s) => ({
+    itemName: s.itemName,
+    moduleName: s.moduleName,
+    categories: s.categories,
+    setModuleName: s.setModuleName,
+    setItem: s.setItem,
+    setItemName: s.setItemName,
+    setCategories: s.setCategories,
+    changeSort: s.changeSort,
+    setHistory: s.setHistory,
+    history: s.history,
+  }));
+
   const rootCategories = categories.filter((c) => c.parent_id === 0);
   const getSubCategories = useCallback(
     (id) => categories.filter((c) => c.parent_id === id),
@@ -45,10 +87,15 @@ export function SiteSettingCategory() {
       submodule,
     };
     try {
-      const response = await getData("get_category_data", data);
-      setModuleName(response.submodule.name);
-      setCategories(response.categories);
+      const res = await getData("get_category_data", data);
+      if (!res?.st) {
+        throw new Error(res?.text || "Unknown error");
+      }
+      setModuleName(res.submodule.name);
+      setCategories(res.categories);
+      setHistory(res.history);
     } catch (e) {
+      console.error(e);
       showAlert(`Fetch error: ${e}`, false);
     }
   }, [setCategories]);
@@ -59,7 +106,6 @@ export function SiteSettingCategory() {
     getData,
     fetchCoreData,
   );
-  const [acces] = useSiteSettingStore((state) => [state.acces]);
 
   const saveSort = useDebounce(async (id, event) => {
     const targetCategory = useCategoryStore.getState().categories.find((cat) => cat.id === id);
@@ -89,7 +135,7 @@ export function SiteSettingCategory() {
       modalPrefix,
       () => (
         <>
-          {acces.category_edit ? (
+          {canEdit("category") ? (
             <Button
               variant="contained"
               onClick={async () => (action === "newCategory" ? await saveNew() : await saveEdit())}
@@ -107,7 +153,7 @@ export function SiteSettingCategory() {
 
   useEffect(() => {
     fetchCoreData();
-  }, [fetchCoreData]);
+  }, []);
 
   // update banner name in modal title
   useEffect(
@@ -136,7 +182,7 @@ export function SiteSettingCategory() {
         }}
       >
         <Typography variant="h5">{moduleName}</Typography>
-        {acces.category_edit ? (
+        {canEdit("category") ? (
           <Button
             onClick={() => openModal("newCategory", "Новая категория")}
             variant="contained"
@@ -153,7 +199,10 @@ export function SiteSettingCategory() {
         }}
       >
         <TableContainer>
-          <Table size="small">
+          <Table
+            size="small"
+            stickyHeader
+          >
             <TableHead>
               <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
                 <TableCell>#</TableCell>
@@ -186,7 +235,7 @@ export function SiteSettingCategory() {
                         <MyTextInput
                           type="number"
                           label=""
-                          disabled={acces.category_view && !acces.category_edit}
+                          disabled={!canEdit("category")}
                           value={item.sort}
                           func={(e) => changeSort(item.id, e)}
                           onBlur={(e) => saveSort(item.id, e)}
@@ -225,7 +274,7 @@ export function SiteSettingCategory() {
                           <MyTextInput
                             type="number"
                             label=""
-                            disabled={acces.category_view && !acces.category_edit}
+                            disabled={!canEdit("category")}
                             value={subcat.sort}
                             func={(e) => changeSort(subcat.id, e)}
                             onBlur={(e) => saveSort(subcat.id, e)}
@@ -260,7 +309,7 @@ export function SiteSettingCategory() {
                       <MyTextInput
                         type="number"
                         label=""
-                        disabled={acces.category_view && !acces.category_edit}
+                        disabled={!canEdit("category")}
                         value={item.sort}
                         func={(e) => changeSort(item.id, e)}
                         onBlur={(e) => saveSort(item.id, e)}
@@ -282,6 +331,11 @@ export function SiteSettingCategory() {
           </Table>
         </TableContainer>
       </Grid>
+      {history?.length > 0 && (
+        <Grid size={12}>
+          <HistoryLog history={history} />
+        </Grid>
+      )}
     </Grid>
   );
 }

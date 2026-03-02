@@ -22,37 +22,74 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useBannerModalStore } from "./useBannerModalStore";
 import { BannerModal } from "./BannerModal";
 import useSaveBanner from "../hooks/useSaveBanner";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export function SiteSettingBanners(props) {
   const {} = props;
   const submodule = "banners";
-  // Page state
-  const [cityId, cities] = useSiteSettingStore((state) => [state.city_id, state.cities]);
-  const { createModal, setCityId, closeModal, setModalTitle, showAlert } =
-    useSiteSettingStore.getState();
-  const [acces] = useSiteSettingStore((state) => [state.acces]);
+  // site setting store
+  const {
+    city_id: cityId,
+    cities,
+    access,
+    createModal,
+    setCityId,
+    closeModal,
+    setModalTitle,
+    showAlert,
+  } = useSiteSettingStore((s) => ({
+    city_id: s.city_id,
+    cities: s.cities,
+    access: s.access,
+    createModal: s.createModal,
+    setCityId: s.setCityId,
+    closeModal: s.closeModal,
+    setModalTitle: s.setModalTitle,
+    showAlert: s.showAlert,
+  }));
 
-  // banners list state
-  const { getData, setActiveBanners, setNonActiveBanners, setModuleName, banner } =
-    useBannersStore.getState();
-  const active = useBannersStore((state) => state.active);
-  const non_active = useBannersStore((state) => state.non_active);
-  const moduleName = useBannersStore((state) => state.moduleName);
-  const setSort = useBannersStore((state) => state.setSort);
+  const canEdit = (key) => handleUserAccess(access).userCan("edit", key);
 
-  const bannerName = useBannerModalStore((state) => state.bannerName);
+  // banners store
+  const {
+    getData,
+    setActiveBanners,
+    setNonActiveBanners,
+    setModuleName,
+    banner,
+    active,
+    non_active,
+    moduleName,
+    setSort,
+  } = useBannersStore((s) => ({
+    getData: s.getData,
+    setActiveBanners: s.setActiveBanners,
+    setNonActiveBanners: s.setNonActiveBanners,
+    setModuleName: s.setModuleName,
+    banner: s.banner,
+    active: s.active,
+    non_active: s.non_active,
+    moduleName: s.moduleName,
+    setSort: s.setSort,
+  }));
+
+  // modal store
+  const bannerName = useBannerModalStore((s) => s.bannerName);
 
   const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle);
 
   const { saveNew, saveEdit } = useSaveBanner(showAlert, getData, closeModal);
 
   const updateItemSort = async (item, event) => {
-    if (item.sort === event.target.value) {
+    const oldSort = item.old_sort;
+    const newSort = +event.target.value;
+    if (oldSort === undefined || oldSort === newSort) {
+      console.log(oldSort, newSort, "No sort change detected");
       return;
     }
     const newItem = {
       id: item.id,
-      sort: event.target.value,
+      sort: newSort,
       is_show: item.is_active,
     };
     try {
@@ -62,6 +99,7 @@ export function SiteSettingBanners(props) {
       showAlert("Error saving banner sort");
     }
   };
+
   const updateItemActive = async (item, event) => {
     if (item.is_active === event.target.value) {
       return;
@@ -109,7 +147,7 @@ export function SiteSettingBanners(props) {
       modalPrefix,
       () => (
         <>
-          {acces.banners_edit ? (
+          {canEdit("banners") && (
             <Button
               variant="contained"
               onClick={async () => {
@@ -119,7 +157,7 @@ export function SiteSettingBanners(props) {
             >
               Сохранить
             </Button>
-          ) : null}
+          )}
         </>
       ),
     );
@@ -154,14 +192,14 @@ export function SiteSettingBanners(props) {
       >
         <Typography variant="h5">{moduleName}</Typography>
 
-        {acces.banners_edit ? (
+        {canEdit("banners") && (
           <Button
             onClick={() => openModal("bannerNew", "Новый баннер")}
             variant="contained"
           >
-            Добавить новую категорию
+            Добавить баннер
           </Button>
-        ) : null}
+        )}
       </Grid>
       <Grid size={12}>
         <MySelect
@@ -217,19 +255,13 @@ export function SiteSettingBanners(props) {
                     </TableCell>
                     <TableCell>{item?.link}</TableCell>
                     <TableCell>
-                      <Grid
-                        size={{
-                          xs: 12,
-                          sm: 6,
-                        }}
-                      >
-                        <MyTextInput
-                          value={item.sort}
-                          disabled={acces.banners_view && !acces.banners_edit}
-                          func={(e) => setSort(item.id, e)}
-                          onBlur={async (e) => await updateItemSort(item, e)}
-                        />
-                      </Grid>
+                      <MyTextInput
+                        type="number"
+                        value={item.sort}
+                        disabled={access.banners_view && !access.banners_edit}
+                        func={(e) => setSort(item.id, e)}
+                        onBlur={async (e) => await updateItemSort(item, e)}
+                      />
                     </TableCell>
                     <TableCell>{item.city_name ?? "Все города"}</TableCell>
                     <TableCell>{item.date_start}</TableCell>
@@ -237,7 +269,7 @@ export function SiteSettingBanners(props) {
                     <TableCell>
                       <MyCheckBox
                         value={!!item.is_active}
-                        disabled={acces.banners_view && !acces.banners_edit}
+                        disabled={access.banners_view && !access.banners_edit}
                         func={async (e) => await updateItemActive(item, e)}
                       />
                     </TableCell>

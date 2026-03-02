@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSiteSettingStore } from "../useSiteSettingStore";
 import { usePagesStore } from "./usePagesStore";
 import useSavePage from "../hooks/useSavePage";
 import {
+  Box,
   Button,
+  Divider,
   Grid,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -16,59 +19,124 @@ import {
   Typography,
 } from "@mui/material";
 import { PageTextModal } from "./PageTextModal";
-import { MySelect } from "@/ui/Forms";
+import { MySelect, MyTextInput } from "@/ui/Forms";
+import useApi from "@/src/hooks/useApi";
+import { useDebounce } from "@/src/hooks/useDebounce";
+import HistoryLog from "@/ui/history/HistoryLog";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export function SiteSettingPages() {
   const submodule = "seo";
   // Settings state
-  const [cityId, cities, acces, setCityId] = useSiteSettingStore((state) => [
-    state.city_id,
-    state.cities,
-    state.acces,
-    state.setCityId,
-  ]);
-  const createModal = useSiteSettingStore((state) => state.createModal);
-  const closeModal = useSiteSettingStore((state) => state.closeModal);
-  const setModalTitle = useSiteSettingStore((state) => state.setModalTitle);
-  const showAlert = useSiteSettingStore((state) => state.showAlert);
+  const {
+    city_id: cityId,
+    cities,
+    access,
+    setCityId,
+    createModal,
+    closeModal,
+    setModalTitle,
+    showAlert,
+  } = useSiteSettingStore((s) => ({
+    city_id: s.city_id,
+    cities: s.cities,
+    access: s.access,
+    setCityId: s.setCityId,
+    createModal: s.createModal,
+    closeModal: s.closeModal,
+    setModalTitle: s.setModalTitle,
+    showAlert: s.showAlert,
+  }));
+
+  const canEdit = (key) => handleUserAccess(access).userCan("edit", key);
+
   // Page text state
-  const { getData, setModuleName, setPages, setItem, setItemName, setCategories } =
-    usePagesStore.getState();
-  const pages = usePagesStore((s) => s.pages);
-  const itemName = usePagesStore((s) => s.itemName);
-  const moduleName = usePagesStore((s) => s.moduleName);
+  const {
+    setModuleName,
+    setPages,
+    setItem,
+    setItemName,
+    setCategories,
+    setFilteredPages,
+    pages,
+    filteredPages,
+    itemName,
+    moduleName,
+    history,
+    setHistory,
+  } = usePagesStore((s) => ({
+    getData: s.getData,
+    setModuleName: s.setModuleName,
+    setPages: s.setPages,
+    setItem: s.setItem,
+    setItemName: s.setItemName,
+    setCategories: s.setCategories,
+    setFilteredPages: s.setFilteredPages,
+    pages: s.pages,
+    filteredPages: s.filteredPages,
+    itemName: s.itemName,
+    moduleName: s.moduleName,
+    history: s.history,
+    setHistory: s.setHistory,
+  }));
+
+  // fetching data
+  const getData = async (method, data = {}) => {
+    const { setIsLoad, module: parentModule } = useSiteSettingStore.getState();
+    const { api_laravel } = useApi(parentModule);
+    setIsLoad(true);
+    try {
+      // inject submodule type
+      data.submodule = submodule;
+      const result = await api_laravel(method, data);
+      return result;
+    } catch (e) {
+      throw e;
+    } finally {
+      setIsLoad(false);
+    }
+  };
 
   const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle);
 
   const fetchCoreData = useCallback(async () => {
     const data = {
-      submodule,
       city_id: cityId,
     };
     try {
-      const response = await getData("get_page_text_data", data);
-      setModuleName(response.submodule.name);
-      setPages(response.pages);
-      setCategories(response.categories);
+      const res = await getData("get_page_text_data", data);
+      if (!res?.st) throw new Error(res?.text || "Unknown error");
+      setModuleName(res.submodule.name);
+      setPages(res.pages);
+      setCategories(res.categories);
+      setHistory(res.history);
     } catch (e) {
-      showAlert(`Fetch error: ${e}`, false);
+      showAlert(`Fetch seo pages error: ${e.message}`, false);
     }
   }, [cityId]);
 
+  // filtering with debounce
+  const [query, setQuery] = useState("");
+
+  const filterPages = useDebounce((search) => {
+    if (!search || search.length < 3) {
+      setFilteredPages(pages);
+      return;
+    }
+
+    const q = search.toLowerCase();
+    const filtered = pages.filter((p) =>
+      [p.title, p.description, p.content].some((val) => val.toLowerCase().includes(q)),
+    );
+    setFilteredPages(filtered);
+  }, 300);
+
   useEffect(() => {
-    const data = {
-      submodule,
-      city_id: cityId,
-    };
-    getData("get_page_text_data", data)
-      .then((response) => {
-        setModuleName(response.submodule.name);
-        setPages(response.pages);
-        setCategories(response.categories);
-      })
-      .catch((e) => {
-        showAlert(`Fetch error: ${e}`, false);
-      });
+    filterPages(query);
+  }, [query, pages]);
+
+  useEffect(() => {
+    fetchCoreData();
   }, [cityId]);
 
   const { saveNew, saveEdit, setPageItem } = useSavePage(
@@ -91,7 +159,7 @@ export function SiteSettingPages() {
       modalPrefix,
       () => (
         <>
-          {acces.seo_edit ? (
+          {canEdit("seo") ? (
             <Button
               variant="contained"
               onClick={async () => (action === "newPage" ? await saveNew() : await saveEdit())}
@@ -106,10 +174,6 @@ export function SiteSettingPages() {
       },
     );
   };
-
-  useEffect(() => {
-    fetchCoreData();
-  }, []);
 
   // update page name in modal title
   useEffect(
@@ -139,7 +203,16 @@ export function SiteSettingPages() {
       >
         <Typography variant="h5">{moduleName}</Typography>
 
-        {acces.seo_edit ? (
+        <MyTextInput
+          type="search"
+          size="small"
+          value={query}
+          func={(e) => setQuery(e.target.value)}
+          placeholder="Найти страницу…"
+          sx={{ width: 300, ml: "auto" }}
+        />
+
+        {canEdit("seo") ? (
           <Button
             onClick={() => openModal("newPage", "Новая страница")}
             variant="contained"
@@ -169,8 +242,8 @@ export function SiteSettingPages() {
           sm: 12,
         }}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ maxHeight: "50dvh" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell style={{ width: "2%" }}>#</TableCell>
@@ -182,7 +255,7 @@ export function SiteSettingPages() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {pages.map((page, key) => (
+              {filteredPages.map((page, key) => (
                 <TableRow
                   key={page.id}
                   hover
@@ -203,6 +276,11 @@ export function SiteSettingPages() {
           </Table>
         </TableContainer>
       </Grid>
+      {history?.length > 0 && (
+        <Grid size={12}>
+          <HistoryLog history={history} />
+        </Grid>
+      )}
     </Grid>
   );
 }
