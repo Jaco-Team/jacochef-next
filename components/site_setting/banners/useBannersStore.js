@@ -25,9 +25,13 @@ export const useBannersStore = create((set, get) => ({
       active: state.active.map((item) => (item.id === id ? { ...item, is_active: value } : item)),
     })),
 
-  setSort: (id, value) =>
+  setSort: (id, e) =>
     set((state) => ({
-      active: state.active.map((item) => (item.id === id ? { ...item, sort: value } : item)),
+      active: state.active.map((item) =>
+        item.id === id
+          ? { ...item, sort: +e.target.value, old_sort: item.old_sort ?? item.sort }
+          : item,
+      ),
     })),
 
   // fetching data
