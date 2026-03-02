@@ -14,6 +14,7 @@ export function MyTextInput(props) {
     inputProps,
     slotProps,
     isTimeMask,
+    isDecimalMask,
     InputAdornment: legacyInputAdornment = null, // legacy hack
     inputAdornment,
     rows,
@@ -126,14 +127,43 @@ export function MyTextInput(props) {
       );
     }
   }
+
+  const handleDecimalMask = (e) => {
+    let value = e.target.value;
+
+    // Заменяем точки на запятые
+    value = value.replace(/\./g, ",");
+
+    // Удаляем все, кроме цифр и запятой
+    value = value.replace(/[^\d,]/g, "");
+
+    // Оставляем только одну запятую
+    const parts = value.split(",");
+    if (parts.length > 2) {
+      value = parts[0] + "," + parts.slice(1).join("");
+    }
+
+    // Ограничиваем количество знаков после запятой (например, 3)
+    if (parts.length === 2 && parts[1].length > 3) {
+      value = parts[0] + "," + parts[1].slice(0, 3);
+    }
+
+    e.target.value = value;
+    if (func) func(e);
+  };
+
+  const formatDecimal = (value) => {
+    if (value === null || value === undefined) return "";
+    return String(value).replace(/\./g, ",");
+  };
   //
 
   return (
     <TextField
       size="small"
       {...rest}
-      onChange={isTimeMask ? handleSimpleTimeMask : func}
-      value={value ?? ""}
+      onChange={isTimeMask ? handleSimpleTimeMask : isDecimalMask ? handleDecimalMask : func}
+      value={isDecimalMask ? formatDecimal(value) : value ? value : ""}
       type={type}
       multiline={isMultiline}
       rows={rows}

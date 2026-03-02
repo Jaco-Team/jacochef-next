@@ -730,6 +730,7 @@ class ReceptModule_Modal extends React.Component {
       all_w_brutto: 0,
       all_w_netto: 0,
       show_in_rev: 0,
+      err_valid: {},
       openAlert: false,
       err_status: false,
       err_text: "",
@@ -1023,6 +1024,20 @@ class ReceptModule_Modal extends React.Component {
       all_w_netto: this.state.all_w_netto,
     };
 
+    let err_valid = {
+      name: this.state.acces?.name_edit && this.state.name === "",
+      shelf_life: this.state.acces?.shelf_life_edit && this.state.shelf_life === "",
+      date_start: this.state.acces?.date_start_edit && this.state.date_start === null,
+      time_edit: this.state.acces?.time_edit && this.state.time === "",
+      dop_time: this.state.acces?.dop_time_edit && this.state.dop_time === "",
+      rec_apps: this.state.acces?.rec_apps_edit && this.state.rec_apps.length === 0,
+      storages: this.state.acces?.storages_edit && this.state.storages.length === 0,
+      items: this.state.acces?.items_edit && this.state.list.length === 0,
+    };
+    this.setState({
+      err_valid,
+    });
+
     if (this.props.method === "Новый рецепт" || this.props.method === "Новый полуфабрикат") {
       this.props.saveNew(data);
     } else {
@@ -1117,9 +1132,9 @@ class ReceptModule_Modal extends React.Component {
                   value={this.state.addMethod}
                   func={(event, value) => {
                     if (value.id === "rec") {
-                      this.props.changeAddMethod("Новый рецепт", "rec");
+                      this.props.changeAddMethod("Новый рецепт", "rec", false);
                     } else {
-                      this.props.changeAddMethod("Новый полуфабрикат", "pf");
+                      this.props.changeAddMethod("Новый полуфабрикат", "pf", false);
                     }
                   }}
                 />
@@ -1139,6 +1154,19 @@ class ReceptModule_Modal extends React.Component {
                   label="Наименование"
                   value={this.state.name}
                   disabled={!this.state.acces?.name_edit}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        name: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.name
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={this.changeItem.bind(this, "name")}
                 />
               </Grid>
@@ -1156,6 +1184,19 @@ class ReceptModule_Modal extends React.Component {
                 <MyTextInput
                   label="Срок годности"
                   value={this.state.shelf_life}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        shelf_life: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.shelf_life
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   disabled={!this.state.acces?.shelf_life_edit}
                   func={this.changeItem.bind(this, "shelf_life")}
                 />
@@ -1215,7 +1256,24 @@ class ReceptModule_Modal extends React.Component {
                   maxDate={this.state.date_end ? dayjs(this.state.date_end) : null}
                   minDate={dayjs(new Date())}
                   value={this.state.date_start}
-                  disabled={!this.state.acces?.date_start_edit}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        date_start: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.date_start
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
+                  disabled={
+                    !this.state.acces?.date_start_edit ||
+                    (this.props.method !== "Новый рецепт" &&
+                      this.props.method !== "Новый полуфабрикат")
+                  }
                   func={this.changeDateRange.bind(this, "date_start")}
                 />
               </Grid>
@@ -1254,6 +1312,19 @@ class ReceptModule_Modal extends React.Component {
                   label="Время приготовления 1 кг ММ:SS (15:20)"
                   value={this.state.time}
                   isTimeMask
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        time: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.time
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   disabled={!this.state.acces?.time_edit}
                   func={this.changeItem.bind(this, "time")}
                 />
@@ -1273,6 +1344,19 @@ class ReceptModule_Modal extends React.Component {
                   label="Доп. время (уборка рабочего места) MM:SS (15:20)"
                   value={this.state.dop_time}
                   isTimeMask
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.dop_time,
+                        name: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.dop_time
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   disabled={!this.state.acces?.dop_time_edit}
                   func={this.changeItem.bind(this, "dop_time")}
                 />
@@ -1294,6 +1378,19 @@ class ReceptModule_Modal extends React.Component {
                   data={apps}
                   disabled={!this.state.acces?.rec_apps_edit}
                   value={this.state.rec_apps}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        rec_apps: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.rec_apps
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={this.changeComplite.bind(this, "rec_apps")}
                 />
               </Grid>
@@ -1313,6 +1410,19 @@ class ReceptModule_Modal extends React.Component {
                   multiple={true}
                   data={storages}
                   value={this.state.storages}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        storages: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.storages
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   disabled={!this.state.acces?.storages_edit}
                   func={this.changeComplite.bind(this, "storages")}
                 />
@@ -1356,6 +1466,23 @@ class ReceptModule_Modal extends React.Component {
                             optionKey="id_name"
                             getOptionKey={(option) => `${option?.id}-${option?.name}`}
                             data={all_pf_list}
+                            onFocus={() => {
+                              this.setState((prevState) => ({
+                                err_valid: {
+                                  ...prevState.items,
+                                  name: false,
+                                },
+                              }));
+                            }}
+                            style={
+                              this.state.err_valid?.items
+                                ? {
+                                    border: "2px solid red",
+                                    borderRadius: "6px",
+                                    backgroundColor: "#f5f5f5",
+                                  }
+                                : {}
+                            }
                             isOptionEqualToValue={(option, value) => {
                               const isEqual = option?.name === value?.name;
                               return isEqual;
@@ -1376,6 +1503,7 @@ class ReceptModule_Modal extends React.Component {
                           <MyTextInput
                             value={item.brutto}
                             type={"number"}
+                            isDecimalMask
                             func={this.changeItemList.bind(this, "brutto", key)}
                           />
                         </TableCell>
@@ -1389,6 +1517,7 @@ class ReceptModule_Modal extends React.Component {
                         <TableCell>
                           <MyTextInput
                             value={item.netto}
+                            isDecimalMask
                             disabled={true}
                             className="disabled_input"
                           />
@@ -1397,6 +1526,7 @@ class ReceptModule_Modal extends React.Component {
                           <MyTextInput
                             value={item.pr_2}
                             type={"number"}
+                            isDecimalMask
                             func={this.changeItemList.bind(this, "pr_2", key)}
                           />
                         </TableCell>
@@ -1404,6 +1534,7 @@ class ReceptModule_Modal extends React.Component {
                           <MyTextInput
                             value={item.res}
                             disabled={true}
+                            isDecimalMask
                             className="disabled_input"
                           />
                         </TableCell>
@@ -1423,6 +1554,23 @@ class ReceptModule_Modal extends React.Component {
                           getOptionLabel={(option) => option?.name || ""}
                           disabledItemsFocusable={true}
                           value={null}
+                          onFocus={() => {
+                            this.setState((prevState) => ({
+                              err_valid: {
+                                ...prevState.items,
+                                name: false,
+                              },
+                            }));
+                          }}
+                          style={
+                            this.state.err_valid?.items
+                              ? {
+                                  border: "2px solid red",
+                                  borderRadius: "6px",
+                                  backgroundColor: "#f5f5f5",
+                                }
+                              : {}
+                          }
                           blurOnSelect={true}
                           autoFocus={false}
                           func={this.chooseItem.bind(this)}
@@ -1471,6 +1619,7 @@ class ReceptModule_Modal extends React.Component {
                         <MyTextInput
                           value={this.state.all_w_brutto}
                           disabled={true}
+                          isDecimalMask
                           className="disabled_input"
                         />
                       </TableCell>
@@ -1479,6 +1628,7 @@ class ReceptModule_Modal extends React.Component {
                         <MyTextInput
                           value={this.state.all_w_netto}
                           disabled={true}
+                          isDecimalMask
                           className="disabled_input"
                         />
                       </TableCell>
@@ -1486,6 +1636,7 @@ class ReceptModule_Modal extends React.Component {
                       <TableCell>
                         <MyTextInput
                           value={this.state.all_w}
+                          isDecimalMask
                           disabled={true}
                           className="disabled_input"
                         />
@@ -1832,7 +1983,7 @@ class ReceptModule_ extends React.Component {
     }
   }
 
-  async openItemNew(method, type) {
+  async openItemNew(method, type, change = true) {
     this.handleResize();
 
     const data = {
@@ -1846,16 +1997,26 @@ class ReceptModule_ extends React.Component {
         { id: 0, name: "Один сотрудник" },
         { id: 20, name: "Два сотрудника" },
       ];
-
-      this.setState({
-        modalDialog: true,
-        method,
-        storages: res.all_storages,
-        apps: res.apps,
-        all_pf_list: res.all_pf_list,
-        rec: res.rec,
-        rec_pf_list: res.pf_list,
-      });
+      if (change) {
+        this.setState({
+          modalDialog: true,
+          method,
+          storages: res.all_storages,
+          apps: res.apps,
+          all_pf_list: res.all_pf_list,
+          rec: res.rec,
+          rec_pf_list: res.pf_list,
+        });
+      } else {
+        this.setState({
+          modalDialog: true,
+          method,
+          storages: res.all_storages,
+          apps: res.apps,
+          all_pf_list: res.all_pf_list,
+          rec_pf_list: res.pf_list,
+        });
+      }
     } else {
       const res = await this.getData("get_one_pf", data);
 
@@ -1869,16 +2030,20 @@ class ReceptModule_ extends React.Component {
         { id: 0, name: "Один сотрудник" },
         { id: 20, name: "Два сотрудника" },
       ];
-
-      this.setState({
-        modalDialog: true,
-        method,
-        storages: res.all_storages,
-        apps: res.apps,
-        all_pf_list: res.all_items_list,
-        rec: res.pf,
-        rec_pf_list: res.items_list,
-      });
+      if (change) {
+        this.setState({
+          rec: res.pf,
+        });
+      } else {
+        this.setState({
+          modalDialog: true,
+          method,
+          storages: res.all_storages,
+          apps: res.apps,
+          all_pf_list: res.all_items_list,
+          rec_pf_list: res.items_list,
+        });
+      }
     }
   }
 
@@ -1893,7 +2058,12 @@ class ReceptModule_ extends React.Component {
         const value = res.all_pf_list.find(
           (item) => parseInt(item.id) === parseInt(pf.item_id) && item.type_rec === pf.type_rec,
         );
-        pf.item_id = { id: value.id, name: value.name };
+        if (!value?.id) {
+          const value2 = res.all_pf_list.find((item) => parseInt(item.id) === parseInt(pf.item_id));
+          pf.item_id = { id: value2.id, name: value2.name };
+        } else {
+          pf.item_id = { id: value.id, name: value.name };
+        }
         return pf;
       });
 
