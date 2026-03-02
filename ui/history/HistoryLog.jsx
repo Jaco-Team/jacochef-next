@@ -35,15 +35,23 @@ function HistoryLog({ history, title = "История изменений", rest
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Дата изменения</TableCell>
-                    <TableCell>Автор</TableCell>
+                    <TableCell sx={{ minWidth: "120px" }}>Дата изменения</TableCell>
+                    <TableCell sx={{ minWidth: "120px" }}>Автор</TableCell>
                     <TableCell>Изменения</TableCell>
                     {!!restoreFunc && <TableCell>Откатить</TableCell>}
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {history?.map((item, index) => (
-                    <TableRow key={item.id || index}>
+                    <TableRow
+                      key={item.id || index}
+                      sx={{
+                        verticalAlign: "top",
+                        borderTop: "2px solid",
+                        borderCollapse: "separate",
+                        "& td": { borderBottom: "1px solid", borderColor: "divider" },
+                      }}
+                    >
                       <TableCell>{dayjs(item.created_at)?.format("DD.MM.YYYY HH:mm")}</TableCell>
                       <TableCell>{item.actor_name}</TableCell>
                       <TableCell>

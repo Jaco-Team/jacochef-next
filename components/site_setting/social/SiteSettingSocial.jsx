@@ -8,6 +8,8 @@ import { useSiteSettingStore } from "../useSiteSettingStore";
 import useApi from "@/src/hooks/useApi";
 import HistoryLog from "@/ui/history/HistoryLog";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import { useConfirm } from "@/src/hooks/useConfirm";
+import dayjs from "dayjs";
 
 export function SiteSettingSocial() {
   const submodule = "social";
@@ -23,6 +25,8 @@ export function SiteSettingSocial() {
     }),
   );
   const setSocialState = useSocialStore.setState;
+
+  const { withConfirm, ConfirmDialog } = useConfirm();
 
   const getData = async (method, data = {}) => {
     const { setIsLoad, module: parentModule } = useSiteSettingStore.getState();
@@ -68,7 +72,8 @@ export function SiteSettingSocial() {
     }
   }, [cityId]);
 
-  const saveData = async () => {
+  const saveData = async (override = {}) => {
+    console.log(override);
     const data = {
       submodule,
       city_id: cityId,
@@ -79,6 +84,7 @@ export function SiteSettingSocial() {
       fb: dataInfo.fb,
       rt: dataInfo.rt,
       file1: "",
+      ...override,
     };
     // console.log('Saving: ', data);
     await getData("save_social_data", data);
@@ -92,133 +98,134 @@ export function SiteSettingSocial() {
     }));
   };
 
-  const restoreData = (item) => {
+  const restoreData = withConfirm(async (item) => {
     const { id } = item;
-    setSocialState((state) => {
-      console.log(state.history);
-      const historyItem = state.history.find((item) => item.id === id);
-      if (!historyItem) return state;
+    const { history, dataInfo } = useSocialStore.getState();
+    const historyItem = history?.find((item) => item.id === id);
+    if (!historyItem) return;
 
-      let restoredData = { ...state.dataInfo };
-      try {
-        const diff = JSON.parse(historyItem.diff_json);
-        Object.entries(diff).forEach(([key, value]) => {
-          restoredData[key] = value.from || "";
-        });
-      } catch (e) {
-        console.error("Error parsing diff JSON for restore", e);
-      }
-      return {
-        ...state,
-        dataInfo: restoredData,
-      };
-    });
-  };
+    let restoredData = structuredClone(dataInfo);
+    console.log("Restoring data for history item", restoredData);
+    try {
+      const diff = JSON.parse(historyItem.diff_json);
+      Object.entries(diff).forEach(([key, value]) => {
+        restoredData[key] = value.from || "";
+      });
+      await saveData({
+        ...restoredData,
+        comment: `Восстановлены значения перед изменением ID=${item.id} от ${dayjs(item.created_at).format("YYYY-MM-DD HH:mm:ss")}`,
+      });
+    } catch (e) {
+      console.error("Error parsing diff JSON for restore", e);
+    }
+  }, "Вы уверены, что хотите вернуть значения к выбранному состоянию?");
 
   useEffect(() => {
     updateData();
   }, [cityId]);
 
   return (
-    <Grid
-      container
-      spacing={3}
-    >
+    <>
+      <ConfirmDialog />
       <Grid
-        sx={{ pb: 3 }}
-        size={{
-          xs: 12,
-        }}
+        container
+        spacing={3}
       >
-        <MySelect
-          data={cities.filter((city) => city.id !== -1)}
-          value={cityId}
-          func={(e) => setCityId(e.target?.value)}
-          label="Город"
-          is_none={false}
-        />
-      </Grid>
-      {cityId === -1 && (
-        <>
-          <Grid style={{ display: "flex", justifyContent: "center", padding: "1em" }}>
-            <Typography>Выберите город.</Typography>
-          </Grid>
-        </>
-      )}
-      {cityId >= 0 && (
-        <>
-          <Grid
-            sx={{ pb: 3 }}
-            size={{
-              xs: 12,
-            }}
-          >
-            <Typography variant="h5">{moduleName}</Typography>
-          </Grid>
-          {!!dataInfo && (
+        <Grid
+          sx={{ pb: 3 }}
+          size={{
+            xs: 12,
+          }}
+        >
+          <MySelect
+            data={cities.filter((city) => city.id !== -1)}
+            value={cityId}
+            func={(e) => setCityId(e.target?.value)}
+            label="Город"
+            is_none={false}
+          />
+        </Grid>
+        {cityId === -1 && (
+          <>
+            <Grid style={{ display: "flex", justifyContent: "center", padding: "1em" }}>
+              <Typography>Выберите город.</Typography>
+            </Grid>
+          </>
+        )}
+        {cityId >= 0 && (
+          <>
             <Grid
+              sx={{ pb: 3 }}
               size={{
                 xs: 12,
               }}
             >
+              <Typography variant="h5">{moduleName}</Typography>
+            </Grid>
+            {!!dataInfo && (
               <Grid
-                container
-                spacing={3}
+                size={{
+                  xs: 12,
+                }}
               >
                 <Grid
-                  size={{
-                    xs: 12,
-                    sm: 6,
-                  }}
+                  container
+                  spacing={3}
                 >
-                  <MyTextInput
-                    label="Вконтакте"
-                    disabled={!canEdit("social")}
-                    value={dataInfo?.vk || ""}
-                    func={(e) => changeData("vk", e)}
-                  />
-                </Grid>
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 6,
-                  }}
-                >
-                  <MyTextInput
-                    label="RuTube"
-                    disabled={!canEdit("social")}
-                    value={dataInfo?.rt || ""}
-                    func={(e) => changeData("rt", e)}
-                  />
-                </Grid>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                    }}
+                  >
+                    <MyTextInput
+                      label="Вконтакте"
+                      disabled={!canEdit("social")}
+                      value={dataInfo?.vk || ""}
+                      func={(e) => changeData("vk", e)}
+                    />
+                  </Grid>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                    }}
+                  >
+                    <MyTextInput
+                      label="RuTube"
+                      disabled={!canEdit("social")}
+                      value={dataInfo?.rt || ""}
+                      func={(e) => changeData("rt", e)}
+                    />
+                  </Grid>
 
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 6,
-                  }}
-                >
-                  <MyTextInput
-                    label="Одноклассники"
-                    value={dataInfo?.ok || ""}
-                    disabled={!canEdit("social")}
-                    func={(e) => changeData("ok", e)}
-                  />
-                </Grid>
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 6,
-                  }}
-                >
-                  <MyTextInput
-                    label="Телеграм"
-                    value={dataInfo?.tg || ""}
-                    disabled={!canEdit("social")}
-                    func={(e) => changeData("tg", e)}
-                  />
-                </Grid>
-                {/* <Grid
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                    }}
+                  >
+                    <MyTextInput
+                      label="Одноклассники"
+                      value={dataInfo?.ok || ""}
+                      disabled={!canEdit("social")}
+                      func={(e) => changeData("ok", e)}
+                    />
+                  </Grid>
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                    }}
+                  >
+                    <MyTextInput
+                      label="Телеграм"
+                      value={dataInfo?.tg || ""}
+                      disabled={!canEdit("social")}
+                      func={(e) => changeData("tg", e)}
+                    />
+                  </Grid>
+                  {/* <Grid
                   size={{
                     xs: 12,
                     sm: 6,
@@ -232,35 +239,36 @@ export function SiteSettingSocial() {
                   />
                 </Grid> */}
 
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 6,
-                  }}
-                >
-                  {canEdit("social") ? (
-                    <Button
-                      variant="contained"
-                      onClick={saveData}
-                    >
-                      Обновить данные
-                    </Button>
-                  ) : null}
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                    }}
+                  >
+                    {canEdit("social") ? (
+                      <Button
+                        variant="contained"
+                        onClick={() => saveData()}
+                      >
+                        Обновить данные
+                      </Button>
+                    ) : null}
+                  </Grid>
                 </Grid>
               </Grid>
-            </Grid>
-          )}
-        </>
-      )}
-      {!!history?.length && (
-        <Grid size={12}>
-          <HistoryLog
-            history={history}
-            restoreFunc={restoreData}
-            mt={3}
-          />
-        </Grid>
-      )}
-    </Grid>
+            )}
+          </>
+        )}
+        {!!history?.length && (
+          <Grid size={12}>
+            <HistoryLog
+              history={history}
+              restoreFunc={restoreData}
+              mt={3}
+            />
+          </Grid>
+        )}
+      </Grid>
+    </>
   );
 }

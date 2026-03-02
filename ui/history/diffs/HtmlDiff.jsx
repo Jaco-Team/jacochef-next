@@ -83,45 +83,38 @@ const FieldDiff = memo(function FieldDiff({ from, to }) {
 
 function HtmlDiff({ items }) {
   return (
-    <>
-      <Accordion
-        disableGutters
-        elevation={0}
+    <Accordion variant="outlined">
+      <AccordionSummary
+        expandIcon={<ExpandMore size="small" />}
+        sx={{
+          minWidth: 0,
+          minHeight: 0,
+          "& .MuiAccordionSummary-content": { minWidth: 0 },
+        }}
       >
-        <AccordionSummary
-          expandIcon={<ExpandMore />}
-          sx={{
-            minWidth: 0,
-            "& .MuiAccordionSummary-content": { minWidth: 0 },
-          }}
+        <Typography
+          variant="body2"
+          sx={{ minWidth: 0, fontWeight: 600, m: 0 }}
         >
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ minWidth: 0, overflowWrap: "anywhere" }}
-          >
-            {items.map((i) => i.field).join(", ")}
-          </Typography>
-        </AccordionSummary>
+          {items.map((i) => i.field).join(", ")}:
+        </Typography>
+      </AccordionSummary>
 
-        <AccordionDetails sx={{ p: 0, minWidth: 0 }}>
-          <Stack
-            spacing={2}
-            sx={{ minWidth: 0 }}
-          >
-            {items.map(({ field, from, to }) => (
-              <FieldDiff
-                key={field}
-                from={from ?? ""}
-                to={to ?? ""}
-              />
-            ))}
-          </Stack>
-        </AccordionDetails>
-      </Accordion>
-
-      <Divider />
-    </>
+      <AccordionDetails sx={{ minWidth: 0 }}>
+        <Stack
+          spacing={2}
+          sx={{ minWidth: 0 }}
+        >
+          {items.map(({ field, from, to }) => (
+            <FieldDiff
+              key={field}
+              from={from ?? ""}
+              to={to ?? ""}
+            />
+          ))}
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
   );
 }
 

@@ -16,6 +16,13 @@ export default function MediaDiff({ items }) {
           alignItems="center"
           useFlexGap
         >
+          <Typography
+            variant="body2"
+            fontWeight={600}
+            sx={{ flex: "1 0 100%" }}
+          >
+            {field} {to}
+          </Typography>
           <Box
             component="img"
             src={`${BASE}${from}`}
