@@ -756,6 +756,7 @@ class SkladItemsModule_Modal extends React.Component {
       condition: "new",
       rules_save: true,
       openDelete: false,
+      err_valid: {},
     };
   }
 
@@ -771,6 +772,7 @@ class SkladItemsModule_Modal extends React.Component {
     }
 
     if (this.props !== prevProps) {
+      this.setState({ err_valid: {} });
       const currentStorages = this.state.itemEdit ? this.state.itemEdit.this_storages : [];
 
       if (this.props.event) {
@@ -786,6 +788,7 @@ class SkladItemsModule_Modal extends React.Component {
           err_text: "",
         });
       }
+
       if (
         this.props.acces?.name_edit === 0 &&
         this.props.acces?.cats_edit === 0 &&
@@ -833,14 +836,44 @@ class SkladItemsModule_Modal extends React.Component {
       cat_id,
       ed_izmer_id,
       name_for_vendor,
-      pq,
       art,
       pf_id,
       my_allergens,
       my_allergens_other,
       app_id,
+      honest_sign,
+      mark_name,
+      max_count_in_m,
+      pq,
+      percent,
+      min_count,
+      vend_percent,
+      time_min_other,
     } = item.item;
     let { this_storages } = item;
+    let err_valid = {
+      name: name === "" && this.props.acces?.name_edit,
+      cats: cat_id === "" && this.props.acces?.cats_edit,
+      name_for_vendor: name_for_vendor === "" && this.props.acces?.name_for_vendor_edit,
+      ed_izmer_id: ed_izmer_id === null && this.props.acces?.ed_izmer_edit,
+      apps: app_id === null && this.props.acces?.apps_edit,
+      time_min_other: time_min_other === "" && this.props.acces?.time_min_other_edit,
+      art: art === "" && this.props.acces?.art_edit,
+      my_allergens: my_allergens.length === 0 && this.props.acces?.allergens_edit,
+      my_allergens_other:
+        my_allergens_other.length === 0 && this.props.acces?.my_allergens_other_edit,
+      this_storages: this_storages.length === 0 && this.props.acces?.this_storages_edit,
+      max_count_in_m: max_count_in_m === "" && this.props.acces?.max_count_in_m_edit,
+      mark_name: mark_name === "" && this.props.acces?.mark_name_edit,
+      pq: pq === "" && this.props.acces?.pq_edit,
+      percent: percent === 0 && this.props.acces?.percent_edit,
+      vend_percent: vend_percent === 0 && this.props.acces?.vend_percent_edit,
+      min_count: min_count === "" && this.props.acces?.min_count_edit,
+      honest_sign:
+        (honest_sign?.length === 0 || honest_sign === "0") && this.props.acces?.honest_sign_edit,
+    };
+    this.setState({ err_valid });
+
     if (
       (!name && this.props.acces?.name_edit) ||
       (!cat_id && this.props.acces?.cats_edit) ||
@@ -960,6 +993,19 @@ class SkladItemsModule_Modal extends React.Component {
                   label="Название товара"
                   value={this.state.itemEdit ? this.state.itemEdit.item.name : ""}
                   disabled={!this.props.acces?.name_edit}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        name: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.name
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={this.changeItem.bind(this, "name")}
                 />
               </Grid>
@@ -978,6 +1024,19 @@ class SkladItemsModule_Modal extends React.Component {
                   label="Категория"
                   multiple={false}
                   data={this.state.itemEdit ? this.state.itemEdit.cats : []}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        cats: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.cats
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   value={
                     this.state.itemEdit
                       ? this.state.itemEdit.item.cat_id === "0"
@@ -1013,6 +1072,19 @@ class SkladItemsModule_Modal extends React.Component {
                         : this.state.itemEdit.item.ed_izmer_id
                       : ""
                   }
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        ed_izmer_id: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.ed_izmer_id
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={this.changeItem.bind(this, "ed_izmer_id")}
                   disabled={!this.props.acces?.ed_izmer_edit}
                   label="Ед измер"
@@ -1034,6 +1106,19 @@ class SkladItemsModule_Modal extends React.Component {
                   label="Максимальное количество заказов в месяц (0 - без ограничений)"
                   value={this.state.itemEdit ? this.state.itemEdit.item.max_count_in_m : ""}
                   type="number"
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        max_count_in_m: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.max_count_in_m
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   onWheel={(e) => e.target.blur()}
                   disabled={!this.props.acces?.max_count_in_m_edit}
                   func={this.changeItem.bind(this, "max_count_in_m")}
@@ -1054,6 +1139,19 @@ class SkladItemsModule_Modal extends React.Component {
                   label="Маркетинговое название"
                   value={this.state.itemEdit ? this.state.itemEdit.item.mark_name : ""}
                   disabled={!this.props.acces?.mark_name_edit}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        mark_name: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.mark_name
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={this.changeItem.bind(this, "mark_name")}
                 />
               </Grid>
@@ -1072,6 +1170,19 @@ class SkladItemsModule_Modal extends React.Component {
                   label="Название товара для поставщика"
                   value={this.state.itemEdit ? this.state.itemEdit.item.name_for_vendor : ""}
                   disabled={!this.props.acces?.name_for_vendor_edit}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        name_for_vendor: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.name_for_vendor
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={this.changeItem.bind(this, "name_for_vendor")}
                 />
               </Grid>
@@ -1092,6 +1203,19 @@ class SkladItemsModule_Modal extends React.Component {
                   onWheel={(e) => e.target.blur()}
                   value={this.state.itemEdit ? this.state.itemEdit.item.pq : ""}
                   disabled={!this.props.acces?.pq_edit}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        pq: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.pq
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={this.changeItem.bind(this, "pq")}
                 />
               </Grid>
@@ -1112,6 +1236,19 @@ class SkladItemsModule_Modal extends React.Component {
                   onWheel={(e) => e.target.blur()}
                   value={this.state.itemEdit ? this.state.itemEdit.item.percent : ""}
                   disabled={!this.props.acces?.percent_edit}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        percent: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.percent
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={this.changeItem.bind(this, "percent")}
                 />
               </Grid>
@@ -1132,6 +1269,19 @@ class SkladItemsModule_Modal extends React.Component {
                   onWheel={(e) => e.target.blur()}
                   value={this.state.itemEdit ? this.state.itemEdit.item.vend_percent : ""}
                   disabled={!this.props.acces?.vend_percent_edit}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        vend_percent: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.vend_percent
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={this.changeItem.bind(this, "vend_percent")}
                 />
               </Grid>
@@ -1150,6 +1300,19 @@ class SkladItemsModule_Modal extends React.Component {
                   label="Код для 1с"
                   value={this.state.itemEdit ? this.state.itemEdit.item.art : ""}
                   disabled={!this.props.acces?.art_edit}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        art: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.art
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={this.changeItem.bind(this, "art")}
                 />
               </Grid>
@@ -1170,6 +1333,19 @@ class SkladItemsModule_Modal extends React.Component {
                   onWheel={(e) => e.target.blur()}
                   value={this.state.itemEdit ? this.state.itemEdit.item.min_count : ""}
                   disabled={!this.props.acces?.min_count_edit}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        min_count: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.min_count
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={this.changeItem.bind(this, "min_count")}
                 />
               </Grid>
@@ -1191,6 +1367,19 @@ class SkladItemsModule_Modal extends React.Component {
                   data={this.state.itemEdit ? this.state.itemEdit.allergens : []}
                   value={this.state.itemEdit ? this.state.itemEdit.item.my_allergens : ""}
                   disabled={!this.props.acces?.allergens_edit}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        my_allergens: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.my_allergens
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={(event, value) => {
                     let this_storages = this.state.itemEdit;
                     this_storages.item.my_allergens = value;
@@ -1217,6 +1406,19 @@ class SkladItemsModule_Modal extends React.Component {
                   data={this.state.itemEdit ? this.state.itemEdit.allergens : []}
                   value={this.state.itemEdit ? this.state.itemEdit.item.my_allergens_other : ""}
                   disabled={!this.props.acces?.my_allergens_other_edit}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        my_allergens_other: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.my_allergens_other
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   func={(event, value) => {
                     let this_storages = this.state.itemEdit;
                     this_storages.item.my_allergens_other = value;
@@ -1306,6 +1508,19 @@ class SkladItemsModule_Modal extends React.Component {
                   multiple={true}
                   data={this.state.itemEdit ? this.state.itemEdit.acc_sys : []}
                   value={this.state.itemEdit ? this.state.itemEdit?.item?.acc_sys : ""}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        honest_sign: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.honest_sign
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
                   disabled={!this.props.acces?.honest_sign_edit}
                   func={(event, value) => {
                     let this_storages = { ...this.state.itemEdit };
@@ -1338,6 +1553,23 @@ class SkladItemsModule_Modal extends React.Component {
                       multiple={true}
                       data={this.state.itemEdit ? this.state.itemEdit.storages : []}
                       value={this.state.itemEdit ? this.state.itemEdit.this_storages : ""}
+                      onFocus={() => {
+                        this.setState((prevState) => ({
+                          err_valid: {
+                            ...prevState.err_valid,
+                            this_storages: false,
+                          },
+                        }));
+                      }}
+                      style={
+                        this.state.err_valid?.this_storages
+                          ? {
+                              border: "2px solid red",
+                              borderRadius: "6px",
+                              backgroundColor: "#f5f5f5",
+                            }
+                          : {}
+                      }
                       disabled={!this.props.acces?.this_storages_edit}
                       func={(event, value) => {
                         let this_storages = { ...this.state.itemEdit };
@@ -1378,6 +1610,23 @@ class SkladItemsModule_Modal extends React.Component {
                           data={this.state.itemEdit ? this.state.itemEdit.apps : []}
                           value={this.state.itemEdit ? this.state.itemEdit.item.app_id : ""}
                           disabled={!this.props.acces?.apps_edit}
+                          onFocus={() => {
+                            this.setState((prevState) => ({
+                              err_valid: {
+                                ...prevState.err_valid,
+                                apps: false,
+                              },
+                            }));
+                          }}
+                          style={
+                            this.state.err_valid?.apps
+                              ? {
+                                  border: "2px solid red",
+                                  borderRadius: "6px",
+                                  backgroundColor: "#f5f5f5",
+                                }
+                              : {}
+                          }
                           func={this.changeItem.bind(this, "app_id")}
                           is_none={false}
                         />
@@ -1399,6 +1648,23 @@ class SkladItemsModule_Modal extends React.Component {
                           isTimeMask
                           value={this.state.itemEdit ? this.state.itemEdit.item.time_min_other : ""}
                           disabled={!this.props.acces?.time_min_other_edit}
+                          onFocus={() => {
+                            this.setState((prevState) => ({
+                              err_valid: {
+                                ...prevState.err_valid,
+                                time_min_other: false,
+                              },
+                            }));
+                          }}
+                          style={
+                            this.state.err_valid?.time_min_other
+                              ? {
+                                  border: "2px solid red",
+                                  borderRadius: "6px",
+                                  backgroundColor: "#f5f5f5",
+                                }
+                              : {}
+                          }
                           func={this.changeItem.bind(this, "time_min_other")}
                           placeholder="00:00"
                         />
@@ -1638,7 +1904,7 @@ class SkladItemsModule_ extends React.Component {
     if (res.hist.length) {
       if (res.hist.length > 1) {
         res.hist.map((hist, index) => {
-          hist.date_end = res?.hist[index + 1]?.date_start ?? "";
+          hist.date_end = "";
           return hist;
         });
       }
@@ -1691,7 +1957,7 @@ class SkladItemsModule_ extends React.Component {
 
   async saveEditItem(itemEdit, main_item_id = 0) {
     let pf_id = itemEdit.item.pf_id;
-    let cat_id = itemEdit.item.cat_id.id;
+    let cat_id = itemEdit.item.cat_id?.id;
 
     const data = {
       pf_id,
