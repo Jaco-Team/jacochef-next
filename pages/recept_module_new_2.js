@@ -763,7 +763,9 @@ class ReceptModule_Modal extends React.Component {
 
     if (this.props.rec !== prevProps.rec) {
       let list = this.props.list;
-
+      this.setState({
+        err_valid: {},
+      });
       let all_w_brutto = list.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
 
       all_w_brutto = roundTo(all_w_brutto, 3);
