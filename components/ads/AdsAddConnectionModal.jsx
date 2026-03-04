@@ -21,6 +21,7 @@ export default function AdsAddConnectionModal({ isOpened, onClose, onSuccess, sh
 
   const [form, setForm] = useState({
     provider: "yandex_direct",
+    name: "",
     title: "",
   });
 
@@ -57,7 +58,7 @@ export default function AdsAddConnectionModal({ isOpened, onClose, onSuccess, sh
           >
             <TextField
               fullWidth
-              label="Provider"
+              label="Провайдер"
               value={form.provider}
               onChange={(e) => setField("provider", e.target.value)}
               disabled
@@ -65,9 +66,15 @@ export default function AdsAddConnectionModal({ isOpened, onClose, onSuccess, sh
 
             <TextField
               fullWidth
-              label="Name"
-              value={form.title}
+              label="Логин"
+              value={form.name}
               onChange={(e) => setField("name", e.target.value)}
+            />
+            <TextField
+              fullWidth
+              label="Название (для отображения в интерфейсе)"
+              value={form.title}
+              onChange={(e) => setField("title", e.target.value)}
             />
           </Stack>
         </DialogContent>
