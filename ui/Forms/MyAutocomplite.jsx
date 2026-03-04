@@ -88,6 +88,7 @@ export function MyAutocomplite(props) {
           disabledItemsFocusable={props.disabledItemsFocusable}
           //disableAutoFocus={props.disableAutoFocus}
           blurOnSelect={props.blurOnSelect}
+          ListboxProps={props.ListboxProps || undefined}
           onBlur={props.onBlur || undefined}
           filterSelectedOptions
           multiple={props.multiple && props.multiple === true ? true : false}
@@ -125,14 +126,18 @@ export function MyAutocomplite(props) {
               />
             ))
           }
-          renderOption={(params, option) => (
-            <li
-              {...params}
-              key={props.optionKey ? option[`${props.optionKey}`] : option.id}
-            >
-              {option.name}
-            </li>
-          )}
+          renderOption={
+            props.renderOption
+              ? props.renderOption
+              : (params, option) => (
+                  <li
+                    {...params}
+                    key={props.optionKey ? option[`${props.optionKey}`] : option.id}
+                  >
+                    {option.name}
+                  </li>
+                )
+          }
         />
       </Stack>
     </NoSsr>

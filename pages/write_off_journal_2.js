@@ -144,8 +144,14 @@ class Write_off_journal_View extends React.Component {
         open={open}
         fullWidth={true}
         maxWidth={"xl"}
+        sx={{
+          marginTop: this.state.isMobile ? "0" : "60px",
+          ".MuiDialog-backdrop": {
+            backgroundColor: "transparent !important",
+          },
+        }}
         onClose={this.onClose.bind(this)}
-        fullScreen={this.state.isMobile}
+        fullScreen={true}
       >
         {this.state.isMobile ? (
           <DialogTitle
@@ -172,112 +178,289 @@ class Write_off_journal_View extends React.Component {
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-between",
+              backgroundColor: "#E5E5E5",
             }}
           >
-            Списание
-            <IconButton
-              onClick={this.onClose.bind(this)}
-              style={{ cursor: "pointer", float: "right" }}
-            >
-              <CloseIcon style={{ color: "#3C3B3B" }} />
-            </IconButton>
+            <div>
+              <span
+                className="text-14px"
+                style={{ color: "#A6A6A6", cursor: "pointer" }}
+                onClick={this.onClose.bind(this)}
+              >
+                Журнал списания &#8193;/&#8193;{" "}
+              </span>
+              <span className="text-14px">Списание от {this.state.itemView?.date}</span>
+            </div>
           </DialogTitle>
         )}
-        <DialogContent style={{ padding: 12, backgroundColor: "#F2F2F2" }}>
+        <DialogContent
+          style={{ padding: 12, backgroundColor: this.state.isMobile ? "#F2F2F2" : "#E5E5E5" }}
+        >
           <Grid
             container
             rowSpacing={1}
             spacing={3}
           >
-            {this.state.itemView?.items.map((it) => {
-              return (
-                <Grid
-                  size={{
-                    xs: 12,
-                    sm: 6,
+            {!this.state.isMobile ? (
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    margin: "8px",
                   }}
                 >
-                  <div
-                    style={{
-                      backgroundColor: "#fff",
-                      display: "flex",
-                      flexDirection: "column",
-                      borderRadius: "12px",
-                      padding: "8px 12px",
-                      marginBottom: "12px",
+                  <h2 style={{ color: "#3C3B3B" }}>Списание от {this.state.itemView?.date}</h2>
+                  {this.props.acces?.edit_write_off_access ? (
+                    <Button
+                      style={{
+                        backgroundColor: "#2F7D33",
+                        borderRadius: "12px",
+                        height: "48px",
+                        textTransform: "capitalize",
+                        color: "#2FFF",
+                        boxShadow: "none",
+                      }}
+                      variant="contained"
+                      onClick={() =>
+                        this.props.openItem(this.state.itemView?.id, "Редактрование списания")
+                      }
+                    >
+                      Редактирование
+                    </Button>
+                  ) : null}
+                </div>
+              </Grid>
+            ) : null}
+            {this.state.isMobile ? (
+              this.state.itemView?.items.map((it) => {
+                return (
+                  <Grid
+                    size={{
+                      xs: 12,
+                      sm: 6,
                     }}
                   >
                     <div
                       style={{
+                        backgroundColor: "#fff",
                         display: "flex",
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: "10px",
+                        flexDirection: "column",
+                        borderRadius: "12px",
+                        padding: "8px 12px",
+                        marginBottom: "12px",
                       }}
                     >
-                      <span style={{ color: "#666666", fontWeight: "500" }}>Тип</span>
-                      <span style={{ color: "#666666", fontWeight: "400" }}>{it.type_name}</span>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      <span style={{ color: "#666666", fontWeight: "500" }}>Наименование</span>
-                      <span style={{ color: "#666666", fontWeight: "400" }}>{it.item_name}</span>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      <span style={{ color: "#666666", fontWeight: "500" }}>Количество</span>
-                      <span
+                      <div
                         style={{
-                          color: "#666666",
-                          fontWeight: "400",
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <span style={{ color: "#666666", fontWeight: "500" }}>Тип</span>
+                        <span style={{ color: "#666666", fontWeight: "400" }}>{it.type_name}</span>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <span style={{ color: "#666666", fontWeight: "500" }}>Наименование</span>
+                        <span style={{ color: "#666666", fontWeight: "400" }}>{it.item_name}</span>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <span style={{ color: "#666666", fontWeight: "500" }}>Количество</span>
+                        <span
+                          style={{
+                            color: "#666666",
+                            fontWeight: "400",
+                          }}
+                        >
+                          {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <span style={{ color: "#666666", fontWeight: "500" }}>
+                          Причина списания
+                        </span>
+                        <span
+                          style={{
+                            color: "#666666",
+                            fontWeight: "400",
+                          }}
+                        >
+                          {this.state.itemView.coment}
+                        </span>
+                      </div>
+                    </div>
+                  </Grid>
+                );
+              })
+            ) : (
+              <Table
+                sx={{
+                  margin: "8px",
+                }}
+              >
+                <TableHead sx={{ backgroundColor: "#F3F3F3 !important" }}>
+                  <TableRow sx={{ backgroundColor: "#F3F3F3 !important" }}>
+                    <TableCell
+                      sx={{
+                        backgroundColor: "#F3F3F3 !important",
+                        borderRadius: "8px 0 0 0",
+                        padding: "12px",
+                      }}
+                    >
+                      Номер
+                    </TableCell>
+                    <TableCell sx={{ backgroundColor: "#F3F3F3 !important", padding: "12px" }}>
+                      Тип
+                    </TableCell>
+                    <TableCell sx={{ backgroundColor: "#F3F3F3 !important", padding: "12px" }}>
+                      Наименование
+                    </TableCell>
+                    <TableCell sx={{ backgroundColor: "#F3F3F3 !important", padding: "12px" }}>
+                      Количество
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        backgroundColor: "#F3F3F3 !important",
+                        borderRadius: "0 8px 0 0",
+                        padding: "12px",
+                      }}
+                    >
+                      Причина списания
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {this.state.itemView?.items.map((it, k) => (
+                    <TableRow
+                      hover
+                      key={k}
+                    >
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
+                        }}
+                      >
+                        {k + 1}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
+                        }}
+                      >
+                        {it.type_name}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
+                        }}
+                      >
+                        {it.name}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
                         }}
                       >
                         {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      <span style={{ color: "#666666", fontWeight: "500" }}>Причина списания</span>
-                      <span
-                        style={{
-                          color: "#666666",
-                          fontWeight: "400",
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
                         }}
                       >
                         {this.state.itemView.coment}
-                      </span>
-                    </div>
-                  </div>
-                </Grid>
-              );
-            })}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+            {this.state.isMobile ? (
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    margin: "8px",
+                  }}
+                >
+                  {this.props.acces?.edit_write_off_access ? (
+                    <Button
+                      style={{
+                        backgroundColor: "#2F7D33",
+                        borderRadius: "12px",
+                        height: "48px",
+                        textTransform: "capitalize",
+                        color: "#2FFF",
+                        boxShadow: "none",
+                        width: "100%",
+                      }}
+                      variant="contained"
+                      onClick={() =>
+                        this.props.openItem(this.state.itemView?.id, "Редактрование списания")
+                      }
+                    >
+                      Посмотреть
+                    </Button>
+                  ) : null}
+                </div>
+              </Grid>
+            ) : null}
           </Grid>
           <Accordion
             sx={{
               color: "#666666",
               borderRadius: "12px !important",
+              margin: "7px",
               boxShadow: "none",
               "&::before": {
                 display: "none",
@@ -290,178 +473,284 @@ class Write_off_journal_View extends React.Component {
             <AccordionSummary expandIcon={<ExpandMoreIcon style={{ color: "#A6A6A6" }} />}>
               <Typography style={{ fontWeight: "400" }}>История изменений</Typography>
             </AccordionSummary>
-            <AccordionDetails style={{ backgroundColor: "#F2F2F2", padding: "12px 0 0 0" }}>
+            <AccordionDetails
+              style={{
+                backgroundColor: this.state.isMobile ? "#F2F2F2" : "#E5E5E5",
+                padding: "12px 0 0 0",
+              }}
+            >
               <Grid
                 container
                 spacing={3}
               >
-                {this.state.itemHist?.map((it, key) => {
-                  return (
-                    <Grid
-                      size={{
-                        xs: 12,
-                        sm: 6,
-                      }}
-                    >
-                      <div
-                        style={{ display: "flex", flexDirection: "column", marginBottom: "12px" }}
+                {this.state.isMobile ? (
+                  this.state.itemHist?.map((it, key) => {
+                    return (
+                      <Grid
+                        size={{
+                          xs: 12,
+                          sm: 6,
+                        }}
                       >
                         <div
-                          style={{
-                            backgroundColor: "#fff",
-                            display: "flex",
-                            flexDirection: "column",
-                            borderRadius: "12px",
-                            marginBottom: "12px",
-                            border: "1px solid #E5E5E5",
-                          }}
+                          style={{ display: "flex", flexDirection: "column", marginBottom: "12px" }}
                         >
                           <div
                             style={{
+                              backgroundColor: "#fff",
                               display: "flex",
-                              flexDirection: "row",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              padding: "8px 12px",
-                              borderBottom: "1px solid #E5E5E5",
+                              flexDirection: "column",
+                              borderRadius: "12px",
+                              marginBottom: "12px",
+                              border: "1px solid #E5E5E5",
                             }}
                           >
-                            <span style={{ color: "#666666", fontWeight: "500" }}>№ {key + 1}</span>
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "row",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              padding: "8px 12px",
-                            }}
-                          >
-                            <span style={{ color: "#666666", fontWeight: "500" }}>
-                              Дата создания
-                            </span>
-                            <span style={{ color: "#666666", fontWeight: "400" }}>
-                              {it.date_create}
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "row",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              padding: "8px 12px",
-                            }}
-                          >
-                            <span style={{ color: "#666666", fontWeight: "500" }}>
-                              Дата редактирования/удаления
-                            </span>
-                            <span
+                            <div
                               style={{
-                                color: "#666666",
-                                fontWeight: "400",
+                                display: "flex",
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "8px 12px",
+                                borderBottom: "1px solid #E5E5E5",
                               }}
                             >
-                              {it.date_update === "0000-00-00" ? "" : it.date_update}
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "row",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              padding: "8px 12px",
-                            }}
-                          >
-                            <span style={{ color: "#666666", fontWeight: "500" }}>
-                              Время редактирования/удаления
-                            </span>
-                            <span
+                              <span style={{ color: "#666666", fontWeight: "500" }}>
+                                № {key + 1}
+                              </span>
+                            </div>
+                            <div
                               style={{
-                                color: "#666666",
-                                fontWeight: "400",
+                                display: "flex",
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "8px 12px",
                               }}
                             >
-                              {parseInt(it.time_update) ? it.time_update : ""}
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "row",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              padding: "8px 12px",
-                            }}
-                          >
-                            <span style={{ color: "#666666", fontWeight: "500" }}>Редактор</span>
-                            <span
+                              <span style={{ color: "#666666", fontWeight: "500" }}>
+                                Дата создания
+                              </span>
+                              <span style={{ color: "#666666", fontWeight: "400" }}>
+                                {it.date_create}
+                              </span>
+                            </div>
+                            <div
                               style={{
-                                color: "#666666",
-                                fontWeight: "400",
+                                display: "flex",
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "8px 12px",
                               }}
                             >
-                              {it.user_update ?? it.user_create}
-                            </span>
+                              <span style={{ color: "#666666", fontWeight: "500" }}>
+                                Дата редактирования/удаления
+                              </span>
+                              <span
+                                style={{
+                                  color: "#666666",
+                                  fontWeight: "400",
+                                }}
+                              >
+                                {it.date_update === "0000-00-00" ? "" : it.date_update}
+                              </span>
+                            </div>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "8px 12px",
+                              }}
+                            >
+                              <span style={{ color: "#666666", fontWeight: "500" }}>
+                                Время редактирования/удаления
+                              </span>
+                              <span
+                                style={{
+                                  color: "#666666",
+                                  fontWeight: "400",
+                                }}
+                              >
+                                {parseInt(it.time_update) ? it.time_update : ""}
+                              </span>
+                            </div>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "8px 12px",
+                              }}
+                            >
+                              <span style={{ color: "#666666", fontWeight: "500" }}>Редактор</span>
+                              <span
+                                style={{
+                                  color: "#666666",
+                                  fontWeight: "400",
+                                }}
+                              >
+                                {it.user_update ?? it.user_create}
+                              </span>
+                            </div>
                           </div>
+                          <Button
+                            onClick={this.props.openModalHistoryView.bind(
+                              this,
+                              key,
+                              this.state.itemHist,
+                            )}
+                            style={{
+                              backgroundColor: "#fff",
+                              borderRadius: "12px",
+                              height: "48px",
+                              border: "1px solid #2F7D33",
+                              color: "#2F7D33",
+                            }}
+                          >
+                            Посмотреть
+                          </Button>
                         </div>
-                        <Button
-                          onClick={this.props.openModalHistoryView.bind(
-                            this,
-                            key,
-                            this.state.itemHist,
-                          )}
-                          style={{
-                            backgroundColor: "#fff",
-                            borderRadius: "12px",
-                            height: "48px",
-                            border: "1px solid #2F7D33",
-                            color: "#2F7D33",
+                      </Grid>
+                    );
+                  })
+                ) : (
+                  <Table
+                    sx={{
+                      margin: "20px",
+                    }}
+                  >
+                    <TableHead sx={{ backgroundColor: "#F3F3F3 !important" }}>
+                      <TableRow sx={{ backgroundColor: "#F3F3F3 !important" }}>
+                        <TableCell
+                          sx={{
+                            backgroundColor: "#F3F3F3 !important",
+                            borderRadius: "8px 0 0 0",
+                            padding: "12px",
                           }}
                         >
-                          Посмотреть
-                        </Button>
-                      </div>
-                    </Grid>
-                  );
-                })}
+                          Номер
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            backgroundColor: "#F3F3F3 !important",
+                            borderRadius: "8px 0 0 0",
+                            padding: "12px",
+                          }}
+                        >
+                          Дата создания
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: "#F3F3F3 !important", padding: "12px" }}>
+                          Дата редактирования / удаления
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: "#F3F3F3 !important", padding: "12px" }}>
+                          Время редактирования / удаления
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: "#F3F3F3 !important", padding: "12px" }}>
+                          Редактор
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            backgroundColor: "#F3F3F3 !important",
+                            borderRadius: "0 8px 0 0",
+                            padding: "12px",
+                          }}
+                        >
+                          Просмотр
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {this.state.itemHist.map((it, k) => (
+                        <TableRow
+                          hover
+                          key={k}
+                          sx={{ borderTop: "8px solid #E5E5E5" }}
+                        >
+                          <TableCell
+                            sx={{
+                              backgroundColor: "#FFF !important",
+                              marginTop: "8px",
+                              padding: "12px",
+                            }}
+                          >
+                            {k + 1}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              backgroundColor: "#FFF !important",
+                              marginTop: "8px",
+                              padding: "12px",
+                            }}
+                          >
+                            {it.date_create}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              backgroundColor: "#FFF !important",
+                              marginTop: "8px",
+                              padding: "12px",
+                            }}
+                          >
+                            {it.date_update === "0000-00-00" ? "" : it.date_update}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              backgroundColor: "#FFF !important",
+                              marginTop: "8px",
+                              padding: "12px",
+                            }}
+                          >
+                            {parseInt(it.time_update) ? it.time_update : ""}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              backgroundColor: "#FFF !important",
+                              marginTop: "8px",
+                              padding: "12px",
+                            }}
+                          >
+                            {it.user_update ?? it.user_create}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              backgroundColor: "#FFF !important",
+                              marginTop: "8px",
+                              padding: "12px",
+                            }}
+                          >
+                            <Button
+                              onClick={this.props.openModalHistoryView.bind(
+                                this,
+                                k,
+                                this.state.itemHist,
+                              )}
+                              style={{
+                                backgroundColor: "#fff",
+                                borderRadius: "12px",
+                                height: "48px",
+                                border: "1px solid #F3F3F3",
+                                color: "#5E5E5E",
+                              }}
+                            >
+                              Посмотреть
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </Grid>
             </AccordionDetails>
           </Accordion>
         </DialogContent>
-        <DialogActions style={{ backgroundColor: "#F2F2F2" }}>
-          {this.props.acces?.edit_write_off_access ? (
-            <Button
-              style={{
-                backgroundColor: "#2F7D33",
-                borderRadius: "12px",
-                height: "48px",
-                textTransform: "capitalize",
-                color: "#2FFF",
-                boxShadow: "none",
-              }}
-              variant="contained"
-              onClick={() => this.props.openItem(this.state.itemView?.id, "Редактрование списания")}
-            >
-              Редактирование
-            </Button>
-          ) : null}
-          <Button
-            variant="contained"
-            style={{
-              backgroundColor: "#DD1A32",
-              borderRadius: "12px",
-              height: "48px",
-              textTransform: "capitalize",
-              color: "#2FFF",
-              boxShadow: "none",
-            }}
-            onClick={this.onClose.bind(this)}
-          >
-            Закрыть
-          </Button>
-        </DialogActions>
+        <DialogActions
+          style={{ backgroundColor: this.state.isMobile ? "#F2F2F2" : "#E5E5E5" }}
+        ></DialogActions>
       </Dialog>
     );
   }
@@ -475,6 +764,7 @@ class Write_off_journal_View_Tags extends React.Component {
       reason: "",
       tags: [],
       tag: {},
+      openAccept: false,
       isMobile: window.innerWidth <= 600,
     };
   }
@@ -524,10 +814,73 @@ class Write_off_journal_View_Tags extends React.Component {
           },
         }}
       >
+        {this.state.openAccept ? (
+          <Dialog
+            sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435, borderRadius: "12px" } }}
+            maxWidth="xs"
+            open={this.state.openAccept}
+            onClose={() => this.setState({ openAccept: false })}
+          >
+            <DialogTitle
+              sx={{
+                backgroundColor: "#F2F2F2",
+                borderBottom: "1px solid #E5E5E5",
+                display: "flex",
+                padding: "12px 14px",
+                height: "20px",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography sx={{ color: "#666666" }}>Подтверждение</Typography>
+              <IconButton
+                onClick={() => this.setState({ openAccept: false })}
+                style={{ cursor: "pointer", color: "#666666" }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent
+              align="center"
+              sx={{ fontWeight: "400", color: "#5E5E5E", margin: "20px 32px", padding: 0 }}
+            >
+              Вы подтверждаете создание нового списания?
+            </DialogContent>
+            <DialogActions>
+              <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+                <Button
+                  sx={{
+                    borderRadius: "12px",
+                    padding: "12px 49px",
+                    width: "100%",
+                    backgroundColor: "#2F7D33",
+                    color: "#fff",
+                  }}
+                  onClick={() => this.props.createTags(this.state.reason, this.state.tag)}
+                >
+                  Да
+                </Button>
+                <Button
+                  sx={{
+                    borderRadius: "12px",
+                    padding: "12px 49px",
+                    width: "100%",
+                    backgroundColor: "#FFFFFF",
+                    color: "#F43331",
+                  }}
+                  autoFocus
+                  onClick={() => this.setState({ openAccept: false })}
+                >
+                  Нет
+                </Button>
+              </div>
+            </DialogActions>
+          </Dialog>
+        ) : null}
         <Box
           sx={{
             width: "100%",
-            display: "flex",
+            display: this.state.isMobile ? "flex" : "none",
             justifyContent: "center",
             paddingTop: 1,
             paddingBottom: 2,
@@ -563,17 +916,28 @@ class Write_off_journal_View_Tags extends React.Component {
             maxHeight: "calc(90vh - 60px)",
           }}
         >
-          <DialogTitle sx={{ textAlign: "center", padding: "0 12px" }}>
-            Создание новой причины
+          <DialogTitle
+            sx={{
+              textAlign: this.state.isMobile ? "center" : "start",
+              padding: this.state.isMobile ? "0px 12px" : "12px 14px",
+              color: this.state.isMobile ? "black" : "#5E5E5E",
+              backgroundColor: this.state.isMobile ? "#fff" : "#F3F3F3",
+            }}
+          >
+            <span>Создание новой причины</span>
             <IconButton
               onClick={this.onClose.bind(this)}
               style={{ cursor: "pointer", float: "right" }}
             >
-              <CloseIcon />
+              <CloseIcon style={{ color: "#A6A6A6" }} />
             </IconButton>
           </DialogTitle>
           <DialogContent
-            style={{ padding: "16px 0 360px 0", backgroundColor: "#f5f5f5", width: "100%" }}
+            style={{
+              padding: "16px 0 360px 0",
+              backgroundColor: this.state.isMobile ? "#f5f5f5" : "#FFF",
+              width: "100%",
+            }}
           >
             <Grid
               container
@@ -583,7 +947,7 @@ class Write_off_journal_View_Tags extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6,
+                  sm: 12,
                 }}
               >
                 <MyTextInput
@@ -675,12 +1039,37 @@ class Write_off_journal_View_Tags extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 6,
+                  sm: 12,
                 }}
               >
                 <MyAutocomplite
                   label="Тег"
                   multiple={false}
+                  renderOption={(params, option) => (
+                    <li
+                      style={{
+                        backgroundColor: "#F3F3F3",
+                        borderRadius: "12px",
+                        padding: "12px",
+                        border: "1px solid #E5E5E5",
+                        margin: "0 4px",
+                        whiteSpace: "nowrap",
+                      }}
+                      {...params}
+                      key={option.id}
+                    >
+                      {option.name}
+                    </li>
+                  )}
+                  ListboxProps={{
+                    style: {
+                      display: "flex",
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                      padding: "8px",
+                    },
+                  }}
                   customRI="journal"
                   data={this.props.tags}
                   value={this.state.tag}
@@ -695,14 +1084,15 @@ class Write_off_journal_View_Tags extends React.Component {
               >
                 <Button
                   style={{
-                    backgroundColor: "#2F7D33",
+                    backgroundColor: this.state.isMobile ? "#2F7D33" : "#FFF",
                     borderRadius: "12px",
                     height: "48px",
                     textTransform: "capitalize",
-                    color: "#FFF",
+                    border: this.state.isMobile ? "none" : "1px solid #2F7D33",
+                    color: this.state.isMobile ? "#FFF" : "#2F7D33",
                     width: "100%",
                   }}
-                  onClick={() => this.props.createTags(this.state.reason, this.state.tag)}
+                  onClick={() => this.setState({ openAccept: true })}
                 >
                   Создать причину
                 </Button>
@@ -718,6 +1108,7 @@ class Write_off_journal_View_Tags extends React.Component {
                     backgroundColor: "#FFF",
                     borderRadius: "12px",
                     height: "48px",
+                    border: this.state.isMobile ? "none" : "1px solid #E5E5E5",
                     textTransform: "capitalize",
                     color: "#F43331",
                     width: "100%",
@@ -874,7 +1265,7 @@ class Write_off_journal_View_Disabled extends React.Component {
                   justifyContent: "space-between",
                   borderRadius: "12px",
                   marginBottom: "16px",
-                  width: "95%",
+                  width: "98%",
                 }}
               >
                 <span style={{ color: "#666666" }}>Изменение №1</span>
@@ -1118,6 +1509,7 @@ class Write_off_journal_modal extends React.Component {
 
       ed_izmer: "",
       isMobile: false,
+      openAccept: false,
 
       count: "",
       writeOffItems: [],
@@ -1354,6 +1746,7 @@ class Write_off_journal_modal extends React.Component {
       err_status: true,
       err_text: "",
       confirmDialog: false,
+      openAccept: false,
     });
 
     this.props.onClose();
@@ -1378,6 +1771,69 @@ class Write_off_journal_modal extends React.Component {
             tags_journal={this.props.itemEdit?.tags_journal}
             createTags={this.createTags}
           />
+        ) : null}
+        {this.state.openAccept ? (
+          <Dialog
+            sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435, borderRadius: "12px" } }}
+            maxWidth="xs"
+            open={this.state.openAccept}
+            onClose={() => this.setState({ openAccept: false })}
+          >
+            <DialogTitle
+              sx={{
+                backgroundColor: "#F2F2F2",
+                borderBottom: "1px solid #E5E5E5",
+                display: "flex",
+                padding: "12px 14px",
+                height: "20px",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography sx={{ color: "#666666" }}>Подтверждение</Typography>
+              <IconButton
+                onClick={() => this.setState({ openAccept: false })}
+                style={{ cursor: "pointer", color: "#666666" }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent
+              align="center"
+              sx={{ fontWeight: "400", color: "#5E5E5E", margin: "20px 32px", padding: 0 }}
+            >
+              Вы подтверждаете создание нового списания?
+            </DialogContent>
+            <DialogActions>
+              <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+                <Button
+                  sx={{
+                    borderRadius: "12px",
+                    padding: "12px 49px",
+                    width: "100%",
+                    backgroundColor: "#2F7D33",
+                    color: "#fff",
+                  }}
+                  onClick={this.save.bind(this)}
+                >
+                  Да
+                </Button>
+                <Button
+                  sx={{
+                    borderRadius: "12px",
+                    padding: "12px 49px",
+                    width: "100%",
+                    backgroundColor: "#FFFFFF",
+                    color: "#F43331",
+                  }}
+                  autoFocus
+                  onClick={() => this.setState({ openAccept: false })}
+                >
+                  Нет
+                </Button>
+              </div>
+            </DialogActions>
+          </Dialog>
         ) : null}
         <Dialog
           sx={{
@@ -1459,7 +1915,13 @@ class Write_off_journal_modal extends React.Component {
           fullWidth={true}
           maxWidth={"xl"}
           onClose={this.onClose.bind(this)}
-          fullScreen={this.state.isMobile}
+          sx={{
+            marginTop: this.state.isMobile ? "0" : "60px",
+            ".MuiDialog-backdrop": {
+              backgroundColor: "transparent",
+            },
+          }}
+          fullScreen={true}
         >
           {this.state.isMobile ? (
             <DialogTitle
@@ -1486,19 +1948,25 @@ class Write_off_journal_modal extends React.Component {
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "space-between",
+                backgroundColor: "#E5E5E5",
               }}
             >
-              {method}
-              <IconButton
-                onClick={this.onClose.bind(this)}
-                style={{ cursor: "pointer", float: "right" }}
-              >
-                <CloseIcon style={{ color: "#3C3B3B" }} />
-              </IconButton>
+              <div>
+                <span
+                  className="text-14px"
+                  style={{ color: "#A6A6A6", cursor: "pointer" }}
+                  onClick={this.onClose.bind(this)}
+                >
+                  Журнал списания &#8193;/&#8193;{" "}
+                </span>
+                <span className="text-14px">{method}</span>
+              </div>
             </DialogTitle>
           )}
 
-          <DialogContent style={{ padding: 12, backgroundColor: "#F2F2F2" }}>
+          <DialogContent
+            style={{ padding: 12, backgroundColor: this.state.isMobile ? "#F3F3F3" : "#E5E5E5" }}
+          >
             <Grid
               container
               spacing={3}
@@ -1509,7 +1977,7 @@ class Write_off_journal_modal extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 4,
+                  sm: 3,
                 }}
               >
                 {method === "Новое списание" ? (
@@ -1535,13 +2003,7 @@ class Write_off_journal_modal extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 8,
-                }}
-              />
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 3,
+                  sm: 2,
                 }}
               >
                 <MySelect
@@ -1556,7 +2018,7 @@ class Write_off_journal_modal extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 4,
+                  sm: 3,
                 }}
               >
                 <MyAutocomplite
@@ -1571,7 +2033,7 @@ class Write_off_journal_modal extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 3,
+                  sm: 2,
                 }}
               >
                 <NumericTextField
@@ -1598,14 +2060,13 @@ class Write_off_journal_modal extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 9,
+                  sm: 8,
                 }}
               />
               <Grid
-                style={{ display: "flex", justifyContent: "flex-end" }}
                 size={{
                   xs: 12,
-                  sm: 3,
+                  sm: 2,
                 }}
               >
                 <Button
@@ -1617,17 +2078,41 @@ class Write_off_journal_modal extends React.Component {
                     height: "48px",
                     textTransform: "capitalize",
                     color: "#2F7D33",
+                    width: "100%",
                     border: "1px solid #2F7D33",
                     boxShadow: "none",
                   }}
                 >
-                  Добавить
+                  Добавить позицию
+                </Button>
+              </Grid>
+              <Grid
+                style={{ display: "flex", justifyContent: "flex-end" }}
+                size={{
+                  xs: 12,
+                  sm: 2,
+                }}
+              >
+                <Button
+                  onClick={this.addItems.bind(this)}
+                  variant="contained"
+                  style={{
+                    backgroundColor: "#FFF",
+                    borderRadius: "12px",
+                    height: "48px",
+                    width: "100%",
+                    textTransform: "capitalize",
+                    color: "#F43331",
+                    boxShadow: "none",
+                  }}
+                >
+                  Сбросить фильтры
                 </Button>
               </Grid>
               <Grid
                 size={{
                   xs: 12,
-                  sm: 9,
+                  sm: 12,
                 }}
               >
                 <div
@@ -1652,85 +2137,197 @@ class Write_off_journal_modal extends React.Component {
                     onClick={() => this.setState({ openTags: true })}
                     sx={{
                       color: "#2F7D33",
-                      borderRadius: "50%",
+                      borderRadius: this.state.isMobile ? "50%" : "12px",
                       border: "1px solid #2F7D33",
+                      padding: this.state.isMobile ? "inherit" : "9px 40px",
                       ml: 0.5,
                       backgroundColor: "white",
                     }}
                   >
-                    <AddIcon fontSize="small" />
+                    <AddIcon fontSize="small" />{" "}
+                    {this.state.isMobile ? "" : <span className="text-14px">Новая причина</span>}
                   </IconButton>
                 </div>
               </Grid>
             </Grid>
-            {this.state.writeOffItems.map((it, key) => {
-              return (
-                <div
-                  style={{
-                    borderRadius: "8px",
-                    backgroundColor: "#fff",
-                    display: "flex",
-                    flexDirection: "column",
-                    border: "1px solid #E5E5E5",
-                    marginBottom: "4px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "12px 10px",
-                      justifyContent: "space-between",
-                      borderRadius: "8px 8px 0 0",
-                    }}
-                  >
-                    <span style={{ color: "#666", fontWeight: "500" }}>Тип</span>
-                    <span style={{ color: "#666", fontWeight: "400" }}>
-                      {it.type_name}
-                      <IconButton
-                        size="small"
-                        onClick={this.deleteItem.bind(this, key)}
+            {!this.state.isMobile ? (
+              <Table>
+                <TableHead sx={{ backgroundColor: "#F3F3F3 !important" }}>
+                  <TableRow sx={{ backgroundColor: "#F3F3F3 !important" }}>
+                    <TableCell
+                      sx={{
+                        backgroundColor: "#F3F3F3 !important",
+                        borderRadius: "8px 0 0 0",
+                        padding: "12px",
+                      }}
+                    >
+                      Номер
+                    </TableCell>
+                    <TableCell sx={{ backgroundColor: "#F3F3F3 !important", padding: "12px" }}>
+                      Тип
+                    </TableCell>
+                    <TableCell sx={{ backgroundColor: "#F3F3F3 !important", padding: "12px" }}>
+                      Наименование
+                    </TableCell>
+                    <TableCell sx={{ backgroundColor: "#F3F3F3 !important", padding: "12px" }}>
+                      Количество
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        backgroundColor: "#F3F3F3 !important",
+                        borderRadius: "0 8px 0 0",
+                        padding: "12px",
+                      }}
+                    >
+                      "Удалить"
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {this.state.writeOffItems.map((it, k) => (
+                    <TableRow
+                      hover
+                      key={k}
+                      sx={{ borderTop: "8px solid #E5E5E5" }}
+                    >
+                      <TableCell
                         sx={{
-                          cursor: "pointer",
-                          padding: { xs: "4px", sm: "8px" },
-                          "& svg": {
-                            fontSize: { xs: "18px", sm: "24px" },
-                          },
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
                         }}
                       >
-                        <CloseIcon />
-                      </IconButton>
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "12px 10px",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <span style={{ color: "#666", fontWeight: "500" }}>Наименование</span>
-                    <span style={{ color: "#666", fontWeight: "400" }}>{it.name}</span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "12px 10px",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <span style={{ color: "#666", fontWeight: "500" }}>Количество</span>
-                    <span style={{ color: "#666", fontWeight: "400" }}>
-                      {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                        {k + 1}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
+                        }}
+                      >
+                        {it.type_name}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
+                        }}
+                      >
+                        {it.name}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
+                        }}
+                      >
+                        {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
+                        }}
+                      >
+                        <IconButton
+                          size="small"
+                          onClick={this.deleteItem.bind(this, k)}
+                          sx={{
+                            cursor: "pointer",
+                            padding: { xs: "4px", sm: "8px" },
+                            "& svg": {
+                              fontSize: { xs: "18px", sm: "24px" },
+                            },
+                          }}
+                        >
+                          <CloseIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : null}
+            {this.state.isMobile
+              ? this.state.writeOffItems.map((it, key) => {
+                  return (
+                    <div
+                      style={{
+                        borderRadius: "8px",
+                        backgroundColor: "#fff",
+                        display: "flex",
+                        flexDirection: "column",
+                        border: "1px solid #E5E5E5",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          padding: "12px 10px",
+                          justifyContent: "space-between",
+                          borderRadius: "8px 8px 0 0",
+                        }}
+                      >
+                        <span style={{ color: "#666", fontWeight: "500" }}>Тип</span>
+                        <span style={{ color: "#666", fontWeight: "400" }}>
+                          {it.type_name}
+                          <IconButton
+                            size="small"
+                            onClick={this.deleteItem.bind(this, key)}
+                            sx={{
+                              cursor: "pointer",
+                              padding: { xs: "4px", sm: "8px" },
+                              "& svg": {
+                                fontSize: { xs: "18px", sm: "24px" },
+                              },
+                            }}
+                          >
+                            <CloseIcon />
+                          </IconButton>
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          padding: "12px 10px",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span style={{ color: "#666", fontWeight: "500" }}>Наименование</span>
+                        <span style={{ color: "#666", fontWeight: "400" }}>{it.name}</span>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          padding: "12px 10px",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span style={{ color: "#666", fontWeight: "500" }}>Количество</span>
+                        <span style={{ color: "#666", fontWeight: "400" }}>
+                          {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              : null}
           </DialogContent>
-          <DialogActions style={{ paddingBottom: 10, paddingTop: 10, backgroundColor: "#F2F2F2" }}>
+          <DialogActions
+            style={{
+              paddingBottom: 10,
+              paddingTop: 10,
+              backgroundColor: this.state.isMobile ? "#F3F3F3" : "#E5E5E5",
+            }}
+          >
             {method !== "Новое списание" &&
             parseInt(this.props.acces?.delete_write_off_access) == 1 ? (
               <Button
@@ -1744,11 +2341,11 @@ class Write_off_journal_modal extends React.Component {
                   textTransform: "capitalize",
                 }}
               >
-                Отменить
+                Удалить
               </Button>
             ) : null}
             <Button
-              onClick={this.save.bind(this)}
+              onClick={() => this.setState({ openAccept: true })}
               variant="contained"
               style={{
                 backgroundColor: "#2F7D33",
@@ -1758,6 +2355,19 @@ class Write_off_journal_modal extends React.Component {
               }}
             >
               {method !== "Новое списание" ? "Сохранить" : "Создать списание"}
+            </Button>
+            <Button
+              onClick={this.onClose.bind(this)}
+              variant="contained"
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: "12px",
+                color: "#F43331",
+                height: "48px",
+                textTransform: "capitalize",
+              }}
+            >
+              Отменить
             </Button>
           </DialogActions>
         </Dialog>
@@ -2456,22 +3066,26 @@ class Write_off_journal_ extends React.Component {
           spacing={3}
           style={{ padding: "88px 24px 24px 24px", backgroundColor: "#f2f2f2" }}
         >
-          <Grid size={12}>
-            <h1>{this.state.module_name}</h1>
-          </Grid>
           <Grid
             size={{
               xs: 12,
               sm: 10,
             }}
           />
+          <Grid
+            size={{
+              xs: 12,
+              sm: 10,
+            }}
+          >
+            <h1>{this.state.module_name}</h1>
+          </Grid>
           {parseInt(this.state.acces?.create_write_off_access) == 1 && (
             <Grid
               size={{
                 xs: 12,
                 sm: 2,
               }}
-              style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}
             >
               <Button
                 onClick={this.openNewItem.bind(this, "Новое списание")}
@@ -2484,6 +3098,7 @@ class Write_off_journal_ extends React.Component {
                   padding: "12px 20px",
                   fontWeight: "400",
                   height: "40px",
+                  width: "100%",
                 }}
               >
                 <AddIcon
@@ -2514,14 +3129,7 @@ class Write_off_journal_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 8,
-            }}
-          />
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 2,
+              sm: 4,
             }}
           >
             <MyDatePickerNew
@@ -2535,7 +3143,7 @@ class Write_off_journal_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 2,
+              sm: 4,
             }}
           >
             <MyDatePickerNew
@@ -2549,7 +3157,7 @@ class Write_off_journal_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 3,
+              sm: 8,
             }}
           >
             <MyAutocomplite
@@ -2565,7 +3173,7 @@ class Write_off_journal_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 5,
+              sm: 4,
             }}
           >
             <div style={{ display: "flex" }}>
@@ -2580,6 +3188,7 @@ class Write_off_journal_ extends React.Component {
                   fontWeight: "400",
                   height: "40px",
                   marginRight: "12px",
+                  width: "100%",
                 }}
               >
                 Посмотреть
@@ -2603,6 +3212,7 @@ class Write_off_journal_ extends React.Component {
                   fontWeight: "400",
                   height: "40px",
                   boxShadow: "none",
+                  width: "100%",
                 }}
               >
                 Сбросить
@@ -2841,12 +3451,14 @@ class Write_off_journal_ extends React.Component {
                       {this.state.list.map((item, key) => (
                         <TableRow
                           hover
+                          onClick={this.openModalHistoryView.bind(this, item)}
                           key={key}
                           sx={{
                             "&:last-of-type": {
                               "& td:first-of-type": {
                                 borderBottomLeftRadius: "12px",
                               },
+                              cursor: "pointer",
                               "& td:last-of-type": {
                                 borderBottomRightRadius: "12px",
                               },
@@ -2877,19 +3489,9 @@ class Write_off_journal_ extends React.Component {
                             {key + 1}.
                           </TableCell>
                           <TableCell className="text-14px">
-                            <Button
-                              variant="text"
-                              sx={{
-                                textTransform: "none",
-                                padding: 0,
-                                fontWeight: 400,
-                              }}
-                              onClick={this.openModalHistoryView.bind(this, item)}
-                            >
-                              {item.date}
-                              <br />
-                              {item.time}
-                            </Button>
+                            {item.date}
+                            <br />
+                            {item.time}
                           </TableCell>
                           <TableCell className="text-14px">
                             {new Intl.NumberFormat("ru-RU").format(item?.price ?? "")} ₽
