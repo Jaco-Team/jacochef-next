@@ -23,7 +23,6 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 
 import Paper from "@mui/material/Paper";
-import PropTypes from "prop-types";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
@@ -42,6 +41,12 @@ import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import { formatDateMin } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
+import TabPanel from "@/ui/TabPanel/TabPanel";
+import a11yProps from "@/ui/TabPanel/a11yProps";
+import ExcelIcon from "@/ui/ExcelIcon";
+import DownloadButton from "@/ui/DownloadButton";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import { Download } from "@mui/icons-material";
 dayjs.locale("ru");
 
 var am5locales_ru_RU = {
@@ -69,37 +74,6 @@ var am5locales_ru_RU = {
   Dec: "Дек",
   December: "Дек",
 };
-
-// ---------- Вспомогательные функции для переключения Табов ----------
-
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-TabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.number.isRequired,
-  value: PropTypes.number.isRequired,
-};
-
-function a11yProps(index) {
-  return {
-    id: `simple-tab-${index}`,
-    "aria-controls": `simple-tabpanel-${index}`,
-  };
-}
 
 // ---------- Вспомогательные функции для конвертации цветов ----------
 
@@ -2429,7 +2403,7 @@ class StatSale_Tab_Clients extends React.Component {
     });
   }
 
-  get_data_clients = async () => {
+  get_data_clients = async (exp = false) => {
     const { point, date_start, date_end } = this.state;
 
     if (!point.length) {
@@ -2442,6 +2416,15 @@ class StatSale_Tab_Clients extends React.Component {
       date_end,
       point,
     };
+
+    // export
+    if (exp) {
+      const res = await this.props.getData("export_data_clients", data);
+      if (!res?.st) {
+        return this.props.openAlert(res?.st, res?.text || "Ошибка при экспорте данных");
+      }
+      return res?.url;
+    }
 
     const res = await this.props.getData("get_data_clients", data);
 
@@ -2672,7 +2655,7 @@ class StatSale_Tab_Clients extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 10,
+                sm: 9,
               }}
             >
               <MyAutocomplite
@@ -2687,15 +2670,26 @@ class StatSale_Tab_Clients extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 2,
+                sm: 3,
               }}
             >
               <Button
                 variant="contained"
-                onClick={this.get_data_clients}
+                onClick={() => this.get_data_clients()}
               >
                 Показать
               </Button>
+              {this.props.canExport && data_clients_list.length > 0 && (
+                <DownloadButton
+                  variant="contained"
+                  color="success"
+                  button={true}
+                  url={async () => await this.get_data_clients(true)}
+                  sx={{ ml: { sm: 2, xs: 0 } }}
+                >
+                  <Download />
+                </DownloadButton>
+              )}
             </Grid>
 
             {!data_clients_list.length ? null : (
@@ -3373,7 +3367,7 @@ class StatSale_Tab_Sale extends React.Component {
     });
   }
 
-  get_data_sale = async () => {
+  get_data_sale = async (exp = false) => {
     const { point, date_start, date_end } = this.state;
 
     if (!point.length) {
@@ -3388,8 +3382,18 @@ class StatSale_Tab_Sale extends React.Component {
       point,
     };
 
-    const res = await this.props.getData("get_data_sale", data);
+    if (exp) {
+      const res = await this.props.getData("export_data_sale", data);
+      if (!res?.st) {
+        return this.props.openAlert(false, res?.text || "Ошибка экспорта");
+      }
+      this.setState({
+        export_file_url: res.url,
+      });
+      return res.url;
+    }
 
+    const res = await this.props.getData("get_data_sale", data);
     if (res.st) {
       this.setState({
         data_sale_list: res.data_sale_list,
@@ -3452,7 +3456,7 @@ class StatSale_Tab_Sale extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 10,
+                sm: 9,
               }}
             >
               <MyAutocomplite
@@ -3467,15 +3471,26 @@ class StatSale_Tab_Sale extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 2,
+                sm: 3,
               }}
             >
               <Button
                 variant="contained"
-                onClick={this.get_data_sale}
+                onClick={() => this.get_data_sale()}
               >
                 Показать
               </Button>
+              {this.props.canExport && data_sale_list && (
+                <DownloadButton
+                  variant="contained"
+                  color="success"
+                  button={true}
+                  url={async () => await this.get_data_sale(true)}
+                  sx={{ ml: { sm: 2, xs: 0 } }}
+                >
+                  <Download />
+                </DownloadButton>
+              )}
             </Grid>
 
             {data_sale_list && data_sale_list.columns && data_sale_list.columns.months.length ? (
@@ -3551,13 +3566,19 @@ class StatSale_ extends React.Component {
     this.handleResize();
   }
 
+  canAccess = (key) => {
+    const { userCan } = handleUserAccess(this.state.acces);
+    return userCan("access", key);
+  };
+
   getData = (method, data = {}) => {
     this.setState({
       is_load: true,
     });
 
     let res = api_laravel(this.state.module, method, data)
-      .then((result) => result.data)
+      .then((result) => result?.data)
+      .catch(console.log)
       .finally(() => {
         setTimeout(() => {
           this.setState({
@@ -3889,6 +3910,7 @@ class StatSale_ extends React.Component {
               openAlert={this.openAlert}
               getData={this.getData}
               openGraphModal={this.openGraphModal}
+              canExport={this.canAccess("export")}
             />
           )}
           {/* Продажи */}
@@ -3903,6 +3925,7 @@ class StatSale_ extends React.Component {
               getData={this.getData}
               rates={this.state.data_sett_rate_clients}
               openGraphModal={this.openGraphModal}
+              canExport={this.canAccess("export")}
             />
           )}
           {/* Клиенты */}
