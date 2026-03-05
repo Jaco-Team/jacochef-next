@@ -31,8 +31,14 @@ const statusColorMap = {
 };
 
 function isOauthRequired(status) {
-  return status === "oauth_required" || status === "refresh_failed";
+  return (
+    status === "oauth_required" ||
+    status === "refresh_failed" ||
+    status === "active" ||
+    status === null
+  );
 }
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export default function AdsPage() {
   const [connections, setConnections] = useState([]);
@@ -310,16 +316,16 @@ export default function AdsPage() {
                           <Typography
                             variant="h6"
                             noWrap
-                            title={conn.name}
+                            title={conn.title}
                           >
-                            {conn.name || "—"}
+                            {conn.title || "—"}
                           </Typography>
                           <Typography
                             variant="body2"
                             sx={{ opacity: 0.7 }}
                             noWrap
                           >
-                            {conn.provider} • {conn.external_account_id || "—"}
+                            {conn.name} • {conn.provider} • {conn.external_account_id || "—"}
                           </Typography>
                         </Box>
 
