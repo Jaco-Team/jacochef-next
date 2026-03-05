@@ -36,20 +36,19 @@ import { MySelect, MyDatePickerNew, MyTextInput, MyAutocomplite } from "@/ui/For
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { useRouter } from "next/router";
 
 import dayjs from "dayjs";
 import moment from "moment";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
 import { NumericTextField } from "@/ui/Forms/MyNumericFormat";
-import { Box } from "@mui/material";
+import { Box, Chip } from "@mui/material";
 import WriteOffReasons from "@/ui/Forms/WriteOffReasons";
-import CheckIcon from "@mui/icons-material/Check";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
-class Write_off_journal_View extends React.Component {
+export class Write_off_journal_View extends React.Component {
   constructor(props) {
     super(props);
 
@@ -756,6 +755,933 @@ class Write_off_journal_View extends React.Component {
   }
 }
 
+export class WriteOffJournalEdit extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      points: [],
+      point: "",
+      types: [],
+      type: "",
+      openTags: false,
+      items: [],
+      item: "",
+      ed_izmer: "",
+      isMobile: false,
+      openAccept: false,
+      count: "",
+      writeOffItems: [],
+      comment: "",
+      openAlert: false,
+      err_status: true,
+      err_text: "",
+      confirmDialogTag: false,
+      reason: "",
+      confirmDialog: false,
+    };
+  }
+
+  componentDidMount() {
+    this.handleResize();
+    window.addEventListener("resize", this.handleResize);
+
+    if (this.props.itemEdit) {
+      const point =
+        this.props.points?.find((point) => parseInt(point.id) === parseInt(this.props.point?.id)) ||
+        "";
+      console.log(this.props.itemEdit);
+      this.setState({
+        point,
+        points: this.props.points || [],
+        types: this.props.itemEdit.types || [
+          { id: "1", name: "Товар" },
+          { id: "2", name: "Заготовка" },
+          { id: "3", name: "Сайт" },
+        ],
+        writeOffItems: this.props.itemEdit?.woj_items || [],
+        comment: this.props.itemEdit?.woj?.coment || "",
+      });
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    if (!this.props.itemEdit) {
+      return;
+    }
+
+    if (this.props.itemEdit !== prevProps.itemEdit) {
+      const point =
+        this.props.points?.find((point) => parseInt(point.id) === parseInt(this.props.point?.id)) ||
+        "";
+
+      this.setState({
+        point,
+        points: this.props.points || [],
+        types: this.props.itemEdit.types || [],
+        writeOffItems: this.props.itemEdit?.woj_items || [],
+        comment: this.props.itemEdit?.woj?.coment || "",
+      });
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("resize", this.handleResize);
+  }
+
+  handleResize = () => {
+    this.setState({ isMobile: window.innerWidth <= 600 });
+  };
+
+  changePoint = (data, event) => {
+    this.setState({
+      [data]: event.target.value,
+    });
+  };
+
+  changeItem = (data, event) => {
+    let value = event.target.value;
+
+    if (value === "") {
+      value = null;
+    }
+
+    if (value < 0 && data === "count") {
+      this.setState({
+        [data]: 0,
+      });
+    } else {
+      this.setState({
+        [data]: value,
+      });
+    }
+  };
+
+  changeType = (data, event) => {
+    const items =
+      this.props.itemEdit?.items?.items?.filter((it) => {
+        if (parseInt(event.target.value) === 1) {
+          return it.type === "item" || it.type === "set";
+        }
+        if (parseInt(event.target.value) === 2) {
+          return it.type === "rec" || it.type === "pf";
+        }
+        if (parseInt(event.target.value) === 3) {
+          return it.type === "pos";
+        }
+        return false;
+      }) || [];
+
+    this.setState({
+      [data]: event.target.value,
+      items,
+      item: "",
+    });
+  };
+
+  changeItemData = (data, event, value) => {
+    this.setState({
+      [data]: value,
+      ed_izmer: value?.ei_name || "",
+    });
+  };
+
+  addItem = () => {
+    const { type, types, item, count, writeOffItems } = this.state;
+
+    if (!type || !item || !parseInt(count)) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Необходимо указать все данные для списания",
+      });
+      return;
+    }
+
+    const typeObj = types.find((t) => parseInt(t.id) === parseInt(type));
+
+    const newItem = {
+      id: item.id,
+      ei_name: item.ei_name,
+      name: item.name,
+      type: item.type,
+      type_name: typeObj?.name || "",
+      type_s: "1",
+      value: count,
+    };
+
+    writeOffItems.push(newItem);
+
+    this.setState({
+      writeOffItems,
+      items: [],
+      type: "",
+      item: "",
+      count: "",
+      ed_izmer: "",
+    });
+  };
+
+  deleteItem = (index) => {
+    const writeOffItems = [...this.state.writeOffItems];
+    writeOffItems.splice(index, 1);
+    this.setState({ writeOffItems });
+  };
+
+  delete = () => {
+    const point = this.state.point;
+    this.props.deleteItem?.(this.props.itemEdit?.woj?.id, point);
+    this.setState({ confirmDialog: false });
+  };
+
+  createTags = async (reason, tag) => {
+    try {
+      const res = await api_laravel("write_off_journal_2", "save_tag", {
+        name: reason,
+        tag_id: tag.id,
+      });
+
+      if (res.data.st) {
+        this.setState({ openTags: false, reason, confirmDialogTag: true });
+        this.props.update?.();
+      } else {
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: res.data.text,
+        });
+      }
+    } catch (error) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Ошибка создания тега",
+      });
+    }
+  };
+
+  save = async () => {
+    const { writeOffItems, comment } = this.state;
+    const { point, writeOffId, onSave, onClose } = this.props;
+
+    const cleanComment = comment.replace(/\s/g, "");
+
+    if (!writeOffItems.length) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Позиции для списания отсутствуют!",
+      });
+      return;
+    }
+
+    if (!comment.trim()) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Комментарий обязателен для заполнения!",
+      });
+      return;
+    }
+
+    if (cleanComment.length < 3) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Комментарий должен содержать минимум 3 символа (без пробелов)",
+      });
+      return;
+    }
+
+    try {
+      const res = await api_laravel("write_off_journal_2", "save_edit", {
+        items: writeOffItems,
+        comment,
+        j_id: writeOffId,
+        point: point,
+      });
+
+      if (res.data.st) {
+        this.setState({
+          openAlert: true,
+          err_status: true,
+          err_text: res.data.text,
+          openAccept: false,
+        });
+        setTimeout(() => {
+          onSave?.();
+          onClose?.();
+        }, 1000);
+      } else {
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: res.data.text,
+        });
+      }
+    } catch (error) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: "Ошибка сохранения",
+      });
+    }
+  };
+
+  onClose = () => {
+    this.setState({
+      point: "",
+      points: [],
+      type: "",
+      types: [],
+      item: "",
+      items: [],
+      count: "",
+      ed_izmer: "",
+      comment: "",
+      writeOffItems: [],
+      openAlert: false,
+      err_status: true,
+      err_text: "",
+      confirmDialog: false,
+      openAccept: false,
+    });
+    this.props.onClose?.();
+  };
+
+  render() {
+    const { open, method = "Редактирование списания", itemEdit } = this.props;
+    const {
+      type,
+      item,
+      count,
+      ed_izmer,
+      writeOffItems,
+      comment,
+      isMobile,
+      openAccept,
+      confirmDialog,
+      confirmDialogTag,
+      reason,
+      openTags,
+    } = this.state;
+
+    const types = this.state.types || [];
+
+    return (
+      <>
+        <MyAlert
+          isOpen={this.state.openAlert}
+          onClose={() => this.setState({ openAlert: false })}
+          status={this.state.err_status}
+          text={this.state.err_text}
+        />
+
+        {this.state.openTags ? (
+          <Write_off_journal_View_Tags
+            open={this.state.openTags}
+            onClose={() => this.setState({ openTags: false })}
+            tags={this.props.itemEdit?.tags}
+            tags_journal={this.props.itemEdit?.tags_journal}
+            createTags={this.createTags}
+          />
+        ) : null}
+
+        {/* Диалог подтверждения */}
+        {openAccept && (
+          <Dialog
+            sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435, borderRadius: "12px" } }}
+            maxWidth="xs"
+            open={openAccept}
+            onClose={() => this.setState({ openAccept: false })}
+          >
+            <DialogTitle
+              sx={{
+                backgroundColor: "#F2F2F2",
+                borderBottom: "1px solid #E5E5E5",
+                display: "flex",
+                padding: "12px 14px",
+                height: "20px",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography sx={{ color: "#666666" }}>Подтверждение</Typography>
+              <IconButton
+                onClick={() => this.setState({ openAccept: false })}
+                style={{ cursor: "pointer", color: "#666666" }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent
+              align="center"
+              sx={{ fontWeight: "400", color: "#5E5E5E", margin: "20px 32px", padding: 0 }}
+            >
+              Вы подтверждаете сохранение изменений?
+            </DialogContent>
+            <DialogActions>
+              <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+                <Button
+                  sx={{
+                    borderRadius: "12px",
+                    padding: "12px 49px",
+                    width: "100%",
+                    backgroundColor: "#2F7D33",
+                    color: "#fff",
+                  }}
+                  onClick={this.save}
+                >
+                  Да
+                </Button>
+                <Button
+                  sx={{
+                    borderRadius: "12px",
+                    padding: "12px 49px",
+                    width: "100%",
+                    backgroundColor: "#FFFFFF",
+                    color: "#F43331",
+                  }}
+                  autoFocus
+                  onClick={() => this.setState({ openAccept: false })}
+                >
+                  Нет
+                </Button>
+              </div>
+            </DialogActions>
+          </Dialog>
+        )}
+
+        <Dialog
+          sx={{
+            "& .MuiDialog-paper": {
+              width: "80%",
+              maxHeight: 435,
+              borderRadius: "12px",
+            },
+          }}
+          maxWidth="xs"
+          open={confirmDialog}
+          fullScreen={false}
+          onClose={() => this.setState({ confirmDialog: false })}
+        >
+          <DialogTitle
+            sx={{
+              backgroundColor: "#F2F2F2",
+              borderBottom: "1px solid #E5E5E5",
+              display: "flex",
+              padding: "12px 14px",
+              height: "20px",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography sx={{ color: "#666666" }}>Подтверждение</Typography>
+            <IconButton
+              onClick={() => this.setState({ confirmDialog: false })}
+              style={{ cursor: "pointer", color: "#666666" }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent
+            align="center"
+            sx={{
+              fontWeight: "400",
+              color: "#5E5E5E",
+              margin: "20px 32px",
+              padding: 0,
+              height: "100px",
+            }}
+          >
+            Вы подтверждаете удаление?
+          </DialogContent>
+          <DialogActions>
+            <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+              <Button
+                sx={{
+                  borderRadius: "12px",
+                  padding: "12px 49px",
+                  width: "100%",
+                  backgroundColor: "#2F7D33",
+                  color: "#fff",
+                }}
+                onClick={this.delete}
+              >
+                Да
+              </Button>
+              <Button
+                sx={{
+                  borderRadius: "12px",
+                  padding: "12px 49px",
+                  width: "100%",
+                  backgroundColor: "#FFFFFF",
+                  color: "#F43331",
+                }}
+                autoFocus
+                onClick={() => this.setState({ openAccept: false })}
+              >
+                Нет
+              </Button>
+            </div>
+          </DialogActions>
+        </Dialog>
+
+        {/* Диалог успешного создания тега */}
+        <Dialog
+          sx={{
+            "&& .MuiDialog-paper": {
+              width: "382px !important",
+              borderRadius: "12px !important",
+              maxHeight: 210,
+            },
+          }}
+          maxWidth="sm"
+          open={confirmDialogTag}
+          fullScreen={isMobile}
+          onClose={() => this.setState({ confirmDialogTag: false })}
+        >
+          <DialogTitle
+            sx={{
+              backgroundColor: "#F2F2F2",
+              borderBottom: "1px solid #E5E5E5",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography sx={{ color: "#666666" }}>Добавлена новая причина списания</Typography>
+            <IconButton
+              onClick={() => this.setState({ confirmDialogTag: false })}
+              style={{ cursor: "pointer", color: "#666666" }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Typography sx={{ color: "#666666", fontSize: "16px", marginBottom: "8px" }}>
+              В список добавлена новая причина
+            </Typography>
+            <Typography
+              sx={{
+                color: "#666666",
+                fontSize: "20px !important",
+                marginBottom: "8px",
+                marginTop: "8px",
+              }}
+            >
+              {reason}
+            </Typography>
+          </DialogContent>
+        </Dialog>
+
+        {/* Основной диалог */}
+        <Dialog
+          open={open}
+          fullWidth={true}
+          maxWidth={"xl"}
+          onClose={this.onClose}
+          sx={{
+            marginTop: isMobile ? "0" : "60px",
+            ".MuiDialog-backdrop": {
+              backgroundColor: "transparent",
+            },
+          }}
+          fullScreen={true}
+        >
+          {isMobile ? (
+            <DialogTitle
+              sx={{
+                display: "flex",
+                flexDirection: "row-reverse",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div></div>
+              {method}
+              <IconButton
+                onClick={this.onClose}
+                style={{ cursor: "pointer", float: "right" }}
+              >
+                <KeyboardArrowDownIcon style={{ color: "#3C3B3B", rotate: "90deg" }} />
+              </IconButton>
+            </DialogTitle>
+          ) : (
+            <DialogTitle
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                backgroundColor: "#E5E5E5",
+              }}
+            >
+              <div>
+                <span
+                  className="text-14px"
+                  style={{ color: "#A6A6A6", cursor: "pointer" }}
+                  onClick={this.onClose}
+                >
+                  Списание &#8193;/&#8193;{" "}
+                </span>
+                <span className="text-14px">{method}</span>
+              </div>
+            </DialogTitle>
+          )}
+
+          <DialogContent style={{ padding: 12, backgroundColor: isMobile ? "#F3F3F3" : "#E5E5E5" }}>
+            <Grid
+              container
+              spacing={3}
+              sx={{ mb: 3 }}
+            >
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <MyTextInput
+                  label="Точка"
+                  value={this.state.point?.name || ""}
+                  disabled={true}
+                  customRI="journal"
+                  className="disabled_input"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <MySelect
+                  is_none={false}
+                  data={types}
+                  value={type}
+                  customRI="journal"
+                  func={this.changeType.bind(this, "type")}
+                  label="Тип"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <MyAutocomplite
+                  label="Наименование"
+                  multiple={false}
+                  data={this.state.items}
+                  value={item}
+                  customRI="journal"
+                  func={this.changeItemData.bind(this, "item")}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <NumericTextField
+                  label="Количество"
+                  value={count}
+                  customRI="journal"
+                  onChange={this.changeItem.bind(this, "count")}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <MyTextInput
+                  label="Ед измерения"
+                  value={ed_izmer}
+                  disabled={true}
+                  customRI="journal"
+                  className="disabled_input"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 8 }} />
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <Button
+                  onClick={this.addItem}
+                  variant="contained"
+                  style={{
+                    backgroundColor: "#FFF",
+                    borderRadius: "12px",
+                    height: "48px",
+                    textTransform: "capitalize",
+                    color: "#2F7D33",
+                    width: "100%",
+                    border: "1px solid #2F7D33",
+                    boxShadow: "none",
+                  }}
+                >
+                  Добавить позицию
+                </Button>
+              </Grid>
+              <Grid
+                size={{ xs: 12, sm: 2 }}
+                style={{ display: "flex", justifyContent: "flex-end" }}
+              >
+                <Button
+                  onClick={() => {
+                    this.setState({
+                      type: "",
+                      item: "",
+                      count: "",
+                      ed_izmer: "",
+                    });
+                  }}
+                  variant="contained"
+                  style={{
+                    backgroundColor: "#FFF",
+                    borderRadius: "12px",
+                    height: "48px",
+                    width: "100%",
+                    textTransform: "capitalize",
+                    color: "#F43331",
+                    boxShadow: "none",
+                  }}
+                >
+                  Сбросить фильтры
+                </Button>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 12 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    width: "100%",
+                  }}
+                >
+                  <WriteOffReasons
+                    value={comment}
+                    onChange={(e) => this.setState({ comment: e })}
+                    list={itemEdit?.tags_journal || []}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => this.setState({ openTags: true })}
+                    sx={{
+                      color: "#2F7D33",
+                      borderRadius: isMobile ? "50%" : "12px",
+                      border: "1px solid #2F7D33",
+                      padding: isMobile ? "inherit" : "9px 40px",
+                      ml: 0.5,
+                      backgroundColor: "white",
+                    }}
+                  >
+                    <AddIcon fontSize="small" />{" "}
+                    {isMobile ? "" : <span className="text-14px">Новая причина</span>}
+                  </IconButton>
+                </div>
+              </Grid>
+            </Grid>
+
+            {!isMobile ? (
+              <Table>
+                <TableHead sx={{ backgroundColor: "#F3F3F3 !important" }}>
+                  <TableRow sx={{ backgroundColor: "#F3F3F3 !important" }}>
+                    <TableCell
+                      sx={{
+                        backgroundColor: "#F3F3F3 !important",
+                        borderRadius: "8px 0 0 0",
+                        padding: "12px",
+                      }}
+                    >
+                      Номер
+                    </TableCell>
+                    <TableCell sx={{ backgroundColor: "#F3F3F3 !important", padding: "12px" }}>
+                      Тип
+                    </TableCell>
+                    <TableCell sx={{ backgroundColor: "#F3F3F3 !important", padding: "12px" }}>
+                      Наименование
+                    </TableCell>
+                    <TableCell sx={{ backgroundColor: "#F3F3F3 !important", padding: "12px" }}>
+                      Количество
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        backgroundColor: "#F3F3F3 !important",
+                        borderRadius: "0 8px 0 0",
+                        padding: "12px",
+                      }}
+                    >
+                      Удалить
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {writeOffItems.map((it, k) => (
+                    <TableRow
+                      hover
+                      key={k}
+                      sx={{ borderTop: "8px solid #E5E5E5" }}
+                    >
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
+                        }}
+                      >
+                        {k + 1}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
+                        }}
+                      >
+                        {it.type_name}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
+                        }}
+                      >
+                        {it.name}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
+                        }}
+                      >
+                        {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          backgroundColor: "#FFF !important",
+                          marginTop: "8px",
+                          padding: "12px",
+                        }}
+                      >
+                        <IconButton
+                          size="small"
+                          onClick={() => this.deleteItem(k)}
+                          sx={{
+                            cursor: "pointer",
+                            padding: { xs: "4px", sm: "8px" },
+                            "& svg": {
+                              fontSize: { xs: "18px", sm: "24px" },
+                            },
+                          }}
+                        >
+                          <CloseIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              writeOffItems.map((it, key) => (
+                <div
+                  key={key}
+                  style={{
+                    borderRadius: "8px",
+                    backgroundColor: "#fff",
+                    display: "flex",
+                    flexDirection: "column",
+                    border: "1px solid #E5E5E5",
+                    marginBottom: "4px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "12px 10px",
+                      justifyContent: "space-between",
+                      borderRadius: "8px 8px 0 0",
+                    }}
+                  >
+                    <span style={{ color: "#666", fontWeight: "500" }}>Тип</span>
+                    <span style={{ color: "#666", fontWeight: "400" }}>
+                      {it.type_name}
+                      <IconButton
+                        size="small"
+                        onClick={() => this.deleteItem(key)}
+                        sx={{
+                          cursor: "pointer",
+                          padding: { xs: "4px", sm: "8px" },
+                          "& svg": {
+                            fontSize: { xs: "18px", sm: "24px" },
+                          },
+                        }}
+                      >
+                        <CloseIcon />
+                      </IconButton>
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "12px 10px",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span style={{ color: "#666", fontWeight: "500" }}>Наименование</span>
+                    <span style={{ color: "#666", fontWeight: "400" }}>{it.name}</span>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "12px 10px",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span style={{ color: "#666", fontWeight: "500" }}>Количество</span>
+                    <span style={{ color: "#666", fontWeight: "400" }}>
+                      {String(it.value)?.replace(/\./g, ",") + " " + it.ei_name}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </DialogContent>
+
+          <DialogActions
+            style={{
+              paddingBottom: 10,
+              paddingTop: 10,
+              backgroundColor: isMobile ? "#F3F3F3" : "#E5E5E5",
+            }}
+          >
+            <Button
+              onClick={() => this.setState({ confirmDialog: true })}
+              variant="contained"
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: "12px",
+                color: "#F43331",
+                height: "48px",
+                textTransform: "capitalize",
+              }}
+            >
+              Удалить
+            </Button>
+            <Button
+              onClick={() => this.setState({ openAccept: true })}
+              variant="contained"
+              style={{
+                backgroundColor: "#2F7D33",
+                borderRadius: "12px",
+                height: "48px",
+                textTransform: "capitalize",
+              }}
+            >
+              Сохранить
+            </Button>
+            <Button
+              onClick={this.onClose}
+              variant="contained"
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: "12px",
+                color: "#F43331",
+                height: "48px",
+                textTransform: "capitalize",
+              }}
+            >
+              Отменить
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
+    );
+  }
+}
+
 class Write_off_journal_View_Tags extends React.Component {
   constructor(props) {
     super(props);
@@ -764,9 +1690,17 @@ class Write_off_journal_View_Tags extends React.Component {
       reason: "",
       tags: [],
       tag: {},
+      touchStartY: 0,
+      touchEndY: 0,
+      swipeOffset: 0,
+      isSwiping: false,
+      maxSwipeOffset: 600,
       openAccept: false,
       isMobile: window.innerWidth <= 600,
     };
+    this.handleTouchStart = this.handleTouchStart.bind(this);
+    this.handleTouchMove = this.handleTouchMove.bind(this);
+    this.handleTouchEnd = this.handleTouchEnd.bind(this);
   }
 
   onClose() {
@@ -791,6 +1725,52 @@ class Write_off_journal_View_Tags extends React.Component {
     });
   };
 
+  handleTouchStart = (e) => {
+    this.setState({
+      touchStartY: e.touches[0].clientY,
+      isSwiping: true,
+      swipeOffset: 0,
+    });
+    e.stopPropagation();
+  };
+
+  handleTouchMove = (e) => {
+    if (!this.state.isSwiping) return;
+
+    const touchY = e.touches[0].clientY;
+    const deltaY = touchY - this.state.touchStartY;
+
+    // Разрешаем движение только вниз и ограничиваем максимальное смещение
+    if (deltaY > 0) {
+      const newOffset = Math.min(deltaY, this.state.maxSwipeOffset);
+      this.setState({ swipeOffset: newOffset });
+    }
+
+    e.stopPropagation();
+    e.preventDefault(); // Важно! Предотвращает скролл страницы
+  };
+
+  handleTouchEnd = (e) => {
+    const { swipeOffset, isSwiping } = this.state;
+
+    if (isSwiping) {
+      // Если свайпнули достаточно далеко (больше 30% от максимума) - закрываем
+      if (swipeOffset > this.state.maxSwipeOffset * 0.3) {
+        this.onClose();
+      } else {
+        // Иначе возвращаем в исходное положение
+        this.setState({ swipeOffset: 0 });
+      }
+    }
+
+    this.setState({
+      isSwiping: false,
+      touchStartY: 0,
+    });
+
+    e.stopPropagation();
+  };
+
   render() {
     const { open, fullScreen } = this.props;
 
@@ -811,6 +1791,17 @@ class Write_off_journal_View_Tags extends React.Component {
             height: "auto",
             maxHeight: "90vh",
             overflow: "hidden",
+            // Добавляем трансформацию для свайпа
+            transform:
+              this.state.isMobile && this.state.swipeOffset > 0
+                ? `translateY(${this.state.swipeOffset}px)`
+                : "none",
+            transition: this.state.isSwiping ? "none" : "transform 0.3s ease-out",
+            // Добавляем тень при свайпе для лучшего визуального эффекта
+            boxShadow:
+              this.state.swipeOffset > 0
+                ? "0px -4px 20px rgba(0, 0, 0, 0.2)"
+                : "0px -4px 10px rgba(0, 0, 0, 0.1)",
           },
         }}
       >
@@ -886,6 +1877,11 @@ class Write_off_journal_View_Tags extends React.Component {
             paddingBottom: 2,
             position: "relative",
             cursor: "pointer",
+            flexShrink: 0, // Не даем сжиматься
+            backgroundColor: this.state.isMobile ? "#fff" : "transparent", // Цвет как у заголовка
+            borderTopLeftRadius: "40px",
+            borderTopRightRadius: "40px",
+            zIndex: 10,
             "&:active": {
               "& .drag-indicator": {
                 backgroundColor: "#888",
@@ -893,7 +1889,9 @@ class Write_off_journal_View_Tags extends React.Component {
             },
           }}
           onClick={this.onClose.bind(this)}
-          onTouchStart={(e) => e.stopPropagation()}
+          onTouchStart={this.handleTouchStart}
+          onTouchMove={this.handleTouchMove}
+          onTouchEnd={this.handleTouchEnd}
         >
           {this.state.isMobile ? (
             <Box
@@ -904,6 +1902,7 @@ class Write_off_journal_View_Tags extends React.Component {
                 backgroundColor: "#BABABA",
                 borderRadius: 2,
                 transition: "background-color 0.2s",
+                marginTop: 1,
               }}
             />
           ) : null}
@@ -1046,28 +2045,35 @@ class Write_off_journal_View_Tags extends React.Component {
                   label="Тег"
                   multiple={false}
                   renderOption={(params, option) => (
-                    <li
-                      style={{
-                        backgroundColor: "#F3F3F3",
-                        borderRadius: "12px",
-                        padding: "12px",
-                        border: "1px solid #E5E5E5",
-                        margin: "0 4px",
-                        whiteSpace: "nowrap",
-                      }}
+                    <Chip
                       {...params}
                       key={option.id}
-                    >
-                      {option.name}
-                    </li>
+                      label={option.name}
+                      size="small"
+                      sx={{
+                        backgroundColor: "#F3F3F3",
+                        borderRadius: "12px",
+                        border: "1px solid #E5E5E5",
+                        margin: "2px",
+                        height: "22px",
+                        lineHeight: "14px",
+                        flexShrink: 0,
+                        "& .MuiChip-label": {
+                          padding: "0 8px",
+                          fontSize: "12px",
+                        },
+                      }}
+                    />
                   )}
                   ListboxProps={{
                     style: {
                       display: "flex",
                       flexDirection: "row",
                       flexWrap: "wrap",
-                      gap: "8px",
+                      gap: "4px",
                       padding: "8px",
+                      overflowX: this.state.isMobile ? "auto" : "visible",
+                      WebkitOverflowScrolling: "touch",
                     },
                   }}
                   customRI="journal"
@@ -1126,7 +2132,7 @@ class Write_off_journal_View_Tags extends React.Component {
   }
 }
 
-class Write_off_journal_View_Disabled extends React.Component {
+export class Write_off_journal_View_Disabled extends React.Component {
   constructor(props) {
     super(props);
 
@@ -1134,9 +2140,63 @@ class Write_off_journal_View_Disabled extends React.Component {
       itemView: null,
       width: window.innerWidth,
       height: window.innerHeight,
+      isMobile: window.innerWidth <= 600, // добавили
+      touchStartY: 0,
+      touchEndY: 0,
+      swipeOffset: 0,
+      isSwiping: false,
+      maxSwipeOffset: 600, // уменьшили
     };
+
+    this.handleTouchStart = this.handleTouchStart.bind(this);
+    this.handleTouchMove = this.handleTouchMove.bind(this);
+    this.handleTouchEnd = this.handleTouchEnd.bind(this);
     this.containerRef = React.createRef();
   }
+
+  handleTouchStart = (e) => {
+    this.setState({
+      touchStartY: e.touches[0].clientY,
+      isSwiping: true,
+      swipeOffset: 0,
+    });
+    e.stopPropagation();
+  };
+
+  handleTouchMove = (e) => {
+    if (!this.state.isSwiping) return;
+
+    const touchY = e.touches[0].clientY;
+    const deltaY = touchY - this.state.touchStartY;
+
+    // Разрешаем движение только вниз и ограничиваем максимальное смещение
+    if (deltaY > 0) {
+      const newOffset = Math.min(deltaY, this.state.maxSwipeOffset);
+      this.setState({ swipeOffset: newOffset });
+    }
+
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
+  handleTouchEnd = (e) => {
+    const { swipeOffset, isSwiping, maxSwipeOffset } = this.state;
+
+    if (isSwiping) {
+      if (swipeOffset > maxSwipeOffset * 0.3) {
+        this.onClose();
+      } else {
+        this.setState({ swipeOffset: 0 });
+      }
+    }
+
+    this.setState({
+      isSwiping: false,
+      touchStartY: 0,
+    });
+
+    e.stopPropagation();
+  };
 
   componentDidMount() {
     window.addEventListener("resize", this.handleResize);
@@ -1150,16 +2210,11 @@ class Write_off_journal_View_Disabled extends React.Component {
     this.setState({
       width: window.innerWidth,
       height: window.innerHeight,
+      isMobile: window.innerWidth <= 600, // обновляем isMobile
     });
   };
 
   componentDidUpdate(prevProps) {
-    //console.log(this.props);
-
-    if (!this.props) {
-      return;
-    }
-
     if (this.props !== prevProps) {
       this.setState({
         itemView: this.props.itemView,
@@ -1167,55 +2222,67 @@ class Write_off_journal_View_Disabled extends React.Component {
     }
   }
 
-  onClose() {
+  onClose = () => {
     this.setState({
       itemView: null,
+      swipeOffset: 0,
     });
-
     this.props.onClose();
-  }
+  };
 
   render() {
     const { open, fullScreen } = this.props;
-    const { width, height } = this.state;
+    const { width, height, isMobile, swipeOffset, isSwiping } = this.state;
+
     return (
       <Dialog
         open={open}
         fullWidth={true}
         maxWidth={"lg"}
-        onClose={this.onClose.bind(this)}
+        onClose={this.onClose}
         fullScreen={fullScreen}
         PaperProps={{
           sx: {
             margin: 0,
-            position: width < 585 ? "absolute" : "initial",
+            position: isMobile ? "absolute" : "initial",
             bottom: 0,
-            borderRadius: width < 585 ? "40px 40px 0 0" : "12px",
+            width: "100%",
+            borderRadius: isMobile ? "40px 40px 0 0" : "12px",
             height: "auto",
-            overflow: "hidden",
             maxHeight: "90vh",
+            overflow: "hidden",
+            transform: isMobile && swipeOffset > 0 ? `translateY(${swipeOffset}px)` : "none",
+            transition: isSwiping ? "none" : "transform 0.3s ease-out",
+            boxShadow:
+              swipeOffset > 0 ? "0px -4px 20px rgba(0,0,0,0.2)" : "0px -4px 10px rgba(0,0,0,0.1)",
           },
         }}
       >
-        <Box
-          sx={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            paddingTop: 1,
-            paddingBottom: 2,
-            position: "relative",
-            cursor: "pointer",
-            "&:active": {
-              "& .drag-indicator": {
+        {/* Индикатор свайпа (только для мобильных) */}
+        {isMobile && (
+          <Box
+            sx={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              paddingTop: 1,
+              paddingBottom: 2,
+              position: "relative",
+              cursor: "pointer",
+              flexShrink: 0,
+              backgroundColor: "#fff",
+              borderTopLeftRadius: "40px",
+              borderTopRightRadius: "40px",
+              zIndex: 10,
+              "&:active .drag-indicator": {
                 backgroundColor: "#888",
               },
-            },
-          }}
-          onClick={this.onClose.bind(this)}
-          onTouchStart={(e) => e.stopPropagation()}
-        >
-          {width < 585 ? (
+            }}
+            onClick={this.onClose}
+            onTouchStart={this.handleTouchStart}
+            onTouchMove={this.handleTouchMove}
+            onTouchEnd={this.handleTouchEnd}
+          >
             <Box
               className="drag-indicator"
               sx={{
@@ -1224,22 +2291,23 @@ class Write_off_journal_View_Disabled extends React.Component {
                 backgroundColor: "#BABABA",
                 borderRadius: 2,
                 transition: "background-color 0.2s",
+                marginTop: 1,
               }}
             />
-          ) : null}
-        </Box>
+          </Box>
+        )}
 
         <Box
           sx={{
             overflow: "auto",
-            maxHeight: "calc(90vh - 60px)",
+            maxHeight: isMobile ? "calc(90vh - 60px)" : "calc(90vh - 20px)",
           }}
         >
           <DialogTitle sx={{ textAlign: "center", padding: "0 12px" }}>
             История изменений
             <IconButton
-              onClick={this.onClose.bind(this)}
-              style={{ cursor: "pointer", float: "right" }}
+              onClick={this.onClose}
+              style={{ float: "right" }}
             >
               <CloseIcon />
             </IconButton>
@@ -1275,94 +2343,90 @@ class Write_off_journal_View_Disabled extends React.Component {
                 container
                 spacing={3}
               >
-                {this.props.itemView?.items?.map((it, key) => {
-                  return (
-                    <Grid
-                      size={{
-                        xs: 12,
-                        sm: 6,
+                {this.props.itemView?.items?.map((it, key) => (
+                  <Grid
+                    size={{ xs: 12, sm: 6 }}
+                    key={key}
+                  >
+                    <div
+                      style={{
+                        backgroundColor: "#fff",
+                        display: "flex",
+                        flexDirection: "column",
+                        borderRadius: "12px",
+                        border: "1px solid #E5E5E5",
                       }}
                     >
                       <div
                         style={{
-                          backgroundColor: "#fff",
                           display: "flex",
-                          flexDirection: "column",
-                          borderRadius: "12px",
-                          border: "1px solid #E5E5E5",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "12px 8px",
+                          borderRadius: "12px 12px 0 0",
+                          borderBottom: "1px solid #E5E5E5",
                         }}
                       >
-                        <div
+                        <span style={{ color: "#666" }}>#{key + 1}</span>
+                        <span
                           style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            padding: "12px 8px",
-                            borderRadius: "12px 12px 0 0",
-                            borderBottom: "1px solid #E5E5E5",
+                            color:
+                              it.color === "add"
+                                ? "#2F7D33"
+                                : it.color === "delete"
+                                  ? "#F43331"
+                                  : "#FFA500",
                           }}
                         >
-                          <span style={{ color: "#666" }}>#{key + 1}</span>
-                          <span
-                            style={{
-                              color:
-                                it.color === "add"
-                                  ? it.color === "edit"
-                                    ? "yellow"
-                                    : "#2F7D33"
-                                  : "#F43331",
-                            }}
-                          >
-                            {it.color === "add"
-                              ? it.color === "edit"
-                                ? "Изменён"
-                                : "Добавлен"
-                              : "Удалён"}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            padding: "8px 12px",
-                          }}
-                        >
-                          <span style={{ color: "#666", fontWeight: "500" }}>Тип</span>
-                          <span style={{ color: "#666", fontWeight: "400" }}>{it.type_name}</span>
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            padding: "8px 12px",
-                          }}
-                        >
-                          <span style={{ color: "#666", fontWeight: "500" }}>Наименование</span>
-                          <span style={{ color: "#666", fontWeight: "400" }}>{it.item_name}</span>
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            padding: "8px 12px",
-                          }}
-                        >
-                          <span style={{ color: "#666", fontWeight: "500" }}>Количество</span>
-                          <span style={{ color: "#666", fontWeight: "400" }}>
-                            {it.value + " " + it.ei_name}
-                          </span>
-                        </div>
+                          {it.color === "add"
+                            ? "Добавлен"
+                            : it.color === "delete"
+                              ? "Удалён"
+                              : "Изменён"}
+                        </span>
                       </div>
-                    </Grid>
-                  );
-                })}
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "8px 12px",
+                        }}
+                      >
+                        <span style={{ color: "#666", fontWeight: "500" }}>Тип</span>
+                        <span style={{ color: "#666", fontWeight: "400" }}>{it.type_name}</span>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "8px 12px",
+                        }}
+                      >
+                        <span style={{ color: "#666", fontWeight: "500" }}>Наименование</span>
+                        <span style={{ color: "#666", fontWeight: "400" }}>{it.item_name}</span>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "8px 12px",
+                        }}
+                      >
+                        <span style={{ color: "#666", fontWeight: "500" }}>Количество</span>
+                        <span style={{ color: "#666", fontWeight: "400" }}>
+                          {it.value} {it.ei_name}
+                        </span>
+                      </div>
+                    </div>
+                  </Grid>
+                ))}
                 <div
                   style={{
                     padding: "12px",
@@ -2094,7 +3158,14 @@ class Write_off_journal_modal extends React.Component {
                 }}
               >
                 <Button
-                  onClick={this.addItems.bind(this)}
+                  onClick={() => {
+                    this.setState({
+                      type: "",
+                      item: "",
+                      count: "",
+                      ed_izmer: "",
+                    });
+                  }}
                   variant="contained"
                   style={{
                     backgroundColor: "#FFF",
@@ -2531,8 +3602,6 @@ class Write_off_journal_ extends React.Component {
   async componentDidMount() {
     const data = await this.getData("get_all");
 
-    // для тестов
-    //const points = [{base: "jaco_rolls_0", id: "0", id_2: "1_0", manager_id: "0", name: "Тольятти, Тестовая", name2: "Тольятти, Тестовая"}]
     const result = Object.keys(data.acces).reduce((acc, key) => {
       acc[key] = parseInt(data.acces[key], 10);
       return acc;
@@ -3451,7 +4520,9 @@ class Write_off_journal_ extends React.Component {
                       {this.state.list.map((item, key) => (
                         <TableRow
                           hover
-                          onClick={this.openModalHistoryView.bind(this, item)}
+                          onClick={() => {
+                            window.location.href = `/write_off_journal_2/${this.state.point?.id}/${item.id}`;
+                          }}
                           key={key}
                           sx={{
                             "&:last-of-type": {

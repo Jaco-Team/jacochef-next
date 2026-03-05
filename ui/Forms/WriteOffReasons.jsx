@@ -108,7 +108,7 @@ export default function WriteOffReasons({ value, onChange, disabled, list }) {
           "& .MuiOutlinedInput-root": {
             borderRadius: "12px",
             border: "1px solid #E5E5E5",
-            color: "#BABABA",
+            color: "#666666",
             backgroundColor: disabled ? "#F5F5F5" : "#FFFFFF",
             "&:hover": {
               backgroundColor: disabled ? "#F5F5F5" : "#FFFFFF",
@@ -265,7 +265,7 @@ export default function WriteOffReasons({ value, onChange, disabled, list }) {
             </Typography>
             <Box
               sx={{
-                maxHeight: 200,
+                maxHeight: 152,
                 overflowY: "auto",
                 borderRadius: "12px",
                 bgcolor: "background.paper",
