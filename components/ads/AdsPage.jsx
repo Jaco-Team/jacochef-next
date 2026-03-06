@@ -39,6 +39,7 @@ export default function AdsPage() {
         connections: res?.connections,
         access: res?.access,
       });
+      document.title = res?.module_info?.name || "Рекламные кампании";
     } catch (e) {
       showAlert?.(e?.message || "Ошибка");
     } finally {
