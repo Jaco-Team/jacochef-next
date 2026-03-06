@@ -4,9 +4,6 @@ import { useMemo, useState } from "react";
 import {
   Box,
   Button,
-  Card,
-  CardContent,
-  Chip,
   Paper,
   Stack,
   Table,
@@ -22,6 +19,7 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 
+import DownloadIcon from "@mui/icons-material/Download";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PauseCircleIcon from "@mui/icons-material/PauseCircle";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
@@ -29,19 +27,11 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import { useAdsStore } from "../useAdsStore";
 import { MyDatePickerNew } from "@/ui/Forms";
+import { formatYMD } from "@/src/helpers/ui/formatDate";
+import useXLSExport from "@/src/hooks/useXLSXExport";
 
 function SmallText({ children, size = "0.7rem" }) {
   return <div style={{ fontSize: size }}>{children}</div>;
-}
-
-function formatDate(v) {
-  if (!v) return null;
-  const d = v?.$d instanceof Date ? v.$d : v instanceof Date ? v : new Date(v);
-  if (Number.isNaN(d.getTime())) return null;
-  const yyyy = String(d.getFullYear());
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
 }
 
 export default function YandexDirectTab({ api_laravel, showAlert }) {
@@ -56,7 +46,48 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
   const [orderBy, setOrderBy] = useState("spend_minor");
   const [orderDir, setOrderDir] = useState("desc");
 
+  const exportXLSX = useXLSExport();
+
   const canSubmit = useMemo(() => !!date_start && !!date_end, [date_start, date_end]);
+
+  const columns = [
+    {
+      key: "name",
+      label: "Кампания",
+    },
+    {
+      key: "impressions",
+      label: "Показы",
+      numeric: true,
+    },
+    {
+      key: "clicks",
+      label: "Клики",
+      numeric: true,
+    },
+    {
+      key: "ctr",
+      label: "CTR",
+      numeric: true,
+    },
+    {
+      key: "spend_minor",
+      label: "Расход",
+      numeric: true,
+      formatRaw: (v) => ((v ?? 0) / 1_000_000).toFixed(2),
+    },
+    {
+      key: "cpc_minor",
+      label: "CPC",
+      numeric: true,
+      formatRaw: (v) => ((v ?? 0) / 1_000_000).toFixed(2),
+    },
+    {
+      key: "conversions",
+      label: "Конверсии",
+      numeric: true,
+    },
+  ];
 
   const getStats = async () => {
     setLoading(true);
@@ -113,16 +144,6 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
 
   const spendTotal = (totals?.spend_minor ?? 0) / 1_000_000;
 
-  const columns = [
-    { id: "name", label: "Campaign" },
-    { id: "impressions", label: "Impressions", numeric: true },
-    { id: "clicks", label: "Clicks", numeric: true },
-    { id: "ctr", label: "CTR", numeric: true },
-    { id: "spend_minor", label: "Spend", numeric: true },
-    { id: "cpc_minor", label: "CPC", numeric: true },
-    { id: "conversions", label: "Conversions", numeric: true },
-  ];
-
   return (
     <Grid
       container
@@ -130,7 +151,7 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
     >
       <Grid size={12}>
         <Stack spacing={2}>
-          <Typography variant="h6">Yandex Direct</Typography>
+          <Typography variant="h6">Яндекс Директ</Typography>
 
           <Grid
             container
@@ -138,7 +159,7 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
           >
             <Grid size={{ xs: 12, md: 4 }}>
               <MyDatePickerNew
-                func={(v) => setDates({ date_start: formatDate(v) })}
+                func={(v) => setDates({ date_start: formatYMD(v) })}
                 value={date_start}
                 label="Начало периода"
               />
@@ -146,7 +167,7 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
 
             <Grid size={{ xs: 12, md: 4 }}>
               <MyDatePickerNew
-                func={(v) => setDates({ date_end: formatDate(v) })}
+                func={(v) => setDates({ date_end: formatYMD(v) })}
                 value={date_end}
                 label="Конец периода"
               />
@@ -157,6 +178,7 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
                 direction="row"
                 justifyContent={{ xs: "flex-start", md: "flex-end" }}
                 alignItems="center"
+                spacing={1}
                 sx={{ height: "100%" }}
               >
                 <Button
@@ -166,6 +188,26 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
                 >
                   Получить статистику
                 </Button>
+
+                <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
+                  <span>
+                    <Button
+                      variant="contained"
+                      sx={{ backgroundColor: "#3cb623ff" }}
+                      disabled={!sortedCampaigns.length}
+                      onClick={() =>
+                        exportXLSX(
+                          sortedCampaigns,
+                          columns,
+                          `yandex_direct_${date_start}-${date_end}.xlsx`,
+                          `Yandex Direct ${date_start} → ${date_end}`,
+                        )
+                      }
+                    >
+                      <DownloadIcon />
+                    </Button>
+                  </span>
+                </Tooltip>
               </Stack>
             </Grid>
           </Grid>
@@ -186,16 +228,16 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
                   <TableRow>
                     {columns.map((col) => (
                       <TableCell
-                        key={col.id}
+                        key={col.key}
                         align={col.numeric ? "right" : "left"}
                       >
-                        {col.id === "name" ? (
+                        {col.key === "name" ? (
                           col.label
                         ) : (
                           <TableSortLabel
-                            active={orderBy === col.id}
-                            direction={orderBy === col.id ? orderDir : "asc"}
-                            onClick={() => handleSort(col.id)}
+                            active={orderBy === col.key}
+                            direction={orderBy === col.key ? orderDir : "asc"}
+                            onClick={() => handleSort(col.key)}
                           >
                             {col.label}
                           </TableSortLabel>
@@ -258,6 +300,7 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
                             </Tooltip>
                             <Typography fontWeight={600}>{c.name}</Typography>
                           </Stack>
+
                           <SmallText>
                             {c.connection_title} • {c.external_account_id}
                           </SmallText>
@@ -276,7 +319,7 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
 
                 {totals && (
                   <TableFooter
-                    sx={{ position: "sticky", bottom: 0, backgroundColor: "background.paper" }}
+                    sx={{ position: "sticky", bottom: "-1px", backgroundColor: "background.paper" }}
                   >
                     <TableRow>
                       <TableCell>
