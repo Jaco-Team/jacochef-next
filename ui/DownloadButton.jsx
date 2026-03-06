@@ -1,10 +1,12 @@
 "use client";
 
-import { CircularProgress, IconButton, Tooltip } from "@mui/material";
+import { Button, CircularProgress, IconButton, Tooltip } from "@mui/material";
 import { useState } from "react";
 
-export default function DownloadButton({ children, url = null, ...restProps }) {
+export default function DownloadButton({ children, url = null, button = false, ...restProps }) {
   const [loading, setLoading] = useState(false);
+
+  const ButtonComponent = button ? Button : IconButton;
 
   const handleDownload = async (e) => {
     e.preventDefault();
@@ -36,7 +38,7 @@ export default function DownloadButton({ children, url = null, ...restProps }) {
       title={`${restProps.title || "Скачать Excel файл"}${loading ? " (ждите ответа...)" : ""}`}
     >
       <span>
-        <IconButton
+        <ButtonComponent
           component="span"
           size="small"
           onClick={handleDownload}
@@ -44,7 +46,7 @@ export default function DownloadButton({ children, url = null, ...restProps }) {
           {...restProps}
         >
           {loading ? <CircularProgress size={10} /> : children}
-        </IconButton>
+        </ButtonComponent>
       </span>
     </Tooltip>
   );
