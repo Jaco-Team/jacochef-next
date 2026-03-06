@@ -157,9 +157,7 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
 
       <Grid
         container
-        spacing={3}
-        mb={3}
-        className="container_first_child"
+        spacing={1}
       >
         <Grid size={12}>
           <Stack
@@ -170,13 +168,7 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
             flexWrap="wrap"
           >
             <Box>
-              <Typography variant="h5">Ads Integrations</Typography>
-              <Typography
-                variant="body2"
-                sx={{ opacity: 0.7 }}
-              >
-                Module: {moduleName}
-              </Typography>
+              <Typography variant="h6">Настройка соединений с API</Typography>
             </Box>
 
             <Stack

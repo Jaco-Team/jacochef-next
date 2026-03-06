@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo } from "react";
-import { Backdrop, Box, CircularProgress, Grid, Tab, Tabs, Typography } from "@mui/material";
+import { Backdrop, Box, CircularProgress, Grid, Paper, Tab, Tabs, Typography } from "@mui/material";
 import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
@@ -17,7 +17,7 @@ import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 export default function AdsPage() {
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
-  const access = useAdsStore((s) => s.loading);
+  const access = useAdsStore((s) => s.access);
   const loading = useAdsStore((s) => s.loading);
   const tab = useAdsStore((s) => s.tab);
   const moduleName = useAdsStore((s) => s.moduleName);
@@ -46,13 +46,11 @@ export default function AdsPage() {
     }
   };
 
-  const canAccess = useCallback(
-    (key) => {
-      const { userCan } = handleUserAccess(access);
-      return userCan("access", key);
-    },
-    [access],
-  );
+  const canAccess = (key) => {
+    const { userCan } = handleUserAccess(access);
+    console.log("Checking access for", key, "with access list", access);
+    return userCan("access", key);
+  };
 
   useEffect(() => {
     loadAll();
@@ -102,7 +100,7 @@ export default function AdsPage() {
       />
 
       <Grid
-        spacing={1}
+        spacing={3}
         className="container_first_child"
       >
         <Grid size={12}>
@@ -110,21 +108,26 @@ export default function AdsPage() {
             <Typography variant="h6">{moduleName}</Typography>
           </Box>
         </Grid>
-        <Grid size={12}>
-          <Tabs
-            value={tab}
-            onChange={(_, v) => setTab(v)}
-            aria-label="ads tabs"
-            sx={{ mb: 3 }}
-          >
-            {tabs.map((t, idx) => (
-              <Tab
-                key={t.label}
-                label={t.label}
-                {...a11yProps(idx)}
-              />
-            ))}
-          </Tabs>
+        <Grid
+          size={12}
+          mt={2}
+        >
+          <Paper>
+            <Tabs
+              value={tab}
+              onChange={(_, v) => setTab(v)}
+              aria-label="ads tabs"
+              sx={{ mb: 3 }}
+            >
+              {tabs.map((t, idx) => (
+                <Tab
+                  key={t.label}
+                  label={t.label}
+                  {...a11yProps(idx)}
+                />
+              ))}
+            </Tabs>
+          </Paper>
         </Grid>
         <Grid size={12}>
           {tabs.map((t, idx) => (
