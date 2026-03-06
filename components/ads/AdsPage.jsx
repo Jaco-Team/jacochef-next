@@ -59,7 +59,7 @@ export default function AdsPage() {
   const tabs = useMemo(
     () => [
       {
-        label: "Yandex Direct",
+        label: "Яндекс.Директ",
         // node: canAccess("yandex_direct") ? (
         node: (
           <YandexDirectTab
@@ -69,7 +69,7 @@ export default function AdsPage() {
         ),
       },
       {
-        label: "Settings",
+        label: "Настройки",
         // node: canAccess("settings") ? (
         node: (
           <SettingsTab
@@ -103,11 +103,13 @@ export default function AdsPage() {
         spacing={3}
         className="container_first_child"
       >
-        <Grid size={12}>
-          <Box>
-            <Typography variant="h6">{moduleName}</Typography>
-          </Box>
+        <Grid
+          size={12}
+          sx={{ mb: 2 }}
+        >
+          <h1>{moduleName}</h1>
         </Grid>
+
         <Grid
           size={12}
           mt={2}
