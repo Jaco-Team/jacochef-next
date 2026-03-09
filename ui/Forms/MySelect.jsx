@@ -83,6 +83,19 @@ export function MySelect(props) {
           color: "rgba(0, 0, 0, 0.38)",
         },
       },
+      "& .MuiSelect-select": {
+        color: "#666666",
+        "&.Mui-disabled": {
+          color: "rgba(0, 0, 0, 0.38)",
+          WebkitTextFillColor: "rgba(0, 0, 0, 0.38)",
+        },
+      },
+      "& .MuiSelect-icon": {
+        color: "#7A7A7A",
+        "&.Mui-disabled": {
+          color: "rgba(0, 0, 0, 0.38)",
+        },
+      },
       "& .MuiOutlinedInput-notchedOutline": {
         display: "none",
       },
@@ -95,10 +108,11 @@ export function MySelect(props) {
         fullWidth
         variant="outlined"
         size="small"
+        disabled={!!props.disabled}
         style={props.style}
         sx={isJournalStyle ? customStylesRenderInput.journal : {}}
       >
-        <InputLabel>{props.label}</InputLabel>
+        <InputLabel disabled={!!props.disabled}>{props.label}</InputLabel>
         <Select
           value={normalizedValue}
           IconComponent={isJournalStyle ? KeyboardArrowDownIcon : undefined}
