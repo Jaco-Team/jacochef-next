@@ -476,7 +476,7 @@ function FeedbackPage() {
                       "&:hover": { color: "blue", textDecoration: "underline" },
                     }}
                   >
-                    {it.id}
+                    {it.post_id}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -491,26 +491,6 @@ function FeedbackPage() {
                   </TableCell>
                   <TableCell sx={{ border: "1px solid #e5e5e5" }}>
                     <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
-                      {it.reactions?.items?.map((i) => (
-                        <div
-                          key={i.id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            margin: "4px",
-                            border: "1px solid #E5E5E5",
-                            padding: "4px 8px",
-                            borderRadius: "8px",
-                            backgroundColor: "#f2f2f2",
-                            fontSize: "0.875rem",
-                          }}
-                        >
-                          {i.id === 0 && <span>👍</span>}
-                          {i.id === 5 && <span>👎</span>}
-                          {i.id === 4 && <span>😈</span>}
-                          {i.count}
-                        </div>
-                      ))}
                       <div
                         style={{
                           display: "flex",
@@ -523,7 +503,8 @@ function FeedbackPage() {
                           fontSize: "0.875rem",
                         }}
                       >
-                        🔗 {it.reposts?.count}
+                        <span>👍</span>
+                        {it.likes}
                       </div>
                       <div
                         style={{
@@ -537,7 +518,36 @@ function FeedbackPage() {
                           fontSize: "0.875rem",
                         }}
                       >
-                        👁 {it.views?.count}
+                        <span>👎</span>
+                        {it.dislikes}
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          margin: "4px",
+                          border: "1px solid #E5E5E5",
+                          padding: "4px 8px",
+                          borderRadius: "8px",
+                          backgroundColor: "#f2f2f2",
+                          fontSize: "0.875rem",
+                        }}
+                      >
+                        🔗 {it.reposts}
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          margin: "4px",
+                          border: "1px solid #E5E5E5",
+                          padding: "4px 8px",
+                          borderRadius: "8px",
+                          backgroundColor: "#f2f2f2",
+                          fontSize: "0.875rem",
+                        }}
+                      >
+                        👁 {it.views}
                       </div>
                     </div>
                   </TableCell>
@@ -558,7 +568,10 @@ function FeedbackPage() {
                       </IconButton>
                       <IconButton
                         onClick={() =>
-                          window.open(`https://vk.com/wall-${group.vk_group_id}_${it.id}`, "_blank")
+                          window.open(
+                            `https://vk.com/wall-${group.vk_group_id}_${it.post_id}`,
+                            "_blank",
+                          )
                         }
                         sx={{
                           border: "1px solid #E0E0E0",

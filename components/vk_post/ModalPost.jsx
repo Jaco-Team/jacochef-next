@@ -223,7 +223,7 @@ export const ModalPost = ({ open, onClose, postData, openGraph, refreshPost }) =
         </Button>
         <IconButton
           onClick={() =>
-            window.open(`https://vk.com/wall-${postData.vk_group_id}_${postData.id}`, "_blank")
+            window.open(`https://vk.com/wall-${postData.vk_group_id}_${postData.post_id}`, "_blank")
           }
           sx={{
             border: "1px solid #E0E0E0",
