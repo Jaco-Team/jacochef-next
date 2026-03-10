@@ -163,7 +163,7 @@ export function MyTextInput(props) {
       size="small"
       {...rest}
       onChange={isTimeMask ? handleSimpleTimeMask : isDecimalMask ? handleDecimalMask : func}
-      value={isDecimalMask ? formatDecimal(value) : value ? value : ""}
+      value={isDecimalMask ? formatDecimal(value) : (value ?? "")}
       type={type}
       multiline={isMultiline}
       rows={rows}

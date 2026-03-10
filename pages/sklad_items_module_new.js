@@ -841,7 +841,7 @@ class SkladItemsModule_Modal extends React.Component {
       my_allergens,
       my_allergens_other,
       app_id,
-      honest_sign,
+      acc_sys,
       mark_name,
       max_count_in_m,
       pq,
@@ -851,57 +851,154 @@ class SkladItemsModule_Modal extends React.Component {
       time_min_other,
     } = item.item;
     let { this_storages } = item;
+
+    const isBlankValue = (value) =>
+      value === 0 ||
+      value === null ||
+      value === undefined ||
+      value === "" ||
+      value === "0" ||
+      value === "None" ||
+      value === "none";
+
+    const isNoneLikeName = (value) => {
+      const normalized = String(value ?? "")
+        .trim()
+        .toLowerCase();
+      return normalized === "none" || normalized === "нет";
+    };
+
+    const isEmptySelectValue = (value) => {
+      if (isBlankValue(value)) return true;
+      if (typeof value === "object") {
+        const name = value?.name ?? value?.label ?? "";
+        return isBlankValue(value?.id) || isNoneLikeName(name);
+      }
+      return false;
+    };
+
+    const isEmptyRequiredNumber = (value) =>
+      value === null || value === undefined || String(value).trim() === "";
+
+    const isEmptyRequiredText = (value) => String(value ?? "").trim() === "";
+
+    const isInvalidTimeMmSs = (value) => {
+      const str = String(value ?? "").trim();
+      // expected mask: MM:SS (example: 15:20)
+      if (!/^\d{2}:\d{2}$/.test(str)) return true;
+      const [, secStr] = str.split(":");
+      const sec = Number(secStr);
+      return Number.isNaN(sec) || sec > 59;
+    };
+
+    const findOptionById = (value, options = []) => {
+      if (typeof value === "object" && value !== null) return value;
+      return options.find((opt) => String(opt?.id) === String(value));
+    };
+
+    const isEmptyEdIzmer = (value) => {
+      if (isEmptySelectValue(value)) return true;
+      const option = findOptionById(value, item.ed_izmer || []);
+      return isNoneLikeName(option?.name ?? option?.label);
+    };
+
     let err_valid = {
       name: name === "" && this.props.acces?.name_edit,
-      cats: cat_id === "" && this.props.acces?.cats_edit,
+      cats: isEmptySelectValue(cat_id) && this.props.acces?.cats_edit,
       name_for_vendor: name_for_vendor === "" && this.props.acces?.name_for_vendor_edit,
-      ed_izmer_id: ed_izmer_id === null && this.props.acces?.ed_izmer_edit,
+      ed_izmer_id: isEmptyEdIzmer(ed_izmer_id) && this.props.acces?.ed_izmer_edit,
       apps: app_id === null && this.props.acces?.apps_edit,
-      time_min_other: time_min_other === "" && this.props.acces?.time_min_other_edit,
+      time_min_other: isInvalidTimeMmSs(time_min_other) && this.props.acces?.time_min_other_edit,
       art: art === "" && this.props.acces?.art_edit,
       my_allergens: my_allergens.length === 0 && this.props.acces?.allergens_edit,
       my_allergens_other:
         my_allergens_other.length === 0 && this.props.acces?.my_allergens_other_edit,
       this_storages: this_storages.length === 0 && this.props.acces?.this_storages_edit,
-      max_count_in_m: max_count_in_m === "" && this.props.acces?.max_count_in_m_edit,
+      max_count_in_m:
+        isEmptyRequiredNumber(max_count_in_m) && this.props.acces?.max_count_in_m_edit,
       mark_name: mark_name === "" && this.props.acces?.mark_name_edit,
       pq: pq === "" && this.props.acces?.pq_edit,
       percent: percent === 0 && this.props.acces?.percent_edit,
       vend_percent: vend_percent === 0 && this.props.acces?.vend_percent_edit,
       min_count: min_count === "" && this.props.acces?.min_count_edit,
       honest_sign:
-        (honest_sign?.length === 0 || honest_sign === "0") && this.props.acces?.honest_sign_edit,
+        (!Array.isArray(acc_sys) || acc_sys.length === 0) && this.props.acces?.honest_sign_edit,
     };
     this.setState({ err_valid });
 
-    if (
-      (!name && this.props.acces?.name_edit) ||
-      (!cat_id && this.props.acces?.cats_edit) ||
-      (!ed_izmer_id && this.props.acces?.ed_izmer_edit) ||
-      (!name_for_vendor && this.props.acces?.name_for_vendor_edit) ||
-      (!pq && this.props.acces?.pq_edit) ||
-      (!art && this.props.acces?.art_edit) ||
-      (!my_allergens.length && this.props.acces?.allergens_edit) ||
-      (!my_allergens_other.length && this.props.acces?.my_allergens_other_edit) ||
-      (!this_storages.length && this.props.acces?.this_storages_edit)
-    ) {
+    const requiredFields = [
+      {
+        label: "Название товара",
+        missing: !name && this.props.acces?.name_edit,
+      },
+      {
+        label: "Маркетинговое название",
+        missing: !mark_name && this.props.acces?.mark_name_edit,
+      },
+      {
+        label: "Категория",
+        missing: isEmptySelectValue(cat_id) && this.props.acces?.cats_edit,
+      },
+      {
+        label: "Ед измер",
+        missing: isEmptyEdIzmer(ed_izmer_id) && this.props.acces?.ed_izmer_edit,
+      },
+      {
+        label: "Название товара для поставщика",
+        missing: !name_for_vendor && this.props.acces?.name_for_vendor_edit,
+      },
+      {
+        label: "Максимальное количество заказов в месяц",
+        missing: isEmptyRequiredNumber(max_count_in_m) && this.props.acces?.max_count_in_m_edit,
+      },
+      {
+        label: "Количество в упаковке",
+        missing: !pq && this.props.acces?.pq_edit,
+      },
+      {
+        label: "Артикул",
+        missing: !art && this.props.acces?.art_edit,
+      },
+      {
+        label: "Аллергены",
+        missing: !my_allergens.length && this.props.acces?.allergens_edit,
+      },
+      {
+        label: "Аллергены (прочие)",
+        missing: !my_allergens_other.length && this.props.acces?.my_allergens_other_edit,
+      },
+      {
+        label: "Места хранения",
+        missing: !this_storages.length && this.props.acces?.this_storages_edit,
+      },
+      {
+        label: "Минимальный остаток",
+        missing: isEmptyRequiredNumber(min_count) && this.props.acces?.min_count_edit,
+      },
+      {
+        label: "Разрешенный % повышения ценника",
+        missing: isEmptyRequiredNumber(vend_percent) && this.props.acces?.vend_percent_edit,
+      },
+      {
+        label: "Время ММ:SS за 1кг...",
+        missing: isInvalidTimeMmSs(time_min_other) && this.props.acces?.time_min_other_edit,
+      },
+      {
+        label: "% заявки",
+        missing: isEmptyRequiredNumber(percent) && this.props.acces?.percent_edit,
+      },
+    ];
+
+    const missingFields = requiredFields.filter((f) => f.missing).map((f) => f.label);
+
+    if (missingFields.length) {
       this.setState({
         openAlert: true,
         err_status: false,
-        err_text: "Все поля формы должны быть заполнены",
+        err_text: `Заполните обязательные поля: ${missingFields.join(", ")}`,
       });
 
       return;
-    } else {
-      if (!name) {
-        this.setState({
-          openAlert: true,
-          err_status: false,
-          err_text: "Название должно быть заполнено",
-        });
-
-        return;
-      }
     }
 
     this.props.method === "Редактирование товара"
@@ -1826,17 +1923,7 @@ class SkladItemsModule_ extends React.Component {
   }
 
   async update() {
-    const data = await this.getData("get_all");
-
-    this.setState({
-      module_name: data.module_info.name,
-      cats: data.cats,
-      freeItems: data.items_free,
-      unusedItems: data.unused_items,
-      acces: data.acces,
-    });
-
-    document.title = data.module_info.name;
+    await this.reloadItems();
   }
 
   getData = (method, data = {}) => {
@@ -1856,6 +1943,33 @@ class SkladItemsModule_ extends React.Component {
 
     return res;
   };
+
+  async reloadItems() {
+    const searchValue = (this.state.searchItem || "").trim();
+
+    if (searchValue.length > 0) {
+      const res = await this.getData("get_search", { item: searchValue });
+
+      this.setState({
+        cats: res.cats,
+        freeItems: res.items_free,
+        unusedItems: res.unused_items,
+      });
+      return;
+    }
+
+    const data = await this.getData("get_all");
+
+    this.setState({
+      module_name: data.module_info.name,
+      cats: data.cats,
+      freeItems: data.items_free,
+      unusedItems: data.unused_items,
+      acces: data.acces,
+    });
+
+    document.title = data.module_info.name;
+  }
 
   handleResize() {
     if (window.innerWidth < 601) {
@@ -1983,13 +2097,7 @@ class SkladItemsModule_ extends React.Component {
         checkArtList: [],
       });
 
-      res = await this.getData("get_all");
-
-      this.setState({
-        cats: res.cats,
-        freeItems: res.items_free,
-        unusedItems: res.unused_items,
-      });
+      await this.reloadItems();
     } else {
       this.setState({
         operAlert: true,
@@ -2025,13 +2133,7 @@ class SkladItemsModule_ extends React.Component {
         checkArtList: [],
       });
 
-      res = await this.getData("get_all");
-
-      this.setState({
-        cats: res.cats,
-        freeItems: res.items_free,
-        unusedItems: res.unused_items,
-      });
+      await this.reloadItems();
     } else {
       this.setState({
         operAlert: true,
@@ -2126,13 +2228,7 @@ class SkladItemsModule_ extends React.Component {
         err_text: res.text,
       });
 
-      res = await this.getData("get_all");
-
-      this.setState({
-        cats: res.cats,
-        freeItems: res.items_free,
-        unusedItems: res.unused_items,
-      });
+      await this.reloadItems();
     } else {
       this.setState({
         operAlert: true,
@@ -2143,11 +2239,29 @@ class SkladItemsModule_ extends React.Component {
   }
 
   async search(value) {
-    const data = {
-      item: value ? value : this.state.searchItem,
-    };
+    const nextSearch = value ?? this.state.searchItem ?? "";
+    const normalizedSearch = String(nextSearch);
+    const trimmedSearch = normalizedSearch.trim();
 
-    const res = await this.getData("get_search", data);
+    this.setState({
+      searchItem: normalizedSearch,
+    });
+
+    if (trimmedSearch.length === 0) {
+      const data = await this.getData("get_all");
+
+      this.setState({
+        module_name: data.module_info.name,
+        cats: data.cats,
+        freeItems: data.items_free,
+        unusedItems: data.unused_items,
+        acces: data.acces,
+      });
+
+      return;
+    }
+
+    const res = await this.getData("get_search", { item: trimmedSearch });
 
     this.setState({
       cats: res.cats,
@@ -2227,7 +2341,7 @@ class SkladItemsModule_ extends React.Component {
     return (
       <>
         <Backdrop
-          style={{ zIndex: 99 }}
+          sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
           open={this.state.is_load}
         >
           <CircularProgress color="inherit" />
