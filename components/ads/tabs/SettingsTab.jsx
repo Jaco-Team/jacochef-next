@@ -9,14 +9,11 @@ import AdsAddConnectionModal from "../AdsAddConnectionModal";
 import AdsOauthCodeModal from "../AdsOauthCodeModal";
 import AdsSyncModal from "../AdsSyncModal";
 import { useAdsStore } from "../useAdsStore";
-import { refresh } from "next/cache";
 
 export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
   const { ConfirmDialog, withConfirm } = useConfirm();
 
-  const moduleName = useAdsStore((s) => s.moduleName);
   const connections = useAdsStore((s) => s.connections);
-  const access = useAdsStore((s) => s.access);
 
   const isAddOpen = useAdsStore((s) => s.isAddOpen);
   const oauthModal = useAdsStore((s) => s.oauthModal);
@@ -180,7 +177,7 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
                 variant="outlined"
                 onClick={refreshAll}
               >
-                Reload
+                Обновить
               </Button>
 
               <Button
@@ -188,7 +185,7 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
                 onClick={() => setAddOpen(true)}
                 disabled={!canAccess("settings")}
               >
-                Add connection
+                Добавить апи
               </Button>
             </Stack>
           </Stack>
@@ -248,9 +245,9 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
                       <Divider />
 
                       <Stack spacing={0.5}>
-                        <Typography variant="body2">Currency: {conn.currency || "—"}</Typography>
+                        <Typography variant="body2">Валюта: {conn.currency || "—"}</Typography>
                         <Typography variant="body2">
-                          Updated:{" "}
+                          Последнее изменение:{" "}
                           {conn.updated_at ? new Date(conn.updated_at).toLocaleString() : "—"}
                         </Typography>
                       </Stack>
@@ -267,7 +264,7 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
                           onClick={() => toggleStatus(conn)}
                           disabled={!canAccess("settings")}
                         >
-                          {conn.status === "disabled" ? "Enable" : "Disable"}
+                          {conn.status === "disabled" ? "Включить" : "Отключить"}
                         </Button>
 
                         <Button
@@ -276,7 +273,7 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
                           onClick={() => refreshTokens(conn)}
                           disabled={!canAccess("settings")}
                         >
-                          Refresh tokens
+                          Обновить токены
                         </Button>
 
                         {oauthNeeded ? (
@@ -286,7 +283,7 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
                             onClick={() => authorize(conn)}
                             disabled={!canAccess("settings")}
                           >
-                            Connect
+                            Подключиться
                           </Button>
                         ) : (
                           <Button
@@ -295,7 +292,7 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
                             onClick={() => openSync(conn)}
                             disabled={!canAccess("settings")}
                           >
-                            Sync
+                            Обновить статистику
                           </Button>
                         )}
 
@@ -309,7 +306,7 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
                           )}
                           disabled={!canAccess("settings")}
                         >
-                          Delete
+                          Удалить
                         </Button>
                       </Stack>
                     </Stack>

@@ -47,11 +47,14 @@ export default function AdsPage() {
     }
   };
 
-  const canAccess = (key) => {
-    const { userCan } = handleUserAccess(access);
-    console.log("Checking access for", key, "with access list", access);
-    return userCan("access", key);
-  };
+  const canAccess = useCallback(
+    (key) => {
+      const { userCan } = handleUserAccess(access);
+      // console.log("Checking access for", key, "with access list", access);
+      return userCan("access", key);
+    },
+    [access],
+  );
 
   useEffect(() => {
     loadAll();
@@ -61,27 +64,25 @@ export default function AdsPage() {
     () => [
       {
         label: "Яндекс.Директ",
-        // node: canAccess("yandex_direct") ? (
-        node: (
+        node: canAccess("yandex_direct") ? (
           <YandexDirectTab
             api_laravel={api_laravel}
             showAlert={showAlert}
           />
-        ),
+        ) : null,
       },
       {
         label: "Настройки",
-        // node: canAccess("settings") ? (
-        node: (
+        node: canAccess("settings") ? (
           <SettingsTab
             api_laravel={api_laravel}
             showAlert={showAlert}
             canAccess={canAccess}
           />
-        ),
+        ) : null,
       },
     ],
-    [],
+    [access, canAccess],
   );
 
   return (

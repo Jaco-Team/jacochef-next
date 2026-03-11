@@ -32,8 +32,10 @@ export const useAdsStore = create((set) => ({
   oauthModal: { open: false, connection: null },
   syncModal: { open: false, connection: null },
 
-  date_start: null,
-  date_end: null,
+  date_start: "2026-03-01",
+  date_end: "2026-03-10",
+  // date_start: null,
+  // date_end: null,
   stats: null,
 
   statusColorMap,

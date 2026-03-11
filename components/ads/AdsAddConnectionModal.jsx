@@ -50,7 +50,7 @@ export default function AdsAddConnectionModal({
       fullWidth
       maxWidth="sm"
     >
-      <DialogTitle>Add connection</DialogTitle>
+      <DialogTitle>Добавление Апи</DialogTitle>
       <DialogContent>
         <Stack
           spacing={2}
@@ -82,14 +82,14 @@ export default function AdsAddConnectionModal({
           onClick={onClose}
           disabled={loading}
         >
-          Cancel
+          Отмена
         </Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
           disabled={loading || !form.provider}
         >
-          Create
+          Добавить
         </Button>
       </DialogActions>
     </Dialog>

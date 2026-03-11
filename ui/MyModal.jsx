@@ -1,5 +1,5 @@
 "use client";
-import { Dialog, DialogTitle, IconButton } from "@mui/material";
+import { Dialog, DialogTitle, IconButton, useMediaQuery, useTheme } from "@mui/material";
 import { Close } from "@mui/icons-material";
 
 /**
@@ -13,14 +13,18 @@ export default function MyModal({
   fullWidth = true,
   maxWidth = "xl",
   scroll = "body",
+  fsBp = "sm", // breakpoint for full-screen mode
   children,
   ...rest
 }) {
+  const theme = useTheme();
+  const fullscreen = useMediaQuery(theme.breakpoints.down(fsBp));
   return (
     <Dialog
       open={open}
       onClose={onClose}
       fullWidth={fullWidth}
+      fullscreen={fullscreen}
       maxWidth={maxWidth}
       scroll={scroll}
       {...rest}

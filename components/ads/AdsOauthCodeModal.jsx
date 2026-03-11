@@ -42,7 +42,7 @@ export default function AdsOauthCodeModal({ open, connection, onClose, onSubmit 
             variant="body2"
             sx={{ opacity: 0.8 }}
           >
-            Connection: {connection?.provider || "—"} • {connection?.name || connection?.id || "—"}
+            Апи: {connection?.provider || "—"} • {connection?.name || connection?.id || "—"}
           </Typography>
 
           <TextField
@@ -55,12 +55,12 @@ export default function AdsOauthCodeModal({ open, connection, onClose, onSubmit 
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>Отмена</Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
         >
-          Exchange
+          Отправить
         </Button>
       </DialogActions>
     </Dialog>
