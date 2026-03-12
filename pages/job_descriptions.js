@@ -585,7 +585,7 @@ class JobDescriptions_ extends React.Component {
       is_load: true,
     });
 
-    return api_laravel_local(this.state.module, method, data)
+    return api_laravel(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {
