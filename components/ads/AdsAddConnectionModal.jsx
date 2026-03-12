@@ -10,13 +10,14 @@ import {
   TextField,
   Stack,
 } from "@mui/material";
-import useApi from "@/src/hooks/useApi";
-import useMyAlert from "@/src/hooks/useMyAlert";
-import MyAlert from "@/ui/MyAlert";
 
-export default function AdsAddConnectionModal({ isOpened, onClose, onSuccess, showAlert }) {
-  const { api_laravel } = useApi("ads");
-
+export default function AdsAddConnectionModal({
+  api_laravel,
+  isOpened,
+  onClose,
+  onSuccess,
+  showAlert,
+}) {
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
@@ -36,64 +37,61 @@ export default function AdsAddConnectionModal({ isOpened, onClose, onSuccess, sh
       onClose();
       await onSuccess?.();
     } catch (e) {
-      showAlert(e?.message || "Ошибка");
+      showAlert?.(e?.message || "Ошибка");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>
-      <Dialog
-        open={isOpened}
-        onClose={onClose}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Add connection</DialogTitle>
-        <DialogContent>
-          <Stack
-            spacing={2}
-            mt={1}
-          >
-            <TextField
-              fullWidth
-              label="Провайдер"
-              value={form.provider}
-              onChange={(e) => setField("provider", e.target.value)}
-              disabled
-            />
-
-            <TextField
-              fullWidth
-              label="Логин"
-              value={form.name}
-              onChange={(e) => setField("name", e.target.value)}
-            />
-            <TextField
-              fullWidth
-              label="Название (для отображения в интерфейсе)"
-              value={form.title}
-              onChange={(e) => setField("title", e.target.value)}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={onClose}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={loading || !form.provider}
-          >
-            Create
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+    <Dialog
+      open={isOpened}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+    >
+      <DialogTitle>Добавление Апи</DialogTitle>
+      <DialogContent>
+        <Stack
+          spacing={2}
+          mt={1}
+        >
+          <TextField
+            fullWidth
+            label="Провайдер"
+            value={form.provider}
+            onChange={(e) => setField("provider", e.target.value)}
+            disabled
+          />
+          <TextField
+            fullWidth
+            label="Логин"
+            value={form.name}
+            onChange={(e) => setField("name", e.target.value)}
+          />
+          <TextField
+            fullWidth
+            label="Название (для отображения в интерфейсе)"
+            value={form.title}
+            onChange={(e) => setField("title", e.target.value)}
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button
+          onClick={onClose}
+          disabled={loading}
+        >
+          Отмена
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={loading || !form.provider}
+        >
+          Добавить
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
