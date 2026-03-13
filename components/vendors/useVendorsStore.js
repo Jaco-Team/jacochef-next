@@ -1,50 +1,33 @@
 "use client";
+
 import { create } from "zustand";
-// lightweight id generator to avoid extra deps
-function genId() {
-  return String(Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
-}
 
 const defaultState = {
-  cities: [],
-  cityFilter: "all",
-  city: null,
-  modalOpen: false,
   module: "vendors",
-  moduleName: null,
+  module_name: "",
+  cities: [],
+  city: -1,
+  vendors: [],
+  modalOpen: false,
   isLoading: false,
-  vendors: [
-    {
-      id: "v1",
-      name: "Coffee & Co",
-      city: "Moscow",
-      address: "Lenina 12",
-      active: true,
-      itemsCount: 24,
-    },
-    {
-      id: "v2",
-      name: "Bakery House",
-      city: "Saint Petersburg",
-      address: "Nevsky 45",
-      active: false,
-      itemsCount: 8,
-    },
-    {
-      id: "v3",
-      name: "Green Salads",
-      city: "Moscow",
-      address: "Tverskaya 3",
-      active: true,
-      itemsCount: 12,
-    },
-  ],
 };
 
-export const useVendorsStore = create((set) => ({
+const useVendorsStore = create((set) => ({
   ...defaultState,
 
-  // actions
+  setBootstrap(payload = {}) {
+    set({
+      module_name: payload.module_name ?? "",
+      cities: payload.cities ?? [],
+      vendors: payload.vendors ?? [],
+      city: payload.city ?? -1,
+    });
+  },
+
+  setVendors(vendors = []) {
+    set({ vendors });
+  },
+
   setCity(city) {
     set({ city });
   },
@@ -52,26 +35,13 @@ export const useVendorsStore = create((set) => ({
   openModal() {
     set({ modalOpen: true });
   },
+
   closeModal() {
     set({ modalOpen: false });
   },
 
-  addVendor(payload) {
-    const vendor = {
-      id: genId(),
-      name: payload.name || "Unnamed",
-      city: payload.city || "",
-      address: payload.address || "",
-      active: payload.active ?? true,
-      itemsCount: payload.itemsCount || 0,
-    };
-    set((s) => ({ vendors: [vendor, ...s.vendors], modalOpen: false }));
-  },
-
-  toggleActive(id) {
-    set((s) => ({
-      vendors: s.vendors.map((v) => (v.id === id ? { ...v, active: !v.active } : v)),
-    }));
+  setLoading(isLoading) {
+    set({ isLoading: Boolean(isLoading) });
   },
 }));
 

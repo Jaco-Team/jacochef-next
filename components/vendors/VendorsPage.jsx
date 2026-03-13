@@ -1,96 +1,131 @@
 "use client";
-import { memo, useEffect } from "react";
+
+import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/router";
 import {
-  Button,
   Accordion,
-  AccordionSummary,
   AccordionDetails,
-  Typography,
+  AccordionSummary,
+  Backdrop,
+  Button,
+  CircularProgress,
   Grid,
   Stack,
-  Backdrop,
-  CircularProgress,
+  Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddIcon from "@mui/icons-material/Add";
-import { MySelect } from "@/ui/Forms";
-import VendorCard from "./VendorCard";
-import ModalAddVendor from "./ModalAddVendor";
-import useVendorsStore from "./useVendorsStore";
+import { MySelect, MyTextInput } from "@/ui/Forms";
 import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
+import ModalAddVendor from "./ModalAddVendor";
+import VendorCard from "./VendorCard";
+import useVendorsStore from "./useVendorsStore";
 
 function VendorsPage() {
+  const router = useRouter();
+  const initializedRef = useRef(false);
+
+  const { api_laravel } = useApi("vendors");
   const { isAlert, closeAlert, showAlert, alertMessage, alertStatus } = useMyAlert();
+  const [search, setSearch] = useState("");
 
-  const module = useVendorsStore((s) => s.module);
-  const module_name = useVendorsStore((s) => s.module_name);
-  const cities = useVendorsStore((s) => s.cities);
-  const city = useVendorsStore((s) => s.city);
-  const setCity = useVendorsStore((s) => s.setCity);
-  const openModal = useVendorsStore((s) => s.openModal);
-  const vendors = useVendorsStore((s) => s.vendors);
-  const toggleActive = useVendorsStore((s) => s.toggleActive);
-  const isLoading = useVendorsStore((s) => s.isLoading);
+  const module_name = useVendorsStore((state) => state.module_name);
+  const cities = useVendorsStore((state) => state.cities);
+  const city = useVendorsStore((state) => state.city);
+  const vendors = useVendorsStore((state) => state.vendors);
+  const isLoading = useVendorsStore((state) => state.isLoading);
+  const openModal = useVendorsStore((state) => state.openModal);
+  const setBootstrap = useVendorsStore((state) => state.setBootstrap);
+  const setCity = useVendorsStore((state) => state.setCity);
+  const setVendors = useVendorsStore((state) => state.setVendors);
+  const setLoading = useVendorsStore((state) => state.setLoading);
 
-  const filtered = vendors; //.filter((v) => city === -1 || v.city === city);
-  const activeVendors = filtered.filter((v) => v.is_show);
-  const inactiveVendors = filtered.filter((v) => !v.is_show);
+  const filteredVendors = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
 
-  const setState = useVendorsStore.setState;
+    if (!normalizedSearch) {
+      return vendors;
+    }
 
-  const { api_laravel } = useApi(module);
+    return vendors.filter((vendor) => vendor.name?.toLowerCase().includes(normalizedSearch));
+  }, [vendors, search]);
 
-  const getData = async (method, data) => {
+  const activeVendors = filteredVendors.filter((vendor) => Number(vendor.is_show) === 1);
+  const inactiveVendors = filteredVendors.filter((vendor) => Number(vendor.is_show) !== 1);
+  const citySelectValue = cities.length ? city : "";
+
+  const callApi = async (method, data = {}) => {
     try {
-      setState({ isLoading: true });
-      const res = await api_laravel(method, data);
-      if (!res?.st) {
-        throw new Error(res?.text || "Error");
+      setLoading(true);
+      const response = await api_laravel(method, data);
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка запроса");
       }
-      return res;
-    } catch (e) {
-      return showAlert(e?.message || "Ошибка запроса", false);
+
+      return response;
+    } catch (error) {
+      showAlert(error?.message || "Ошибка запроса", false);
+      return null;
     } finally {
-      setState({ isLoading: false });
+      setLoading(false);
     }
   };
 
-  const getAll = async () => {
-    const res = await getData("get_all");
-    setState({
-      cities: res?.cities || [],
-      vendors: res?.vendor_items || [],
-      items: res?.items || [],
-      access: res?.access || [],
-      module_name: res.module_info?.name || "",
-    });
-    document.title = res.module_info?.name;
-  };
-
-  const getVendors = async () => {
-    const { city } = useVendorsStore.getState();
-    const res = await getData("get_vendors", { city });
-    setState({
-      vendors: res?.vendors || [],
-    });
-  };
-
-  const getVendorInfo = async () => {
-    const { city } = useVendorsStore.getState();
-    const res = await getData("get_vendors", { city });
-    setState({
-      vendors: res?.vendors || [],
-    });
-  };
-
   useEffect(() => {
-    getAll();
+    let isMounted = true;
+
+    const loadBootstrap = async () => {
+      const response = await callApi("get_all");
+
+      if (!response || !isMounted) {
+        return;
+      }
+
+      const nextCity =
+        response.cities?.find((option) => Number(option.id) === -1)?.id ??
+        response.cities?.[0]?.id ??
+        -1;
+
+      setBootstrap({
+        module_name: response.module_info?.name || "Поставщики",
+        cities: response.cities || [],
+        vendors: response.vendors || [],
+        city: Number(nextCity),
+      });
+      document.title = response.module_info?.name || "Поставщики";
+      initializedRef.current = true;
+    };
+
+    loadBootstrap();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
-    getVendors();
+    if (!initializedRef.current) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadVendors = async () => {
+      const response = await callApi("get_vendors", { city: Number(city) });
+
+      if (response && isMounted) {
+        setVendors(response.vendors || []);
+      }
+    };
+
+    loadVendors();
+
+    return () => {
+      isMounted = false;
+    };
   }, [city]);
 
   return (
@@ -101,13 +136,16 @@ function VendorsPage() {
       >
         <CircularProgress />
       </Backdrop>
-      <ModalAddVendor />
+
+      <ModalAddVendor onSaved={setVendors} />
+
       <MyAlert
         isOpen={isAlert}
         status={alertStatus}
         text={alertMessage}
         onClose={closeAlert}
       />
+
       <Grid
         container
         spacing={2}
@@ -119,69 +157,76 @@ function VendorsPage() {
         >
           <h1>{module_name}</h1>
         </Grid>
-        <Grid size={12}>
-          <Stack
-            direction="row"
-            spacing={2}
-            alignItems="center"
-            justifyContent="space-between"
-            sx={{ mb: 2 }}
+        <Grid
+          size={12}
+          sx={{ display: "flex", gap: 1, justifyContent: "space-between" }}
+        >
+          <MySelect
+            label="Город"
+            data={(cities || []).map((option) => ({
+              id: option.id,
+              name: option.name,
+            }))}
+            value={citySelectValue}
+            func={(event) => setCity(Number(event.target.value))}
+            is_none={false}
+            style={{ minWidth: 220, maxWidth: 300 }}
+          />
+          <MyTextInput
+            label="Поиск по названию"
+            value={search}
+            func={(event) => setSearch(event.target.value)}
+            sx={{ maxWidth: 300 }}
+          />
+
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={openModal}
+            sx={{ whiteSpace: "nowrap", ml: "auto" }}
           >
-            <Stack
-              direction="row"
-              spacing={2}
-              alignItems="center"
-            >
-              <MySelect
-                label="City"
-                data={[{ id: -1, name: "All" }, ...(cities || [])].map((c) => ({
-                  id: c.id,
-                  name: c.name,
-                }))}
-                value={city ?? -1}
-                func={(e) => setCity(Number(e.target.value))}
-                is_none={false}
-                style={{ minWidth: 220 }}
-              />
-            </Stack>
+            Добавить поставщика
+          </Button>
+        </Grid>
 
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={openModal}
-            >
-              Add vendor
-            </Button>
-          </Stack>
-
-          <Accordion defaultExpanded>
+        <Grid size={12}>
+          <Accordion
+            defaultExpanded
+            sx={{ borderRadius: "16px !important" }}
+          >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography sx={{ fontWeight: 600 }}>Активные ({activeVendors?.length})</Typography>
+              <Typography sx={{ fontWeight: 700 }}>Активные ({activeVendors.length})</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Grid
                 container
                 spacing={2}
               >
-                {activeVendors?.map((v) => (
+                {activeVendors.map((vendor) => (
                   <Grid
-                    size={{ xs: 12, sm: 6 }}
-                    key={v.id}
+                    key={vendor.id}
+                    size={{ xs: 12, sm: 6, xl: 4 }}
                   >
                     <VendorCard
-                      vendor={v}
-                      onToggleActive={toggleActive}
+                      vendor={vendor}
+                      cities={cities}
+                      onClick={(item) => {
+                        setLoading(true);
+                        router.push(`/vendors/${item.id}`);
+                      }}
                     />
                   </Grid>
                 ))}
               </Grid>
             </AccordionDetails>
           </Accordion>
+        </Grid>
 
-          <Accordion>
+        <Grid size={12}>
+          <Accordion sx={{ borderRadius: "16px !important" }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography sx={{ fontWeight: 600 }}>
-                Неактивные ({inactiveVendors?.length})
+              <Typography sx={{ fontWeight: 700 }}>
+                Неактивные ({inactiveVendors.length})
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
@@ -189,14 +234,18 @@ function VendorsPage() {
                 container
                 spacing={2}
               >
-                {inactiveVendors?.map((v) => (
+                {inactiveVendors.map((vendor) => (
                   <Grid
-                    size={{ xs: 12, sm: 6, md: 4 }}
-                    key={v.id}
+                    key={vendor.id}
+                    size={{ xs: 12, sm: 6, xl: 4 }}
                   >
                     <VendorCard
-                      vendor={v}
-                      onToggleActive={toggleActive}
+                      vendor={vendor}
+                      cities={cities}
+                      onClick={(item) => {
+                        setLoading(true);
+                        router.push(`/vendors/${item.id}`);
+                      }}
                     />
                   </Grid>
                 ))}
