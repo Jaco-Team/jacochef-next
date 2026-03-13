@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import {
   Accordion,
@@ -25,11 +25,11 @@ import useVendorsStore from "./useVendorsStore";
 
 function VendorsPage() {
   const router = useRouter();
-  const initializedRef = useRef(false);
 
   const { api_laravel } = useApi("vendors");
   const { isAlert, closeAlert, showAlert, alertMessage, alertStatus } = useMyAlert();
   const [search, setSearch] = useState("");
+  const [isBootstrapped, setIsBootstrapped] = useState(false);
 
   const module_name = useVendorsStore((state) => state.module_name);
   const cities = useVendorsStore((state) => state.cities);
@@ -84,19 +84,24 @@ function VendorsPage() {
         return;
       }
 
-      const nextCity =
-        response.cities?.find((option) => Number(option.id) === -1)?.id ??
-        response.cities?.[0]?.id ??
-        -1;
+      const availableCities = response.cities || [];
+      const hasCurrentCity = availableCities.some((option) => Number(option.id) === Number(city));
+      const nextCity = hasCurrentCity
+        ? Number(city)
+        : Number(
+            availableCities.find((option) => Number(option.id) === -1)?.id ??
+              availableCities[0]?.id ??
+              -1,
+          );
 
       setBootstrap({
         module_name: response.module_info?.name || "Поставщики",
-        cities: response.cities || [],
-        vendors: response.vendors || [],
-        city: Number(nextCity),
+        cities: availableCities,
+        vendors: [],
+        city: nextCity,
       });
       document.title = response.module_info?.name || "Поставщики";
-      initializedRef.current = true;
+      setIsBootstrapped(true);
     };
 
     loadBootstrap();
@@ -107,7 +112,7 @@ function VendorsPage() {
   }, []);
 
   useEffect(() => {
-    if (!initializedRef.current) {
+    if (!isBootstrapped) {
       return;
     }
 
@@ -126,7 +131,7 @@ function VendorsPage() {
     return () => {
       isMounted = false;
     };
-  }, [city]);
+  }, [city, isBootstrapped]);
 
   return (
     <>

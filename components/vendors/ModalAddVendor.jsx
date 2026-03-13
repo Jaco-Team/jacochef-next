@@ -75,7 +75,7 @@ export default function ModalAddVendor({ onSaved }) {
         setAllCities(normalizeCities(response.all_cities));
         setVendorCities(normalizeCities(response.vendor_cities));
         setAllPoints(response.all_points || []);
-        setMails(normalizeMails(response.mails));
+        setMails(normalizeMails(response.mails, response.all_points || []));
       } catch (error) {
         showAlert(error?.message || "Ошибка запроса", false);
       } finally {

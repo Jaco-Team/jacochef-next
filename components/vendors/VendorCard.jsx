@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Box, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PhoneIcon from "@mui/icons-material/Phone";
@@ -27,10 +28,7 @@ export default function VendorCard({ vendor, cities, onClick }) {
         height: "100%",
         cursor: "pointer",
         borderRadius: 3,
-        transition: "background-color 0.2s ease, border-color 0.2s ease",
-        "&:hover": {
-          backgroundColor: "#eee",
-        },
+        transition: "border-color 0.2s ease",
       }}
     >
       <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1, flex: 1 }}>
@@ -97,8 +95,7 @@ export default function VendorCard({ vendor, cities, onClick }) {
           <Chip
             label={formatPlural(items, ["продукт", "продукта", "продуктов"])}
             size="small"
-            color="error"
-            sx={{ color: "common.white", bgcolor: "main" }}
+            sx={{ color: "common.white", bgcolor: "primary.main" }}
           />
         </Stack>
       </CardContent>

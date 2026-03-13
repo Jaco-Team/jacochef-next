@@ -4,7 +4,6 @@ Use this file as the source of truth when upgrading the FE for the `vendors` mod
 
 Scope:
 
-- Backend routes stay unchanged.
 - Payloads are sent inside `data`.
 - Responses use the common legacy wrapper:
   - success: `{ st: true, ...payload }`
@@ -15,6 +14,10 @@ Base routes:
 - `POST/ANY /api/chef/vendors/get_all`
 - `POST/ANY /api/chef/vendors/get_vendor_items`
 - `POST/ANY /api/chef/vendors/save_vendor_items`
+- `POST/ANY /api/chef/vendors/upload_declaration`
+- `POST/ANY /api/chef/vendors/bind_declaration_to_item`
+- `POST/ANY /api/chef/vendors/unbind_declaration_from_item`
+- `POST/ANY /api/chef/vendors/delete_declaration`
 - `POST/ANY /api/chef/vendors/new_vendor`
 - `POST/ANY /api/chef/vendors/update_vendor`
 - `POST/ANY /api/chef/vendors/get_vendors`
@@ -44,26 +47,10 @@ Response:
   "cities": [
     { "id": -1, "name": "Все поставщики" },
     { "id": -2, "name": "Поставщики без города" },
-    { "id": 1, "name": "City name", "addr": "..." }
-  ],
-  "vendors": [
-    {
-      "id": 10,
-      "name": "Vendor",
-      "is_show": 1,
-      "is_priority": 0,
-      "addr": "Address",
-      "items_count": 25,
-      "city_ids": [1, 2]
-    }
+    { "id": 1, "name": "City name" }
   ]
 }
 ```
-
-Notes:
-
-- `cities` is for the FE filter selector.
-- `vendors` is the default list for `city = -1`.
 
 ## 2. `get_vendors`
 
@@ -100,19 +87,12 @@ Response:
       "is_show": 1,
       "is_priority": 0,
       "addr": "Address",
+      "phone": "+79990000000",
+      "email": "test@example.com",
       "items_count": 25,
-      "city_ids": [1, 2]
+      "cities": [{ "id": 1 }, { "id": 2 }]
     }
   ]
-}
-```
-
-Validation errors:
-
-```json
-{
-  "st": false,
-  "text": "The city field must be an integer."
 }
 ```
 
@@ -120,7 +100,7 @@ Validation errors:
 
 Purpose:
 
-- Load all available items plus current vendor-item links.
+- Load all available buy-items plus current vendor-item links.
 
 Request:
 
@@ -141,7 +121,17 @@ Response:
     {
       "id": 100,
       "name": "Item",
-      "is_show": 1
+      "is_show": 1,
+      "cat_id": 7,
+      "cat_name": "Milk products",
+      "declarations": [
+        {
+          "id": 1,
+          "filename": "declarations/2026/03/hash_decl.pdf",
+          "url": "https://storage.yandexcloud.net/site-other-data/declarations/2026/03/hash_decl.pdf",
+          "created_at": "2026-03-13 10:00:00"
+        }
+      ]
     }
   ],
   "vendor_items": [
@@ -151,8 +141,17 @@ Response:
       "vendor_id": 10,
       "nds": -1,
       "sort": 0,
+      "cat_id": 7,
+      "cat_name": "Milk products",
       "item_name": "Item",
-      "nds_text": "Без НДС"
+      "declarations": [
+        {
+          "id": 1,
+          "filename": "declarations/2026/03/hash_decl.pdf",
+          "url": "https://storage.yandexcloud.net/site-other-data/declarations/2026/03/hash_decl.pdf",
+          "created_at": "2026-03-13 10:00:00"
+        }
+      ]
     }
   ]
 }
@@ -162,17 +161,13 @@ Notes:
 
 - `all_items` is the catalog from `jaco_main_rolls.items`.
 - `vendor_items` is from `jaco_main_rolls.vendor_items`.
+- `all_items[*]` currently contains the full item row from `jaco_main_rolls.items` plus `cat_name` and `declarations`.
+- `vendor_items[*]` is a plain row payload with `id`, `item_id`, `vendor_id`, `nds`, `sort`, `item_name`, `cat_id`, `cat_name`, `declarations`.
 - `sort` is returned and should be preserved by FE if FE edits vendor items.
+- `cat_id` and `cat_name` are for filtering.
+- `declarations` are item-level, not vendor-row-level.
+- `nds_text` is no longer returned. FE should render it from `nds` if needed.
 - The old debug `post` field is gone and should not be expected.
-
-Validation errors:
-
-```json
-{
-  "st": false,
-  "text": "The vendor id field is required."
-}
-```
 
 ## 4. `save_vendor_items`
 
@@ -217,20 +212,157 @@ Write semantics:
 - Existing rows for the same `vendor_id + item_id` keep their DB `id` where possible.
 - If FE does not send `sort`, backend keeps the existing `sort` for already existing rows and uses `0` for new rows.
 
-Validation errors:
+## 5. `upload_declaration`
+
+Purpose:
+
+- Upload a PDF declaration and immediately bind it to one buy-item.
+
+Request:
+
+- `multipart/form-data`
+- `file`: uploaded PDF
+- `data`: JSON string
+
+Example `data`:
 
 ```json
 {
-  "st": false,
-  "text": "The items.0.item id field is required."
+  "item_id": 100,
+  "name": "Декларация молоко 3.2%"
 }
 ```
 
-FE requirement:
+Naming:
 
-- Always send `sort` if FE allows reordering. Do not rely on backend fallback unless necessary.
+- FE may send optional `name`.
+- Backend uses `name` for the stored filename base.
+- If `name` is empty or missing, backend uses the item name.
+- In both cases backend transliterates via project helper and still keeps the random hash/prefix in the final storage path.
 
-## 5. `get_vendor_info`
+Response:
+
+```json
+{
+  "st": true,
+  "item_id": 100,
+  "declaration": {
+    "id": 1,
+    "filename": "declarations/2026/03/hash_decl.pdf",
+    "url": "https://storage.yandexcloud.net/site-other-data/declarations/2026/03/hash_decl.pdf",
+    "created_at": "2026-03-13 10:00:00"
+  },
+  "declarations": [
+    {
+      "id": 1,
+      "filename": "declarations/2026/03/hash_decl.pdf",
+      "url": "https://storage.yandexcloud.net/site-other-data/declarations/2026/03/hash_decl.pdf",
+      "created_at": "2026-03-13 10:00:00"
+    }
+  ]
+}
+```
+
+## 6. `bind_declaration_to_item`
+
+Purpose:
+
+- Bind an existing declaration to one buy-item.
+
+Request:
+
+```json
+{
+  "data": {
+    "item_id": 100,
+    "decl_id": 1
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "st": true,
+  "item_id": 100,
+  "decl_id": 1,
+  "declarations": [
+    {
+      "id": 1,
+      "filename": "declarations/2026/03/hash_decl.pdf",
+      "url": "https://storage.yandexcloud.net/site-other-data/declarations/2026/03/hash_decl.pdf",
+      "created_at": "2026-03-13 10:00:00"
+    }
+  ]
+}
+```
+
+## 7. `unbind_declaration_from_item`
+
+Purpose:
+
+- Remove one declaration binding from one buy-item.
+
+Request:
+
+```json
+{
+  "data": {
+    "item_id": 100,
+    "decl_id": 1
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "st": true,
+  "item_id": 100,
+  "decl_id": 1,
+  "declarations": []
+}
+```
+
+## 8. `delete_declaration`
+
+Purpose:
+
+- Delete the declaration row and file entirely.
+
+Request:
+
+```json
+{
+  "data": {
+    "decl_id": 1
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "st": true,
+  "decl_id": 1,
+  "item_ids": [100, 101],
+  "item_declarations": [
+    {
+      "item_id": 100,
+      "declarations": []
+    },
+    {
+      "item_id": 101,
+      "declarations": []
+    }
+  ]
+}
+```
+
+## 9. `get_vendor_info`
 
 Purpose:
 
@@ -251,7 +383,7 @@ Response:
 ```json
 {
   "st": true,
-  "all_cities": [{ "id": 1, "name": "City", "addr": "..." }],
+  "all_cities": [{ "id": 1, "name": "City" }],
   "vendor_cities": [{ "id": 1, "name": "City" }],
   "vendor": {
     "id": 10,
@@ -263,6 +395,8 @@ Response:
     "text": "Comment",
     "bill_ex": 1,
     "need_img_bill_ex": 0,
+    "phone": "+79990000000",
+    "email": "test@example.com",
     "bik": "123",
     "rc": "456",
     "is_show": 1,
@@ -271,11 +405,7 @@ Response:
   "mails": [
     {
       "id": 1,
-      "point_id": {
-        "id": -1,
-        "name": "Все точки",
-        "city_id": -1
-      },
+      "point_id": -1,
       "mail": "test@example.com",
       "comment": "note"
     }
@@ -283,12 +413,12 @@ Response:
   "all_points": [
     {
       "id": -1,
-      "name": "Все точки",
+      "addr": "Все точки",
       "city_id": -1
     },
     {
       "id": 5,
-      "name": "Point address",
+      "addr": "Point address",
       "city_id": 1
     }
   ]
@@ -297,10 +427,13 @@ Response:
 
 Important:
 
-- `mails[*].point_id` is an object, not a scalar id.
-- `all_points[*].name` is the point address.
+- `vendor` is now the raw vendor row payload instead of a hand-mapped subset.
+- `mails[*].point_id` is now a scalar id.
+- `all_points[*].addr` is the point address.
+- FE should not rely on backend integer casting for every numeric field; consume scalar values as returned.
+- Backend still tolerates legacy mail payloads with `point_id: { id: ... }`, but FE should switch to plain scalar `point_id`.
 
-## 6. `new_vendor`
+## 10. `new_vendor`
 
 Purpose:
 
@@ -320,13 +453,14 @@ Request:
       "text": "Comment",
       "bill_ex": 1,
       "need_img_bill_ex": 0,
+      "phone": "+79990000000",
       "bik": "123",
       "rc": "456"
     },
     "vendor_cities": [{ "id": 1 }, { "id": 2 }],
     "mails": [
       {
-        "point_id": { "id": -1 },
+        "point_id": -1,
         "mail": "test@example.com",
         "comment": "note"
       }
@@ -335,47 +469,7 @@ Request:
 }
 ```
 
-Response:
-
-```json
-{
-  "st": true,
-  "vendors": [
-    {
-      "id": 10,
-      "name": "Vendor",
-      "is_show": 1,
-      "is_priority": 0,
-      "addr": "Address",
-      "items_count": 0,
-      "city_ids": [1, 2]
-    }
-  ]
-}
-```
-
-Validation / business errors:
-
-```json
-{
-  "st": false,
-  "text": "The vendor.name field is required."
-}
-```
-
-```json
-{
-  "st": false,
-  "text": "Поставщик с таким наименованием уже существует"
-}
-```
-
-Notes:
-
-- `min_price` may be sent as string with comma, backend normalizes it.
-- Empty strings are normalized to `null` for optional text fields.
-
-## 7. `update_vendor`
+## 11. `update_vendor`
 
 Purpose:
 
@@ -396,6 +490,7 @@ Request:
       "text": "Comment",
       "bill_ex": 1,
       "need_img_bill_ex": 0,
+      "phone": "+79990000000",
       "bik": "123",
       "rc": "456",
       "is_show": 1,
@@ -404,7 +499,7 @@ Request:
     "vendor_cities": [{ "id": 1 }],
     "mails": [
       {
-        "point_id": { "id": 5 },
+        "point_id": 5,
         "mail": "test@example.com",
         "comment": "note"
       }
@@ -413,44 +508,13 @@ Request:
 }
 ```
 
-Response:
+## 12. Validation And Error Shape
 
-```json
-{
-  "st": true,
-  "vendors": [
-    {
-      "id": 10,
-      "name": "Vendor",
-      "is_show": 1,
-      "is_priority": 0,
-      "addr": "Address",
-      "items_count": 25,
-      "city_ids": [1]
-    }
-  ]
-}
-```
-
-Validation errors:
+Validation and business errors always come as:
 
 ```json
 {
   "st": false,
-  "text": "The vendor.id field is required."
+  "text": "Human-readable message"
 }
 ```
-
-Notes:
-
-- Cities are fully replaced by the submitted list.
-- Mails are fully replaced by the submitted list.
-
-## FE upgrade checklist
-
-1. Stop expecting `post` in `get_vendor_items`.
-2. Preserve and submit `sort` in vendor item editing.
-3. Keep using nested shape for `mails[*].point_id` as an object with `id`.
-4. Treat `get_all.cities` as filter options, not just real DB cities.
-5. Treat all backend validation/business failures as `{ st: false, text }`.
-6. Do not change route names or wrapper shape in FE migration.

@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import {
   Alert,
@@ -10,23 +9,36 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   CircularProgress,
-  Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Grid,
   Stack,
+  Tab,
+  Tabs,
   Typography,
 } from "@mui/material";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
+import TabPanel from "@/ui/TabPanel/TabPanel";
+import a11yProps from "@/ui/TabPanel/a11yProps";
+import { MySelect } from "@/ui/Forms";
+import TabInfo from "./tabs/TabInfo";
+import TabLocations from "./tabs/TabLocations";
+import TabProducts from "./tabs/TabProducts";
+import TabDocuments from "./tabs/TabDocuments";
+import { VendorDetailsProvider } from "./VendorDetailsContext";
 import VendorEditorForm from "./VendorEditorForm";
+import useVendorsStore from "./useVendorsStore";
 import {
   buildMailsPayload,
   buildVendorCitiesPayload,
@@ -37,82 +49,50 @@ import {
   normalizeVendor,
 } from "./vendorFormUtils";
 
-const TABS = [
-  { key: "overview", label: "Обзор", icon: <DescriptionOutlinedIcon fontSize="small" /> },
-  { key: "locations", label: "Локации", icon: <PlaceOutlinedIcon fontSize="small" /> },
-  { key: "products", label: "Продукты", icon: <Inventory2OutlinedIcon fontSize="small" /> },
-  { key: "documents", label: "Документы", icon: <StorefrontOutlinedIcon fontSize="small" /> },
+const TAB_DEFINITIONS = [
+  { index: 0, key: "overview", label: "Обзор", icon: <DescriptionOutlinedIcon fontSize="small" /> },
+  { index: 1, key: "locations", label: "Локации", icon: <PlaceOutlinedIcon fontSize="small" /> },
+  {
+    index: 2,
+    key: "products",
+    label: "Продукты",
+    icon: <Inventory2OutlinedIcon fontSize="small" />,
+  },
+  {
+    index: 3,
+    key: "documents",
+    label: "Документы",
+    icon: <StorefrontOutlinedIcon fontSize="small" />,
+  },
 ];
-
-function FieldCard({ title, rows }) {
-  return (
-    <Card
-      variant="outlined"
-      sx={{ borderRadius: 3 }}
-    >
-      <CardContent>
-        <Stack spacing={2}>
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 800, textTransform: "uppercase" }}
-          >
-            {title}
-          </Typography>
-          {rows.map((row) => (
-            <Box key={row.label}>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-              >
-                {row.label}
-              </Typography>
-              <Typography sx={{ fontWeight: 600 }}>{row.value || "Не указано"}</Typography>
-            </Box>
-          ))}
-        </Stack>
-      </CardContent>
-    </Card>
-  );
-}
-
-function PlaceholderCard({ title, text }) {
-  return (
-    <Card
-      variant="outlined"
-      sx={{ borderRadius: 3 }}
-    >
-      <CardContent>
-        <Stack spacing={1}>
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 700 }}
-          >
-            {title}
-          </Typography>
-          <Typography color="text.secondary">{text}</Typography>
-        </Stack>
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function VendorDetailPage() {
   const router = useRouter();
   const vendorId = Number(router.query.id);
-  const { api_laravel } = useApi("vendors");
+  const { api_laravel, api_upload } = useApi("vendors");
   const { isAlert, closeAlert, showAlert, alertMessage, alertStatus } = useMyAlert();
+  const isLoading = useVendorsStore((state) => state.isLoading);
+  const setLoading = useVendorsStore((state) => state.setLoading);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
-  const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
   const [vendor, setVendor] = useState(null);
   const [vendorCities, setVendorCities] = useState([]);
   const [allCities, setAllCities] = useState([]);
   const [mails, setMails] = useState([]);
   const [allPoints, setAllPoints] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [vendorItems, setVendorItems] = useState([]);
+  const [allItems, setAllItems] = useState([]);
+  const [selectedItemId, setSelectedItemId] = useState(null);
+  const [bindDeclarationId, setBindDeclarationId] = useState("");
+  const [isDeclarationWorking, setIsDeclarationWorking] = useState(false);
+  const [documentsFilter, setDocumentsFilter] = useState("");
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [docModalItemId, setDocModalItemId] = useState("");
+  const [docModalFile, setDocModalFile] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isItemsSaving, setIsItemsSaving] = useState(false);
+  const [selectedCatalogItemId, setSelectedCatalogItemId] = useState("");
 
   const loadVendor = async () => {
     if (!vendorId) {
@@ -120,7 +100,7 @@ export default function VendorDetailPage() {
     }
 
     try {
-      setIsLoading(true);
+      setLoading(true);
       const [infoResponse, productsResponse] = await Promise.all([
         api_laravel("get_vendor_info", { vendor_id: vendorId }),
         api_laravel("get_vendor_items", { vendor_id: vendorId }),
@@ -137,14 +117,15 @@ export default function VendorDetailPage() {
       setVendor(normalizeVendor(infoResponse.vendor));
       setVendorCities(normalizeCities(infoResponse.vendor_cities));
       setAllCities(normalizeCities(infoResponse.all_cities));
-      setMails(normalizeMails(infoResponse.mails));
+      setMails(normalizeMails(infoResponse.mails, infoResponse.all_points || []));
       setAllPoints(infoResponse.all_points || []);
-      setProducts(productsResponse.vendor_items || []);
+      setVendorItems(productsResponse.vendor_items || []);
+      setAllItems(productsResponse.all_items || []);
       document.title = infoResponse.vendor?.name || "Поставщик";
     } catch (error) {
       showAlert(error?.message || "Ошибка запроса", false);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -152,46 +133,302 @@ export default function VendorDetailPage() {
     loadVendor();
   }, [vendorId]);
 
-  const overviewCards = useMemo(() => {
-    if (!vendor) {
-      return [];
+  useEffect(() => {
+    if (!vendorItems?.length) {
+      setDocModalItemId("");
+      return;
     }
 
-    return [
-      {
-        title: "Основное",
-        rows: [
-          { label: "Наименование", value: vendor.name },
-          { label: "Описание", value: vendor.text },
-          { label: "Мин. сумма заказа", value: formatMoney(vendor.min_price) },
-        ],
-      },
-      {
-        title: "Настройки",
-        rows: [
-          { label: "Активность", value: Number(vendor.is_show) ? "Да" : "Нет" },
-          { label: "Работа по счетам", value: Number(vendor.bill_ex) ? "Да" : "Нет" },
-          {
-            label: "Необходима картинка накладной",
-            value: Number(vendor.need_img_bill_ex) ? "Да" : "Нет",
-          },
-          { label: "Приоритетный поставщик", value: Number(vendor.is_priority) ? "Да" : "Нет" },
-        ],
-      },
-      {
-        title: "Реквизиты",
-        rows: [
-          { label: "ИНН", value: vendor.inn },
-          { label: "ОГРН", value: vendor.ogrn },
-          { label: "Расчетный счет", value: vendor.rc },
-          { label: "БИК", value: vendor.bik },
-          { label: "Юридический адрес", value: vendor.addr },
-        ],
-      },
-    ];
-  }, [vendor]);
+    const exists = vendorItems.some((item) => String(item.item_id) === String(docModalItemId));
 
-  const handleSubmit = async () => {
+    if (!exists) {
+      setDocModalItemId(String(vendorItems[0].item_id));
+    }
+  }, [vendorItems, docModalItemId]);
+
+  useEffect(() => {
+    if (!vendorItems?.length) {
+      setSelectedItemId(null);
+      return;
+    }
+
+    const hasSelected =
+      selectedItemId != null &&
+      vendorItems.some((item) => Number(item.item_id) === Number(selectedItemId));
+
+    if (!hasSelected) {
+      setSelectedItemId(Number(vendorItems[0].item_id));
+    }
+  }, [vendorItems, selectedItemId]);
+
+  useEffect(() => {
+    setBindDeclarationId("");
+  }, [selectedItemId]);
+
+  const applyDeclarationUpdates = (entries = []) => {
+    if (!Array.isArray(entries) || entries.length === 0) {
+      return;
+    }
+
+    const updates = new Map();
+    entries.forEach((entry) => {
+      if (!entry?.item_id) {
+        return;
+      }
+      const itemId = Number(entry.item_id);
+      const declarations = Array.isArray(entry.declarations) ? entry.declarations : [];
+      updates.set(itemId, declarations);
+    });
+
+    if (!updates.size) {
+      return;
+    }
+
+    setVendorItems((prev) =>
+      prev.map((vendorItem) => {
+        const itemId = Number(vendorItem.item_id);
+        if (updates.has(itemId)) {
+          return { ...vendorItem, declarations: updates.get(itemId) };
+        }
+        return vendorItem;
+      }),
+    );
+
+    setAllItems((prev) =>
+      prev.map((catalogItem) => {
+        const itemId = Number(catalogItem.id);
+        if (updates.has(itemId)) {
+          return { ...catalogItem, declarations: updates.get(itemId) };
+        }
+        return catalogItem;
+      }),
+    );
+  };
+
+  const handleDeclarationResponse = (response) => {
+    if (!response) {
+      return;
+    }
+
+    if (Array.isArray(response.item_declarations)) {
+      applyDeclarationUpdates(response.item_declarations);
+      return;
+    }
+
+    if (response.item_id) {
+      applyDeclarationUpdates([
+        { item_id: response.item_id, declarations: response.declarations || [] },
+      ]);
+    }
+  };
+
+  const handleUploadDeclaration = async (itemId, file) => {
+    if (!itemId || !file) {
+      return;
+    }
+
+    setIsDeclarationWorking(true);
+
+    try {
+      const response = await api_upload("upload_declaration", file, {
+        item_id: Number(itemId),
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Не удалось загрузить декларацию");
+      }
+
+      handleDeclarationResponse(response);
+      showAlert("Декларация загружена", true);
+      return response;
+    } catch (error) {
+      showAlert(error?.message || "Не удалось загрузить декларацию", false);
+    } finally {
+      setIsDeclarationWorking(false);
+    }
+
+    return null;
+  };
+
+  const closeDocModal = () => {
+    setIsDocModalOpen(false);
+    setDocModalFile(null);
+  };
+
+  const handleDocumentModalSubmit = async () => {
+    if (!docModalItemId || !docModalFile) {
+      showAlert("Выберите товар и файл", false);
+      return;
+    }
+
+    const response = await handleUploadDeclaration(docModalItemId, docModalFile);
+    if (response?.st) {
+      closeDocModal();
+    }
+  };
+
+  const openDocModal = () => {
+    setDocModalFile(null);
+    setIsDocModalOpen(true);
+  };
+
+  const handleBindDeclaration = async () => {
+    if (!selectedItemId || !bindDeclarationId) {
+      return;
+    }
+
+    setIsDeclarationWorking(true);
+
+    try {
+      const response = await api_laravel("bind_declaration_to_item", {
+        item_id: Number(selectedItemId),
+        decl_id: Number(bindDeclarationId),
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Не удалось привязать декларацию");
+      }
+
+      handleDeclarationResponse(response);
+      showAlert("Декларация привязана", true);
+      setBindDeclarationId("");
+    } catch (error) {
+      showAlert(error?.message || "Не удалось привязать декларацию", false);
+    } finally {
+      setIsDeclarationWorking(false);
+    }
+  };
+
+  const handleUnbindDeclaration = async (declId) => {
+    if (!selectedItemId || !declId) {
+      return;
+    }
+
+    setIsDeclarationWorking(true);
+
+    try {
+      const response = await api_laravel("unbind_declaration_from_item", {
+        item_id: Number(selectedItemId),
+        decl_id: Number(declId),
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Не удалось отвязать декларацию");
+      }
+
+      handleDeclarationResponse(response);
+      showAlert("Декларация отвязана", true);
+    } catch (error) {
+      showAlert(error?.message || "Не удалось отвязать декларацию", false);
+    } finally {
+      setIsDeclarationWorking(false);
+    }
+  };
+
+  const handleDeleteDeclaration = async (declId) => {
+    if (!declId) {
+      return;
+    }
+
+    setIsDeclarationWorking(true);
+
+    try {
+      const response = await api_laravel("delete_declaration", {
+        decl_id: Number(declId),
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Не удалось удалить декларацию");
+      }
+
+      handleDeclarationResponse(response);
+      showAlert("Декларация удалена", true);
+    } catch (error) {
+      showAlert(error?.message || "Не удалось удалить декларацию", false);
+    } finally {
+      setIsDeclarationWorking(false);
+    }
+  };
+
+  const toggleCity = (city) => {
+    if (!city?.id) {
+      return;
+    }
+
+    const cityId = Number(city.id);
+    setVendorCities((prev) => {
+      const exists = prev.some((entry) => Number(entry.id) === cityId);
+      if (exists) {
+        return prev.filter((entry) => Number(entry.id) !== cityId);
+      }
+      return [...prev, city];
+    });
+  };
+
+  const commitVendorItems = async (nextItems) => {
+    if (!vendorId) {
+      return;
+    }
+
+    setIsItemsSaving(true);
+
+    try {
+      const payload = nextItems.map((item, index) => ({
+        item_id: Number(item.item_id),
+        nds: Number(item.nds ?? -1),
+        sort: Number(item.sort ?? index * 10),
+      }));
+
+      const response = await api_laravel("save_vendor_items", {
+        vendor_id: vendorId,
+        items: payload,
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Не удалось сохранить товары");
+      }
+
+      await loadVendor();
+    } catch (error) {
+      showAlert(error?.message || "Ошибка запроса", false);
+    } finally {
+      setIsItemsSaving(false);
+    }
+  };
+
+  const handleAddVendorItem = async () => {
+    if (!selectedCatalogItemId) {
+      return;
+    }
+
+    const newItemId = Number(selectedCatalogItemId);
+    if (vendorItemIds.has(newItemId)) {
+      return;
+    }
+
+    const maxSort = vendorItems.reduce((max, item) => Math.max(max, Number(item.sort) || 0), 0);
+
+    const nextItems = [...vendorItems, { item_id: newItemId, nds: -1, sort: maxSort + 1 }];
+
+    await commitVendorItems(nextItems);
+    setSelectedCatalogItemId("");
+  };
+
+  const handleRemoveVendorItem = async (itemId) => {
+    if (!itemId) {
+      return;
+    }
+
+    const nextItems = vendorItems.filter((item) => Number(item.item_id) !== Number(itemId));
+
+    await commitVendorItems(nextItems);
+
+    if (Number(selectedItemId) === Number(itemId)) {
+      setSelectedItemId(null);
+    }
+  };
+
+  const handleVendorSubmit = async () => {
     try {
       setIsSaving(true);
 
@@ -214,179 +451,157 @@ export default function VendorDetailPage() {
     }
   };
 
-  const renderOverview = () => (
-    <Stack spacing={2}>
-      {overviewCards.map((card) => (
-        <FieldCard
-          key={card.title}
-          title={card.title}
-          rows={card.rows}
-        />
-      ))}
-    </Stack>
+  const sortedVendorItems = [...(vendorItems || [])].sort(
+    (a, b) => (Number(a.sort) || 0) - (Number(b.sort) || 0),
   );
 
-  const renderLocations = () => (
-    <Stack spacing={2}>
-      <Card
-        variant="outlined"
-        sx={{ borderRadius: 3 }}
-      >
-        <CardContent>
-          <Stack spacing={2}>
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 700 }}
-            >
-              Локации
-            </Typography>
-            <Stack
-              direction="row"
-              gap={1}
-              flexWrap="wrap"
-            >
-              {vendorCities.length ? (
-                vendorCities.map((city) => (
-                  <Chip
-                    key={city.id}
-                    label={city.name}
-                  />
-                ))
-              ) : (
-                <Typography color="text.secondary">Локации не назначены.</Typography>
-              )}
-            </Stack>
-          </Stack>
-        </CardContent>
-      </Card>
+  const vendorItemIds = new Set((vendorItems || []).map((item) => Number(item.item_id)));
 
-      <Card
-        variant="outlined"
-        sx={{ borderRadius: 3 }}
-      >
-        <CardContent>
-          <Stack spacing={2}>
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 700 }}
-            >
-              Email по точкам
-            </Typography>
-            {mails.length ? (
-              mails.map((mail, index) => (
-                <Box key={`${mail.point_id?.id ?? "mail"}-${index}`}>
-                  <Typography sx={{ fontWeight: 600 }}>
-                    {mail.point_id?.name || "Без точки"}
-                  </Typography>
-                  <Typography>{mail.mail || "Не указан"}</Typography>
-                  {mail.comment ? (
-                    <Typography color="text.secondary">{mail.comment}</Typography>
-                  ) : null}
-                  {index < mails.length - 1 ? <Divider sx={{ mt: 2 }} /> : null}
-                </Box>
-              ))
-            ) : (
-              <Typography color="text.secondary">Email по точкам не настроены.</Typography>
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
-    </Stack>
+  const selectedVendorItem = sortedVendorItems.find(
+    (item) => Number(item.item_id) === Number(selectedItemId),
   );
 
-  const renderProducts = () => (
-    <Card
-      variant="outlined"
-      sx={{ borderRadius: 3 }}
-    >
-      <CardContent>
-        <Stack spacing={2}>
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 700 }}
-          >
-            Продукты поставщика
-          </Typography>
-          {products.length ? (
-            products.map((item, index) => (
-              <Box key={item.id || `${item.item_id}-${index}`}>
-                <Typography sx={{ fontWeight: 600 }}>
-                  {item.item_name || `Товар #${item.item_id}`}
-                </Typography>
-                <Typography color="text.secondary">
-                  НДС: {item.nds_text || item.nds || "Не указан"}
-                </Typography>
-                {index < products.length - 1 ? <Divider sx={{ mt: 2 }} /> : null}
-              </Box>
-            ))
-          ) : (
-            <Typography color="text.secondary">
-              У поставщика пока нет привязанных товаров.
-            </Typography>
-          )}
-        </Stack>
-      </CardContent>
-    </Card>
+  const selectedCatalogItem = (allItems || []).find(
+    (item) => Number(item.id) === Number(selectedItemId),
   );
 
-  const renderDocuments = () => (
-    <PlaceholderCard
-      title="Документы"
-      text="В текущем контракте нет отдельного API для документов поставщика. Экран оставлен как заглушка до появления backend-ручек."
-    />
+  const itemsSelectData = (allItems || []).map((item) => ({
+    id: String(item.id),
+    name: item.name || `Товар #${item.id}`,
+  }));
+
+  const availableDeclarations = (() => {
+    const map = new Map();
+    (allItems || []).forEach((item) => {
+      (item.declarations || []).forEach((decl) => {
+        if (!decl?.id) {
+          return;
+        }
+        const key = Number(decl.id);
+        if (map.has(key)) {
+          return;
+        }
+        map.set(key, {
+          ...decl,
+          item_id: item.id,
+          item_name: item.name || "",
+        });
+      });
+    });
+    return Array.from(map.values());
+  })();
+
+  const availableDeclarationsForBind = (() => {
+    const boundIds = new Set(
+      (selectedVendorItem?.declarations || []).map((decl) => Number(decl.id)),
+    );
+    return availableDeclarations.filter((decl) => !boundIds.has(Number(decl.id)));
+  })();
+
+  const vendorDeclarations = (vendorItems || []).flatMap((item) =>
+    (item.declarations || []).map((decl) => ({
+      ...decl,
+      item_id: Number(item.item_id),
+      item_name: item.item_name || `Товар #${item.item_id}`,
+      nds: item.nds,
+    })),
   );
 
-  const renderContent = () => {
-    if (isEditing && vendor) {
-      return (
-        <VendorEditorForm
-          mode="update"
-          vendor={vendor}
-          vendorCities={vendorCities}
-          allCities={allCities}
-          mails={mails}
-          allPoints={allPoints}
-          isSubmitting={isSaving}
-          onVendorChange={(field, value) => setVendor((prev) => ({ ...prev, [field]: value }))}
-          onVendorToggle={(field) =>
-            setVendor((prev) => ({ ...prev, [field]: Number(prev[field]) ? 0 : 1 }))
-          }
-          onVendorCitiesChange={setVendorCities}
-          onMailChange={(index, field, value) =>
-            setMails((prev) =>
-              prev.map((mail, mailIndex) =>
-                mailIndex === index ? { ...mail, [field]: value } : mail,
-              ),
-            )
-          }
-          onAddMail={(mail) => setMails((prev) => [...prev, mail])}
-          onRemoveMail={(index) =>
-            setMails((prev) => prev.filter((_, mailIndex) => mailIndex !== index))
-          }
-          onCancel={() => setIsEditing(false)}
-          onSubmit={handleSubmit}
-        />
-      );
-    }
+  const normalizedDocumentsFilter = (documentsFilter || "").trim().toLowerCase();
+  const filteredVendorDeclarations = !normalizedDocumentsFilter
+    ? vendorDeclarations
+    : vendorDeclarations.filter((decl) => {
+        const fileName = (decl.filename || decl.url || "").toLowerCase();
+        const itemName = (decl.item_name || "").toLowerCase();
+        return (
+          fileName.includes(normalizedDocumentsFilter) ||
+          itemName.includes(normalizedDocumentsFilter)
+        );
+      });
 
-    switch (activeTab) {
-      case "locations":
-        return renderLocations();
-      case "products":
-        return renderProducts();
-      case "documents":
-        return renderDocuments();
-      case "overview":
-      default:
-        return renderOverview();
-    }
+  const vendorItemsOptions = (vendorItems || []).map((item) => ({
+    id: String(item.item_id),
+    name: item.item_name || `Товар #${item.item_id}`,
+  }));
+
+  const overviewCards = vendor
+    ? [
+        {
+          title: "Основное",
+          rows: [
+            { label: "Наименование", value: vendor.name },
+            { label: "Описание", value: vendor.text },
+          ],
+        },
+        {
+          title: "Настройки",
+          rows: [
+            { label: "Мин. сумма заказа", value: formatMoney(vendor.min_price) },
+            { label: "Активность", value: Number(vendor.is_show) ? "Да" : "Нет" },
+            { label: "Работа по счетам", value: Number(vendor.bill_ex) ? "Да" : "Нет" },
+            {
+              label: "Необходима картинка накладной",
+              value: Number(vendor.need_img_bill_ex) ? "Да" : "Нет",
+            },
+            { label: "Приоритетный поставщик", value: Number(vendor.is_priority) ? "Да" : "Нет" },
+          ],
+        },
+        {
+          title: "Реквизиты",
+          rows: [
+            { label: "ИНН", value: vendor.inn },
+            { label: "ОГРН", value: vendor.ogrn },
+            { label: "Расчетный счет", value: vendor.rc },
+            { label: "БИК", value: vendor.bik },
+            { label: "Юридический адрес", value: vendor.addr },
+          ],
+        },
+      ]
+    : [];
+
+  const activeTabDefinition =
+    TAB_DEFINITIONS.find((tab) => tab.index === activeTab) ?? TAB_DEFINITIONS[0];
+
+  const contextValue = {
+    overviewCards,
+    vendorCities,
+    allCities,
+    mails,
+    sortedVendorItems,
+    vendorItemIds,
+    selectedItemId,
+    setSelectedItemId,
+    selectedVendorItem,
+    selectedCatalogItem,
+    allItems,
+    itemsSelectData,
+    selectedCatalogItemId,
+    setSelectedCatalogItemId,
+    isEditing,
+    isItemsSaving,
+    toggleCity,
+    handleAddVendorItem,
+    handleRemoveVendorItem,
+    availableDeclarationsForBind,
+    bindDeclarationId,
+    setBindDeclarationId,
+    handleBindDeclaration,
+    handleUploadDeclaration,
+    handleUnbindDeclaration,
+    handleDeleteDeclaration,
+    isDeclarationWorking,
+    filteredVendorDeclarations,
+    documentsFilter,
+    setDocumentsFilter,
+    openDocModal,
+    vendorItems,
   };
 
   return (
     <>
       <Backdrop
         sx={{ zIndex: (theme) => theme.zIndex.drawer + 2 }}
-        open={isLoading || isNavigating}
+        open={isLoading}
       >
         <CircularProgress />
       </Backdrop>
@@ -397,6 +612,73 @@ export default function VendorDetailPage() {
         text={alertMessage}
         onClose={closeAlert}
       />
+
+      <Dialog
+        open={isDocModalOpen}
+        onClose={closeDocModal}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Добавить декларацию</DialogTitle>
+        <DialogContent>
+          <Stack
+            spacing={2}
+            sx={{ mt: 1 }}
+          >
+            <MySelect
+              label="Товар поставщика"
+              data={vendorItemsOptions}
+              value={docModalItemId}
+              func={(event) => setDocModalItemId(event.target.value)}
+              is_none={false}
+              disabled={isDeclarationWorking || !vendorItems.length}
+            />
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="center"
+            >
+              <Button
+                variant="outlined"
+                component="label"
+                disabled={isDeclarationWorking}
+              >
+                Выбрать файл
+                <input
+                  hidden
+                  type="file"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = "";
+                    setDocModalFile(file || null);
+                  }}
+                />
+              </Button>
+              <Typography
+                color="text.secondary"
+                variant="body2"
+              >
+                {docModalFile ? docModalFile.name : "Файл не выбран"}
+              </Typography>
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={closeDocModal}
+            disabled={isDeclarationWorking}
+          >
+            Отмена
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDocumentModalSubmit}
+            disabled={isDeclarationWorking || !docModalFile || !docModalItemId}
+          >
+            Добавить
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Box className="container_first_child">
         <Grid
@@ -417,7 +699,7 @@ export default function VendorDetailPage() {
                     startIcon={<KeyboardBackspaceIcon />}
                     sx={{ justifyContent: "flex-start", p: 2 }}
                     onClick={() => {
-                      setIsNavigating(true);
+                      setLoading(true);
                       router.push("/vendors");
                     }}
                   >
@@ -431,23 +713,44 @@ export default function VendorDetailPage() {
                       {vendor?.name || "Поставщик"}
                     </Typography>
                   </Box>
-                  {TABS.map((tab) => (
-                    <Button
-                      key={tab.key}
-                      color={tab.key === activeTab ? "error" : "inherit"}
-                      onClick={() => setActiveTab(tab.key)}
-                      sx={{
-                        justifyContent: "flex-start",
-                        px: 3,
-                        py: 1.5,
-                        borderRadius: 0,
-                        bgcolor: tab.key === activeTab ? "rgba(244, 67, 54, 0.08)" : "transparent",
-                      }}
-                      startIcon={tab.icon}
-                    >
-                      {tab.label}
-                    </Button>
-                  ))}
+                  <Tabs
+                    orientation="vertical"
+                    value={activeTab}
+                    onChange={(_, value) => setActiveTab(value)}
+                    aria-label="Vendor tabs"
+                    sx={{
+                      borderTop: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  >
+                    {TAB_DEFINITIONS.map((tab) => (
+                      <Tab
+                        key={tab.index}
+                        icon={tab.icon}
+                        iconPosition="start"
+                        label={tab.label}
+                        {...a11yProps(tab.index)}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "flex-start",
+                          flexDirection: "row",
+                          textTransform: "none",
+                          px: 3,
+                          py: 1.5,
+                          borderRadius: 0,
+                          alignItems: "center",
+                          whiteSpace: "nowrap",
+                          minHeight: 56,
+                          minWidth: 180,
+                          columnGap: 1,
+                          "& .MuiTab-icon": {
+                            marginBottom: "0 !important",
+                            marginRight: "0 !important",
+                          },
+                        }}
+                      />
+                    ))}
+                  </Tabs>
                 </Stack>
               </CardContent>
             </Card>
@@ -474,39 +777,100 @@ export default function VendorDetailPage() {
                     <Button
                       startIcon={<KeyboardBackspaceIcon />}
                       onClick={() => {
-                        setIsNavigating(true);
+                        setLoading(true);
                         router.push("/vendors");
                       }}
                     >
                       Назад
                     </Button>
                   </Stack>
-                  <Typography
-                    component="h1"
-                    variant="h4"
-                    sx={{ fontWeight: 800 }}
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1}
+                    alignItems="center"
+                    sx={{ width: "100%" }}
                   >
-                    {activeTab === "overview"
-                      ? "Обзор поставщика"
-                      : TABS.find((tab) => tab.key === activeTab)?.label}
-                  </Typography>
+                    <Typography
+                      component="h1"
+                      variant="h4"
+                      sx={{ fontWeight: 800 }}
+                    >
+                      {activeTabDefinition.label}
+                    </Typography>
+                    {activeTab === 0 ? (
+                      <Button
+                        variant="outlined"
+                        startIcon={<EditOutlinedIcon />}
+                        onClick={() => setIsEditing(true)}
+                        disabled={isLoading || !vendor}
+                        sx={{ ml: { xs: 0, sm: "auto" } }}
+                      >
+                        Редактировать
+                      </Button>
+                    ) : null}
+                  </Stack>
                 </Stack>
-
-                {!isEditing ? (
-                  <Button
-                    variant="outlined"
-                    startIcon={<EditOutlinedIcon />}
-                    onClick={() => setIsEditing(true)}
-                  >
-                    Редактировать
-                  </Button>
-                ) : null}
               </Stack>
 
               {!isLoading && !vendor ? (
                 <Alert severity="error">Поставщик не найден или не загрузился.</Alert>
+              ) : isEditing ? (
+                <VendorEditorForm
+                  mode="update"
+                  vendor={vendor}
+                  vendorCities={vendorCities}
+                  allCities={allCities}
+                  mails={mails}
+                  allPoints={allPoints}
+                  isSubmitting={isSaving}
+                  onVendorChange={(field, value) =>
+                    setVendor((prev) => ({ ...prev, [field]: value }))
+                  }
+                  onVendorToggle={(field) =>
+                    setVendor((prev) => ({ ...prev, [field]: Number(prev[field]) ? 0 : 1 }))
+                  }
+                  onVendorCitiesChange={setVendorCities}
+                  onMailChange={(index, field, value) =>
+                    setMails((prev) =>
+                      prev.map((mail, mailIndex) =>
+                        mailIndex === index ? { ...mail, [field]: value } : mail,
+                      ),
+                    )
+                  }
+                  onAddMail={(mail) => setMails((prev) => [...prev, mail])}
+                  onRemoveMail={(index) =>
+                    setMails((prev) => prev.filter((_, mailIndex) => mailIndex !== index))
+                  }
+                  onCancel={() => setIsEditing(false)}
+                  onSubmit={handleVendorSubmit}
+                />
               ) : (
-                renderContent()
+                <VendorDetailsProvider value={contextValue}>
+                  <TabPanel
+                    value={activeTab}
+                    index={0}
+                  >
+                    <TabInfo />
+                  </TabPanel>
+                  <TabPanel
+                    value={activeTab}
+                    index={1}
+                  >
+                    <TabLocations />
+                  </TabPanel>
+                  <TabPanel
+                    value={activeTab}
+                    index={2}
+                  >
+                    <TabProducts />
+                  </TabPanel>
+                  <TabPanel
+                    value={activeTab}
+                    index={3}
+                  >
+                    <TabDocuments />
+                  </TabPanel>
+                </VendorDetailsProvider>
               )}
             </Stack>
           </Grid>
@@ -525,37 +889,34 @@ export default function VendorDetailPage() {
             zIndex: (theme) => theme.zIndex.appBar,
           }}
         >
-          <Grid
-            container
-            columns={4}
+          <Tabs
+            value={activeTab}
+            onChange={(_, value) => setActiveTab(value)}
+            variant="fullWidth"
+            aria-label="Vendor mobile tabs"
           >
-            {TABS.map((tab) => (
-              <Grid
-                key={tab.key}
-                size={1}
-              >
-                <Button
-                  color={tab.key === activeTab ? "error" : "inherit"}
-                  onClick={() => setActiveTab(tab.key)}
-                  sx={{
-                    width: "100%",
-                    minHeight: 60,
-                    borderRadius: 0,
-                    flexDirection: "column",
-                    gap: 0.5,
-                  }}
-                >
-                  {tab.icon}
-                  <Typography
-                    variant="caption"
-                    sx={{ fontWeight: tab.key === activeTab ? 700 : 500 }}
-                  >
-                    {tab.label}
-                  </Typography>
-                </Button>
-              </Grid>
+            {TAB_DEFINITIONS.map((tab) => (
+              <Tab
+                key={tab.index}
+                icon={tab.icon}
+                iconPosition="start"
+                label={tab.label}
+                {...a11yProps(tab.index)}
+                sx={{
+                  display: "flex",
+                  minHeight: 60,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  whiteSpace: "nowrap",
+                  columnGap: 0.75,
+                  "& .MuiTab-icon": {
+                    marginBottom: "0 !important",
+                    marginRight: "0 !important",
+                  },
+                }}
+              />
             ))}
-          </Grid>
+          </Tabs>
         </Box>
       </Box>
     </>

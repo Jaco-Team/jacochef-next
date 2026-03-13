@@ -38,16 +38,27 @@ export const normalizeCities = (cities) =>
         }))
     : [];
 
-export const normalizeMails = (mails) =>
+export const normalizeMails = (mails, allPoints = []) =>
   Array.isArray(mails)
     ? mails.map((mail) => ({
-        point_id: mail?.point_id?.id
-          ? {
-              id: Number(mail.point_id.id),
-              name: mail.point_id.name || "",
-              city_id: Number(mail.point_id.city_id ?? -1),
-            }
-          : null,
+        point_id:
+          Number(mail?.point_id) || Number(mail?.point_id) === -1
+            ? (() => {
+                const pointId = Number(mail.point_id);
+                const point = (allPoints || []).find((item) => Number(item.id) === pointId);
+                return {
+                  id: pointId,
+                  name: point?.addr || "Без точки",
+                  city_id: Number(point?.city_id ?? -1),
+                };
+              })()
+            : mail?.point_id?.id
+              ? {
+                  id: Number(mail.point_id.id),
+                  name: mail.point_id.name || "",
+                  city_id: Number(mail.point_id.city_id ?? -1),
+                }
+              : null,
         mail: mail?.mail || "",
         comment: mail?.comment || "",
       }))
@@ -60,7 +71,12 @@ export const createEmptyMail = () => ({
 });
 
 export const getPointOptions = (allPoints, vendorCities) => {
-  const points = Array.isArray(allPoints) ? allPoints : [];
+  const points = Array.isArray(allPoints)
+    ? allPoints.map((point) => ({
+        ...point,
+        name: point.name || point.addr || "",
+      }))
+    : [];
   const cityIds = new Set((vendorCities || []).map((city) => Number(city.id)));
   const globalPoint = points.find((point) => Number(point.id) === -1);
   const scopedPoints = points.filter((point) => cityIds.has(Number(point.city_id)));
@@ -111,10 +127,24 @@ export const buildMailsPayload = (mails) =>
     .filter((mail) => Number(mail?.point_id?.id) || Number(mail?.point_id?.id) === -1)
     .filter((mail) => mail.mail?.trim())
     .map((mail) => ({
-      point_id: { id: Number(mail.point_id.id) },
+      point_id: Number(mail.point_id.id),
       mail: mail.mail.trim(),
       comment: mail.comment?.trim() || "",
     }));
+
+export const formatVendorNds = (value) => {
+  const nds = Number(value);
+
+  if (nds === -1) {
+    return "Без НДС";
+  }
+
+  if (Number.isNaN(nds)) {
+    return "НДС не указан";
+  }
+
+  return `НДС ${nds}%`;
+};
 
 export const getCityNamesByIds = (cityIds, cities) =>
   (cityIds || [])
