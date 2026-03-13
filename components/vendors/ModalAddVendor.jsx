@@ -12,16 +12,16 @@ import {
   Stack,
 } from "@mui/material";
 import { MySelect } from "@/ui/Forms";
-import useVendorsStore from "@/src/stores/useVendorsStore";
+import useVendorsStore from "./useVendorsStore";
 
 export default function ModalAddVendor() {
   const open = useVendorsStore((s) => s.modalOpen);
   const close = useVendorsStore((s) => s.closeModal);
   const addVendor = useVendorsStore((s) => s.addVendor);
-  const cities = useVendorsStore((s) => s.cities());
+  const cities = useVendorsStore((s) => s.cities);
 
   const [name, setName] = useState("");
-  const [city, setCity] = useState(cities?.[1] || "");
+  const [city, setCity] = useState(cities?.[0]?.id ?? -1);
   const [address, setAddress] = useState("");
   const [itemsCount, setItemsCount] = useState(0);
   const [active, setActive] = useState(true);
@@ -55,9 +55,9 @@ export default function ModalAddVendor() {
           />
           <MySelect
             label="City"
-            data={cities.map((c) => ({ id: c, name: c }))}
+            data={cities?.map((c) => ({ id: c.id, name: c.name }))}
             value={city}
-            func={(e) => setCity(e.target.value)}
+            func={(e) => setCity(Number(e.target.value))}
             is_none={false}
           />
           <TextField

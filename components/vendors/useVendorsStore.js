@@ -1,12 +1,14 @@
 "use client";
-import create from "zustand";
+import { create } from "zustand";
 // lightweight id generator to avoid extra deps
 function genId() {
   return String(Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
 }
 
-export const useVendorsStore = create((set, get) => ({
+const defaultState = {
+  cities: [],
   cityFilter: "all",
+  city: null,
   modalOpen: false,
   module: "vendors",
   moduleName: null,
@@ -37,16 +39,14 @@ export const useVendorsStore = create((set, get) => ({
       itemsCount: 12,
     },
   ],
+};
 
-  // selectors / view helpers
-  cities() {
-    const xs = Array.from(new Set(get().vendors.map((v) => v.city))).sort();
-    return ["all", ...xs];
-  },
+export const useVendorsStore = create((set) => ({
+  ...defaultState,
 
   // actions
-  setCityFilter(city) {
-    set({ cityFilter: city });
+  setCity(city) {
+    set({ city });
   },
 
   openModal() {
