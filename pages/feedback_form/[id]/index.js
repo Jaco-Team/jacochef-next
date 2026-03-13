@@ -8,6 +8,7 @@ import {
   Chip,
   FormControlLabel,
   Rating,
+  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -45,6 +46,32 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
+import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
+import {
+  InfoOutlined,
+  ChatBubbleOutline,
+  StarOutline,
+  ThumbDownOutlined,
+  ThumbUpOutlined,
+} from "@mui/icons-material";
+import dynamic from "next/dynamic";
+import QualityByPointsTable from "@/components/admin_feedback_drivers/QualityByPointsTable";
+import ReviewsTable from "@/components/admin_feedback_drivers/ReviewsTable";
+
+const RatingDynamicsChart = dynamic(
+  () => import("@/components/admin_feedback_drivers/RatingDynamicsChart"),
+  { ssr: false }, // Важно: отключаем SSR для всего компонента
+);
+
+const ReviewThemesWidget = dynamic(
+  () => import("@/components/admin_feedback_drivers/ReviewThemesWidget"),
+  { ssr: false }, // Важно: отключаем SSR для всего компонента
+);
+
+const RatingDistributionChart = dynamic(
+  () => import("@/components/admin_feedback_drivers/RatingDistributionChart"),
+  { ssr: false }, // Важно: отключаем SSR для всего компонента
+);
 
 const ModalOrder = ({ open, onClose, getData, pointId, orderId }) => {
   const [order, setOrder] = useState({});
@@ -506,13 +533,17 @@ function FeedbackPage() {
   const [selectedTags, setSelectedTags] = useState([]);
   const [active, setActive] = useState(false);
   const [value, setValue] = useState("view_form");
+  const [res, setRes] = useState([]);
   const [points, setPoints] = useState([]);
   const [items, setItems] = useState([]);
   const [point, setPoint] = useState([]);
+  const [pointEva, setPointEva] = useState([]);
+  const [evaNegative, setEvaNegative] = useState(false);
   const [item, setItem] = useState([]);
   const [rows, setRows] = useState([]);
   const [leaderLow, setLeaderLow] = useState([]);
   const [leaderUp, setLeaderUp] = useState([]);
+  const [dataEva, setDataEva] = useState({});
   const [dateStart, setDateStart] = useState(null);
   const [dateEnd, setDateEnd] = useState(null);
   const [feedbacks, setFeedbacks] = useState([]);
@@ -524,8 +555,9 @@ function FeedbackPage() {
   const [errText, setErrText] = useState("");
   const [typeSale, setTypeSale] = useState(0);
   const tabsData = {
-    view_form: "Просомотр формы",
+    view_form: "Просмотр формы",
     view_feed: "Отчеты",
+    eva_reviews: "Оценка отзывов",
   };
   const [access, setAccess] = useState({});
 
@@ -540,6 +572,7 @@ function FeedbackPage() {
       );
       setAccess(Object.fromEntries(tabsCheck));
       setPoints(data.points);
+      setPointEva(data.points);
       setItems(data.items);
     });
   }, []);
@@ -579,6 +612,26 @@ function FeedbackPage() {
         setRows(data.rows);
         setLeaderLow(data.leaderLow);
         setLeaderUp(data.leaderUp);
+      }
+    });
+  };
+
+  const getEva = () => {
+    getData("get_eva", {
+      dateStart: dayjs(dateStart).format("YYYY-MM-DD"),
+      dateEnd: dayjs(dateEnd).format("YYYY-MM-DD"),
+      point: pointEva,
+      item,
+      negative: evaNegative,
+      form_id: id,
+    }).then((data) => {
+      if (!data.st) {
+        setErrStatus(data.st);
+        setErrText(data.text);
+        setOpenAlert(true);
+      } else {
+        setDataEva(data.all);
+        setRes(data?.all?.res);
       }
     });
   };
@@ -789,7 +842,7 @@ function FeedbackPage() {
       }}
     >
       <Backdrop
-        style={{ zIndex: 99 }}
+        sx={{ zIndex: 9999 }}
         open={isLoad}
       >
         <CircularProgress color="inherit" />
@@ -1394,6 +1447,396 @@ function FeedbackPage() {
                   Отправить
                 </Button>
               </div>
+            </Grid>
+          </TabPanel>
+          <TabPanel
+            value="eva_reviews"
+            style={{ backgroundColor: "#f9f9f9", borderRadius: "12px" }}
+          >
+            <Grid
+              container
+              spacing={2}
+              style={{ marginBottom: 16, backgroundColor: "#fff", padding: "16px" }}
+            >
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3,
+                }}
+              >
+                <CityCafeAutocomplete2
+                  label="Кафе"
+                  points={points}
+                  value={pointEva}
+                  onChange={(v) => setPointEva(v)}
+                  withAll
+                  withAllSelected
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 2,
+                }}
+              >
+                <MyDatePickerNew
+                  label="Дата начала"
+                  value={dateStart}
+                  func={(e) => setDateStart(formatDate(e))}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 2,
+                }}
+              >
+                <MyDatePickerNew
+                  label="Дата окончания"
+                  value={dateEnd}
+                  func={(e) => setDateEnd(formatDate(e))}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3,
+                }}
+              >
+                <Switch
+                  size="medium"
+                  checked={evaNegative}
+                  onChange={(e) => setEvaNegative(e.target.checked)}
+                  color="primary"
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      backgroundColor: "primary.main",
+                    },
+                    "& .MuiSwitch-track": {
+                      backgroundColor: "grey.400",
+                      opacity: 1,
+                    },
+                  }}
+                />
+                <span>Только негатив</span>
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 2,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={getEva}
+                >
+                  Показать оценки
+                </Button>
+              </Grid>
+            </Grid>
+            <Grid
+              container
+              spacing={2}
+              style={{ marginBottom: 16 }}
+            >
+              {dataEva && Object.keys(dataEva).length > 0 ? (
+                <>
+                  {/* Всего отзывов */}
+                  <Grid size={{ xs: 12, sm: 3 }}>
+                    <Paper
+                      sx={{
+                        p: 3,
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        borderRadius: 2,
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 2,
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          Всего отзывов
+                          <IconButton
+                            size="small"
+                            sx={{ ml: 0.5, verticalAlign: "middle" }}
+                            title="Количество уникальных отзывов за выбранный период"
+                          >
+                            <InfoOutlined fontSize="small" />
+                          </IconButton>
+                        </Typography>
+                        <ChatBubbleOutline sx={{ color: "text.secondary", fontSize: 20 }} />
+                      </Box>
+
+                      <Typography
+                        variant="h4"
+                        fontWeight="bold"
+                        gutterBottom
+                      >
+                        {dataEva?.countAll}
+                      </Typography>
+
+                      <Typography
+                        variant="body2"
+                        color={
+                          dataEva?.countDiff > 0
+                            ? "success.main"
+                            : dataEva?.countDiff < 0
+                              ? "error.main"
+                              : "text.secondary"
+                        }
+                      >
+                        {dataEva?.countDiff > 0 && "↗ "}
+                        {dataEva?.countDiff < 0 && "↘ "}
+                        {dataEva?.countDiff === 0 && "• "}
+                        {Math.abs(dataEva?.countDiff)}% к пред. периоду
+                      </Typography>
+                    </Paper>
+                  </Grid>
+
+                  {/* Средняя оценка */}
+                  <Grid size={{ xs: 12, sm: 3 }}>
+                    <Paper
+                      sx={{
+                        p: 3,
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        borderRadius: 2,
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 2,
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          Средняя оценка
+                          <IconButton
+                            size="small"
+                            sx={{ ml: 0.5, verticalAlign: "middle" }}
+                            title="Средняя оценка от 1 до 5"
+                          >
+                            <InfoOutlined fontSize="small" />
+                          </IconButton>
+                        </Typography>
+                        <StarOutline sx={{ color: "text.secondary", fontSize: 20 }} />
+                      </Box>
+
+                      <Typography
+                        variant="h4"
+                        fontWeight="bold"
+                        gutterBottom
+                      >
+                        {dataEva?.mediumRating}
+                      </Typography>
+
+                      <Typography
+                        variant="body2"
+                        color={
+                          dataEva?.mediumDiff > 0
+                            ? "success.main"
+                            : dataEva?.mediumDiff < 0
+                              ? "error.main"
+                              : "text.secondary"
+                        }
+                      >
+                        {dataEva?.mediumDiff > 0 && "↗ "}
+                        {dataEva?.mediumDiff < 0 && "↘ "}
+                        {dataEva?.mediumDiff === 0 && "• "}
+                        {Math.abs(dataEva?.mediumDiff)}% к пред. периоду
+                      </Typography>
+                    </Paper>
+                  </Grid>
+
+                  {/* Доля негатива */}
+                  <Grid size={{ xs: 12, sm: 3 }}>
+                    <Paper
+                      sx={{
+                        p: 3,
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        borderRadius: 2,
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 2,
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          Доля негатива
+                          <IconButton
+                            size="small"
+                            sx={{ ml: 0.5, verticalAlign: "middle" }}
+                            title="Процент отзывов от 1 до 3"
+                          >
+                            <InfoOutlined fontSize="small" />
+                          </IconButton>
+                        </Typography>
+                        <ThumbDownOutlined sx={{ color: "text.secondary", fontSize: 20 }} />
+                      </Box>
+
+                      <Typography
+                        variant="h4"
+                        fontWeight="bold"
+                        gutterBottom
+                      >
+                        {dataEva?.negativeRating}%
+                      </Typography>
+
+                      <Typography
+                        variant="body2"
+                        color={
+                          dataEva?.negativeDiff > 0
+                            ? "success.main"
+                            : dataEva?.negativeDiff < 0
+                              ? "error.main"
+                              : "text.secondary"
+                        }
+                      >
+                        {dataEva?.negativeDiff > 0 && "↗ "}
+                        {dataEva?.negativeDiff < 0 && "↘ "}
+                        {dataEva?.negativeDiff === 0 && "• "}
+                        {Math.abs(dataEva?.negativeDiff)}% к пред. периоду
+                      </Typography>
+                    </Paper>
+                  </Grid>
+
+                  {/* Доля позитива */}
+                  <Grid size={{ xs: 12, sm: 3 }}>
+                    <Paper
+                      sx={{
+                        p: 3,
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        borderRadius: 2,
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 2,
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          Доля позитива
+                          <IconButton
+                            size="small"
+                            sx={{ ml: 0.5, verticalAlign: "middle" }}
+                            title="Процент отзывов от 4 до 5"
+                          >
+                            <InfoOutlined fontSize="small" />
+                          </IconButton>
+                        </Typography>
+                        <ThumbUpOutlined sx={{ color: "text.secondary", fontSize: 20 }} />
+                      </Box>
+
+                      <Typography
+                        variant="h4"
+                        fontWeight="bold"
+                        gutterBottom
+                      >
+                        {dataEva?.positiveRating}%
+                      </Typography>
+
+                      <Typography
+                        variant="body2"
+                        color={
+                          dataEva?.positiveDiff > 0
+                            ? "success.main"
+                            : dataEva?.positiveDiff < 0
+                              ? "error.main"
+                              : "text.secondary"
+                        }
+                      >
+                        {dataEva?.positiveDiff > 0 && "↗ "}
+                        {dataEva?.positiveDiff < 0 && "↘ "}
+                        {dataEva?.positiveDiff === 0 && "• "}
+                        {Math.abs(dataEva?.positiveDiff)}% к пред. периоду
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                  {/* Динамика рейтинга - с проверкой на существование */}
+                  {dataEva?.dynamicGraph && Object.keys(dataEva.dynamicGraph).length > 0 ? (
+                    <Grid
+                      size={{ xs: 12, sm: 6 }}
+                      sx={{ marginTop: "45px" }}
+                    >
+                      <RatingDynamicsChart data={Object.entries(dataEva.dynamicGraph)} />
+                    </Grid>
+                  ) : null}
+
+                  {/* Распределение рейтинга */}
+                  {dataEva?.disGraph && Object.keys(dataEva.disGraph).length > 0 ? (
+                    <Grid
+                      size={{ xs: 12, sm: 6 }}
+                      sx={{ marginTop: "45px" }}
+                    >
+                      <RatingDistributionChart data={Object.entries(dataEva.disGraph)} />
+                    </Grid>
+                  ) : null}
+
+                  {/* Качество по точкам - с проверкой на существование */}
+                  {dataEva?.pointGraph && Object.keys(dataEva.pointGraph).length > 0 ? (
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <QualityByPointsTable data={Object.entries(dataEva.pointGraph)} />
+                    </Grid>
+                  ) : null}
+
+                  {/* Темы отзывов - проверяем что это массив и он не пустой */}
+                  {res.length > 0 ? (
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <ReviewThemesWidget data={res} />
+                    </Grid>
+                  ) : null}
+
+                  {/* Таблица отзывов */}
+                  {dataEva?.feedbackTable &&
+                  Array.isArray(dataEva.feedbackTable) &&
+                  dataEva.feedbackTable.length > 0 ? (
+                    <Grid size={{ xs: 12, sm: 12 }}>
+                      <ReviewsTable reviews={dataEva.feedbackTable} />
+                    </Grid>
+                  ) : null}
+                </>
+              ) : null}
             </Grid>
           </TabPanel>
         </TabContext>
