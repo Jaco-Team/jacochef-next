@@ -1322,8 +1322,7 @@ class Concenter_ extends React.Component {
               </DialogActions>
             ) : null}
 
-            {parseInt(this.state.showOrder.order.is_delete) == 0 &&
-            parseInt(this.state.showOrder.order.driver_id) &&
+            {parseInt(this.state.showOrder.order.driver_id) &&
             parseInt(acces?.withdraw_an_order_access) &&
             parseInt(this.state.showOrder.order.status_order) !== 6 ? (
               <DialogActions style={{ justifyContent: "flex-end", padding: "15px 0px" }}>
