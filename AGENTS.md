@@ -36,60 +36,24 @@
 
 ## Forms
 
-- Reuse existing form components when possible:
-  - `MyTextInput`
-  - `MyAutocomplite`
-  - `TextEditor`
-- Preserve the `journal` form style where it is already used.
-- Keep placeholders gray and entered values readable.
+Do not commit secrets, private DSNs, or deployment credentials. Review changes to `pages/_document.js`, `pages/_app.js`, and `ecosystem.config.js` carefully because they affect global scripts, monitoring, and runtime configuration across the entire app.
 
-## API Conventions
+## MUI Grid (v7) Note
 
-- For page modules that already use module-based API calls, prefer:
-  - `api_laravel_local(this.state.module, method, data)`
-- Follow existing page API naming rather than inventing a new client abstraction.
-- After successful create, update, or delete actions, refresh page data from the server.
-- Prefer server-derived truth over local optimistic state when the page already reloads via `get_all`.
+When using Material UI v7, the `Grid` item sizing props changed. Use the `size` prop on `Grid` children instead of the old `xs`, `sm`, `md` props. Examples:
 
-## Page Data Pattern
+- Single size: `<Grid size={12}>` (full width)
+- Responsive sizes: `<Grid size={{ xs: 12, sm: 6, md: 4 }}>`
 
-- If a page already has a `get_all` endpoint, treat it as the source of truth for:
-  - main lists
-  - permissions/access
-  - histories
-  - derived page state
-- After mutations, prefer `refreshPageData()` rather than hand-editing multiple local arrays.
+Update existing `Grid` usages when upgrading to v7 to avoid layout regressions.
 
-## History And Audit
+## Engineering Standards
 
-- If the backend returns history arrays such as `desc_hist` or `news_hist`, normalize them on the frontend into the format expected by `HistoryLog`.
-- Reuse `@/ui/history/HistoryLog` instead of building a second history UI.
-- Reuse `SmartDiff`-compatible `diff_json` structures when possible.
-- Show history near the block it belongs to:
-  - instruction history under instructions
-  - news history under news
+Always produce senior-level code: avoid inventing field names or making assumptions about API shapes - ask. When consuming external data:
 
-## News And Rich Text
+- Validate for null/undefined before access.
+- Use only documented/known fields; do not add speculative fallbacks without verifying upstream.
+- Prefer clear, minimal, and well-tested transformations over ad-hoc, speculative code.
+- Fast syntax checks, no extra formatting
 
-- Reuse the existing `TextEditor` integration.
-- If a design requires a custom editor layout, prefer extending `TextEditor` variants instead of creating one-off editor wrappers in page files.
-- Keep TinyMCE configuration explicit and avoid passing undefined nested config blocks that can break desktop/mobile initialization.
-
-## Access And Permissions
-
-- Respect page access flags returned by the API.
-- Hide edit/delete controls when access does not allow them.
-- Do not rely only on UI checks; keep server calls aligned with backend permissions.
-
-## Page-Level Guidance For This Repo
-
-- On admin/content pages, actions commonly live inside the section they affect.
-- Lists on desktop can sit in columns; on mobile they should stack naturally into the page flow.
-- Avoid nested internal scroll areas unless the design clearly requires them.
-- Prefer page scroll over small embedded scroll containers on mobile.
-
-## Good Defaults For Codex
-
-- When unsure, extend the current page instead of extracting a new subsystem.
-- When a request sounds like “make it like the existing modal/block,” reuse the current implementation pattern first.
-- If history, confirmation, or edit flows already exist on the page, mirror those patterns for related entities.
+Follow these rules on all PRs to keep the codebase maintainable.
