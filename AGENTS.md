@@ -38,13 +38,6 @@
 
 Do not commit secrets, private DSNs, or deployment credentials. Review changes to `pages/_document.js`, `pages/_app.js`, and `ecosystem.config.js` carefully because they affect global scripts, monitoring, and runtime configuration across the entire app.
 
-## Local Dev Credentials
-
-For local FE verification against the running dev app, use:
-
-- phone: `+79213463070`
-- password: `Jaco112211`
-
 ## MUI Grid (v7) Note
 
 When using Material UI v7, the `Grid` item sizing props changed. Use the `size` prop on `Grid` children instead of the old `xs`, `sm`, `md` props. Examples:
@@ -61,5 +54,6 @@ Always produce senior-level code: avoid inventing field names or making assumpti
 - Validate for null/undefined before access.
 - Use only documented/known fields; do not add speculative fallbacks without verifying upstream.
 - Prefer clear, minimal, and well-tested transformations over ad-hoc, speculative code.
+- Fast syntax checks, no extra formatting
 
 Follow these rules on all PRs to keep the codebase maintainable.

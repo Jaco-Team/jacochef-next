@@ -165,6 +165,21 @@ export default function VendorDetailPage() {
     setBindDeclarationId("");
   }, [selectedItemId]);
 
+  useEffect(() => {
+    if (!selectedCatalogItemId) {
+      return;
+    }
+
+    const exists = (allItems || []).some(
+      (item) =>
+        Number(item.id) === Number(selectedCatalogItemId) && !vendorItemIds.has(Number(item.id)),
+    );
+
+    if (!exists) {
+      setSelectedCatalogItemId("");
+    }
+  }, [allItems, selectedCatalogItemId, vendorItems]);
+
   const applyDeclarationUpdates = (entries = []) => {
     if (!Array.isArray(entries) || entries.length === 0) {
       return;
@@ -465,10 +480,14 @@ export default function VendorDetailPage() {
     (item) => Number(item.id) === Number(selectedItemId),
   );
 
-  const itemsSelectData = (allItems || []).map((item) => ({
-    id: String(item.id),
-    name: item.name || `Товар #${item.id}`,
-  }));
+  const itemsSelectData = (allItems || [])
+    .filter((item) => !vendorItemIds.has(Number(item.id)))
+    .map((item) => ({
+      id: String(item.id),
+      name: item.cat_name
+        ? `${item.name || `Товар #${item.id}`} · ${item.cat_name}`
+        : item.name || `Товар #${item.id}`,
+    }));
 
   const availableDeclarations = (() => {
     const map = new Map();
@@ -577,7 +596,6 @@ export default function VendorDetailPage() {
     itemsSelectData,
     selectedCatalogItemId,
     setSelectedCatalogItemId,
-    isEditing,
     isItemsSaving,
     toggleCity,
     handleAddVendorItem,
