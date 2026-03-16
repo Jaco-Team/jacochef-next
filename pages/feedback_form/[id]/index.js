@@ -1568,13 +1568,6 @@ function FeedbackPage() {
                           color="text.secondary"
                         >
                           Всего отзывов
-                          <IconButton
-                            size="small"
-                            sx={{ ml: 0.5, verticalAlign: "middle" }}
-                            title="Количество уникальных отзывов за выбранный период"
-                          >
-                            <InfoOutlined fontSize="small" />
-                          </IconButton>
                         </Typography>
                         <ChatBubbleOutline sx={{ color: "text.secondary", fontSize: 20 }} />
                       </Box>
@@ -1631,13 +1624,6 @@ function FeedbackPage() {
                           color="text.secondary"
                         >
                           Средняя оценка
-                          <IconButton
-                            size="small"
-                            sx={{ ml: 0.5, verticalAlign: "middle" }}
-                            title="Средняя оценка от 1 до 5"
-                          >
-                            <InfoOutlined fontSize="small" />
-                          </IconButton>
                         </Typography>
                         <StarOutline sx={{ color: "text.secondary", fontSize: 20 }} />
                       </Box>
@@ -1694,13 +1680,6 @@ function FeedbackPage() {
                           color="text.secondary"
                         >
                           Доля негатива
-                          <IconButton
-                            size="small"
-                            sx={{ ml: 0.5, verticalAlign: "middle" }}
-                            title="Процент отзывов от 1 до 3"
-                          >
-                            <InfoOutlined fontSize="small" />
-                          </IconButton>
                         </Typography>
                         <ThumbDownOutlined sx={{ color: "text.secondary", fontSize: 20 }} />
                       </Box>
@@ -1757,13 +1736,6 @@ function FeedbackPage() {
                           color="text.secondary"
                         >
                           Доля позитива
-                          <IconButton
-                            size="small"
-                            sx={{ ml: 0.5, verticalAlign: "middle" }}
-                            title="Процент отзывов от 4 до 5"
-                          >
-                            <InfoOutlined fontSize="small" />
-                          </IconButton>
                         </Typography>
                         <ThumbUpOutlined sx={{ color: "text.secondary", fontSize: 20 }} />
                       </Box>

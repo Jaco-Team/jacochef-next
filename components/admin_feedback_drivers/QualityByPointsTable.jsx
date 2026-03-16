@@ -96,13 +96,15 @@ const QualityByPointsTable = ({ data }) => {
                     <Box sx={{ display: "flex", flexDirection: "column", ml: -0.5 }}>
                       <ArrowUpward
                         sx={{
-                          fontSize: 14,
+                          fontSize: 10,
+                          marginLeft: "6px",
                           opacity: orderBy === "location" && order === "asc" ? 1 : 0.3,
                         }}
                       />
                       <ArrowDownward
                         sx={{
-                          fontSize: 14,
+                          fontSize: 10,
+                          marginLeft: "6px",
                           opacity: orderBy === "location" && order === "desc" ? 1 : 0.3,
                         }}
                       />
@@ -122,6 +124,7 @@ const QualityByPointsTable = ({ data }) => {
                   borderBottom: "1px solid rgba(224, 224, 224, 0.5)",
                 }}
               >
+                <span className="text-14px">Отзывов</span>
                 <TableSortLabel
                   active={orderBy === "count"}
                   direction={orderBy === "count" ? order : "asc"}
@@ -130,21 +133,21 @@ const QualityByPointsTable = ({ data }) => {
                     <Box sx={{ display: "flex", flexDirection: "column", ml: -0.5 }}>
                       <ArrowUpward
                         sx={{
-                          fontSize: 14,
+                          fontSize: 10,
+                          marginLeft: "6px",
                           opacity: orderBy === "count" && order === "asc" ? 1 : 0.3,
                         }}
                       />
                       <ArrowDownward
                         sx={{
-                          fontSize: 14,
+                          fontSize: 10,
+                          marginLeft: "6px",
                           opacity: orderBy === "count" && order === "desc" ? 1 : 0.3,
                         }}
                       />
                     </Box>
                   )}
-                >
-                  <span className="text-14px">Отзывов</span>
-                </TableSortLabel>
+                ></TableSortLabel>
               </TableCell>
 
               <TableCell
@@ -165,13 +168,15 @@ const QualityByPointsTable = ({ data }) => {
                       <Box sx={{ display: "flex", flexDirection: "column", ml: -0.5 }}>
                         <ArrowUpward
                           sx={{
-                            fontSize: 14,
+                            fontSize: 10,
+                            marginLeft: "6px",
                             opacity: orderBy === "mediumRating" && order === "asc" ? 1 : 0.3,
                           }}
                         />
                         <ArrowDownward
                           sx={{
-                            fontSize: 14,
+                            fontSize: 10,
+                            marginLeft: "6px",
                             opacity: orderBy === "mediumRating" && order === "desc" ? 1 : 0.3,
                           }}
                         />
@@ -215,13 +220,15 @@ const QualityByPointsTable = ({ data }) => {
                       <Box sx={{ display: "flex", flexDirection: "column", ml: -0.5 }}>
                         <ArrowUpward
                           sx={{
-                            fontSize: 14,
+                            fontSize: 10,
+                            marginLeft: "6px",
                             opacity: orderBy === "negativeRating" && order === "asc" ? 1 : 0.3,
                           }}
                         />
                         <ArrowDownward
                           sx={{
-                            fontSize: 14,
+                            fontSize: 10,
+                            marginLeft: "6px",
                             opacity: orderBy === "negativeRating" && order === "desc" ? 1 : 0.3,
                           }}
                         />
@@ -256,6 +263,7 @@ const QualityByPointsTable = ({ data }) => {
                   borderBottom: "1px solid rgba(224, 224, 224, 0.5)",
                 }}
               >
+                <span className="text-14px">Тренд</span>
                 <TableSortLabel
                   active={orderBy === "trend"}
                   direction={orderBy === "trend" ? order : "asc"}
@@ -264,20 +272,21 @@ const QualityByPointsTable = ({ data }) => {
                     <Box sx={{ display: "flex", flexDirection: "column", ml: -0.5 }}>
                       <ArrowUpward
                         sx={{
-                          fontSize: 14,
+                          fontSize: 10,
+                          marginLeft: "6px",
                           opacity: orderBy === "trend" && order === "asc" ? 1 : 0.3,
                         }}
                       />
                       <ArrowDownward
                         sx={{
-                          fontSize: 14,
+                          fontSize: 10,
+                          marginLeft: "6px",
                           opacity: orderBy === "trend" && order === "desc" ? 1 : 0.3,
                         }}
                       />
                     </Box>
                   )}
                 >
-                  <span className="text-14px">Тренд</span>
                   <Tooltip
                     title="Изменение показателей по сравнению с предыдущим периодом"
                     placement="top"

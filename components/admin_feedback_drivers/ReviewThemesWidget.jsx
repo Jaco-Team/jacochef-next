@@ -129,7 +129,6 @@ function ThemeChip({ item }) {
       title={
         <Box sx={{ p: 0.5 }}>
           <Typography sx={{ fontSize: 12, fontWeight: 700, mb: 0.5 }}>{item.theme}</Typography>
-          <Typography sx={{ fontSize: 12, opacity: 0.9 }}>Тональность: {meta.label}</Typography>
           <Typography sx={{ fontSize: 12, opacity: 0.9 }}>Упоминаний: {item.count}</Typography>
           {item.names && item.names.length > 0 && (
             <Typography sx={{ fontSize: 12, opacity: 0.9, mt: 0.75 }}>
@@ -239,9 +238,8 @@ export default function ReviewThemesWidget({ data }) {
         sx={{
           mx: "auto",
           p: { xs: 2, md: 3 },
-          borderRadius: 4,
-          border: "1px solid #E6EAF0",
-          boxShadow: "0 2px 10px rgba(16, 24, 40, 0.04)",
+          borderRadius: 2,
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2.5 }}>

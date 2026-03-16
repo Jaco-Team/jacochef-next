@@ -158,14 +158,28 @@ const ReviewsTable = ({ reviews }) => {
           >
             <TableHead>
               <TableRow sx={{ bgcolor: "#fafafa" }}>
-                <TableCell sx={{ fontWeight: 600, color: "#616161", fontSize: "0.875rem" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    color: "#616161",
+                    fontSize: "0.875rem",
+                    minWidth: "100px",
+                  }}
+                >
                   Дата
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, color: "#616161", fontSize: "0.875rem" }}>
                   Заказ
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "#616161", fontSize: "0.875rem" }}>
-                  Точка
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    color: "#616161",
+                    fontSize: "0.875rem",
+                    minWidth: "250px",
+                  }}
+                >
+                  Кафе
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, color: "#616161", fontSize: "0.875rem" }}>
                   Оценка
