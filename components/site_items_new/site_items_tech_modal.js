@@ -67,6 +67,11 @@ const modalSections = [
     description: "Тайминги, заготовки и позиции",
   },
 ];
+const markingOptions = [
+  { id: "0", name: "Обычный товар" },
+  { id: "1", name: "Вода" },
+  { id: "2", name: "Сладкий напиток" },
+];
 
 function a11yProps(index) {
   return {
@@ -110,6 +115,8 @@ export class SiteItemsModalTech extends React.Component {
       date_start: null,
       date_end: null,
       art: "",
+      is_mark: "0",
+      mark_code: "",
       category_id: null,
       count_part: "",
       stol: "",
@@ -227,12 +234,40 @@ export class SiteItemsModalTech extends React.Component {
     return String(this.state.short_name ?? "").trim().length > 20;
   }
 
+  isMarkCodeRequired() {
+    const markType = parseInt(this.state.is_mark, 10);
+
+    return markType === 1 || markType === 2;
+  }
+
   hasAccessFlag(value) {
     return value === true || value === 1 || value === "1";
   }
 
   getFieldAccess(field, type = "edit") {
     return this.hasAccessFlag(this.props.acces?.[`${field}_${type}`]);
+  }
+
+  getFieldAccessOrDefault(field, type = "edit", fallback = true) {
+    const accessKey = `${field}_${type}`;
+
+    if (!(accessKey in (this.props.acces || {}))) {
+      return fallback;
+    }
+
+    return this.getFieldAccess(field, type);
+  }
+
+  getFieldVisibilityOrDefault(field, fallback = true) {
+    const editKey = `${field}_edit`;
+    const viewKey = `${field}_view`;
+    const rawAccess = this.props.acces || {};
+
+    if (!(editKey in rawAccess) && !(viewKey in rawAccess)) {
+      return fallback;
+    }
+
+    return this.hasAccessFlag(rawAccess[editKey]) || this.hasAccessFlag(rawAccess[viewKey]);
   }
 
   getNormalizedAccess() {
@@ -443,6 +478,15 @@ export class SiteItemsModalTech extends React.Component {
         label: "Код 1С",
         tab: "0",
         missing: this.getFieldAccess("art") && this.isEmptyTextValue(this.state.art),
+      },
+      {
+        key: "mark_code",
+        label: "Код маркировки",
+        tab: "0",
+        missing:
+          this.getFieldAccessOrDefault("marc") &&
+          this.isMarkCodeRequired() &&
+          this.isEmptyTextValue(this.state.mark_code),
       },
       {
         key: "date_start",
@@ -732,6 +776,8 @@ export class SiteItemsModalTech extends React.Component {
           ...this.getDefaultFormState(),
           name: isNewItem ? "" : this.props.item?.name || "",
           art: isNewItem ? "" : this.props.item?.art || "",
+          is_mark: isNewItem ? "0" : String(this.props.item?.is_mark ?? 0),
+          mark_code: isNewItem ? "" : this.props.item?.mark_code || "",
           category_id: selectedCategory,
           count_part: isNewItem
             ? ""
@@ -802,6 +848,20 @@ export class SiteItemsModalTech extends React.Component {
 
   changeItemChecked(type, event) {
     this.updateFieldValue(type, event.target.checked === true ? 1 : 0);
+  }
+
+  changeMarkingType(event) {
+    const nextValue = event.target.value;
+
+    this.setState((prevState) => ({
+      is_mark: nextValue,
+      mark_code:
+        parseInt(nextValue, 10) === 1 || parseInt(nextValue, 10) === 2 ? prevState.mark_code : "",
+      err_valid: {
+        ...prevState.err_valid,
+        mark_code: false,
+      },
+    }));
   }
 
   componentWillUnmount() {
@@ -1261,6 +1321,8 @@ export class SiteItemsModalTech extends React.Component {
       type: this.props.item?.type,
       name: this.state.name,
       art: this.state.art,
+      is_mark: this.state.is_mark,
+      mark_code: this.isMarkCodeRequired() ? this.state.mark_code : "",
       tmp_desc: this.state.tmp_desc,
       marc_desc: this.state.marc_desc,
       marc_desc_full: this.state.marc_desc_full,
@@ -1413,6 +1475,10 @@ export class SiteItemsModalTech extends React.Component {
     const canSave = this.hasAnyEditableField();
     const hiddenIf = (condition) => (condition ? { display: "none" } : {});
     const isChecked = (value) => parseInt(value) === 1;
+    const canViewMarkingType = this.getFieldVisibilityOrDefault("marc");
+    const canEditMarkingType = this.getFieldAccessOrDefault("marc");
+    const canViewMarkCode = this.getFieldVisibilityOrDefault("marc");
+    const canEditMarkCode = this.getFieldAccessOrDefault("marc");
 
     const dialogPaperSx = fullScreen
       ? {
@@ -2449,6 +2515,54 @@ export class SiteItemsModalTech extends React.Component {
                               onFocus={() => this.clearFieldError("stol")}
                               sx={this.getErrorFieldSx("stol")}
                               func={this.changeItem.bind(this, "stol")}
+                            />
+                          </Grid>
+                          <Grid
+                            size={{
+                              xs: 12,
+                              md: 4,
+                            }}
+                            style={hiddenIf(!canViewMarkingType)}
+                          >
+                            <MyAutocomplite
+                              label="Маркировка"
+                              data={markingOptions}
+                              multiple={false}
+                              unifiedPopup
+                              disableClearable
+                              filterSelectedOptions={false}
+                              value={
+                                markingOptions.find(
+                                  (item) => item.id === String(this.state.is_mark),
+                                ) || null
+                              }
+                              disabled={!canEditMarkingType}
+                              isOptionEqualToValue={(option, value) =>
+                                String(option?.id) === String(value?.id)
+                              }
+                              func={(event, value) =>
+                                this.changeMarkingType({
+                                  target: {
+                                    value: value?.id ?? "0",
+                                  },
+                                })
+                              }
+                            />
+                          </Grid>
+                          <Grid
+                            size={{
+                              xs: 12,
+                              md: 8,
+                            }}
+                            style={hiddenIf(!this.isMarkCodeRequired() || !canViewMarkCode)}
+                          >
+                            <MyTextInput
+                              label="Код маркировки"
+                              value={this.state.mark_code}
+                              disabled={!canEditMarkCode}
+                              onFocus={() => this.clearFieldError("mark_code")}
+                              sx={this.getErrorFieldSx("mark_code")}
+                              func={this.changeItem.bind(this, "mark_code")}
                             />
                           </Grid>
                         </Grid>,

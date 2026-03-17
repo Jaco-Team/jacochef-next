@@ -89,6 +89,8 @@ const siteItemHistoryFieldLabels = {
   date_start: "Действует с",
   date_end: "Действует по",
   art: "Код 1С",
+  is_mark: "Маркировка",
+  mark_code: "Код маркировки",
   category_id: "Категория",
   weight: "Вес",
   count_part: "Кусочков или размер",
@@ -147,6 +149,23 @@ function formatSiteItemHistoryBoolean(value) {
   }
 
   return parseInt(value) ? "Да" : "Нет";
+}
+
+function formatSiteItemHistoryMarking(value) {
+  if (value === "" || value === null || value === undefined) {
+    return "";
+  }
+
+  switch (parseInt(value, 10)) {
+    case 0:
+      return "Обычный товар";
+    case 1:
+      return "Вода";
+    case 2:
+      return "Сладкий напиток";
+    default:
+      return String(value);
+  }
 }
 
 function formatSiteItemHistoryNumber(value, decimals = null) {
@@ -227,6 +246,10 @@ function formatSiteItemHistoryValue(field, item, categories = []) {
       return formatSiteItemHistoryDate(item?.[field]);
     case "category_id":
       return getSiteItemCategoryName(item, categories);
+    case "is_mark":
+      return formatSiteItemHistoryMarking(item?.is_mark);
+    case "mark_code":
+      return item?.mark_code || item?.code_mark || "";
     case "is_price":
     case "is_show":
     case "show_program":
@@ -269,6 +292,8 @@ function buildSiteItemHistoryDiff(item, previousItem = null, categories = []) {
     "date_start",
     "date_end",
     "art",
+    "is_mark",
+    "mark_code",
     "category_id",
     "count_part",
     "stol",

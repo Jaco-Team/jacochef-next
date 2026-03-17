@@ -101,7 +101,9 @@ export function MySelect(props) {
       },
     },
   };
+
   const isJournalStyle = props.customRI === "journal";
+
   return (
     <NoSsr>
       <FormControl
@@ -116,7 +118,6 @@ export function MySelect(props) {
         <Select
           value={normalizedValue}
           IconComponent={isJournalStyle ? KeyboardArrowDownIcon : undefined}
-          // Для кнопки очистки (только если Select не multiple и не disabled)
           {...(isJournalStyle &&
           !props.multiple &&
           !props.disabled &&

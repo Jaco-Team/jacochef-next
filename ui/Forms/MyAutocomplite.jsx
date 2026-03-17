@@ -237,7 +237,7 @@ export function MyAutocomplite(props) {
         blurOnSelect={props.blurOnSelect}
         ListboxProps={props.ListboxProps || undefined}
         onBlur={props.onBlur || undefined}
-        filterSelectedOptions
+        filterSelectedOptions={props.filterSelectedOptions ?? true}
         multiple={props.multiple && props.multiple === true ? true : false}
         slots={mergedSlots}
         slotProps={mergedSlotProps}
