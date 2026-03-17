@@ -1496,6 +1496,7 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
               <MyAutocomplite
                 label="Теги"
                 multiple={true}
+                unifiedPopup
                 disabled={true}
                 data={this.state.itemView?.tags_all?.key}
                 value={this.state.itemView?.tags?.key}
@@ -2253,6 +2254,7 @@ class SiteItems_Modal_Mark extends React.Component {
                 <MyAutocomplite
                   label="Теги"
                   multiple={true}
+                  unifiedPopup
                   data={this.state.tags_all}
                   value={this.state.tags_my}
                   func={this.changeAutocomplite.bind(this, "tags_my")}
@@ -2504,6 +2506,7 @@ const ModalEditTags = ({ open, onClose, save, title = "Редактирован�
             <MyAutocomplite
               label="Тег"
               multiple={false}
+              unifiedPopup
               data={tags}
               value={chooseTag}
               func={(data, value) => {

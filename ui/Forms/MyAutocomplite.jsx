@@ -1,11 +1,29 @@
 "use client";
 
-import { Autocomplete, NoSsr, Stack, TextField } from "@mui/material";
+import { forwardRef } from "react";
+import { Autocomplete, NoSsr, Popper, Stack, TextField } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import CloseIcon from "@mui/icons-material/Close";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
+const UnifiedAutocompletePopper = forwardRef(function UnifiedAutocompletePopper(popperProps, ref) {
+  const { anchorEl, style, ...other } = popperProps;
+
+  return (
+    <Popper
+      {...other}
+      ref={ref}
+      anchorEl={anchorEl}
+      style={{
+        ...style,
+        width: anchorEl?.offsetWidth ?? style?.width ?? undefined,
+      }}
+    />
+  );
+});
+
 export function MyAutocomplite(props) {
+  const isUnifiedPopup = Boolean(props.unifiedPopup);
   const customStylesRenderInput = {
     journal: {
       "& .MuiOutlinedInput-root": {
@@ -52,6 +70,135 @@ export function MyAutocomplite(props) {
     },
   };
 
+  const unifiedAutocompleteSx = isUnifiedPopup
+    ? {
+        "&.Mui-expanded .MuiOutlinedInput-root": {
+          borderBottomLeftRadius: "0px",
+          borderBottomRightRadius: "0px",
+        },
+      }
+    : {};
+
+  const unifiedTextFieldSx = isUnifiedPopup
+    ? {
+        "& .MuiOutlinedInput-root": {
+          borderRadius: "18px",
+          border: "1px solid #E5E5E5",
+          color: "#3C3B3B",
+          backgroundColor: props.disabled ? "#F5F5F5" : "#FFFFFF",
+          transition: "border-radius 0.16s ease",
+          "&:hover": {
+            backgroundColor: props.disabled ? "#F5F5F5" : "#FFFFFF",
+            borderColor: "#E5E5E5",
+          },
+          "&.Mui-focused": {
+            backgroundColor: "#FFFFFF",
+            borderColor: "#E5E5E5",
+          },
+          "&.Mui-disabled": {
+            backgroundColor: "#F5F5F5",
+            borderColor: "rgba(0, 0, 0, 0.12)",
+          },
+          "& .MuiOutlinedInput-notchedOutline": {
+            display: "none",
+          },
+        },
+        "& .MuiInputLabel-root": {
+          color: "#666666",
+          backgroundColor: "#fff",
+          paddingInline: "8px",
+          borderRadius: "12px",
+          "&.Mui-focused": {
+            color: "#A6A6A6",
+          },
+          "&.Mui-disabled": {
+            color: "rgba(0, 0, 0, 0.38)",
+          },
+        },
+      }
+    : {};
+
+  const unifiedPopperSx = isUnifiedPopup
+    ? {
+        marginTop: "-1px !important",
+        [`& .MuiAutocomplete-paper`]: {
+          margin: 0,
+        },
+      }
+    : {};
+
+  const unifiedPaperSx = isUnifiedPopup
+    ? {
+        marginTop: 0,
+        border: "1px solid #E5E5E5",
+        borderTop: "none",
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+        borderBottomLeftRadius: "18px",
+        borderBottomRightRadius: "18px",
+        boxShadow: "0px 10px 24px rgba(0, 0, 0, 0.08)",
+        overflow: "hidden",
+        backgroundColor: "#FFFFFF",
+      }
+    : {};
+
+  const unifiedListboxSx = isUnifiedPopup
+    ? {
+        padding: 0,
+        maxHeight: 320,
+        "& .MuiAutocomplete-option": {
+          minHeight: 52,
+          padding: "12px 20px",
+          fontSize: 16,
+          lineHeight: "24px",
+          color: "#3C3B3B",
+          borderTop: "1px solid #F3F3F3",
+        },
+        "& .MuiAutocomplete-option:first-of-type": {
+          borderTop: "none",
+        },
+        "& .MuiAutocomplete-option.Mui-focused": {
+          backgroundColor: "#F8F8F8",
+        },
+        '& .MuiAutocomplete-option[aria-selected="true"]': {
+          backgroundColor: "#FFF7F8",
+        },
+        '& .MuiAutocomplete-option[aria-selected="true"].Mui-focused': {
+          backgroundColor: "#FFF1F3",
+        },
+      }
+    : {};
+
+  const mergedSlotProps = {
+    ...props.slotProps,
+    popper: {
+      ...props.slotProps?.popper,
+      sx: {
+        ...(unifiedPopperSx || {}),
+        ...(props.slotProps?.popper?.sx || {}),
+      },
+    },
+    paper: {
+      ...props.slotProps?.paper,
+      sx: {
+        ...(unifiedPaperSx || {}),
+        ...(props.slotProps?.paper?.sx || {}),
+      },
+    },
+    listbox: {
+      ...props.slotProps?.listbox,
+      sx: {
+        ...(unifiedListboxSx || {}),
+        ...(props.slotProps?.listbox?.sx || {}),
+      },
+    },
+  };
+
+  const mergedSlots = {
+    ...props.slots,
+    ...(isUnifiedPopup ? { popper: UnifiedAutocompletePopper } : {}),
+  };
+
   const autocompleteContent = (
     <Stack spacing={3}>
       <Autocomplete
@@ -92,6 +239,12 @@ export function MyAutocomplite(props) {
         onBlur={props.onBlur || undefined}
         filterSelectedOptions
         multiple={props.multiple && props.multiple === true ? true : false}
+        slots={mergedSlots}
+        slotProps={mergedSlotProps}
+        sx={{
+          ...(unifiedAutocompleteSx || {}),
+          ...(props.autocompleteSx || {}),
+        }}
         isOptionEqualToValue={
           props.isOptionEqualToValue ||
           ((option, value) => parseInt(option?.id) === parseInt(value?.id))
@@ -123,6 +276,7 @@ export function MyAutocomplite(props) {
               label={props.label}
               placeholder={props.placeholder}
               sx={{
+                ...(unifiedTextFieldSx || {}),
                 ...(props.customRI ? customStylesRenderInput[props.customRI] : {}),
                 ...(props.sx || {}),
               }}

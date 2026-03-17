@@ -1860,6 +1860,7 @@ export class SiteItemsModalTech extends React.Component {
                 <MyAutocomplite
                   multiple={false}
                   disableNoSsr
+                  unifiedPopup
                   optionKey="un_id"
                   getOptionKey={(option) => `${option?.un_id}`}
                   data={this.state.items_stage?.all ?? []}
@@ -1944,6 +1945,7 @@ export class SiteItemsModalTech extends React.Component {
             <MyAutocomplite
               multiple={false}
               disableNoSsr
+              unifiedPopup
               data={this.state.item_items?.all_items ?? []}
               value={item.item_id}
               func={this.changeItemData.bind(this, key, "this_items")}
@@ -2422,6 +2424,7 @@ export class SiteItemsModalTech extends React.Component {
                             <MyAutocomplite
                               label="Категория"
                               multiple={false}
+                              unifiedPopup
                               data={category}
                               disabled={!access?.category_id_edit}
                               value={this.state.category_id}
@@ -2666,6 +2669,7 @@ export class SiteItemsModalTech extends React.Component {
                             <MyAutocomplite
                               label="Теги"
                               multiple={true}
+                              unifiedPopup
                               data={this.state.tags_all}
                               value={this.state.tags_my}
                               onFocus={() => this.clearFieldError("tags_my")}
@@ -2913,6 +2917,7 @@ export class SiteItemsModalTech extends React.Component {
                                   <MyAutocomplite
                                     multiple={false}
                                     disableNoSsr
+                                    unifiedPopup
                                     data={this.state.items_stage?.all ?? []}
                                     disabledItemsFocusable={true}
                                     value={null}
@@ -3006,6 +3011,7 @@ export class SiteItemsModalTech extends React.Component {
                                   <MyAutocomplite
                                     multiple={false}
                                     disableNoSsr
+                                    unifiedPopup
                                     data={this.state.item_items?.all_items ?? []}
                                     disabledItemsFocusable={true}
                                     value={null}
