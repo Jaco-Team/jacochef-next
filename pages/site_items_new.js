@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 
+import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import EditNoteIcon from "@mui/icons-material/EditNote";
-import TextSnippetOutlinedIcon from "@mui/icons-material/TextSnippetOutlined";
 
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -17,6 +18,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableContainer from "@mui/material/TableContainer";
 import Paper from "@mui/material/Paper";
+import Checkbox from "@mui/material/Checkbox";
 
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -38,8 +40,25 @@ import { api_laravel_local, api_laravel } from "@/src/api_new";
 import dayjs from "dayjs";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
+import HistoryLog from "@/ui/history/HistoryLog";
 import { SiteItemsModalTech } from "@/components/site_items_new/site_items_tech_modal";
 import { TableSortLabel } from "@mui/material";
+
+const brandRed = "#DD1A32";
+const blockBackground = "#F3F3F3";
+const blockBorder = "#E5E5E5";
+const textPrimary = "#3C3B3B";
+const textSecondary = "#5E5E5E";
+const tableSortLabelSx = {
+  fontWeight: 600,
+  color: textPrimary,
+  "&.Mui-active": {
+    color: brandRed,
+  },
+  "& .MuiTableSortLabel-icon": {
+    color: `${brandRed} !important`,
+  },
+};
 
 function roundTo(n, digits) {
   if (n.length == 0) {
@@ -61,6 +80,326 @@ function roundTo(n, digits) {
     n = (n * -1).toFixed(digits);
   }
   return n;
+}
+
+const siteItemHistoryFieldLabels = {
+  name: "Наименование",
+  short_name: "Короткое название",
+  link: "Ссылка",
+  date_start: "Действует с",
+  date_end: "Действует по",
+  art: "Код 1С",
+  category_id: "Категория",
+  weight: "Вес",
+  count_part: "Кусочков или размер",
+  stol: "Стол",
+  is_price: "Установить цену",
+  is_show: "Активность",
+  protein: "Белки",
+  fat: "Жиры",
+  carbohydrates: "Углеводы",
+  time_stage_1: "Время на 1 этап",
+  time_stage_2: "Время на 2 этап",
+  time_stage_3: "Время на 3 этап",
+  tmp_desc: "Состав",
+  marc_desc: "Короткое описание",
+  marc_desc_full: "Полное описание",
+  show_program: "На кассе",
+  show_site: "На сайте и КЦ",
+  is_new: "Новинка",
+  is_hit: "Хит",
+  sort: "Сортировка",
+  img_app: "Изображение",
+  all_w_brutto: "Итого брутто",
+  all_w_netto: "Итого нетто",
+  all_w: "Итого выход",
+  stage_1: "Заготовки: 1 этап",
+  stage_2: "Заготовки: 2 этап",
+  stage_3: "Заготовки: 3 этап",
+  items: "Позиции",
+  tags: "Теги",
+};
+
+function getSiteItemHistoryTimestamp(item) {
+  return item?.update_item || item?.date_update || item?.date_start || "";
+}
+
+function getSiteItemHistoryDateValue(item) {
+  const timestamp = getSiteItemHistoryTimestamp(item);
+  const parsed = timestamp ? new Date(timestamp).getTime() : 0;
+
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function formatSiteItemHistoryDate(value) {
+  if (!value) {
+    return "";
+  }
+
+  const parsed = dayjs(value);
+
+  return parsed.isValid() ? parsed.format("DD.MM.YYYY") : String(value);
+}
+
+function formatSiteItemHistoryBoolean(value) {
+  if (value === "" || value === null || value === undefined) {
+    return "";
+  }
+
+  return parseInt(value) ? "Да" : "Нет";
+}
+
+function formatSiteItemHistoryNumber(value, decimals = null) {
+  if (value === "" || value === null || value === undefined) {
+    return "";
+  }
+
+  const parsed = Number(String(value).replace(",", "."));
+
+  if (Number.isNaN(parsed)) {
+    return String(value);
+  }
+
+  if (decimals === null) {
+    return Number.isInteger(parsed) ? String(parsed) : String(parsed).replace(".", ",");
+  }
+
+  return parsed.toFixed(decimals).replace(".", ",");
+}
+
+function formatSiteItemHistoryTags(tags = []) {
+  if (!Array.isArray(tags) || !tags.length) {
+    return "";
+  }
+
+  return [...tags]
+    .sort((a, b) => parseInt(a?.id || 0) - parseInt(b?.id || 0))
+    .map((tag) => tag?.name)
+    .filter(Boolean)
+    .join(", ");
+}
+
+function formatSiteItemHistoryCollection(items = [], { isFinal = false } = {}) {
+  if (!Array.isArray(items) || !items.length) {
+    return "";
+  }
+
+  return items
+    .map((item) => {
+      const name = item?.name || item?.item_id?.name || item?.type_id?.name || "";
+      const parts = [
+        name,
+        item?.ei_name ? `ед: ${item.ei_name}` : "",
+        item?.brutto !== undefined ? `брутто: ${formatSiteItemHistoryNumber(item.brutto, 3)}` : "",
+        item?.pr_1 !== undefined ? `% ХО: ${formatSiteItemHistoryNumber(item.pr_1)}` : "",
+        item?.netto !== undefined ? `нетто: ${formatSiteItemHistoryNumber(item.netto, 3)}` : "",
+        item?.pr_2 !== undefined ? `% ГО: ${formatSiteItemHistoryNumber(item.pr_2)}` : "",
+        item?.res !== undefined ? `выход: ${formatSiteItemHistoryNumber(item.res, 3)}` : "",
+        !isFinal && item?.stage ? `этап: ${item.stage}` : "",
+        isFinal && item?.is_add !== undefined
+          ? `добавка: ${parseInt(item.is_add) ? "Да" : "Нет"}`
+          : "",
+      ].filter(Boolean);
+
+      return parts.join(", ");
+    })
+    .join(" | ");
+}
+
+function getSiteItemCategoryName(item, categories = []) {
+  const categoryId = item?.category_id ?? item?.category_id2;
+
+  if (categoryId === "" || categoryId === null || categoryId === undefined) {
+    return "";
+  }
+
+  const matchedCategory = categories.find(
+    (category) => parseInt(category?.id) === parseInt(categoryId),
+  );
+
+  return matchedCategory?.name || String(categoryId);
+}
+
+function formatSiteItemHistoryValue(field, item, categories = []) {
+  switch (field) {
+    case "date_start":
+    case "date_end":
+      return formatSiteItemHistoryDate(item?.[field]);
+    case "category_id":
+      return getSiteItemCategoryName(item, categories);
+    case "is_price":
+    case "is_show":
+    case "show_program":
+    case "show_site":
+    case "is_new":
+    case "is_hit":
+      return formatSiteItemHistoryBoolean(item?.[field]);
+    case "weight":
+    case "count_part":
+    case "protein":
+    case "fat":
+    case "carbohydrates":
+    case "sort":
+      return formatSiteItemHistoryNumber(item?.[field]);
+    case "all_w_brutto":
+    case "all_w_netto":
+    case "all_w":
+      return formatSiteItemHistoryNumber(item?.[field], 3);
+    case "stage_1":
+    case "stage_2":
+    case "stage_3":
+      return formatSiteItemHistoryCollection(item?.[field]);
+    case "items":
+      return formatSiteItemHistoryCollection(item?.[field], { isFinal: true });
+    case "tags":
+      return formatSiteItemHistoryTags(item?.tags);
+    case "img_app":
+      return item?.img_app || "";
+    default:
+      return item?.[field] === null || item?.[field] === undefined ? "" : String(item[field]);
+  }
+}
+
+function buildSiteItemHistoryDiff(item, previousItem = null, categories = []) {
+  const diff = {};
+  const fields = [
+    "name",
+    "short_name",
+    "link",
+    "date_start",
+    "date_end",
+    "art",
+    "category_id",
+    "count_part",
+    "stol",
+    "weight",
+    "is_price",
+    "is_show",
+    "protein",
+    "fat",
+    "carbohydrates",
+    "time_stage_1",
+    "time_stage_2",
+    "time_stage_3",
+    "tmp_desc",
+    "marc_desc",
+    "marc_desc_full",
+    "show_program",
+    "show_site",
+    "is_new",
+    "is_hit",
+    "sort",
+    "img_app",
+    "all_w_brutto",
+    "all_w_netto",
+    "all_w",
+    "tags",
+    "stage_1",
+    "stage_2",
+    "stage_3",
+    "items",
+  ];
+
+  fields.forEach((field) => {
+    const currentValue = formatSiteItemHistoryValue(field, item, categories);
+    const previousValue = previousItem
+      ? formatSiteItemHistoryValue(field, previousItem, categories)
+      : "";
+
+    if (currentValue !== previousValue) {
+      diff[siteItemHistoryFieldLabels[field] || field] = {
+        from: previousValue,
+        to: currentValue,
+      };
+    }
+  });
+
+  if (!Object.keys(diff).length) {
+    diff["Изменения"] = {
+      from: "",
+      to: previousItem ? "Карточка обновлена" : "Карточка создана",
+    };
+  }
+
+  return diff;
+}
+
+function normalizeSiteItemHistory(hist = [], categories = []) {
+  const safeHist = Array.isArray(hist) ? hist.filter(Boolean) : [];
+  const sortedHist = [...safeHist].sort((a, b) => {
+    const dateDifference = getSiteItemHistoryDateValue(b) - getSiteItemHistoryDateValue(a);
+
+    if (dateDifference !== 0) {
+      return dateDifference;
+    }
+
+    return parseInt(b?.id || 0) - parseInt(a?.id || 0);
+  });
+
+  return sortedHist.map((item, index) => {
+    const previousItem = sortedHist[index + 1] || null;
+
+    return {
+      id: item?.id || `${item?.item_id || "site-item"}-${index}`,
+      created_at: getSiteItemHistoryTimestamp(item),
+      actor_name: item?.user || "Неизвестно",
+      event_type: previousItem ? "update" : "create",
+      diff_json: JSON.stringify(buildSiteItemHistoryDiff(item, previousItem, categories)),
+      meta_json: JSON.stringify({
+        entity_type: "site_item",
+        item_id: item?.item_id || item?.id || null,
+      }),
+    };
+  });
+}
+
+function getLatestSiteItemHistorySnapshot(hist = []) {
+  return [...(Array.isArray(hist) ? hist : [])].sort(
+    (a, b) => getSiteItemHistoryDateValue(b) - getSiteItemHistoryDateValue(a),
+  )[0];
+}
+
+function formatSiteItemsTableDate(value, withTime = false) {
+  if (!value) {
+    return "—";
+  }
+
+  const parsed = dayjs(value);
+
+  if (parsed.isValid()) {
+    return parsed.format(withTime ? "DD.MM.YYYY HH:mm" : "DD.MM.YYYY");
+  }
+
+  return String(value);
+}
+
+function OutlineActionButton({ children, onClick, sx = {} }) {
+  return (
+    <Button
+      variant="outlined"
+      onClick={onClick}
+      sx={{
+        minHeight: 40,
+        px: 2,
+        borderRadius: 1.5,
+        borderColor: brandRed,
+        color: brandRed,
+        backgroundColor: "#fff",
+        textTransform: "none",
+        fontSize: 16,
+        lineHeight: "20px",
+        fontWeight: 400,
+        whiteSpace: "nowrap",
+        "&:hover": {
+          borderColor: brandRed,
+          backgroundColor: "#fff",
+        },
+        ...sx,
+      }}
+    >
+      {children}
+    </Button>
+  );
 }
 
 class SiteItems_Modal_History_View_Tech extends React.Component {
@@ -1460,71 +1799,104 @@ class SiteItems_Modal_History extends React.Component {
   }
 
   render() {
+    const history = Array.isArray(this.state.item) ? this.state.item : [];
+
     return (
       <Dialog
         open={this.props.open}
         fullWidth={true}
-        maxWidth={"xl"}
+        maxWidth={"lg"}
         onClose={this.onClose.bind(this)}
         fullScreen={this.props.fullScreen}
+        sx={{
+          "& .MuiDialog-paper": {
+            borderRadius: { xs: 0, md: 3 },
+            overflow: "hidden",
+          },
+        }}
       >
-        <DialogTitle className="button">
-          <Typography style={{ alignSelf: "center" }}>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 2,
+            borderBottom: `1px solid ${blockBorder}`,
+            backgroundColor: "#fff",
+          }}
+        >
+          <Typography
+            sx={{
+              alignSelf: "center",
+              fontWeight: 700,
+              color: textPrimary,
+            }}
+          >
             {this.props.method}
             {this.props.itemName ? `: ${this.props.itemName}` : ""}
           </Typography>
           <IconButton
             onClick={this.onClose.bind(this)}
-            style={{ cursor: "pointer" }}
+            sx={{ color: "#9B9B9B" }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
 
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <TableContainer component={Paper}>
-            <Table
-              stickyHeader
-              aria-label="sticky table"
+        <DialogContent
+          sx={{
+            px: { xs: 1.5, md: 2.5 },
+            py: { xs: 2, md: 2.5 },
+            backgroundColor: blockBackground,
+          }}
+        >
+          <Box
+            sx={{
+              mb: 2,
+              px: { xs: 0.5, md: 0 },
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 14,
+                lineHeight: "20px",
+                color: textSecondary,
+              }}
             >
-              <TableHead>
-                <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                  <TableCell style={{ width: "2%" }}>#</TableCell>
-                  <TableCell style={{ width: "19%" }}>Наименование</TableCell>
-                  <TableCell style={{ width: "18%" }}>Действует с</TableCell>
-                  <TableCell style={{ width: "18%" }}>Дата редактирования</TableCell>
-                  <TableCell style={{ width: "20%" }}>Редактор</TableCell>
-                  <TableCell style={{ width: "5%" }}>Просмотр</TableCell>
-                </TableRow>
-              </TableHead>
+              История показывает только измененные поля между соседними версиями карточки.
+            </Typography>
+          </Box>
 
-              <TableBody>
-                {this.state.item.map((it, key) => (
-                  <TableRow
-                    key={key}
-                    hover
-                  >
-                    <TableCell>{key + 1}</TableCell>
-                    <TableCell>{it.name}</TableCell>
-                    <TableCell>{it.date_start}</TableCell>
-                    <TableCell>{it.date_update}</TableCell>
-                    <TableCell>{it.user}</TableCell>
-                    <TableCell
-                      style={{ cursor: "pointer" }}
-                      onClick={this.props.openModalHistoryView.bind(this, key)}
-                    >
-                      <TextSnippetOutlinedIcon />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <HistoryLog
+            history={history}
+            title="Лента изменений"
+            defaultExpanded={true}
+          />
         </DialogContent>
-        <DialogActions>
+
+        <DialogActions
+          sx={{
+            px: { xs: 1.5, md: 2.5 },
+            py: { xs: 1.5, md: 2 },
+            borderTop: `1px solid ${blockBorder}`,
+            backgroundColor: "#fff",
+          }}
+        >
           <Button
             onClick={this.onClose.bind(this)}
-            variant="contained"
+            sx={{
+              minHeight: 40,
+              px: 2,
+              borderRadius: 1.5,
+              border: `1px solid ${blockBorder}`,
+              color: textPrimary,
+              backgroundColor: "#fff",
+              textTransform: "none",
+              "&:hover": {
+                backgroundColor: "#fff",
+                borderColor: blockBorder,
+              },
+            }}
           >
             Закрыть
           </Button>
@@ -2052,54 +2424,154 @@ const ModalEditTags = ({ open, onClose, save, title = "Редактирован�
 
   return (
     <Dialog
-      sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 435 } }}
-      maxWidth="xs"
+      maxWidth={false}
+      fullWidth={true}
       open={open}
       onClose={onClose}
+      slotProps={{
+        paper: {
+          sx: {
+            width: "100%",
+            maxWidth: {
+              xs: "calc(100vw - 20px)",
+              sm: 520,
+            },
+            borderRadius: 3,
+            m: {
+              xs: 1.25,
+              sm: 2,
+            },
+            overflow: "hidden",
+            boxShadow: "none",
+          },
+        },
+        backdrop: {
+          sx: {
+            backgroundColor: "rgba(0,0,0,0.3)",
+          },
+        },
+      }}
     >
-      <DialogTitle className="button">
-        <Typography>{title}</Typography>
-        <IconButton onClick={onClose}>
+      <DialogTitle
+        sx={{
+          minHeight: 56,
+          px: 2,
+          py: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          bgcolor: blockBackground,
+          borderBottom: `1px solid ${blockBorder}`,
+          color: textSecondary,
+        }}
+      >
+        <Typography
+          sx={{
+            color: textPrimary,
+            fontSize: 18,
+            lineHeight: "24px",
+            fontWeight: 700,
+          }}
+        >
+          {title}
+        </Typography>
+        <IconButton
+          onClick={onClose}
+          sx={{
+            color: "#A6A6A6",
+          }}
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
+      <DialogContent
+        sx={{
+          px: 2,
+          pt: 2,
+          pb: 0,
+        }}
+      >
+        <Grid
+          container
+          spacing={2.5}
+        >
+          <Grid
+            size={{
+              xs: 12,
+            }}
+            style={{ paddingTop: 20 }}
+          >
+            <MyAutocomplite
+              label="Тег"
+              multiple={false}
+              data={tags}
+              value={chooseTag}
+              func={(data, value) => {
+                setChooseTag(value || {});
+                setName(value?.name || "");
+              }}
+            />
+          </Grid>
+          <Grid
+            size={{
+              xs: 12,
+            }}
+          >
+            <MyTextInput
+              label="Новое название"
+              value={name}
+              func={(event) => {
+                setName(event.target.value);
+              }}
+            />
+          </Grid>
+        </Grid>
+      </DialogContent>
 
-      <DialogContent
-        align="center"
-        sx={{ fontWeight: "bold" }}
-        style={{ paddingBottom: 10, paddingTop: 10 }}
+      <DialogActions
+        sx={{
+          px: 2,
+          pb: 2,
+          pt: 2,
+          justifyContent: "space-between",
+        }}
       >
-        <MyAutocomplite
-          label="Теги"
-          multiple={false}
-          data={tags}
-          value={chooseTag}
-          func={(data, value) => {
-            (setChooseTag(value), setName(value.name));
-          }}
-        />
-      </DialogContent>
-      <DialogContent
-        align="center"
-        sx={{ fontWeight: "bold" }}
-        style={{ paddingBottom: 10, paddingTop: 10 }}
-      >
-        <MyTextInput
-          label="Новое название"
-          value={name}
-          func={(event) => {
-            setName(event.target.value);
-          }}
-        />
-      </DialogContent>
-      <DialogActions>
         <Button
-          autoFocus
           onClick={onClose}
+          sx={{
+            minHeight: 42,
+            px: 2,
+            borderRadius: 2,
+            border: `1px solid ${blockBorder}`,
+            color: textPrimary,
+            backgroundColor: "#FFFFFF",
+            textTransform: "none",
+            "&:hover": {
+              borderColor: blockBorder,
+              backgroundColor: "#FFFFFF",
+            },
+          }}
         >
           Отмена
         </Button>
-        <Button onClick={() => save(chooseTag, name)}>Подтвердить</Button>
+        <Button
+          variant="contained"
+          onClick={() => save(chooseTag, name)}
+          sx={{
+            minHeight: 42,
+            px: 2.5,
+            borderRadius: 2,
+            backgroundColor: brandRed,
+            textTransform: "none",
+            boxShadow: "none",
+            "&:hover": {
+              backgroundColor: brandRed,
+              boxShadow: "none",
+            },
+          }}
+        >
+          Сохранить
+        </Button>
       </DialogActions>
     </Dialog>
   );
@@ -2153,8 +2625,14 @@ class SiteItems_Table extends React.Component {
     sortedData.forEach((category) => {
       if (category.items && Array.isArray(category.items)) {
         category.items.sort((a, b) => {
-          let valueA = this.prepareValueForSort(a[field], field);
-          let valueB = this.prepareValueForSort(b[field], field);
+          let valueA = this.prepareValueForSort(
+            field === "date_update" ? a[field] || a.update_item : a[field],
+            field,
+          );
+          let valueB = this.prepareValueForSort(
+            field === "date_update" ? b[field] || b.update_item : b[field],
+            field,
+          );
 
           if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
           if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
@@ -2229,176 +2707,709 @@ class SiteItems_Table extends React.Component {
   });
 
   render() {
-    const { cats, user_app, acces } = this.props;
+    const { user_app, acces } = this.props;
     const { changeSort, saveSort, changeTableCheck, openItem, openHistoryItem } = this.props;
+    const activityLabel = user_app === "technologist" ? "Активность" : "Сайт и КЦ";
+    const mobileSortOptions = [
+      {
+        field: user_app === "technologist" ? "is_show" : "show_site",
+        label: activityLabel,
+        visible: acces?.site_kc_edit || acces?.site_kc_view,
+      },
+      {
+        field: "show_program",
+        label: "Касса",
+        visible: acces?.kassa_edit || acces?.kassa_view,
+      },
+      {
+        field: "sort",
+        label: "Сортировка",
+        visible: user_app === "marketing",
+      },
+      {
+        field: "name",
+        label: "Название",
+        visible: true,
+      },
+      {
+        field: "date_start",
+        label: "Действует с",
+        visible: true,
+      },
+      {
+        field: "date_update",
+        label: "Обновление",
+        visible: true,
+      },
+      {
+        field: "art",
+        label: "Код 1С",
+        visible: user_app === "technologist",
+      },
+    ].filter((option) => option.visible);
+    const renderMobileSortButton = (field, label) => {
+      const isActive = this.state.sortField === field;
+
+      return (
+        <Button
+          key={field}
+          variant="outlined"
+          onClick={() => this.handleSort(field)}
+          sx={{
+            minHeight: 34,
+            px: 1.25,
+            borderRadius: 999,
+            borderColor: isActive ? brandRed : blockBorder,
+            color: isActive ? brandRed : textSecondary,
+            backgroundColor: "#fff",
+            textTransform: "none",
+            fontSize: 13,
+            lineHeight: "16px",
+            fontWeight: isActive ? 600 : 400,
+            whiteSpace: "nowrap",
+            "&:hover": {
+              borderColor: isActive ? brandRed : blockBorder,
+              backgroundColor: "#fff",
+            },
+          }}
+        >
+          {label}
+          {isActive ? ` ${this.state.sortOrder === "asc" ? "↑" : "↓"}` : ""}
+        </Button>
+      );
+    };
+    const renderMobileStatusControl = (label, checked, onChange) => (
+      <Box
+        key={label}
+        sx={{
+          flex: "1 1 140px",
+          minWidth: 0,
+          px: 1.25,
+          py: 1,
+          borderRadius: 2,
+          border: `1px solid ${blockBorder}`,
+          backgroundColor: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: 13,
+            lineHeight: "16px",
+            color: textSecondary,
+          }}
+        >
+          {label}
+        </Typography>
+        <Checkbox
+          checked={checked}
+          onChange={onChange}
+          size="small"
+          sx={{
+            p: 0.5,
+            color: "#6F6F6F",
+            "&.Mui-checked": {
+              color: brandRed,
+            },
+          }}
+        />
+      </Box>
+    );
+    const renderMobileInfoItem = (label, value, fullWidth = false) => (
+      <Box
+        key={label}
+        sx={{
+          minWidth: 0,
+          gridColumn: fullWidth ? "1 / -1" : "auto",
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: 11,
+            lineHeight: "14px",
+            fontWeight: 600,
+            color: "#8B8B8B",
+            textTransform: "uppercase",
+            letterSpacing: "0.04em",
+          }}
+        >
+          {label}
+        </Typography>
+        <Typography
+          sx={{
+            mt: 0.35,
+            fontSize: 14,
+            lineHeight: "18px",
+            color: textPrimary,
+            wordBreak: "break-word",
+          }}
+        >
+          {value || "—"}
+        </Typography>
+      </Box>
+    );
+    const actionButtonSx = {
+      flex: "1 1 0",
+      minHeight: 40,
+      borderRadius: 1.75,
+      borderColor: blockBorder,
+      color: textSecondary,
+      backgroundColor: "#fff",
+      textTransform: "none",
+      fontSize: 14,
+      lineHeight: "18px",
+      "&:hover": {
+        backgroundColor: blockBackground,
+        borderColor: blockBorder,
+      },
+    };
 
     return (
       <Grid
-        style={{ paddingBottom: "50px" }}
         size={{
           xs: 12,
           sm: 12,
         }}
       >
-        {this.state.cats.map((cat, key) => (
-          <Accordion key={key}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>
-                {cat.name}
-                {cat.items ? ` (${cat.items.length})` : ""}
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails className="accordion_details">
-              <TableContainer
-                component={Paper}
-                sx={{ maxHeight: { xs: "none", sm: 600 } }}
+        <Stack
+          spacing={2}
+          sx={{ pb: 2 }}
+        >
+          {this.state.cats.map((cat, key) => (
+            <Accordion
+              key={key}
+              disableGutters
+              elevation={0}
+              sx={{
+                borderRadius: 3,
+                border: `1px solid ${blockBorder}`,
+                backgroundColor: blockBackground,
+                boxShadow: "none",
+                overflow: "hidden",
+                "&::before": {
+                  display: "none",
+                },
+                "&.Mui-expanded": {
+                  margin: 0,
+                },
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon sx={{ color: textSecondary }} />}
+                sx={{
+                  px: { xs: 1.5, lg: 2.5 },
+                  py: 0.75,
+                  minHeight: 72,
+                  "&.Mui-expanded": {
+                    minHeight: 72,
+                  },
+                  "& .MuiAccordionSummary-content": {
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 2,
+                    margin: "14px 0",
+                  },
+                  "& .MuiAccordionSummary-content.Mui-expanded": {
+                    margin: "14px 0",
+                  },
+                }}
               >
-                <Table
-                  stickyHeader
-                  aria-label="sticky table"
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontSize: 18,
+                      lineHeight: "22px",
+                      fontWeight: 500,
+                      color: textPrimary,
+                    }}
+                  >
+                    {cat.name}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      mt: 0.5,
+                      fontSize: 14,
+                      lineHeight: "18px",
+                      color: textSecondary,
+                    }}
+                  >
+                    Товаров в категории: {cat.items?.length || 0}
+                  </Typography>
+                </Box>
+
+                <Box
+                  sx={{
+                    minWidth: 42,
+                    height: 42,
+                    px: 1.5,
+                    borderRadius: 999,
+                    border: `1px solid ${blockBorder}`,
+                    backgroundColor: "#fff",
+                    color: textSecondary,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 16,
+                    lineHeight: "20px",
+                    fontWeight: 500,
+                  }}
                 >
-                  <TableHead>
-                    <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                      <TableCell style={{ width: "1%" }}>№</TableCell>
+                  {cat.items?.length || 0}
+                </Box>
+              </AccordionSummary>
 
-                      {(acces?.site_kc_edit || acces?.site_kc_view) && (
-                        <TableCell style={{ width: "11%" }}>
-                          <TableSortLabel
-                            {...this.getSortProps(
-                              user_app === "technologist" ? "is_show" : "show_site",
-                            )}
-                          >
-                            {user_app === "technologist" ? "Активность" : "Сайт и КЦ"}
-                          </TableSortLabel>
-                        </TableCell>
-                      )}
-
-                      {(acces?.kassa_edit || acces?.kassa_view) && (
-                        <TableCell style={{ width: "11%" }}>
-                          <TableSortLabel {...this.getSortProps("show_program")}>
-                            Касса
-                          </TableSortLabel>
-                        </TableCell>
-                      )}
-
-                      {user_app === "marketing" && (
-                        <TableCell style={{ width: "11%" }}>
-                          <TableSortLabel {...this.getSortProps("sort")}>Сортировка</TableSortLabel>
-                        </TableCell>
-                      )}
-
-                      <TableCell style={{ width: "11%" }}>
-                        <TableSortLabel {...this.getSortProps("name")}>Название</TableSortLabel>
-                      </TableCell>
-
-                      <TableCell style={{ width: "11%" }}>
-                        <TableSortLabel {...this.getSortProps("date_start")}>
-                          Действует с
-                        </TableSortLabel>
-                      </TableCell>
-
-                      <TableCell style={{ width: "11%" }}>
-                        <TableSortLabel {...this.getSortProps("date_end")}>по</TableSortLabel>
-                      </TableCell>
-
-                      <TableCell style={{ width: "11%" }}>
-                        <TableSortLabel {...this.getSortProps("date_update")}>
-                          Обновление
-                        </TableSortLabel>
-                      </TableCell>
-
-                      {user_app === "technologist" && (
-                        <TableCell style={{ width: "11%" }}>
-                          <TableSortLabel {...this.getSortProps("art")}>Код для 1С</TableSortLabel>
-                        </TableCell>
-                      )}
-
-                      <TableCell style={{ width: "11%" }}>Редактирование</TableCell>
-                      <TableCell style={{ width: "11%" }}>История изменений</TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {cat.items &&
-                      cat.items.map((item, index) => (
-                        <TableRow key={item.id || index}>
-                          <TableCell>{index + 1}</TableCell>
+              <AccordionDetails
+                className="accordion_details"
+                sx={{
+                  px: 0,
+                  pt: 0,
+                  pb: { xs: 1.5, lg: 2 },
+                }}
+              >
+                <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                  <TableContainer
+                    component={Paper}
+                    elevation={0}
+                    sx={{
+                      mx: { xs: 1, lg: 2 },
+                      borderRadius: 2.5,
+                      border: `1px solid ${blockBorder}`,
+                      boxShadow: "none",
+                      backgroundColor: "#fff",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Table
+                      aria-label={`Категория ${cat.name}`}
+                      sx={{
+                        width: "100%",
+                        tableLayout: "fixed",
+                        "& th, & td": {
+                          px: { xs: 1, lg: 1.25 },
+                          py: 1.5,
+                          fontSize: { xs: 12, lg: 14 },
+                          lineHeight: { xs: "16px", lg: "20px" },
+                          verticalAlign: "middle",
+                          whiteSpace: "normal",
+                          wordBreak: "break-word",
+                        },
+                        "& thead th": {
+                          backgroundColor: blockBackground,
+                          borderBottom: `1px solid ${blockBorder}`,
+                        },
+                        "& tbody td": {
+                          borderBottom: `1px solid ${blockBorder}`,
+                          color: textSecondary,
+                        },
+                        "& tbody tr:last-of-type td": {
+                          borderBottom: "none",
+                        },
+                        "& tbody tr": {
+                          transition: "background-color 0.15s ease",
+                        },
+                        "& tbody tr:hover": {
+                          backgroundColor: "#FAFAFA",
+                        },
+                        "& .MuiTableSortLabel-root": {
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          width: "100%",
+                          whiteSpace: "normal",
+                        },
+                      }}
+                    >
+                      <TableHead>
+                        <TableRow sx={{ "& th": { fontWeight: "bold", color: textPrimary } }}>
+                          <TableCell sx={{ width: "3%" }}>№</TableCell>
 
                           {(acces?.site_kc_edit || acces?.site_kc_view) && (
-                            <TableCell>
-                              <MyCheckBox
-                                label=""
-                                value={
-                                  parseInt(
-                                    user_app === "technologist" ? item.is_show : item.show_site,
-                                  ) === 1
-                                }
-                                func={changeTableCheck.bind(
-                                  this,
-                                  key,
-                                  index,
-                                  item.id,
+                            <TableCell sx={{ width: "8%" }}>
+                              <TableSortLabel
+                                {...this.getSortProps(
                                   user_app === "technologist" ? "is_show" : "show_site",
                                 )}
-                              />
+                                sx={tableSortLabelSx}
+                              >
+                                {activityLabel}
+                              </TableSortLabel>
                             </TableCell>
                           )}
 
                           {(acces?.kassa_edit || acces?.kassa_view) && (
-                            <TableCell>
-                              <MyCheckBox
-                                label=""
-                                value={parseInt(item.show_program) === 1}
-                                func={changeTableCheck.bind(
-                                  this,
-                                  key,
-                                  index,
-                                  item.id,
-                                  "show_program",
-                                )}
-                              />
+                            <TableCell sx={{ width: "8%" }}>
+                              <TableSortLabel
+                                {...this.getSortProps("show_program")}
+                                sx={tableSortLabelSx}
+                              >
+                                Касса
+                              </TableSortLabel>
                             </TableCell>
                           )}
 
                           {user_app === "marketing" && (
-                            <TableCell>
-                              <MyTextInput
-                                label=""
-                                value={item.sort}
-                                func={changeSort.bind(this, key, index)}
-                                onBlur={saveSort.bind(this, item.id, "sort")}
-                              />
+                            <TableCell sx={{ width: "9%" }}>
+                              <TableSortLabel
+                                {...this.getSortProps("sort")}
+                                sx={tableSortLabelSx}
+                              >
+                                Сортировка
+                              </TableSortLabel>
                             </TableCell>
                           )}
 
-                          <TableCell>{item.name}</TableCell>
-                          <TableCell>{item.date_start}</TableCell>
-                          <TableCell>{item.date_end}</TableCell>
-                          <TableCell>{item.date_update || item.update_item}</TableCell>
-
-                          {user_app === "technologist" && <TableCell>{item.art}</TableCell>}
-
-                          <TableCell
-                            style={{ cursor: "pointer" }}
-                            onClick={openItem.bind(this, item.id, item.name)}
-                          >
-                            <EditIcon />
+                          <TableCell sx={{ width: user_app === "technologist" ? "18%" : "21%" }}>
+                            <TableSortLabel
+                              {...this.getSortProps("name")}
+                              sx={tableSortLabelSx}
+                            >
+                              Название
+                            </TableSortLabel>
                           </TableCell>
 
+                          <TableCell sx={{ width: "11%" }}>
+                            <TableSortLabel
+                              {...this.getSortProps("date_start")}
+                              sx={tableSortLabelSx}
+                            >
+                              Действует с
+                            </TableSortLabel>
+                          </TableCell>
+
+                          <TableCell sx={{ width: "9%" }}>
+                            <TableSortLabel
+                              {...this.getSortProps("date_end")}
+                              sx={tableSortLabelSx}
+                            >
+                              по
+                            </TableSortLabel>
+                          </TableCell>
+
+                          <TableCell sx={{ width: "12%" }}>
+                            <TableSortLabel
+                              {...this.getSortProps("date_update")}
+                              sx={tableSortLabelSx}
+                            >
+                              Обновление
+                            </TableSortLabel>
+                          </TableCell>
+
+                          {user_app === "technologist" && (
+                            <TableCell sx={{ width: "10%" }}>
+                              <TableSortLabel
+                                {...this.getSortProps("art")}
+                                sx={tableSortLabelSx}
+                              >
+                                Код для 1С
+                              </TableSortLabel>
+                            </TableCell>
+                          )}
+
                           <TableCell
-                            style={{ cursor: "pointer" }}
-                            onClick={openHistoryItem.bind(this, item.id, "История изменений")}
+                            align="center"
+                            sx={{ width: "7%" }}
                           >
-                            <EditNoteIcon />
+                            Редактирование
+                          </TableCell>
+                          <TableCell
+                            align="center"
+                            sx={{ width: "7%" }}
+                          >
+                            История изменений
                           </TableCell>
                         </TableRow>
+                      </TableHead>
+
+                      <TableBody>
+                        {cat.items &&
+                          cat.items.map((item, index) => (
+                            <TableRow key={item.id || index}>
+                              <TableCell sx={{ color: textPrimary, fontWeight: 500 }}>
+                                {index + 1}
+                              </TableCell>
+
+                              {(acces?.site_kc_edit || acces?.site_kc_view) && (
+                                <TableCell align="center">
+                                  <MyCheckBox
+                                    label=""
+                                    value={
+                                      parseInt(
+                                        user_app === "technologist" ? item.is_show : item.show_site,
+                                      ) === 1
+                                    }
+                                    func={changeTableCheck.bind(
+                                      this,
+                                      key,
+                                      index,
+                                      item.id,
+                                      user_app === "technologist" ? "is_show" : "show_site",
+                                    )}
+                                  />
+                                </TableCell>
+                              )}
+
+                              {(acces?.kassa_edit || acces?.kassa_view) && (
+                                <TableCell align="center">
+                                  <MyCheckBox
+                                    label=""
+                                    value={parseInt(item.show_program) === 1}
+                                    func={changeTableCheck.bind(
+                                      this,
+                                      key,
+                                      index,
+                                      item.id,
+                                      "show_program",
+                                    )}
+                                  />
+                                </TableCell>
+                              )}
+
+                              {user_app === "marketing" && (
+                                <TableCell>
+                                  <MyTextInput
+                                    label=""
+                                    value={item.sort}
+                                    func={changeSort.bind(this, key, index)}
+                                    onBlur={saveSort.bind(this, item.id, "sort")}
+                                  />
+                                </TableCell>
+                              )}
+
+                              <TableCell sx={{ color: textPrimary, fontWeight: 500 }}>
+                                {item.name}
+                              </TableCell>
+                              <TableCell>{item.date_start}</TableCell>
+                              <TableCell>{item.date_end}</TableCell>
+                              <TableCell>{item.date_update || item.update_item}</TableCell>
+
+                              {user_app === "technologist" && <TableCell>{item.art}</TableCell>}
+
+                              <TableCell align="center">
+                                <IconButton
+                                  onClick={openItem.bind(this, item.id, item.name)}
+                                  sx={{
+                                    color: textSecondary,
+                                    border: `1px solid ${blockBorder}`,
+                                    borderRadius: 1.5,
+                                    backgroundColor: "#fff",
+                                    "&:hover": {
+                                      backgroundColor: blockBackground,
+                                      color: textPrimary,
+                                    },
+                                  }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </TableCell>
+
+                              <TableCell align="center">
+                                <IconButton
+                                  onClick={openHistoryItem.bind(this, item.id, "История изменений")}
+                                  sx={{
+                                    color: textSecondary,
+                                    border: `1px solid ${blockBorder}`,
+                                    borderRadius: 1.5,
+                                    backgroundColor: "#fff",
+                                    "&:hover": {
+                                      backgroundColor: blockBackground,
+                                      color: textPrimary,
+                                    },
+                                  }}
+                                >
+                                  <EditNoteIcon fontSize="small" />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+
+                <Box
+                  sx={{
+                    display: { xs: "block", sm: "none" },
+                    mx: 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      px: 1.25,
+                      py: 1.25,
+                      borderRadius: 2.5,
+                      border: `1px solid ${blockBorder}`,
+                      backgroundColor: "#fff",
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        mb: 1,
+                        fontSize: 12,
+                        lineHeight: "16px",
+                        fontWeight: 600,
+                        color: "#8B8B8B",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      Сортировка списка
+                    </Typography>
+                    <Stack
+                      direction="row"
+                      flexWrap="wrap"
+                      useFlexGap
+                      gap={0.75}
+                    >
+                      {mobileSortOptions.map((option) =>
+                        renderMobileSortButton(option.field, option.label),
+                      )}
+                    </Stack>
+                  </Box>
+
+                  <Stack
+                    spacing={1}
+                    sx={{ mt: 1 }}
+                  >
+                    {cat.items &&
+                      cat.items.map((item, index) => (
+                        <Box
+                          key={item.id || index}
+                          sx={{
+                            borderRadius: 2.5,
+                            border: `1px solid ${blockBorder}`,
+                            backgroundColor: "#fff",
+                            p: 1.25,
+                          }}
+                        >
+                          <Stack spacing={1.25}>
+                            <Stack
+                              direction="row"
+                              alignItems="flex-start"
+                              justifyContent="space-between"
+                              spacing={1.25}
+                            >
+                              <Box sx={{ minWidth: 0, flex: 1 }}>
+                                <Typography
+                                  sx={{
+                                    fontSize: 16,
+                                    lineHeight: "20px",
+                                    fontWeight: 700,
+                                    color: textPrimary,
+                                    wordBreak: "break-word",
+                                  }}
+                                >
+                                  {index + 1}. {item.name || "Без названия"}
+                                </Typography>
+                                {user_app === "technologist" ? (
+                                  <Typography
+                                    sx={{
+                                      mt: 0.4,
+                                      fontSize: 13,
+                                      lineHeight: "16px",
+                                      color: textSecondary,
+                                    }}
+                                  >
+                                    Код 1С: {item.art || "—"}
+                                  </Typography>
+                                ) : null}
+                              </Box>
+
+                              {user_app === "marketing" ? (
+                                <Box sx={{ width: 88, flexShrink: 0 }}>
+                                  <MyTextInput
+                                    label=""
+                                    value={item.sort}
+                                    func={changeSort.bind(this, key, index)}
+                                    onBlur={saveSort.bind(this, item.id, "sort")}
+                                  />
+                                </Box>
+                              ) : null}
+                            </Stack>
+
+                            <Box
+                              sx={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                                gap: 1.25,
+                              }}
+                            >
+                              {renderMobileInfoItem(
+                                "Действует с",
+                                formatSiteItemsTableDate(item.date_start),
+                              )}
+                              {renderMobileInfoItem("По", formatSiteItemsTableDate(item.date_end))}
+                              {renderMobileInfoItem(
+                                "Обновление",
+                                formatSiteItemsTableDate(
+                                  item.date_update || item.update_item,
+                                  true,
+                                ),
+                                true,
+                              )}
+                            </Box>
+
+                            <Stack
+                              direction="row"
+                              flexWrap="wrap"
+                              useFlexGap
+                              gap={0.75}
+                            >
+                              {(acces?.site_kc_edit || acces?.site_kc_view) &&
+                                renderMobileStatusControl(
+                                  activityLabel,
+                                  parseInt(
+                                    user_app === "technologist" ? item.is_show : item.show_site,
+                                  ) === 1,
+                                  changeTableCheck.bind(
+                                    this,
+                                    key,
+                                    index,
+                                    item.id,
+                                    user_app === "technologist" ? "is_show" : "show_site",
+                                  ),
+                                )}
+
+                              {(acces?.kassa_edit || acces?.kassa_view) &&
+                                renderMobileStatusControl(
+                                  "Касса",
+                                  parseInt(item.show_program) === 1,
+                                  changeTableCheck.bind(this, key, index, item.id, "show_program"),
+                                )}
+                            </Stack>
+
+                            <Stack
+                              direction="row"
+                              spacing={1}
+                            >
+                              <Button
+                                variant="outlined"
+                                startIcon={<EditIcon fontSize="small" />}
+                                onClick={openItem.bind(this, item.id, item.name)}
+                                sx={actionButtonSx}
+                              >
+                                Изменить
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                startIcon={<EditNoteIcon fontSize="small" />}
+                                onClick={openHistoryItem.bind(this, item.id, "История изменений")}
+                                sx={actionButtonSx}
+                              >
+                                История
+                              </Button>
+                            </Stack>
+                          </Stack>
+                        </Box>
                       ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </AccordionDetails>
-          </Accordion>
-        ))}
+                  </Stack>
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </Stack>
       </Grid>
     );
   }
@@ -2812,17 +3823,12 @@ class SiteItems_ extends React.Component {
     res = await this.getData("get_one_hist_mark", data);
 
     if (res.hist.length) {
-      if (res.hist.length > 1) {
-        res.hist.map((hist, index) => {
-          hist.date_update = res?.hist[index + 1]?.date_start ?? "";
-          return hist;
-        });
-      }
+      const latestSnapshot = getLatestSiteItemHistorySnapshot(res.hist);
 
       this.setState({
         modalDialogHist: true,
-        itemHist: res.hist,
-        itemName: res.hist[0].name,
+        itemHist: normalizeSiteItemHistory(res.hist, this.state.category),
+        itemName: latestSnapshot?.name || "",
         method,
       });
     } else {
@@ -2834,7 +3840,7 @@ class SiteItems_ extends React.Component {
 
       this.setState({
         modalDialogHist: true,
-        itemHist: [res.item],
+        itemHist: normalizeSiteItemHistory([res.item], this.state.category),
         itemName: res.item.name,
         method,
       });
@@ -2851,17 +3857,12 @@ class SiteItems_ extends React.Component {
     const res = await this.getData("get_one_hist_tech", data);
 
     if (res.hist.length) {
-      if (res.hist.length > 1) {
-        res.hist.map((hist, index) => {
-          hist.date_update = res?.hist[index + 1]?.date_start ?? "";
-          return hist;
-        });
-      }
+      const latestSnapshot = getLatestSiteItemHistorySnapshot(res.hist);
 
       this.setState({
         modalDialogHist: true,
-        itemHist: res.hist,
-        itemName: res.hist[0].name,
+        itemHist: normalizeSiteItemHistory(res.hist, this.state.category),
+        itemName: latestSnapshot?.name || "",
         method,
       });
     } else {
@@ -2888,7 +3889,7 @@ class SiteItems_ extends React.Component {
 
       this.setState({
         modalDialogHist: true,
-        itemHist: [res.item],
+        itemHist: normalizeSiteItemHistory([res.item], res.cat_list || this.state.category),
         itemName: res.item.name,
         method,
       });
@@ -3244,26 +4245,7 @@ class SiteItems_ extends React.Component {
           item={this.state.itemHist}
           method={this.state.method}
           fullScreen={this.state.fullScreen}
-          openModalHistoryView={
-            this.state.user_app === "technologist"
-              ? this.openModalHistoryView_Tech.bind(this)
-              : this.openModalHistoryView_Mark.bind(this)
-          }
           itemName={this.state.itemName}
-        />
-        <SiteItems_Modal_History_View_Mark
-          open={this.state.modalDialogView_Mark}
-          onClose={() => this.setState({ modalDialogView_Mark: false, itemView_Mark: null })}
-          itemView={this.state.itemView_Mark}
-          itemName={this.state.itemName}
-          fullScreen={this.state.fullScreen}
-        />
-        <SiteItems_Modal_History_View_Tech
-          open={this.state.modalDialogView}
-          onClose={() => this.setState({ modalDialogView: false, itemView: null })}
-          itemView={this.state.itemView}
-          itemName={this.state.itemName}
-          fullScreen={this.state.fullScreen}
         />
         <Dialog
           sx={{
@@ -3293,87 +4275,162 @@ class SiteItems_ extends React.Component {
             <Button onClick={this.updateVK.bind(this)}>Ok</Button>
           </DialogActions>
         </Dialog>
-        <Grid
-          container
-          spacing={3}
+        <Box
           className="container_first_child"
+          sx={{
+            px: { xs: 0, lg: 2.5 },
+            pb: { xs: 0, lg: 3 },
+          }}
         >
-          <Grid
-            size={{
-              xs: 12,
-              sm: 12,
+          <Box
+            sx={{
+              bgcolor: blockBackground,
+              borderRadius: { xs: 0, lg: 3 },
+              mx: { xs: -3, lg: 0 },
+              px: { xs: 1.5, lg: 2.5 },
+              py: { xs: 2, lg: 2.5 },
+              mb: 2.5,
             }}
           >
-            <h1>{this.state.module_name}</h1>
-          </Grid>
-          {this.state.acces?.reload_vk_access ? (
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <Button
-                onClick={() => this.setState({ confirmDialog: true })}
-                color="primary"
-                variant="contained"
+            <Stack spacing={2.5}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", lg: "row" },
+                  alignItems: { xs: "flex-start", lg: "center" },
+                  justifyContent: "space-between",
+                  gap: 2,
+                }}
               >
-                Обновить товары VK
-              </Button>
-            </Grid>
-          ) : null}
+                <Box>
+                  <Typography
+                    component="h1"
+                    sx={{
+                      fontSize: { xs: 28, lg: 36 },
+                      lineHeight: { xs: "32px", lg: "40px" },
+                      fontWeight: 400,
+                      color: textPrimary,
+                    }}
+                  >
+                    {this.state.module_name}
+                  </Typography>
+                </Box>
 
-          {this.state.acces?.new_item_access ? (
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <Button
-                onClick={this.openItemNew.bind(this, "Новое блюдо")}
-                color="primary"
-                variant="contained"
-              >
-                Новый товар
-              </Button>
-            </Grid>
-          ) : null}
-          {this.state.acces?.change_tag_access ? (
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <Button
-                onClick={() => this.setState({ modalEditTags: true })}
-                color="primary"
-                variant="contained"
-              >
-                Редактировать тэги
-              </Button>
-            </Grid>
-          ) : null}
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  useFlexGap
+                  flexWrap="wrap"
+                  sx={{ width: { xs: "100%", lg: "auto" } }}
+                >
+                  {this.state.acces?.reload_vk_access ? (
+                    <Button
+                      onClick={() => this.setState({ confirmDialog: true })}
+                      variant="contained"
+                      sx={{
+                        minHeight: 40,
+                        px: 2,
+                        borderRadius: 1.5,
+                        backgroundColor: brandRed,
+                        color: "#fff",
+                        textTransform: "none",
+                        fontSize: 16,
+                        lineHeight: "20px",
+                        fontWeight: 400,
+                        boxShadow: "none",
+                        "&:hover": {
+                          backgroundColor: brandRed,
+                          boxShadow: "none",
+                        },
+                      }}
+                    >
+                      Обновить товары VK
+                    </Button>
+                  ) : null}
 
-          {this.state.cats.length == 0 ? null : (
-            <SiteItems_Table
-              user_app={this.state.user_app}
-              cats={this.state.cats}
-              timeUpdate={this.state.timeUpdate}
-              changeSort={this.changeSort.bind(this)}
-              saveSort={this.saveSort.bind(this)}
-              changeTableCheck={this.changeTableCheck.bind(this)}
-              acces={this.state.acces}
-              openItem={this.openItemTech.bind(this)}
-              openHistoryItem={
-                this.state.user_app === "technologist"
-                  ? this.openHistoryTech.bind(this)
-                  : this.openHistoryMark.bind(this)
-              }
-            />
-          )}
-        </Grid>
+                  {this.state.acces?.new_item_access ? (
+                    <OutlineActionButton
+                      onClick={this.openItemNew.bind(this, "Новое блюдо")}
+                      sx={{ width: { xs: "100%", sm: "auto" } }}
+                    >
+                      Новый товар
+                    </OutlineActionButton>
+                  ) : null}
+
+                  {this.state.acces?.change_tag_access ? (
+                    <OutlineActionButton
+                      onClick={() => this.setState({ modalEditTags: true })}
+                      sx={{ width: { xs: "100%", sm: "auto" } }}
+                    >
+                      Редактировать тэги
+                    </OutlineActionButton>
+                  ) : null}
+                </Stack>
+              </Box>
+            </Stack>
+          </Box>
+
+          <Box
+            sx={{
+              bgcolor: blockBackground,
+              borderRadius: { xs: 0, lg: 3 },
+              mx: { xs: -3, lg: 0 },
+              px: { xs: 1.5, lg: 2 },
+              py: { xs: 2, lg: 2.5 },
+            }}
+          >
+            <Box sx={{ mb: 2.5 }}>
+              <Typography
+                sx={{
+                  fontSize: 20,
+                  lineHeight: "24px",
+                  fontWeight: 400,
+                  color: textPrimary,
+                }}
+              >
+                Категории
+              </Typography>
+            </Box>
+
+            {this.state.cats.length == 0 ? (
+              <Box
+                sx={{
+                  borderRadius: 2.5,
+                  border: `1px solid ${blockBorder}`,
+                  backgroundColor: "#fff",
+                  px: 2,
+                  py: 4,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 16,
+                    lineHeight: "20px",
+                    color: textSecondary,
+                  }}
+                >
+                  Категории пока не загружены.
+                </Typography>
+              </Box>
+            ) : (
+              <SiteItems_Table
+                user_app={this.state.user_app}
+                cats={this.state.cats}
+                timeUpdate={this.state.timeUpdate}
+                changeSort={this.changeSort.bind(this)}
+                saveSort={this.saveSort.bind(this)}
+                changeTableCheck={this.changeTableCheck.bind(this)}
+                acces={this.state.acces}
+                openItem={this.openItemTech.bind(this)}
+                openHistoryItem={
+                  this.state.user_app === "technologist"
+                    ? this.openHistoryTech.bind(this)
+                    : this.openHistoryMark.bind(this)
+                }
+              />
+            )}
+          </Box>
+        </Box>
       </>
     );
   }

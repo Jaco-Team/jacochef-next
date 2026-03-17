@@ -19,12 +19,18 @@ import dayjs from "dayjs";
 import { memo } from "react";
 import SmartDiff from "./SmartDiff";
 
-function HistoryLog({ history, title = "История изменений", restoreFunc = null }) {
+function HistoryLog({
+  history,
+  title = "История изменений",
+  restoreFunc = null,
+  defaultExpanded = false,
+}) {
   return (
     <>
       <Accordion
         component={Paper}
         variant="outlined"
+        defaultExpanded={defaultExpanded}
       >
         <AccordionSummary expandIcon={<ExpandMore />}>
           <Typography>{title}</Typography>

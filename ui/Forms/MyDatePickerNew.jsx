@@ -88,7 +88,10 @@ export function MyDatePickerNew(props) {
             textField: {
               fullWidth: true,
               size: "small",
-              sx: props.customRI ? customStylesRenderInput[props.customRI] : {},
+              sx: {
+                ...(props.customRI ? customStylesRenderInput[props.customRI] : {}),
+                ...(props.sx || {}),
+              },
             },
 
             field: { clearable: props.clearable },
