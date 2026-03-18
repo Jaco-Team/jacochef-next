@@ -3003,7 +3003,10 @@ export class SiteItemsModalTech extends React.Component {
                         "Заготовки",
                         "Состав технологической карты",
                         "Добавляйте заготовки, управляйте потерями и перемещайте их по этапам.",
-                        <Box sx={tableWrapperSx}>
+                        <Box
+                          sx={tableWrapperSx}
+                          style={hiddenIf(!access?.stage_edit && !access?.stage_view)}
+                        >
                           <Table sx={tableSx}>
                             <TableHead>
                               <TableRow>
@@ -3102,7 +3105,10 @@ export class SiteItemsModalTech extends React.Component {
                         "Позиции",
                         "Финальные товары",
                         "Управляйте позициями, которые формируют итоговый состав блюда.",
-                        <Box sx={tableWrapperSx}>
+                        <Box
+                          sx={tableWrapperSx}
+                          style={hiddenIf(!access?.items_edit && !access?.items_view)}
+                        >
                           <Table sx={positionTableSx}>
                             <TableHead>
                               <TableRow>
