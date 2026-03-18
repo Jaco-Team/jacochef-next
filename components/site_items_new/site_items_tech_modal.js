@@ -2820,11 +2820,13 @@ export class SiteItemsModalTech extends React.Component {
                               xs: 12,
                               md: 4,
                             }}
+                            style={hiddenIf(!access?.is_updated_edit && !access?.is_updated_view)}
                           >
                             {renderToggleCard(
                               "Обновлено",
                               isChecked(this.state.is_updated),
                               this.changeItemChecked.bind(this, "is_updated"),
+                              !access?.is_updated_edit,
                             )}
                           </Grid>
                           <Grid
