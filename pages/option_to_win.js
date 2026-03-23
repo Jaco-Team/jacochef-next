@@ -172,7 +172,6 @@ class OptionToWin_ extends React.Component {
   async save(item) {
     try {
       // LEGACY
-      console.log(this.state.mark);
       this.setState({ is_load: true });
       if (this.state.mark === "newItem") {
         const data = item;

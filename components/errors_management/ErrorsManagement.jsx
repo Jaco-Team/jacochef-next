@@ -1,6 +1,7 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
+import ErrCats from "@/components/option_to_win/ErrCats";
 import {
   Alert,
   Backdrop,
@@ -17,6 +18,7 @@ import {
   MenuItem,
   Paper,
   Stack,
+  styled,
   Switch,
   Table,
   TableBody,
@@ -27,30 +29,38 @@ import {
   TableRow,
   TextField,
   Typography,
-  styled,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
 import { api_laravel_local } from "@/src/api_new";
 import { MyCheckBox, MyDatePickerNew } from "@/ui/Forms";
 import { ModalProblems } from "@/components/errors_management/ModalProblems";
+import dayjs from "dayjs";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import CatsModal from "@/components/option_to_win/CatsModal";
 
 const moduleName = "errors_management";
 
-const DEFAULT_ORDER_TYPES = [{ id: "", name: "Любой" }];
+const DEFAULT_ORDER_TYPES = [
+  { id: 0, name: "Любой" },
+  { id: 1, name: "Доставка" },
+  { id: 2, name: "Самовывоз" },
+  { id: 3, name: "Зал" },
+];
 
 const INITIAL_FILTERS = {
   cityId: "",
   pointId: "",
-  orderType: "",
+  orderType: 0,
   orderNumber: "",
   amountFrom: "",
   amountTo: "",
-  dateFrom: "",
-  dateTo: "",
+  dateFrom: dayjs().format("YYYY-MM-DD"),
+  dateTo: dayjs().format("YYYY-MM-DD"),
   phone: "",
-  timeFrom: "",
-  timeTo: "",
+  timeFrom: "00:00",
+  timeTo: "23:59",
 };
 
 const brandRed = "#DD1A32";
@@ -134,7 +144,7 @@ function buildOrdersRequest(filters) {
   return {
     city_id: filters.cityId || "",
     point_id: filters.pointId || 0,
-    type_order: filters.orderType || "",
+    type_order: filters.orderType || 0,
     order_id: filters.orderNumber || "",
     number_order: filters.orderNumber || "",
     sum_from: filters.amountFrom || "",
@@ -719,6 +729,8 @@ function ErrorsManagement() {
   const [draftFilters, setDraftFilters] = useState(INITIAL_FILTERS);
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [errCats, setErrCats] = useState([]);
+  const [siteCats, setSiteCats] = useState([]);
 
   const getData = useCallback(async (method, data = {}) => {
     setIsLoad(true);
@@ -747,6 +759,55 @@ function ErrorsManagement() {
     },
     [getData],
   );
+
+  const [mark, setMark] = useState("");
+  const [modalCats, setModalCats] = useState(false);
+  const [parentValue, setParentValue] = useState(false);
+  const [modalCatsTitle, setModalCatsTitle] = useState("");
+  const [itemName, setItemName] = useState("");
+  const [catItem, setCatItem] = useState({});
+  const [solutions, setSolutions] = useState([]);
+  const [allStages, setAllStages] = useState([]);
+  const openCatsModal = (title, mark, id = null, parentValue = false) => {
+    let catItem = errCats?.find((c) => +c.id === +id) || null;
+    const itemName = catItem?.name || "";
+    if (parentValue) {
+      catItem = { ...catItem, name: "" };
+    }
+    setMark(mark);
+    setModalCats(true);
+    setParentValue(parentValue);
+    setModalCatsTitle(title);
+    setItemName(itemName);
+    setCatItem(catItem);
+  };
+
+  const changeCatActive = async (cat) => {
+    // const alterCat = { ...cat, is_active: !cat.is_active };
+    // await this.save(alterCat);
+    await saveActiveCat(cat.id, !cat.is_active);
+  };
+
+  const saveActiveCat = async (id, is_active) => {
+    try {
+      const data = {
+        id,
+        is_active,
+      };
+      await getData("set_active_cat", data);
+    } catch (e) {
+      console.error(e.message || "Ошибка");
+    } finally {
+      update();
+    }
+  };
+
+  const update = async () => {
+    const res = await getData("get_all");
+    console.log(res.data);
+    setErrCats(res.data.err_cats);
+    setSiteCats(res.data.site_cats);
+  };
 
   const loadInitialData = useCallback(async () => {
     setErrorText("");
@@ -785,9 +846,103 @@ function ErrorsManagement() {
     setPoints(nextPoints);
     setOrderTypes(nextOrderTypes);
     setDraftFilters(nextFilters);
+    setErrCats(res.data?.err_cats);
+    setSiteCats(res.data?.site_cats);
+    setAllStages(res.data?.all_stages);
+    setSolutions(res.data?.solutions);
 
     await loadOrders(nextFilters);
   }, [getData, loadOrders]);
+
+  const toCsv = (v) =>
+    !v
+      ? ""
+      : Array.isArray(v)
+        ? v
+            .map((x) => (typeof x === "object" ? x.id : x))
+            .filter(Boolean)
+            .join(",")
+        : String(v)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .join(",");
+
+  const save = async (item) => {
+    try {
+      if (mark === "newItem") {
+        await getData("save_new", item);
+        return;
+      }
+
+      if (mark === "editItem") {
+        const data = {
+          id: item.err.id,
+          name: item.err.name,
+          is_active: item.err.is_active,
+          need_photo: item.err.need_photo,
+          id_win: item.this_wins,
+          stage_err_1: item.this_stages_1,
+          stage_err_2: item.this_stages_2,
+          stage_err_3: item.this_stages_3,
+        };
+
+        await getData("save_edit", data);
+        return;
+      }
+      // CATS
+      const type = item.id && !parentValue ? "editCat" : "addCat";
+      const properSiteCats = Array.isArray(item?.site_cats)
+        ? item?.site_cats?.map((c) => c.id).join(",") || null
+        : item?.site_cats;
+      const request = {
+        cat: {
+          ...item,
+          site_cats: properSiteCats,
+          stage_1: toCsv(item.stage_1),
+          stage_2: toCsv(item.stage_2),
+          stage_3: toCsv(item.stage_3),
+          solutions: toCsv(item.solutions),
+        },
+      };
+      if (type === "editCat") {
+        const res = await getData("update_cat", request);
+        /*if (!res?.st) {
+          this.setState({
+            openAlert: true,
+            err_status: res.st,
+            err_text: res.text,
+          });
+        }*/
+      }
+      if (type === "addCat") {
+        const res = await getData("add_cat", request);
+        if (!res?.st) {
+          /*this.setState({
+            openAlert: true,
+            err_status: res.st,
+            err_text: res.text,
+          });*/
+        }
+      }
+    } catch (e) {
+      console.error(e?.message || "ERROOORRR");
+    } finally {
+      setCatItem(null);
+      await update();
+    }
+  };
+
+  const removeErrCat = async (id) => {
+    if (!id) return;
+    try {
+      const res = await getData("delete_cat", { id });
+      await update();
+    } catch (e) {
+      console.error(e.message || "Ошибка");
+    } finally {
+    }
+  };
 
   useEffect(() => {
     loadInitialData();
@@ -855,6 +1010,8 @@ function ErrorsManagement() {
     setSelectedOrder(payload);
   };
 
+  const [activeTab, setActiveTab] = useState(0);
+
   return (
     <>
       <Backdrop
@@ -868,6 +1025,21 @@ function ErrorsManagement() {
         detail={selectedOrder}
         onClose={() => setSelectedOrder(null)}
         access={access}
+      />
+
+      <CatsModal
+        open={modalCats}
+        title={modalCatsTitle}
+        catName={""}
+        errCats={errCats}
+        siteCats={siteCats}
+        parentValue={parentValue}
+        solutions={solutions}
+        allStages={allStages}
+        item={catItem}
+        onClose={() => setModalCats(false)}
+        save={save}
+        remove={removeErrCat}
       />
 
       <Box
@@ -895,13 +1067,37 @@ function ErrorsManagement() {
             {errorText}
           </Alert>
         ) : null}
-
+        <Paper
+          sx={{
+            marginBottom: "24px",
+            marginTop: "24px",
+            backgroundColor: "#f3f3f3",
+            borderRadius: "16px 16px 0 0",
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(e, val) => setActiveTab(val)}
+            variant="fullWidth"
+            scrollButtons={false}
+          >
+            <Tab
+              label="Ошибки по отзывам"
+              sx={{ minWidth: "fit-content", flex: 1 }}
+            />
+            <Tab
+              label="Варианты решения жалоб"
+              sx={{ minWidth: "fit-content", flex: 1 }}
+            />
+          </Tabs>
+        </Paper>
         <Paper
           elevation={0}
           sx={{
             backgroundColor: blockBackground,
             border: `1px solid ${blockBorder}`,
             borderRadius: "16px",
+            display: activeTab === 0 ? "block" : "none",
             p: { xs: 2, md: 3 },
           }}
         >
@@ -945,7 +1141,6 @@ function ErrorsManagement() {
                       onChange={handleDraftChange("pointId")}
                       sx={searchFieldSx}
                     >
-                      <MenuItem value="">Все точки в городе</MenuItem>
                       {pointOptions.map((point) => (
                         <MenuItem
                           key={point.id}
@@ -1109,11 +1304,37 @@ function ErrorsManagement() {
             </Box>
           </Stack>
         </Paper>
+        <Paper
+          sx={{
+            backgroundColor: "transparent",
+            border: `1px solid ${blockBorder}`,
+            borderRadius: "16px",
+            display: activeTab === 1 ? "block" : "none",
+            p: { xs: 2, md: 3 },
+          }}
+        >
+          <Button
+            onClick={() => openCatsModal("Новая категория", "addCat")}
+            variant="contained"
+            sx={{ height: "42px", marginLeft: "auto" }}
+          >
+            Добавить категорию
+          </Button>
+          <ErrCats
+            errCats={errCats}
+            siteCats={siteCats}
+            openModal={(id) => openCatsModal("Редактировать", "editCat", id)}
+            openNewModalCats={(id, p) => openCatsModal("Новая категория", "addCat", id, p)}
+            changeActive={changeCatActive}
+          />
+        </Paper>
 
-        <Divider sx={{ my: 3 }} />
+        <Divider sx={{ my: 3, display: activeTab === 0 ? "block" : "none" }} />
 
         {orders.length ? (
-          <Paper sx={{ width: "100%", overflow: "hidden" }}>
+          <Paper
+            sx={{ width: "100%", overflow: "hidden", display: activeTab === 0 ? "block" : "none" }}
+          >
             <TableContainer sx={{ maxHeight: "70vh" }}>
               <Table
                 size="small"
@@ -1202,6 +1423,7 @@ function ErrorsManagement() {
             elevation={0}
             sx={{
               p: 4,
+              display: activeTab === 0 ? "block" : "none",
               border: "1px solid #E5E5E5",
               textAlign: "center",
             }}
