@@ -32,7 +32,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
-import { api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 import { MyCheckBox, MyDatePickerNew } from "@/ui/Forms";
 import { ModalProblems } from "@/components/errors_management/ModalProblems";
 import dayjs from "dayjs";
@@ -736,7 +736,7 @@ function ErrorsManagement() {
     setIsLoad(true);
 
     try {
-      return await api_laravel_local(moduleName, method, data);
+      return await api_laravel(moduleName, method, data);
     } finally {
       setIsLoad(false);
     }
@@ -1141,6 +1141,12 @@ function ErrorsManagement() {
                       onChange={handleDraftChange("pointId")}
                       sx={searchFieldSx}
                     >
+                      <MenuItem
+                        key={0}
+                        value={0}
+                      >
+                        Все точки в городе
+                      </MenuItem>
                       {pointOptions.map((point) => (
                         <MenuItem
                           key={point.id}
@@ -1369,6 +1375,15 @@ function ErrorsManagement() {
                   {orders.map((item, index) => (
                     <TableRow
                       key={`${getRowOrderId(item)}-${index}`}
+                      style={
+                        parseInt(item.is_delete) == 1
+                          ? {
+                              backgroundColor: "red",
+                              color: "#fff !important",
+                              fontWeight: "bold",
+                            }
+                          : {}
+                      }
                       hover
                     >
                       <TableCell
