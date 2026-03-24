@@ -397,13 +397,13 @@ class AppPerH_ extends React.Component {
             }}
           >
             <MyTextInput
-              label="Коэф. пиццы для бонуса"
+              label="Коэф. роллов для бонуса"
               style={{ marginTop: "10px" }}
-              value={this.state.k_pizza || ""}
-              func={(e) => this.setState({ k_pizza: e.target.value })}
+              value={this.state.k_rolls || ""}
+              func={(e) => this.setState({ k_rolls: e.target.value })}
               type="number"
-              step="0.01"
               onWheel={(e) => e.target.blur()}
+              step="0.01"
               fullWidth
             />
           </Grid>
@@ -414,13 +414,13 @@ class AppPerH_ extends React.Component {
             }}
           >
             <MyTextInput
-              label="Коэф. роллов для бонуса"
+              label="Коэф. пиццы для бонуса"
               style={{ marginTop: "10px" }}
-              value={this.state.k_rolls || ""}
-              func={(e) => this.setState({ k_rolls: e.target.value })}
+              value={this.state.k_pizza || ""}
+              func={(e) => this.setState({ k_pizza: e.target.value })}
               type="number"
-              onWheel={(e) => e.target.blur()}
               step="0.01"
+              onWheel={(e) => e.target.blur()}
               fullWidth
             />
           </Grid>
