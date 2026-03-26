@@ -560,6 +560,7 @@ function FeedbackPage() {
     eva_reviews: "Оценка отзывов",
   };
   const [access, setAccess] = useState({});
+  const [full_access, setFullAccess] = useState({});
 
   useEffect(() => {
     getData("get_form", { id }).then((data) => {
@@ -571,6 +572,7 @@ function FeedbackPage() {
         ([key]) => parseInt(data.acces?.[key + "_access"]) === 1 || key === "view_form",
       );
       setAccess(Object.fromEntries(tabsCheck));
+      setFullAccess(data.acces);
       setPoints(data.points);
       setPointEva(data.points);
       setItems(data.items);
@@ -827,6 +829,8 @@ function FeedbackPage() {
         return null;
     }
   };
+
+  console.log("full_access", full_access, parseInt(full_access?.add_feedback_access) == 1);
 
   return (
     <Grid
@@ -1399,25 +1403,27 @@ function FeedbackPage() {
             ) : null}
           </TabPanel>
           <TabPanel value="view_form">
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <FormControlLabel
-                sx={{ pt: 0 }}
-                control={
-                  <Checkbox
-                    checked={active}
-                    onChange={changeActive}
-                  />
-                }
-                label={"Активность"}
-                id={"active"}
-                size="small"
-              />
-            </Grid>
+            {parseInt(full_access?.add_feedback_access) == 0 ? null : (
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+              >
+                <FormControlLabel
+                  sx={{ pt: 0 }}
+                  control={
+                    <Checkbox
+                      checked={active}
+                      onChange={changeActive}
+                    />
+                  }
+                  label={"Активность"}
+                  id={"active"}
+                  size="small"
+                />
+              </Grid>
+            )}
             <Grid
               size={{
                 xs: 12,

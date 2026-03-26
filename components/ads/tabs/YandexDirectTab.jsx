@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   Box,
   Button,
@@ -32,7 +33,8 @@ import useXLSExport from "@/src/hooks/useXLSXExport";
 import { QueryStats } from "@mui/icons-material";
 import { formatNumber } from "@/src/helpers/utils/i18n";
 import MyModal from "@/ui/MyModal";
-import StatsChart from "./StatsChart";
+
+const StatsChart = dynamic(() => import("./StatsChart"), { ssr: false });
 
 function SmallText({ children, size = "0.7rem" }) {
   return <div style={{ fontSize: size }}>{children}</div>;
