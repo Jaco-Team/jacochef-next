@@ -1,4 +1,5 @@
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect, useRef, useState } from "react";
+import Script from "next/script";
 
 const fillPrimaryActive = "#00FF00";
 const fillPrimaryInactive = "#AAAAAA";
@@ -11,6 +12,7 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
   const mapRef = useRef(null);
   const isYm = useRef(false);
   const polygonsRef = useRef([]); // Реф для хранения полигонов
+  const [isMapsScriptReady, setIsMapsScriptReady] = useState(false);
 
   const handleClickCallback = (e) => {
     const target = e.get("target");
@@ -134,14 +136,27 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
   };
 
   useEffect(() => {
+    if (!window["ymaps"]) {
+      return;
+    }
+
+    setIsMapsScriptReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMapsScriptReady) {
+      return;
+    }
+
     createZones();
+
     return () => {
       mapRef.current?.destroy?.();
       mapRef.current = null;
       isYm.current = false;
       polygonsRef.current = [];
     };
-  }, []);
+  }, [isMapsScriptReady]);
 
   useEffect(() => {
     updateZones();
@@ -149,6 +164,11 @@ const CafeEdit_ZonesMap = ({ zones, otherZones, clickCallback, readonly = false 
 
   return (
     <>
+      <Script
+        src="https://api-maps.yandex.ru/2.1/?apikey=665f5b53-8905-4934-9502-4a6a7b06a900&lang=ru_RU"
+        strategy="afterInteractive"
+        onReady={() => setIsMapsScriptReady(true)}
+      />
       <div
         id="map"
         style={{ width: "100%", minHeight: "300px", height: "50dvh" }}

@@ -1,4 +1,5 @@
 import React from "react";
+import Script from "next/script";
 
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
@@ -1068,6 +1069,14 @@ export default class HotMap extends React.PureComponent {
   render() {
     return (
       <>
+        <Script
+          src="https://api-maps.yandex.ru/2.1/?apikey=665f5b53-8905-4934-9502-4a6a7b06a900&lang=ru_RU"
+          strategy="afterInteractive"
+        />
+        <Script
+          src="https://yastatic.net/s3/mapsapi-jslibs/heatmap/0.0.1/heatmap.min.js"
+          strategy="afterInteractive"
+        />
         <Backdrop
           open={this.state.is_load}
           style={{ zIndex: 99 }}
