@@ -45,6 +45,8 @@ export default function DraggableImage({
     <div
       ref={setNodeRef}
       style={dragStyle}
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
       {...listeners}
       {...attributes}
     >

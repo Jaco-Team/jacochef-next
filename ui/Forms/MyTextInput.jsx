@@ -15,6 +15,7 @@ export function MyTextInput(props) {
     slotProps,
     isTimeMask,
     isDecimalMask,
+    decimalScale = 3,
     InputAdornment: legacyInputAdornment = null, // legacy hack
     inputAdornment,
     rows,
@@ -130,6 +131,7 @@ export function MyTextInput(props) {
 
   const handleDecimalMask = (e) => {
     let value = e.target.value;
+    const safeDecimalScale = Number.isInteger(decimalScale) ? decimalScale : 3;
 
     // Заменяем точки на запятые
     value = value.replace(/\./g, ",");
@@ -143,9 +145,9 @@ export function MyTextInput(props) {
       value = parts[0] + "," + parts.slice(1).join("");
     }
 
-    // Ограничиваем количество знаков после запятой (например, 3)
-    if (parts.length === 2 && parts[1].length > 3) {
-      value = parts[0] + "," + parts[1].slice(0, 3);
+    // Ограничиваем количество знаков после запятой
+    if (parts.length === 2 && parts[1].length > safeDecimalScale) {
+      value = parts[0] + "," + parts[1].slice(0, safeDecimalScale);
     }
 
     e.target.value = value;
