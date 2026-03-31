@@ -2001,7 +2001,7 @@ class StatSale_Tab_Sett extends React.Component {
         >
           <TabPanel
             value={activeTab}
-            index={2}
+            index={3}
             id="clients"
           >
             <Grid
@@ -3005,6 +3005,1258 @@ class StatSale_Tab_Clients extends React.Component {
   }
 }
 
+// ---------- Таб Динамика ----------
+class StatSale_Tab_Dynamic extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      date_start: formatDateMin(new Date()),
+      date_end: formatDateMin(new Date()),
+      data_clients_list: [],
+      data_clients_list_cafe: [],
+      data_clients_list_kc: [],
+      data_clients_list_site: [],
+      yearly_totals: null,
+      yearly_totals_cafe: null,
+      yearly_totals_kc: null,
+      yearly_totals_site: null,
+      loading: false,
+    };
+  }
+
+  changeDateRange(type, data) {
+    this.setState({
+      [type]: formatDateMin(data),
+    });
+  }
+
+  get_data_clients = async (exp = false) => {
+    const { date_start, date_end } = this.state;
+    const data = {
+      date_start,
+      date_end,
+    };
+
+    // export
+    if (exp) {
+      const res = await this.props.getData("export_data_clients", data);
+      if (!res?.st) {
+        return this.props.openAlert(res?.st, res?.text || "Ошибка при экспорте данных");
+      }
+      return res?.url;
+    }
+
+    this.setState({ loading: true });
+    const res = await this.props.getData("get_dynamics", data);
+    this.setState({ loading: false });
+
+    if (res.st) {
+      this.setState({
+        data_clients_list: res.res || [],
+        data_clients_list_cafe: res.res_cafe || [],
+        data_clients_list_kc: res.res_kc || [],
+        data_clients_list_site: res.res_site || [],
+        yearly_totals: res.yearly_totals || null,
+        yearly_totals_cafe: res.yearly_totals_cafe || null,
+        yearly_totals_kc: res.yearly_totals_kc || null,
+        yearly_totals_site: res.yearly_totals_site || null,
+      });
+    } else {
+      this.props.openAlert(res.st, res.text);
+    }
+  };
+
+  renderTable = () => {
+    const { data_clients_list, yearly_totals } = this.state;
+
+    if (!data_clients_list.length) return null;
+
+    // Фильтруем месяцы с данными
+    const monthsWithData = data_clients_list.filter(
+      (m) => m.rolly !== 0 || m.pizza !== 0 || m.order !== 0,
+    );
+    const currentMonth = data_clients_list.find((m) => m.month === new Date().getMonth() + 1);
+
+    // Количество колонок для секционных заголовков (5 фикс + 3 * кол-во месяцев)
+    const totalCols = 5 + monthsWithData.length * 3;
+
+    // Подсчитываем общее количество строк данных для rowspan
+    const totalDataRows = 3 + 1 + 4 + 1; // ПРОДУКТЫ(3) + ЭФФЕКТИВНОСТЬ(1) + АККАУНТЫ(4) + АУДИТОРИЯ(1)
+
+    // Вспомогательный компонент для секционного заголовка
+    const SectionHeader = ({ title, icon, color }) => (
+      <tr>
+        <td
+          colSpan={totalCols + 1}
+          style={{
+            padding: "10px 8px",
+            backgroundColor: color,
+            fontWeight: "600",
+            fontSize: "13px",
+            borderBottom: "2px solid #ccc",
+            borderTop: "1px solid #ddd",
+          }}
+        >
+          {icon} {title}
+        </td>
+      </tr>
+    );
+
+    // Вспомогательная функция для ячеек месяца
+    const renderMonthCells = (month, metricKey) => {
+      const planValue = month[`${metricKey}_plan`];
+      const factValue = month[metricKey];
+      const dynamicsValue = month[`${metricKey}_dynamics`];
+
+      return (
+        <React.Fragment key={`cell-${month.month}-${metricKey}`}>
+          <td
+            style={{
+              border: "1px solid #ddd",
+              padding: "4px",
+              textAlign: "right",
+              backgroundColor: "#fff",
+            }}
+          >
+            {planValue !== null && planValue !== undefined
+              ? planValue.toLocaleString("ru-RU")
+              : "-"}
+          </td>
+          <td
+            style={{
+              border: "1px solid #ddd",
+              padding: "4px",
+              textAlign: "right",
+              backgroundColor: "#fff",
+            }}
+          >
+            {factValue !== null && factValue !== undefined
+              ? factValue.toLocaleString("ru-RU")
+              : "-"}
+          </td>
+          <td
+            style={{
+              border: "1px solid #ddd",
+              padding: "4px",
+              textAlign: "right",
+              backgroundColor: "#fff",
+              borderRight: "2px solid #ccc",
+            }}
+          >
+            {dynamicsValue !== null && dynamicsValue !== undefined
+              ? `${dynamicsValue.toFixed(2)}%`
+              : "-"}
+          </td>
+        </React.Fragment>
+      );
+    };
+
+    return (
+      <div
+        style={{
+          overflowX: "auto",
+          marginTop: "20px",
+          border: "1px solid #ddd",
+          borderRadius: "4px",
+        }}
+      >
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: "12px",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          <thead>
+            <tr style={{ backgroundColor: "#f5f5f5" }}>
+              <th
+                rowSpan={2}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "center",
+                  position: "sticky",
+                  left: 0,
+                  backgroundColor: "#f5f5f5",
+                  zIndex: 3,
+                  minWidth: "120px",
+                }}
+              >
+                Источник
+              </th>
+              <th
+                rowSpan={2}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "center",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#f5f5f5",
+                  zIndex: 3,
+                  minWidth: "150px",
+                }}
+              >
+                Метрика
+              </th>
+              <th
+                rowSpan={2}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "center",
+                  minWidth: "80px",
+                }}
+              >
+                План год
+              </th>
+              <th
+                rowSpan={2}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "center",
+                  minWidth: "80px",
+                }}
+              >
+                Факт год
+              </th>
+              <th
+                rowSpan={2}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "center",
+                  minWidth: "90px",
+                }}
+              >
+                Факт по тек.мес
+              </th>
+              <th
+                rowSpan={2}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "center",
+                  minWidth: "70px",
+                }}
+              >
+                Динамика
+              </th>
+
+              {monthsWithData.map((month, idx) => (
+                <React.Fragment key={`header-${month.month}`}>
+                  <th
+                    colSpan={3}
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "8px",
+                      textAlign: "center",
+                      backgroundColor: `hsl(${idx * 45}, 75%, 92%)`,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {month.month_name.charAt(0).toUpperCase() + month.month_name.slice(1)}
+                  </th>
+                </React.Fragment>
+              ))}
+            </tr>
+            <tr style={{ backgroundColor: "#f5f5f5" }}>
+              {monthsWithData.map((month) => (
+                <React.Fragment key={`subheader-${month.month}`}>
+                  <th
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "center",
+                      fontSize: "11px",
+                      backgroundColor: "#fafafa",
+                    }}
+                  >
+                    План
+                  </th>
+                  <th
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "center",
+                      fontSize: "11px",
+                      backgroundColor: "#fafafa",
+                    }}
+                  >
+                    Факт
+                  </th>
+                  <th
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "center",
+                      fontSize: "11px",
+                      backgroundColor: "#fafafa",
+                    }}
+                  >
+                    Δ%
+                  </th>
+                </React.Fragment>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            {/* Роллы */}
+            <tr style={{ backgroundColor: "#fafafa" }}>
+              <td
+                rowSpan={totalDataRows}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  textAlign: "center",
+                  verticalAlign: "middle",
+                  position: "sticky",
+                  left: 0,
+                  backgroundColor: "#e3f2fd",
+                  zIndex: 2,
+                  minWidth: "120px",
+                }}
+              >
+                Все источники
+              </td>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fafafa",
+                  zIndex: 2,
+                }}
+              >
+                Роллы
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+                {yearly_totals?.rolly_plan?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+                {yearly_totals?.rolly?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {currentMonth?.rolly_dynamics?.toFixed(2) || "-"}%
+              </td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
+              >
+                {yearly_totals?.rolly_dynamics_avg?.toFixed(2) || "-"}%
+              </td>
+              {monthsWithData.map((month) => renderMonthCells(month, "rolly"))}
+            </tr>
+
+            <tr style={{ backgroundColor: "#fff" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fff",
+                  zIndex: 2,
+                }}
+              >
+                Пицца
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+                {yearly_totals?.pizza_plan?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+                {yearly_totals?.pizza?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {currentMonth?.pizza_dynamics?.toFixed(2) || "-"}%
+              </td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
+              >
+                {yearly_totals?.pizza_dynamics_avg?.toFixed(2) || "-"}%
+              </td>
+              {monthsWithData.map((month) => renderMonthCells(month, "pizza"))}
+            </tr>
+
+            <tr style={{ backgroundColor: "#fafafa" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fafafa",
+                  zIndex: 2,
+                }}
+              >
+                Заказы
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+                {yearly_totals?.order_plan?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+                {yearly_totals?.order?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {currentMonth?.order_dynamics?.toFixed(2) || "-"}%
+              </td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
+              >
+                {yearly_totals?.order_dynamics_avg?.toFixed(2) || "-"}%
+              </td>
+              {monthsWithData.map((month) => renderMonthCells(month, "order"))}
+            </tr>
+
+            <tr style={{ backgroundColor: "#fafafa" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fafafa",
+                  zIndex: 2,
+                }}
+              >
+                Эфф-ть/Загрузка
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>100%</td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {currentMonth?.effect?.toFixed(2) || "-"}%
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
+              >
+                -
+              </td>
+              {monthsWithData.map((month) => (
+                <React.Fragment key={`eff-${month.month}`}>
+                  <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "right" }}>
+                    100%
+                  </td>
+                  <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "right" }}>
+                    {month.effect?.toFixed(2) || "-"}%
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "right",
+                      borderRight: "2px solid #ccc",
+                    }}
+                  >
+                    -
+                  </td>
+                </React.Fragment>
+              ))}
+            </tr>
+
+            <tr style={{ backgroundColor: "#fafafa" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fafafa",
+                  zIndex: 2,
+                }}
+              >
+                Аккаунтов
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {currentMonth?.active?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
+              >
+                -
+              </td>
+              {monthsWithData.map((month) => renderMonthCells(month, "active"))}
+            </tr>
+
+            <tr style={{ backgroundColor: "#fff" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  paddingLeft: "24px",
+                  fontStyle: "italic",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fff",
+                  zIndex: 2,
+                }}
+              >
+                └─ Доля аккаунтов
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
+              >
+                -
+              </td>
+              {monthsWithData.map((month) => (
+                <React.Fragment key={`share-active-${month.month}`}>
+                  <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "right" }}>
+                    -
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "right",
+                      fontStyle: "italic",
+                      color: "#666",
+                    }}
+                  >
+                    {month.active && yearly_totals?.residents
+                      ? ((month.active / month.residents) * 100).toFixed(2) + "%"
+                      : "-"}
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "right",
+                      borderRight: "2px solid #ccc",
+                    }}
+                  >
+                    -
+                  </td>
+                </React.Fragment>
+              ))}
+            </tr>
+
+            <tr style={{ backgroundColor: "#fafafa" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fafafa",
+                  zIndex: 2,
+                }}
+              >
+                Активные аккаунты
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {currentMonth?.register?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {currentMonth?.register_dynamics?.toFixed(2) || "-"}%
+              </td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
+              >
+                {yearly_totals?.register_dynamics_avg?.toFixed(2) || "-"}%
+              </td>
+              {monthsWithData.map((month) => renderMonthCells(month, "register"))}
+            </tr>
+
+            {/* Доля регистраций */}
+            <tr style={{ backgroundColor: "#fff" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  paddingLeft: "24px",
+                  fontStyle: "italic",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fff",
+                  zIndex: 2,
+                }}
+              >
+                └─ Доля активных аккаунтов
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
+              >
+                -
+              </td>
+              {monthsWithData.map((month) => (
+                <React.Fragment key={`share-reg-${month.month}`}>
+                  <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "right" }}>
+                    -
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "right",
+                      fontStyle: "italic",
+                      color: "#666",
+                    }}
+                  >
+                    {month.register && month.residents
+                      ? ((month.register / month.residents) * 100).toFixed(2) + "%"
+                      : "-"}
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "right",
+                      borderRight: "2px solid #ccc",
+                    }}
+                  >
+                    -
+                  </td>
+                </React.Fragment>
+              ))}
+            </tr>
+
+            {/* Жители */}
+            <tr style={{ backgroundColor: "#fafafa" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fafafa",
+                  zIndex: 2,
+                  borderBottom: "2px solid #ccc",
+                }}
+              >
+                Жителей
+              </td>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "500",
+                  borderBottom: "2px solid #ccc",
+                }}
+              >
+                {yearly_totals?.residents?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderBottom: "2px solid #ccc" }}
+              >
+                {currentMonth?.residents?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderBottom: "2px solid #ccc" }}
+              >
+                100%
+              </td>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  borderBottom: "2px solid #ccc",
+                  borderRight: "2px solid #ccc",
+                }}
+              >
+                -
+              </td>
+              {monthsWithData.map((month) => (
+                <React.Fragment key={`residents-${month.month}`}>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "right",
+                      borderBottom: "2px solid #ccc",
+                    }}
+                  >
+                    {month.residents?.toLocaleString("ru-RU") || "-"}
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "right",
+                      borderBottom: "2px solid #ccc",
+                    }}
+                  >
+                    {month.residents?.toLocaleString("ru-RU") || "-"}
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "right",
+                      borderBottom: "2px solid #ccc",
+                      borderRight: "2px solid #ccc",
+                    }}
+                  >
+                    100%
+                  </td>
+                </React.Fragment>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  renderTableMini = (title, data_clients_list, yearly_totals) => {
+    if (!data_clients_list.length) return null;
+
+    const monthsWithData = data_clients_list.filter(
+      (m) => m.rolly !== 0 || m.pizza !== 0 || m.order !== 0,
+    );
+    const currentMonth = data_clients_list.find((m) => m.month === new Date().getMonth() + 1);
+
+    const totalCols = 5 + monthsWithData.length * 3;
+
+    // Подсчитываем общее количество строк данных для rowspan
+    const totalDataRows = 3 + 1 + 4 + 1; // ПРОДУКТЫ(3) + ЭФФЕКТИВНОСТЬ(1) + АККАУНТЫ(4) + АУДИТОРИЯ(1)
+
+    // Вспомогательный компонент для секционного заголовка
+    const SectionHeader = ({ title, icon, color }) => (
+      <tr>
+        <td
+          colSpan={totalCols + 1}
+          style={{
+            padding: "10px 8px",
+            backgroundColor: color,
+            fontWeight: "600",
+            fontSize: "13px",
+            borderBottom: "2px solid #ccc",
+            borderTop: "1px solid #ddd",
+          }}
+        >
+          {icon} {title}
+        </td>
+      </tr>
+    );
+
+    // Вспомогательная функция для ячеек месяца
+    const renderMonthCells = (month, metricKey) => {
+      const planValue = month[`${metricKey}_plan`];
+      const factValue = month[metricKey];
+      const dynamicsValue = month[`${metricKey}_dynamics`];
+
+      return (
+        <React.Fragment key={`cell-${month.month}-${metricKey}`}>
+          <td
+            style={{
+              border: "1px solid #ddd",
+              padding: "4px",
+              textAlign: "right",
+              backgroundColor: "#fff",
+            }}
+          >
+            {planValue !== null && planValue !== undefined
+              ? planValue.toLocaleString("ru-RU")
+              : "-"}
+          </td>
+          <td
+            style={{
+              border: "1px solid #ddd",
+              padding: "4px",
+              textAlign: "right",
+              backgroundColor: "#fff",
+            }}
+          >
+            {factValue !== null && factValue !== undefined
+              ? factValue.toLocaleString("ru-RU")
+              : "-"}
+          </td>
+          <td
+            style={{
+              border: "1px solid #ddd",
+              padding: "4px",
+              textAlign: "right",
+              backgroundColor: "#fff",
+              borderRight: "2px solid #ccc",
+            }}
+          >
+            {dynamicsValue !== null && dynamicsValue !== undefined
+              ? `${dynamicsValue.toFixed(2)}%`
+              : "-"}
+          </td>
+        </React.Fragment>
+      );
+    };
+
+    return (
+      <div
+        style={{
+          overflowX: "auto",
+          marginTop: "20px",
+          border: "1px solid #ddd",
+          borderRadius: "4px",
+        }}
+      >
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: "12px",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          <thead>
+            <tr style={{ backgroundColor: "#f5f5f5" }}>
+              <th
+                rowSpan={2}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "center",
+                  position: "sticky",
+                  left: 0,
+                  backgroundColor: "#f5f5f5",
+                  zIndex: 3,
+                  minWidth: "120px",
+                }}
+              >
+                Источник
+              </th>
+              <th
+                rowSpan={2}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "center",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#f5f5f5",
+                  zIndex: 3,
+                  minWidth: "150px",
+                }}
+              >
+                Метрика
+              </th>
+              <th
+                rowSpan={2}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "center",
+                  minWidth: "80px",
+                }}
+              >
+                План год
+              </th>
+              <th
+                rowSpan={2}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "center",
+                  minWidth: "80px",
+                }}
+              >
+                Факт год
+              </th>
+              <th
+                rowSpan={2}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "center",
+                  minWidth: "90px",
+                }}
+              >
+                Факт по тек.мес
+              </th>
+              <th
+                rowSpan={2}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "center",
+                  minWidth: "70px",
+                }}
+              >
+                Динамика
+              </th>
+
+              {monthsWithData.map((month, idx) => (
+                <React.Fragment key={`header-${month.month}`}>
+                  <th
+                    colSpan={3}
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "8px",
+                      textAlign: "center",
+                      backgroundColor: `hsl(${idx * 45}, 75%, 92%)`,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {month.month_name.charAt(0).toUpperCase() + month.month_name.slice(1)}
+                  </th>
+                </React.Fragment>
+              ))}
+            </tr>
+            <tr style={{ backgroundColor: "#f5f5f5" }}>
+              {monthsWithData.map((month) => (
+                <React.Fragment key={`subheader-${month.month}`}>
+                  <th
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "center",
+                      fontSize: "11px",
+                      backgroundColor: "#fafafa",
+                    }}
+                  >
+                    План
+                  </th>
+                  <th
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "center",
+                      fontSize: "11px",
+                      backgroundColor: "#fafafa",
+                    }}
+                  >
+                    Факт
+                  </th>
+                  <th
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "center",
+                      fontSize: "11px",
+                      backgroundColor: "#fafafa",
+                    }}
+                  >
+                    Δ%
+                  </th>
+                </React.Fragment>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            {/* Роллы */}
+            <tr style={{ backgroundColor: "#fafafa" }}>
+              <td
+                rowSpan={totalDataRows}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  textAlign: "center",
+                  verticalAlign: "middle",
+                  position: "sticky",
+                  left: 0,
+                  backgroundColor: "#e3f2fd",
+                  zIndex: 2,
+                  minWidth: "120px",
+                }}
+              >
+                {title}
+              </td>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fafafa",
+                  zIndex: 2,
+                }}
+              >
+                Роллы
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+                {yearly_totals?.rolly_plan?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+                {yearly_totals?.rolly?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {currentMonth?.rolly_dynamics?.toFixed(2) || "-"}%
+              </td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
+              >
+                {yearly_totals?.rolly_dynamics_avg?.toFixed(2) || "-"}%
+              </td>
+              {monthsWithData.map((month) => renderMonthCells(month, "rolly"))}
+            </tr>
+
+            <tr style={{ backgroundColor: "#fff" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fff",
+                  zIndex: 2,
+                }}
+              >
+                Пицца
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+                {yearly_totals?.pizza_plan?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+                {yearly_totals?.pizza?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {currentMonth?.pizza_dynamics?.toFixed(2) || "-"}%
+              </td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
+              >
+                {yearly_totals?.pizza_dynamics_avg?.toFixed(2) || "-"}%
+              </td>
+              {monthsWithData.map((month) => renderMonthCells(month, "pizza"))}
+            </tr>
+
+            <tr style={{ backgroundColor: "#fafafa" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fafafa",
+                  zIndex: 2,
+                }}
+              >
+                Заказы
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+                {yearly_totals?.order_plan?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+                {yearly_totals?.order?.toLocaleString("ru-RU") || "-"}
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {currentMonth?.order_dynamics?.toFixed(2) || "-"}%
+              </td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
+              >
+                {yearly_totals?.order_dynamics_avg?.toFixed(2) || "-"}%
+              </td>
+              {monthsWithData.map((month) => renderMonthCells(month, "order"))}
+            </tr>
+
+            <tr style={{ backgroundColor: "#fafafa" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  fontWeight: "600",
+                  position: "sticky",
+                  left: 120,
+                  backgroundColor: "#fafafa",
+                  zIndex: 2,
+                }}
+              >
+                Эфф-ть/Загрузка
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>100%</td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {currentMonth?.effect?.toFixed(2) || "-"}%
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
+              <td
+                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
+              >
+                -
+              </td>
+              {monthsWithData.map((month) => (
+                <React.Fragment key={`eff-${month.month}`}>
+                  <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "right" }}>
+                    100%
+                  </td>
+                  <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "right" }}>
+                    {month.effect?.toFixed(2) || "-"}%
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "4px",
+                      textAlign: "right",
+                      borderRight: "2px solid #ccc",
+                    }}
+                  >
+                    -
+                  </td>
+                </React.Fragment>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  render() {
+    const { activeTab } = this.props;
+    const {
+      data_clients_list,
+      loading,
+      data_clients_list_cafe,
+      yearly_totals_cafe,
+      data_clients_list_kc,
+      yearly_totals_kc,
+      data_clients_list_site,
+      yearly_totals_site,
+    } = this.state;
+
+    return (
+      <Grid
+        style={{ paddingTop: 0 }}
+        size={{
+          xs: 12,
+          sm: 12,
+        }}
+      >
+        <TabPanel
+          value={activeTab}
+          index={2}
+          id="dynamics"
+        >
+          <Grid
+            container
+            spacing={3}
+          >
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+              }}
+            >
+              <MyDatePickerNewViews
+                label="Дата от"
+                views={["month", "year"]}
+                value={this.state.date_start}
+                func={this.changeDateRange.bind(this, "date_start")}
+              />
+            </Grid>
+
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3,
+              }}
+            >
+              <Button
+                variant="contained"
+                onClick={() => this.get_data_clients()}
+                disabled={loading}
+              >
+                {loading ? "Загрузка..." : "Показать"}
+              </Button>
+              {this.props.canExport && data_clients_list.length > 0 && (
+                <DownloadButton
+                  variant="contained"
+                  color="success"
+                  button={true}
+                  url={async () => await this.get_data_clients(true)}
+                  sx={{ ml: { sm: 2, xs: 0 } }}
+                >
+                  <Download />
+                </DownloadButton>
+              )}
+            </Grid>
+
+            {data_clients_list.length > 0 && (
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+                sx={{
+                  mt: 3,
+                  mb: 5,
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {this.renderTable()}
+              </Grid>
+            )}
+
+            {data_clients_list_cafe.length > 0 && (
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+                sx={{
+                  mt: 3,
+                  mb: 5,
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {this.renderTableMini("Кафе", data_clients_list_cafe, yearly_totals_cafe)}
+              </Grid>
+            )}
+
+            {data_clients_list_kc.length > 0 && (
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+                sx={{
+                  mt: 3,
+                  mb: 5,
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {this.renderTableMini("Контакт-центр", data_clients_list_kc, yearly_totals_kc)}
+              </Grid>
+            )}
+
+            {data_clients_list_site.length > 0 && (
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+                sx={{
+                  mt: 3,
+                  mb: 5,
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {this.renderTableMini("Сайт", data_clients_list_site, yearly_totals_site)}
+              </Grid>
+            )}
+          </Grid>
+        </TabPanel>
+      </Grid>
+    );
+  }
+}
+
 // ---------- Таблица в Таб Продажи ----------
 const DataTable = ({ tableData, openGraphModal }) => {
   const toRawMonth = (formatted) => {
@@ -3603,7 +4855,7 @@ class StatSale_ extends React.Component {
   }
 
   changeTab = (event, val) => {
-    if (parseInt(val) === 2) this.getDataSet();
+    if (parseInt(val) === 3) this.getDataSet();
 
     this.setState({ activeTab: val });
   };
@@ -3728,6 +4980,16 @@ class StatSale_ extends React.Component {
   };
 
   renderGraph = (data, id) => {
+    if (
+      typeof am5 === "undefined" ||
+      typeof am5xy === "undefined" ||
+      typeof am5themes_Animated === "undefined"
+    ) {
+      console.error("amCharts libraries not loaded yet");
+      // Попробуем еще раз через секунду
+      setTimeout(() => this.renderGraph(data, id), 1000);
+      return;
+    }
     if (this.chartStat) {
       this.chartStat.dispose();
     }
@@ -3890,10 +5152,15 @@ class StatSale_ extends React.Component {
                   {...a11yProps(1)}
                   sx={{ minWidth: "fit-content", flex: 1 }}
                 />
+                <Tab
+                  label="Динамика"
+                  {...a11yProps(2)}
+                  sx={{ minWidth: "fit-content", flex: 1 }}
+                />
                 {this.state.acces.client_edit || this.state.acces.sale_edit ? (
                   <Tab
                     label="Настройки"
-                    {...a11yProps(2)}
+                    {...a11yProps(3)}
                     sx={{ minWidth: "fit-content", flex: 1 }}
                   />
                 ) : null}
@@ -3928,10 +5195,22 @@ class StatSale_ extends React.Component {
               canExport={this.canAccess("export")}
             />
           )}
+          {this.state.activeTab === 2 && (
+            <StatSale_Tab_Dynamic
+              activeTab={this.state.activeTab}
+              fullScreen={this.state.fullScreen}
+              points={this.state.points}
+              openAlert={this.openAlert}
+              getData={this.getData}
+              rates={this.state.data_sett_rate_clients}
+              openGraphModal={this.openGraphModal}
+              canExport={this.canAccess("export")}
+            />
+          )}
           {/* Клиенты */}
 
           {/* Настройки */}
-          {this.state.activeTab === 2 && (
+          {this.state.activeTab === 3 && (
             <StatSale_Tab_Sett
               activeTab={this.state.activeTab}
               fullScreen={this.state.fullScreen}
