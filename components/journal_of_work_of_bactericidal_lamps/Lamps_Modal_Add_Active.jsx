@@ -126,8 +126,16 @@ export default function Lamps_Modal_Add_Active({
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Typography variant="h6">{isEdit ? "Редактирование" : "Добавление"} активации</Typography>
+        <DialogTitle
+          component="div"
+          sx={{ display: "flex", justifyContent: "space-between" }}
+        >
+          <Typography
+            component="h2"
+            variant="h6"
+          >
+            {isEdit ? "Редактирование" : "Добавление"} активации
+          </Typography>
           <IconButton onClick={handleClose}>
             <CloseIcon />
           </IconButton>

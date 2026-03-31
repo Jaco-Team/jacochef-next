@@ -16,6 +16,11 @@ export function MyAutoCompleteWithAll({
   ...rest
 }) {
   const ALL_OPTION = { id: "__ALL__", name: withAllLabel };
+  const resolveOptionKey = (option) => {
+    if (option == null) return "";
+    if (typeof option === "string" || typeof option === "number") return String(option);
+    return option.id ?? option.value ?? option.key ?? option.name ?? "";
+  };
 
   // include All option in dropdown
   const fullOptions = useMemo(
@@ -100,6 +105,7 @@ export function MyAutoCompleteWithAll({
         value={valueForUI}
         isOptionEqualToValue={(a, b) => a.id === b.id}
         getOptionLabel={(o) => o?.name ?? "n/a"}
+        getOptionKey={resolveOptionKey}
         filterOptions={filterOptions}
         onChange={handleChange}
         renderInput={(params) => (
@@ -113,7 +119,7 @@ export function MyAutoCompleteWithAll({
           const { key, ...restProps } = props;
           return (
             <li
-              key={option.id}
+              key={resolveOptionKey(option)}
               {...restProps}
             >
               {option.name}

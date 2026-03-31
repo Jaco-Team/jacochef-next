@@ -110,6 +110,10 @@ export default function CityCafeAutocomplete2({
   }, [value, points, innerValue]);
 
   const allSelected = withAll && actualValue.some((v) => v.id === ALL_OPTION.id);
+  const getOptionKey = useCallback(
+    (option) => `${option?.id ?? option?.name ?? "option"}-${option?.cityId ?? "all"}`,
+    [],
+  );
 
   const setValueSafe = (next) => {
     if (!withAll) {
@@ -307,6 +311,7 @@ export default function CityCafeAutocomplete2({
       value={actualValue}
       onChange={(_, next) => setValueSafe(next)}
       getOptionLabel={(opt) => opt.name}
+      getOptionKey={getOptionKey}
       groupBy={groupBy}
       isOptionEqualToValue={(a, b) => a.id === b.id}
       disabled={disabled}
@@ -326,7 +331,7 @@ export default function CityCafeAutocomplete2({
         const { key, ...restProps } = props;
         return (
           <li
-            key={key}
+            key={getOptionKey(option) || key}
             {...restProps}
           >
             <Checkbox

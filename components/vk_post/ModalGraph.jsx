@@ -222,6 +222,7 @@ const PostAnalyticsDialog = ({
     >
       {/* Заголовок */}
       <DialogTitle
+        component="div"
         sx={{
           display: "flex",
           justifyContent: "space-between",
