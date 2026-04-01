@@ -626,7 +626,7 @@ function HistoryClientModalCrm({ canAccess, showAlert, openOrder, open, onClose 
                   </Grid>
 
                   <TableContainer
-                    sx={{ maxHeight: { xs: "none", sm: "45dvh" } }}
+                    sx={{ maxHeight: { xs: "none", sm: "43dvh" } }}
                     component={Paper}
                   >
                     <Table
