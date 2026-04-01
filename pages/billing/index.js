@@ -523,15 +523,22 @@ class Billing_ extends React.Component {
         return status;
       });
 
-      const bills = res.res.map((bill) => {
-        bill_status.map((item) => {
-          if (parseInt(item.id) === parseInt(bill.status) && parseInt(bill.status) !== 0) {
-            bill.color = item.clr;
-          }
-        });
+      const bills = res.res
+        .map((bill) => {
+          bill_status.map((item) => {
+            if (parseInt(item.id) === parseInt(bill.status) && parseInt(bill.status) !== 0) {
+              bill.color = item.clr;
+            }
+          });
 
-        return bill;
-      });
+          return bill;
+        })
+        .sort((a, b) => {
+          const sortA = Number.isFinite(Number(a?.sort)) ? Number(a.sort) : Number.MAX_SAFE_INTEGER;
+          const sortB = Number.isFinite(Number(b?.sort)) ? Number(b.sort) : Number.MAX_SAFE_INTEGER;
+
+          return sortA - sortB;
+        });
 
       this.setState({
         bills,
