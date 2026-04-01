@@ -1698,7 +1698,7 @@ const useStore = create((set, get) => ({
       return item;
     });
 
-    const allPrice = bill_items.reduce((all, item) => all + Number(item.price), 0).toFixed(2);
+    const allPrice = bill_items.reduce((all, item) => all + Number(item.price_item), 0).toFixed(2);
     const allPrice_w_nds = bill_items
       .reduce((all, item) => all + Number(item.price_w_nds), 0)
       .toFixed(2);
