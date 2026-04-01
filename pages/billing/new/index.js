@@ -442,13 +442,19 @@ function formatBillingPackOptions(options = []) {
 }
 
 function normalizeBillingDecimalText(value, fractionDigits = BILLING_DECIMAL_SCALE) {
-  let normalizedValue = normalizeOcrText(value).replace(/\s+/g, "").replace(/,/g, ".");
+  const rawValue = normalizeOcrText(value).replace(/\s+/g, "");
+  const hasTrailingSeparator = /[.,]$/.test(rawValue);
+  let normalizedValue = rawValue.replace(/,/g, ".");
 
   normalizedValue = normalizedValue.replace(/[^\d.]/g, "");
 
   const [rawIntegerPart = "", ...rest] = normalizedValue.split(".");
   const integerPart = rawIntegerPart.length ? rawIntegerPart : rest.length ? "0" : "";
   const fractionPart = rest.join("").slice(0, fractionDigits);
+
+  if (hasTrailingSeparator && !fractionPart.length) {
+    return integerPart.length ? `${integerPart}.` : "";
+  }
 
   return fractionPart.length ? `${integerPart}.${fractionPart}` : integerPart;
 }
