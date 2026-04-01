@@ -211,12 +211,12 @@ export function BillingPageHero({ onBack, title, subtitle }) {
         sx={{
           position: "relative",
           overflow: "hidden",
-          borderRadius: { xs: "26px", md: "34px" },
-          px: { xs: 2, md: 3.5 },
-          py: { xs: 2.25, md: 3.5 },
+          borderRadius: { xs: "22px", md: "28px" },
+          px: { xs: 2, md: 3 },
+          py: { xs: 1.75, md: 2.5 },
           background:
             "linear-gradient(135deg, rgba(143, 18, 57, 0.97) 0%, rgba(159, 18, 57, 0.95) 44%, rgba(217, 119, 6, 0.92) 120%)",
-          boxShadow: "0 28px 56px rgba(127, 29, 29, 0.24)",
+          boxShadow: "0 22px 44px rgba(127, 29, 29, 0.22)",
           color: "#fff",
         }}
       >
@@ -235,7 +235,7 @@ export function BillingPageHero({ onBack, title, subtitle }) {
             display: "flex",
             alignItems: { xs: "stretch", md: "center" },
             justifyContent: "space-between",
-            gap: { xs: 1.5, md: 2 },
+            gap: { xs: 1.25, md: 1.75 },
             flexDirection: { xs: "column", md: "row" },
           }}
         >
@@ -249,11 +249,11 @@ export function BillingPageHero({ onBack, title, subtitle }) {
             <Box
               onClick={onBack}
               sx={{
-                width: { xs: 48, md: 52 },
-                height: { xs: 48, md: 52 },
-                minWidth: { xs: 48, md: 52 },
-                minHeight: { xs: 48, md: 52 },
-                borderRadius: { xs: "12px", md: "16px" },
+                width: { xs: 42, md: 46 },
+                height: { xs: 42, md: 46 },
+                minWidth: { xs: 42, md: 46 },
+                minHeight: { xs: 42, md: 46 },
+                borderRadius: { xs: "12px", md: "14px" },
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -286,7 +286,7 @@ export function BillingPageHero({ onBack, title, subtitle }) {
                   fontSize: { xs: 11, md: 12 },
                   fontWeight: 700,
                   opacity: 0.82,
-                  mb: { xs: 0.25, md: 0.5 },
+                  mb: { xs: 0.125, md: 0.375 },
                 }}
               >
                 Накладные
@@ -294,25 +294,27 @@ export function BillingPageHero({ onBack, title, subtitle }) {
               <Typography
                 component="h1"
                 sx={{
-                  fontSize: { xs: 26, sm: 30, md: 52 },
-                  lineHeight: { xs: 1.05, md: 1 },
+                  fontSize: { xs: 24, sm: 28, md: 42 },
+                  lineHeight: { xs: 1.05, md: 0.98 },
                   fontWeight: 800,
                   letterSpacing: "-0.04em",
-                  mb: { xs: 0.75, md: 1 },
+                  mb: subtitle ? { xs: 0.625, md: 0.875 } : 0,
                 }}
               >
                 {title}
               </Typography>
-              <Typography
-                sx={{
-                  maxWidth: 620,
-                  fontSize: { xs: 13, md: 16 },
-                  lineHeight: { xs: 1.45, md: 1.6 },
-                  color: "rgba(255,255,255,0.86)",
-                }}
-              >
-                {subtitle}
-              </Typography>
+              {!subtitle ? null : (
+                <Typography
+                  sx={{
+                    maxWidth: 620,
+                    fontSize: { xs: 13, md: 16 },
+                    lineHeight: { xs: 1.45, md: 1.6 },
+                    color: "rgba(255,255,255,0.86)",
+                  }}
+                >
+                  {subtitle}
+                </Typography>
+              )}
             </Box>
           </Box>
         </Box>
