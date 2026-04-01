@@ -15,13 +15,267 @@ import ExcelIcon from "@/ui/ExcelIcon";
 import axios from "axios";
 import ColorPickerWithPalette from "@/ui/Forms/ColorPickerWithPalette";
 
-const HeatmapCell = ({ value, hourData, metricKey, settings }) => {
+const DetailModal = ({ open, onClose, data }) => {
+  if (!open || !data) return null;
+
+  return (
+    <Box
+      sx={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        zIndex: 1300,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+      onClick={onClose}
+    >
+      <Paper
+        sx={{
+          p: 3,
+          minWidth: 300,
+          maxWidth: 400,
+          borderRadius: 2,
+          boxShadow: 24,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Typography
+            variant="h6"
+            component="h2"
+            sx={{ fontWeight: "bold" }}
+          >
+            Детальная информация
+          </Typography>
+          <IconButton
+            size="small"
+            onClick={onClose}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+        <Box sx={{ mb: 2 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            gutterBottom
+          >
+            {data.type === "hour" ? "Почасовые данные" : "Итоговые данные"}
+          </Typography>
+
+          {data.type === "hour" ? (
+            <>
+              <Box sx={{ mb: 1.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Время:
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 500 }}
+                >
+                  {data.hour}:00
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 1.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Дата:
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 500 }}
+                >
+                  {data.date}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 1.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Показатель:
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 500 }}
+                >
+                  {data.metricName}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 1.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Текущий период:
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 500, color: "#2e7d32" }}
+                >
+                  {data.currentValue}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 1.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Прошлый период:
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 500, color: "#d32f2f" }}
+                >
+                  {data.prevValue}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 1.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Изменение:
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontWeight: "bold",
+                    color: data.delta > 0 ? "#2e7d32" : data.delta < 0 ? "#d32f2f" : "#666",
+                  }}
+                >
+                  {data.delta > 0 ? `+${data.delta}` : data.delta} (
+                  {data.percent > 0 ? `+${data.percent}%` : `${data.percent}%`})
+                </Typography>
+              </Box>
+            </>
+          ) : (
+            <>
+              <Box sx={{ mb: 1.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Дата:
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 500 }}
+                >
+                  {data.date}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 1.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Показатель:
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 500 }}
+                >
+                  {data.metricName}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 1.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Итого за день:
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 500, color: "#2e7d32" }}
+                >
+                  {data.totalValue}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 1.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Изменение:
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontWeight: "bold",
+                    color: data.delta > 0 ? "#2e7d32" : data.delta < 0 ? "#d32f2f" : "#666",
+                  }}
+                >
+                  {data.delta > 0 ? `+${data.delta}` : data.delta} (
+                  {data.percent > 0 ? `+${data.percent}%` : `${data.percent}%`})
+                </Typography>
+              </Box>
+            </>
+          )}
+        </Box>
+
+        <Button
+          variant="contained"
+          onClick={onClose}
+          fullWidth
+          sx={{ mt: 1 }}
+        >
+          Закрыть
+        </Button>
+      </Paper>
+    </Box>
+  );
+};
+
+const HeatmapCell = ({ value, hourData, metricKey, settings, onClick }) => {
   const settingsObj = settings.reduce((acc, item) => ({ ...acc, [item.percent]: item.color }), {});
+
+  // Функция для получения имени метрики
+  const getMetricName = () => {
+    switch (metricKey) {
+      case "count_orders_percent":
+        return "Оформленные заказы";
+      case "count_rolls_percent":
+        return "Роллы";
+      case "count_pizza_percent":
+        return "Пицца";
+      case "ready_orders_percent":
+        return "Завершенные заказы";
+      case "ready_rolls_percent":
+        return "Готовые роллы";
+      case "ready_pizza_percent":
+        return "Готовая пицца";
+      default:
+        return "Оформленные заказы";
+    }
+  };
 
   const getCellColor = (val) => {
     const percentages = Object.keys(settingsObj)
       .map(Number)
       .sort((a, b) => a - b);
+
+    if (!percentages.length) return "#81c784";
 
     if (val <= percentages[0]) return settingsObj[percentages[0]];
     if (val >= percentages[percentages.length - 1])
@@ -41,66 +295,104 @@ const HeatmapCell = ({ value, hourData, metricKey, settings }) => {
     return Math.abs(val) > 20 ? "#fff" : "#000";
   };
 
-  const displayValue =
-    value !== null && value !== undefined ? (value > 0 ? `+${value}%` : `${value}%`) : "0%";
+  const percentValue = value || 0;
+  const metricName = getMetricName();
 
-  const getTooltipContent = () => {
-    if (!hourData) return "Нет данных";
+  let deltaValue = 0;
+  if (hourData) {
+    switch (metricKey) {
+      case "count_orders_percent":
+        deltaValue = hourData.count_orders_delta || 0;
+        break;
+      case "count_rolls_percent":
+        deltaValue = hourData.count_rolls_delta || 0;
+        break;
+      case "count_pizza_percent":
+        deltaValue = hourData.count_pizza_delta || 0;
+        break;
+      case "ready_orders_percent":
+        deltaValue = hourData.ready_orders_delta || 0;
+        break;
+      case "ready_rolls_percent":
+        deltaValue = hourData.ready_rolls_delta || 0;
+        break;
+      case "ready_pizza_percent":
+        deltaValue = hourData.ready_pizza_delta || 0;
+        break;
+      default:
+        deltaValue = hourData.count_orders_delta || 0;
+    }
+  }
+
+  const displayValue =
+    deltaValue !== 0 ? (deltaValue > 0 ? `+${deltaValue}` : `${deltaValue}`) : "0";
+
+  const handleClick = (e) => {
+    e.stopPropagation(); // Предотвращаем всплытие события
+
+    if (!onClick) return;
+
+    // Если нет hourData, не открываем модалку
+    if (!hourData) {
+      console.warn("No hourData available for this cell");
+      return;
+    }
 
     let currentValue = 0;
     let prevValue = 0;
-    let metricName = "";
 
     switch (metricKey) {
       case "count_orders_percent":
         currentValue = hourData.count_orders || 0;
         prevValue = hourData.count_orders_prev || 0;
-        metricName = "заказов";
         break;
       case "count_rolls_percent":
         currentValue = hourData.count_rolls || 0;
         prevValue = hourData.count_rolls_prev || 0;
-        metricName = "роллов";
         break;
       case "count_pizza_percent":
         currentValue = hourData.count_pizza || 0;
         prevValue = hourData.count_pizza_prev || 0;
-        metricName = "пицц";
         break;
       case "ready_orders_percent":
         currentValue = hourData.ready_orders || 0;
         prevValue = hourData.ready_orders_prev || 0;
-        metricName = "готовых заказов";
         break;
       case "ready_rolls_percent":
         currentValue = hourData.ready_rolls || 0;
         prevValue = hourData.ready_rolls_prev || 0;
-        metricName = "готовых роллов";
         break;
       case "ready_pizza_percent":
         currentValue = hourData.ready_pizza || 0;
         prevValue = hourData.ready_pizza_prev || 0;
-        metricName = "готовой пиццы";
         break;
       default:
         currentValue = hourData.count_orders || 0;
         prevValue = hourData.count_orders_prev || 0;
-        metricName = "заказов";
     }
 
-    return `Количество ${metricName}:\nТекущий период: ${currentValue}\nПрошлый период: ${prevValue}\nИзменение: ${displayValue}`;
+    onClick({
+      type: "hour",
+      hour: hourData.hour,
+      date: hourData.date,
+      metricName,
+      currentValue,
+      prevValue,
+      delta: deltaValue,
+      percent: percentValue,
+    });
   };
 
   return (
     <Box
       sx={{
-        backgroundColor: getCellColor(value),
-        color: getTextColor(value),
+        backgroundColor: getCellColor(percentValue),
+        color: getTextColor(percentValue),
         padding: "8px 4px",
         textAlign: "center",
         borderRadius: "4px",
         fontSize: "13px",
-        fontWeight: value === 0 ? "normal" : "600",
+        fontWeight: deltaValue === 0 ? "normal" : "600",
         minHeight: "36px",
         display: "flex",
         alignItems: "center",
@@ -113,14 +405,15 @@ const HeatmapCell = ({ value, hourData, metricKey, settings }) => {
           zIndex: 10,
         },
       }}
-      title={getTooltipContent()}
+      title={`${metricName}: ${displayValue} (${percentValue > 0 ? `+${percentValue}%` : `${percentValue}%`})`}
+      onClick={handleClick}
     >
       {displayValue}
     </Box>
   );
 };
 
-const TotalCell = ({ value, settings }) => {
+const TotalCell = ({ value, delta, settings, onClick, date, metricName }) => {
   const settingsObj = settings.reduce((acc, item) => ({ ...acc, [item.percent]: item.color }), {});
 
   const getCellColor = (val) => {
@@ -146,8 +439,20 @@ const TotalCell = ({ value, settings }) => {
     return Math.abs(val) > 20 ? "#fff" : "#000";
   };
 
-  const displayValue =
-    value !== null && value !== undefined ? (value > 0 ? `+${value}%` : `${value}%`) : "0%";
+  const displayValue = delta !== 0 ? (delta > 0 ? `+${delta}` : `${delta}`) : "0";
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick({
+        type: "total",
+        date,
+        metricName: metricName || "Показатель",
+        totalValue: displayValue,
+        delta,
+        percent: value,
+      });
+    }
+  };
 
   return (
     <Box
@@ -158,12 +463,21 @@ const TotalCell = ({ value, settings }) => {
         textAlign: "center",
         borderRadius: "4px",
         fontSize: "13px",
-        fontWeight: value === 0 ? "normal" : "600",
+        fontWeight: delta === 0 ? "normal" : "600",
         minHeight: "36px",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        cursor: "pointer",
+        transition: "transform 0.2s",
+        "&:hover": {
+          transform: "scale(1.02)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+          zIndex: 10,
+        },
       }}
+      title={`Итого: ${displayValue} (${value > 0 ? `+${value}%` : `${value}%`})`}
+      onClick={handleClick}
     >
       {displayValue}
     </Box>
@@ -171,17 +485,43 @@ const TotalCell = ({ value, settings }) => {
 };
 
 const CafeHeatmapTable = ({ cafeName, data, metricKey, settings, dateStart }) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalData, setModalData] = useState(null);
+
   const hours = Array.from({ length: 12 }, (_, i) => String(i + 10).padStart(2, "0"));
   const days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
-  const startDate = dayjs(dateStart);
-  const weekDates = Array.from({ length: 7 }, (_, i) =>
-    startDate.add(i, "day").format("YYYY-MM-DD"),
-  );
+  const weekDates = Object.keys(data).sort();
 
   const getDayName = (dateStr) => {
     const dayIndex = dayjs(dateStr).day();
     return dayIndex === 0 ? days[6] : days[dayIndex - 1];
+  };
+
+  const getMetricDelta = (hourData, key) => {
+    if (!hourData) return 0;
+    const deltaMap = {
+      count_orders_percent: "count_orders_delta",
+      count_rolls_percent: "count_rolls_delta",
+      count_pizza_percent: "count_pizza_delta",
+      ready_orders_percent: "ready_orders_delta",
+      ready_rolls_percent: "ready_rolls_delta",
+      ready_pizza_percent: "ready_pizza_delta",
+    };
+    const deltaKey = deltaMap[key];
+    return hourData[deltaKey] ?? 0;
+  };
+
+  const getTotalsDeltaKey = (metricKey) => {
+    const map = {
+      count_orders_percent: "sv_o_delta",
+      count_rolls_percent: "sv_r_delta",
+      count_pizza_percent: "sv_p_delta",
+      ready_orders_percent: "sv_o_delta",
+      ready_rolls_percent: "sv_r_delta",
+      ready_pizza_percent: "sv_p_delta",
+    };
+    return map[metricKey] || "sv_o_delta";
   };
 
   const formatDate = (dateStr) => dayjs(dateStr).format("DD.MM");
@@ -200,133 +540,198 @@ const CafeHeatmapTable = ({ cafeName, data, metricKey, settings, dateStart }) =>
       count_orders_percent: "sv_o_percent",
       count_rolls_percent: "sv_r_percent",
       count_pizza_percent: "sv_p_percent",
+      ready_orders_percent: "sv_o_percent",
+      ready_rolls_percent: "sv_r_percent",
+      ready_pizza_percent: "sv_p_percent",
     };
     return map[metricKey] || "sv_o_percent";
   };
 
-  return (
-    <Paper sx={{ p: 3, mb: 4 }}>
-      <Typography
-        variant="h6"
-        sx={{ mb: 2, fontWeight: "bold" }}
-      >
-        {cafeName}
-      </Typography>
+  const getMetricName = () => {
+    switch (metricKey) {
+      case "count_orders_percent":
+        return "Оформленные заказы";
+      case "count_rolls_percent":
+        return "Роллы";
+      case "count_pizza_percent":
+        return "Пицца";
+      case "ready_orders_percent":
+        return "Завершенные заказы";
+      case "ready_rolls_percent":
+        return "Готовые роллы";
+      case "ready_pizza_percent":
+        return "Готовая пицца";
+      default:
+        return "Оформленные заказы";
+    }
+  };
 
-      <Box sx={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "900px" }}>
-          <thead>
-            <tr>
-              <th
-                style={{
-                  padding: "8px",
-                  textAlign: "left",
-                  fontWeight: "600",
-                  position: "sticky",
-                  left: 0,
-                  backgroundColor: "#fff",
-                  zIndex: 2,
-                  borderBottom: "2px solid #ddd",
-                }}
-              >
-                Час
-              </th>
-              {weekDates.map((date, idx) => (
+  const handleCellClick = (data) => {
+    setModalData(data);
+    setModalOpen(true);
+  };
+
+  if (!data || Object.keys(data).length === 0) {
+    return (
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Typography
+          variant="h6"
+          sx={{ mb: 2, fontWeight: "bold" }}
+        >
+          {cafeName}
+        </Typography>
+        <Typography>Нет данных</Typography>
+      </Paper>
+    );
+  }
+
+  return (
+    <>
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Typography
+          variant="h6"
+          sx={{ mb: 2, fontWeight: "bold" }}
+        >
+          {cafeName}
+        </Typography>
+
+        <Box sx={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "900px" }}>
+            <thead>
+              <tr>
                 <th
-                  key={date}
                   style={{
                     padding: "8px",
-                    textAlign: "center",
+                    textAlign: "left",
                     fontWeight: "600",
-                    minWidth: "70px",
+                    position: "sticky",
+                    left: 0,
+                    backgroundColor: "#fff",
+                    zIndex: 2,
                     borderBottom: "2px solid #ddd",
                   }}
                 >
-                  <div>{getDayName(date)}</div>
-                  <div style={{ fontSize: "12px", fontWeight: "normal", color: "#666" }}>
-                    {formatDate(date)}
-                  </div>
+                  Час
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {hours.map((hourStr, hourIdx) => {
-              const displayHour = parseInt(hourStr, 10);
-              return (
-                <tr key={hourIdx}>
-                  <td
+                {weekDates.map((date, idx) => (
+                  <th
+                    key={date}
                     style={{
-                      padding: "4px 8px",
-                      fontWeight: "500",
-                      fontSize: "14px",
-                      position: "sticky",
-                      left: 0,
-                      backgroundColor: "#fff",
-                      zIndex: 1,
-                      borderRight: "1px solid #eee",
+                      padding: "8px",
+                      textAlign: "center",
+                      fontWeight: "600",
+                      minWidth: "70px",
+                      borderBottom: "2px solid #ddd",
                     }}
                   >
-                    {`${displayHour}:00`}
-                  </td>
-                  {weekDates.map((dateKey) => {
-                    const dayData = data[dateKey];
-                    const hourData = dayData?.hours ? findHourData(dayData.hours, hourStr) : null;
-                    const value = hourData ? getMetricValue(hourData, metricKey) : 0;
-
-                    return (
-                      <td
-                        key={`${dateKey}-${hourStr}`}
-                        style={{ padding: "2px" }}
-                      >
-                        <HeatmapCell
-                          value={value}
-                          settings={settings}
-                          hourData={hourData}
-                          metricKey={metricKey}
-                        />
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-            {/* Total row */}
-            <tr>
-              <td
-                style={{
-                  padding: "8px",
-                  fontWeight: "bold",
-                  borderTop: "2px solid #ddd",
-                  position: "sticky",
-                  left: 0,
-                  backgroundColor: "#fff",
-                  zIndex: 1,
-                }}
-              >
-                Итого
-              </td>
-              {weekDates.map((dateKey) => {
-                const totalsKey = getTotalsKey(metricKey);
-                const total = data[dateKey]?.totals?.[totalsKey] ?? 0;
-
+                    <div>{getDayName(date)}</div>
+                    <div style={{ fontSize: "12px", fontWeight: "normal", color: "#666" }}>
+                      {formatDate(date)}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {hours.map((hourStr, hourIdx) => {
+                const displayHour = parseInt(hourStr, 10);
                 return (
-                  <td
-                    key={`total-${dateKey}`}
-                    style={{ padding: "2px", borderTop: "2px solid #ddd" }}
-                  >
-                    <TotalCell
-                      value={total}
-                      settings={settings}
-                    />
-                  </td>
+                  <tr key={hourIdx}>
+                    <td
+                      style={{
+                        padding: "4px 8px",
+                        fontWeight: "500",
+                        fontSize: "14px",
+                        position: "sticky",
+                        left: 0,
+                        backgroundColor: "#fff",
+                        zIndex: 1,
+                        borderRight: "1px solid #eee",
+                      }}
+                    >
+                      {`${displayHour}:00`}
+                    </td>
+                    {weekDates.map((dateKey) => {
+                      const dayData = data[dateKey];
+                      const hourData = dayData?.hours ? findHourData(dayData.hours, hourStr) : null;
+                      const percentValue = hourData ? getMetricValue(hourData, metricKey) : 0;
+                      const deltaValue = hourData ? getMetricDelta(hourData, metricKey) : 0;
+
+                      let enhancedHourData = null;
+                      if (hourData) {
+                        enhancedHourData = {
+                          ...hourData,
+                          date: formatDate(dateKey),
+                          hour: displayHour,
+                        };
+                      }
+
+                      return (
+                        <td
+                          key={`${dateKey}-${hourStr}`}
+                          style={{ padding: "2px" }}
+                        >
+                          <HeatmapCell
+                            value={percentValue}
+                            hourData={enhancedHourData}
+                            metricKey={metricKey}
+                            settings={settings}
+                            onClick={handleCellClick}
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
                 );
               })}
-            </tr>
-          </tbody>
-        </table>
-      </Box>
-    </Paper>
+              {/* Total row */}
+              <tr>
+                <td
+                  style={{
+                    padding: "8px",
+                    fontWeight: "bold",
+                    borderTop: "2px solid #ddd",
+                    position: "sticky",
+                    left: 0,
+                    backgroundColor: "#fff",
+                    zIndex: 1,
+                  }}
+                >
+                  Итого
+                </td>
+                {weekDates.map((dateKey) => {
+                  const totalsKey = getTotalsKey(metricKey);
+                  const percentTotal = data[dateKey]?.totals?.[totalsKey] ?? 0;
+                  const deltaTotal = data[dateKey]?.totals?.[getTotalsDeltaKey(metricKey)] ?? 0;
+
+                  return (
+                    <td
+                      key={`total-${dateKey}`}
+                      style={{ padding: "2px", borderTop: "2px solid #ddd" }}
+                    >
+                      <TotalCell
+                        value={percentTotal}
+                        delta={deltaTotal}
+                        settings={settings}
+                        onClick={handleCellClick}
+                        date={formatDate(dateKey)}
+                        metricName={getMetricName()}
+                      />
+                    </td>
+                  );
+                })}
+              </tr>
+            </tbody>
+          </table>
+        </Box>
+      </Paper>
+
+      <DetailModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        data={modalData}
+      />
+    </>
   );
 };
 
@@ -370,7 +775,10 @@ function OrdersPage() {
           module: "orders_by_hour",
           version: 2,
           login: localStorage.getItem("token"),
-          data: { differences: tableData, date_start: dayjs(dateStart).format("YYYY-MM-DD") },
+          data: {
+            differences: tableData,
+            date_start: dayjs(dateStart).startOf("week").format("YYYY-MM-DD"),
+          },
         }),
         {
           responseType: "blob",
@@ -429,13 +837,6 @@ function OrdersPage() {
       point_list: point,
     };
     getData("get_data", data).then((data) => {
-      const firstCafe = Object.values(data.differences)[0];
-      if (firstCafe) {
-        const firstDate = Object.keys(firstCafe)[0];
-        if (firstDate && firstCafe[firstDate]?.totals) {
-          console.log("Totals structure:", firstCafe[firstDate].totals);
-        }
-      }
       setTableData(data.differences);
       setTimeDiv(data.timeVs);
     });
