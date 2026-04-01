@@ -512,10 +512,6 @@ a {
   // z-index: 999;
   width: 100% !important;
 }
-.Mui-disabled {
-  background-color: #fff !important;
-  opacity: 1 !important;
-}
 // .MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.MuiMenu-paper.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation8.MuiPopover-paper{
 // z-index: 999;
 // }
@@ -649,9 +645,9 @@ a {
 
   .box_as {
     border: 2px solid #e5e5e5;
-    border-radius: 60;
+    border-radius: 60px;
     padding: 1px 14px;
-    font-size: 12;
+    font-size: 12px;
     width: fit-content;
     background-color: #fff;
     white-space: nowrap;

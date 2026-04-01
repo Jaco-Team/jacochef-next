@@ -100,6 +100,7 @@ const VKAuthDialog = ({ open, onClose, onSave, authUrl = "" }) => {
       maxWidth="md"
     >
       <DialogTitle
+        component="div"
         sx={{
           display: "flex",
           justifyContent: "space-between",
@@ -110,7 +111,7 @@ const VKAuthDialog = ({ open, onClose, onSave, authUrl = "" }) => {
       >
         <Typography
           variant="h6"
-          component="div"
+          component="h2"
           fontWeight={600}
         >
           Подтвердить права VK

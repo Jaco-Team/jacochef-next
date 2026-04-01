@@ -4,6 +4,9 @@ import Link from "next/link";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Checkbox from "@mui/material/Checkbox";
 
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -17,6 +20,8 @@ import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
 import ErrorIcon from "@mui/icons-material/Error";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import PaymentsRoundedIcon from "@mui/icons-material/PaymentsRounded";
 
 import {
   MySelect,
@@ -24,7 +29,6 @@ import {
   MyAutocomplite2,
   MyDatePickerNew,
   MyTextInput,
-  MyCheckBox,
 } from "@/ui/Forms";
 
 import queryString from "query-string";
@@ -38,6 +42,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import { formatDateReverse, formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { billingPageFieldSx } from "@/components/billing/BillingPageCommon";
 
 const bill_status = [
   {
@@ -158,6 +163,41 @@ function MyTooltip(props) {
       {children}
     </Tooltip>
   );
+}
+
+const billingTypeNameMap = types.reduce((acc, item) => {
+  acc[String(item.id)] = item.name;
+  return acc;
+}, {});
+
+const billingStatusNameMap = bill_status.reduce((acc, item) => {
+  acc[String(item.id)] = item.name;
+  return acc;
+}, {});
+
+function formatBillingMoney(value) {
+  const normalized = Number(
+    String(value ?? 0)
+      .replace(/\s+/g, "")
+      .replace(",", "."),
+  );
+
+  if (!Number.isFinite(normalized)) {
+    return "0,00 ₽";
+  }
+
+  return `${new Intl.NumberFormat("ru-RU", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(normalized)} ₽`;
+}
+
+function getBillingTypeName(typeId) {
+  return billingTypeNameMap[String(typeId)] || "Приход";
+}
+
+function getBillingStatusName(statusId) {
+  return billingStatusNameMap[String(statusId)] || "Статус";
 }
 
 class Billing_ extends React.Component {
@@ -546,10 +586,11 @@ class Billing_ extends React.Component {
 
   //onClick={this.getOneBill.bind(this, item)}
 
-  check_all_bill_pay() {
+  check_all_bill_pay(event) {
     let arr_Pay = this.state.arrPay;
 
     let bills = this.state.bills;
+    const checked = event?.target?.checked ?? true;
 
     let count_true = 0;
 
@@ -559,10 +600,12 @@ class Billing_ extends React.Component {
           bill_id: bill.id,
           point_id: bill.point_id,
           bill_type: bill.my_type_bill,
-          status: true,
+          status: checked,
         };
 
-        count_true++;
+        if (checked) {
+          count_true++;
+        }
       }
     });
 
@@ -570,6 +613,256 @@ class Billing_ extends React.Component {
   }
 
   render() {
+    const warningBillsCount = this.state.bills.filter(
+      (item) => parseInt(item.check_day) === 1 || parseInt(item.check_price) === 1,
+    ).length;
+    const payableBillsCount = this.state.bills.filter(
+      (item) => parseInt(item?.status) === 9,
+    ).length;
+    const hasBills = this.state.bills.length > 0;
+    const statusSummaryItems = hasBills
+      ? this.state.billings.filter(
+          (item) => Number(item.count) > 0 || String(item.id) === String(this.state.status || "0"),
+        )
+      : this.state.billings.slice(0, 1);
+    const tabularNumericSx = {
+      fontVariantNumeric: "tabular-nums",
+      fontFeatureSettings: '"tnum"',
+      whiteSpace: "nowrap",
+    };
+    const riskCellSx = {
+      width: 72,
+      px: 1,
+      textAlign: "center",
+    };
+    const headerMetricSx = {
+      px: 1.25,
+      py: 0.75,
+      borderRadius: "999px",
+      border: "1px solid #ece3dc",
+      backgroundColor: "#fcfaf8",
+      fontSize: 13,
+      color: "#5b6472",
+      fontWeight: 500,
+      ...tabularNumericSx,
+    };
+    const actionButtonSx = {
+      minHeight: 42,
+      px: 1.75,
+      borderRadius: "12px",
+      textTransform: "none",
+      fontSize: 14,
+      fontWeight: 700,
+      boxShadow: "none",
+      whiteSpace: "nowrap",
+    };
+    const unifiedDropdownSlotProps = {
+      popper: {
+        allowAdaptivePlacement: true,
+      },
+      listbox: {
+        sx: {
+          maxHeight: { xs: "min(220px, 40dvh)", sm: 320 },
+        },
+      },
+    };
+    const filterPaperSx = {
+      ...billingPageFieldSx,
+      p: { xs: 2, md: 2.5 },
+      borderRadius: "22px",
+      border: "1px solid rgba(226, 232, 240, 0.9)",
+      background: "linear-gradient(180deg, #ffffff 0%, #fdfaf7 100%)",
+      boxShadow: "0 18px 40px rgba(15, 23, 42, 0.04)",
+      "& .MuiAutocomplete-tag, & .MuiChip-root": {
+        height: 30,
+        borderRadius: "999px",
+        border: "1px solid rgba(222, 226, 231, 0.92)",
+        backgroundColor: "#f6f4f1",
+        color: "#374151",
+        fontWeight: 600,
+      },
+      "& .MuiChip-label": {
+        px: 1.25,
+      },
+      "& .MuiChip-deleteIcon": {
+        color: "#9ca3af",
+      },
+      "& .MuiAutocomplete-input::placeholder": {
+        color: "#9ca3af",
+        opacity: 1,
+      },
+      "& .MuiInputLabel-root": {
+        color: "#6b7280",
+        "&.Mui-focused": {
+          color: "#9f1239",
+        },
+        "&.MuiInputLabel-shrink": {
+          backgroundColor: "rgba(255, 252, 249, 0.98)",
+        },
+      },
+      "& .MuiTextField-root .MuiOutlinedInput-root:not(.MuiAutocomplete-inputRoot), & .MuiPickersOutlinedInput-root":
+        {
+          backgroundColor: "#ffffff",
+          boxShadow: "0 8px 18px rgba(15, 23, 42, 0.04)",
+          "& fieldset": {
+            borderColor: "rgba(209, 213, 219, 0.96)",
+          },
+          "&:hover fieldset": {
+            borderColor: "rgba(186, 193, 202, 0.98)",
+          },
+          "&.Mui-focused": {
+            backgroundColor: "#ffffff",
+            boxShadow: "0 12px 22px rgba(15, 23, 42, 0.05)",
+          },
+          "&.Mui-focused fieldset": {
+            borderColor: "rgba(217, 4, 61, 0.38)",
+            borderWidth: "1px",
+          },
+        },
+      "& .MuiAutocomplete-root .MuiOutlinedInput-root": {
+        backgroundColor: "#ffffff",
+        boxShadow: "0 8px 18px rgba(15, 23, 42, 0.04)",
+        "& fieldset": {
+          borderColor: "rgba(209, 213, 219, 0.96)",
+        },
+        "&:hover fieldset": {
+          borderColor: "rgba(186, 193, 202, 0.98)",
+        },
+        "&.Mui-focused": {
+          backgroundColor: "#ffffff",
+          boxShadow: "0 12px 22px rgba(15, 23, 42, 0.05)",
+        },
+        "&.Mui-focused fieldset": {
+          borderColor: "rgba(217, 4, 61, 0.38)",
+          borderWidth: "1px",
+        },
+      },
+      "& .MuiAutocomplete-popupIndicator .MuiSvgIcon-root, & .MuiSelect-icon, & .MuiInputAdornment-root .MuiSvgIcon-root":
+        {
+          color: "#94a3b8",
+        },
+    };
+    const filterTextInputSx = {
+      "& .MuiOutlinedInput-root": {
+        minHeight: "44px !important",
+        height: "44px !important",
+        borderRadius: "18px",
+        backgroundColor: "#ffffff",
+        boxShadow: "0 8px 18px rgba(15, 23, 42, 0.04)",
+        "& fieldset": {
+          borderColor: "rgba(209, 213, 219, 0.96)",
+        },
+        "&:hover fieldset": {
+          borderColor: "rgba(186, 193, 202, 0.98)",
+        },
+        "&.Mui-focused": {
+          boxShadow: "0 12px 22px rgba(15, 23, 42, 0.05)",
+        },
+        "&.Mui-focused fieldset": {
+          borderColor: "rgba(217, 4, 61, 0.38)",
+          borderWidth: "1px",
+        },
+      },
+      "& .MuiOutlinedInput-input": {
+        boxSizing: "border-box",
+        minHeight: "24px",
+        padding: "10px 16px",
+      },
+      "& .MuiInputLabel-root": {
+        color: "#6b7280",
+        "&.Mui-focused": {
+          color: "#9f1239",
+        },
+      },
+    };
+    const filterDateInputSx = {
+      "&.MuiFormControl-root": {
+        minHeight: 44,
+      },
+      "& .MuiPickersOutlinedInput-root": {
+        minHeight: "44px !important",
+        height: "44px !important",
+        paddingLeft: "0px",
+        borderRadius: "18px",
+        backgroundColor: "#ffffff",
+        boxShadow: "0 8px 18px rgba(15, 23, 42, 0.04)",
+        "& fieldset": {
+          borderColor: "rgba(209, 213, 219, 0.96)",
+          borderRadius: "18px",
+        },
+        "&:hover fieldset": {
+          borderColor: "rgba(186, 193, 202, 0.98)",
+        },
+        "&.Mui-focused": {
+          boxShadow: "0 12px 22px rgba(15, 23, 42, 0.05)",
+        },
+        "&.Mui-focused fieldset": {
+          borderColor: "rgba(217, 4, 61, 0.38)",
+          borderWidth: "1px",
+        },
+      },
+      "& .MuiPickersInputBase-sectionsContainer": {
+        minHeight: "24px",
+        paddingTop: "10px",
+        paddingRight: "8px",
+        paddingBottom: "10px",
+        paddingLeft: "16px",
+        alignItems: "center",
+      },
+      "& .MuiPickersInputBase-sectionContent, & .MuiPickersInputBase-sectionSeparator": {
+        color: "#1f2937",
+        fontSize: "1rem",
+        fontWeight: 500,
+        lineHeight: "24px",
+      },
+      "& .MuiInputAdornment-root": {
+        marginRight: "8px",
+      },
+      "& .MuiIconButton-root": {
+        padding: "5px",
+        color: "#9ca3af",
+      },
+      "& .MuiInputLabel-root": {
+        color: "#6b7280",
+        backgroundColor: "rgba(255, 252, 249, 0.98)",
+        px: 0.5,
+        borderRadius: "999px",
+        "&.Mui-focused": {
+          color: "#9f1239",
+        },
+      },
+    };
+    const filterAutocompleteSx = {
+      "& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root": {
+        minHeight: "44px",
+        alignItems: "center",
+        paddingTop: "6px !important",
+        paddingBottom: "6px !important",
+        paddingLeft: "16px !important",
+        paddingRight: "44px !important",
+      },
+      "& .MuiAutocomplete-input": {
+        minHeight: "24px !important",
+        height: "24px",
+        lineHeight: "24px !important",
+        alignSelf: "center",
+        paddingTop: "0 !important",
+        paddingBottom: "0 !important",
+        margin: "0 !important",
+      },
+      "& .MuiAutocomplete-endAdornment": {
+        top: "50%",
+        transform: "translateY(-50%)",
+      },
+      "& .MuiAutocomplete-tag": {
+        marginTop: "3px",
+        marginBottom: "3px",
+      },
+      "& .MuiAutocomplete-input::placeholder": {
+        lineHeight: "24px",
+      },
+    };
+
     return (
       <>
         <Backdrop
@@ -589,18 +882,23 @@ class Billing_ extends React.Component {
           onClose={() => {
             this.setState({ modelCheckPay: false });
           }}
+          PaperProps={{
+            sx: {
+              width: "100%",
+              maxWidth: 520,
+              borderRadius: "16px",
+            },
+          }}
         >
-          <DialogTitle>Подтверждение</DialogTitle>
-          <DialogContent>
-            <DialogContentText style={{ marginBottom: 20 }}>
-              Оплатить выбранные документы ?
-            </DialogContentText>
+          <DialogTitle>Подтверждение оплаты</DialogTitle>
+          <DialogContent sx={{ pb: 0 }}>
+            <DialogContentText sx={{ mb: 2 }}>Оплатить выбранные документы ?</DialogContentText>
+            <Typography sx={{ fontWeight: 700 }}>
+              Отмечено документов: {new Intl.NumberFormat("ru-RU").format(this.state.count_true)}
+            </Typography>
           </DialogContent>
-          <DialogActions
-            style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
-          >
+          <DialogActions>
             <Button
-              variant="contained"
               onClick={() => {
                 this.setState({ modelCheckPay: false });
               }}
@@ -625,346 +923,607 @@ class Billing_ extends React.Component {
           <Grid
             size={{
               xs: 12,
-              sm: 12,
+              md: 6,
             }}
           >
-            <h1>{this.state.module_name}</h1>
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <Button variant="contained">
-              <Link
-                style={{ color: "#fff", textDecoration: "none" }}
-                href="/billing/new"
-              >
-                Новый документ
-              </Link>
-            </Button>
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            <MyDatePickerNew
-              label="Дата от"
-              format="DD-MM-YYYY"
-              value={this.state.date_start}
-              func={this.changeDateRange.bind(this, "date_start")}
-              clearable={true}
-              customActions={true}
-            />
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            <MyDatePickerNew
-              label="Дата до"
-              format="DD-MM-YYYY"
-              value={this.state.date_end}
-              func={this.changeDateRange.bind(this, "date_end")}
-              clearable={true}
-              customActions={true}
-            />
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            <MySelect
-              data={this.state.types}
-              value={this.state.type}
-              multiple={false}
-              is_none={false}
-              func={this.changeSelect.bind(this, "type")}
-              label="Тип"
-            />
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            <MyAutocomplite2
-              label="Поставщик"
-              freeSolo={true}
-              multiple={false}
-              data={this.state.vendors}
-              value={this.state.search_vendor}
-              func={this.search.bind(this)}
-              onBlur={this.search.bind(this)}
-            />
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            <MySelect
-              data={this.state.bill_list}
-              value={this.state.status}
-              multiple={false}
-              is_none={false}
-              func={this.changeSelect.bind(this, "status")}
-              label="Статус"
-            />
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            <MyTextInput
-              label="Номер накладной"
-              value={this.state.number}
-              func={this.changeInput.bind(this)}
-            />
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            <MyAutocomplite
-              data={this.state.points}
-              multiple={true}
-              value={this.state.point}
-              func={this.changeAutocomplite.bind(this, "point")}
-              label="Точка"
-            />
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <MyAutocomplite
-              data={this.state.all_items}
-              multiple={true}
-              value={this.state.items}
-              func={this.changeAutocomplite.bind(this, "items")}
-              label="Товары"
-            />
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 2,
-            }}
-          >
-            <Button
-              variant="contained"
-              onClick={this.getBillingList.bind(this)}
+            <Typography
+              component="h1"
+              sx={{
+                fontSize: { xs: 28, md: 32 },
+                lineHeight: 1.15,
+                fontWeight: 700,
+                color: "#1f2937",
+                mb: 0.25,
+              }}
             >
-              Показать
-            </Button>
-          </Grid>
-
-          <Grid
-            style={{ marginBottom: 20 }}
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <TableContainer component={Paper}>
-              <Table
-                aria-label="a dense table"
-                size="small"
-              >
-                <TableHead>
-                  <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                    <TableCell style={{ minWidth: "180px" }}>Тип</TableCell>
-                    <TableCell>Количество</TableCell>
-                    <TableCell style={{ minWidth: "150px" }}>Сумма с НДС</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {this.state.billings.map((item, key) => (
-                    <TableRow key={key}>
-                      <TableCell
-                        style={{
-                          backgroundColor: item.clr,
-                          color: key !== 0 ? "#fff" : "rgba(0, 0, 0, 0.8)",
-                        }}
-                      >
-                        {item.name}
-                      </TableCell>
-                      <TableCell>{item.count}</TableCell>
-                      <TableCell>{item.sum_w_nds}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+              {this.state.module_name || "Накладные"}
+            </Typography>
           </Grid>
 
           <Grid
             size={{
               xs: 12,
+              md: 6,
+            }}
+            sx={{
+              display: "flex",
+              justifyContent: { xs: "flex-start", md: "flex-end" },
+              alignItems: "center",
             }}
           >
-            {this.state.acces_bux_pay === true ? (
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1}
+              justifyContent={{ xs: "stretch", md: "flex-end" }}
+              sx={{ width: { xs: "100%", md: "auto" } }}
+            >
               <Button
+                component={Link}
+                href="/billing/new"
                 variant="contained"
-                color="success"
-                disabled={this.state.count_true > 0 ? false : true}
-                onClick={() => {
-                  this.setState({ modelCheckPay: true });
+                startIcon={<AddRoundedIcon />}
+                sx={{
+                  ...actionButtonSx,
+                  flexShrink: 0,
+                  backgroundColor: "#1f2937",
+                  "&:hover": {
+                    backgroundColor: "#111827",
+                    boxShadow: "none",
+                  },
                 }}
               >
-                Оплатить выбранные
+                Новый документ
               </Button>
-            ) : (
-              false
-            )}
+              {this.state.acces_bux_pay === true ? (
+                <Button
+                  variant="outlined"
+                  startIcon={<PaymentsRoundedIcon />}
+                  disabled={this.state.count_true === 0}
+                  onClick={() => {
+                    this.setState({ modelCheckPay: true });
+                  }}
+                  sx={{
+                    ...actionButtonSx,
+                    flexShrink: 0,
+                    minWidth: 190,
+                    borderColor: this.state.count_true > 0 ? "#16a34a" : "#d1d5db",
+                    color: this.state.count_true > 0 ? "#166534" : "#6b7280",
+                    backgroundColor: this.state.count_true > 0 ? "#f0fdf4" : "#fff",
+                    "&:hover": {
+                      borderColor: this.state.count_true > 0 ? "#16a34a" : "#d1d5db",
+                      backgroundColor: this.state.count_true > 0 ? "#dcfce7" : "#fff",
+                    },
+                  }}
+                >
+                  Оплатить выбранные
+                </Button>
+              ) : null}
+            </Stack>
           </Grid>
 
-          <Grid
-            style={{ marginBottom: 40 }}
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <TableContainer component={Paper}>
-              <Table
-                aria-label="a dense table"
-                size="small"
+          <Grid size={12}>
+            <Paper
+              elevation={0}
+              sx={filterPaperSx}
+            >
+              <Grid
+                container
+                spacing={2}
+                alignItems="flex-end"
               >
-                <TableHead>
-                  <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                    <TableCell>#</TableCell>
-                    <TableCell>
-                      {this.state.acces_bux_pay === true ? (
-                        <MyCheckBox
-                          label={"Оплатить"}
-                          func={this.check_all_bill_pay.bind(this)}
-                          value={false}
-                        />
-                      ) : (
-                        ""
-                      )}
-                    </TableCell>
-                    <TableCell></TableCell>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 9,
+                  }}
+                >
+                  <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#1f2937" }}>
+                    Фильтр
+                  </Typography>
+                </Grid>
+                <Grid
+                  size={{
+                    xs: 12,
+                    md: 3,
+                  }}
+                  sx={{
+                    display: { xs: "none", md: "flex" },
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={this.getBillingList.bind(this)}
+                    sx={{
+                      ...actionButtonSx,
+                      maxWidth: { md: 180 },
+                      backgroundColor: "#d9043d",
+                      "&:hover": {
+                        backgroundColor: "#b80035",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    Показать
+                  </Button>
+                </Grid>
 
-                    <TableCell>Тип</TableCell>
-                    <TableCell>Номер</TableCell>
-                    <TableCell style={{ minWidth: "180px" }}>Дата накладной</TableCell>
-                    <TableCell style={{ minWidth: "180px" }}>Поставщик</TableCell>
-                    <TableCell style={{ minWidth: "180px" }}>Сумма с НДС</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {this.state.bills.map((item, key) => (
-                    <TableRow
-                      key={key}
-                      style={{ cursor: "pointer" }}
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <MyDatePickerNew
+                    label="Дата от"
+                    format="DD-MM-YYYY"
+                    value={this.state.date_start}
+                    func={this.changeDateRange.bind(this, "date_start")}
+                    clearable={true}
+                    customActions={true}
+                    sx={filterDateInputSx}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <MyDatePickerNew
+                    label="Дата до"
+                    format="DD-MM-YYYY"
+                    value={this.state.date_end}
+                    func={this.changeDateRange.bind(this, "date_end")}
+                    clearable={true}
+                    customActions={true}
+                    sx={filterDateInputSx}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <MySelect
+                    data={this.state.types}
+                    value={this.state.type}
+                    multiple={false}
+                    is_none={false}
+                    unifiedPopup
+                    func={this.changeSelect.bind(this, "type")}
+                    label="Тип"
+                    slotProps={unifiedDropdownSlotProps}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <MyAutocomplite2
+                    label="Поставщик"
+                    freeSolo={true}
+                    multiple={false}
+                    data={this.state.vendors}
+                    unifiedPopup
+                    value={this.state.search_vendor}
+                    func={this.search.bind(this)}
+                    onBlur={this.search.bind(this)}
+                    slotProps={unifiedDropdownSlotProps}
+                    sx={filterAutocompleteSx}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <MySelect
+                    data={this.state.bill_list}
+                    value={this.state.status}
+                    multiple={false}
+                    is_none={false}
+                    unifiedPopup
+                    func={this.changeSelect.bind(this, "status")}
+                    label="Статус"
+                    slotProps={unifiedDropdownSlotProps}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <MyTextInput
+                    label="Номер накладной"
+                    value={this.state.number}
+                    func={this.changeInput.bind(this)}
+                    sx={filterTextInputSx}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 5 }}>
+                  <MyAutocomplite
+                    data={this.state.points}
+                    multiple={true}
+                    unifiedPopup
+                    value={this.state.point}
+                    func={this.changeAutocomplite.bind(this, "point")}
+                    label="Кафе"
+                    slotProps={unifiedDropdownSlotProps}
+                    sx={filterAutocompleteSx}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 7 }}>
+                  <MyAutocomplite
+                    data={this.state.all_items}
+                    multiple={true}
+                    unifiedPopup
+                    value={this.state.items}
+                    func={this.changeAutocomplite.bind(this, "items")}
+                    label="Товары"
+                    slotProps={unifiedDropdownSlotProps}
+                    sx={filterAutocompleteSx}
+                  />
+                </Grid>
+
+                <Grid
+                  size={12}
+                  sx={{ display: { xs: "flex", md: "none" } }}
+                >
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={this.getBillingList.bind(this)}
+                    sx={{
+                      ...actionButtonSx,
+                      backgroundColor: "#d9043d",
+                      "&:hover": {
+                        backgroundColor: "#b80035",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    Показать
+                  </Button>
+                </Grid>
+
+                <Grid size={12}>
+                  <Box
+                    sx={{
+                      mt: 0.5,
+                      pt: 2,
+                      borderTop: "1px solid #e5e7eb",
+                    }}
+                  >
+                    <Stack
+                      direction={{ xs: "column", md: "row" }}
+                      spacing={1}
+                      alignItems={{ xs: "flex-start", md: "center" }}
+                      justifyContent="space-between"
+                      sx={{ mb: 0.5 }}
                     >
+                      <Typography sx={{ fontSize: 16, fontWeight: 700, color: "#1f2937" }}>
+                        Короткая сводка
+                      </Typography>
+                      <Typography sx={{ fontSize: 13, color: "#6b7280" }}>
+                        Всего документов:{" "}
+                        {new Intl.NumberFormat("ru-RU").format(this.state.bills.length)}
+                      </Typography>
+                    </Stack>
+
+                    <Box
+                      sx={{
+                        mt: 1.25,
+                        display: { xs: "grid", sm: "flex" },
+                        gridTemplateColumns: {
+                          xs: "1fr",
+                        },
+                        gap: 1,
+                        alignItems: "stretch",
+                        flexWrap: { sm: "wrap" },
+                      }}
+                    >
+                      {statusSummaryItems.map((item) => (
+                        <Paper
+                          key={item.id}
+                          elevation={0}
+                          sx={{
+                            px: { xs: 1.25, sm: 1.5 },
+                            py: { xs: 0.95, sm: 1 },
+                            borderRadius: { xs: "14px", sm: "14px" },
+                            border: "1px solid #e5e7eb",
+                            width: { xs: "100%", sm: "auto" },
+                            minWidth: { sm: 180 },
+                            maxWidth: "100%",
+                            boxSizing: "border-box",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: "grid",
+                              gridTemplateColumns: "minmax(0, 1fr) auto",
+                              columnGap: 1,
+                              rowGap: 0.5,
+                              alignItems: "start",
+                            }}
+                          >
+                            <Stack
+                              direction="row"
+                              spacing={1}
+                              alignItems="center"
+                              sx={{ minWidth: 0 }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 9,
+                                  height: 9,
+                                  borderRadius: "999px",
+                                  backgroundColor: item.clr,
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <Typography
+                                sx={{
+                                  fontSize: { xs: 14, sm: 13 },
+                                  fontWeight: 600,
+                                  color: "#1f2937",
+                                  minWidth: 0,
+                                  lineHeight: 1.25,
+                                  whiteSpace: { xs: "normal", sm: "nowrap" },
+                                }}
+                              >
+                                {item.name}
+                              </Typography>
+                            </Stack>
+                            <Box
+                              sx={{
+                                px: 0.75,
+                                py: 0.25,
+                                borderRadius: "999px",
+                                backgroundColor: "#f3f4f6",
+                                color: "#4b5563",
+                                fontSize: { xs: 12.5, sm: 12 },
+                                fontWeight: 600,
+                                lineHeight: 1.2,
+                                ...tabularNumericSx,
+                              }}
+                            >
+                              {new Intl.NumberFormat("ru-RU").format(Number(item.count) || 0)}
+                            </Box>
+                            <Typography
+                              sx={{
+                                gridColumn: "1 / -1",
+                                fontSize: { xs: 13, sm: 12 },
+                                color: "#6b7280",
+                                textAlign: { xs: "left", sm: "right" },
+                                pl: { xs: 2.25, sm: 0 },
+                                ...tabularNumericSx,
+                              }}
+                            >
+                              {formatBillingMoney(item.sum_w_nds)}
+                            </Typography>
+                          </Box>
+                        </Paper>
+                      ))}
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+
+          <Grid size={12}>
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: "16px",
+                border: "1px solid #e5e7eb",
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  px: { xs: 2, md: 2.5 },
+                  py: 2,
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  spacing={1.25}
+                  alignItems={{ xs: "flex-start", md: "center" }}
+                  justifyContent="space-between"
+                >
+                  <Box>
+                    <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#1f2937" }}>
+                      Список накладных
+                    </Typography>
+                  </Box>
+
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    flexWrap="wrap"
+                    useFlexGap
+                  >
+                    <Box sx={headerMetricSx}>
+                      Всего: {new Intl.NumberFormat("ru-RU").format(this.state.bills.length)}
+                    </Box>
+                    <Box sx={headerMetricSx}>
+                      Риски: {new Intl.NumberFormat("ru-RU").format(warningBillsCount)}
+                    </Box>
+                    {this.state.acces_bux_pay === true ? (
+                      <Box sx={headerMetricSx}>
+                        К оплате: {new Intl.NumberFormat("ru-RU").format(this.state.count_true)}
+                      </Box>
+                    ) : null}
+                  </Stack>
+                </Stack>
+              </Box>
+              <TableContainer>
+                <Table
+                  aria-label="billing documents table"
+                  size="small"
+                  sx={{
+                    "& .MuiTableHead-root .MuiTableCell-root": {
+                      fontWeight: 700,
+                      backgroundColor: "#f8fafc",
+                      whiteSpace: "nowrap",
+                    },
+                    "& .MuiTableBody-root .MuiTableRow-root:hover": {
+                      backgroundColor: "#f9fafb",
+                    },
+                  }}
+                >
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>#</TableCell>
                       <TableCell
-                        style={{
-                          backgroundColor: item?.color ?? "#fff",
-                          color: item?.color ? "#fff" : "rgba(0, 0, 0, 0.87)",
+                        sx={{
+                          width: 60,
+                          px: 1,
+                          textAlign: "center",
                         }}
-                        onClick={this.getOneBill.bind(this, item)}
                       >
-                        {key + 1}
-                      </TableCell>
-                      <TableCell
-                        style={
-                          this.state.acces_bux_pay === true && parseInt(item?.status) == 9
-                            ? { display: "flex", justifyContent: "center" }
-                            : {}
-                        }
-                      >
-                        {this.state.acces_bux_pay === true && parseInt(item?.status) == 9 ? (
-                          <MyCheckBox
-                            func={this.actionCheckBox.bind(
-                              this,
-                              item.id,
-                              item.point_id,
-                              item.my_type_bill,
-                            )}
-                            value={
-                              this.state.arrPay[
-                                item.my_type_bill + "_" + item.id + "_" + item.point_id
-                              ]?.status ?? false
-                            }
-                          />
+                        {this.state.acces_bux_pay === true ? (
+                          <Tooltip title="Выбрать все к оплате">
+                            <Checkbox
+                              size="small"
+                              checked={
+                                payableBillsCount > 0 && this.state.count_true === payableBillsCount
+                              }
+                              indeterminate={
+                                this.state.count_true > 0 &&
+                                this.state.count_true < payableBillsCount
+                              }
+                              onChange={this.check_all_bill_pay.bind(this)}
+                              sx={{ p: 0.5 }}
+                            />
+                          </Tooltip>
                         ) : (
                           ""
                         )}
                       </TableCell>
-                      <TableCell onClick={this.getOneBill.bind(this, item)}>
-                        {parseInt(item.check_day) === 1 || parseInt(item.check_price) === 1 ? (
-                          <MyTooltip name={item.err_items ? item.err_items : item.err_date}>
-                            <Typography
-                              component="div"
-                              className="ceil_svg"
-                            >
-                              <ErrorIcon />
-                            </Typography>
-                          </MyTooltip>
-                        ) : null}
-                      </TableCell>
-
-                      <TableCell onClick={this.getOneBill.bind(this, item)}>Прих</TableCell>
-                      <TableCell onClick={this.getOneBill.bind(this, item)}>
-                        {item.number}
-                      </TableCell>
+                      <TableCell sx={riskCellSx}>Риск</TableCell>
+                      <TableCell>Тип</TableCell>
+                      <TableCell>Номер</TableCell>
+                      <TableCell>Дата накладной</TableCell>
+                      <TableCell sx={{ minWidth: 220 }}>Поставщик</TableCell>
                       <TableCell
-                        onClick={this.getOneBill.bind(this, item)}
-                        style={{
-                          backgroundColor:
-                            parseInt(item.check_day) === 1 ? "rgb(204, 0, 51)" : "#fff",
-                          color: parseInt(item.check_day) === 1 ? "#fff" : "rgba(0, 0, 0, 0.87)",
-                        }}
+                        align="right"
+                        sx={{ minWidth: 160, pr: 3 }}
                       >
-                        {formatDateReverse(item.date)}
-                      </TableCell>
-                      <TableCell onClick={this.getOneBill.bind(this, item)}>
-                        {item.vendor_name}
-                      </TableCell>
-                      <TableCell
-                        onClick={this.getOneBill.bind(this, item)}
-                        style={{
-                          backgroundColor:
-                            parseInt(item.check_price) === 1 ? "rgb(204, 0, 51)" : "#fff",
-                          color: parseInt(item.check_price) === 1 ? "#fff" : "rgba(0, 0, 0, 0.87)",
-                        }}
-                      >
-                        {item.sum_w_nds} ₽
+                        Сумма с НДС
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {hasBills ? (
+                      this.state.bills.map((item, key) => (
+                        <TableRow
+                          key={`${item.id}-${item.point_id}-${item.my_type_bill}`}
+                          sx={{ cursor: "pointer" }}
+                        >
+                          <TableCell
+                            onClick={this.getOneBill.bind(this, item)}
+                            sx={{ pl: 1.5 }}
+                          >
+                            <Stack
+                              direction="row"
+                              spacing={1}
+                              alignItems="center"
+                            >
+                              <Tooltip title={getBillingStatusName(item.status)}>
+                                <Box
+                                  sx={{
+                                    width: 8,
+                                    height: 24,
+                                    borderRadius: "999px",
+                                    backgroundColor: item.color || "#d1d5db",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                              </Tooltip>
+                              <Box sx={tabularNumericSx}>{key + 1}</Box>
+                            </Stack>
+                          </TableCell>
+                          <TableCell
+                            sx={
+                              this.state.acces_bux_pay === true && parseInt(item?.status) == 9
+                                ? { textAlign: "center", px: 1 }
+                                : { px: 1 }
+                            }
+                          >
+                            {this.state.acces_bux_pay === true && parseInt(item?.status) == 9 ? (
+                              <Checkbox
+                                size="small"
+                                onChange={this.actionCheckBox.bind(
+                                  this,
+                                  item.id,
+                                  item.point_id,
+                                  item.my_type_bill,
+                                )}
+                                checked={
+                                  this.state.arrPay[
+                                    item.my_type_bill + "_" + item.id + "_" + item.point_id
+                                  ]?.status ?? false
+                                }
+                                sx={{ p: 0.5 }}
+                              />
+                            ) : (
+                              ""
+                            )}
+                          </TableCell>
+                          <TableCell
+                            onClick={this.getOneBill.bind(this, item)}
+                            sx={riskCellSx}
+                          >
+                            <Box
+                              sx={{
+                                width: "100%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              {parseInt(item.check_day) === 1 ||
+                              parseInt(item.check_price) === 1 ? (
+                                <MyTooltip name={item.err_items ? item.err_items : item.err_date}>
+                                  <ErrorIcon sx={{ color: "#d97706" }} />
+                                </MyTooltip>
+                              ) : (
+                                "—"
+                              )}
+                            </Box>
+                          </TableCell>
+                          <TableCell onClick={this.getOneBill.bind(this, item)}>
+                            {getBillingTypeName(item.my_type_bill)}
+                          </TableCell>
+                          <TableCell
+                            onClick={this.getOneBill.bind(this, item)}
+                            sx={{ fontWeight: 600 }}
+                          >
+                            {item.number}
+                          </TableCell>
+                          <TableCell
+                            onClick={this.getOneBill.bind(this, item)}
+                            sx={{
+                              color: parseInt(item.check_day) === 1 ? "rgb(204, 0, 51)" : "inherit",
+                              fontWeight: parseInt(item.check_day) === 1 ? 700 : 400,
+                              ...tabularNumericSx,
+                            }}
+                          >
+                            {formatDateReverse(item.date)}
+                          </TableCell>
+                          <TableCell onClick={this.getOneBill.bind(this, item)}>
+                            {item.vendor_name}
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            onClick={this.getOneBill.bind(this, item)}
+                            sx={{
+                              pr: 3,
+                              color:
+                                parseInt(item.check_price) === 1 ? "rgb(204, 0, 51)" : "inherit",
+                              fontWeight: parseInt(item.check_price) === 1 ? 700 : 500,
+                              ...tabularNumericSx,
+                            }}
+                          >
+                            {formatBillingMoney(item.sum_w_nds)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={8}
+                          sx={{ py: 5, textAlign: "center", color: "#6b7280" }}
+                        >
+                          Выбери тип и точки, затем нажми «Показать».
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
           </Grid>
         </Grid>
       </>

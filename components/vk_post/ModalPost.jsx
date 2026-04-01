@@ -43,10 +43,12 @@ export const ModalPost = ({ open, onClose, postData, openGraph, refreshPost }) =
     >
       {/* Заголовок */}
       <DialogTitle
+        component="div"
         sx={{ m: 0, p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}
       >
         <Typography
           variant="subtitle1"
+          component="h2"
           fontWeight="bold"
         >
           Пост {postData.id}

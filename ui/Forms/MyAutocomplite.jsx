@@ -75,6 +75,13 @@ const UnifiedAutocompletePopper = forwardRef(function UnifiedAutocompletePopper(
 
 export function MyAutocomplite(props) {
   const isUnifiedPopup = Boolean(props.unifiedPopup);
+  const resolveOptionKey =
+    props.getOptionKey ||
+    ((option) => {
+      if (option == null) return "";
+      if (typeof option === "string" || typeof option === "number") return String(option);
+      return option.id ?? option.value ?? option.key ?? option.name ?? "";
+    });
   const unifiedRadius = "18px";
   const unifiedFieldMinHeight = 44;
   const unifiedInputHorizontalPadding = 16;
@@ -306,7 +313,7 @@ export function MyAutocomplite(props) {
         options={props.data ?? []}
         getOptionLabel={(option) => option?.name || ""}
         disableClearable={props.disableClearable}
-        getOptionKey={props.getOptionKey}
+        getOptionKey={resolveOptionKey}
         value={props.value ?? (props.multiple ? [] : null)}
         onChange={props.func}
         onFocus={props.onFocus}
@@ -332,8 +339,11 @@ export function MyAutocomplite(props) {
         renderTags={(value, getTagProps) =>
           value.map((option, index) => (
             <Chip
-              {...getTagProps({ index })}
-              key={option.id}
+              {...(() => {
+                const { key, ...tagProps } = getTagProps({ index });
+                return tagProps;
+              })()}
+              key={`${resolveOptionKey(option)}-${index}`}
               label={option.name}
               size="small"
               sx={{
@@ -369,7 +379,7 @@ export function MyAutocomplite(props) {
             : (params, option) => (
                 <li
                   {...params}
-                  key={props.optionKey ? option[`${props.optionKey}`] : option.id}
+                  key={props.optionKey ? option[`${props.optionKey}`] : resolveOptionKey(option)}
                 >
                   {option.name}
                 </li>

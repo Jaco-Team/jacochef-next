@@ -442,13 +442,19 @@ function formatBillingPackOptions(options = []) {
 }
 
 function normalizeBillingDecimalText(value, fractionDigits = BILLING_DECIMAL_SCALE) {
-  let normalizedValue = normalizeOcrText(value).replace(/\s+/g, "").replace(/,/g, ".");
+  const rawValue = normalizeOcrText(value).replace(/\s+/g, "");
+  const hasTrailingSeparator = /[.,]$/.test(rawValue);
+  let normalizedValue = rawValue.replace(/,/g, ".");
 
   normalizedValue = normalizedValue.replace(/[^\d.]/g, "");
 
   const [rawIntegerPart = "", ...rest] = normalizedValue.split(".");
   const integerPart = rawIntegerPart.length ? rawIntegerPart : rest.length ? "0" : "";
   const fractionPart = rest.join("").slice(0, fractionDigits);
+
+  if (hasTrailingSeparator && !fractionPart.length) {
+    return integerPart.length ? `${integerPart}.` : "";
+  }
 
   return fractionPart.length ? `${integerPart}.${fractionPart}` : integerPart;
 }
@@ -683,8 +689,8 @@ var global_point_id = 0;
 var type_bill = "bill";
 var bill_type = 0;
 var is_return = false;
-// const API_URL = "https://apichef.jacochef.ru/api";
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = "https://apichef.jacochef.ru/api";
+// const API_URL = "http://127.0.0.1:8000/api";
 const url_bill = `${API_URL}/bill-items/upload`;
 const url_bill_ex = `${API_URL}/bill-ex-items/upload`;
 const url_ocr = `${API_URL}/ocr/files/pipeline`;

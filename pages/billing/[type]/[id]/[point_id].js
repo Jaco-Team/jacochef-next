@@ -148,7 +148,8 @@ var type_bill = "bill";
 var bill_type = 0;
 const url_bill = "https://apichef.jacochef.ru/api/bill-items/upload";
 const url_bill_ex = "https://apichef.jacochef.ru/api/bill-ex-items/upload";
-const API_URL = "http://127.0.0.1:8000/api";
+// const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = "https://apichef.jacochef.ru/api";
 const url_ocr = `${API_URL}/ocr/files/pipeline`;
 
 function isImageFileName(fileName) {
@@ -303,13 +304,19 @@ function formatBillingPackOptions(options = []) {
 }
 
 function normalizeBillingDecimalText(value, fractionDigits = BILLING_DECIMAL_SCALE) {
-  let normalizedValue = normalizeBillingText(value).replace(/\s+/g, "").replace(/,/g, ".");
+  const rawValue = normalizeBillingText(value).replace(/\s+/g, "");
+  const hasTrailingSeparator = /[.,]$/.test(rawValue);
+  let normalizedValue = rawValue.replace(/,/g, ".");
 
   normalizedValue = normalizedValue.replace(/[^\d.]/g, "");
 
   const [rawIntegerPart = "", ...rest] = normalizedValue.split(".");
   const integerPart = rawIntegerPart.length ? rawIntegerPart : rest.length ? "0" : "";
   const fractionPart = rest.join("").slice(0, fractionDigits);
+
+  if (hasTrailingSeparator && !fractionPart.length) {
+    return integerPart.length ? `${integerPart}.` : "";
+  }
 
   return fractionPart.length ? `${integerPart}.${fractionPart}` : integerPart;
 }
@@ -646,6 +653,187 @@ const billingNumericHeaderCellSx = {
   minWidth: "130px",
 };
 
+const billingFormFieldPaddingX = 16;
+const billingFormFieldPaddingY = 10;
+const billingFormFieldLabelX = 16;
+const billingFormFieldLabelShrinkX = 18;
+const billingReadonlyFieldValueColor = "#6b7280";
+const billingDisabledFieldLabelColor = "#94a3b8";
+const billingDisabledFieldBackground = "#f3f4f6";
+const billingDisabledFieldBorder = "#e5e7eb";
+
+const billingEditFieldOverridesSx = {
+  "& .MuiFormLabel-root.MuiInputLabel-root.Mui-disabled, & .MuiInputLabel-root.Mui-disabled": {
+    color: `${billingDisabledFieldLabelColor} !important`,
+    opacity: 1,
+  },
+  "& .MuiInputLabel-root.Mui-disabled.MuiInputLabel-shrink": {
+    backgroundColor: `${billingDisabledFieldBackground} !important`,
+  },
+  "& .MuiTextField-root .MuiOutlinedInput-root.Mui-disabled .MuiInputBase-input, & .MuiAutocomplete-root .MuiOutlinedInput-root.Mui-disabled .MuiInputBase-input, & .MuiSelect-select.Mui-disabled":
+    {
+      color: `${billingReadonlyFieldValueColor} !important`,
+      WebkitTextFillColor: `${billingReadonlyFieldValueColor} !important`,
+      opacity: 1,
+    },
+  "& .MuiTextField-root .MuiOutlinedInput-root.Mui-disabled, & .MuiAutocomplete-root .MuiOutlinedInput-root.Mui-disabled, & .MuiPickersOutlinedInput-root.Mui-disabled":
+    {
+      backgroundColor: `${billingDisabledFieldBackground} !important`,
+      boxShadow: "none !important",
+      backgroundImage: "none !important",
+    },
+  "& .MuiTextField-root .MuiOutlinedInput-root.Mui-disabled fieldset, & .MuiAutocomplete-root .MuiOutlinedInput-root.Mui-disabled fieldset, & .MuiPickersOutlinedInput-root.Mui-disabled fieldset":
+    {
+      borderColor: `${billingDisabledFieldBorder} !important`,
+    },
+  "& .MuiAutocomplete-popupIndicator.Mui-disabled .MuiSvgIcon-root, & .MuiAutocomplete-clearIndicator.Mui-disabled .MuiSvgIcon-root, & .MuiSelect-icon.Mui-disabled, & .MuiPickersInputBase-root.Mui-disabled .MuiSvgIcon-root":
+    {
+      color: "#94a3b8 !important",
+      opacity: 1,
+    },
+  "& .MuiAutocomplete-root .MuiOutlinedInput-root.Mui-disabled .MuiAutocomplete-endAdornment, & .MuiAutocomplete-root .MuiOutlinedInput-root.Mui-disabled .MuiAutocomplete-popupIndicator, & .MuiAutocomplete-root .MuiOutlinedInput-root.Mui-disabled .MuiAutocomplete-clearIndicator":
+    {
+      backgroundColor: "transparent !important",
+      boxShadow: "none !important",
+    },
+  "& .MuiPickersInputBase-root.Mui-disabled .MuiPickersSectionList-root, & .MuiPickersInputBase-root.Mui-disabled .MuiPickersInputBase-input":
+    {
+      color: `${billingReadonlyFieldValueColor} !important`,
+      WebkitTextFillColor: `${billingReadonlyFieldValueColor} !important`,
+      opacity: 1,
+    },
+  "& .MuiPickersInputBase-root .MuiPickersSectionList-root": {
+    minHeight: "24px",
+    display: "flex",
+    alignItems: "center",
+    paddingLeft: `${billingFormFieldPaddingX}px`,
+    paddingRight: 0,
+  },
+  "& .MuiPickersInputBase-root .MuiPickersInputBase-input": {
+    paddingLeft: `${billingFormFieldPaddingX}px`,
+  },
+};
+
+const billingCompactFieldLabelSx = {
+  "& .MuiInputLabel-root": {
+    top: "50%",
+    lineHeight: "24px",
+    transform: `translate(${billingFormFieldLabelX}px, -50%) scale(1)`,
+  },
+  "& .MuiInputLabel-root.MuiInputLabel-shrink": {
+    top: 0,
+    transform: `translate(${billingFormFieldLabelShrinkX}px, -9px) scale(0.75)`,
+  },
+};
+
+const billingCompactAutocompleteFieldSx = {
+  ...billingCompactFieldLabelSx,
+  "& .MuiOutlinedInput-root": {
+    minHeight: billingFieldMinHeight,
+  },
+  "& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root": {
+    minHeight: billingFieldMinHeight,
+    alignItems: "center",
+    paddingTop: `${billingFormFieldPaddingY}px !important`,
+    paddingBottom: `${billingFormFieldPaddingY}px !important`,
+    paddingLeft: `${billingFormFieldPaddingX}px !important`,
+    paddingRight: "44px !important",
+  },
+  "& .MuiAutocomplete-input": {
+    minHeight: "24px !important",
+    lineHeight: "24px !important",
+    boxSizing: "content-box",
+    alignSelf: "center",
+    paddingTop: "0 !important",
+    paddingBottom: "0 !important",
+    paddingLeft: "0 !important",
+    paddingRight: "0 !important",
+    margin: "0 !important",
+  },
+};
+
+const billingCompactAutocompleteSx = {
+  "&.Mui-expanded .MuiOutlinedInput-root": {
+    borderBottomLeftRadius: "0 !important",
+    borderBottomRightRadius: "0 !important",
+    boxShadow: "0 14px 30px rgba(15, 23, 42, 0.08) !important",
+  },
+  "& .MuiOutlinedInput-root": {
+    overflow: "hidden",
+  },
+};
+
+const billingCompactAutocompleteSlotProps = {
+  popper: {
+    sx: {
+      marginTop: "-2px !important",
+      zIndex: 1500,
+    },
+  },
+  paper: {
+    sx: {
+      marginTop: 0,
+      border: "1px solid rgba(148, 163, 184, 0.18)",
+      borderTop: "none",
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+      borderBottomLeftRadius: billingFieldRadius,
+      borderBottomRightRadius: billingFieldRadius,
+      boxShadow: "0 18px 36px rgba(15, 23, 42, 0.1)",
+      overflow: "hidden",
+      backgroundColor: "#ffffff",
+    },
+  },
+  listbox: {
+    sx: {
+      padding: 0,
+      maxHeight: 320,
+      "& .MuiAutocomplete-option": {
+        minHeight: 52,
+        padding: "12px 20px",
+        lineHeight: "24px",
+        borderTop: "1px solid rgba(226, 232, 240, 0.8)",
+      },
+      "& .MuiAutocomplete-option:first-of-type": {
+        borderTop: "none",
+      },
+    },
+  },
+};
+
+const billingCompactTextInputSx = {
+  ...billingCompactFieldLabelSx,
+  "& .MuiOutlinedInput-input": {
+    minHeight: "24px",
+    lineHeight: "24px",
+    boxSizing: "border-box",
+    paddingTop: `${billingFormFieldPaddingY}px`,
+    paddingBottom: `${billingFormFieldPaddingY}px`,
+    paddingLeft: `${billingFormFieldPaddingX}px`,
+    paddingRight: `${billingFormFieldPaddingX}px`,
+  },
+};
+
+const billingFormNumericInputSx = {
+  ...billingCompactFieldLabelSx,
+  "& .MuiOutlinedInput-input": {
+    minHeight: "24px",
+    lineHeight: "24px",
+    boxSizing: "border-box",
+    paddingTop: `${billingFormFieldPaddingY}px`,
+    paddingBottom: `${billingFormFieldPaddingY}px`,
+    paddingLeft: `${billingFormFieldPaddingX}px`,
+    paddingRight: `${billingFormFieldPaddingX}px`,
+    textAlign: "right",
+    fontVariantNumeric: "tabular-nums lining-nums",
+    fontFeatureSettings: '"tnum" 1, "lnum" 1',
+  },
+  "& .MuiInputAdornment-root": {
+    color: "#94a3b8",
+    marginRight: "12px",
+  },
+};
+
 const billingNumericInputSx = {
   "& .MuiInputBase-input": {
     textAlign: "right",
@@ -683,6 +871,98 @@ const billingActionsCardSx = {
   gap: 2,
   width: "100%",
 };
+
+const billingActionButtonToneMap = {
+  delete: {
+    color: "#dc2626",
+    border: "1px solid rgba(220, 38, 38, 0.28)",
+    backgroundColor: "rgba(254, 242, 242, 0.92)",
+    boxShadow: "none",
+    hover: {
+      color: "#b91c1c",
+      borderColor: "rgba(220, 38, 38, 0.38)",
+      backgroundColor: "rgba(254, 226, 226, 0.98)",
+      boxShadow: "none",
+    },
+  },
+  "return-manager": {
+    color: "#ffffff",
+    background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+    boxShadow: "0 14px 28px rgba(220, 38, 38, 0.22)",
+    hover: {
+      background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
+      boxShadow: "0 18px 34px rgba(185, 28, 28, 0.28)",
+    },
+  },
+  save: {
+    color: "#ffffff",
+    background: "linear-gradient(135deg, #4caf50 0%, #43a047 100%)",
+    boxShadow: "0 14px 28px rgba(67, 160, 71, 0.22)",
+    hover: {
+      background: "linear-gradient(135deg, #43a047 0%, #388e3c 100%)",
+      boxShadow: "0 18px 34px rgba(56, 142, 60, 0.28)",
+    },
+  },
+  "send-1c": {
+    color: "#ffffff",
+    background: "linear-gradient(135deg, #1faee9 0%, #1296d3 100%)",
+    boxShadow: "0 14px 28px rgba(31, 174, 233, 0.24)",
+    hover: {
+      background: "linear-gradient(135deg, #1296d3 0%, #0c7fb6 100%)",
+      boxShadow: "0 18px 34px rgba(18, 150, 211, 0.28)",
+    },
+  },
+  pay: {
+    color: "#ffffff",
+    background: "linear-gradient(135deg, #4caf50 0%, #43a047 100%)",
+    boxShadow: "0 14px 28px rgba(67, 160, 71, 0.22)",
+    hover: {
+      background: "linear-gradient(135deg, #43a047 0%, #388e3c 100%)",
+      boxShadow: "0 18px 34px rgba(56, 142, 60, 0.28)",
+    },
+  },
+  "confirm-prices": {
+    color: "#1f2937",
+    background: "linear-gradient(135deg, #facc15 0%, #f59e0b 100%)",
+    boxShadow: "0 14px 28px rgba(245, 158, 11, 0.22)",
+    hover: {
+      background: "linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)",
+      boxShadow: "0 18px 34px rgba(234, 88, 12, 0.26)",
+    },
+  },
+  "save-send": {
+    color: "#ffffff",
+    background: "linear-gradient(135deg, #f5770a 0%, #ea580c 100%)",
+    boxShadow: "0 14px 28px rgba(245, 119, 10, 0.24)",
+    hover: {
+      background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
+      boxShadow: "0 18px 34px rgba(194, 65, 12, 0.28)",
+    },
+  },
+};
+
+function getBillingActionButtonSx(actionKey) {
+  const tone = billingActionButtonToneMap[actionKey] ?? billingActionButtonToneMap.save;
+
+  return {
+    minHeight: 52,
+    borderRadius: "16px",
+    fontWeight: 800,
+    letterSpacing: "0.01em",
+    boxShadow: tone.boxShadow ?? "none",
+    border: tone.border ?? "1px solid transparent",
+    color: tone.color,
+    background: tone.background,
+    backgroundColor: tone.backgroundColor,
+    "&:hover": {
+      color: tone.hover?.color ?? tone.color,
+      background: tone.hover?.background ?? tone.background,
+      backgroundColor: tone.hover?.backgroundColor ?? tone.backgroundColor,
+      borderColor: tone.hover?.borderColor ?? tone.border,
+      boxShadow: tone.hover?.boxShadow ?? tone.boxShadow ?? "none",
+    },
+  };
+}
 
 const billingDropzoneAddActionSx = {
   width: "100%",
@@ -1338,7 +1618,7 @@ const useStore = create((set, get) => ({
       is_load_store: true,
     });
 
-    let res = api_laravel_local(get().module, method, data)
+    let res = api_laravel(get().module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {
@@ -1424,7 +1704,7 @@ const useStore = create((set, get) => ({
       return item;
     });
 
-    const allPrice = bill_items.reduce((all, item) => all + Number(item.price), 0).toFixed(2);
+    const allPrice = bill_items.reduce((all, item) => all + Number(item.price_item), 0).toFixed(2);
     const allPrice_w_nds = bill_items
       .reduce((all, item) => all + Number(item.price_w_nds), 0)
       .toFixed(2);
@@ -2493,7 +2773,6 @@ function FormHeader_new({ type_edit }) {
           label="Кафе"
           disabled={true}
           value={point_name}
-          className="disabled_input"
         />
       </Grid>
       <Grid
@@ -2523,7 +2802,6 @@ function FormHeader_new({ type_edit }) {
           label="Поставщик"
           disabled={true}
           value={search_vendor}
-          className="disabled_input"
         />
       </Grid>
       {parseInt(type) === 2 || parseInt(type) === 3 ? (
@@ -2684,6 +2962,9 @@ function FormVendorItems() {
           freeSolo={true}
           multiple={false}
           unifiedPopup
+          autocompleteSx={billingCompactAutocompleteSx}
+          slotProps={billingCompactAutocompleteSlotProps}
+          sx={billingCompactAutocompleteFieldSx}
           data={vendor_items}
           value={search_item?.name ?? search_item}
           func={(event, name) => search_vendor_items(event, name)}
@@ -2702,6 +2983,9 @@ function FormVendorItems() {
             multiple={false}
             is_none={false}
             unifiedPopup
+            autocompleteSx={billingCompactAutocompleteSx}
+            slotProps={billingCompactAutocompleteSlotProps}
+            sx={billingCompactAutocompleteFieldSx}
             data={formatBillingPackOptions(all_ed_izmer)}
             value={findVendorPackOption(all_ed_izmer, pq)?.id ?? pq ?? ""}
             func={(event) => changeData("pq", event)}
@@ -2712,6 +2996,9 @@ function FormVendorItems() {
             freeSolo={true}
             multiple={false}
             unifiedPopup
+            autocompleteSx={billingCompactAutocompleteSx}
+            slotProps={billingCompactAutocompleteSlotProps}
+            sx={billingCompactAutocompleteFieldSx}
             data={all_ed_izmer}
             value={pq}
             func={(event, data) =>
@@ -2735,6 +3022,7 @@ function FormVendorItems() {
           isDecimalMask
           decimalScale={BILLING_DECIMAL_SCALE}
           label="Кол-во упаковок"
+          sx={billingCompactTextInputSx}
           value={count}
           func={(event) => changeCount(getBillingDecimalEvent(event))}
           onBlur={(event) => changeCount(getBillingDecimalEvent(event, { fixed: true }))}
@@ -2750,7 +3038,7 @@ function FormVendorItems() {
           label="Кол-вo"
           disabled={true}
           value={formatBillingFieldValue(fact_unit)}
-          className="disabled_input"
+          sx={billingCompactTextInputSx}
         />
       </Grid>
       <Grid
@@ -2766,7 +3054,7 @@ function FormVendorItems() {
           decimalScale={BILLING_DECIMAL_SCALE}
           label="Сумма без НДС"
           inputAdornment={<BillingRubleAdornment />}
-          sx={billingNumericInputSx}
+          sx={billingFormNumericInputSx}
           value={summ}
           func={(event) => changeData("summ", getBillingDecimalEvent(event))}
           onBlur={(event) => changeData("summ", getBillingDecimalEvent(event, { fixed: true }))}
@@ -2785,7 +3073,7 @@ function FormVendorItems() {
           decimalScale={BILLING_DECIMAL_SCALE}
           label="Сумма c НДС"
           inputAdornment={<BillingRubleAdornment />}
-          sx={billingNumericInputSx}
+          sx={billingFormNumericInputSx}
           value={sum_w_nds}
           func={(event) => changeData("sum_w_nds", getBillingDecimalEvent(event))}
           onBlur={(event) =>
@@ -4365,22 +4653,22 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
                 <Box
                   key={meta.label}
                   sx={{
-                    minHeight: { xs: "auto", md: 76 },
-                    borderRadius: { xs: "16px", md: "18px" },
+                    minHeight: { xs: "auto", md: 42 },
+                    borderRadius: { xs: "14px", md: "16px" },
                     border: "1px solid rgba(148, 163, 184, 0.16)",
                     backgroundColor: "rgba(255, 255, 255, 0.72)",
-                    px: { xs: 1.25, md: 1.5 },
-                    py: { xs: 1, md: 1.35 },
+                    px: { xs: 1.1, md: 1.25 },
+                    py: { xs: 0.8, md: 0.75 },
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "flex-start",
-                    justifyContent: "flex-start",
-                    gap: { xs: 0.45, md: 0 },
+                    justifyContent: "center",
+                    gap: 0.2,
                   }}
                 >
                   <Typography
                     sx={{
-                      fontSize: { xs: 11, md: 12 },
+                      fontSize: { xs: 10, md: 11 },
                       fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.08em",
@@ -4393,9 +4681,9 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
                   </Typography>
                   <Typography
                     sx={{
-                      mt: { xs: 0, md: 0.75 },
-                      fontSize: { xs: 14, md: 15 },
-                      lineHeight: { xs: 1.35, md: 1.45 },
+                      mt: 0,
+                      fontSize: { xs: 13, md: 14 },
+                      lineHeight: 1.2,
                       fontWeight: meta.numeric ? 800 : 700,
                       color: "#0f172a",
                       textAlign: "left",
@@ -5224,7 +5512,7 @@ class Billing_Edit_ extends React.Component {
       is_load: true,
     });
 
-    let res = api_laravel_local(this.state.module, method, data)
+    let res = api_laravel(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
         setTimeout(() => {
@@ -6250,8 +6538,7 @@ class Billing_Edit_ extends React.Component {
         ? {
             key: "return-manager",
             label: "Ошибка: вернуть управляющему",
-            variant: "outlined",
-            color: "warning",
+            variant: "contained",
             onClick: () => {
               this.setState({ modelChecReturn: true });
             },
@@ -6262,7 +6549,6 @@ class Billing_Edit_ extends React.Component {
             key: "save",
             label: "Сохранить изменения",
             variant: "contained",
-            color: "success",
             onClick: this.saveEditBill.bind(this, "current", true),
           }
         : null,
@@ -6271,7 +6557,6 @@ class Billing_Edit_ extends React.Component {
             key: "send-1c",
             label: "Отправить в 1С",
             variant: "contained",
-            color: "success",
             onClick: this.saveEditBill.bind(this, "next", true),
           }
         : null,
@@ -6280,7 +6565,6 @@ class Billing_Edit_ extends React.Component {
             key: "pay",
             label: "Оплатить",
             variant: "contained",
-            color: "success",
             onClick: this.saveEditBill.bind(this, "next", true),
           }
         : null,
@@ -6288,8 +6572,7 @@ class Billing_Edit_ extends React.Component {
         ? {
             key: "confirm-prices",
             label: "Подтвердить ценники",
-            variant: "outlined",
-            color: "warning",
+            variant: "contained",
             onClick: () => {
               this.setState({ modelCheckPrice: true });
             },
@@ -6300,7 +6583,6 @@ class Billing_Edit_ extends React.Component {
             key: "save-send",
             label: "Сохранить и отправить",
             variant: "contained",
-            color: "info",
             onClick: this.saveEditBill.bind(this, "next", true),
           }
         : null,
@@ -6896,6 +7178,7 @@ class Billing_Edit_ extends React.Component {
           className="container_first_child"
           sx={{
             ...billingPageFieldSx,
+            ...billingEditFieldOverridesSx,
             maxWidth: is_vertical ? "50%" : "100%",
             mb: is_horizontal ? "700px" : 4,
           }}
@@ -7019,14 +7302,10 @@ class Billing_Edit_ extends React.Component {
                       >
                         <Button
                           variant={action.variant}
-                          color={action.color}
                           fullWidth
                           onClick={action.onClick}
                           sx={{
-                            minHeight: 52,
-                            borderRadius: "16px",
-                            fontWeight: 700,
-                            boxShadow: action.variant === "contained" ? "none" : undefined,
+                            ...getBillingActionButtonSx(action.key),
                           }}
                         >
                           {action.label}
