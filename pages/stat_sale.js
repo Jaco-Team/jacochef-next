@@ -47,6 +47,8 @@ import ExcelIcon from "@/ui/ExcelIcon";
 import DownloadButton from "@/ui/DownloadButton";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import { Download } from "@mui/icons-material";
+import axios from "axios";
+import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 dayjs.locale("ru");
 
 var am5locales_ru_RU = {
@@ -1047,6 +1049,351 @@ class StatSale_Tab_Sett_Modal_Input extends React.Component {
   }
 }
 
+const StatSale_Tab_Sett_Dynamics = ({ dynamics, saveDynamics, openAlert }) => {
+  const [editingValue, setEditingValue] = React.useState(null);
+  const [editData, setEditData] = React.useState({});
+  const [filterType, setFilterType] = React.useState("all");
+
+  const months = [
+    "Январь",
+    "Февраль",
+    "Март",
+    "Апрель",
+    "Май",
+    "Июнь",
+    "Июль",
+    "Август",
+    "Сентябрь",
+    "Октябрь",
+    "Ноябрь",
+    "Декабрь",
+  ];
+
+  const types = [
+    { value: "rolly", label: "Роллы (план)" },
+    { value: "pizza", label: "Пицца (план)" },
+    { value: "order", label: "Заказы (план)" },
+    { value: "active", label: "Активные аккаунты (план)" },
+    { value: "register", label: "Аккаунты (план)" },
+  ];
+
+  // Группируем данные по типу и месяцу
+  const groupedData = React.useMemo(() => {
+    const grouped = {};
+
+    dynamics.forEach((item) => {
+      if (!grouped[item.type]) {
+        grouped[item.type] = {};
+      }
+      grouped[item.type][item.mounth] = {
+        id: item.id,
+        value: item.value,
+      };
+    });
+
+    return grouped;
+  }, [dynamics]);
+
+  // Фильтруем данные для отображения
+  const filteredData = React.useMemo(() => {
+    let filtered = types;
+
+    if (filterType !== "all") {
+      filtered = filtered.filter((t) => t.value === filterType);
+    }
+
+    return filtered;
+  }, [filterType]);
+
+  // Сохраняем значение перед переключением ячейки
+  const handleEdit = (type, month, currentValue, id) => {
+    // Если уже есть редактируемая ячейка, сохраняем её значение перед переключением
+    if (editingValue) {
+      const { type: oldType, month: oldMonth } = editingValue;
+      const oldValue = editData[oldType]?.[oldMonth];
+
+      if (oldValue !== undefined) {
+        // Сохраняем текущее редактируемое значение
+        setEditData((prev) => ({
+          ...prev,
+          [oldType]: {
+            ...prev[oldType],
+            [oldMonth]: oldValue,
+          },
+        }));
+      }
+    }
+
+    // Устанавливаем новую редактируемую ячейку
+    setEditingValue({ type, month, id });
+
+    // Загружаем существующее значение из editData или исходное
+    const existingValue = editData[type]?.[month];
+    if (existingValue === undefined) {
+      setEditData((prev) => ({
+        ...prev,
+        [type]: {
+          ...prev[type],
+          [month]: currentValue,
+        },
+      }));
+    }
+  };
+
+  const handleValueChange = (type, month, value) => {
+    // Обновляем значение в editData
+    setEditData((prev) => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        [month]: parseInt(value) || 0,
+      },
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      // Сохраняем последнее редактируемое значение
+      if (editingValue) {
+        const { type, month } = editingValue;
+        const value = editData[type]?.[month];
+        if (value !== undefined) {
+          setEditData((prev) => ({
+            ...prev,
+            [type]: {
+              ...prev[type],
+              [month]: value,
+            },
+          }));
+        }
+      }
+
+      // Формируем данные для сохранения
+      const saveData = [];
+      const savedItems = new Set(); // Чтобы не дублировать
+
+      Object.keys(editData).forEach((type) => {
+        Object.keys(editData[type]).forEach((month) => {
+          const monthNum = parseInt(month);
+          const originalItem = dynamics.find(
+            (item) => item.type === type && item.mounth === monthNum,
+          );
+
+          const newValue = editData[type][month];
+          const originalValue = originalItem?.value || 0;
+
+          // Сохраняем только если значение изменилось
+          if (newValue !== originalValue) {
+            const key = `${type}_${month}`;
+            if (!savedItems.has(key)) {
+              savedItems.add(key);
+              saveData.push({
+                id: originalItem?.id || null,
+                type: type,
+                mounth: monthNum,
+                value: newValue,
+              });
+            }
+          }
+        });
+      });
+
+      if (saveData.length === 0) {
+        openAlert(true, "Нет изменений для сохранения");
+        return;
+      }
+
+      await saveDynamics(saveData);
+      setEditingValue(null);
+      setEditData({});
+      openAlert(true, "Данные успешно сохранены");
+    } catch (error) {
+      openAlert(false, "Ошибка при сохранении: " + error.message);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingValue(null);
+    setEditData({});
+  };
+
+  // Получаем значение для отображения
+  const getDisplayValue = (type, monthNum) => {
+    // Если есть измененное значение в editData
+    if (editData[type]?.[monthNum] !== undefined) {
+      return editData[type][monthNum];
+    }
+    // Иначе исходное значение
+    return groupedData[type]?.[monthNum]?.value || 0;
+  };
+
+  return (
+    <Grid
+      container
+      spacing={3}
+      sx={{ mt: 2 }}
+    >
+      <Grid size={{ xs: 12 }}>
+        <Paper sx={{ p: 2 }}>
+          <Grid
+            container
+            spacing={2}
+            sx={{ mb: 3 }}
+          >
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel>Фильтр по типу</InputLabel>
+                <Select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  label="Фильтр по типу"
+                >
+                  <MenuItem value="all">Все типы</MenuItem>
+                  {types.map((type) => (
+                    <MenuItem
+                      key={type.value}
+                      value={type.value}
+                    >
+                      {type.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+
+          <TableContainer sx={{ maxHeight: "70vh" }}>
+            <Table
+              stickyHeader
+              size="small"
+            >
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: "bold", backgroundColor: "#f5f5f5" }}>Тип</TableCell>
+                  {months.map((month, index) => (
+                    <TableCell
+                      key={index}
+                      align="right"
+                      sx={{ fontWeight: "bold", backgroundColor: "#f5f5f5" }}
+                    >
+                      {month}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredData.map((type) => (
+                  <TableRow key={type.value}>
+                    <TableCell sx={{ fontWeight: "bold" }}>{type.label}</TableCell>
+                    {months.map((month, monthIndex) => {
+                      const monthNum = monthIndex + 1;
+                      const currentValue = getDisplayValue(type.value, monthNum);
+                      const isEditing =
+                        editingValue?.type === type.value && editingValue?.month === monthNum;
+                      const editValue =
+                        editData[type.value]?.[monthNum] !== undefined
+                          ? editData[type.value][monthNum]
+                          : currentValue;
+
+                      // Проверяем, есть ли изменения
+                      const originalValue = groupedData[type.value]?.[monthNum]?.value || 0;
+                      const hasChanges =
+                        editData[type.value]?.[monthNum] !== undefined &&
+                        editData[type.value][monthNum] !== originalValue;
+
+                      return (
+                        <TableCell
+                          key={monthIndex}
+                          align="right"
+                        >
+                          {isEditing ? (
+                            <TextField
+                              type="number"
+                              size="small"
+                              value={editValue}
+                              onChange={(e) =>
+                                handleValueChange(type.value, monthNum, e.target.value)
+                              }
+                              autoFocus
+                              onBlur={() => {
+                                // Сохраняем значение при потере фокуса и выходим из режима редактирования
+                                setEditingValue(null);
+                              }}
+                              onKeyPress={(e) => {
+                                if (e.key === "Enter") {
+                                  setEditingValue(null);
+                                }
+                              }}
+                              InputProps={{
+                                inputProps: { min: 0, step: 1000 },
+                              }}
+                              sx={{ width: "100px" }}
+                            />
+                          ) : (
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                cursor: "pointer",
+                                color: hasChanges ? "#1976d2" : "inherit",
+                                fontWeight: hasChanges ? "bold" : "normal",
+                                "&:hover": {
+                                  color: "#1976d2",
+                                  textDecoration: "underline",
+                                },
+                              }}
+                              onClick={() =>
+                                handleEdit(
+                                  type.value,
+                                  monthNum,
+                                  currentValue,
+                                  groupedData[type.value]?.[monthNum]?.id,
+                                )
+                              }
+                            >
+                              {currentValue.toLocaleString()}
+                              {hasChanges && " *"}
+                            </Typography>
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {Object.keys(editData).length > 0 && (
+            <Grid
+              container
+              spacing={2}
+              sx={{ mt: 2, justifyContent: "flex-end" }}
+            >
+              <Grid item>
+                <Button
+                  variant="outlined"
+                  onClick={handleCancel}
+                >
+                  Отменить все
+                </Button>
+              </Grid>
+              <Grid item>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleSave}
+                >
+                  Сохранить изменения
+                </Button>
+              </Grid>
+            </Grid>
+          )}
+        </Paper>
+      </Grid>
+    </Grid>
+  );
+};
+
 // ---------- Модалка Коэффициенты (Клиенты) ----------
 class StatSale_Tab_Sett_Modal_Rate_Clients extends React.Component {
   constructor(props) {
@@ -1583,6 +1930,16 @@ class StatSale_Tab_Sett extends React.Component {
     };
   }
 
+  // Добавьте метод для сохранения динамики
+  save_dynamics = async (data) => {
+    const res = await this.props.getData("save_dynamics", { data });
+    this.props.openAlert(res.st, res.text);
+
+    if (res.st) {
+      setTimeout(() => this.props.getDataSet(), 100);
+    }
+  };
+
   initializeRows() {
     return [
       { id: 1, type: "percent", data: [] },
@@ -1934,7 +2291,7 @@ class StatSale_Tab_Sett extends React.Component {
   };
 
   render() {
-    const { activeTab, fullScreen, openAlert } = this.props;
+    const { activeTab, fullScreen, openAlert, dynamics } = this.props;
     const { active_tab, rows, points, rows_clietns } = this.state;
 
     const cellStyles = {
@@ -2039,8 +2396,28 @@ class StatSale_Tab_Sett extends React.Component {
                         {...a11yProps(2)}
                       />
                     ) : null}
+                    {this.props.acces.client_view && this.props.acces.client_view ? (
+                      <Tab
+                        label="Лимиты (Динамика)"
+                        {...a11yProps(3)}
+                      />
+                    ) : null}
                   </Tabs>
                 </Paper>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 12 }}>
+                <TabPanel
+                  value={active_tab}
+                  index={3}
+                  id="clients"
+                >
+                  <StatSale_Tab_Sett_Dynamics
+                    dynamics={dynamics || []}
+                    saveDynamics={this.save_dynamics}
+                    openAlert={openAlert}
+                  />
+                </TabPanel>
               </Grid>
 
               {/* Коэффициенты (Продажи) */}
@@ -3014,6 +3391,7 @@ class StatSale_Tab_Dynamic extends React.Component {
       date_start: formatDateMin(new Date()),
       date_end: formatDateMin(new Date()),
       data_clients_list: [],
+      res: {},
       data_clients_list_cafe: [],
       data_clients_list_kc: [],
       data_clients_list_site: [],
@@ -3040,11 +3418,92 @@ class StatSale_Tab_Dynamic extends React.Component {
 
     // export
     if (exp) {
-      const res = await this.props.getData("export_data_clients", data);
-      if (!res?.st) {
-        return this.props.openAlert(res?.st, res?.text || "Ошибка при экспорте данных");
+      try {
+        this.setState({ is_load: true });
+
+        const response = await axios.post(
+          "https://apichef.jacochef.ru/api/stat_sale/export_data_dynamics",
+          {
+            method: "export_data_dynamics",
+            module: "orders_by_hour",
+            version: 2,
+            login: localStorage.getItem("token"),
+            data: this.state.res,
+          },
+          {
+            responseType: "blob",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            },
+            timeout: 30000,
+          },
+        );
+
+        // Проверяем тип ответа
+        const contentType = response.headers["content-type"];
+
+        // Если вернулся JSON с ошибкой
+        if (contentType && contentType.includes("application/json")) {
+          const text = await response.data.text();
+          const errorData = JSON.parse(text);
+          this.props.openAlert(false, errorData.text || "Ошибка экспорта");
+          return;
+        }
+
+        // Проверяем размер файла
+        if (response.data.size === 0) {
+          this.props.openAlert(false, "Ошибка: получен пустой файл");
+          return;
+        }
+
+        // Создаем ссылку для скачивания
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+
+        // Получаем имя файла из заголовка или генерируем сами
+        let fileName = `stat_dynamics_${new Date().toISOString().split("T")[0]}.xlsx`;
+        const contentDisposition = response.headers["content-disposition"];
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (match && match[1]) {
+            fileName = match[1].replace(/['"]/g, "");
+          }
+        }
+
+        link.setAttribute("download", fileName);
+        document.body.appendChild(link);
+        link.click();
+
+        // Очищаем
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+
+        this.props.openAlert(true, "Экспорт успешно выполнен");
+      } catch (error) {
+        console.error("Export error:", error);
+
+        let errorMessage = "Ошибка при экспорте";
+        if (error.response && error.response.data) {
+          try {
+            const text = await error.response.data.text();
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.text || errorMessage;
+          } catch (e) {
+            errorMessage = error.message || errorMessage;
+          }
+        } else {
+          errorMessage = error.message || errorMessage;
+        }
+
+        this.props.openAlert(false, errorMessage);
+      } finally {
+        this.setState({ is_load: false });
       }
-      return res?.url;
+      return;
     }
 
     this.setState({ loading: true });
@@ -3054,6 +3513,7 @@ class StatSale_Tab_Dynamic extends React.Component {
     if (res.st) {
       this.setState({
         data_clients_list: res.res || [],
+        res: res || [],
         data_clients_list_cafe: res.res_cafe || [],
         data_clients_list_kc: res.res_kc || [],
         data_clients_list_site: res.res_site || [],
@@ -4156,6 +4616,19 @@ class StatSale_Tab_Dynamic extends React.Component {
                 func={this.changeDateRange.bind(this, "date_start")}
               />
             </Grid>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 6,
+              }}
+            >
+              <MyDatePickerNewViews
+                label="Дата до"
+                views={["month", "year"]}
+                value={this.state.date_end}
+                func={this.changeDateRange.bind(this, "date_end")}
+              />
+            </Grid>
 
             <Grid
               size={{
@@ -4786,6 +5259,7 @@ class StatSale_ extends React.Component {
 
       fullScreen: false,
       activeTab: 0,
+      data_sett_limit_dynamic: [],
 
       data_sett_rate: [],
       data_sett_points: [],
@@ -4823,23 +5297,20 @@ class StatSale_ extends React.Component {
     return userCan("access", key);
   };
 
-  getData = (method, data = {}) => {
-    this.setState({
-      is_load: true,
-    });
+  getData = async (method, data = {}) => {
+    this.setState({ is_load: true });
 
-    let res = api_laravel(this.state.module, method, data)
-      .then((result) => result?.data)
-      .catch(console.log)
-      .finally(() => {
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 500);
-      });
-
-    return res;
+    try {
+      const result = await api_laravel(this.state.module, method, data);
+      return result?.data;
+    } catch (error) {
+      console.error(error);
+      return { st: false, text: error.message || "Ошибка запроса" };
+    } finally {
+      setTimeout(() => {
+        this.setState({ is_load: false });
+      }, 500);
+    }
   };
 
   handleResize() {
@@ -4867,6 +5338,7 @@ class StatSale_ extends React.Component {
       data_sett_rate: res.data_sett_rate,
       data_sett_points: res.data_sett_points,
       data_sett_rate_clients: res.data_sett_rate_clients,
+      data_sett_limit_dynamic: res.data_sett_limit_dynamic,
     });
   };
 
@@ -5216,6 +5688,7 @@ class StatSale_ extends React.Component {
               fullScreen={this.state.fullScreen}
               acces={this.state.acces}
               rows={this.state.data_sett_rate}
+              dynamics={this.state.data_sett_limit_dynamic}
               rows_clietns={this.state.data_sett_rate_clients}
               getDataSet={this.getDataSet}
               getData={this.getData}
